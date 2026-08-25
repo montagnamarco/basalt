@@ -708,7 +708,17 @@ public sealed class VbHtmlParser
         {
             if (LooksLikeKeywordAt(_index, keyword))
             {
-                var body = _text.Substring(start, _index - start);
+                // Back over the "@" that introduces the closing keyword: the
+                // scan matches "End Functions" and the template writes
+                // "@End Functions", so the marker was left at the end of the
+                // body and written into the class as a stray line. The
+                // generated Visual Basic did not compile, and every template
+                // using @Functions was affected — views included.
+                var end = _index;
+
+                if (end > start && _text[end - 1] == '@') end--;
+
+                var body = _text.Substring(start, end - start);
 
                 Advance(SkipToKeywordEnd(keyword));
                 closed = true;

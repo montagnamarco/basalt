@@ -33,4 +33,19 @@ public enum ViewHost
     /// which is a 404 with nothing in the log to explain it.
     /// </remarks>
     RazorPage,
+
+    /// <summary>
+    /// A Blazor component, in any of its render modes.
+    /// </summary>
+    /// <remarks>
+    /// The furthest from the others: a component does not write HTML at all.
+    /// It builds a render tree — OpenElement, AddContent, CloseElement — which
+    /// Blazor then diffs against the previous one to decide what to change on
+    /// screen. Writing markup out as text, the way every other host does,
+    /// produces a class that compiles and renders nothing.
+    ///
+    /// Server, WebAssembly and Auto are not separate hosts: they differ in
+    /// where the component runs, not in what is generated for it.
+    /// </remarks>
+    Component,
 }
