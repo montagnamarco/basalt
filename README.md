@@ -1,38 +1,76 @@
 # Basalt
 
-**Razor for Visual Basic on modern .NET — plus a cross-platform IDE to write it in.**
+**A cross-platform IDE for Visual Basic and its dialects.**
 
-Microsoft shipped `.vbhtml` with ASP.NET MVC 5 on the .NET Framework and never
-carried it forward. On .NET Core and everything after it, Razor is C# only: no
-`.vbhtml` compilation, no tooling, no templates. A VB.NET web application has
-had no view engine of its own for a decade.
+Basalt is an integrated development environment for Visual Basic, running on
+macOS, Windows and Linux from one source tree. MSBuild compilation with
+clickable errors, Roslyn IntelliSense in-process, a visual Avalonia designer
+previewing through the real engine, Git, real terminals, and typing that
+behaves the way VB does on Windows — `end if` becoming `End If` as you type.
 
-Basalt closes that gap. It is a Razor implementation for Visual Basic that
-compiles `.vbhtml` views ahead of time, serves them under ASP.NET Core MVC,
-Razor Pages and Web API, and gives them syntax highlighting, IntelliSense and
-diagnostics **in Rider, Visual Studio, VS Code and in Basalt's own editor**.
+Along the way it grew a few things that stand on their own:
 
-Everything here is MIT licensed. There is no runtime dependency on Basalt the
-IDE: the packages work in whatever editor you already use.
+- **Razor for Visual Basic on modern .NET.** `.vbhtml` was left behind at the
+  .NET Framework; Basalt brings it back, as packages that work in Rider,
+  Visual Studio and VS Code as well as here. This is the largest piece of
+  work in the repository and most of what follows is about it.
+- **`.vbp` pages** — Classic ASP's philosophy, brought up to date: a page is a
+  file, a URL is a path, save and refresh. **Under active development.**
+- **QuickBASIC**, which is here for the fun of it. See
+  [below](#quickbasic-for-the-fun-of-it).
+
+Everything is MIT licensed. The Razor packages have no dependency on the IDE:
+use them in whatever editor you already have.
 
 ---
 
 ## Table of contents
 
+- [The IDE](#the-ide)
 - [The `.vbhtml` story](#the-vbhtml-story)
 - [Quick start](#quick-start)
 - [How a view becomes a class](#how-a-view-becomes-a-class)
 - [The language](#the-language)
 - [Serving views under ASP.NET Core](#serving-views-under-aspnet-core)
 - [`.vbp` pages: Classic ASP, modernised](#vbp-pages-classic-asp-modernised)
-- [IDE support](#ide-support)
+- [IDE support for `.vbhtml`](#ide-support-for-vbhtml)
 - [Project templates](#project-templates)
-- [The IDE](#the-ide)
+- [QuickBASIC, for the fun of it](#quickbasic-for-the-fun-of-it)
 - [Building from source](#building-from-source)
 - [Repository layout](#repository-layout)
 - [Design decisions](#design-decisions)
 - [Known limitations](#known-limitations)
 - [Contributing](#contributing)
+
+---
+
+## The IDE
+
+The editor these packages were developed in, and the reason the repository
+exists.
+
+- **MSBuild compilation** with clickable errors carrying file, line and column
+- **Roslyn IntelliSense** in-process — completion, diagnostics, quick info,
+  go-to-definition — with no external server
+- **A visual Avalonia designer**: toolbox, drag-and-drop, selection handles,
+  property grid, undo/redo. The preview is rendered by the real Avalonia
+  engine rather than an imitation of it, and VB.NET code-behind is generated
+  and kept in sync
+- **Typing that behaves like VB on Windows**: `end if` becomes `End If`,
+  `if x=1 then` becomes `If x = 1 Then`, blocks close themselves on Enter,
+  and identifiers follow the project's real symbols
+  (`console.writeline` → `Console.WriteLine`). Strings and comments are left
+  alone
+- **Integrated terminals** on a real pseudo-terminal — shell prompts, colours,
+  `vim` and `top` all work
+- **Git**: branch, status, staging, commit, history
+- **Dockable panels** that split, float into their own window, and restore
+- **New Solution** generating VB.NET solutions that are verified by tests that
+  actually compile them
+
+```bash
+dotnet run --project src/Basalt.Shell
+```
 
 ---
 
@@ -118,7 +156,7 @@ compiler blames the right file. This is what makes an error in a view point at
 the view rather than at generated code nobody wrote.
 
 Those mappings are also what the language server runs on — see
-[IDE support](#ide-support). They are the load-bearing part of the whole design,
+[IDE support](#ide-support-for-vbhtml). They are the load-bearing part of the whole design,
 and the one most easily got subtly wrong: an off-by-twelve in a mapping does not
 crash anything, it just makes IntelliSense describe the token next door.
 
@@ -218,8 +256,20 @@ serve both.
 
 ## `.vbp` pages: Classic ASP, modernised
 
-Alongside Razor there is a second, deliberately simpler model: a page is a file,
-a URL is a path, and there are no controllers or models to declare.
+> **Under active development.** The parser, the compiler, the hosting and the
+> editor support all work and are covered by tests — but this is the newest
+> part of the repository and the one most likely to change. Expect rough
+> edges, and say so when you find them.
+
+Alongside Razor there is a second, deliberately simpler model, and it is a
+philosophy more than a feature: the one Classic ASP and early PHP had. A page
+is a file, a URL is a path, there are no controllers or models to declare, and
+you save the file and refresh the browser.
+
+That directness is what made those tools easy to start with, and what the
+modern frameworks traded away for structure. `.vbp` is an attempt to have it
+back on top of ASP.NET Core — the old feel, with a real compiler underneath and
+none of the old drawbacks.
 
 ```vbp
 <%@ Import Namespace="System.Linq" %>
@@ -246,10 +296,11 @@ read — which looks exactly like hot reload being broken.
 
 ---
 
-## IDE support
+## IDE support for `.vbhtml`
 
 This is the part that makes `.vbhtml` usable rather than merely compilable, and
-it is the same implementation everywhere.
+it is the same implementation everywhere — including in editors that have never
+heard of Visual Basic Razor.
 
 ### One server, four editors
 
@@ -291,7 +342,7 @@ types, the grammar and the LSP client. Install the built zip via
 
 ### Basalt
 
-Built in. No extension needed.
+Built in. No extension needed — the IDE runs the same parser directly.
 
 ---
 
@@ -320,25 +371,24 @@ a terminal works, and the resulting project opens and builds in Rider normally.
 
 ---
 
-## The IDE
+## QuickBASIC, for the fun of it
 
-Basalt is also a full IDE for Visual Basic — the editor these packages were
-developed in. It runs on macOS, Windows and Linux from one source tree.
+This one is here because it was enjoyable to write, not because anyone asked
+for it. Basalt is an IDE for Visual Basic *and its dialects*, and QuickBASIC is
+where the family started.
 
-- **MSBuild compilation** with clickable errors carrying file, line and column
-- **Roslyn IntelliSense** in-process: completion, diagnostics, quick info,
-  go-to-definition
-- **A visual Avalonia designer** — toolbox, drag-and-drop, selection handles,
-  property grid, undo/redo — previewing through the real Avalonia engine rather
-  than an imitation of it, with VB.NET code-behind generated and kept in sync
-- **Typing that behaves like VB on Windows**: `end if` becomes `End If`,
-  `if x=1 then` becomes `If x = 1 Then`, blocks close themselves on Enter,
-  identifiers follow the project's real symbols
-- **Integrated terminals** on a real pseudo-terminal — shell prompts, colours,
-  `vim` and `top` all work
-- **Git**: branch, status, staging, commit, history
-- **Dockable panels** that split, float and restore
-- **A QuickBASIC dialect** for older sources
+It is a complete implementation all the same: a lexer, a parser, a symbol
+table, an interpreter for running a program straight from the editor, and a
+native compiler that translates to C and hands it to clang — so a `.bas` file
+becomes a real executable. Cross-compiling works too, and the test suite
+verifies it by building for the other architecture and reading back what
+`file` says about the result.
+
+`PRINT`, `INPUT`, `GOTO`, `GOSUB`, `DIM`, `WHILE`/`WEND`, `SELECT CASE`, `SUB`
+and `FUNCTION` are understood, with editor support alongside the rest.
+
+See [`src/Basalt.QuickBasic/CROSS-COMPILING.md`](src/Basalt.QuickBasic/CROSS-COMPILING.md)
+for which targets build out of the box and which need a sysroot first.
 
 ---
 
@@ -371,21 +421,33 @@ for `osx-arm64` as needed.
 
 ## Repository layout
 
+The IDE:
+
+| Path | |
+|---|---|
+| `src/Basalt.Shell` | the IDE itself — editor, panels, menus, terminals |
+| `src/Basalt.Workspace` | projects, MSBuild, Roslyn, Git |
+| `src/Basalt.Designer` | the Avalonia visual designer |
+| `src/Basalt.Core`, `src/Basalt.Extensibility` | shared model and extension points |
+
+Razor for Visual Basic:
+
 | Path | |
 |---|---|
 | `src/Basalt.Razor.Vb` | parser, code writer, source mappings, source generator |
 | `src/Basalt.Razor.Vb.AspNetCore` | the ASP.NET Core integration — `AddVbViews` |
-| `src/Basalt.Razor.Vb.Hosting` | `.vbp` pages and on-the-fly compilation |
-| `src/Basalt.Razor.Vb.LanguageServer` | the LSP server all four editors run |
 | `src/Basalt.Razor.Vb.Generator` | the build-time generator entry point |
-| `src/Basalt.Shell` | the IDE |
-| `src/Basalt.Workspace` | projects, MSBuild, Roslyn, Git |
-| `src/Basalt.Designer` | the Avalonia visual designer |
-| `src/Basalt.Core`, `src/Basalt.Extensibility` | shared model and extension points |
-| `src/Basalt.QuickBasic` | the QuickBASIC dialect |
+| `src/Basalt.Razor.Vb.LanguageServer` | the LSP server all four editors run |
+| `src/Basalt.Razor.Vb.Hosting` | `.vbp` pages and on-the-fly compilation |
 | `extensions/` | Rider, Visual Studio and VS Code plugins |
 | `templates/` | `dotnet new` templates |
 | `samples/` | a working MVC site and a `.vbp` site |
+
+And the rest:
+
+| Path | |
+|---|---|
+| `src/Basalt.QuickBasic` | the QuickBASIC dialect, interpreter and native compiler |
 | `tests/` | 2,226 tests |
 
 ---
@@ -421,6 +483,8 @@ shows something else.
   `addTagHelper`/`removeTagHelper`/`tagHelperPrefix` are not implemented yet.
 - **The Visual Studio and VS Code extensions** are built from the same server as
   the Rider plugin but have had less use. Reports are welcome.
+- **`.vbp` pages** are under active development — the newest part of the
+  repository, and the one whose shape is most likely to still change.
 - **The designer** is missing distance guides while dragging, a grid row/column
   overlay, and a colour picker in the property grid.
 
