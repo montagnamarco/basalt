@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="16" height="16">
+  <!--
+    The same rock at sixteen pixels, where the full icon cannot go: rendered
+    that small, three columns merge into one orange smudge with no shape in it
+    at all. Two, drawn larger, still read as two.
+
+    Checked by rasterising and looking rather than by reasoning about it — the
+    three-column version looks perfectly correct in the editor and fails only
+    on screen.
+  -->
+
+  <rect width="64" height="64" rx="12" fill="#1B1B1F"/>
+
+  <!-- the shorter column -->
+  <path d="M12.34,32.45 L12.34,27.55 L21.00,25.10 L21.00,50.00 L12.34,50.00 Z" fill="#C2491A"/>
+  <path d="M21.00,25.10 L29.66,27.55 L29.66,32.45 L29.66,50.00 L21.00,50.00 Z" fill="#8A3210"/>
+  <path d="M12.34,32.45 L21.00,34.90 L29.66,32.45 L29.66,27.55 L21.00,25.10 L12.34,27.55 Z" fill="#E2963A"/>
+
+  <!-- the taller one -->
+  <path d="M32.34,22.45 L32.34,17.55 L41.00,15.10 L41.00,50.00 L32.34,50.00 Z" fill="#D9531E"/>
+  <path d="M41.00,15.10 L49.66,17.55 L49.66,22.45 L49.66,50.00 L41.00,50.00 Z" fill="#96360F"/>
+  <path d="M32.34,22.45 L41.00,24.90 L49.66,22.45 L49.66,17.55 L41.00,15.10 L32.34,17.55 Z" fill="#F2A03D"/>
+</svg>

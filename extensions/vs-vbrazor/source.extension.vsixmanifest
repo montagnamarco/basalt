@@ -5,8 +5,9 @@
               Version="1.0.0"
               Language="en-US"
               Publisher="Basalt" />
-    <DisplayName>Razor for Visual Basic</DisplayName>
+    <DisplayName>Basalt</DisplayName>
     <Description xml:space="preserve">Editing support for .vbhtml views: colouring, completion and diagnostics. ASP.NET Core's Razor compiler emits C# only, so this fills a gap Microsoft left.</Description>
+    <Icon>icon.png</Icon>
     <MoreInfo>https://github.com/basalt/ide</MoreInfo>
     <License>LICENSE.txt</License>
     <Tags>vb, visual basic, razor, vbhtml, aspnetcore</Tags>

@@ -1,4 +1,5 @@
 using Avalonia.Headless.XUnit;
+using Basalt.Shell.Controls;
 using Avalonia.Platform;
 
 namespace Basalt.Tests;
@@ -29,10 +30,10 @@ public class ApplicationIconTests
     {
         var svg = System.Text.Encoding.UTF8.GetString(Resource("basalt.svg"));
 
-        // The same volcano the IDE draws for IconKind.Application: if the two
-        // drift, the dock and the menu show different icons.
+        // The same basalt columns the IDE draws for IconKind.Application: if
+        // the two drift, the dock and the menu show different icons.
         Assert.Contains("<svg", svg, StringComparison.Ordinal);
-        Assert.Contains("crater", svg, StringComparison.Ordinal);
+        Assert.Contains("hexagonal", svg, StringComparison.Ordinal);
     }
 
     [AvaloniaFact]
@@ -94,5 +95,40 @@ public class ApplicationIconTests
             Assert.Equal(4, stream.Read(header, 0, 4));
 
         Assert.Equal("icns", System.Text.Encoding.ASCII.GetString(header));
+    }
+
+    [AvaloniaFact]
+    public void TheDrawnIconStillHasTwoColumnsAtSixteenPixels()
+    {
+        // Rasterised and counted, not reasoned about. The three-column
+        // artwork looks perfectly correct in an editor and turns into one
+        // orange smudge at the size the menu bar and the tabs use — which is
+        // why the drawn icon carries two columns and the file carries three.
+        var geometry = IdeIcons.PathFor(IconKind.Application)!;
+
+        // The gap between the columns, at the height they overlap: a single
+        // merged shape would fill it.
+        var atMidHeight = new Avalonia.Point(7.75, 9);
+
+        Assert.False(
+            geometry.FillContains(atMidHeight),
+            "the two columns have merged into one shape");
+
+        // And both columns are really there.
+        Assert.True(geometry.FillContains(new Avalonia.Point(5.25, 9)), "no left column");
+        Assert.True(geometry.FillContains(new Avalonia.Point(10.25, 9)), "no right column");
+    }
+
+    [AvaloniaFact]
+    public void TheDrawnIconFillsItsBox()
+    {
+        // A path scaled to nothing also "exists": the volcano it replaced was
+        // checked only for being non-null, and an icon that draws a speck in
+        // the corner passes that.
+        var bounds = IdeIcons.PathFor(IconKind.Application)!.Bounds;
+
+        Assert.True(bounds.Width >= 8, $"only {bounds.Width:0.0} wide");
+        Assert.True(bounds.Height >= 8, $"only {bounds.Height:0.0} tall");
+        Assert.True(bounds.Right <= 16 && bounds.Bottom <= 16, "it overflows the 16 by 16 box");
     }
 }

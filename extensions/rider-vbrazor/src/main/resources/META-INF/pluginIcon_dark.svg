@@ -1,19 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40">
   <!--
-    Basalt: the rock the IDE is named after, which cools into hexagonal
-    columns. Drawn as three of them at different heights, each an isometric
-    hexagon extruded down to a shared base line so they stand on something.
-
-    The volcano this replaces read as a lightning bolt stuck to a triangle at
-    any size below the About window, and the crater cut a black notch out of
-    the summit.
-
-    Depth is carried by three shades rather than by outline: the back column is
-    the dullest, the front one the brightest. Flat colours of the same value
-    made the same three shapes read as a bar chart.
+    The plugin icon, from the same drawing as the IDE's own: a
+    plugin that looked like something else in the marketplace
+    would be a second identity to keep in step.
   -->
-
-  <rect width="64" height="64" rx="12" fill="#1B1B1F"/>
+<rect width="64" height="64" rx="12" fill="#2B2B2F"/>
 
   <!-- the column behind, dulled by distance -->
   <path d="M38.21,32.20 L38.21,27.80 L46.00,25.60 L46.00,50.00 L38.21,50.00 Z" fill="#A8410F"/>

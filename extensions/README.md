@@ -1,4 +1,4 @@
-# Razor for Visual Basic in other editors
+# Basalt in other editors
 
 Basalt is not the only place a `.vbhtml` file gets opened. These three
 extensions bring the same editing to Visual Studio, Rider and VS Code, all

@@ -448,16 +448,16 @@ Both `.vbhtml` and `.vbp` are handled.
 ### Rider
 
 `extensions/rider-vbrazor` — an IntelliJ Platform plugin registering the file
-types, the grammar and the LSP client. Install the built zip via
-**Settings → Plugins → ⚙ → Install Plugin from Disk**.
+types, the grammar and the LSP client. Listed as **Basalt**. Install the built
+zip via **Settings → Plugins → ⚙ → Install Plugin from Disk**.
 
 ### Visual Studio
 
-`extensions/vs-vbrazor` — a VSIX doing the same for Visual Studio 2022.
+`extensions/vs-vbrazor` — a VSIX doing the same for Visual Studio 2022, listed as **Basalt**.
 
 ### VS Code
 
-`extensions/vscode-vbrazor` — a standard extension; the server ships inside it.
+`extensions/vscode-vbrazor` — a standard extension, listed as **Basalt**; the server ships inside it.
 
 ### Basalt
 
@@ -591,7 +591,7 @@ Razor for Visual Basic:
 | `src/Basalt.Razor.Vb.Generator` | the build-time generator entry point |
 | `src/Basalt.Razor.Vb.LanguageServer` | the LSP server all four editors run |
 | `src/Basalt.Razor.Vb.Hosting` | `.vbp` pages and on-the-fly compilation |
-| `extensions/` | Rider, Visual Studio and VS Code plugins |
+| `extensions/` | the Rider, Visual Studio and VS Code plugins, all named Basalt |
 | `templates/` | `dotnet new` templates |
 | `samples/` | a working MVC site and a `.vbp` site |
 

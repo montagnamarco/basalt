@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.basalt.vbrazor</id>
-    <name>Basalt VB.NET Razor</name>
-    <vendor url="https://github.com/basalt-ide">Basalt</vendor>
+    <name>Basalt</name>
+    <vendor url="https://github.com/montagnamarco/basalt">Marco Montagna</vendor>
 
     <description><![CDATA[
         <p><b>Razor views written in Visual Basic, in Rider.</b></p>

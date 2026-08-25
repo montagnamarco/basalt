@@ -1,6 +1,6 @@
 {
   "name": "vbrazor",
-  "displayName": "Razor for Visual Basic",
+  "displayName": "Basalt",
   "description": "Editing support for .vbhtml views: colouring, completion, diagnostics and navigation. ASP.NET Core's own Razor compiler emits C# only, so this fills a gap Microsoft left.",
   "version": "1.0.0",
   "publisher": "basalt",
@@ -71,7 +71,7 @@
       }
     ],
     "configuration": {
-      "title": "Razor for Visual Basic",
+      "title": "Basalt",
       "properties": {
         "vbrazor.server.path": {
           "type": "string",
@@ -93,13 +93,13 @@
     "commands": [
       {
         "command": "vbrazor.newProject",
-        "title": "Razor for Visual Basic: New Web Project",
-        "category": "Razor for Visual Basic"
+        "title": "Basalt: New Web Project",
+        "category": "Basalt"
       },
       {
         "command": "vbrazor.restartServer",
-        "title": "Razor for Visual Basic: Restart Language Server",
-        "category": "Razor for Visual Basic"
+        "title": "Basalt: Restart Language Server",
+        "category": "Basalt"
       }
     ],
     "configurationDefaults": {
@@ -125,5 +125,6 @@
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
     "typescript": "^5.3.3"
-  }
+  },
+  "icon": "images/icon.png"
 }

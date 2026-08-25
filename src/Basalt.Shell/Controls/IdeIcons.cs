@@ -225,19 +225,20 @@ public static class IdeIcons
         IconKind.Diff => "M1.5,2.5 H7 V13.5 H1.5 Z M9,2.5 H14.5 V13.5 H9 Z M3,5.5 H5.5 M3,8 H5.5 M10.5,8 H13 M10.5,10.5 H13",
         IconKind.Zoom => "M3,3 H13 V13 H3 Z M6,6 H10 V10 H6 Z",
 
-        // The volcano: a cone with a crater, and lava running down the near
-        // side. Drawn as one outline so it reads at 16 pixels, where separate
-        // strokes would blur into a smudge.
+        // Basalt: the rock the IDE is named after, which cools into hexagonal
+        // columns. The same two-column figure as basalt-small.svg, so the
+        // window, the dock and the About box cannot show different icons.
+        //
+        // Two rather than the three in the full artwork: rendered at sixteen
+        // pixels three of them merge into one smudge with no shape in it, which
+        // is only visible by rasterising and looking.
         IconKind.Application =>
-            // The cone, from the left foot up to the crater lip and down.
-            "M1.5,14 L6,4.5 L6.6,3.6 L9.4,3.6 L10,4.5 L14.5,14 Z "
-            // The crater, cut out of the top.
-          + "M6.6,3.6 L7.4,5 L8.6,5 L9.4,3.6 Z "
-            // Lava, spilling from the crater down the right flank.
-          + "M8.6,5 L9.8,7 L9,8.6 L10.2,10.6 L9.4,12 L11,14 L12.4,14 "
-          + "L10.6,11.4 L11.4,9.8 L10.2,7.8 L11,6 Z "
-            // Two sparks above the crater.
-          + "M7,1.6 L7.6,2.4 L6.8,2.8 Z M9.4,1.2 L10,2 L9.2,2.4 Z",
+            // The shorter column: its hexagonal top, then the shaft.
+            "M3.08,8.11 L5.25,8.72 L7.42,8.11 L7.42,6.89 L5.25,6.28 L3.08,6.89 Z "
+          + "M3.08,8.11 L3.08,6.89 L5.25,6.28 L7.42,6.89 L7.42,8.11 L7.42,12.50 L3.08,12.50 Z "
+            // The taller one, in front.
+          + "M8.08,5.61 L10.25,6.22 L12.42,5.61 L12.42,4.39 L10.25,3.77 L8.08,4.39 Z "
+          + "M8.08,5.61 L8.08,4.39 L10.25,3.77 L12.42,4.39 L12.42,5.61 L12.42,12.50 L8.08,12.50 Z",
 
         IconKind.Settings => "M8,5.5 A2.5,2.5 0 1 1 8,10.5 A2.5,2.5 0 0 1 8,5.5 "
                            + "M8,1 V3 M8,13 V15 M1,8 H3 M13,8 H15 "
