@@ -29,6 +29,7 @@ use them in whatever editor you already have.
 - [The IDE](#the-ide)
 - [The `.vbhtml` story](#the-vbhtml-story)
 - [Quick start](#quick-start)
+- [The packages](#the-packages)
 - [How a view becomes a class](#how-a-view-becomes-a-class)
 - [The language](#the-language)
 - [Serving views under ASP.NET Core](#serving-views-under-aspnet-core)
@@ -111,10 +112,16 @@ cd MySite && dotnet run
 That is the whole thing. `Views/Home/Index.vbhtml` is a real Razor view, it
 compiles at build time, and it is served by stock ASP.NET Core MVC.
 
-> **Not on nuget.org yet.** The packages build and are verified end to end
-> (see [Building the packages](#building-the-packages)), but they have not been
-> published. Until they are, build them locally and restore from
-> `artifacts/`.
+> **Not on nuget.org yet.** All four packages build and are verified end to end
+> — `build/pack.sh` installs the templates, creates a project through
+> `dotnet new`, and checks the views really became classes (see
+> [Building the packages](#building-the-packages)). They have not been
+> published. Until they are, build them locally and restore from `artifacts/`:
+>
+> ```bash
+> build/pack.sh
+> dotnet new install artifacts/Basalt.Templates.1.0.0.nupkg
+> ```
 
 In an existing VB.NET web project, two steps:
 
@@ -131,6 +138,87 @@ builder.Services.AddVbViews()   ' the single call that makes .vbhtml work
 the package pulls in `Basalt.Razor.Vb` — the source generator that turns every
 `.vbhtml` in the project into a compiled class. Referencing `Basalt.Razor.Vb`
 directly as well is fine and changes nothing.
+
+---
+
+## The packages
+
+Four packages, each answering a different question your project asks — at
+restore time, at build time, or at start-up. None of them depends on the IDE.
+
+| Package | What it is for | When you need it |
+|---|---|---|
+| **`Basalt.Razor.Vb.AspNetCore`** | Serves `.vbhtml` views from MVC and Razor Pages | Any web project with Razor views. **Start here** — it pulls in the generator for you |
+| **`Basalt.Razor.Vb`** | The compiler: source generator, parser, runtime | Comes in automatically with the one above. Reference it directly only for views outside a web app |
+| **`Basalt.Razor.Vb.Hosting`** | `.vbp` pages, compiled while the site runs | Only for Classic ASP-style pages |
+| **`Basalt.Templates`** | `dotnet new` templates for VB web projects | Installed once per machine, not referenced by a project |
+
+### `Basalt.Razor.Vb` — turns views into classes
+
+The engine. It carries three things that are useless apart:
+
+- the **source generator**, which runs inside the compiler;
+- the **runtime** each generated view inherits from;
+- the **MSBuild props and targets** that tell the build which files are views.
+
+At build time the props collect every `.vbhtml` in the project and hand them to
+the compiler as `AdditionalFiles`. The generator parses each one and emits a
+Visual Basic class inheriting `RazorPage(Of TModel)`, carrying a
+`[RazorCompiledItem]` attribute so ASP.NET Core's discovery finds it.
+
+`Views/Home/Index.vbhtml` becomes the type `YourSite.Views.Home.Index` inside
+your own assembly. Nothing is compiled at runtime, so there is no first-request
+delay and no Razor SDK dependency in production.
+
+### `Basalt.Razor.Vb.AspNetCore` — makes MVC find them
+
+The generator produces the classes; ASP.NET Core does not know they exist,
+because it looks for `.cshtml`. One line fixes that:
+
+```vb
+builder.Services.AddVbViews()
+```
+
+It registers the three hooks described in
+[Serving views under ASP.NET Core](#serving-views-under-aspnet-core), and it
+**depends on `Basalt.Razor.Vb`** — so referencing this one alone is enough.
+Referencing both is fine and changes nothing.
+
+This is the package to install for an MVC or Razor Pages site. A Web API with
+no views needs neither.
+
+### `Basalt.Razor.Vb.Hosting` — `.vbp` pages
+
+Only for the Classic ASP-style pages. Separate for a concrete reason: it
+carries the Visual Basic compiler, which is tens of megabytes, and a site that
+compiles its pages at build time should not ship a compiler to production to
+get them.
+
+```vb
+app.MapVbPagesFromDisk(...)   ' development: save, refresh, see the change
+app.MapVbPages()              ' production: compiled in
+```
+
+### `Basalt.Templates` — `dotnet new` templates
+
+Installed on the machine rather than referenced by a project:
+
+```bash
+dotnet new install Basalt.Templates
+```
+
+After that, `dotnet new mvc -lang VB` and its siblings work from any folder.
+See [Project templates](#project-templates). Uninstall with
+`dotnet new uninstall Basalt.Templates`.
+
+### Which do I install?
+
+| What you are building | Reference |
+|---|---|
+| MVC or Razor Pages site with `.vbhtml` views | `Basalt.Razor.Vb.AspNetCore` |
+| Web API, no views | nothing |
+| A site of `.vbp` pages | `Basalt.Razor.Vb.Hosting` |
+| Razor templates outside a web app (mail, reports) | `Basalt.Razor.Vb` |
 
 ---
 
@@ -357,6 +445,8 @@ Built in. No extension needed — the IDE runs the same parser directly.
 dotnet new install Basalt.Templates
 ```
 
+Installed once per machine, not referenced by a project. Then, from anywhere:
+
 | Command | What you get |
 |---|---|
 | `dotnet new mvc -lang VB` | MVC with `.vbhtml` views |
@@ -428,16 +518,24 @@ for `osx-arm64` as needed.
 build/pack.sh
 ```
 
-Packs the three NuGet packages into `artifacts/`, then proves they work: it
-creates a scratch project that references them **by version from a feed**, with
-no reference to this repository's sources, builds it, and checks the `.vbhtml`
+Packs all four NuGet packages into `artifacts/`, then proves they work. It
+reads the template package's own layout, installs it, creates a project through
+`dotnet new mvc -lang VB`, restores it **by version from a feed** with no
+reference to this repository's sources, builds it, and checks the `.vbhtml`
 views actually became classes in the assembly.
 
-That last check is the reason the script exists. A package can pack cleanly,
+Those last checks are the reason the script exists. A package can pack cleanly,
 restore cleanly and still produce nothing — the generator flows through a
 dependency but the MSBuild props that hand it the views do not, so the project
-builds green with no views in it and says nothing about why. Asserting only
-that the build succeeded would have missed exactly that, and did.
+builds green with no views in it and says nothing about why. A template package
+can pack cleanly and put its templates one folder deeper than `dotnet new`
+looks, installing successfully and offering nothing. Both of those happened
+here, and asserting only that the build succeeded missed both.
+
+The template check reads the package rather than asking `dotnet new` what it
+offers: templates left over from an earlier run answer that question, so the
+check passed with the layout deliberately broken. It was rewritten and then
+verified by breaking the layout again.
 
 `build/pack.sh --skip-test` packs without verifying. Publishing:
 

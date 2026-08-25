@@ -16,6 +16,13 @@
     disagree about the shape of a generated view.
   -->
   <PropertyGroup>
+    <!--
+      Nothing is published unless it says so. The default is true, which would
+      have put the IDE, the workspace layer and the language server on
+      nuget.org the first time anyone ran dotnet pack on the solution.
+    -->
+    <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
+
     <VersionPrefix>1.0.0</VersionPrefix>
     <Authors>Marco Montagna</Authors>
     <Company>Marco Montagna</Company>
@@ -30,8 +37,14 @@
       A symbol package and a source link, so a debugger can step from a
       consuming project into this code rather than stopping at a stack frame
       with no source behind it.
+
+      Defaulted rather than forced: a package with no build output has nothing
+      for a .snupkg to carry, and pack fails outright with NU5017 rather than
+      producing an empty one. Those projects set IncludeSymbols false
+      themselves — this file is imported before them, so a condition here on
+      IncludeBuildOutput would read it before it has been set.
     -->
-    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
 

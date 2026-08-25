@@ -12,11 +12,12 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
 
     <!--
-      No symbol package: this one ships as an analyzer with its build output
-      excluded, so there is nothing for a .snupkg to carry and pack fails with
-      NU5017 rather than quietly producing an empty one.
+      No symbol package: this ships as an analyzer with its build output
+      excluded, so a .snupkg would have nothing in it and pack fails with
+      NU5017 rather than producing an empty one.
     -->
     <IncludeSymbols>false</IncludeSymbols>
+
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 
     <!--

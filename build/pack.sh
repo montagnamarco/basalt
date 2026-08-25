@@ -16,16 +16,17 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out="$root/artifacts"
-packages=(
-  Basalt.Razor.Vb.Generator
-  Basalt.Razor.Vb.AspNetCore
-  Basalt.Razor.Vb.Hosting
+projects=(
+  src/Basalt.Razor.Vb.Generator
+  src/Basalt.Razor.Vb.AspNetCore
+  src/Basalt.Razor.Vb.Hosting
+  templates
 )
 
 echo "==> Packing into $out"
 rm -rf "$out"
-for project in "${packages[@]}"; do
-  dotnet pack "$root/src/$project" -c Release -o "$out" --nologo -v q
+for project in "${projects[@]}"; do
+  dotnet pack "$root/$project" -c Release -o "$out" --nologo -v q
 done
 
 ls "$out"/*.nupkg | sed 's|.*/|    |'
@@ -40,9 +41,28 @@ fi
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
+# The package's own layout, read from the package. Installing and asking
+# dotnet new what it offers measures the machine instead: templates left over
+# from an earlier run answer the question, and a package that puts its
+# templates somewhere dotnet new never looks passes anyway. That is exactly
+# what happened — the check reported success with the layout deliberately
+# broken.
+echo "==> Verifying the template package"
+template_package="$(ls "$out"/Basalt.Templates.*.nupkg | head -1)"
+templates_found="$(unzip -l "$template_package" | grep -c 'content/[^/]*/\.template\.config/template\.json' || true)"
+
+if [[ "$templates_found" -lt 5 ]]; then
+  echo "FAILED: the template package holds $templates_found templates under content/, expected 5." >&2
+  echo "        dotnet new only looks there, so it would install and offer nothing." >&2
+  exit 1
+fi
+
+# Then really installed, because a correct layout can still fail to register.
+dotnet new uninstall Basalt.Templates >/dev/null 2>&1 || true
+dotnet new install "$template_package" >/dev/null
+
 echo "==> Verifying against a project that only has the packages"
-cp -R "$root/templates/content/BasaltVbMvc" "$work/Site"
-rm -rf "$work/Site/.template.config"
+dotnet new mvc -lang VB -o "$work/Site" >/dev/null
 
 cat > "$work/Site/nuget.config" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
@@ -66,8 +86,8 @@ dotnet build "$work/Site" -c Release --nologo -v q
 # The views must be classes in the assembly. Checking only that the build
 # succeeded is what let the missing props go unnoticed: without the generator
 # the project still compiles, it just has no views.
-assembly="$work/Site/bin/Release/net10.0/BasaltVbMvc.dll"
-if ! strings -a "$assembly" | grep -q 'BasaltVbMvc.Views.Home.Index'; then
+assembly="$work/Site/bin/Release/net10.0/Site.dll"
+if ! strings -a "$assembly" | grep -q 'Site.Views.Home.Index'; then
   echo "FAILED: the project built but its .vbhtml views were not compiled." >&2
   echo "        The generator or its MSBuild props did not reach the project." >&2
   exit 1

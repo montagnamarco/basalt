@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <IsPackable>true</IsPackable>
     <PackageType>Template</PackageType>
     <PackageId>Basalt.Templates</PackageId>
     <Title>Visual Basic web templates</Title>
@@ -11,13 +12,30 @@
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
+
+    <!--
+      No symbol package: this one carries templates, not a library, and its
+      build output is excluded. A .snupkg would have nothing in it, and pack
+      fails outright with NU5017 rather than producing an empty one.
+    -->
+    <IncludeSymbols>false</IncludeSymbols>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <!-- Templates are content, so nothing here is compiled. -->
     <EnableDefaultItems>false</EnableDefaultItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" />
+    <!--
+      PackagePath rather than ContentTargetFolders alone: that setting prepends
+      the target folder to each item's own path, so files already under
+      content/ landed in content/content/. A template one folder deeper than
+      dotnet new looks for it is a package that installs cleanly and then
+      offers nothing.
+    -->
+    <Content Include="content\**\*"
+             Exclude="content\**\bin\**;content\**\obj\**"
+             Pack="true"
+             PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

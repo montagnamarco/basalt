@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <IsPackable>true</IsPackable>
     <!--
       net10.0 rather than netstandard2.0: unlike Basalt.Razor.Vb, this is not
       compiled into the source generator. It is referenced by the user's web
