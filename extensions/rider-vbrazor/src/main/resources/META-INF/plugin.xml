@@ -79,5 +79,12 @@
 
         <platform.lsp.serverSupportProvider
             implementation="com.basalt.vbrazor.VbHtmlLspServerSupportProvider" />
+
+        <!--
+            Tidies a line when the caret leaves it by any means. The protocol's
+            onTypeFormatting only fires on characters the author types, so
+            arrowing off a line or clicking elsewhere never reached the server.
+        -->
+        <editorFactoryListener implementation="com.basalt.vbrazor.VbHtmlLineFormatter"/>
     </extensions>
 </idea-plugin>

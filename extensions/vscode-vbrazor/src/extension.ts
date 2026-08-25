@@ -52,13 +52,72 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         outputChannelName: 'Razor for Visual Basic'
     };
 
-    client = new LanguageClient('vbrazor', 'Razor for Visual Basic', serverOptions, clientOptions);
+    client = new LanguageClient('vbrazor', 'Basalt', serverOptions, clientOptions);
 
     await client.start();
 
     context.subscriptions.push({ dispose: () => { void client?.stop(); } });
 
     registerCommands(context);
+    formatLinesOnLeaving(context);
+}
+
+/**
+ * Tidies a line as soon as the caret leaves it, however it leaves.
+ *
+ * The protocol cannot express this: onTypeFormatting fires on characters the
+ * author types, so Enter reaches the server and arrowing off a line or
+ * clicking elsewhere does not — which in practice is most of the times a line
+ * is finished.
+ *
+ * The edit is asked of the same server that answers everything else, so what
+ * happens here and what Format Document does cannot disagree.
+ */
+function formatLinesOnLeaving(context: vscode.ExtensionContext): void {
+    let lastLine = -1;
+
+    context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(async event => {
+        const editor = event.textEditor;
+        const document = editor.document;
+
+        if (document.languageId !== 'vbhtml' && document.languageId !== 'vbp') return;
+
+        const line = editor.selection.active.line;
+        const previous = lastLine;
+        lastLine = line;
+
+        // The first position seen formats nothing: opening a file puts the
+        // caret somewhere, and rewriting that line before the author has
+        // touched it edits a file nobody asked to change.
+        if (previous < 0 || previous === line) return;
+        if (previous >= document.lineCount) return;
+
+        const text = document.lineAt(previous);
+
+        // An empty line carries no token to correct.
+        if (text.isEmptyOrWhitespace) return;
+
+        const version = document.version;
+
+        const edits = await vscode.commands.executeCommand<vscode.TextEdit[]>(
+            'vscode.executeFormatOnTypeProvider',
+            document.uri,
+            text.range.end,
+            '\n',
+            { tabSize: 4, insertSpaces: true });
+
+        if (!edits?.length) return;
+
+        // The document may have been edited while the request was in flight,
+        // and applying an edit computed against text that no longer exists
+        // corrupts it.
+        if (document.version !== version) return;
+
+        const change = new vscode.WorkspaceEdit();
+        for (const edit of edits) change.replace(document.uri, edit.range, edit.newText);
+
+        await vscode.workspace.applyEdit(change);
+    }));
 }
 
 /** The commands the extension adds to the palette. */

@@ -1,0 +1,160 @@
+package com.basalt.vbrazor
+
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspServerState
+import org.eclipse.lsp4j.DocumentOnTypeFormattingParams
+import org.eclipse.lsp4j.FormattingOptions
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.TextEdit
+
+/**
+ * Tidies a line as soon as the caret leaves it, however it leaves.
+ *
+ * This is the half that made Visual Basic feel like Visual Basic, and the
+ * protocol cannot express it: textDocument/onTypeFormatting fires on
+ * characters the author *types*, so pressing Enter reaches the server and
+ * arrowing down, clicking elsewhere or paging away does not. A line left by
+ * any other means stayed exactly as written — which in practice is most of
+ * them, because moving off a line without typing is the ordinary way to
+ * finish it.
+ *
+ * The line is sent to the same server that answers every other request, so
+ * what happens here and what Reformat Code does cannot disagree.
+ */
+class VbHtmlLineFormatter : EditorFactoryListener {
+
+    override fun editorCreated(event: EditorFactoryEvent) {
+        val editor = event.editor
+        val project = editor.project ?: return
+        val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
+
+        if (file.extension != "vbhtml" && file.extension != "vbp") return
+
+        editor.caretModel.addCaretListener(LineWatcher(project, editor, file))
+    }
+
+    /**
+     * Watches which line the caret is on, and tidies the one it left.
+     */
+    private class LineWatcher(
+        private val project: Project,
+        private val editor: Editor,
+        private val file: VirtualFile
+    ) : CaretListener {
+
+        /**
+         * The line the caret was on when it last moved.
+         *
+         * Starts at -1 so the first position seen formats nothing: opening a
+         * file puts the caret somewhere, and rewriting that line before the
+         * author has touched it edits a file nobody asked to change.
+         */
+        private var lastLine = -1
+
+        override fun caretPositionChanged(event: CaretEvent) {
+            val line = event.newPosition.line
+            val previous = lastLine
+            lastLine = line
+
+            if (previous < 0 || previous == line) return
+
+            format(previous)
+        }
+
+        private fun format(line: Int) {
+            val document = editor.document
+
+            if (line >= document.lineCount) return
+
+            val start = document.getLineStartOffset(line)
+            val end = document.getLineEndOffset(line)
+
+            // An empty line carries no token to correct, and asking about one
+            // is a round trip for a guaranteed no-op.
+            if (document.getText(TextRange(start, end)).isBlank()) return
+
+            val server = LspServerManager.getInstance(project)
+                .getServersForProvider(VbHtmlLspServerSupportProvider::class.java)
+                .firstOrNull { it.state == LspServerState.Running }
+                ?: return
+
+            val stamp = document.modificationStamp
+
+            // Off the UI thread, then applied back on it: the request crosses
+            // a process boundary, and waiting for it inline is felt as the
+            // caret sticking on every line change.
+            ApplicationManager.getApplication().executeOnPooledThread {
+                val edits = request(server, document, line, end) ?: return@executeOnPooledThread
+
+                if (edits.isEmpty()) return@executeOnPooledThread
+
+                ApplicationManager.getApplication().invokeLater {
+                    // Checked again here: the document may have been edited
+                    // while the request was in flight, and applying an edit
+                    // computed against text that no longer exists corrupts it.
+                    if (document.modificationStamp != stamp) return@invokeLater
+
+                    WriteCommandAction.runWriteCommandAction(project, "Format Line", null, {
+                        apply(document, edits)
+                    })
+                }
+            }
+        }
+
+        private fun request(
+            server: LspServer,
+            document: Document,
+            line: Int,
+            end: Int
+        ): List<TextEdit>? = try {
+            val params = DocumentOnTypeFormattingParams(
+                server.getDocumentIdentifier(file),
+                FormattingOptions(4, true),
+                Position(line, end - document.getLineStartOffset(line)),
+
+                // The same trigger Enter sends. The server formats the line
+                // the position names and does not care which key moved the
+                // caret off it.
+                "\n")
+
+            server.sendRequestSync(LspServer.DEFAULT_REQUEST_TIMEOUT_MS) { lsp ->
+                lsp.textDocumentService.onTypeFormatting(params)
+            }
+        } catch (_: Exception) {
+            // A server restarting, or a request cancelled behind us: the line
+            // stays as written, which is what happened before this existed.
+            null
+        }
+
+        private fun apply(document: Document, edits: List<TextEdit>) {
+            // Last first, so an edit does not shift the ones before it.
+            for (edit in edits.sortedByDescending { it.range.start.line }) {
+                document.replaceString(
+                    offsetOf(document, edit.range.start),
+                    offsetOf(document, edit.range.end),
+                    edit.newText)
+            }
+        }
+
+        private fun offsetOf(document: Document, position: Position): Int {
+            if (position.line >= document.lineCount) return document.textLength
+
+            return minOf(
+                document.getLineStartOffset(position.line) + position.character,
+                document.getLineEndOffset(position.line))
+        }
+    }
+}
