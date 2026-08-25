@@ -421,29 +421,52 @@ public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
 
     protected override Task<SemanticTokensDocument> GetSemanticTokensDocument(
         ITextDocumentIdentifierParams identifier, CancellationToken ct) =>
-        Task.FromResult(new SemanticTokensDocument(RegistrationOptions.Legend));
+        // Through our own legend rather than RegistrationOptions.Legend: the
+        // library fills RegistrationOptions in from the capability exchange,
+        // and a client that asks for semantic tokens without having declared
+        // support for them leaves it null. Dereferencing it answered every
+        // colouring request with an Internal Error, and an editor that gets an
+        // error for its tokens simply shows none — which reads as highlighting
+        // being broken, with the reason buried in a JSON-RPC reply.
+        Task.FromResult(new SemanticTokensDocument(Legend));
+
+    /// <summary>
+    /// The token types this server emits, in protocol order.
+    /// </summary>
+    /// <remarks>
+    /// The index is the wire format: an editor receives a number, not a name,
+    /// so reordering this list recolours every token in every open view.
+    /// </remarks>
+    private static readonly SemanticTokensLegend Legend = new()
+    {
+        TokenTypes = new Container<SemanticTokenType>(
+            SemanticTokenType.Macro,
+            SemanticTokenType.Variable,
+            SemanticTokenType.Keyword,
+            SemanticTokenType.String,
+            SemanticTokenType.Number,
+            SemanticTokenType.Comment,
+            SemanticTokenType.Property,
+            SemanticTokenType.Operator),
+        TokenModifiers = new Container<SemanticTokenModifier>()
+    };
+
+    /// <summary>
+    /// The document a colouring request is answered into, without a client.
+    /// </summary>
+    /// <remarks>
+    /// A seam for the tests: the failure this guards against happens before
+    /// any capability exchange, which a test cannot otherwise reach.
+    /// </remarks>
+    internal Task<SemanticTokensDocument> GetTokensDocumentForTest() =>
+        GetSemanticTokensDocument(null!, CancellationToken.None);
 
     protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(
         SemanticTokensCapability capability, ClientCapabilities clientCapabilities) =>
         new()
         {
             DocumentSelector = Selector.ForVbHtml,
-            Legend = new SemanticTokensLegend
-            {
-                // The order is the protocol's index: an editor receives a
-                // number, not a name, and reordering this list recolours
-                // every token in every open view.
-                TokenTypes = new Container<SemanticTokenType>(
-                    SemanticTokenType.Macro,
-                    SemanticTokenType.Variable,
-                    SemanticTokenType.Keyword,
-                    SemanticTokenType.String,
-                    SemanticTokenType.Number,
-                    SemanticTokenType.Comment,
-                    SemanticTokenType.Property,
-                    SemanticTokenType.Operator),
-                TokenModifiers = new Container<SemanticTokenModifier>()
-            },
+            Legend = Legend,
             Full = true,
             Range = true
         };
