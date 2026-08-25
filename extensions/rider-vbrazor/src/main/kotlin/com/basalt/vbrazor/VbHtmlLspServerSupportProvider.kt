@@ -28,7 +28,7 @@ class VbHtmlLspServerSupportProvider : LspServerSupportProvider {
         // Both extensions: a .vbp page is answered by the same server, and
         // guarding on the view alone left pages with a registered file type,
         // a grammar, and no server behind them.
-        if (file.extension != "vbhtml" && file.extension != "vbp") return
+        if (file.extension !in setOf("vbhtml", "vbp", "vb")) return
 
         // Without the server the file still opens; only the language features
         // are missing, which is better than refusing to show it.
@@ -128,7 +128,16 @@ private class VbHtmlLspServerDescriptor(project: Project) :
             file: VirtualFile,
             ideCanFormatThisFileItself: Boolean,
             serverExplicitlyWantsToFormatThisFile: Boolean
-        ) = file.extension == "vbhtml" || file.extension == "vbp"
+        ) =
+            // Templates only. Rider has no formatter for them at all, so the
+            // server is the only thing that can lay them out.
+            //
+            // A .vb file is deliberately not claimed exclusively: Rider does
+            // format those, and taking Reformat Code away from it to replace
+            // it with ours would be a downgrade. What Rider does not do there
+            // is the typing behaviour, and that arrives through the caret
+            // listener without needing exclusivity.
+            file.extension == "vbhtml" || file.extension == "vbp"
     }
 
     override fun createCommandLine(): GeneralCommandLine {

@@ -38,6 +38,178 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
     public bool TriggersFormatting(char character) => false;
 
     /// <summary>
+    /// The line that closes the block opened on this one, if it opens one.
+    /// </summary>
+    /// <remarks>
+    /// Through the same Roslyn-backed completer the IDE uses for a .vb file,
+    /// asked about the code alone: pressing Enter after "If x Then" puts
+    /// "End If" below, the way Visual Basic has always done it. A template
+    /// used to answer null here, so blocks inside @Code had to be closed by
+    /// hand while the very same block in a .vb file closed itself.
+    ///
+    /// The whole template cannot be handed to the completer, because the
+    /// markup around the code is not Visual Basic and stops it parsing. What
+    /// is passed is the code of the block the line sits in, with the line
+    /// index rebased onto it.
+    /// </remarks>
+    public async Task<string?> GetBlockClosingAsync(
+        LanguageDocument document, int lineIndex, CancellationToken ct = default)
+    {
+        var text = document.Text;
+        var lineStart = StartOfLine(text, lineIndex);
+
+        if (lineStart < 0) return null;
+
+        var block = CodeAround(text, lineStart);
+
+        if (block is null) return null;
+
+        var (code, from) = block.Value;
+
+        // Which line of the block the caret is on. Anchored to the start of
+        // the line the code begins on, not to the code itself: the parser
+        // hands over the block trimmed of its leading whitespace, so on an
+        // indented line the two sit on the same line but at different offsets
+        // — and counting from the code put the caret one line out, which
+        // silently answered null for every indented block.
+        var firstLine = LineOf(text, from);
+        var codeStartsAt = StartOfLine(text, firstLine);
+
+        if (codeStartsAt >= 0 && codeStartsAt < from)
+        {
+            // The block's own first line keeps whatever indentation it had, so
+            // the line numbers line up with the template's.
+            code = text[codeStartsAt..(from + code.Length)];
+        }
+
+        // Wrapped in a module and a method, because Roslyn will not read a
+        // bare "If x Then" as a block at all: on its own it parses as an
+        // IfStatement with no MultiLineIfBlock around it, and the completer
+        // looks for the block. Measured — without the wrapper every template
+        // answered null, whatever the line said.
+        const string opening = "Module __M\nSub __S()\n";
+
+        var closing = await VisualBasicBlockCompleter
+            .GetClosingFor(opening + code, lineIndex - firstLine + 2, ct)
+            .ConfigureAwait(false);
+
+        // End Sub and End Module are the wrapper's, not the author's.
+        return closing is "End Sub" or "End Module" ? null : closing;
+    }
+
+    /// <summary>
+    /// How far a new line at this position should be indented.
+    /// </summary>
+    /// <remarks>
+    /// The depth of the enclosing blocks, counted the same way the document
+    /// formatter counts it, so a line typed and a line laid out afterwards
+    /// agree. Answering zero — which the default did — dropped every new line
+    /// inside a block back to the left margin.
+    /// </remarks>
+    public Task<int> GetIndentationAsync(
+        LanguageDocument document, int position, CancellationToken ct = default)
+    {
+        var text = document.Text;
+        var block = CodeAround(text, Math.Clamp(position, 0, text.Length));
+
+        if (block is null) return Task.FromResult(0);
+
+        var (code, from) = block.Value;
+        var upTo = Math.Clamp(position - from, 0, code.Length);
+
+        var depth = 1;
+
+        foreach (var raw in code[..upTo].Replace("\r\n", "\n").Split('\n'))
+        {
+            var line = raw.Trim();
+
+            if (line.Length == 0) continue;
+            if (Closes(line)) depth = Math.Max(1, depth - 1);
+            if (Opens(line)) depth++;
+        }
+
+        return Task.FromResult(depth * 4);
+    }
+
+    /// <summary>
+    /// The code block this position sits in, and where it starts.
+    /// </summary>
+    private static (string Code, int From)? CodeAround(string text, int position)
+    {
+        // A .vb file is Visual Basic from the first character: there is no
+        // markup to stay out of and no delimiters to find. Looking for them
+        // meant a plain file got nothing — no block closed itself and no line
+        // was tidied, which is most of what Rider does not do for VB.NET.
+        if (IsPlainVisualBasic(text)) return (text, 0);
+
+        if (LooksLikeAPage(text))
+        {
+            var open = text.LastIndexOf("<%", position, StringComparison.Ordinal);
+
+            if (open < 0) return null;
+
+            var close = text.IndexOf("%>", open, StringComparison.Ordinal);
+
+            if (close < 0 || close < position) return null;
+
+            return (text[(open + 2)..close], open + 2);
+        }
+
+        var parsed = VbHtmlParser.Parse(text);
+
+        foreach (var statement in parsed.Nodes.OfType<StatementNode>())
+        {
+            var at = text.IndexOf(statement.Code, statement.Position, StringComparison.Ordinal);
+
+            if (at < 0) continue;
+
+            // Back over the indentation in front of the first line: the parser
+            // hands the block over trimmed, so a caret at the start of an
+            // indented line sits before the code and the block was not found
+            // at all — every indented block silently closed nothing.
+            var start = at;
+
+            while (start > 0 && (text[start - 1] == ' ' || text[start - 1] == '\t')) start--;
+
+            if (position < start || position > at + statement.Code.Length) continue;
+
+            return (text[start..(at + statement.Code.Length)], start);
+        }
+
+        return null;
+    }
+
+    /// <summary>The offset a line begins at, or -1 when there is no such line.</summary>
+    private static int StartOfLine(string text, int lineIndex)
+    {
+        if (lineIndex < 0) return -1;
+
+        var at = 0;
+
+        for (var line = 0; line < lineIndex; line++)
+        {
+            var next = text.IndexOf('\n', at);
+
+            if (next < 0) return -1;
+
+            at = next + 1;
+        }
+
+        return at;
+    }
+
+    /// <summary>Which line an offset falls on.</summary>
+    private static int LineOf(string text, int offset)
+    {
+        var line = 0;
+
+        for (var i = 0; i < offset && i < text.Length; i++)
+            if (text[i] == '\n') line++;
+
+        return line;
+    }
+
+    /// <summary>
     /// Puts the @Imports directives in order, alphabetically, with System
     /// first.
     ///
@@ -298,6 +470,8 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
     /// </summary>
     private static bool IsCode(string text, int lineStart, int lineEnd)
     {
+        if (IsPlainVisualBasic(text)) return true;
+
         // A page's blocks are delimited and usually sit within one line, so
         // the line itself answers the question. Looking only at what precedes
         // the line said no for a block that opens on it, which left every
@@ -514,6 +688,25 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
     /// </remarks>
     private static bool LooksLikeAPage(string text) =>
         text.Contains("<%", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Whether this is a .vb file rather than a template.
+    /// </summary>
+    /// <remarks>
+    /// Decided from the text, like the page check above: the formatter is
+    /// handed a document's contents, and a caller that had to name the dialect
+    /// would have to get it right in every editor separately.
+    ///
+    /// A template always carries one of the two markers somewhere — a Razor
+    /// view has an @ directive or expression, a page has its delimiters — so
+    /// their absence is what identifies plain Visual Basic. A .vb file that
+    /// happens to contain an "@" inside a string is the case this gets wrong,
+    /// and it errs towards treating the file as a template, which formats
+    /// nothing rather than formatting the wrong thing.
+    /// </remarks>
+    private static bool IsPlainVisualBasic(string text) =>
+        !text.Contains("<%", StringComparison.Ordinal)
+        && !text.Contains('@');
 
     /// <summary>
     /// Lays out the Visual Basic inside a page's blocks.

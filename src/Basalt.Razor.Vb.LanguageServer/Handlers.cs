@@ -266,4 +266,21 @@ internal static class Selector
         new(
             TextDocumentFilter.ForPattern("**/*.vbhtml"),
             TextDocumentFilter.ForPattern("**/*.vbp"));
+
+    /// <summary>
+    /// The templates and plain Visual Basic, for formatting only.
+    /// </summary>
+    /// <remarks>
+    /// A .vb file is not offered completion, diagnostics or navigation here:
+    /// Rider answers those through ReSharper, and a second opinion competing
+    /// with it would be worse than none. What ReSharper does not do is the
+    /// typing behaviour Visual Basic has always had — "end if" becoming
+    /// "End If", a block closing itself, a new line landing at the right
+    /// depth — so that is all this claims.
+    /// </remarks>
+    public static TextDocumentSelector ForFormatting { get; } =
+        new(
+            TextDocumentFilter.ForPattern("**/*.vbhtml"),
+            TextDocumentFilter.ForPattern("**/*.vbp"),
+            TextDocumentFilter.ForPattern("**/*.vb"));
 }

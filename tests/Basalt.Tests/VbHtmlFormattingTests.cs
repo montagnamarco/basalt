@@ -236,4 +236,69 @@ public sealed class VbHtmlFormattingTests
 
         Assert.Equal(source, result.Text);
     }
+
+    [Theory]
+    [InlineData("if x=1 then", "End If")]
+    [InlineData("For Each i In xs", "Next")]
+    [InlineData("While ok", "End While")]
+    [InlineData("Dim x = 1", null)]
+    public async Task ClosesTheBlockALineOpens(string line, string? expected)
+    {
+        // Enter after "If x Then" puts "End If" below, the way Visual Basic
+        // has always done it. A template answered null to this: blocks inside
+        // @Code had to be closed by hand while the same block in a .vb file
+        // closed itself.
+        var document = new LanguageDocument("/t.vbhtml", $"@Code\n{line}\nEnd Code\n");
+
+        var closing = await new VbHtmlFormattingProvider().GetBlockClosingAsync(document, 1);
+
+        Assert.Equal(expected, closing);
+    }
+
+    [Fact]
+    public async Task ClosesAnIndentedBlockToo()
+    {
+        // The parser hands a block over trimmed of its leading whitespace, so
+        // a caret at the start of an indented line sits before the code and
+        // the block was not found at all. Every indented block — which is
+        // every block anyone actually writes — silently closed nothing.
+        var document = new LanguageDocument("/t.vbhtml", "@Code\n    if x=1 then\nEnd Code\n");
+
+        Assert.Equal("End If", await new VbHtmlFormattingProvider().GetBlockClosingAsync(document, 1));
+    }
+
+    [Fact]
+    public async Task IndentsByTheDepthOfTheEnclosingBlocks()
+    {
+        // Answering zero — which the default did — dropped every new line
+        // inside a block back to the left margin.
+        var text = "@Code\nIf x = 1 Then\n\nEnd If\nEnd Code\n";
+        var document = new LanguageDocument("/t.vbhtml", text);
+        var provider = new VbHtmlFormattingProvider();
+
+        Assert.Equal(4, await provider.GetIndentationAsync(document, text.IndexOf("If x", StringComparison.Ordinal)));
+        Assert.Equal(8, await provider.GetIndentationAsync(document, text.IndexOf("Then", StringComparison.Ordinal) + 4));
+    }
+
+    [Fact]
+    public async Task WorksOnAPlainVisualBasicFileToo()
+    {
+        // Rider ships Roslyn's Visual Basic assemblies but wires none of the
+        // typing behaviour to them: a block does not close itself, "end if"
+        // stays lower case, and a new line lands at the left margin. The
+        // formatter used to look for @Code or <% %> and find neither, so a
+        // .vb file got nothing at all.
+        const string source = "Module M\n    Sub S()\n        if x=1 then\n    End Sub\nEnd Module\n";
+
+        var provider = new VbHtmlFormattingProvider();
+        var document = new LanguageDocument("/t.vb", source);
+
+        Assert.Equal("End If", await provider.GetBlockClosingAsync(document, 2));
+
+        var formatted = await provider.FormatLineAsync(
+            document, source.IndexOf("then", StringComparison.Ordinal));
+
+        // Cased, spaced, and the indentation the author chose left alone.
+        Assert.Contains("        If x = 1 Then", formatted.Text);
+    }
 }

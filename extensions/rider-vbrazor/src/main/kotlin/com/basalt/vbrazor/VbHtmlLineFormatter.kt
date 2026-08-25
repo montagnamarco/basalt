@@ -41,7 +41,12 @@ class VbHtmlLineFormatter : EditorFactoryListener {
         val project = editor.project ?: return
         val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
 
-        if (file.extension != "vbhtml" && file.extension != "vbp") return
+        // Plain .vb as well. Rider ships Roslyn's Visual Basic assemblies but
+        // wires none of the typing behaviour to them: a block does not close
+        // itself, "end if" stays lower case, and a new line lands at the left
+        // margin. Completion and navigation are left to ReSharper, which does
+        // them well — only formatting is claimed here.
+        if (file.extension !in setOf("vbhtml", "vbp", "vb")) return
 
         editor.caretModel.addCaretListener(LineWatcher(project, editor, file))
     }

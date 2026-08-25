@@ -47,7 +47,7 @@ public sealed class VbHtmlFormattingHandler : DocumentFormattingHandlerBase
 
     protected override DocumentFormattingRegistrationOptions CreateRegistrationOptions(
         DocumentFormattingCapability capability, ClientCapabilities clientCapabilities) =>
-        new() { DocumentSelector = Selector.ForVbHtml };
+        new() { DocumentSelector = Selector.ForFormatting };
 }
 
 /// <summary>
@@ -86,7 +86,7 @@ public sealed class VbHtmlRangeFormattingHandler : DocumentRangeFormattingHandle
 
     protected override DocumentRangeFormattingRegistrationOptions CreateRegistrationOptions(
         DocumentRangeFormattingCapability capability, ClientCapabilities clientCapabilities) =>
-        new() { DocumentSelector = Selector.ForVbHtml };
+        new() { DocumentSelector = Selector.ForFormatting };
 }
 
 /// <summary>
@@ -113,24 +113,68 @@ public sealed class VbHtmlOnTypeFormattingHandler : DocumentOnTypeFormattingHand
         if (document is null) return null;
 
         var caret = Offsets.ToOffset(document.Text, request.Position);
+        var languageDocument = new LanguageDocument(document.Uri, document.Text);
 
         var result = await _formatter
-            .FormatLineAsync(new LanguageDocument(document.Uri, document.Text), caret, ct)
+            .FormatLineAsync(languageDocument, caret, ct)
             .ConfigureAwait(false);
+
+        // Then the block, if this line opened one. Enter after "If x Then"
+        // puts "End If" below with the body indented between them, which is
+        // what Visual Basic has always done and what a template never did:
+        // blocks inside @Code had to be closed by hand while the same block
+        // in a .vb file closed itself.
+        //
+        // Only on Enter. The trigger list also carries a space, and closing a
+        // block halfway through typing its condition would be maddening.
+        var text = request.Character == "\n"
+            ? await Closed(languageDocument with { Text = result.Text }, request.Position, ct)
+                .ConfigureAwait(false)
+            : result.Text;
 
         // Nothing to say rather than an edit that changes nothing: an editor
         // that receives an identical replacement still moves the caret and
         // still marks the file dirty.
-        return result.Text == document.Text
+        return text == document.Text
             ? null
-            : Edits.ReplacingWholeDocument(document.Text, result.Text);
+            : Edits.ReplacingWholeDocument(document.Text, text);
+    }
+
+    /// <summary>
+    /// The document with the block this line opened closed below it.
+    /// </summary>
+    private async Task<string> Closed(
+        LanguageDocument document, Position position, CancellationToken ct)
+    {
+        var closing = await _formatter
+            .GetBlockClosingAsync(document, position.Line, ct)
+            .ConfigureAwait(false);
+
+        if (string.IsNullOrEmpty(closing)) return document.Text;
+
+        var text = document.Text;
+        var lineStart = Offsets.ToOffset(text, new Position(position.Line, 0));
+        var lineEnd = text.IndexOf('\n', lineStart);
+
+        if (lineEnd < 0) lineEnd = text.Length;
+
+        var line = text[lineStart..lineEnd];
+        var indent = line[..(line.Length - line.TrimStart().Length)];
+
+        // The closing keyword lines up with what it opened, and the body sits
+        // one level in from both — the shape a reader expects, and the same
+        // one the document formatter produces.
+        var body = indent + new string(' ', 4);
+        var inserted = $"\n{body}\n{indent}{closing}";
+
+        return text[..lineEnd] + inserted + text[lineEnd..];
     }
 
     protected override DocumentOnTypeFormattingRegistrationOptions CreateRegistrationOptions(
         DocumentOnTypeFormattingCapability capability, ClientCapabilities clientCapabilities) =>
         new()
         {
-            DocumentSelector = Selector.ForVbHtml,
+            DocumentSelector = Selector.ForFormatting,
 
             // Enter is the moment the line is finished, and the protocol takes
             // one trigger plus a list of extras. A space is what completes a
