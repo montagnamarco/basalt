@@ -21,6 +21,7 @@
   ],
   "activationEvents": [
     "onLanguage:vbhtml",
+    "onLanguage:vbp",
     "onCommand:vbrazor.newProject"
   ],
   "main": "./out/extension.js",
@@ -100,7 +101,17 @@
         "title": "Razor for Visual Basic: Restart Language Server",
         "category": "Razor for Visual Basic"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[vbhtml]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true
+      },
+      "[vbp]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true
+      }
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",

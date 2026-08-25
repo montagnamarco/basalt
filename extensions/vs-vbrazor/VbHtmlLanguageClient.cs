@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.Utilities;
 namespace Basalt.Razor.Vb.VisualStudio;
 
 /// <summary>
-/// Starts the language server for .vbhtml files.
+/// Starts the language server for .vbhtml views and .vbp pages.
 ///
 /// The same server the VS Code extension and the Rider plugin use, which is
 /// what keeps the three editors agreeing about what a view means.
@@ -26,7 +26,9 @@ public sealed class VbHtmlLanguageClient : ILanguageClient
 
     public object? InitializationOptions => null;
 
-    public IEnumerable<string>? FilesToWatch => new[] { "**/*.vbhtml" };
+    // Both, because the server answers both: watching only the view meant a
+    // page edited outside the editor was never reported to the server.
+    public IEnumerable<string>? FilesToWatch => new[] { "**/*.vbhtml", "**/*.vbp" };
 
     public bool ShowNotificationOnInitializeFailed => true;
 

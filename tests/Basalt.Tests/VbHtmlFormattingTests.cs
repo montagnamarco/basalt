@@ -125,4 +125,69 @@ public sealed class VbHtmlFormattingTests
 
         Assert.Contains("\n\n", result.Text, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void SpellsTheKeywordsTheWayVisualBasicDoes()
+    {
+        // Indentation alone is half the job. What made Visual Basic feel like
+        // Visual Basic is that a line tidies itself: "end if" becomes "End If"
+        // and "x=1" becomes "x = 1". A view used to come back tidily indented
+        // and still lower case, which reads as a formatter that half works.
+        var result = VbHtmlFormattingProvider.Format(
+            "@Code\nDim x=1\nif x=1 then\nx=2\nend if\nEnd Code\n", caret: 0);
+
+        Assert.Contains("Dim x = 1", result.Text);
+        Assert.Contains("If x = 1 Then", result.Text);
+        Assert.Contains("End If", result.Text);
+    }
+
+    [Fact]
+    public void LaysOutAPageOfAngleBracketBlocks()
+    {
+        // A .vbp page is written with <% %>, which the Razor parser reads as
+        // one long run of markup: it found nothing to format and pages were
+        // left exactly as typed while views were being tidied.
+        var result = VbHtmlFormattingProvider.Format(
+            "<% Dim x=1 %>\n<% if x=1 then %>\n<p>hello</p>\n<% end if %>\n", caret: 0);
+
+        Assert.Contains("<% Dim x = 1 %>", result.Text);
+        Assert.Contains("<% If x = 1 Then %>", result.Text);
+        Assert.Contains("<% End If %>", result.Text);
+
+        // The markup between the blocks is the author's business.
+        Assert.Contains("<p>hello</p>", result.Text);
+    }
+
+    [Fact]
+    public void FormattingTwiceChangesNothingTheSecondTime()
+    {
+        // Roslyn formats inside a scratch method and hands back lines indented
+        // for it. Carried into a <% %> block that showed up as a page drifting
+        // two characters right on every save — the kind of defect a single
+        // pass looks perfectly correct.
+        foreach (var source in new[]
+                 {
+                     "@Code\nDim x=1\nif x=1 then\nx=2\nend if\nEnd Code\n",
+                     "<% Dim x=1 %>\n<% if x=1 then %>\n<p>hello</p>\n<% end if %>\n"
+                 })
+        {
+            var once = VbHtmlFormattingProvider.Format(source, caret: 0).Text;
+            var twice = VbHtmlFormattingProvider.Format(once, caret: 0).Text;
+
+            Assert.Equal(once, twice);
+        }
+    }
+
+    [Fact]
+    public void LeavesABlockThatDoesNotParseAlone()
+    {
+        // A template is unparseable most of the time it is being typed into,
+        // and a formatter that rearranges half-written code is one people turn
+        // off — taking the working half with it.
+        const string halfWritten = "@Code\nDim x = \nEnd Code\n";
+
+        var result = VbHtmlFormattingProvider.Format(halfWritten, caret: 0);
+
+        Assert.Contains("Dim x = ", result.Text);
+    }
 }

@@ -416,6 +416,32 @@ answer back. Your types, your references, your project.
 | Find references | across views and Visual Basic files alike |
 | Diagnostics | parse errors immediately, semantic errors as the compilation catches up |
 | Signature help, document symbols, folding, highlight, linked editing | |
+| Formatting | on request, on save, and while typing — see below |
+
+### Typing that behaves like Visual Basic
+
+The half that made VB feel like VB, in every editor rather than only in
+Basalt: type `end if` and it becomes `End If`; type `if x=1 then` and it
+becomes `If x = 1 Then`. Blocks inside `@Code` are indented to their depth,
+and `<% %>` blocks in a `.vbp` page are tidied on their own line.
+
+The markup is left exactly as written. Where a tag breaks and how attributes
+wrap are opinions people hold strongly, and a formatter that rearranged a
+template's HTML is one they switch off — taking the code half with it.
+
+Keyword spelling comes from Roslyn's own tables and spacing from Roslyn's
+formatter, rather than from a list kept here: the rules for which operators
+take spaces and which contextual keywords are keywords belong to the compiler.
+It is the same formatter the IDE runs, so a file does not change shape
+depending on which editor last touched it, and it leaves a half-written block
+alone — a template is unparseable most of the time it is being typed into.
+
+| Editor | How |
+|---|---|
+| Rider | Reformat Code (⌥⌘L), and while typing |
+| Visual Studio | Format Document (Ctrl+K, Ctrl+D), and while typing |
+| VS Code | on save and while typing, enabled by the extension for these files only |
+| Basalt | ⌥⌘D, on save, and while typing |
 
 Both `.vbhtml` and `.vbp` are handled.
 

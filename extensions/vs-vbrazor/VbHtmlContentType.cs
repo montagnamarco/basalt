@@ -5,7 +5,8 @@ using Microsoft.VisualStudio.Utilities;
 namespace Basalt.Razor.Vb.VisualStudio;
 
 /// <summary>
-/// Tells Visual Studio that .vbhtml files are a language of their own.
+/// Tells Visual Studio that .vbhtml views and .vbp pages are a language of
+/// their own.
 ///
 /// Without a content type the editor treats them as plain text, and no
 /// colouring, completion or diagnostics can attach to them.
@@ -27,4 +28,13 @@ public static class VbHtmlContentDefinition
     [FileExtension(".vbhtml")]
     [ContentType(ContentTypeName)]
     internal static FileExtensionToContentTypeDefinition? VbHtmlFileExtension { get; set; }
+
+    // .vbp pages, on the same content type: the server answers both from the
+    // same parser, and registering only the view left pages as plain text in
+    // Visual Studio — no colouring, no completion, and no formatting — while
+    // the other three editors handled them.
+    [Export]
+    [FileExtension(".vbp")]
+    [ContentType(ContentTypeName)]
+    internal static FileExtensionToContentTypeDefinition? VbPageFileExtension { get; set; }
 }

@@ -1,6 +1,10 @@
 using System.Text;
 using Basalt.Extensibility;
 using Basalt.Razor.Vb;
+using Basalt.Razor.Vb.Classic;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.VisualBasic;
 
 namespace Basalt.Workspace.Web;
 
@@ -226,6 +230,13 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
     /// </summary>
     internal static FormattingResult Format(string text, int caret)
     {
+        // A .vbp page is written with <% %> rather than @, so the Razor parser
+        // sees one long run of markup and finds nothing to lay out. The pages
+        // were left exactly as typed while views were being tidied, which is
+        // the sort of gap nobody reports as a bug — it just quietly feels
+        // unfinished.
+        if (LooksLikeAPage(text)) return FormatPage(text, caret);
+
         var parsed = VbHtmlParser.Parse(text);
 
         // A template that does not parse is left alone: reformatting
@@ -254,7 +265,13 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
             while (from > 0 && (text[from - 1] == ' ' || text[from - 1] == '\t')) from--;
 
             var existing = text.Substring(from, at - from + block.Code.Length);
-            var indented = Indent(block.Code);
+
+            // Casing before indentation. Roslyn is asked what each keyword is
+            // properly spelled, which is what makes "end if" become "End If"
+            // and is the half of the Visual Basic experience that indentation
+            // alone does not give: a view used to be indented tidily and
+            // stayed lower case, which reads as a formatter that half works.
+            var indented = Indent(Canonicalise(block.Code));
 
             if (string.Equals(indented, existing, StringComparison.Ordinal)) continue;
 
@@ -277,6 +294,200 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
     /// One level in after a block opens, one back out before it closes, which
     /// is what makes a nested If readable.
     /// </summary>
+    /// <summary>
+    /// Spells each Visual Basic keyword the way the language does.
+    /// </summary>
+    /// <remarks>
+    /// Through Roslyn rather than a list of keywords kept here: the list is
+    /// long, contextual keywords are not keywords everywhere, and a second
+    /// opinion about what a keyword is would disagree with the compiler
+    /// sooner or later.
+    ///
+    /// Spacing comes from Roslyn's own formatter for the same reason: it is
+    /// what turns "x=1" into "x = 1", and the rules for which operators take
+    /// spaces are the compiler's to state, not ours to copy.
+    ///
+    /// Synchronously, because the surrounding formatter is: a block is a few
+    /// lines of text and parsing it costs less than the machinery to await it
+    /// would. Failure is silent by design — a block that does not parse is
+    /// left exactly as written rather than half-corrected, since a template
+    /// being typed into is unparseable most of the time.
+    /// </remarks>
+    private static string Canonicalise(string code)
+    {
+        try
+        {
+            var cased = VisualBasicCaseCorrector
+                .CorrectKeywordsAsync(code, CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+
+            return Spaced(cased);
+        }
+        catch (Exception)
+        {
+            return code;
+        }
+    }
+
+    /// <summary>
+    /// Puts the spaces where Visual Basic puts them.
+    /// </summary>
+    /// <remarks>
+    /// The block's own lines are formatted inside a scratch method: Roslyn
+    /// formats a compilation unit, and a bare sequence of statements is not
+    /// one. Wrapping and unwrapping keeps the indentation this class applies
+    /// afterwards, which is what lines the code up with the markup around it.
+    /// </remarks>
+    private static string Spaced(string code)
+    {
+        // Closed off, so a block that opens a construct and leaves its body
+        // in the markup still parses: a page writes "if x=1 then" in one <% %>
+        // and "end if" in another, and neither half is a statement on its own.
+        // Without this the tree has errors, Spaced gives up, and the page gets
+        // its keywords cased but never its spacing.
+        var opening = "Module __M\nSub __S()\n";
+        var closing = "\n" + ClosingFor(code) + "\nEnd Sub\nEnd Module";
+
+        var wrapped = opening + code.Replace("\r\n", "\n") + closing;
+        var tree = VisualBasicSyntaxTree.ParseText(wrapped);
+
+        // A block still being typed does not parse, and formatting a broken
+        // tree moves text the author is in the middle of writing.
+        if (tree.GetDiagnostics().Any(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)) return code;
+
+        using var workspace = new AdhocWorkspace();
+        var formatted = Formatter.Format(tree.GetRoot(), workspace).ToFullString();
+
+        var start = formatted.IndexOf(")\n", StringComparison.Ordinal);
+        var end = formatted.LastIndexOf("End Sub", StringComparison.Ordinal);
+
+        if (start < 0 || end < 0 || end <= start) return code;
+
+        var inner = formatted[(formatted.IndexOf('\n', start) + 1)..end];
+
+        // The closing keyword added above is ours, not the author's.
+        var added = ClosingFor(code);
+
+        if (added.Length > 0)
+        {
+            var last = inner.LastIndexOf(added, StringComparison.Ordinal);
+            if (last >= 0) inner = inner[..last];
+        }
+
+        return inner.TrimEnd('\n', ' ');
+    }
+
+    /// <summary>
+    /// Whether this is a page of &lt;% %&gt; blocks rather than a Razor view.
+    /// </summary>
+    /// <remarks>
+    /// Decided from the text rather than the file name: the formatter is given
+    /// a document's contents, and a caller that had to name the dialect first
+    /// would have to get that right in every editor separately.
+    /// </remarks>
+    private static bool LooksLikeAPage(string text) =>
+        text.Contains("<%", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Lays out the Visual Basic inside a page's blocks.
+    /// </summary>
+    /// <remarks>
+    /// Each block on its own, with the markup between them untouched. A page's
+    /// blocks are often a line each — an opening If, some HTML, a closing End
+    /// If — so there is no run of statements to indent as a unit the way a
+    /// view's @Code block is; what is worth fixing is how each line is spelled.
+    /// </remarks>
+    private static FormattingResult FormatPage(string text, int caret)
+    {
+        var page = VbPageParser.Parse(text);
+
+        var blocks = page.Parts
+            .OfType<VbPageParser.Code>()
+            .Where(block => block.Position > 0 && block.Text.Trim().Length > 0)
+            .OrderByDescending(block => block.Position)
+            .ToList();
+
+        if (blocks.Count == 0) return FormattingResult.Unchanged(text, caret);
+
+        var written = new StringBuilder(text);
+        var changed = false;
+
+        // Later blocks first, so an edit does not shift the ones after it.
+        foreach (var block in blocks)
+        {
+            var at = text.IndexOf(block.Text, block.Position, StringComparison.Ordinal);
+
+            if (at < 0) continue;
+
+            // Trimmed of the wrapper's indentation: Roslyn formats inside a
+            // scratch method and hands back lines indented for it, which
+            // inside <% %> shows up as a block that drifts right every time
+            // the page is formatted.
+            //
+            // A page's block is also often half a statement — "if x=1 then"
+            // with its body in the markup below — so it is canonicalised on
+            // its own line and put back on one line.
+            var canonical = OneLine(block.Text, Canonicalise(block.Text));
+
+            if (string.Equals(canonical, block.Text, StringComparison.Ordinal)) continue;
+
+            written.Remove(at, block.Text.Length);
+            written.Insert(at, canonical);
+            changed = true;
+        }
+
+        return changed
+            ? new FormattingResult(written.ToString(), caret, Changed: true)
+            : FormattingResult.Unchanged(text, caret);
+    }
+
+    /// <summary>
+    /// Puts a formatted block back on the single line it came from.
+    /// </summary>
+    /// <remarks>
+    /// The leading whitespace is the scratch wrapper's, not the author's, and
+    /// carrying it into a &lt;% %&gt; block indents the page further on every
+    /// pass. Blocks written across several lines keep their line breaks; only
+    /// the indentation each line gained is removed.
+    /// </remarks>
+    /// <summary>
+    /// What would close the construct this text opens, if it opens one.
+    /// </summary>
+    private static string ClosingFor(string code)
+    {
+        var line = code.Trim();
+
+        if (StartsWithWord(line, "If") && line.EndsWith("Then", StringComparison.OrdinalIgnoreCase))
+            return "End If";
+        if (StartsWithWord(line, "For")) return "Next";
+        if (StartsWithWord(line, "While")) return "End While";
+        if (StartsWithWord(line, "Using")) return "End Using";
+        if (StartsWithWord(line, "With")) return "End With";
+        if (StartsWithWord(line, "Select")) return "End Select";
+        if (StartsWithWord(line, "Try")) return "End Try";
+
+        return "";
+    }
+
+    private static string OneLine(string original, string formatted)
+    {
+        // The block's own padding is kept rather than replaced: the parser
+        // hands over the text between the delimiters with its spaces included,
+        // so adding one of our own on each side widened every block by two
+        // characters every time the page was formatted.
+        var before = original.StartsWith(' ') || original.StartsWith('\t') ? " " : "";
+        var after = original.EndsWith(' ') || original.EndsWith('\t') ? " " : "";
+
+        var lines = formatted.Replace("\r\n", "\n").Split('\n');
+
+        var body = lines.Length == 1
+            ? lines[0].Trim()
+            : string.Join("\n", lines.Select(line => line.Trim())).Trim();
+
+        return before + body + after;
+    }
+
     private static string Indent(string code)
     {
         var lines = code.Replace("\r\n", "\n").Split('\n');

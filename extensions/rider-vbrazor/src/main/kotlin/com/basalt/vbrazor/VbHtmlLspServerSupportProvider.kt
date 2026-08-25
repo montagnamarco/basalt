@@ -7,6 +7,7 @@ import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import java.io.File
 
@@ -108,6 +109,27 @@ private class VbHtmlLspServerDescriptor(project: Project) :
      * disagree with the first.
      */
     override val lspSemanticTokensSupport: LspSemanticTokensSupport = LspSemanticTokensSupport()
+
+    /**
+     * Reformat Code, and the tidying that happens while typing.
+     *
+     * Declared here for the same reason the semantic tokens are: the platform
+     * asks the server only for what the descriptor says it wants. Without
+     * this the server answers formatting requests nobody ever sends, and
+     * Reformat Code on a .vbhtml quietly does nothing.
+     *
+     * This is the half that made Visual Basic feel like Visual Basic: "end if"
+     * becomes "End If" and "x=1" becomes "x = 1" as the line is left, from the
+     * same formatter the IDE runs — so a file does not change shape depending
+     * on which editor last touched it.
+     */
+    override val lspFormattingSupport: LspFormattingSupport = object : LspFormattingSupport() {
+        override fun shouldFormatThisFileExclusivelyByServer(
+            file: VirtualFile,
+            ideCanFormatThisFileItself: Boolean,
+            serverExplicitlyWantsToFormatThisFile: Boolean
+        ) = file.extension == "vbhtml" || file.extension == "vbp"
+    }
 
     override fun createCommandLine(): GeneralCommandLine {
         val server = VbHtmlLspServerSupportProvider.findServer()

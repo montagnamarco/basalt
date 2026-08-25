@@ -20,6 +20,9 @@ var server = await OmniSharp.Extensions.LanguageServer.Server.LanguageServer.Fro
     .WithHandler<VbHtmlDefinitionHandler>()
     .WithHandler<VbHtmlSignatureHelpHandler>()
     .WithHandler<VbHtmlHoverHandler>()
+    .WithHandler<VbHtmlFormattingHandler>()
+    .WithHandler<VbHtmlRangeFormattingHandler>()
+    .WithHandler<VbHtmlOnTypeFormattingHandler>()
     .WithHandler<VbHtmlReferencesHandler>()
 
     // Structure and folding: answerable from the parse tree alone, so they
