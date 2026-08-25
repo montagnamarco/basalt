@@ -1,0 +1,12 @@
+<%! Private Function Total(prices As Double()) As Double
+        Return prices.Sum()
+    End Function %>
+<%@ Import System.Linq %>
+<h1>Cart</h1>
+
+<% Dim prices = {9.99, 4.5} %>
+
+<p>Items: <%= prices.Length %></p>
+<p>Total: <%= Total(prices) %></p>
+
+<p>Search was: <%= Request.Query("q") %></p>

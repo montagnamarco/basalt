@@ -1,0 +1,33 @@
+{
+  "name": "vbhtml",
+  "displayName": "Razor (Visual Basic)",
+  "version": "1.0.0",
+  "contributes": {
+    "languages": [
+      {
+        "id": "vbhtml",
+        "extensions": [
+          ".vbhtml"
+        ]
+      },
+      {
+        "id": "vbp",
+        "extensions": [
+          ".vbp"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vbhtml",
+        "scopeName": "text.html.vbhtml",
+        "path": "./vbhtml.tmLanguage.json"
+      },
+      {
+        "language": "vbp",
+        "scopeName": "text.html.vbp",
+        "path": "./vbp.tmLanguage.json"
+      }
+    ]
+  }
+}

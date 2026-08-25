@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!--
+    Only the extensibility contracts: a language must be addable without
+    reaching into the IDE, and this project is the proof of that.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Basalt.Extensibility\Basalt.Extensibility.csproj" />
+  </ItemGroup>
+
+  <!-- The tests check details that are not part of the public surface. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Basalt.Tests" />
+  </ItemGroup>
+
+</Project>

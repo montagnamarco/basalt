@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <PackageId>Basalt.Razor.Vb.Hosting</PackageId>
+    <Description>Recompiles .vbp pages while the site is running.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      A package of its own, not part of the runtime one: it carries the
+      Visual Basic compiler, which is tens of megabytes, and a site that
+      compiles its pages at build time should not ship a compiler to
+      production to get them.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
+    <ProjectReference Include="..\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />
+    <ProjectReference Include="..\Basalt.Razor.Vb.AspNetCore\Basalt.Razor.Vb.AspNetCore.csproj" />
+  </ItemGroup>
+
+</Project>

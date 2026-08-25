@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>vbrazor-langserver</AssemblyName>
+    <RootNamespace>Basalt.Razor.Vb.LanguageServer</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+  </ItemGroup>
+
+  <!--
+    The tests check what each handler answers, without running a protocol
+    conversation: that would test the OmniSharp library rather than this code.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Basalt.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The parser, shared with the IDE and the generator. One implementation
+      means an editor and a build cannot disagree about what a view means.
+    -->
+    <ProjectReference Include="..\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />
+
+    <!--
+      For the same delegation Basalt uses: the view is generated to Visual
+      Basic and Roslyn is asked about the generated position. Without it the
+      server can only answer about markup, and a model's members are unknown
+      outside Basalt itself.
+
+      Basalt.Workspace does not depend on the shell, which is what makes this
+      possible at all.
+    -->
+    <ProjectReference Include="..\Basalt.Workspace\Basalt.Workspace.csproj" />
+  </ItemGroup>
+
+</Project>

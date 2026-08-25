@@ -1,0 +1,31 @@
+<Project>
+
+  <!--
+    The views are content: they are compiled by the generator, so publishing
+    them alongside would ship the templates as well as the code made from them.
+
+    Written with an Include pattern rather than a condition on %(Extension):
+    referring to item metadata in a top-level condition is not allowed, and
+    doing so fails the build of every project that references this package.
+  -->
+  <ItemGroup>
+    <Content Remove="**/*.vbhtml" />
+  </ItemGroup>
+
+  <!--
+    A project that references this package but has no views has almost
+    certainly misplaced them, and would otherwise get a silent empty build.
+  -->
+  <Target Name="WarnWhenNoVbHtmlViewsFound" BeforeTargets="CoreCompile"
+          Condition="'$(BasaltRazorVbWarnOnEmpty)' != 'false'">
+    <ItemGroup>
+      <_VbHtmlViews Include="@(AdditionalFiles)" />
+      <_VbHtmlViews Remove="@(_VbHtmlViews)" Condition="'%(Extension)' != '.vbhtml'" />
+    </ItemGroup>
+
+    <Warning Code="VBRZ001"
+             Text="Basalt.Razor.Vb is referenced but no .vbhtml views were found. Set BasaltRazorVbWarnOnEmpty to false to silence this."
+             Condition="'@(_VbHtmlViews)' == ''" />
+  </Target>
+
+</Project>

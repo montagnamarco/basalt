@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      netstandard2.0 because these sources are compiled into a source
+      generator, which Roslyn loads into the compiler process and which must
+      therefore target the framework the compiler itself runs on.
+    -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <!-- Packed by the generator project, which ships everything as one. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

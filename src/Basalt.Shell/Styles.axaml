@@ -1,0 +1,237 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Basalt.Shell.Controls"
+        xmlns:dock="using:Dock.Avalonia.Controls">
+
+  <!--
+    Stili che avvicinano i controlli Fluent all'aspetto di VS Code: angoli vivi,
+    spaziature ridotte e testo più piccolo del predefinito Fluent.
+  -->
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource EditorBackgroundBrush}" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+
+  <Style Selector="TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource EditorForegroundBrush}" />
+  </Style>
+
+  <!-- Barra dei menu in-finestra (Windows e Linux) -->
+  <Style Selector="Menu">
+    <Setter Property="Background" Value="{DynamicResource TitleBarBackgroundBrush}" />
+    <Setter Property="Padding" Value="4,2" />
+  </Style>
+
+  <Style Selector="Menu > MenuItem">
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <!-- Campi di testo -->
+  <!--
+    Every input a notch smaller than Fluent's default. Fluent sizes for a
+    finger on a tablet; an IDE is used with a pointer, and a form of
+    touch-sized fields wastes the space the work needs.
+  -->
+  <Style Selector="TextBox">
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Padding" Value="5,2" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <!-- Pulsante primario, come quello blu di VS Code -->
+  <Style Selector="Button">
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Padding" Value="10,3" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Background" Value="{DynamicResource ButtonSecondaryBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource ButtonSecondaryForegroundBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
+  </Style>
+
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#0258A8" />
+    <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
+  </Style>
+
+  <!-- Elenchi e alberi: righe compatte, selezione piena come VS Code -->
+  <Style Selector="TreeView, ListBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="TreeViewItem">
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="Padding" Value="2,0" />
+  </Style>
+
+  <Style Selector="ListBoxItem">
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="Padding" Value="6,1" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+  </Style>
+
+  <!-- Intestazioni dei pannelli laterali: maiuscoletto, come VS Code -->
+  <Style Selector="TextBlock.panelHeader">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource DescriptionForegroundBrush}" />
+    <Setter Property="Margin" Value="12,8,8,6" />
+  </Style>
+
+  <Style Selector="TabItem">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="MinHeight" Value="26" />
+  </Style>
+
+  <!--
+    Fluent gives a check box a minimum height of 32 for a control about 20
+    high, so a column of switches reads as a list of unrelated things however
+    small the gap between them is made.
+  -->
+  <Style Selector="CheckBox">
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Height" Value="18" />
+    <Setter Property="Padding" Value="6,0,0,0" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <Style Selector="RadioButton">
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Height" Value="18" />
+    <Setter Property="Padding" Value="6,0,0,0" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <!-- The boxes themselves, which Fluent draws at 20 for a 32-high control. -->
+  <Style Selector="CheckBox /template/ Border#NormalRectangle">
+    <Setter Property="Width" Value="15" />
+    <Setter Property="Height" Value="15" />
+  </Style>
+
+  <Style Selector="RadioButton /template/ Ellipse#OuterEllipse">
+    <Setter Property="Width" Value="15" />
+    <Setter Property="Height" Value="15" />
+  </Style>
+
+  <Style Selector="RadioButton /template/ Ellipse#CheckOuterEllipse">
+    <Setter Property="Width" Value="15" />
+    <Setter Property="Height" Value="15" />
+  </Style>
+
+  <Style Selector="NumericUpDown">
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <Style Selector="DataGrid">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Background" Value="{DynamicResource EditorBackgroundBrush}" />
+    <Setter Property="GridLinesVisibility" Value="Horizontal" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!--
+    The glyphs on a panel's title bar.
+
+    Dock's own are font outlines: the pin's geometry measures 1571 by 2464
+    units. Squeezed into a 12 by 12 box they come out as an unreadable smudge
+    against the button's grey background — which is what "the icons are
+    missing" means. They were drawn all along, just illegibly.
+
+    Replaced with the IDE's own, drawn on a 16 by 16 grid and readable at the
+    size a title bar allows. Seen by rendering a window with a solution open:
+    with none, no panel exists and there is nothing to look at, which is how
+    this got past a test that only ever built the welcome screen.
+  -->
+  <Style Selector="Button#PART_PinButton, Button#PART_MenuButton,
+                   Button#PART_CloseButton, Button#PART_MaximizeRestoreButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="3" />
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="20" />
+  </Style>
+
+  <!--
+    The glyph itself: Dock's are font outlines, and the pin's geometry
+    measures 1571 by 2464 units. Stretched uniformly into a 12 by 12 box they
+    are readable; left alone they fill the button as a solid smudge, which is
+    what "the icons are missing" looked like.
+
+    Set on the Path rather than replacing the button's Content: Dock assigns
+    the Content locally, and a local value beats a style — the icons never
+    arrived, while the test that measured them went on passing.
+  -->
+  <Style Selector="Button#PART_PinButton Path,
+                   Button#PART_MenuButton Path,
+                   Button#PART_CloseButton Path,
+                   Button#PART_MaximizeRestoreButton Path">
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Width" Value="11" />
+    <Setter Property="Height" Value="11" />
+  </Style>
+
+  <!--
+    The Designer / XAML switch.
+
+    Radio buttons for the behaviour, drawn as flat tabs: the native bullet
+    beside an icon and a word reads as a form to fill in, when what it does is
+    swap one view for another.
+  -->
+  <!--
+    Height explicitly, and larger than the general RadioButton rule: that one
+    caps every radio at 18 to keep forms compact, and a tab carrying an icon
+    and a word needs more than that. Without it the label was clipped along
+    its top edge, which read as the designer being broken.
+  -->
+  <Style Selector="RadioButton.viewSwitch">
+    <Setter Property="Height" Value="26" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="PART_Body"
+                Background="Transparent"
+                BorderThickness="0,0,0,2"
+                BorderBrush="Transparent"
+                Padding="10,3">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            VerticalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <Style Selector="RadioButton.viewSwitch:pointerover /template/ Border#PART_Body">
+    <Setter Property="Background" Value="{DynamicResource ListHoverBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="RadioButton.viewSwitch:checked /template/ Border#PART_Body">
+    <Setter Property="BorderBrush" Value="{DynamicResource ButtonBackgroundBrush}" />
+  </Style>
+
+</Styles>

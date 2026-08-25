@@ -1,0 +1,46 @@
+<%@ Import System.Linq %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About - BasaltVbPages</title>
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+    <header>
+        <h1>About</h1>
+        <nav><a href="/">Home</a> <a href="/about">About</a></nav>
+    </header>
+
+    <main>
+        <p>This page is <code>Pages/About.vbp</code>, and it answers on <code>/about</code>.</p>
+
+        <h2>The blocks</h2>
+        <dl>
+            <dt><code>&lt;% ... %&gt;</code></dt><dd>Statements.</dd>
+            <dt><code>&lt;%= ... %&gt;</code></dt><dd>A value, HTML-encoded.</dd>
+            <dt><code>&lt;%== ... %&gt;</code></dt><dd>A value written as it stands.</dd>
+            <dt><code>&lt;%! ... %&gt;</code></dt><dd>Methods and fields of the page.</dd>
+            <dt><code>&lt;%@ Import ... %&gt;</code></dt><dd>A namespace.</dd>
+        </dl>
+
+        <h2>Reading the request</h2>
+
+        <% Dim name = Request.Query.Item("name").ToString() %>
+        <% If name.Length > 0 Then %>
+            <p>Hello, <%= name %>.</p>
+        <% Else %>
+            <p>Add <code>?name=Ada</code> to the address to be greeted.</p>
+        <% End If %>
+
+        <p>
+            Whatever you put there is written as text, not as markup:
+            that is what <code>&lt;%= %&gt;</code> does, and it is where
+            Classic ASP left a hole.
+        </p>
+    </main>
+
+    <footer>&copy; BasaltVbPages</footer>
+</body>
+</html>

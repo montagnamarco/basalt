@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>BasaltVbRazorPages</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Basalt.Razor.Vb" Version="1.0.0" />
+    <PackageReference Include="Basalt.Razor.Vb.AspNetCore" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>

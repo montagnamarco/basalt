@@ -1,0 +1,138 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Basalt.Shell.NewSolutionDialog"
+        Title="Nuova soluzione"
+        Width="620" Height="500"
+        MinWidth="480" MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{DynamicResource EditorBackgroundBrush}">
+
+  <DockPanel>
+
+    <Border DockPanel.Dock="Top" Background="{DynamicResource SideBarBackgroundBrush}"
+            BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,0,0,1"
+            Padding="20,16">
+      <StackPanel Spacing="2">
+        <TextBlock Text="Nuova soluzione" FontSize="18" FontWeight="SemiBold" />
+        <TextBlock Text="Scegli linguaggio e tipo di progetto."
+                   Foreground="{DynamicResource DescriptionForegroundBrush}" FontSize="12" />
+      </StackPanel>
+    </Border>
+
+    <Border DockPanel.Dock="Bottom" Background="{DynamicResource SideBarBackgroundBrush}"
+            BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0"
+            Padding="20,12">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock x:Name="ErrorLabel" Grid.Column="0"
+                   Foreground="{DynamicResource ErrorForegroundBrush}"
+                   TextWrapping="Wrap" FontSize="12" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="Annulla" Click="OnCancel" Margin="0,0,8,0"
+                IsCancel="True" />
+        <Button Grid.Column="2" Content="Crea" Click="OnCreate" Classes="primary" IsDefault="True" />
+      </Grid>
+    </Border>
+
+    <ScrollViewer>
+      <StackPanel Margin="20" Spacing="16">
+
+        <StackPanel Spacing="6">
+          <TextBlock Text="Tipo di progetto" FontWeight="SemiBold" FontSize="12" />
+
+          <ListBox x:Name="TemplateList" SelectedIndex="0" Height="240"
+                   BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
+                   Background="{DynamicResource EditorBackgroundBrush}">
+            <ListBoxItem Tag="AvaloniaApp">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="Desktop Application" FontWeight="SemiBold" />
+                <TextBlock Text="Cross-platform desktop window, editable in the visual designer."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="ConsoleApp">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="Console Application" FontWeight="SemiBold" />
+                <TextBlock Text="Command-line program."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="ClassLibrary">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="Class Library" FontWeight="SemiBold" />
+                <TextBlock Text="Reusable component with no entry point."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="WebApi">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core Web API" FontWeight="SemiBold" />
+                <TextBlock Text="HTTP service returning JSON from minimal endpoints."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="WebApp">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core Web App" FontWeight="SemiBold" />
+                <TextBlock Text="Minimal web application serving a single page."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="RazorPages">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core Razor Pages" FontWeight="SemiBold" />
+                <TextBlock Text="Page-based web application. Visual Basic uses .vbhtml templates."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="Mvc">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core MVC" FontWeight="SemiBold" />
+                <TextBlock Text="Controllers and views. Visual Basic uses .vbhtml templates."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="TestProject">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="Test Project" FontWeight="SemiBold" />
+                <TextBlock Text="Unit tests with xunit, discovered and run from the test window."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="QuickBasic">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="QuickBASIC" FontWeight="SemiBold" />
+                <TextBlock Text="Classic BASIC compiled to a native executable. No .NET runtime needed."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+          </ListBox>
+        </StackPanel>
+
+        <StackPanel Spacing="6">
+          <TextBlock Text="Nome della soluzione" FontWeight="SemiBold" FontSize="12" />
+          <TextBox x:Name="NameBox" PlaceholderText="MiaApplicazione" />
+        </StackPanel>
+
+        <StackPanel Spacing="6">
+          <TextBlock Text="Percorso" FontWeight="SemiBold" FontSize="12" />
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox x:Name="PathBox" Grid.Column="0" />
+            <Button Grid.Column="1" Content="Sfoglia…" Click="OnBrowse" Margin="8,0,0,0" />
+          </Grid>
+          <TextBlock x:Name="PreviewLabel" FontSize="11"
+                     Foreground="{DynamicResource DescriptionForegroundBrush}" TextWrapping="Wrap" />
+        </StackPanel>
+
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

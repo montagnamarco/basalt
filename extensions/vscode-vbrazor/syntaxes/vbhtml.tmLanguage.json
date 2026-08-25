@@ -1,0 +1,102 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Razor (Visual Basic)",
+  "scopeName": "text.html.vbhtml",
+
+  "_comment": "Markup with Visual Basic behind an @. Written for this project because no .vbhtml grammar exists: ASP.NET Core never supported the format. Basalt reads the same file, so a change here reaches both.",
+
+  "patterns": [
+    { "include": "#razor-comment" },
+    { "include": "#escaped-at" },
+    { "include": "#directive" },
+    { "include": "#code-block" },
+    { "include": "#control-block" },
+    { "include": "#parenthesised-expression" },
+    { "include": "#expression" },
+    { "include": "text.html.basic" }
+  ],
+
+  "repository": {
+    "razor-comment": {
+      "name": "comment.block.vbhtml",
+      "begin": "@\\*",
+      "end": "\\*@"
+    },
+
+    "escaped-at": {
+      "name": "constant.character.escape.vbhtml",
+      "match": "@@"
+    },
+
+    "directive": {
+      "match": "(?i)(@)(ModelType|Imports|Inherits)\\s+([^\\r\\n]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.tag.vbhtml" },
+        "2": { "name": "keyword.control.directive.vbhtml" },
+        "3": { "name": "entity.name.type.vbhtml" }
+      }
+    },
+
+    "code-block": {
+      "begin": "(?i)(@)(Code)\\b",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.vbhtml" },
+        "2": { "name": "keyword.control.vbhtml" }
+      },
+      "end": "(?i)\\b(End\\s+Code)\\b",
+      "endCaptures": {
+        "1": { "name": "keyword.control.vbhtml" }
+      },
+      "contentName": "source.asp.vb.net",
+      "patterns": [{ "include": "source.asp.vb.net" }]
+    },
+
+    "control-block": {
+      "_comment": "The opening clause is Visual Basic; what it governs is markup, so the body falls back to the outer patterns.",
+      "begin": "(?i)(@)(If|For\\s+Each|For|While|Select\\s+Case|Using|Do)\\b",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.vbhtml" },
+        "2": { "name": "keyword.control.vbhtml" }
+      },
+      "end": "(?i)\\b(End\\s+If|End\\s+While|End\\s+Select|End\\s+Using|Next|Loop)\\b",
+      "endCaptures": {
+        "1": { "name": "keyword.control.vbhtml" }
+      },
+      "patterns": [
+        { "include": "#razor-comment" },
+        { "include": "#clause" },
+        { "include": "#expression" },
+        { "include": "text.html.basic" }
+      ]
+    },
+
+    "clause": {
+      "name": "keyword.control.vbhtml",
+      "match": "(?i)\\b(ElseIf|Else|Case\\s+Else|Case)\\b"
+    },
+
+    "parenthesised-expression": {
+      "_comment": "@(...) marks where the expression ends, so it may contain spaces and brackets.",
+      "begin": "(@)(\\()",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.vbhtml" },
+        "2": { "name": "punctuation.section.embedded.vbhtml" }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.embedded.vbhtml" }
+      },
+      "contentName": "source.asp.vb.net",
+      "patterns": [{ "include": "source.asp.vb.net" }]
+    },
+
+    "expression": {
+      "_comment": "A bare @name runs to the end of the identifier, following dots and one bracketed argument list.",
+      "match": "(@)([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*(?:\\([^)\\r\\n]*\\))?)",
+      "captures": {
+        "1": { "name": "punctuation.definition.tag.vbhtml" },
+        "2": { "name": "variable.other.vbhtml" }
+      }
+    }
+  }
+}

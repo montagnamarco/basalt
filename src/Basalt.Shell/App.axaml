@@ -1,0 +1,39 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Basalt.Shell.App"
+             Name="Basalt"
+             RequestedThemeVariant="Light">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--
+                  Preset ufficiale di Dock che allinea i pannelli ancorabili
+                  all'aspetto di VS Code chiaro.
+                -->
+                <ResourceInclude Source="avares://Dock.Avalonia.Themes.Fluent/Presets/Ide/VsCodeLight.axaml" />
+                <ResourceInclude Source="avares://Basalt.Shell/Theme.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <!-- Il DataGrid usato per l'elenco errori porta stili in un pacchetto a parte. -->
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <!--
+          Senza questo tema il TextEditor viene istanziato ma resta privo di
+          template: l'editor risulta invisibile pur essendo nell'albero.
+        -->
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+        <!--
+          Temi dei pannelli ancorabili. Il preset VsCodeLight è fornito dal
+          pacchetto stesso e allinea i pannelli all'aspetto di VS Code chiaro.
+        -->
+        <StyleInclude Source="avares://Dock.Avalonia.Themes.Fluent/DockFluentTheme.axaml" />
+
+        <!-- I nostri stili vengono per ultimi, così prevalgono su Fluent. -->
+        <StyleInclude Source="avares://Basalt.Shell/Styles.axaml" />
+    </Application.Styles>
+</Application>

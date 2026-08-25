@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      net10.0 rather than netstandard2.0: unlike Basalt.Razor.Vb, this is not
+      compiled into the source generator. It is referenced by the user's web
+      application and runs beside ASP.NET Core.
+    -->
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <PackageId>Basalt.Razor.Vb.AspNetCore</PackageId>
+    <Description>Serves .vbhtml views from ASP.NET Core MVC and Razor Pages.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- For ViewNaming: the path-to-class rules must not be duplicated here,
+         or a view would be generated under one name and looked up by another. -->
+    <ProjectReference Include="..\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,38 @@
+<%! Private ReadOnly Features As String() = {
+        "A file is a page: no controller, no model.",
+        "The file's path is its URL.",
+        "Values are HTML-encoded unless you ask otherwise.",
+        "Saved changes show on the next request, while developing."
+    } %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BasaltVbPages</title>
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+    <header>
+        <h1>BasaltVbPages</h1>
+        <nav><a href="/">Home</a> <a href="/about">About</a></nav>
+    </header>
+
+    <main>
+        <p>A site of <code>.vbp</code> pages, written in Visual Basic.</p>
+
+        <ul>
+        <% For Each feature In Features %>
+            <li><%= feature %></li>
+        <% Next %>
+        </ul>
+
+        <p>
+            Edit <code>Pages/Index.vbp</code>, save, and reload this page.
+            Nothing to rebuild.
+        </p>
+    </main>
+
+    <footer>&copy; BasaltVbPages</footer>
+</body>
+</html>

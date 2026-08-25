@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Basalt.Core/Basalt.Core.csproj" />
+    <Project Path="src/Basalt.Designer/Basalt.Designer.csproj" />
+    <Project Path="src/Basalt.Extensibility/Basalt.Extensibility.csproj" />
+    <Project Path="src/Basalt.Razor.Vb.AspNetCore/Basalt.Razor.Vb.AspNetCore.csproj" />
+    <Project Path="src/Basalt.Razor.Vb.Generator/Basalt.Razor.Vb.Generator.csproj" />
+    <Project Path="src/Basalt.Razor.Vb.Hosting/Basalt.Razor.Vb.Hosting.csproj" />
+    <Project Path="src/Basalt.Razor.Vb/Basalt.Razor.Vb.csproj" />
+    <Project Path="src/Basalt.Razor.Vb.LanguageServer/Basalt.Razor.Vb.LanguageServer.csproj" />
+    <Project Path="src/Basalt.QuickBasic/Basalt.QuickBasic.csproj" />
+    <Project Path="src/Basalt.Shell/Basalt.Shell.csproj" />
+    <Project Path="src/Basalt.Workspace/Basalt.Workspace.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Basalt.Sample.Mvc/Basalt.Sample.Mvc.vbproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Basalt.Tests/Basalt.Tests.csproj" />
+    <Project Path="tests/Basalt.Web.Tests/Basalt.Web.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,310 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Text;
+using Basalt.Core.Model;
+using Basalt.Core.Services;
+
+namespace Basalt.Workspace;
+
+/// <summary>
+/// Formatting backed by Roslyn, the same engine Visual Studio uses.
+///
+/// Roslyn picks the Visual Basic rules from the project that owns the
+/// document, so there is no per-language code here. Formatting runs against a
+/// throwaway in-memory project rather than the open solution, which keeps it
+/// usable for files that belong to no project.
+/// </summary>
+public sealed class RoslynFormattingService : IFormattingService, IDisposable
+{
+    private readonly AdhocWorkspace _workspace = new();
+
+    public Task<FormattingResult> FormatAsync(
+        string text, SourceLanguage language, CancellationToken ct = default) =>
+        RunAsync(text, language, span: null, ct);
+
+    public Task<FormattingResult> FormatRangeAsync(
+        string text, SourceLanguage language, int start, int length, CancellationToken ct = default)
+    {
+        // A span reaching past the end of the text would throw inside Roslyn;
+        // clamping keeps a stale caret position from breaking formatting.
+        var from = Math.Clamp(start, 0, text.Length);
+        var to = Math.Clamp(start + length, from, text.Length);
+
+        return RunAsync(text, language, new TextSpan(from, to - from), ct);
+    }
+
+    private async Task<FormattingResult> RunAsync(
+        string text, SourceLanguage language, TextSpan? span, CancellationToken ct)
+    {
+        if (language is not SourceLanguage.VisualBasic)
+            return new FormattingResult(text, Changed: false);
+
+        var document = CreateScratchDocument(text, language);
+
+        var formatted = span is { } range
+            ? await Formatter.FormatAsync(document, range, cancellationToken: ct).ConfigureAwait(false)
+            : await Formatter.FormatAsync(document, cancellationToken: ct).ConfigureAwait(false);
+
+        var result = (await formatted.GetTextAsync(ct).ConfigureAwait(false)).ToString();
+
+        return new FormattingResult(result, !string.Equals(result, text, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Builds a one-document project just to run the formatter.
+    ///
+    /// Each call uses a fresh project id: reusing one would accumulate
+    /// documents in the workspace for the lifetime of the IDE.
+    /// </summary>
+    private Document CreateScratchDocument(string text, SourceLanguage language)
+    {
+        var extension = language == SourceLanguage.VisualBasic ? "vb" : "cs";
+
+        var project = _workspace.AddProject(
+            $"Formatting_{Guid.NewGuid():N}", language.ToRoslynName());
+
+        return _workspace.AddDocument(project.Id, $"Document.{extension}", SourceText.From(text));
+    }
+
+    /// <summary>
+    /// Characters that end a block and therefore change their own line's
+    /// indentation the moment they are typed.
+    ///
+    /// VB closes blocks with keywords rather than punctuation, so there is no
+    /// single character to react to; VB lines are re-indented when the caret
+    /// leaves the line instead.
+    /// </summary>
+    /// <summary>
+    /// Nothing triggers formatting on a single character any more.
+    ///
+    /// This existed for C#, where "}" and ";" close something and give the
+    /// formatter a moment to act. Visual Basic has no such character: a line
+    /// is re-indented when the caret leaves it, which is handled elsewhere.
+    /// Kept rather than removed because callers ask, and the honest answer is
+    /// "no" rather than a missing method.
+    /// </summary>
+    public bool TriggersFormatting(char character, SourceLanguage language) => false;
+
+    public async Task<TypingFormattingResult> FormatLineAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct = default)
+    {
+        if (language is not SourceLanguage.VisualBasic)
+            return new TypingFormattingResult(text, caret, Changed: false);
+
+        var source = SourceText.From(text);
+        var position = Math.Clamp(caret, 0, text.Length);
+        var line = source.Lines.GetLineFromPosition(position);
+
+        // An empty line carries no token to anchor indentation to.
+        if (line.Span.IsEmpty) return new TypingFormattingResult(text, caret, Changed: false);
+
+        var document = CreateScratchDocument(text, language);
+        var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+        if (root is null) return new TypingFormattingResult(text, caret, Changed: false);
+
+        var span = ContextSpan(source, root, line, position);
+
+        var formatted = await Formatter.FormatAsync(document, span, cancellationToken: ct)
+            .ConfigureAwait(false);
+
+        // Only the changes landing on the caret's own line are applied: a wider
+        // span lets the formatter see the enclosing block, but re-indenting the
+        // lines above would undo formatting the author chose deliberately.
+        var changes = (await formatted.GetTextChangesAsync(document, ct).ConfigureAwait(false))
+            .Where(change => change.Span.Start >= line.Start
+                          && change.Span.End <= line.EndIncludingLineBreak)
+            .ToList();
+
+        if (changes.Count == 0) return new TypingFormattingResult(text, caret, Changed: false);
+
+        var updated = source.WithChanges(changes);
+
+        return new TypingFormattingResult(
+            updated.ToString(),
+            ShiftCaret(caret, changes),
+            Changed: true);
+    }
+
+    /// <summary>
+    /// Span the formatter needs in order to know how far to indent the line.
+    ///
+    /// It reaches back to the construct that opens the enclosing block: given
+    /// only the line itself, the formatter has no opening brace or block
+    /// keyword to measure against and leaves the indentation alone.
+    /// </summary>
+    private static TextSpan ContextSpan(
+        SourceText source, SyntaxNode root, TextLine line, int position)
+    {
+        var anchor = Math.Clamp(position, 0, Math.Max(0, root.FullSpan.End - 1));
+        var node = root.FindToken(anchor).Parent;
+
+        // Climb until the node starts on an earlier line: that is the one that
+        // establishes the indentation level for the current line.
+        while (node?.Parent is not null && node.Span.Start >= line.Start) node = node.Parent;
+
+        var start = Math.Min(node?.Span.Start ?? line.Start, line.Start);
+        return TextSpan.FromBounds(start, Math.Min(line.End, source.Length));
+    }
+
+    /// <summary>Moves the caret by however much the text before it grew or shrank.</summary>
+    private static int ShiftCaret(int caret, IReadOnlyList<TextChange> changes)
+    {
+        var delta = changes
+            .Where(change => change.Span.End <= caret)
+            .Sum(change => (change.NewText?.Length ?? 0) - change.Span.Length);
+
+        return Math.Max(0, caret + delta);
+    }
+
+    /// <summary>
+    /// Characters that finish a word.
+    ///
+    /// Visual Basic corrects casing the moment a word is complete, so the
+    /// trigger is the separator typed after it rather than any one keyword
+    /// character. C# is case-sensitive and has no such behaviour.
+    /// </summary>
+    public bool CompletesWord(char character, SourceLanguage language) =>
+        language == SourceLanguage.VisualBasic &&
+        (char.IsWhiteSpace(character) || character is '(' or ')' or ',' or '.' or '=' or ':');
+
+    public async Task<TypingFormattingResult> ApplyTypingConventionsAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct = default)
+    {
+        if (language != SourceLanguage.VisualBasic)
+            return new TypingFormattingResult(text, caret, Changed: false);
+
+        var source = SourceText.From(text);
+        var position = Math.Clamp(caret, 0, text.Length);
+        var line = source.Lines.GetLineFromPosition(position);
+
+        if (line.Span.IsEmpty) return new TypingFormattingResult(text, caret, Changed: false);
+
+        // A half-typed string literal makes the line unparseable, and
+        // reformatting it would mangle the text the user is still writing.
+        if (HasUnterminatedString(source, line, position))
+            return new TypingFormattingResult(text, caret, Changed: false);
+
+        // Casing first: it rewrites tokens in place and never moves anything,
+        // so the spans the formatter works with afterwards stay valid.
+        var casing = await VisualBasicCaseCorrector
+            .GetKeywordChangesAsync(text, line.Span, ct)
+            .ConfigureAwait(false);
+
+        var cased = casing.Count == 0 ? source : source.WithChanges(casing);
+
+        // Then spacing and indentation for the same line.
+        var document = CreateScratchDocument(cased.ToString(), language);
+        var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+        if (root is null)
+            return Result(text, cased.ToString(), caret, casing);
+
+        var span = ContextSpan(cased, root, cased.Lines.GetLineFromPosition(position), position);
+
+        var formatted = await Formatter.FormatAsync(document, span, cancellationToken: ct)
+            .ConfigureAwait(false);
+
+        var currentLine = cased.Lines.GetLineFromPosition(position);
+        var layout = (await formatted.GetTextChangesAsync(document, ct).ConfigureAwait(false))
+            .Where(change => change.Span.Start >= currentLine.Start
+                          && change.Span.End <= currentLine.EndIncludingLineBreak)
+            // Trailing whitespace at the caret is where the user is about to
+            // type the next word. The formatter sees it as redundant and strips
+            // it, which would run that word into the previous one.
+            .Where(change => !TouchesCaretWhitespace(change, cased, position))
+            .ToList();
+
+        if (layout.Count == 0) return Result(text, cased.ToString(), caret, casing);
+
+        var final = cased.WithChanges(layout);
+
+        return new TypingFormattingResult(
+            final.ToString(),
+            ShiftCaret(caret, layout),
+            Changed: true);
+    }
+
+    /// <summary>
+    /// Whether the caret sits inside a string literal that has no closing quote
+    /// yet, counting quotes from the start of the line.
+    ///
+    /// Visual Basic escapes a quote by doubling it, so a pair inside a literal
+    /// leaves the parity unchanged and needs no special handling here.
+    /// </summary>
+    private static bool HasUnterminatedString(SourceText source, TextLine line, int caret)
+    {
+        var upToCaret = source.ToString(TextSpan.FromBounds(line.Start, caret));
+
+        var quotes = upToCaret.Count(c => c == '"');
+        return quotes % 2 != 0;
+    }
+
+    /// <summary>
+    /// Whether a change would remove the whitespace the caret is sitting in.
+    ///
+    /// While typing, the space after a word is not redundant: it separates that
+    /// word from the one being typed next.
+    /// </summary>
+    private static bool TouchesCaretWhitespace(TextChange change, SourceText text, int caret)
+    {
+        if (change.Span.End < caret) return false;
+        if (change.Span.Start > caret) return false;
+
+        // Only deletions and shrinking replacements can swallow the separator.
+        var newLength = change.NewText?.Length ?? 0;
+        if (newLength >= change.Span.Length) return false;
+
+        var removed = text.ToString(change.Span);
+        return removed.Length > 0 && removed.All(char.IsWhiteSpace);
+    }
+
+    private static TypingFormattingResult Result(
+        string original, string updated, int caret, IReadOnlyList<TextChange> changes) =>
+        new(updated, caret, Changed: changes.Count > 0
+                                    && !string.Equals(original, updated, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Works out the indentation of a line that is still empty.
+    ///
+    /// An empty line has no token for the formatter to anchor to, so a
+    /// placeholder declaration is inserted, the text formatted, and the
+    /// resulting column measured. "Dim" is used because it is valid in every
+    /// position a new line can appear: class body, method body, or any nested
+    /// block.
+    /// </summary>
+    public async Task<int> GetIndentationAsync(
+        string text, SourceLanguage language, int position, CancellationToken ct = default)
+    {
+        if (language is not SourceLanguage.VisualBasic) return 0;
+
+        const string probe = "zzIndentProbe";
+        var placeholder = language == SourceLanguage.VisualBasic ? $"Dim {probe}" : $"var {probe};";
+
+        var at = Math.Clamp(position, 0, text.Length);
+
+        // The placeholder must sit on a line of its own. Appended to an
+        // existing line it would be measured at that line's end column, which
+        // is not where a new line would start.
+        var needsNewLine = at > 0 && text[at - 1] != '\n';
+        var prefix = needsNewLine ? "\n" : "";
+
+        var candidate = text[..at] + prefix + placeholder + text[at..];
+
+        var document = CreateScratchDocument(candidate, language);
+        var formatted = await Formatter.FormatAsync(document, cancellationToken: ct)
+            .ConfigureAwait(false);
+
+        var result = (await formatted.GetTextAsync(ct).ConfigureAwait(false)).ToString();
+
+        var index = result.IndexOf(probe, StringComparison.Ordinal);
+        if (index < 0) return 0;
+
+        // Column of the placeholder's own line start, minus the keyword before it.
+        var lineStart = result.LastIndexOf('\n', Math.Max(0, index - 1)) + 1;
+        var column = index - lineStart;
+
+        var keywordLength = language == SourceLanguage.VisualBasic ? "Dim ".Length : "var ".Length;
+        return Math.Max(0, column - keywordLength);
+    }
+
+    public void Dispose() => _workspace.Dispose();
+}

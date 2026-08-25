@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Menu: File -->
+  <data name="Menu_File" xml:space="preserve"><value>File</value></data>
+  <data name="Menu_File_NewSolution" xml:space="preserve"><value>New Solution…</value></data>
+  <data name="Menu_File_OpenSolution" xml:space="preserve"><value>Open Solution or Project…</value></data>
+  <data name="Menu_File_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Menu_File_Exit" xml:space="preserve"><value>Exit</value></data>
+
+  <!-- Menu: Edit -->
+  <data name="Menu_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Menu_Edit_Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Menu_Edit_Redo" xml:space="preserve"><value>Redo</value></data>
+  <data name="Menu_Edit_FormatDocument" xml:space="preserve"><value>Format Document</value></data>
+  <data name="Menu_Edit_Find" xml:space="preserve"><value>Find in Files…</value></data>
+  <data name="Menu_Edit_Replace" xml:space="preserve"><value>Replace in Files…</value></data>
+
+  <!-- Menu: View -->
+  <data name="Menu_View" xml:space="preserve"><value>View</value></data>
+  <data name="Menu_Navigate" xml:space="preserve"><value>Navigate</value></data>
+  <data name="Menu_Navigate_GoToDefinition" xml:space="preserve"><value>Go to Definition</value></data>
+  <data name="Menu_Navigate_FindReferences" xml:space="preserve"><value>Find All References</value></data>
+  <data name="Menu_Navigate_GoToFileSymbol" xml:space="preserve"><value>Go to Symbol in File…</value></data>
+  <data name="Menu_Navigate_GoToSolutionSymbol" xml:space="preserve"><value>Go to Symbol in Solution…</value></data>
+  <data name="Menu_Navigate_Back" xml:space="preserve"><value>Navigate Backward</value></data>
+  <data name="Menu_Navigate_Forward" xml:space="preserve"><value>Navigate Forward</value></data>
+  <data name="Menu_View_ResetLayout" xml:space="preserve"><value>Reset Layout</value></data>
+  <data name="Menu_View_NewTerminal" xml:space="preserve"><value>New Terminal</value></data>
+
+  <!-- Menu: Project -->
+  <data name="Menu_Project" xml:space="preserve"><value>Project</value></data>
+  <data name="Menu_Project_AddWindow" xml:space="preserve"><value>Add Window…</value></data>
+  <data name="Menu_Project_Properties" xml:space="preserve"><value>Properties…</value></data>
+
+  <!-- Menu: Build and Run -->
+  <data name="Menu_Build" xml:space="preserve"><value>Build</value></data>
+  <data name="Menu_Build_BuildSolution" xml:space="preserve"><value>Build Solution</value></data>
+  <data name="Menu_Run" xml:space="preserve"><value>Run</value></data>
+  <data name="Menu_Run_Start" xml:space="preserve"><value>Start</value></data>
+  <data name="Menu_Run_Stop" xml:space="preserve"><value>Stop</value></data>
+
+  <!-- Tool panels -->
+  <data name="Tool_SolutionExplorer" xml:space="preserve"><value>Solution Explorer</value></data>
+  <data name="Tool_Toolbox" xml:space="preserve"><value>Toolbox</value></data>
+  <data name="Tool_Properties" xml:space="preserve"><value>Properties</value></data>
+  <data name="Tool_Problems" xml:space="preserve"><value>Problems</value></data>
+  <data name="Tool_Output" xml:space="preserve"><value>Output</value></data>
+  <data name="Tool_Search" xml:space="preserve"><value>Search</value></data>
+  <data name="Tool_Outline" xml:space="preserve"><value>Outline</value></data>
+  <data name="Menu_Debug" xml:space="preserve"><value>Debug</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Menu_Git" xml:space="preserve"><value>Git</value></data>
+  <data name="Menu_Git_Commit" xml:space="preserve"><value>Commit…</value></data>
+  <data name="Menu_Git_Fetch" xml:space="preserve"><value>Fetch</value></data>
+  <data name="Menu_Git_Pull" xml:space="preserve"><value>Pull</value></data>
+  <data name="Menu_Git_Push" xml:space="preserve"><value>Push</value></data>
+  <data name="Menu_Git_Branches" xml:space="preserve"><value>Branches</value></data>
+  <data name="Menu_Git_History" xml:space="preserve"><value>History</value></data>
+  <data name="Menu_Window" xml:space="preserve"><value>Window</value></data>
+  <data name="Menu_Window_Minimize" xml:space="preserve"><value>Minimise</value></data>
+  <data name="Menu_Window_Zoom" xml:space="preserve"><value>Zoom</value></data>
+  <data name="Menu_Help" xml:space="preserve"><value>Help</value></data>
+  <data name="Menu_Help_About" xml:space="preserve"><value>About Basalt</value></data>
+  <data name="Settings_Editor" xml:space="preserve"><value>Editor</value></data>
+  <data name="Settings_Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Settings_Terminal" xml:space="preserve"><value>Terminal</value></data>
+  <data name="Settings_Debug" xml:space="preserve"><value>Debugging</value></data>
+  <data name="Settings_Saved" xml:space="preserve"><value>Saved.</value></data>
+  <data name="Settings_SaveFailed" xml:space="preserve"><value>Settings could not be saved.</value></data>
+  <data name="Dialog_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Menu_Tools" xml:space="preserve"><value>Tools</value></data>
+  <data name="Menu_Tools_Settings" xml:space="preserve"><value>Settings…</value></data>
+  <data name="Menu_Debug_Start" xml:space="preserve"><value>Start Debugging</value></data>
+  <data name="Menu_Debug_Stop" xml:space="preserve"><value>Stop Debugging</value></data>
+  <data name="Menu_Debug_StepOver" xml:space="preserve"><value>Step Over</value></data>
+  <data name="Menu_Debug_StepInto" xml:space="preserve"><value>Step Into</value></data>
+  <data name="Menu_Debug_StepOut" xml:space="preserve"><value>Step Out</value></data>
+  <data name="Menu_Debug_ToggleBreakpoint" xml:space="preserve"><value>Toggle Breakpoint</value></data>
+  <data name="Menu_Run_WithoutDebugging" xml:space="preserve"><value>Start Without Debugging</value></data>
+  <data name="Tool_CallStack" xml:space="preserve"><value>Call Stack</value></data>
+  <data name="Tool_Tests" xml:space="preserve"><value>Tests</value></data>
+  <data name="Tool_Assistant" xml:space="preserve"><value>Assistant</value></data>
+  <data name="Settings_Assistant" xml:space="preserve"><value>Assistant</value></data>
+  <data name="Menu_Tools_Assistant" xml:space="preserve"><value>Assistant</value></data>
+  <data name="Menu_Test" xml:space="preserve"><value>Test</value></data>
+  <data name="Menu_Test_RunAll" xml:space="preserve"><value>Run All Tests</value></data>
+  <data name="Tool_Variables" xml:space="preserve"><value>Variables</value></data>
+  <data name="Tool_Breakpoints" xml:space="preserve"><value>Breakpoints</value></data>
+  <data name="Tool_GitChanges" xml:space="preserve"><value>Changes</value></data>
+  <data name="Tool_GitBranches" xml:space="preserve"><value>Branches</value></data>
+  <data name="Tool_GitDiff" xml:space="preserve"><value>Diff</value></data>
+  <data name="Tool_GitHistory" xml:space="preserve"><value>History</value></data>
+  <data name="Tool_References" xml:space="preserve"><value>References</value></data>
+  <data name="Tool_Terminal" xml:space="preserve"><value>Terminal</value></data>
+  <data name="Tool_TerminalNumbered" xml:space="preserve"><value>Terminal {0}</value>
+    <comment>{0} is the terminal number, starting from 2</comment></data>
+
+  <!-- Problems panel columns -->
+  <data name="Column_Severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="Column_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Column_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Column_File" xml:space="preserve"><value>File</value></data>
+  <data name="Column_Line" xml:space="preserve"><value>Line</value></data>
+
+  <!-- Welcome screen -->
+  <data name="Welcome_Subtitle" xml:space="preserve"><value>C# and VB.NET, with an Avalonia designer</value></data>
+
+  <!-- New Solution dialog -->
+  <data name="NewSolution_Title" xml:space="preserve"><value>New Solution</value></data>
+  <data name="NewSolution_Subtitle" xml:space="preserve"><value>Choose a language and a project type.</value></data>
+  <data name="NewSolution_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="NewSolution_ProjectType" xml:space="preserve"><value>Project type</value></data>
+  <data name="NewSolution_Name" xml:space="preserve"><value>Solution name</value></data>
+  <data name="NewSolution_Location" xml:space="preserve"><value>Location</value></data>
+  <data name="NewSolution_Browse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="NewSolution_Preview" xml:space="preserve"><value>Will be created in {0}</value>
+    <comment>{0} is the full target directory path</comment></data>
+
+  <!-- Project templates -->
+  <data name="Template_AvaloniaApp" xml:space="preserve"><value>Desktop Application</value></data>
+  <data name="Template_AvaloniaApp_Description" xml:space="preserve"><value>Cross-platform desktop window, editable in the visual designer.</value></data>
+  <data name="Template_ConsoleApp" xml:space="preserve"><value>Console Application</value></data>
+  <data name="Template_ConsoleApp_Description" xml:space="preserve"><value>Command-line program.</value></data>
+  <data name="Template_ClassLibrary" xml:space="preserve"><value>Class Library</value></data>
+  <data name="Template_ClassLibrary_Description" xml:space="preserve"><value>Reusable component with no entry point.</value></data>
+  <data name="Template_WebApi" xml:space="preserve"><value>ASP.NET Core Web API</value></data>
+  <data name="Template_WebApi_Description" xml:space="preserve"><value>HTTP service with JSON endpoints.</value></data>
+  <data name="Template_RazorPages" xml:space="preserve"><value>ASP.NET Core Razor Pages</value></data>
+  <data name="Template_RazorPages_Description" xml:space="preserve"><value>Web application with page-based Razor views.</value></data>
+  <data name="Template_Mvc" xml:space="preserve"><value>ASP.NET Core MVC</value></data>
+  <data name="Template_Mvc_Description" xml:space="preserve"><value>Web application with controllers and views.</value></data>
+  <data name="Template_Blazor" xml:space="preserve"><value>Blazor Web App</value></data>
+  <data name="Template_Blazor_Description" xml:space="preserve"><value>Interactive web UI built from Razor components.</value></data>
+
+  <!-- New Window dialog -->
+  <data name="NewWindow_Title" xml:space="preserve"><value>Add Window</value></data>
+  <data name="NewWindow_Subtitle" xml:space="preserve"><value>New Avalonia window</value></data>
+  <data name="NewWindow_ClassName" xml:space="preserve"><value>Class name</value></data>
+  <data name="NewWindow_Namespace" xml:space="preserve"><value>Namespace (optional)</value></data>
+  <data name="NewWindow_WindowTitle" xml:space="preserve"><value>Window title (optional)</value></data>
+  <data name="NewWindow_CodeBehindVb" xml:space="preserve"><value>Code-behind: Visual Basic (.vb)</value></data>
+  <data name="NewWindow_CodeBehindCs" xml:space="preserve"><value>Code-behind: C# (.cs)</value></data>
+
+  <!-- Shared buttons -->
+  <data name="Button_Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Button_Cancel" xml:space="preserve"><value>Cancel</value></data>
+
+  <!-- Terminal -->
+  <data name="Terminal_InputHint" xml:space="preserve"><value>Type a command and press Enter</value></data>
+
+  <!-- Status messages -->
+  <data name="Status_Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Status_Opening" xml:space="preserve"><value>Opening {0}…</value></data>
+  <data name="Status_Opened" xml:space="preserve"><value>Opened {0}</value></data>
+  <data name="Status_OpenFailed" xml:space="preserve"><value>Could not open: {0}</value></data>
+  <data name="Status_Saved" xml:space="preserve"><value>Saved {0}</value></data>
+  <data name="Status_Building" xml:space="preserve"><value>Building…</value></data>
+  <data name="Status_BuildSucceeded" xml:space="preserve"><value>Build succeeded in {0:F1}s ({1} warnings)</value></data>
+  <data name="Status_BuildFailed" xml:space="preserve"><value>Build failed: {0} errors, {1} warnings</value></data>
+  <data name="Status_BuildInterrupted" xml:space="preserve"><value>Build interrupted: {0}</value></data>
+  <data name="Status_Running" xml:space="preserve"><value>Application running</value></data>
+  <data name="Status_Stopped" xml:space="preserve"><value>Application stopped</value></data>
+  <data name="Status_StartFailed" xml:space="preserve"><value>Could not start: {0}</value></data>
+  <data name="Status_NoProject" xml:space="preserve"><value>No project to build.</value></data>
+  <data name="Status_OpenProjectFirst" xml:space="preserve"><value>Open a project first.</value></data>
+  <data name="Status_WindowCreated" xml:space="preserve"><value>Created {0}</value></data>
+  <data name="Status_Formatted" xml:space="preserve"><value>Formatted {0}</value></data>
+  <data name="Status_PropertiesSaved" xml:space="preserve"><value>Project properties saved</value></data>
+  <data name="Status_NoDefinition" xml:space="preserve"><value>No definition found</value></data>
+  <data name="Status_NoSymbolHere" xml:space="preserve"><value>No symbol at the caret</value></data>
+  <data name="Status_ApplicationExited" xml:space="preserve"><value>[application exited with code {0}]</value></data>
+
+  <!-- Validation messages -->
+  <data name="Validation_NameRequired" xml:space="preserve"><value>Enter a name.</value></data>
+  <data name="Validation_InvalidIdentifier" xml:space="preserve"><value>The name must start with a letter and contain only letters, digits or underscores.</value></data>
+  <data name="Validation_LocationRequired" xml:space="preserve"><value>Enter a destination folder.</value></data>
+
+  <!-- Property inspector -->
+  <data name="Status_NothingToDescribe" xml:space="preserve"><value>There is nothing to describe here.</value></data>
+  <data name="Status_NothingToSave" xml:space="preserve"><value>Nothing needed saving.</value></data>
+  <data name="Status_SavedMany" xml:space="preserve"><value>Saved {0} files.</value></data>
+  <data name="Status_Cleaned" xml:space="preserve"><value>Build output removed.</value></data>
+  <data name="Status_CleanFailed" xml:space="preserve"><value>The clean did not finish.</value></data>
+  <data name="Menu_Git_Initialize" xml:space="preserve"><value>Start a Repository Here…</value></data>
+  <data name="Status_RepositoryCreated" xml:space="preserve"><value>Repository started, with a first commit.</value></data>
+  <data name="Status_RepositoryExists" xml:space="preserve"><value>This folder is already a repository.</value></data>
+  <data name="Menu_File_RecentSolutions" xml:space="preserve"><value>Recent Solutions</value></data>
+  <data name="Menu_File_RecentFiles" xml:space="preserve"><value>Recent Files</value></data>
+  <data name="Menu_File_RecentNone" xml:space="preserve"><value>Nothing yet</value></data>
+  <data name="Menu_File_RecentClear" xml:space="preserve"><value>Clear the list</value></data>
+  <data name="Welcome_Recent" xml:space="preserve"><value>Pick up where you left off</value></data>
+  <data name="Explorer_ShowAllFiles" xml:space="preserve"><value>Show all files</value></data>
+  <data name="Explorer_CollapseAll" xml:space="preserve"><value>Collapse all</value></data>
+  <data name="Explorer_SyncWithEditor" xml:space="preserve"><value>Sync with the open document</value></data>
+  <data name="Explorer_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Problems_Empty" xml:space="preserve"><value>No errors or warnings.</value></data>
+  <data name="Output_Empty" xml:space="preserve"><value>Nothing has been built yet.</value></data>
+  <data name="Properties_NoSelection" xml:space="preserve"><value>No element selected.</value></data>
+  <data name="Properties_UnknownType" xml:space="preserve"><value>Unrecognized control type.</value></data>
+  <data name="Properties_Category_Common" xml:space="preserve"><value>Common</value></data>
+  <data name="Toolbox_Hint" xml:space="preserve"><value>Drag onto the design surface, or double-click to add.</value></data>
+  <data name="Designer_CannotRender" xml:space="preserve"><value>This file cannot be shown in the designer. Open the XAML tab to see it.</value></data>
+  <data name="Properties_Search" xml:space="preserve"><value>Search properties</value></data>
+  <data name="Properties_NoMatch" xml:space="preserve"><value>No property matches the search.</value></data>
+  <data name="Properties_Reset" xml:space="preserve"><value>Reset to the default value</value></data>
+  <data name="Properties_SortByCategory" xml:space="preserve"><value>Group by category</value></data>
+  <data name="Properties_Category_Layout" xml:space="preserve"><value>Layout</value></data>
+  <data name="Properties_Category_Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Properties_Category_Behavior" xml:space="preserve"><value>Behavior</value></data>
+
+  <!-- File pickers -->
+  <data name="Picker_OpenSolution" xml:space="preserve"><value>Open solution or project</value></data>
+  <data name="Picker_SolutionFilter" xml:space="preserve"><value>.NET solutions and projects</value></data>
+  <data name="Picker_ChooseFolder" xml:space="preserve"><value>Choose the folder for the new solution</value></data>
+</root>

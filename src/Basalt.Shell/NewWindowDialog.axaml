@@ -1,0 +1,37 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Basalt.Shell.NewWindowDialog"
+        Title="Aggiungi finestra"
+        Width="460" Height="280"
+        MinWidth="380" MinHeight="240"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+  <StackPanel Margin="20" Spacing="10">
+
+    <TextBlock Text="Nuova finestra Avalonia" FontSize="16" FontWeight="SemiBold" />
+    <TextBlock x:Name="LanguageLabel" Opacity="0.7" FontSize="12" />
+
+    <StackPanel Spacing="3">
+      <TextBlock Text="Nome della classe" FontSize="12" />
+      <TextBox x:Name="NameBox" PlaceholderText="NuovaFinestra" />
+    </StackPanel>
+
+    <StackPanel Spacing="3">
+      <TextBlock Text="Spazio dei nomi (facoltativo)" FontSize="12" />
+      <TextBox x:Name="NamespaceBox" PlaceholderText="MiaApp.Views" />
+    </StackPanel>
+
+    <StackPanel Spacing="3">
+      <TextBlock Text="Titolo della finestra (facoltativo)" FontSize="12" />
+      <TextBox x:Name="TitleBox" PlaceholderText="Titolo mostrato nella barra" />
+    </StackPanel>
+
+    <TextBlock x:Name="ErrorLabel" Foreground="OrangeRed" TextWrapping="Wrap" FontSize="12" />
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <Button Content="Annulla" Click="OnCancel" IsCancel="True" />
+      <Button Content="Crea" Click="OnCreate" IsDefault="True" />
+    </StackPanel>
+  </StackPanel>
+</Window>

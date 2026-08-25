@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>BasaltVbPages</RootNamespace>
+    <Nullable>enable</Nullable>
+
+    <!--
+      The generator turns a page's full path into the URL it answers on, and
+      only MSBuild knows where the project sits.
+    -->
+    <BasaltProjectDir>$(MSBuildProjectDirectory)</BasaltProjectDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="BasaltProjectDir" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Compiles every .vbp into a class, at build time. -->
+    <PackageReference Include="Basalt.Razor.Vb" Version="1.0.0" />
+    <PackageReference Include="Basalt.Razor.Vb.AspNetCore" Version="1.0.0" />
+
+    <!--
+      And recompiles them while the site runs, so saving a page is enough to
+      see the change. It carries the Visual Basic compiler, so it is asked
+      for only in development.
+    -->
+    <PackageReference Include="Basalt.Razor.Vb.Hosting" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>

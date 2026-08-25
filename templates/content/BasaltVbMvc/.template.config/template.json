@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Basalt",
+  "classifications": [
+    "Web",
+    "MVC",
+    "Visual Basic"
+  ],
+  "identity": "Basalt.VisualBasic.Mvc",
+  "name": "ASP.NET Core Web App (Model-View-Controller)",
+  "shortName": "mvc",
+  "tags": {
+    "language": "VB",
+    "type": "project"
+  },
+  "sourceName": "BasaltVbMvc",
+  "preferNameDirectory": true,
+  "symbols": {
+    "Framework": {
+      "type": "parameter",
+      "description": "The target framework for the project.",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "net10.0",
+          "description": "Target net10.0"
+        },
+        {
+          "choice": "net9.0",
+          "description": "Target net9.0"
+        }
+      ],
+      "replaces": "net10.0",
+      "defaultValue": "net10.0"
+    },
+    "Port": {
+      "type": "parameter",
+      "datatype": "integer",
+      "description": "Port number to use for the HTTP endpoint.",
+      "defaultValue": "5000",
+      "replaces": "5000"
+    }
+  },
+  "groupIdentity": "Microsoft.Web.Mvc",
+  "precedence": "10000",
+  "primaryOutputs": [
+    {
+      "path": "BasaltVbMvc.vbproj"
+    },
+    {
+      "condition": "(HostIdentifier != \"dotnetcli\" && HostIdentifier != \"dotnetcli-preview\")",
+      "path": "Views/Home/Index.vbhtml"
+    }
+  ],
+  "defaultName": "VbMvc"
+}

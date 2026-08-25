@@ -1,0 +1,162 @@
+using Basalt.Extensibility;
+using Basalt.Razor.Vb;
+
+namespace Basalt.Workspace.Web;
+
+/// <summary>
+/// Completion inside a .vbhtml, for both halves of the file.
+///
+/// The markup half is HTML and gets HTML completion. The code half is Visual
+/// Basic, and rather than guessing at what a model holds, the template is
+/// generated to Visual Basic, the caret is carried across through the source
+/// map, and the language service is asked. What comes back is what the
+/// compiler knows, which is the only thing worth offering.
+///
+/// This is how Razor itself works: it does not reimplement completion, it
+/// generates a document, delegates, and maps the answers back.
+/// </summary>
+public sealed class VbHtmlCompletionProvider : ICompletionProvider
+{
+    /// <summary>
+    /// Which runtime the view is generated for while answering questions.
+    /// </summary>
+    /// <remarks>
+    /// The generated code must compile against what the user's project
+    /// actually references. Generating the standalone shape for an ASP.NET
+    /// Core project makes the view inherit a base class that project has
+    /// never heard of, and Roslyn then resolves nothing at all — every
+    /// question comes back empty, which reads as "nothing to suggest here"
+    /// rather than as a fault.
+    ///
+    /// Standalone by default, because it is the shape that compiles against
+    /// the least: a project without ASP.NET Core cannot resolve RazorPage,
+    /// and defaulting the other way broke every caller that had none. Whoever
+    /// knows the project is a web one says so.
+    /// </remarks>
+    public ViewHost Host { get; init; } = ViewHost.Standalone;
+
+    private readonly HtmlCompletionProvider _html = new();
+    private readonly Func<string, int, CancellationToken, Task<IReadOnlyList<CompletionItem>>>? _ask;
+
+    private readonly Func<string, int, CancellationToken, Task<SignatureHelp?>>?
+        _askSignature;
+
+    /// <summary>
+    /// Without a language service to ask, only the markup half answers.
+    ///
+    /// That is the honest fallback: a template edited outside a solution has
+    /// no compilation behind it, and offering invented members would be
+    /// worse than offering none.
+    /// </summary>
+    public VbHtmlCompletionProvider() { }
+
+    /// <summary>
+    /// With a way to ask the Visual Basic language service about a position
+    /// in generated code.
+    /// </summary>
+    public VbHtmlCompletionProvider(
+        Func<string, int, CancellationToken, Task<IReadOnlyList<CompletionItem>>> ask) =>
+        _ask = ask;
+
+    /// <summary>
+    /// With a way to ask about calls as well as about names.
+    /// </summary>
+    public VbHtmlCompletionProvider(
+        Func<string, int, CancellationToken, Task<IReadOnlyList<CompletionItem>>> ask,
+        Func<string, int, CancellationToken, Task<SignatureHelp?>> askSignature)
+    {
+        _ask = ask;
+        _askSignature = askSignature;
+    }
+
+    public async Task<IReadOnlyList<CompletionItem>> GetCompletionsAsync(
+        LanguageDocument document, int position, CancellationToken ct = default)
+    {
+        // Which half the caret is in decides who answers.
+        if (!IsInCode(document.Text, position))
+            return await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
+
+        if (_ask is null) return [];
+
+        var parsed = VbHtmlParser.Parse(document.Text);
+
+        var generated = VbHtmlCodeWriter.WriteWithMap(
+            parsed, "GeneratedView", "Basalt.Generated", document.FilePath,
+            Host);
+
+        if (CaretInGenerated(document.Text, generated, position) is not { } at)
+            return [];
+
+        return await _ask(generated.Code, at, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// What the call the caret is inside expects.
+    ///
+    /// Delegated like everything else: the runtime's own helpers used to be
+    /// described by a table of three entries, which said nothing about the
+    /// model's methods — the ones a template actually calls.
+    /// </summary>
+    public async Task<SignatureHelp?> GetSignatureHelpAsync(
+        LanguageDocument document, int position, CancellationToken ct = default)
+    {
+        // Nothing in the markup half takes arguments.
+        if (_askSignature is null || !IsInCode(document.Text, position)) return null;
+
+        var generated = VbHtmlCodeWriter.WriteWithMap(
+            VbHtmlParser.Parse(document.Text),
+            "GeneratedView", "Basalt.Generated", document.FilePath, Host);
+
+        if (CaretInGenerated(document.Text, generated, position) is not { } at)
+            return null;
+
+        return await _askSignature(generated.Code, at, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Where a template position lands in the generated code.
+    ///
+    /// The line-accurate mapping first, because span arithmetic drifts: a
+    /// mapped region and the code written from it are different lengths, so
+    /// an offset measured from the region start means a different place at
+    /// the other end. Roslyn forgives that for completion, which looks around
+    /// the caret, but signature help answered nothing at all.
+    ///
+    /// The span mapping stays as the fallback for a caret the line mapping
+    /// cannot place — past the end of everything mapped, typically, where
+    /// Inclusive and then Inferred still find something useful.
+    /// </summary>
+    private static int? CaretInGenerated(
+        string template, VbHtmlCodeWriter.Generated generated, int position) =>
+        VbHtmlCodeRegions.CaretInGenerated(
+            template, generated.Code, generated.Map, position)
+        ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inclusive)
+        ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inferred)
+        ?? NearestBefore(generated.Map, position);
+
+    /// <summary>
+    /// The end of the last mapping that starts before a position.
+    ///
+    /// Where the caret has run past everything mapped — typing a dot after
+    /// the final expression — the language service still has to be asked
+    /// about somewhere, and the end of that expression is the right place.
+    /// </summary>
+    private static int? NearestBefore(SourceMap map, int position)
+    {
+        SourceMapping? best = null;
+
+        foreach (var mapping in map.Mappings)
+            if (mapping.Original.Start <= position) best = mapping;
+
+        return best is { } found ? found.Generated.Start + found.Generated.Length : null;
+    }
+
+    /// <summary>
+    /// Whether a position sits in the Visual Basic half of the template.
+    ///
+    /// The decision itself lives in the shared library, so the standalone
+    /// language server answers it the same way.
+    /// </summary>
+    internal static bool IsInCode(string text, int position) =>
+        VbHtmlCodeRegions.IsInCode(text, position);
+}

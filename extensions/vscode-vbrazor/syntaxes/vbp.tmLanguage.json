@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Basalt Pages (Visual Basic)",
+  "scopeName": "text.html.vbp",
+  "patterns": [
+    { "include": "#directive" },
+    { "include": "#members" },
+    { "include": "#raw-expression" },
+    { "include": "#expression" },
+    { "include": "#code" },
+    { "include": "text.html.basic" }
+  ],
+  "repository": {
+    "directive": {
+      "name": "meta.directive.vbp",
+      "begin": "<%@",
+      "end": "%>",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.vbp" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.vbp" } },
+      "patterns": [
+        {
+          "match": "\\b(Import|Namespace)\\b",
+          "name": "keyword.control.directive.vbp"
+        },
+        { "include": "source.asp.vb.net" }
+      ]
+    },
+
+    "members": {
+      "name": "meta.embedded.block.vbp",
+      "begin": "<%!",
+      "end": "%>",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.vbp" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.vbp" } },
+      "patterns": [{ "include": "source.asp.vb.net" }]
+    },
+
+    "raw-expression": {
+      "name": "meta.embedded.expression.raw.vbp",
+      "begin": "<%==",
+      "end": "%>",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.vbp" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.vbp" } },
+      "patterns": [{ "include": "source.asp.vb.net" }]
+    },
+
+    "expression": {
+      "name": "meta.embedded.expression.vbp",
+      "begin": "<%=",
+      "end": "%>",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.vbp" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.vbp" } },
+      "patterns": [{ "include": "source.asp.vb.net" }]
+    },
+
+    "code": {
+      "name": "meta.embedded.block.vbp",
+      "begin": "<%",
+      "end": "%>",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.vbp" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.vbp" } },
+      "patterns": [{ "include": "source.asp.vb.net" }]
+    }
+  }
+}

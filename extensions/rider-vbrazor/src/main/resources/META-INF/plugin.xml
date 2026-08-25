@@ -1,0 +1,83 @@
+<idea-plugin>
+    <id>com.basalt.vbrazor</id>
+    <name>Basalt VB.NET Razor</name>
+    <vendor url="https://github.com/basalt-ide">Basalt</vendor>
+
+    <description><![CDATA[
+        <p><b>Razor views written in Visual Basic, in Rider.</b></p>
+
+        <p>ASP.NET Core's Razor compiler emits C# and only C#. A
+        <code>.vbhtml</code> file — a real file type in ASP.NET before Core —
+        has no compiler and no editor support anywhere. This plugin is the
+        editing half.</p>
+
+        <h3>What it does</h3>
+        <ul>
+          <li><b>Completion</b>, including the members of the view's model:
+              type <code>@Model.</code> and the properties of the class are
+              offered, read from the project as the compiler sees it.</li>
+          <li><b>Diagnostics</b> as you type, reported against the view and
+              the line you wrote — not against generated code.</li>
+          <li><b>Hover</b> with the signature and documentation of whatever is
+              under the pointer.</li>
+          <li><b>Go to definition</b>, from a name in the markup through to
+              the <code>.vb</code> file that declares it.</li>
+          <li><b>Signature help</b>, folding and the document outline.</li>
+        </ul>
+
+        <h3>What it needs</h3>
+        <p>A solution or a <code>.vbproj</code> in the folder you open: the
+        plugin's language server compiles the project to answer about types,
+        and finds one on its own. Opening a single loose file gives markup
+        support and nothing more — honestly so, rather than guessing.</p>
+
+        <h3>Compiling the views</h3>
+        <p>Editing is not building. Add the
+        <code>Basalt.Razor.Vb</code> NuGet package to the project and every
+        <code>.vbhtml</code> is compiled by a source generator into Visual
+        Basic, alongside the rest of the code. Errors then arrive at build
+        time, at the right line of the view.</p>
+
+        <p>The same server backs the Visual Studio and VS Code extensions, so
+        a view reads the same in all three.</p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <h3>1.0.0</h3>
+        <ul>
+          <li>First release: completion, diagnostics, hover, go to definition
+              and signature help for <code>.vbhtml</code> views.</li>
+        </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <!--
+        For the TextMate grammar below. Optional: without the bundled TextMate
+        plugin the views still work — the server colours the Visual Basic —
+        and only the HTML around it stays plain.
+    -->
+    <depends optional="true" config-file="textmate.xml">org.jetbrains.plugins.textmate</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!--
+            No fieldName: a Kotlin object cannot declare an INSTANCE of its
+            own — the compiler already generates one, and a second is a build
+            error — so the platform instantiates it from the class name.
+        -->
+        <fileType
+            name="Razor (Visual Basic)"
+            implementationClass="com.basalt.vbrazor.VbHtmlFileType"
+            language="vbhtml"
+            extensions="vbhtml" />
+
+        <fileType
+            name="Basalt Page (Visual Basic)"
+            implementationClass="com.basalt.vbrazor.VbPageFileType"
+            language="vbp"
+            extensions="vbp" />
+
+        <platform.lsp.serverSupportProvider
+            implementation="com.basalt.vbrazor.VbHtmlLspServerSupportProvider" />
+    </extensions>
+</idea-plugin>

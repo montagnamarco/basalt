@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Basalt.Shell.ProjectPropertiesDialog"
+        Title="Project Properties"
+        Width="820" Height="620"
+        MinWidth="600" MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource EditorBackgroundBrush}">
+
+  <DockPanel>
+
+    <Border DockPanel.Dock="Top" Background="{DynamicResource SideBarBackgroundBrush}"
+            BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,0,0,1"
+            Padding="20,14">
+      <StackPanel Spacing="2">
+        <TextBlock x:Name="ProjectNameLabel" FontSize="17" FontWeight="SemiBold" />
+        <TextBlock x:Name="ProjectPathLabel" FontSize="11"
+                   Foreground="{DynamicResource DescriptionForegroundBrush}"
+                   TextTrimming="CharacterEllipsis" />
+      </StackPanel>
+    </Border>
+
+    <Border DockPanel.Dock="Bottom" Background="{DynamicResource SideBarBackgroundBrush}"
+            BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0"
+            Padding="20,12">
+      <Grid ColumnDefinitions="*,Auto,Auto">
+        <TextBlock x:Name="StatusLabel" Grid.Column="0" VerticalAlignment="Center"
+                   FontSize="12" Foreground="{DynamicResource DescriptionForegroundBrush}" />
+        <Button Grid.Column="1" Content="Cancel" Click="OnCancel" Margin="0,0,8,0"
+                IsCancel="True" />
+        <Button Grid.Column="2" Content="Save" Click="OnSave" Classes="primary" IsDefault="True" />
+      </Grid>
+    </Border>
+
+    <!-- Categories on the left, the selected page on the right. -->
+    <Grid ColumnDefinitions="190,1,*">
+
+      <ListBox x:Name="CategoryList" Grid.Column="0" SelectedIndex="0"
+               Background="{DynamicResource SideBarBackgroundBrush}"
+               SelectionChanged="OnCategoryChanged">
+        <ListBoxItem Content="Application" />
+        <ListBoxItem Content="Compile" />
+        <ListBoxItem Content="Advanced" />
+        <ListBoxItem Content="References" />
+        <ListBoxItem Content="Debug" />
+        <ListBoxItem Content="Publish" />
+      </ListBox>
+
+      <Border Grid.Column="1" Background="{DynamicResource PanelBorderBrush}" />
+
+      <ScrollViewer Grid.Column="2">
+        <ContentControl x:Name="PageHost" Margin="20" />
+      </ScrollViewer>
+    </Grid>
+  </DockPanel>
+</Window>

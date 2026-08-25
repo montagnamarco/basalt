@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Basalt.Sample.Mvc</RootNamespace>
+    <!-- The sample is built and exercised by the tests, never shipped. -->
+    <IsPackable>false</IsPackable>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.AspNetCore\Basalt.Razor.Vb.AspNetCore.csproj" />
+    <!-- The generator compiles the .vbhtml views into ordinary classes. -->
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.Generator\Basalt.Razor.Vb.Generator.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--
+      The package's own .props supply this; the sample uses a ProjectReference
+      instead, so it declares it here. Without it a Razor Page is registered
+      under /Hello.cshtml rather than /Pages/Hello.cshtml and never routes.
+    -->
+    <BasaltProjectDir>$(MSBuildProjectDirectory)</BasaltProjectDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="BasaltProjectDir" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Views\**\*.vbhtml" />
+    <AdditionalFiles Include="Pages\**\*.vbhtml" />
+  </ItemGroup>
+
+</Project>

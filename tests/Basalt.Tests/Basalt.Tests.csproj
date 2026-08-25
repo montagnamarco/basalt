@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!--
+      I test creano progetti temporanei e li compilano: le chiamate senza
+      CancellationToken sono deliberate, il ciclo di vita è quello del test.
+    -->
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Basalt.Workspace\Basalt.Workspace.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Core\Basalt.Core.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Designer\Basalt.Designer.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Shell\Basalt.Shell.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.Hosting\Basalt.Razor.Vb.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Extensibility\Basalt.Extensibility.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.QuickBasic\Basalt.QuickBasic.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.LanguageServer\Basalt.Razor.Vb.LanguageServer.csproj" />
+  </ItemGroup>
+
+</Project>

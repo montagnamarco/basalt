@@ -1,0 +1,41 @@
+# Build output
+bin/
+obj/
+[Rr]elease/
+[Dd]ebug/
+
+# Test and coverage results
+TestResults/
+*.coverage
+*.trx
+
+# NuGet
+*.nupkg
+packages/
+
+# Editor and OS
+.vs/
+.vscode/
+.idea/
+.DS_Store
+*.user
+*.suo
+
+# Node, for the VS Code extension
+node_modules/
+extensions/vscode-vbrazor/out/
+*.vsix
+
+# Gradle, for the Rider plugin
+extensions/rider-vbrazor/build/
+extensions/rider-vbrazor/.gradle/
+
+# The plugin sandbox: a whole Rider install's worth of generated files, and it
+# carried a published copy of the language server past the rule below
+extensions/rider-vbrazor/.intellijPlatform/
+
+# The language server published into the extensions
+extensions/*/server/
+
+# Working plans: notes to ourselves, not documentation for anyone else
+docs/planning/

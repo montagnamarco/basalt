@@ -1,0 +1,18 @@
+<idea-plugin>
+    <!--
+        The HTML half, from the same grammar the VS Code extension uses.
+
+        The server colours the Visual Basic, because it is the parser that
+        compiles the view and knows where the code begins. It deliberately
+        says nothing about the markup: a grammar already colours HTML, and a
+        second opinion on the same question is free to disagree with the
+        first.
+
+        Rider has no grammar of its own for .vbhtml, which is why the markup
+        showed black while the code was coloured. Bundling the one VS Code
+        already uses keeps both editors reading a view the same way.
+    -->
+    <extensions defaultExtensionNs="org.jetbrains.plugins.textmate">
+        <bundleProvider implementation="com.basalt.vbrazor.VbHtmlBundleProvider" />
+    </extensions>
+</idea-plugin>

@@ -1,0 +1,118 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      Source generators run inside the compiler, which targets netstandard2.0.
+      The assembly ships as an analyzer, so its own build output is not
+      referenced by consuming projects.
+    -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+
+    <!--
+      One package carries everything a project needs to use Razor with Visual
+      Basic: the generator that compiles the views, the runtime they inherit
+      from, and the targets file that hands the .vbhtml files to the generator.
+      Three separate packages would each be useless on their own.
+    -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Basalt.Razor.Vb</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Basalt</Authors>
+    <Description>
+      Razor views written in Visual Basic, for ASP.NET Core. Compiles .vbhtml
+      templates through a source generator, filling a gap ASP.NET Core leaves:
+      its own Razor compiler emits C# only.
+    </Description>
+    <PackageTags>vb;visualbasic;razor;vbhtml;aspnetcore;sourcegenerator</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <DevelopmentDependency>false</DevelopmentDependency>
+
+    <!--
+      The Roslyn reference is the compiler's own and must not follow the
+      package to consumers, but suppressing every dependency leaves lib/ with
+      no matching dependency group, which NU5128 reports. Declaring the
+      framework keeps both true.
+    -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The analyzer goes where Roslyn looks for generators; the runtime goes
+      where the compiler looks for references. "analyzers/dotnet/vb" rather
+      than "cs": the generator is registered for both languages, and this is
+      the path a Visual Basic project reads.
+    -->
+    <None Include="$(OutputPath)$(AssemblyName).dll"
+          Pack="true" PackagePath="analyzers/dotnet/vb"
+          Visible="false" />
+
+    <None Include="$(OutputPath)$(AssemblyName).dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
+
+    <None Include="../Basalt.Razor.Vb/bin/$(Configuration)/netstandard2.0/Basalt.Razor.Vb.dll"
+          Pack="true" PackagePath="lib/netstandard2.0"
+          Visible="false" />
+
+    <None Include="build/Basalt.Razor.Vb.targets"
+          Pack="true" PackagePath="build"
+          Visible="false" />
+
+    <None Include="build/Basalt.Razor.Vb.props"
+          Pack="true" PackagePath="build"
+          Visible="false" />
+
+    <None Include="README.md" Pack="true" PackagePath="/" Visible="false" />
+  </ItemGroup>
+
+  <!--
+    The runtime must exist before it can be packed, and a project reference
+    would make the analyzer depend on it at load time.
+  -->
+  <Target Name="BuildRuntimeBeforePack" BeforeTargets="Pack">
+    <MSBuild Projects="../Basalt.Razor.Vb/Basalt.Razor.Vb.csproj"
+             Properties="Configuration=$(Configuration)" />
+  </Target>
+
+  <ItemGroup>
+    <!--
+      Microsoft.CodeAnalysis.Common, not the C# or VB packages: the generator
+      is language-agnostic and only needs the shared generator interfaces.
+      PrivateAssets keeps the compiler's own Roslyn from being shadowed.
+    -->
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.8.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Rule metadata the analyzer release-tracking check reads. -->
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The parser is compiled into the generator rather than referenced: an
+      analyzer is loaded in isolation and cannot resolve project references at
+      run time.
+    -->
+    <Compile Include="../Basalt.Razor.Vb/IsExternalInit.cs" Link="Parser/IsExternalInit.cs" />
+    <Compile Include="../Basalt.Razor.Vb/Portable.cs" Link="Parser/Portable.cs" />
+    <Compile Include="../Basalt.Razor.Vb/ViewNaming.cs" Link="Parser/ViewNaming.cs" />
+    <Compile Include="../Basalt.Razor.Vb/VbHtmlSyntax.cs" Link="Parser/VbHtmlSyntax.cs" />
+    <Compile Include="../Basalt.Razor.Vb/VbHtmlParser.cs" Link="Parser/VbHtmlParser.cs" />
+    <Compile Include="../Basalt.Razor.Vb/SourceMapping.cs" Link="Parser/SourceMapping.cs" />
+    <Compile Include="../Basalt.Razor.Vb/ViewImports.cs" Link="Parser/ViewImports.cs" />
+    <Compile Include="../Basalt.Razor.Vb/ViewHost.cs" Link="Parser/ViewHost.cs" />
+    <Compile Include="../Basalt.Razor.Vb/Classic/VbPageParser.cs" Link="Parser/VbPageParser.cs" />
+    <Compile Include="../Basalt.Razor.Vb/Classic/VbPageWriter.cs" Link="Parser/VbPageWriter.cs" />
+    <Compile Include="../Basalt.Razor.Vb/TagHelperRewriting.cs" Link="Parser/TagHelperRewriting.cs" />
+    <Compile Include="../Basalt.Razor.Vb/VbHtmlCodeWriter.cs" Link="Parser/VbHtmlCodeWriter.cs" />
+  </ItemGroup>
+
+</Project>

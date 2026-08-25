@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    Every .vbhtml file in the project is handed to the generator, without the
+    user having to list them. Imported before the project file so that a
+    project can still remove or add to the set.
+  -->
+  <ItemGroup>
+    <AdditionalFiles Include="**/*.vbp"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+    <AdditionalFiles Include="**/*.vbhtml"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--
+      The generator needs the project directory to turn a view's full path
+      into the application-relative one ASP.NET Core routes on: /Pages/Index
+      rather than /Users/someone/src/MySite/Pages/Index.
+    -->
+    <BasaltProjectDir>$(MSBuildProjectDirectory)</BasaltProjectDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="BasaltProjectDir" />
+  </ItemGroup>
+
+</Project>

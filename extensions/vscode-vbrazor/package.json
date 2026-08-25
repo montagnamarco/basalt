@@ -1,0 +1,118 @@
+{
+  "name": "vbrazor",
+  "displayName": "Razor for Visual Basic",
+  "description": "Editing support for .vbhtml views: colouring, completion, diagnostics and navigation. ASP.NET Core's own Razor compiler emits C# only, so this fills a gap Microsoft left.",
+  "version": "1.0.0",
+  "publisher": "basalt",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "vb",
+    "visual basic",
+    "razor",
+    "vbhtml",
+    "aspnetcore"
+  ],
+  "activationEvents": [
+    "onLanguage:vbhtml",
+    "onCommand:vbrazor.newProject"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "vbhtml",
+        "aliases": [
+          "Razor (Visual Basic)",
+          "vbhtml"
+        ],
+        "extensions": [
+          ".vbhtml"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "vbp",
+        "aliases": [
+          "Basalt Page (Visual Basic)",
+          "vbp"
+        ],
+        "extensions": [
+          ".vbp"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vbhtml",
+        "scopeName": "text.html.vbhtml",
+        "path": "./syntaxes/vbhtml.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.asp.vb.net": "vb",
+          "text.html.basic": "html"
+        }
+      },
+      {
+        "language": "vbp",
+        "scopeName": "text.html.vbp",
+        "path": "./syntaxes/vbp.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.asp.vb.net": "vb",
+          "text.html.basic": "html"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Razor for Visual Basic",
+      "properties": {
+        "vbrazor.server.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the language server. Empty uses the one bundled with the extension."
+        },
+        "vbrazor.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Logs the conversation with the language server."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "vbrazor.newProject",
+        "title": "Razor for Visual Basic: New Web Project",
+        "category": "Razor for Visual Basic"
+      },
+      {
+        "command": "vbrazor.restartServer",
+        "title": "Razor for Visual Basic: Restart Language Server",
+        "category": "Razor for Visual Basic"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.3"
+  }
+}

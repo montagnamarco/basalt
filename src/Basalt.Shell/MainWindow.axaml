@@ -1,0 +1,180 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Basalt.Shell.ViewModels"
+        xmlns:dock="using:Dock.Avalonia.Controls"
+        x:Class="Basalt.Shell.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Basalt"
+        Icon="avares://Basalt.Shell/Assets/basalt.ico"
+        Width="1400" Height="900"
+        MinWidth="900" MinHeight="600"
+        Background="{DynamicResource EditorBackgroundBrush}">
+
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+    <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
+    <KeyBinding Gesture="F6" Command="{Binding BuildCommand}" />
+    <!-- F5 debugs and Ctrl+F5 runs without debugging, as in Visual Basic. -->
+    <KeyBinding Gesture="Ctrl+F5" Command="{Binding RunCommand}" />
+  </Window.KeyBindings>
+
+  <DockPanel>
+
+    <!--
+      Barra dei menu: su macOS il menu viene esportato nella barra di sistema in
+      cima allo schermo e questo contenitore resta nascosto; sulle altre
+      piattaforme ospita il menu della finestra. Le voci sono costruite in
+      MainWindow.axaml.cs, una volta sola per entrambe le forme.
+    -->
+    <Menu x:Name="WindowMenu" DockPanel.Dock="Top" />
+
+    <!-- The actions reached most often, as icons: a toolbar exists to be used
+         without reading, and the menus already spell the names out. -->
+    <Border DockPanel.Dock="Top" x:Name="ToolbarHost"
+            Background="{DynamicResource SideBarBackgroundBrush}"
+            BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,0,0,1" />
+
+    <!-- Barra di stato, blu come quella di VS Code -->
+    <Border DockPanel.Dock="Bottom"
+            Background="{DynamicResource StatusBarBackgroundBrush}" Padding="10,3">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+
+        <!-- The branch opens the branch list: seeing which branch you are on
+             and wanting to change it are the same moment. -->
+        <Button Grid.Column="0" x:Name="BranchButton" Click="OnStatusBranch"
+                Padding="4,0" Background="Transparent" BorderThickness="0"
+                IsVisible="{Binding CurrentBranch, Converter={x:Static ObjectConverters.IsNotNull}}"
+                Margin="0,0,14,0">
+          <StackPanel Orientation="Horizontal" Spacing="5">
+            <TextBlock Text="&#xE0A0;" Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding CurrentBranch}"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                    VerticalAlignment="Center">
+          <TextBlock Text="{Binding StatusMessage}"
+                     Foreground="{DynamicResource StatusBarForegroundBrush}"
+                     FontSize="12" VerticalAlignment="Center" />
+
+          <!-- Shown only while something long is running: a build that has
+               gone wrong is one the user wants to end, not wait out. -->
+          <Button x:Name="CancelOperationButton" Click="OnCancelOperation"
+                  IsVisible="False" Padding="6,0" Background="Transparent"
+                  BorderThickness="0" VerticalAlignment="Center">
+            <TextBlock x:Name="CancelOperationLabel"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" />
+          </Button>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="14"
+                    VerticalAlignment="Center" Margin="0,0,12,0">
+          <!-- Where the caret is, and how the file is stored. Encoding and
+               line ending matter more here than on one system: a file written
+               on Windows and edited on macOS is the normal case. -->
+          <!-- Each field is a button: clicking the position asks for a line,
+               clicking the indentation changes it. A status bar that only
+               reports is half a status bar. -->
+          <Button x:Name="CaretPositionButton" Click="OnStatusGoToLine"
+                  Classes="status" Padding="4,0" Background="Transparent"
+                  BorderThickness="0" VerticalAlignment="Center">
+            <TextBlock x:Name="CaretPositionLabel"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" />
+          </Button>
+          <Button x:Name="IndentationButton" Click="OnStatusIndentation"
+                  Padding="4,0" Background="Transparent"
+                  BorderThickness="0" VerticalAlignment="Center">
+            <TextBlock x:Name="IndentationLabel"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" />
+          </Button>
+          <Button x:Name="LineEndingButton" Click="OnStatusLineEnding"
+                  Padding="4,0" Background="Transparent"
+                  BorderThickness="0" VerticalAlignment="Center">
+            <TextBlock x:Name="LineEndingLabel"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" />
+          </Button>
+          <!-- Encoding and language read like the others and now act like
+               them: a value shown but not changeable reads as a gap. -->
+          <Button x:Name="EncodingButton" Click="OnStatusEncoding"
+                  Padding="4,0" Background="Transparent"
+                  BorderThickness="0" VerticalAlignment="Center">
+            <TextBlock x:Name="EncodingLabel"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" />
+          </Button>
+          <Button x:Name="LanguageButton" Click="OnStatusLanguage"
+                  Padding="4,0" Background="Transparent"
+                  BorderThickness="0" VerticalAlignment="Center">
+            <TextBlock x:Name="LanguageLabel"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" />
+          </Button>
+          <TextBlock x:Name="DebugStateLabel"
+                     Foreground="{DynamicResource StatusBarForegroundBrush}"
+                     FontSize="12" VerticalAlignment="Center" />
+          <!-- The error count opens the problems panel, which is what anyone
+               reading a non-zero count wants next. -->
+          <Button x:Name="ErrorSummaryButton" Click="OnStatusErrors"
+                  Padding="4,0" Background="Transparent" BorderThickness="0"
+                  VerticalAlignment="Center">
+            <TextBlock Text="{Binding ErrorSummary}"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}"
+                       FontSize="12" />
+          </Button>
+        </StackPanel>
+
+        <ProgressBar Grid.Column="3" IsIndeterminate="True" Width="90" Height="3"
+                     IsVisible="{Binding IsBusy}" VerticalAlignment="Center"
+                     Foreground="White" Background="#3D82C8" />
+      </Grid>
+    </Border>
+
+    <!--
+      Area dockabile: ogni pannello si può spostare, affiancare, staccare in una
+      finestra separata o chiudere. Il layout iniziale è costruito da FactoryIde.
+    -->
+    <Panel>
+      <dock:DockControl x:Name="Docking" />
+
+      <!--
+        Schermata iniziale, visibile finché non ci sono documenti aperti: rende
+        raggiungibili le azioni principali senza passare dal menu, che su macOS
+        vive fuori dalla finestra.
+      -->
+      <Border x:Name="WelcomePane"
+              Background="{DynamicResource EditorBackgroundBrush}"
+              IsHitTestVisible="{Binding IsWelcomeVisible}"
+              IsVisible="{Binding IsWelcomeVisible}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Spacing="10" Width="320">
+          <TextBlock Text="Basalt" FontSize="30" FontWeight="Light"
+                     HorizontalAlignment="Center" />
+          <TextBlock Text="Visual Basic, con designer Avalonia"
+                     Foreground="{DynamicResource DescriptionForegroundBrush}"
+                     HorizontalAlignment="Center" Margin="0,0,0,18" />
+
+          <Button Content="Nuova soluzione…" Classes="primary"
+                  Click="OnNewSolutionClick" HorizontalAlignment="Stretch" />
+          <Button Content="Apri soluzione o progetto…"
+                  Click="OnOpenSolutionClick" HorizontalAlignment="Stretch" />
+
+          <!--
+            The solutions opened lately. Filled in code because the list comes
+            from the settings and changes while the IDE runs; hidden when there
+            is nothing to show rather than left as an empty heading.
+          -->
+          <StackPanel x:Name="WelcomeRecent" Spacing="2" Margin="0,16,0,0"
+                      IsVisible="False" />
+        </StackPanel>
+      </Border>
+    </Panel>
+  </DockPanel>
+</Window>

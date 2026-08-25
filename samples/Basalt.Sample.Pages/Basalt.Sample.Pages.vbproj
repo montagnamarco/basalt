@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Basalt.Sample.Pages</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <BasaltProjectDir>$(MSBuildProjectDirectory)</BasaltProjectDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="BasaltProjectDir" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Pages\**\*.vbp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.AspNetCore\Basalt.Razor.Vb.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.Hosting\Basalt.Razor.Vb.Hosting.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.Generator\Basalt.Razor.Vb.Generator.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>
