@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -48,7 +50,16 @@ class VbHtmlLineFormatter : EditorFactoryListener {
         // them well — only formatting is claimed here.
         if (file.extension !in setOf("vbhtml", "vbp", "vb")) return
 
-        editor.caretModel.addCaretListener(LineWatcher(project, editor, file))
+        val watcher = LineWatcher(project, editor, file)
+
+        editor.caretModel.addCaretListener(watcher)
+
+        // And the document, because typing does not raise a caret event.
+        // Inserting text moves the caret as a side effect of the edit, so a
+        // line finished by typing the next one never reached the watcher: the
+        // formatting only happened when the caret was moved deliberately,
+        // which is not how anyone writes a block.
+        editor.document.addDocumentListener(watcher)
     }
 
     /**
@@ -58,7 +69,7 @@ class VbHtmlLineFormatter : EditorFactoryListener {
         private val project: Project,
         private val editor: Editor,
         private val file: VirtualFile
-    ) : CaretListener {
+    ) : CaretListener, DocumentListener {
 
         /**
          * The line the caret was on when it last moved.
@@ -69,8 +80,36 @@ class VbHtmlLineFormatter : EditorFactoryListener {
          */
         private var lastLine = -1
 
+        /**
+         * Whether the edit being reported is one of ours.
+         *
+         * Applying a formatting edit changes the document, which raises
+         * documentChanged again: without this the watcher answers its own
+         * edit, asks the server about the line it just wrote, and the file is
+         * formatted in a loop for as long as anything keeps changing.
+         */
+        private var applyingOurOwnEdit = false
+
         override fun caretPositionChanged(event: CaretEvent) {
-            val line = event.newPosition.line
+            moved(event.newPosition.line)
+        }
+
+        override fun documentChanged(event: DocumentEvent) {
+            if (applyingOurOwnEdit) return
+
+            // Where the edit left the caret, which is what the author is now
+            // typing on. Read from the event rather than the caret model: the
+            // model is not updated yet while the change is being dispatched.
+            val line = event.document.getLineNumber(
+                minOf(event.offset + event.newLength, event.document.textLength))
+
+            moved(line)
+        }
+
+        /**
+         * Notes the line the caret is on, and tidies the one it left.
+         */
+        private fun moved(line: Int) {
             val previous = lastLine
             lastLine = line
 
@@ -112,9 +151,15 @@ class VbHtmlLineFormatter : EditorFactoryListener {
                     // computed against text that no longer exists corrupts it.
                     if (document.modificationStamp != stamp) return@invokeLater
 
-                    WriteCommandAction.runWriteCommandAction(project, "Format Line", null, {
-                        apply(document, edits)
-                    })
+                    applyingOurOwnEdit = true
+
+                    try {
+                        WriteCommandAction.runWriteCommandAction(project, "Format Line", null, {
+                            apply(document, edits)
+                        })
+                    } finally {
+                        applyingOurOwnEdit = false
+                    }
                 }
             }
         }
