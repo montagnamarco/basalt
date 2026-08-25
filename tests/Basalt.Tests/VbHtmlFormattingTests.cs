@@ -190,4 +190,50 @@ public sealed class VbHtmlFormattingTests
 
         Assert.Contains("Dim x = ", result.Text);
     }
+
+    [Fact]
+    public void TidiesTheLineTheCaretJustLeft()
+    {
+        // What the editor asks for on Enter, and what FormatLineAsync used to
+        // answer "unchanged" to every single time: it was a stub, so typing in
+        // a view behaved like a plain text editor and a file was only laid out
+        // when someone ran Reformat Code by hand.
+        const string source = "@Code\nDim x=1\nif x=1 then\n";
+
+        // The caret sits at the end of the line just finished, which is where
+        // the editor reports Enter from.
+        var caret = source.IndexOf("if x=1 then", StringComparison.Ordinal) + 5;
+
+        var result = VbHtmlFormattingProvider.FormatLine(source, caret);
+
+        Assert.Contains("If x = 1 Then", result.Text);
+
+        // And only that line: stepping back one line too far corrected the one
+        // above and left the line just typed exactly as it was.
+        Assert.Contains("Dim x=1", result.Text);
+    }
+
+    [Fact]
+    public void TidiesALineInsideAPageBlock()
+    {
+        const string source = "<% if x=1 then %>\n<p>hi</p>\n";
+
+        var result = VbHtmlFormattingProvider.FormatLine(source, caret: 5);
+
+        // Delimiters and their spacing intact: replacing the trimmed code
+        // closed them up against it, giving "<%If x = 1 Then%>".
+        Assert.Contains("<% If x = 1 Then %>", result.Text);
+    }
+
+    [Fact]
+    public void LeavesALineOfMarkupAlone()
+    {
+        // "if x=1 then" inside a paragraph is prose, not code. Rewriting HTML
+        // as it is typed is how a formatter gets switched off.
+        const string source = "<p>ciao if x=1 then</p>\n";
+
+        var result = VbHtmlFormattingProvider.FormatLine(source, caret: 5);
+
+        Assert.Equal(source, result.Text);
+    }
 }

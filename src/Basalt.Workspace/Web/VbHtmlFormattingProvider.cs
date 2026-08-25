@@ -33,7 +33,7 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
 
     public Task<FormattingResult> FormatLineAsync(
         LanguageDocument document, int caret, CancellationToken ct = default) =>
-        Task.FromResult(FormattingResult.Unchanged(document.Text, caret));
+        Task.FromResult(FormatLine(document.Text, caret));
 
     public bool TriggersFormatting(char character) => false;
 
@@ -228,6 +228,132 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
     /// The markup is copied through untouched, so the only lines that can
     /// move are the ones between @Code and End Code.
     /// </summary>
+    /// <summary>
+    /// Tidies the one line the caret just left.
+    /// </summary>
+    /// <remarks>
+    /// This is what the editor asks for on Enter, and it used to answer
+    /// "unchanged" every time: the method was a stub, so a view was laid out
+    /// only when someone ran Reformat Code by hand. Typing behaved like a
+    /// plain text editor, which is the opposite of what made Visual Basic
+    /// Visual Basic.
+    ///
+    /// One line rather than the document: reformatting everything on every
+    /// Enter moves text far from the caret, and an author who indented
+    /// something deliberately watches it get undone as they type.
+    /// </remarks>
+    internal static FormattingResult FormatLine(string text, int caret)
+    {
+        var at = Math.Clamp(caret, 0, text.Length);
+
+        // The line the caret is on. The editor reports the position where
+        // Enter was pressed — the end of the line just finished — rather than
+        // the start of the new one, so stepping back a line as well corrected
+        // the line above and left the one just typed alone.
+        var lineStart = text.LastIndexOf('\n', Math.Max(0, at - 1)) + 1;
+        var lineEnd = text.IndexOf('\n', lineStart);
+
+        if (lineEnd < 0) lineEnd = text.Length;
+
+        var line = text[lineStart..lineEnd];
+
+        if (line.Trim().Length == 0) return FormattingResult.Unchanged(text, caret);
+
+        // Only inside code. A line of markup is the author's to lay out, and
+        // rewriting HTML as it is typed is how a formatter gets switched off.
+        if (!IsCode(text, lineStart, lineEnd)) return FormattingResult.Unchanged(text, caret);
+
+        // A page writes its code between delimiters on the same line, so what
+        // is canonicalised is what sits inside them rather than the whole
+        // line — otherwise the <% and %> are handed to the parser as if they
+        // were Visual Basic.
+        var inner = Delimited(line);
+        var canonical = Canonicalise(inner.Trim());
+
+        if (canonical.Trim().Length == 0) return FormattingResult.Unchanged(text, caret);
+
+        // The indentation the line already carries is kept: working out the
+        // right depth needs the whole block, which is what Format does when
+        // the document is laid out as a whole.
+        var indent = line[..(line.Length - line.TrimStart().Length)];
+
+        // The block's own padding is kept: replacing the trimmed code would
+        // close the delimiters up against it, turning "<% If x = 1 Then %>"
+        // into "<%If x = 1 Then%>" the first time a line was typed.
+        var replacement = ReferenceEquals(inner, line)
+            ? indent + canonical.Trim()
+            : line.Replace(inner, Padded(inner, canonical.Trim()));
+
+        if (string.Equals(replacement, line, StringComparison.Ordinal))
+            return FormattingResult.Unchanged(text, caret);
+
+        var updated = text[..lineStart] + replacement + text[lineEnd..];
+
+        // The caret moves by however much the line grew or shrank before it.
+        return new FormattingResult(updated, caret + (replacement.Length - line.Length), Changed: true);
+    }
+
+    /// <summary>
+    /// Whether this position sits in Visual Basic rather than in markup.
+    /// </summary>
+    private static bool IsCode(string text, int lineStart, int lineEnd)
+    {
+        // A page's blocks are delimited and usually sit within one line, so
+        // the line itself answers the question. Looking only at what precedes
+        // the line said no for a block that opens on it, which left every
+        // single-line <% %> unformatted.
+        if (LooksLikeAPage(text))
+        {
+            var line = text[lineStart..lineEnd];
+
+            if (line.Contains("<%", StringComparison.Ordinal)) return true;
+
+            var open = text.LastIndexOf("<%", lineStart, StringComparison.Ordinal);
+            var close = text.LastIndexOf("%>", lineStart, StringComparison.Ordinal);
+
+            return open > close;
+        }
+
+        var parsed = VbHtmlParser.Parse(text);
+
+        return parsed.Nodes
+            .OfType<StatementNode>()
+            .Any(block => lineStart >= block.Position
+                       && lineStart <= block.Position + block.Code.Length);
+    }
+
+    /// <summary>
+    /// Puts the replacement back with the spaces the original carried.
+    /// </summary>
+    private static string Padded(string original, string replacement)
+    {
+        var before = original.StartsWith(' ') || original.StartsWith('\t') ? " " : "";
+        var after = original.EndsWith(' ') || original.EndsWith('\t') ? " " : "";
+
+        return before + replacement + after;
+    }
+
+    /// <summary>
+    /// The Visual Basic inside a page's delimiters, or the line itself.
+    /// </summary>
+    private static string Delimited(string line)
+    {
+        var open = line.IndexOf("<%", StringComparison.Ordinal);
+
+        if (open < 0) return line;
+
+        // Past the marker that follows <% on a directive or an expression:
+        // those are not statements and are left alone.
+        var from = open + 2;
+
+        if (from < line.Length && (line[from] == '@' || line[from] == '=' || line[from] == '!'))
+            return line;
+
+        var close = line.IndexOf("%>", from, StringComparison.Ordinal);
+
+        return close < 0 ? line : line[from..close];
+    }
+
     internal static FormattingResult Format(string text, int caret)
     {
         // A .vbp page is written with <% %> rather than @, so the Razor parser
