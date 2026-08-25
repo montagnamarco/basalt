@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="build/Basalt.Razor.Vb.AspNetCore.props"
+          Pack="true" PackagePath="build" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,7 +28,15 @@
   <ItemGroup>
     <!-- For ViewNaming: the path-to-class rules must not be duplicated here,
          or a view would be generated under one name and looked up by another. -->
-    <ProjectReference Include="..\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />
+    <!--
+      Build and Analyzers assets flow through deliberately. NuGet excludes them
+      from a ProjectReference by default, which would leave anyone installing
+      this package with the runtime but no generator and no targets: their
+      project would build clean and produce no views at all, with nothing said
+      about why. The generator is the whole point of the dependency.
+    -->
+    <ProjectReference Include="..\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj"
+                      PrivateAssets="none" />
   </ItemGroup>
 
 </Project>

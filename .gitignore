@@ -39,3 +39,4 @@ extensions/*/server/
 
 # Working plans: notes to ourselves, not documentation for anyone else
 docs/planning/
+artifacts/

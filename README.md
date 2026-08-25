@@ -111,10 +111,14 @@ cd MySite && dotnet run
 That is the whole thing. `Views/Home/Index.vbhtml` is a real Razor view, it
 compiles at build time, and it is served by stock ASP.NET Core MVC.
 
+> **Not on nuget.org yet.** The packages build and are verified end to end
+> (see [Building the packages](#building-the-packages)), but they have not been
+> published. Until they are, build them locally and restore from
+> `artifacts/`.
+
 In an existing VB.NET web project, two steps:
 
 ```xml
-<PackageReference Include="Basalt.Razor.Vb" Version="1.0.0" />
 <PackageReference Include="Basalt.Razor.Vb.AspNetCore" Version="1.0.0" />
 ```
 
@@ -123,9 +127,10 @@ builder.Services.AddControllersWithViews()
 builder.Services.AddVbViews()   ' the single call that makes .vbhtml work
 ```
 
-`Basalt.Razor.Vb` carries the source generator, so every `.vbhtml` under the
-project becomes a compiled class on the next build. `AddVbViews` registers the
-view engine hooks that let MVC find them.
+`AddVbViews` registers the view engine hooks that let MVC find the views, and
+the package pulls in `Basalt.Razor.Vb` — the source generator that turns every
+`.vbhtml` in the project into a compiled class. Referencing `Basalt.Razor.Vb`
+directly as well is fine and changes nothing.
 
 ---
 
@@ -416,6 +421,29 @@ cd extensions/rider-vbrazor && ./gradlew buildPlugin
 
 The zip lands in `build/distributions/`. Substitute your own runtime identifier
 for `osx-arm64` as needed.
+
+### Building the packages
+
+```bash
+build/pack.sh
+```
+
+Packs the three NuGet packages into `artifacts/`, then proves they work: it
+creates a scratch project that references them **by version from a feed**, with
+no reference to this repository's sources, builds it, and checks the `.vbhtml`
+views actually became classes in the assembly.
+
+That last check is the reason the script exists. A package can pack cleanly,
+restore cleanly and still produce nothing — the generator flows through a
+dependency but the MSBuild props that hand it the views do not, so the project
+builds green with no views in it and says nothing about why. Asserting only
+that the build succeeded would have missed exactly that, and did.
+
+`build/pack.sh --skip-test` packs without verifying. Publishing:
+
+```bash
+dotnet nuget push "artifacts/*.nupkg" -s https://api.nuget.org/v3/index.json -k YOUR_KEY
+```
 
 ---
 

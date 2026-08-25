@@ -1,27 +1,36 @@
 <Project>
 
-  <!--
-    Every .vbhtml file in the project is handed to the generator, without the
-    user having to list them. Imported before the project file so that a
-    project can still remove or add to the set.
-  -->
-  <ItemGroup>
-    <AdditionalFiles Include="**/*.vbp"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-    <AdditionalFiles Include="**/*.vbhtml"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-  </ItemGroup>
-
   <PropertyGroup>
+    <!--
+      Set before the collection below reads it: MSBuild evaluates a props file
+      top to bottom, so a guard declared underneath the group it guards is
+      always empty when the group is evaluated.
+
+      Guards against collecting every view twice when
+      Basalt.Razor.Vb.AspNetCore is referenced alongside this package: both
+      carry the same collection, and a view added twice is generated twice and
+      fails the build on duplicate class definitions.
+    -->
+    <BasaltRazorVbViewsCollected Condition="'$(BasaltRazorVbViewsCollected)' == ''">basalt.razor.vb</BasaltRazorVbViewsCollected>
+
     <!--
       The generator needs the project directory to turn a view's full path
       into the application-relative one ASP.NET Core routes on: /Pages/Index
       rather than /Users/someone/src/MySite/Pages/Index.
     -->
-    <BasaltProjectDir>$(MSBuildProjectDirectory)</BasaltProjectDir>
+    <BasaltProjectDir Condition="'$(BasaltProjectDir)' == ''">$(MSBuildProjectDirectory)</BasaltProjectDir>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!--
+    Every .vbhtml file in the project is handed to the generator, without the
+    user having to list them. Imported before the project file so that a
+    project can still remove or add to the set.
+  -->
+  <ItemGroup Condition="'$(BasaltRazorVbViewsCollected)' == 'basalt.razor.vb'">
+    <AdditionalFiles Include="**/*.vbp"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+    <AdditionalFiles Include="**/*.vbhtml"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
     <CompilerVisibleProperty Include="BasaltProjectDir" />
   </ItemGroup>
 

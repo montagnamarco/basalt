@@ -1,0 +1,31 @@
+<Project>
+
+  <!--
+    Hands the .vbhtml files to the generator when this package is referenced
+    without Basalt.Razor.Vb alongside it.
+
+    NuGet imports a package's build/ folder only for packages the project
+    references directly. Through a dependency it flows the analyzer but not the
+    props, so the generator arrived with nothing to generate from: the project
+    built clean, produced no views, and said nothing about why. No
+    PrivateAssets setting changes this — it is not an asset-exclusion rule but
+    how MSBuild's import graph is built.
+
+    Whichever of the two packages is evaluated first claims the collection, and
+    the other stands down. Without that a view referenced by both is collected
+    twice, generated twice, and the build fails on duplicate definitions.
+  -->
+  <PropertyGroup>
+    <BasaltRazorVbViewsCollected Condition="'$(BasaltRazorVbViewsCollected)' == ''">basalt.razor.vb.aspnetcore</BasaltRazorVbViewsCollected>
+    <BasaltProjectDir Condition="'$(BasaltProjectDir)' == ''">$(MSBuildProjectDirectory)</BasaltProjectDir>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(BasaltRazorVbViewsCollected)' == 'basalt.razor.vb.aspnetcore'">
+    <AdditionalFiles Include="**/*.vbp"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+    <AdditionalFiles Include="**/*.vbhtml"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+    <CompilerVisibleProperty Include="BasaltProjectDir" />
+  </ItemGroup>
+
+</Project>

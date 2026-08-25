@@ -6,10 +6,17 @@
     <Nullable>enable</Nullable>
 
     <PackageId>Basalt.Razor.Vb.Hosting</PackageId>
-    <Description>Recompiles .vbp pages while the site is running.</Description>
+    <Description>
+      .vbp pages for ASP.NET Core, in the Classic ASP style: a page is a file,
+      a URL is a path. Compiles them on demand while the site runs, so saving
+      a file is enough to see the change.
+    </Description>
+    <PackageTags>vb;visualbasic;vbp;aspnetcore;classic-asp;hot-reload</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
@@ -21,7 +28,15 @@
       production to get them.
     -->
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
-    <ProjectReference Include="..\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />
+    <!--
+      Build and Analyzers assets flow through deliberately. NuGet excludes them
+      from a ProjectReference by default, which would leave anyone installing
+      this package with the runtime but no generator and no targets: their
+      project would build clean and produce no views at all, with nothing said
+      about why. The generator is the whole point of the dependency.
+    -->
+    <ProjectReference Include="..\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj"
+                      PrivateAssets="none" />
     <ProjectReference Include="..\Basalt.Razor.Vb.AspNetCore\Basalt.Razor.Vb.AspNetCore.csproj" />
   </ItemGroup>
 
