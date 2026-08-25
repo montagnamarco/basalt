@@ -103,7 +103,11 @@ class VbHtmlLineFormatter : EditorFactoryListener {
             val line = event.document.getLineNumber(
                 minOf(event.offset + event.newLength, event.document.textLength))
 
-            moved(line)
+            // After the change has finished, not during it: reading the
+            // document to compare against later is only meaningful once it
+            // has settled, and a request started mid-change captured a state
+            // that no longer existed by the time the answer came back.
+            ApplicationManager.getApplication().invokeLater { moved(line) }
         }
 
         /**
@@ -135,7 +139,12 @@ class VbHtmlLineFormatter : EditorFactoryListener {
                 .firstOrNull { it.state == LspServerState.Running }
                 ?: return
 
-            val stamp = document.modificationStamp
+            // The whole document as it was asked about. The server answers
+            // with a replacement for all of it, so all of it has to be
+            // unchanged for that replacement to be safe — applying it over
+            // text the author has edited meanwhile would throw their work
+            // away.
+            val asked = document.text
 
             // Off the UI thread, then applied back on it: the request crosses
             // a process boundary, and waiting for it inline is felt as the
@@ -146,10 +155,11 @@ class VbHtmlLineFormatter : EditorFactoryListener {
                 if (edits.isEmpty()) return@executeOnPooledThread
 
                 ApplicationManager.getApplication().invokeLater {
-                    // Checked again here: the document may have been edited
-                    // while the request was in flight, and applying an edit
-                    // computed against text that no longer exists corrupts it.
-                    if (document.modificationStamp != stamp) return@invokeLater
+                    // Compared by content rather than by modification stamp:
+                    // a stamp moves for changes that leave the text identical,
+                    // and it had already moved by the time the answer came
+                    // back, so every edit was discarded in silence.
+                    if (document.text != asked) return@invokeLater
 
                     applyingOurOwnEdit = true
 
