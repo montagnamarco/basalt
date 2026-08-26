@@ -416,4 +416,89 @@ public class Vb6FormTests
         // one place Visual Basic .NET accepts it.
         Assert.DoesNotContain("Option Explicit", translated);
     }
+
+    [Fact]
+    public void MovingAControlChangesOnlyTheLinesThatSayWhereItIs()
+    {
+        // The original is edited, not regenerated. A .frm holds more than this
+        // converter understands — fonts, an OCX's property bag, the .frx
+        // offsets pointing at binary beside it — and rewriting one from what
+        // we read throws all of that away the first time somebody nudges a
+        // button.
+        var form = FormFile.Parse(Form);
+
+        var moved = FormToAxaml.Convert(form)
+            .Replace("x:Name=\"cmdOk\" Canvas.Left=\"88\" Canvas.Top=\"72\"",
+                     "x:Name=\"cmdOk\" Canvas.Left=\"128\" Canvas.Top=\"92\"");
+
+        var updated = AxamlToForm.Apply(Form, moved);
+
+        var before = Form.Replace("\r\n", "\n").Split('\n');
+        var after = updated.Replace("\r\n", "\n").Split('\n');
+
+        var differences = before.Zip(after)
+            .Where(pair => pair.First != pair.Second)
+            .ToList();
+
+        Assert.Equal(2, differences.Count);
+        Assert.All(differences, d =>
+            Assert.True(d.First.Contains("Left") || d.First.Contains("Top"),
+                $"an unrelated line changed: {d.First.Trim()}"));
+
+        // And the parts nobody understands are still there.
+        Assert.Contains("BeginProperty ColumnHeader(1)", updated);
+        Assert.Contains("MSComctlLib.ListView", updated);
+    }
+
+    [Fact]
+    public void OpeningAndSavingWithoutTouchingAnythingChangesNothing()
+    {
+        // Twips do not survive the round trip through pixels — 4400 becomes
+        // 293 becomes 4395 — so a form opened and saved without a single drag
+        // came back with almost every size altered by a few twips, and the
+        // diff was the whole file.
+        var unchanged = AxamlToForm.Apply(Form, FormToAxaml.Convert(FormFile.Parse(Form)));
+
+        Assert.Equal(Form, unchanged);
+    }
+
+    [Fact]
+    public void KeepsTheLineEndingsTheFormWasWrittenWith()
+    {
+        // A .frm is CRLF. A file that comes back with different endings is a
+        // whole-file change in every diff the author looks at afterwards.
+        const string crlf = "VERSION 5.00\r\nBegin VB.Form Form1 \r\n   Caption = \"x\"\r\nEnd\r\n";
+
+        var updated = AxamlToForm.Apply(
+            crlf, FormToAxaml.Convert(FormFile.Parse(crlf)));
+
+        Assert.Contains("\r\n", updated);
+        Assert.DoesNotContain("\n\n", updated.Replace("\r\n", "\n").Replace("\n\n", "@"));
+    }
+
+    [Fact]
+    public void SavingTheRealSampleLeavesItByteForByte()
+    {
+        // Against the file as Visual Basic 6 wrote it, CRLF and all: the
+        // literal in this file has LF endings and no trailing newline, so it
+        // exercises a different shape than the one anybody will actually open.
+        var directory = Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "..",
+            "samples", "Basalt.Sample.Vb6");
+
+        var path = Path.Combine(directory, "Form1.frm");
+
+        if (!File.Exists(path))
+        {
+            Assert.Skip("the sample form is not beside the tests");
+            return;
+        }
+
+        var original = File.ReadAllText(path);
+
+        var unchanged = AxamlToForm.Apply(
+            original, FormToAxaml.Convert(FormFile.Parse(original)));
+
+        Assert.Equal(original, unchanged);
+    }
 }

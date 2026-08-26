@@ -122,6 +122,40 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public event EventHandler<(string Path, bool IsSolution)>? Opened;
 
     /// <summary>
+    /// What a designer edit should leave in the document.
+    /// </summary>
+    /// <remarks>
+    /// For a .frm, the form's own text with the changed positions written into
+    /// it — never the markup. Writing XAML into a .frm destroys it, and the
+    /// file is the one thing this whole approach promises not to touch.
+    ///
+    /// The original is edited rather than regenerated because a .frm holds
+    /// more than the converter understands: fonts, an OCX's property bag, the
+    /// .frx offsets pointing at binary beside it. All of that survives by
+    /// never being written.
+    /// </remarks>
+    private static string WriteBack(EditorDocumentViewModel document, DesignerSession session)
+    {
+        var markup = session.Document.ToXaml();
+
+        if (document.FilePath is not { } path
+            || !path.EndsWith(".frm", StringComparison.OrdinalIgnoreCase))
+            return markup;
+
+        try
+        {
+            return Basalt.Vb6.AxamlToForm.Apply(document.Text, markup);
+        }
+        catch (Exception)
+        {
+            // The form as it was. A failure here would otherwise replace a
+            // Visual Basic 6 form with Avalonia markup, which is not a change
+            // anybody could undo.
+            return document.Text;
+        }
+    }
+
+    /// <summary>
     /// Turns a Visual Basic 6 project into one this IDE can open.
     /// </summary>
     /// <remarks>
@@ -284,7 +318,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             // XAML lived only in the session: controls were added, the
             // preview showed them, and closing the file threw them away with
             // nothing warning that anything was unsaved.
-            session.DocumentModified += (_, _) => document.Text = session.Document.ToXaml();
+            session.DocumentModified += (_, _) =>
+                document.Text = WriteBack(document, session);
 
             _designerSessions[document] = session;
         }
@@ -317,9 +352,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         if (ActiveDocument is null) return;
 
         // In the designer the source of truth is the XAML document, not the
-        // tab's text: it must be realigned before writing to disk.
+        // tab's text: it must be realigned before writing to disk. Through the
+        // same path as an edit, because this is the one that reaches the file
+        // — writing markup here would leave Avalonia XAML in a .frm.
         if (ActiveDesigner is not null)
-            ActiveDocument.Text = ActiveDesigner.Document.ToXaml();
+            ActiveDocument.Text = WriteBack(ActiveDocument, ActiveDesigner);
 
         if (FormatOnSave && !ActiveDocument.OpenInDesigner)
             await FormatDocumentAsync().ConfigureAwait(true);
