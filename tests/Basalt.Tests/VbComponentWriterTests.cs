@@ -194,4 +194,64 @@ public class VbComponentWriterTests
 
         Assert.Contains("AddressOf Vai", written);
     }
+
+    [Fact]
+    public void PlacesAnotherComponentRatherThanInventingATag()
+    {
+        // <Saluto Nome="x" /> was written out as an HTML element called
+        // "Saluto", so the browser received an invented tag and the parameter
+        // was dropped: the page said <Saluto Nome="Marco"></Saluto> in plain
+        // sight and rendered nothing of the component.
+        var written = Write("<Saluto Nome=\"Marco\" />");
+
+        Assert.Contains("OpenComponent(Of Saluto)", written);
+        Assert.Contains("AddComponentParameter", written);
+        Assert.Contains("CloseComponent()", written);
+
+        // Unqualified: rooting the name at the namespace we wrote misses the
+        // RootNamespace the compiler prepends, and the generator deliberately
+        // does not know it.
+        Assert.DoesNotContain("OpenComponent(Of Global.", written);
+    }
+
+    [Fact]
+    public void ClosesEachTagTheWayItWasOpened()
+    {
+        // A component closes with CloseComponent and an element with
+        // CloseElement. Calling the wrong one leaves the render tree
+        // unbalanced for everything after it.
+        var written = Write("<div><Saluto /></div>");
+
+        var open = written.Split("OpenComponent").Length - 1;
+        var close = written.Split("CloseComponent").Length - 1;
+
+        Assert.Equal(open, close);
+        Assert.Equal(
+            written.Split("OpenElement").Length - 1,
+            written.Split("CloseElement").Length - 1);
+    }
+
+    [Fact]
+    public void PassesWhatIsInsideAComponentAsChildContent()
+    {
+        // Written straight into the tree it became the parent's own frames and
+        // vanished: the box rendered and everything inside it was gone.
+        var written = Write("<Box><p>dentro</p></Box>");
+
+        Assert.Contains("\"ChildContent\"", written);
+        Assert.Contains("RenderFragment", written);
+
+        // And the children go to the lambda's builder, not the outer one.
+        Assert.Contains("__child.OpenElement", written);
+    }
+
+    [Fact]
+    public void TreatsALowerCaseTagAsMarkup()
+    {
+        // The first letter is the whole distinction, the way it is in Razor:
+        // element names are lower case and a component is a class.
+        var written = Write("<div><span>a</span></div>");
+
+        Assert.DoesNotContain("OpenComponent", written);
+    }
 }

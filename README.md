@@ -398,6 +398,23 @@ so `<Parameter>` properties and event handlers live there. An `@AddressOf` in
 an attribute is wrapped in an `EventCallback` the way the C# compiler wraps
 `@onclick`.
 
+### Components inside components
+
+A capitalised tag is another component, the way it is in Razor — the first
+letter is the whole distinction, since element names are lower case and a
+component is a class.
+
+```vbrazor
+<Saluto Nome="Marco" />
+
+<Box>
+    <p>Whatever goes here becomes the box's ChildContent.</p>
+</Box>
+```
+
+What sits between the tags is passed as a `RenderFragment`, so the component
+decides where to put it.
+
 ### Where components live
 
 `Components/Pages/Home.vbrazor` compiles into `YourApp.Components.Home`. A
@@ -697,9 +714,9 @@ shows something else.
   the Rider plugin but have had less use. Reports are welcome.
 - **`.vbp` pages** are under active development — the newest part of the
   repository, and the one whose shape is most likely to still change.
-- **Blazor components** cover routing, parameters, event handlers and the
-  three render modes. Child components placed inside one another, generic
-  components and `RenderFragment` parameters are not implemented yet.
+- **Blazor components** cover routing, parameters, event handlers, child
+  components and `ChildContent`. Generic components, cascading parameters and
+  `@bind` are not implemented yet.
 - **The designer** is missing distance guides while dragging, a grid row/column
   overlay, and a colour picker in the property grid.
 
