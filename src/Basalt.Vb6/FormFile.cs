@@ -15,11 +15,13 @@ namespace Basalt.Vb6;
 /// </remarks>
 public sealed class FormFile
 {
-    private FormFile(FormControl root, string code, IReadOnlyList<string> objects)
+    private FormFile(
+        FormControl root, string code, IReadOnlyList<string> objects, int codeLine)
     {
         Root = root;
         Code = code;
         Objects = objects;
+        CodeLine = codeLine;
     }
 
     /// <summary>The form itself, with its controls beneath it.</summary>
@@ -30,6 +32,16 @@ public sealed class FormFile
 
     /// <summary>The OCX files the form declares it needs.</summary>
     public IReadOnlyList<string> Objects { get; }
+
+    /// <summary>
+    /// Which line of the .frm the code begins on, counting from one.
+    /// </summary>
+    /// <remarks>
+    /// For #ExternalSource, so an error is reported against the .frm at the
+    /// line the author wrote rather than against generated code they never
+    /// saw — and so a breakpoint set in the .frm is hit.
+    /// </remarks>
+    public int CodeLine { get; }
 
     /// <summary>Reads a form from the text of a .frm file.</summary>
     public static FormFile Parse(string text)
@@ -114,7 +126,7 @@ public sealed class FormFile
         var code = string.Join("\n", lines.Skip(codeFrom)).Trim();
 
         return new FormFile(
-            root ?? new FormControl("VB.Form", "Form1"), code, objects);
+            root ?? new FormControl("VB.Form", "Form1"), code, objects, codeFrom + 1);
     }
 
     /// <summary>The control a Begin line declares.</summary>

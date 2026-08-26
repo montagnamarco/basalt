@@ -338,4 +338,53 @@ public class Vb6FormTests
         // And leaves them alone: a line reported is a line the author reads.
         Assert.Contains("GoSub Etichetta", result.Code);
     }
+
+    [Fact]
+    public void WritesAFormAsAClassThatRuns()
+    {
+        // Where the three halves meet: controls from the designer block,
+        // handlers from the code, both against the runtime that sits on
+        // Avalonia.
+        var written = FormToVisualBasic.Write(FormFile.Parse(Form), "Form1", "/x/Form1.frm");
+
+        Assert.Contains("Inherits Global.Basalt.Vb6.Runtime.Vb6Form", written.Code);
+
+        // WithEvents on every control, because a Handles clause cannot hang
+        // from a field without it.
+        Assert.Contains("Private WithEvents cmdOk As New", written.Code);
+        Assert.Contains("Handles cmdOk.Click", written.Code);
+
+        // A control inside a frame goes on the frame. On the form instead, a
+        // group's contents end up loose.
+        Assert.Contains("fraDati.Add(txtNome)", written.Code);
+        Assert.Contains("Add(cmdOk)", written.Code);
+
+        // And the .frm is named, so an error is reported against it and a
+        // breakpoint set there is hit.
+        Assert.Contains("#ExternalSource(\"/x/Form1.frm\"", written.Code);
+    }
+
+    [Fact]
+    public void NamesTheControlsItCouldNotBringOver()
+    {
+        // In the code as well as on the form: the author is told what to
+        // replace rather than finding out when a control does not appear.
+        var written = FormToVisualBasic.Write(FormFile.Parse(Form), "Form1");
+
+        Assert.Contains("lvwElenco (MSComctlLib.ListView)", written.Missing);
+        Assert.DoesNotContain("WithEvents lvwElenco", written.Code);
+    }
+
+    [Fact]
+    public void DropsTheOptionStatementsTheFormCarried()
+    {
+        // The generated file declares its own in the only place Visual Basic
+        // .NET accepts them. A second Option Explicit further down is a
+        // compile error, not a duplicate — measured, on the sample.
+        var written = FormToVisualBasic.Write(FormFile.Parse(Form), "Form1").Code;
+
+        var body = written.Substring(written.IndexOf("Public Class", StringComparison.Ordinal));
+
+        Assert.DoesNotContain("Option Explicit", body);
+    }
 }

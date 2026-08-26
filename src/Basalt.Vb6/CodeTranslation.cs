@@ -84,6 +84,14 @@ public static class CodeTranslation
         {
             var line = lines[i];
 
+            // The file-level Option statements the .frm carries are dropped:
+            // the generated file declares its own in the only place Visual
+            // Basic .NET accepts them, and a second one further down is a
+            // compile error rather than a duplicate.
+            if (Regex.IsMatch(line, @"^\s*Option\s+(Explicit|Strict|Compare|Base)\b",
+                    RegexOptions.IgnoreCase))
+                continue;
+
             foreach (var (pattern, name, why) in Unsupported)
                 if (pattern.IsMatch(line))
                     notes.Add(new Note(i + 1, name, why));

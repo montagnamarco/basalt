@@ -62,13 +62,17 @@ public abstract class Vb6Form : Vb6Control
     /// </remarks>
     public double ScaleWidth
     {
-        get => _window.ClientSize.Width * TwipsPerPixel;
+        // Read back from the window's own Width rather than from ClientSize:
+        // ClientSize is what the platform measured, and before the window is
+        // shown that is a default rather than what was asked for — a form set
+        // to 4680 reported 15360 and looked like an arithmetic mistake.
+        get => _window.Width * TwipsPerPixel;
         set => _window.Width = value / TwipsPerPixel;
     }
 
     public double ScaleHeight
     {
-        get => _window.ClientSize.Height * TwipsPerPixel;
+        get => _window.Height * TwipsPerPixel;
         set => _window.Height = value / TwipsPerPixel;
     }
 
