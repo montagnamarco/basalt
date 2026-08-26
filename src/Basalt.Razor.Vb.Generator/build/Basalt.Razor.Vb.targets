@@ -10,6 +10,7 @@
   -->
   <ItemGroup>
     <Content Remove="**/*.vbhtml" />
+    <Content Remove="**/*.vbrazor" />
   </ItemGroup>
 
   <!--

@@ -64,6 +64,14 @@ dotnet new install "$template_package" >/dev/null
 echo "==> Verifying against a project that only has the packages"
 dotnet new mvc -lang VB -o "$work/Site" >/dev/null
 
+# Written before anything is built: MSBuild expands the props globs when the
+# project is evaluated, so a file created after the first build is invisible
+# to the second.
+cat > "$work/Site/Probe.vbrazor" <<'COMPONENT'
+@Page "/probe"
+<h1>Probe</h1>
+COMPONENT
+
 cat > "$work/Site/nuget.config" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
@@ -93,7 +101,21 @@ if ! strings -a "$assembly" | grep -q 'Site.Views.Home.Index'; then
   exit 1
 fi
 
-echo "==> Views compiled. Packages are good."
+# And a Blazor component, which goes through a different generator and a
+# different writer: a .vbrazor builds a render tree rather than writing
+# markup, so the view passing says nothing about it.
+echo "==> Verifying a Blazor component"
+
+# By its route, which the component carries as an attribute: the class name
+# alone appears in an assembly for other reasons, and the namespace is stored
+# separately from it rather than as one string.
+if ! strings -a "$assembly" | grep -q '^/probe$'; then
+  echo "FAILED: a .vbrazor component was not compiled into the assembly." >&2
+  echo "        The component generator or its MSBuild props did not reach it." >&2
+  exit 1
+fi
+
+echo "==> Views and components compiled. Packages are good."
 echo
 echo "To publish:"
 echo "    dotnet nuget push \"$out/*.nupkg\" -s https://api.nuget.org/v3/index.json -k YOUR_KEY"

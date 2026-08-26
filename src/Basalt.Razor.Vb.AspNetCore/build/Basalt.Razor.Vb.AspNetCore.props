@@ -25,6 +25,12 @@
                      Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
     <AdditionalFiles Include="**/*.vbhtml"
                      Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+
+    <!-- Blazor components: a .vbrazor is compiled into a render tree rather
+         than into a class that writes markup, which is why it carries its own
+         extension the way .razor does beside .cshtml. -->
+    <AdditionalFiles Include="**/*.vbrazor"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
     <CompilerVisibleProperty Include="BasaltProjectDir" />
   </ItemGroup>
 

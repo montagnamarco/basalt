@@ -55,8 +55,11 @@ public static class VbComponentWriter
         builder.AppendLine($"Namespace {namespaceName}");
         builder.AppendLine();
 
-        // The route comes from @page, and a component without one is only
-        // reachable by being placed inside another.
+        // The route the template declared with @Page, unless the caller named
+        // one. A component without either is only reachable by being placed
+        // inside another, which is not an error.
+        route ??= document.PageRoute;
+
         if (!string.IsNullOrWhiteSpace(route))
             builder.AppendLine($"    <Global.Microsoft.AspNetCore.Components.Route(\"{route}\")>");
 
