@@ -254,4 +254,69 @@ public class VbComponentWriterTests
 
         Assert.DoesNotContain("OpenComponent", written);
     }
+
+    [Fact]
+    public void BindsAnInputBothWays()
+    {
+        // @bind is two attributes, not one: the value going out and the
+        // handler bringing the change back. Written as a single attribute
+        // called "bind" the browser received a meaningless one and nothing was
+        // ever read back — a form that looked right and lost every keystroke.
+        var written = Write("<input @bind=\"@nome\" />");
+
+        Assert.Contains("\"value\", Global.Microsoft.AspNetCore.Components.BindConverter.FormatValue(nome)", written);
+        Assert.Contains("\"onchange\"", written);
+
+        // Called as the shared method it is: Visual Basic does not apply an
+        // extension to a fully qualified chain, so the obvious spelling failed
+        // to resolve even with the namespace imported.
+        Assert.Contains("EventCallbackFactoryBinderExtensions.CreateBinder", written);
+    }
+
+    [Fact]
+    public void BindsAComponentParameterToItsChangedCallback()
+    {
+        var written = Write("<TextBox @bind-Value=\"@nome\" />");
+
+        Assert.Contains("\"Value\"", written);
+        Assert.Contains("\"ValueChanged\"", written);
+        Assert.Contains("OpenComponent(Of TextBox)", written);
+    }
+
+    [Fact]
+    public void NamesAFrameworkComponentInFull()
+    {
+        // A sibling is named unqualified so the compiler's RootNamespace is
+        // applied for us; the framework's own components are not siblings and
+        // resolve to nothing that way.
+        var written = Write("<CascadingValue Value=\"@tema\"><p>a</p></CascadingValue>");
+
+        Assert.Contains("Global.Microsoft.AspNetCore.Components.CascadingValue(Of String)", written);
+    }
+
+    [Fact]
+    public void PassesATypeArgumentThroughToAGenericComponent()
+    {
+        // The C# compiler infers this from the parameter values, which needs
+        // the type system. Here the template says it — and read a character at
+        // a time the name stopped at the bracket, leaving "(Of String)" to be
+        // taken for attributes.
+        var written = Write("<Elenco(Of String) Voci=\"@nomi\" />");
+
+        Assert.Contains("OpenComponent(Of Elenco(Of String))", written);
+        Assert.Contains("\"Voci\", nomi", written);
+    }
+
+    [Fact]
+    public void DoesNotOpenChildContentForASelfClosingComponent()
+    {
+        // It opened a lambda nothing ever closed, so the generated file ended
+        // mid-statement: "End Sub expected", against generated code.
+        var written = Write("<Elenco Voci=\"@nomi\" />");
+
+        Assert.DoesNotContain("ChildContent", written);
+        Assert.Equal(
+            written.Split("Sub(__child").Length,
+            written.Split("End Sub,").Length);
+    }
 }

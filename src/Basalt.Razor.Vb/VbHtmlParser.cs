@@ -437,6 +437,20 @@ public sealed class VbHtmlParser
 
         // Members the view declares for itself. Written into the class rather
         // than into Execute, since a method cannot live inside a method.
+        // "@bind" and "@bind-Value" name an attribute, not an expression.
+        // Read as one the attribute was split in three before the writer ever
+        // saw the tag: <input @bind="@x" /> became the expression "bind"
+        // followed by the literal ="  — the binding was lost and a meaningless
+        // attribute reached the browser.
+        //
+        // Left in the markup as written, so the tag arrives whole and the
+        // writer turns it into the pair of attributes a binding really is.
+        if (LooksLikeKeywordAt(_index, "bind"))
+        {
+            into.Add(new HtmlNode("@", start, line));
+            return;
+        }
+
         if (TryReadKeyword("Functions", out _))
         {
             ParseFunctionsBlock(into, document, start, line);

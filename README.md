@@ -415,6 +415,27 @@ component is a class.
 What sits between the tags is passed as a `RenderFragment`, so the component
 decides where to put it.
 
+### Binding, cascading and generics
+
+```vbrazor
+<input @bind="@nome" />
+<TextBox @bind-Value="@nome" />
+
+<CascadingValue Value="@tema">
+    <Child />
+</CascadingValue>
+
+<List(Of String) Items="@names" />
+```
+
+`@bind` becomes the pair of attributes it really is: the value out through
+`BindConverter`, and the change back through `CreateBinder`, which parses what
+arrives into the target's type.
+
+A generic component names its type argument in the tag. The C# compiler infers
+it from the parameter values; that needs the type system, which a template
+compiler does not have.
+
 ### Where components live
 
 `Components/Pages/Home.vbrazor` compiles into `YourApp.Components.Home`. A
@@ -715,8 +736,12 @@ shows something else.
 - **`.vbp` pages** are under active development — the newest part of the
   repository, and the one whose shape is most likely to still change.
 - **Blazor components** cover routing, parameters, event handlers, child
-  components and `ChildContent`. Generic components, cascading parameters and
-  `@bind` are not implemented yet.
+  components, `ChildContent`, `@bind`, cascading values and generics. A
+  generic component names its type argument in the tag —
+  `<List(Of String) …>` — because inferring it from the parameter values needs
+  the type system the C# compiler has here and this does not. A
+  `CascadingValue` carries a `String`; another type needs the component
+  written by hand.
 - **The designer** is missing distance guides while dragging, a grid row/column
   overlay, and a colour picker in the property grid.
 
