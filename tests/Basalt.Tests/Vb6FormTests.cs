@@ -138,4 +138,119 @@ public class Vb6FormTests
     {
         Assert.Contains("MSCOMCTL.OCX", FormFile.Parse(Form).Objects);
     }
+
+    private const string Project = """
+        Type=Exe
+        Form=Form1.frm
+        Module=Modulo1; Modulo1.bas
+        Class=Cliente; Cliente.cls
+        Object={831FDD16-0C5C-11D2-A9FC-0000F8754DA1}#2.0#0; MSCOMCTL.OCX
+        Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#stdole2.tlb#OLE Automation
+        Startup="Form1"
+        Name="Anagrafica"
+        MajorVer=1
+        """;
+
+    [Fact]
+    public void ReadsWhatAProjectIsMadeOf()
+    {
+        var project = ProjectFile.Parse(Project);
+
+        Assert.Equal("Anagrafica", project.Name);
+        Assert.Equal("Form1", project.Startup);
+
+        // "Modulo1; Modulo1.bas" — Visual Basic keeps the module's own name
+        // beside the path, and taking the whole value gives a file that is
+        // not there.
+        Assert.Equal(["Modulo1.bas"], project.Modules);
+        Assert.Equal(["Cliente.cls"], project.Classes);
+        Assert.Equal(["Form1.frm"], project.Forms);
+    }
+
+    [Fact]
+    public void NamesTheOcxAProjectNeeds()
+    {
+        // Reported rather than dropped: the project builds without them and
+        // the forms show placeholders, so the author is told what to replace
+        // instead of finding out when a control does not appear.
+        Assert.Equal(["MSCOMCTL.OCX"], ProjectFile.Parse(Project).Objects);
+    }
+
+    [Fact]
+    public void WritesAProjectBesideTheOneItRead()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "Anagrafica.vbp"), Project);
+            File.WriteAllText(Path.Combine(directory, "Form1.frm"), Form);
+            File.WriteAllText(Path.Combine(directory, "Modulo1.bas"), "Option Explicit");
+
+            var result = ProjectConversion.Convert(
+                Path.Combine(directory, "Anagrafica.vbp"));
+
+            var markup = File.ReadAllText(result.ProjectPath);
+
+            // As AdditionalFiles, not Compile: the .frm is read by a generator
+            // during the build and left exactly as Visual Basic 6 wrote it.
+            Assert.Contains("<AdditionalFiles Include=\"Form1.frm\" />", markup);
+            Assert.DoesNotContain("<Compile Include=\"Form1.frm\"", markup);
+
+            // Option Strict had no equivalent in Visual Basic 6, and a project
+            // written against it assigns freely between types: left on,
+            // nothing would compile at all.
+            Assert.Contains("<OptionStrict>Off</OptionStrict>", markup);
+            Assert.Contains("Anagrafica.Form1", markup);
+
+            // Cliente.cls is listed by the project and not on disk, so it is
+            // left out rather than named in a project that will not restore.
+            Assert.DoesNotContain("Cliente.cls", markup);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ReadsTheSampleVisualBasic6ProjectAsWritten()
+    {
+        // Against the file Visual Basic 6 would have written, not against a
+        // string shaped for the test: CRLF endings, a comment after a value,
+        // a frame with controls inside it and a control from an OCX. Every one
+        // of those broke something while this was being built.
+        var directory = Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "..",
+            "samples", "Basalt.Sample.Vb6");
+
+        if (!Directory.Exists(directory))
+        {
+            Assert.Skip("the sample project is not beside the tests");
+            return;
+        }
+
+        var project = ProjectFile.Parse(
+            File.ReadAllText(Path.Combine(directory, "Anagrafica.vbp")));
+
+        Assert.Equal("Anagrafica", project.Name);
+        Assert.Equal(["Form1.frm"], project.Forms);
+        Assert.Equal(["Modulo1.bas"], project.Modules);
+        Assert.Equal(["MSCOMCTL.OCX"], project.Objects);
+
+        var form = FormFile.Parse(File.ReadAllText(Path.Combine(directory, "Form1.frm")));
+
+        // The frame, the button and the OCX control at the top; the text box
+        // and the label are inside the frame.
+        Assert.Equal(3, form.Root.Children.Count);
+        Assert.Contains("cmdOk_Click", form.Code);
+
+        var markup = XElement.Parse(FormToAxaml.Convert(form));
+
+        // The one that cannot be brought over is named and outlined, and the
+        // window opens with the gap visible.
+        Assert.Contains(markup.Descendants(),
+            e => e.Attribute("Tag")?.Value == "MSComctlLib.ListView");
+    }
 }

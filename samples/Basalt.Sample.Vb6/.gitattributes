@@ -1,0 +1,7 @@
+# Visual Basic 6 writes CRLF, and this sample exists to be the format as
+# written. Normalising it to LF would leave the parser measured against a file
+# no copy of Visual Basic 6 ever produced.
+*.vbp  -text
+*.frm  -text
+*.bas  -text
+*.cls  -text
