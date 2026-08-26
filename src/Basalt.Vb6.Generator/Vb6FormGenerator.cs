@@ -1,0 +1,169 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using Basalt.Vb6;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
+
+namespace Basalt.Vb6.Generator;
+
+/// <summary>
+/// Compiles Visual Basic 6 forms and modules during the build.
+/// </summary>
+/// <remarks>
+/// The .frm and .bas files go in as AdditionalFiles and are never rewritten:
+/// this reads them and writes Visual Basic .NET beside them in memory, so a
+/// project converted by Basalt still opens in Visual Basic 6 afterwards. That
+/// matters more than it sounds — anyone moving twenty-year-old code will open
+/// the original at least once to check what was made of it.
+/// </remarks>
+[Generator(LanguageNames.VisualBasic)]
+public sealed class Vb6FormGenerator : IIncrementalGenerator
+{
+    private static readonly DiagnosticDescriptor CouldNotRead = new(
+        "VB6001",
+        "A Visual Basic 6 file could not be read",
+        "'{0}' could not be read: {1}",
+        "Basalt.Vb6",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    private static readonly DiagnosticDescriptor NotTranslated = new(
+        "VB6002",
+        "A construct has no equivalent in Visual Basic .NET",
+        "{0} line {1}: {2} — {3}",
+        "Basalt.Vb6",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    private static readonly DiagnosticDescriptor ControlUnavailable = new(
+        "VB6003",
+        "A control could not be brought over",
+        "'{0}' uses {1}, which is not available here. The form opens with a placeholder in its place.",
+        "Basalt.Vb6",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var files = context.AdditionalTextsProvider
+            .Where(file =>
+                file.Path.EndsWith(".frm", StringComparison.OrdinalIgnoreCase)
+                || file.Path.EndsWith(".bas", StringComparison.OrdinalIgnoreCase)
+                || file.Path.EndsWith(".cls", StringComparison.OrdinalIgnoreCase))
+            .Select((file, ct) => Read(file, ct));
+
+        context.RegisterSourceOutput(files.Collect(), (production, all) =>
+        {
+            foreach (var file in all) Emit(production, file);
+        });
+    }
+
+    private static void Emit(SourceProductionContext production, Source file)
+    {
+        try
+        {
+            var name = Path.GetFileNameWithoutExtension(file.Path);
+
+            var code = file.Path.EndsWith(".frm", StringComparison.OrdinalIgnoreCase)
+                ? Form(production, file, name)
+                : Module(production, file, name);
+
+            production.AddSource(
+                $"{name}.Vb6.g.vb", SourceText.From(code, System.Text.Encoding.UTF8));
+        }
+        catch (Exception ex)
+        {
+            production.ReportDiagnostic(Diagnostic.Create(
+                CouldNotRead, Location.None, Path.GetFileName(file.Path), ex.Message));
+        }
+    }
+
+    private static string Form(SourceProductionContext production, Source file, string name)
+    {
+        var form = FormFile.Parse(file.Text);
+        var written = FormToVisualBasic.Write(form, name, file.Path);
+
+        Report(production, file.Path, written.Notes);
+
+        foreach (var control in written.Missing)
+            production.ReportDiagnostic(Diagnostic.Create(
+                ControlUnavailable, Location.None, Path.GetFileName(file.Path), control));
+
+        return written.Code;
+    }
+
+    /// <summary>
+    /// Writes a .bas as a module.
+    /// </summary>
+    /// <remarks>
+    /// A .bas is only a VB_Name attribute and code, so it needs the module
+    /// declaration wrapping it — Visual Basic 6 kept the name in an attribute
+    /// where Visual Basic .NET keeps it in the Module statement.
+    /// </remarks>
+    private static string Module(SourceProductionContext production, Source file, string name)
+    {
+        var lines = file.Text.Replace("\r\n", "\n").Split('\n');
+
+        var declared = lines
+            .FirstOrDefault(l => l.TrimStart().StartsWith(
+                "Attribute VB_Name", StringComparison.OrdinalIgnoreCase));
+
+        if (declared is not null)
+        {
+            var at = declared.IndexOf('"');
+            var end = declared.LastIndexOf('"');
+
+            if (at >= 0 && end > at) name = declared.Substring(at + 1, end - at - 1);
+        }
+
+        var body = string.Join("\n", lines.Where(l =>
+            !l.TrimStart().StartsWith("Attribute VB_", StringComparison.OrdinalIgnoreCase)));
+
+        var translated = CodeTranslation.Translate(body);
+
+        Report(production, file.Path, translated.Notes);
+
+        var isClass = file.Path.EndsWith(".cls", StringComparison.OrdinalIgnoreCase);
+        var keyword = isClass ? "Class" : "Module";
+
+        return $"""
+            ' <auto-generated>
+            '     Written by Basalt from a Visual Basic 6 file.
+            '     The original is unchanged and still opens in VB6.
+            ' </auto-generated>
+            Option Strict Off
+            Option Explicit On
+
+            Imports Basalt.Vb6.Runtime.Vb6Dialogs
+            Imports Microsoft.VisualBasic
+
+            Public {keyword} {name}
+            #ExternalSource("{file.Path.Replace("\\", "\\\\")}", 1)
+            {translated.Code}
+            #End ExternalSource
+            End {keyword}
+
+            """;
+    }
+
+    private static void Report(
+        SourceProductionContext production,
+        string path,
+        System.Collections.Generic.IReadOnlyList<CodeTranslation.Note> notes)
+    {
+        // Reported rather than rewritten. A translator that quietly guesses
+        // produces code that compiles and behaves differently, which is the
+        // worst of the three outcomes.
+        foreach (var note in notes)
+            production.ReportDiagnostic(Diagnostic.Create(
+                NotTranslated, Location.None,
+                Path.GetFileName(path), note.Line, note.Construct, note.Explanation));
+    }
+
+    private static Source Read(AdditionalText file, CancellationToken ct) =>
+        new(file.Path, file.GetText(ct)?.ToString() ?? string.Empty);
+
+    private sealed record Source(string Path, string Text);
+}

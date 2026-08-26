@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      Source generators run inside the compiler, which targets netstandard2.0.
+      The assembly ships as an analyzer, so its own build output is not
+      referenced by consuming projects.
+    -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.8.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!--
+    The reader and the writers as sources rather than as a reference: a
+    generator runs inside the compiler and can only load netstandard2.0
+    assemblies, while Basalt.Vb6 targets net10.0 because its runtime half sits
+    on Avalonia. Only the files that do not touch Avalonia are taken.
+  -->
+  <ItemGroup>
+    <!-- Records need it, and netstandard2.0 does not have it. -->
+    <Compile Include="../Basalt.Razor.Vb/IsExternalInit.cs" Link="Vb6/IsExternalInit.cs" />
+    <Compile Include="../Basalt.Vb6/FormFile.cs" Link="Vb6/FormFile.cs" />
+    <Compile Include="../Basalt.Vb6/CodeTranslation.cs" Link="Vb6/CodeTranslation.cs" />
+    <Compile Include="../Basalt.Vb6/FormToVisualBasic.cs" Link="Vb6/FormToVisualBasic.cs" />
+    <Compile Include="../Basalt.Vb6/ProjectFile.cs" Link="Vb6/ProjectFile.cs" />
+  </ItemGroup>
+
+</Project>

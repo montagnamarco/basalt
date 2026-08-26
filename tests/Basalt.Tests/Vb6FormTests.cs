@@ -387,4 +387,33 @@ public class Vb6FormTests
 
         Assert.DoesNotContain("Option Explicit", body);
     }
+
+    [Fact]
+    public void TranslatesAModuleWithoutTouchingWhatItDeclares()
+    {
+        // A .bas is only a VB_Name attribute and code: Visual Basic 6 kept the
+        // module's name in an attribute where Visual Basic .NET keeps it in
+        // the Module statement, so the attribute has to be read and dropped
+        // rather than passed through.
+        const string module = """
+            Attribute VB_Name = "Modulo1"
+            Option Explicit
+
+            Public Sub Avvia()
+                Debug.Print "avviato"
+            End Sub
+            """;
+
+        var body = string.Join("\n",
+            module.Split('\n').Where(l => !l.TrimStart().StartsWith("Attribute VB_")));
+
+        var translated = CodeTranslation.Translate(body).Code;
+
+        Assert.Contains("Debug.Print(\"avviato\")", translated);
+        Assert.DoesNotContain("Attribute VB_", translated);
+
+        // And the Option statement, which the generated file declares in the
+        // one place Visual Basic .NET accepts it.
+        Assert.DoesNotContain("Option Explicit", translated);
+    }
 }
