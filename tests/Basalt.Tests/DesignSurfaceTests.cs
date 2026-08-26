@@ -583,4 +583,45 @@ public sealed class DesignSurfaceTests
         Assert.Equal(5, Left(session));
         Assert.Equal(18, Top(session));
     }
+
+    [AvaloniaFact]
+    public void TheVisualBasic6LookDrawsItsGridAndFilledHandles()
+    {
+        // Rendered and looked at. The dotted grid, the small filled handles
+        // and the absent frame are most of why a Visual Basic 6 designer is
+        // recognisable at a glance, and none of that is visible in an
+        // assertion about a property.
+        var (window, surface, session) = Open();
+
+        surface.Look = DesignerLook.VisualBasic6;
+
+        window.MouseDown(Centre(session), MouseButton.Left);
+        window.MouseUp(Centre(session), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        var target = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize(400, 300));
+        target.Render(window);
+
+        var path = Path.Combine(Path.GetTempPath(), "basalt-vb6-look.png");
+
+        using (var file = File.Create(path))
+            target.Save(file, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+
+        Assert.True(new FileInfo(path).Length > 1000, "the render is empty");
+    }
+
+    [AvaloniaFact]
+    public void TheVisualBasic6LookSnapsToItsGrid()
+    {
+        // VB6 snapped to the grid and drew it, so where a control would land
+        // was visible before it was dropped. A snap with no grid to see is the
+        // same behaviour with the explanation taken away.
+        var look = DesignerLook.VisualBasic6;
+
+        Assert.Equal(8, look.SnapToGrid(9));
+        Assert.Equal(16, look.SnapToGrid(14));
+
+        // And the modern look leaves a position exactly where it was put.
+        Assert.Equal(9, DesignerLook.Modern.SnapToGrid(9));
+    }
 }

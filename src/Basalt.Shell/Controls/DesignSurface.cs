@@ -88,6 +88,28 @@ public sealed class DesignSurface : ContentControl
 
     public event EventHandler<XElement?>? SelectionChanged;
 
+    /// <summary>
+    /// How the surface draws itself.
+    /// </summary>
+    /// <remarks>
+    /// Set to DesignerLook.VisualBasic6 for a form opened from a .frm: the
+    /// dotted grid, the small filled handles and the grey surface are most of
+    /// why a Visual Basic 6 designer is recognisable at a glance, and someone
+    /// opening a twenty-year-old form is expecting to recognise it.
+    /// </remarks>
+    public DesignerLook Look
+    {
+        get => _look;
+        set
+        {
+            _look = value;
+            InvalidateVisual();
+            DrawSelectionAdorner();
+        }
+    }
+
+    private DesignerLook _look = DesignerLook.Modern;
+
     public DesignSurface()
     {
         Background = Brushes.Transparent;
@@ -286,7 +308,7 @@ public sealed class DesignSurface : ContentControl
         // else selects first. Checked before hit-testing because the handles
         // sit outside the control's own bounds and would otherwise select
         // whatever is behind them.
-        if (SelectionBounds() is { } bounds && HandleAt(bounds, at) is { } handle)
+        if (SelectionBounds() is { } bounds && HandleAt(bounds, at, HandleSize) is { } handle)
         {
             _drag = new Drag { Origin = at, Bounds = bounds, Handle = handle };
             e.Pointer.Capture(this);
@@ -615,6 +637,33 @@ public sealed class DesignSurface : ContentControl
         DrawSelectionAdorner();
     }
 
+    /// <summary>
+    /// Draws the dotted grid a Visual Basic 6 form sits on.
+    /// </summary>
+    /// <remarks>
+    /// Through Render rather than as controls: a form of any size is thousands
+    /// of dots, and thousands of Borders in the tree costs more than drawing
+    /// them costs.
+    /// </remarks>
+    public override void Render(DrawingContext context)
+    {
+        base.Render(context);
+
+        // The surface behind the form. Left to the theme in the modern look,
+        // painted here in the Visual Basic 6 one, where the grey is as much of
+        // the recognition as the grid is.
+        if (Look.SurfaceBrush is not null)
+            context.FillRectangle(Look.SurfaceBrush, new Rect(Bounds.Size));
+
+        if (!Look.ShowsGrid || Look.GridBrush is null || Look.GridSpacing <= 0) return;
+
+        var pen = new Pen(Look.GridBrush, 1);
+
+        for (var x = Look.GridSpacing; x < Bounds.Width; x += Look.GridSpacing)
+        for (var y = Look.GridSpacing; y < Bounds.Height; y += Look.GridSpacing)
+            context.DrawLine(pen, new Point(x, y), new Point(x + 1, y));
+    }
+
     /// <summary>Draws the frame and handles around the selected controls.</summary>
     private void DrawSelectionAdorner()
     {
@@ -651,18 +700,23 @@ public sealed class DesignSurface : ContentControl
         // the drag ends, and there is no telling where it will land.
         if (_drag is { Started: true } drag) bounds = Preview(bounds, drag);
 
-        var frame = new Border
+        // Visual Basic 6 draws the handles and nothing between them. Drawing
+        // both a frame and filled handles reads as neither look.
+        if (Look.ShowsSelectionFrame)
         {
-            BorderBrush = Brushes.DodgerBlue,
-            BorderThickness = new Thickness(2),
-            Width = bounds.Width,
-            Height = bounds.Height,
-            IsHitTestVisible = false,
-        };
+            var frame = new Border
+            {
+                BorderBrush = Brushes.DodgerBlue,
+                BorderThickness = new Thickness(2),
+                Width = bounds.Width,
+                Height = bounds.Height,
+                IsHitTestVisible = false,
+            };
 
-        Canvas.SetLeft(frame, bounds.X);
-        Canvas.SetTop(frame, bounds.Y);
-        _adorners.Children.Add(frame);
+            Canvas.SetLeft(frame, bounds.X);
+            Canvas.SetTop(frame, bounds.Y);
+            _adorners.Children.Add(frame);
+        }
 
         foreach (var handle in Enum.GetValues<Handle>())
             _adorners.Children.Add(DrawHandle(bounds, handle));
@@ -826,7 +880,7 @@ public sealed class DesignSurface : ContentControl
     }
 
     /// <summary>How big a resize handle is drawn.</summary>
-    private const double HandleSize = 7;
+    private double HandleSize => Look.HandleSize;
 
     private Control DrawHandle(Rect bounds, Handle handle)
     {
@@ -834,9 +888,9 @@ public sealed class DesignSurface : ContentControl
         {
             Width = HandleSize,
             Height = HandleSize,
-            Background = Brushes.White,
-            BorderBrush = Brushes.DodgerBlue,
-            BorderThickness = new Thickness(1),
+            Background = Look.HandleFill,
+            BorderBrush = Look.HandleStroke,
+            BorderThickness = new Thickness(Look.HandleStroke is null ? 0 : 1),
             IsHitTestVisible = false,
         };
 
@@ -861,16 +915,18 @@ public sealed class DesignSurface : ContentControl
     };
 
     /// <summary>The handle under a point, when one is.</summary>
-    private static Handle? HandleAt(Rect bounds, Point point)
+    private static Handle? HandleAt(Rect bounds, Point point, double size)
     {
         foreach (var handle in Enum.GetValues<Handle>())
         {
             var centre = HandleCentre(bounds, handle);
 
-            // A little larger than the drawn square: a 7-pixel target is hard
-            // to hit, and missing it starts a move instead of a resize.
-            if (Math.Abs(point.X - centre.X) <= HandleSize &&
-                Math.Abs(point.Y - centre.Y) <= HandleSize)
+            // A little larger than the drawn square: a small target is hard to
+            // hit, and missing it starts a move instead of a resize. The
+            // Visual Basic 6 look draws them smaller still, so the target is
+            // taken from the size rather than fixed at it.
+            if (Math.Abs(point.X - centre.X) <= size &&
+                Math.Abs(point.Y - centre.Y) <= size)
                 return handle;
         }
 
