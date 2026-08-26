@@ -98,9 +98,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
             !VbHtmlCompletionProvider.IsInCode(document.Text, position))
             return null;
 
-        var generated = VbHtmlCodeWriter.WriteWithMap(
-            VbHtmlParser.Parse(document.Text),
-            "GeneratedView", "Basalt.Generated", document.FilePath, Host);
+        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
                   ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
@@ -132,9 +130,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
             !VbHtmlCompletionProvider.IsInCode(document.Text, position))
             return [];
 
-        var generated = VbHtmlCodeWriter.WriteWithMap(
-            VbHtmlParser.Parse(document.Text),
-            "GeneratedView", "Basalt.Generated", document.FilePath, Host);
+        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
                   ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
@@ -173,7 +169,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
     /// </summary>
     private static SourceLocation? BackToTemplate(
         LanguageDocument document,
-        VbHtmlCodeWriter.Generated generated,
+        TemplateGeneration.Generated generated,
         SourceLocation found)
     {
         var generatedText = SourceText.From(generated.Code);
@@ -212,9 +208,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
         if (_questions.QuickInfo is null || !VbHtmlCompletionProvider.IsInCode(document.Text, position))
             return null;
 
-        var generated = VbHtmlCodeWriter.WriteWithMap(
-            VbHtmlParser.Parse(document.Text),
-            "GeneratedView", "Basalt.Generated", document.FilePath, Host);
+        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
                   ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);

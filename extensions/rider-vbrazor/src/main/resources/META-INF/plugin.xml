@@ -65,11 +65,13 @@
             own — the compiler already generates one, and a second is a build
             error — so the platform instantiates it from the class name.
         -->
+        <!-- vbrazor shares this type: a Blazor component carries the same
+             syntax as a view and differs only in the class compiled from it. -->
         <fileType
             name="Razor (Visual Basic)"
             implementationClass="com.basalt.vbrazor.VbHtmlFileType"
             language="vbhtml"
-            extensions="vbhtml" />
+            extensions="vbhtml;vbrazor" />
 
         <fileType
             name="Basalt Page (Visual Basic)"

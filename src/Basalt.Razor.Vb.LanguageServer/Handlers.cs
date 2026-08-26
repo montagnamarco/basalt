@@ -265,7 +265,11 @@ internal static class Selector
     public static TextDocumentSelector ForVbHtml { get; } =
         new(
             TextDocumentFilter.ForPattern("**/*.vbhtml"),
-            TextDocumentFilter.ForPattern("**/*.vbp"));
+            TextDocumentFilter.ForPattern("**/*.vbp"),
+
+            // Blazor components: the same syntax as a view, compiled into a
+            // different class. The editor asks the same questions of both.
+            TextDocumentFilter.ForPattern("**/*.vbrazor"));
 
     /// <summary>
     /// The templates and plain Visual Basic, for formatting only.
@@ -282,5 +286,6 @@ internal static class Selector
         new(
             TextDocumentFilter.ForPattern("**/*.vbhtml"),
             TextDocumentFilter.ForPattern("**/*.vbp"),
+            TextDocumentFilter.ForPattern("**/*.vbrazor"),
             TextDocumentFilter.ForPattern("**/*.vb"));
 }

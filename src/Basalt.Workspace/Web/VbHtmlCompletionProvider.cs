@@ -80,9 +80,7 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
 
         var parsed = VbHtmlParser.Parse(document.Text);
 
-        var generated = VbHtmlCodeWriter.WriteWithMap(
-            parsed, "GeneratedView", "Basalt.Generated", document.FilePath,
-            Host);
+        var generated = TemplateGeneration.For(parsed, document.FilePath, Host);
 
         if (CaretInGenerated(document.Text, generated, position) is not { } at)
             return [];
@@ -103,9 +101,7 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         // Nothing in the markup half takes arguments.
         if (_askSignature is null || !IsInCode(document.Text, position)) return null;
 
-        var generated = VbHtmlCodeWriter.WriteWithMap(
-            VbHtmlParser.Parse(document.Text),
-            "GeneratedView", "Basalt.Generated", document.FilePath, Host);
+        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
 
         if (CaretInGenerated(document.Text, generated, position) is not { } at)
             return null;
@@ -127,7 +123,7 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     /// Inclusive and then Inferred still find something useful.
     /// </summary>
     private static int? CaretInGenerated(
-        string template, VbHtmlCodeWriter.Generated generated, int position) =>
+        string template, TemplateGeneration.Generated generated, int position) =>
         VbHtmlCodeRegions.CaretInGenerated(
             template, generated.Code, generated.Map, position)
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inclusive)

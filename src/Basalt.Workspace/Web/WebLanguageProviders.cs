@@ -285,7 +285,11 @@ public static class WebLanguageProviders
     /// generator's business.
     /// </summary>
     public static ILanguageProvider VbRazor { get; } = new WebProvider(
-        new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml"], isCaseSensitive: false),
+        // .vbrazor alongside: a Blazor component carries the same syntax as a
+        // view and asks the same questions of the editor. Listing only the
+        // view left a component with no provider at all, so it coloured — that
+        // comes from the parser — and answered nothing else.
+        new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor"], isCaseSensitive: false),
         new VbHtmlCompletionProvider(),
         new VbHtmlDiagnosticProvider(),
         new VbHtmlFormattingProvider(),
@@ -311,7 +315,7 @@ public static class WebLanguageProviders
             askSignature = null,
         ViewHost host = ViewHost.Standalone) =>
         new WebProvider(
-            new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml"],
+            new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor"],
                 isCaseSensitive: false),
             askSignature is null
                 ? new VbHtmlCompletionProvider(ask) { Host = host }

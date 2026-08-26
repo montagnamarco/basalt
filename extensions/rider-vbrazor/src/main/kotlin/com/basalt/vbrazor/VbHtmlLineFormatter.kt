@@ -48,7 +48,7 @@ class VbHtmlLineFormatter : EditorFactoryListener {
         // itself, "end if" stays lower case, and a new line lands at the left
         // margin. Completion and navigation are left to ReSharper, which does
         // them well — only formatting is claimed here.
-        if (file.extension !in setOf("vbhtml", "vbp", "vb")) return
+        if (file.extension !in setOf("vbhtml", "vbp", "vbrazor", "vb")) return
 
         val watcher = LineWatcher(project, editor, file)
 

@@ -101,4 +101,68 @@ public class VbComponentWriterTests
         // marker was written into the class as a line of its own.
         Assert.DoesNotContain("\n@\n", written);
     }
+
+    [Fact]
+    public void MapsACaretIntoTheExpressionItIsOn()
+    {
+        // The mappings are what the editor runs on: a caret in a component is
+        // moved through them into the generated code, asked about there, and
+        // the answer moved back. Without them a component could be coloured —
+        // that comes from the parser — and could answer nothing else.
+        const string template = "<p>@Model.Nome</p>\n";
+
+        var generated = VbComponentWriter.WriteWithMap(
+            VbHtmlParser.Parse(template), "C", "N", "/x/C.vbrazor");
+
+        var caret = template.IndexOf("Model.", StringComparison.Ordinal) + "Model.".Length;
+        var mapped = generated.Map.ToGenerated(caret, template, generated.Code);
+
+        Assert.NotNull(mapped);
+
+        // Inside the expression, not at the start of the statement carrying
+        // it: mapping the whole line put the caret before "__builder", far
+        // enough out that Roslyn was asked about the wrong token.
+        var around = generated.Code.Substring(mapped!.Value - 12, 12);
+
+        Assert.Contains("Model.", around);
+    }
+
+    [Fact]
+    public void MapsACaretInsideABlocksCondition()
+    {
+        // The opening clause carries the interesting expression — the
+        // condition of an If, the source of a For Each — so a caret there has
+        // to reach the compiler. Mapping only the body left every question
+        // asked inside a condition unanswered.
+        const string template = "@If ok Then\n<b>s</b>\n@End If\n";
+
+        var generated = VbComponentWriter.WriteWithMap(
+            VbHtmlParser.Parse(template), "C", "N", "/x/C.vbrazor");
+
+        var caret = template.IndexOf("ok", StringComparison.Ordinal) + 2;
+
+        Assert.NotNull(generated.Map.ToGenerated(caret, template, generated.Code));
+    }
+
+    [Fact]
+    public void KeepsEveryDirectiveOnItsOwnLine()
+    {
+        // #ExternalSource has to start a line. Writing an expression with
+        // Append rather than AppendLine left the builder mid-line, and the
+        // directive was glued into the middle of the call it was meant to
+        // wrap — a file that did not compile.
+        var written = VbComponentWriter.WriteWithMap(
+            VbHtmlParser.Parse("<p>@Nome</p>\n"), "C", "N", "/x/C.vbrazor").Code;
+
+        foreach (var line in written.Split('\n'))
+        {
+            var trimmed = line.TrimStart();
+
+            if (!trimmed.StartsWith("#", StringComparison.Ordinal)) continue;
+
+            Assert.Equal(trimmed, line.Trim());
+        }
+
+        Assert.DoesNotContain("AddContent(1, #", written);
+    }
 }

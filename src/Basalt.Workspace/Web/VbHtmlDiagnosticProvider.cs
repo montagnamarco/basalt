@@ -106,9 +106,7 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
     private async Task<IReadOnlyList<Diagnostic>> SemanticDiagnosticsAsync(
         LanguageDocument document, CancellationToken ct)
     {
-        var generated = VbHtmlCodeWriter.WriteWithMap(
-            VbHtmlParser.Parse(document.Text),
-            "GeneratedView", "Basalt.Generated", document.FilePath, Host);
+        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
 
         var found = await _ask!(generated.Code, ct).ConfigureAwait(false);
 
