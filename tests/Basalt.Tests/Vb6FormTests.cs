@@ -253,4 +253,89 @@ public class Vb6FormTests
         Assert.Contains(markup.Descendants(),
             e => e.Attribute("Tag")?.Value == "MSComctlLib.ListView");
     }
+
+    [Fact]
+    public void WiresAnEventHandlerTheWayVisualBasicNetNeeds()
+    {
+        // The one that matters. Visual Basic 6 wired an event by the name of
+        // the procedure — cmdOk_Click *was* the handler — and Visual Basic .NET
+        // wants it said out loud. Without the clause the code compiles, runs,
+        // and does nothing: no error, and the button simply never responds.
+        var translated = CodeTranslation.Translate(
+            "Private Sub cmdOk_Click()\nEnd Sub", ["cmdOk"]).Code;
+
+        Assert.Contains("Handles cmdOk.Click", translated);
+    }
+
+    [Fact]
+    public void HandlesTheFormsOwnEventsOnMe()
+    {
+        // Form_Load has no control called Form to hang from.
+        var translated = CodeTranslation.Translate(
+            "Private Sub Form_Load()\nEnd Sub", ["txtNome"]).Code;
+
+        Assert.Contains("Handles Me.Load", translated);
+    }
+
+    [Fact]
+    public void LeavesAMethodThatMerelyLooksLikeAHandlerAlone()
+    {
+        // A Sub named like a handler for something the form does not have is
+        // an ordinary method, and a Handles clause naming a missing control
+        // stops the file compiling.
+        var translated = CodeTranslation.Translate(
+            "Private Sub Report_Print()\nEnd Sub", ["cmdOk"]).Code;
+
+        Assert.DoesNotContain("Handles", translated);
+    }
+
+    [Theory]
+    [InlineData("s = Trim$(x)", "s = Trim(x)")]
+    [InlineData("MsgBox \"ciao\"", "MsgBox(\"ciao\")")]
+    [InlineData("MsgBox \"x\", vbCritical", "MsgBox(\"x\", vbCritical)")]
+    [InlineData("Set a = Nothing", "a = Nothing")]
+    [InlineData("Dim v As Variant", "Dim v As Object")]
+    public void RewritesTheSpellingsTheLanguageDropped(string vb6, string expected)
+    {
+        Assert.Equal(expected, CodeTranslation.Translate(vb6).Code);
+    }
+
+    [Fact]
+    public void WidensIntegerAndLongToWhatTheyMeantInVisualBasic6()
+    {
+        // Integer was 16 bits and Long was 32. Keeping the names halves the
+        // range of every Integer in the program, silently — a loop that ran to
+        // 40000 stops working and nothing says why.
+        var translated = CodeTranslation.Translate(
+            "Dim n As Integer\nDim big As Long").Code;
+
+        Assert.Contains("n As Short", translated);
+        Assert.Contains("big As Integer", translated);
+    }
+
+    [Fact]
+    public void LeavesAStringLiteralExactlyAsWritten()
+    {
+        // Rewriting inside a message changes what the program says to whoever
+        // is reading the screen.
+        const string line = "  Debug.Print(\"use Trim$ here\")";
+
+        Assert.Equal(line, CodeTranslation.Translate(line).Code);
+    }
+
+    [Fact]
+    public void ReportsWhatItCannotTranslateRatherThanGuessing()
+    {
+        // A translator that quietly guesses produces code that compiles and
+        // behaves differently, which is worse than either of the alternatives.
+        var result = CodeTranslation.Translate(
+            "    GoSub Etichetta\n    Dim s As String * 10");
+
+        Assert.Equal(2, result.Notes.Count);
+        Assert.Contains(result.Notes, n => n.Construct == "GoSub");
+        Assert.Contains(result.Notes, n => n.Construct == "fixed-length string");
+
+        // And leaves them alone: a line reported is a line the author reads.
+        Assert.Contains("GoSub Etichetta", result.Code);
+    }
 }
