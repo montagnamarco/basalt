@@ -165,4 +165,33 @@ public class VbComponentWriterTests
 
         Assert.DoesNotContain("AddContent(1, #", written);
     }
+
+    [Fact]
+    public void RegistersAnEventHandlerWrittenInAnAttribute()
+    {
+        // Three defects in a row, each hiding the next. The parser stopped at
+        // the keyword, so onclick="@AddressOf Go" produced AddAttribute(..,
+        // AddressOf) with the method name stranded in the markup. Then
+        // AddAttribute had no overload for a bare delegate. Then the element
+        // was written as literal markup, so the attribute followed no element
+        // frame and Blazor refused it at render.
+        var written = Write("<button onclick=\"@AddressOf Vai\">x</button>");
+
+        Assert.Contains("OpenElement", written);
+        Assert.Contains("EventCallback.Factory.Create(Me, AddressOf Vai)", written);
+
+        // The tag's own bracket is Blazor's to write: leaving the one from the
+        // template put a stray > in the page.
+        Assert.DoesNotContain("\">", written.Substring(written.IndexOf("AddAttribute", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void KeepsAddressOfWithWhatItPointsAt()
+    {
+        // Read as a member chain it stopped at the keyword, leaving the method
+        // name behind as text.
+        var written = Write("<p>@AddressOf Vai</p>");
+
+        Assert.Contains("AddressOf Vai", written);
+    }
 }

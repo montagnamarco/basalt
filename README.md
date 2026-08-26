@@ -14,6 +14,9 @@ Along the way it grew a few things that stand on their own:
   .NET Framework; Basalt brings it back, as packages that work in Rider,
   Visual Studio and VS Code as well as here. This is the largest piece of
   work in the repository and most of what follows is about it.
+- **Blazor components in Visual Basic.** A `.vbrazor` file compiles into a
+  real `ComponentBase`, with parameters, event handlers and routing. Server,
+  WebAssembly and Auto all work from the same compiled class.
 - **`.vbp` pages** — Classic ASP's philosophy, brought up to date: a page is a
   file, a URL is a path, save and refresh. **Under active development.**
 - **QuickBASIC**, which is here for the fun of it. See
@@ -33,6 +36,7 @@ use them in whatever editor you already have.
 - [How a view becomes a class](#how-a-view-becomes-a-class)
 - [The language](#the-language)
 - [Serving views under ASP.NET Core](#serving-views-under-aspnet-core)
+- [Blazor components](#blazor-components)
 - [`.vbp` pages: Classic ASP, modernised](#vbp-pages-classic-asp-modernised)
 - [IDE support for `.vbhtml`](#ide-support-for-vbhtml)
 - [Project templates](#project-templates)
@@ -347,6 +351,61 @@ serve both.
 
 ---
 
+## Blazor components
+
+`.razor` is C# only, the same way `.cshtml` is. A `.vbrazor` file is the
+Visual Basic counterpart: same Razor syntax, compiled into a real
+`ComponentBase` rather than into a class that writes markup.
+
+```vbrazor
+@Page "/"
+
+<h1>@Titolo</h1>
+<p>Conteggio: @count</p>
+<button onclick="@AddressOf Incrementa">Aggiungi uno</button>
+
+@Functions
+    <Global.Microsoft.AspNetCore.Components.Parameter>
+    Public Property Titolo As String = "Ciao"
+
+    Private count As Integer
+
+    Private Sub Incrementa()
+        count += 1
+    End Sub
+@End Functions
+```
+
+```bash
+dotnet new blazor -lang VB -o MyApp
+cd MyApp && dotnet run
+```
+
+**Server, WebAssembly and Auto need nothing different.** They differ in where
+a component runs, not in what is compiled for it, so the same `.vbrazor`
+serves all three.
+
+### What the compiler does differently
+
+A component does not write HTML out as text. It builds a **render tree** —
+`OpenElement`, `AddContent`, `CloseElement` — which Blazor diffs against the
+previous one to decide what to change on screen. A component that wrote markup
+as text would compile and render nothing, which is why this is a separate
+writer rather than a flag on the view one.
+
+`@Page` supplies the route. `@Functions` becomes the component's own members,
+so `<Parameter>` properties and event handlers live there. An `@AddressOf` in
+an attribute is wrapped in an `EventCallback` the way the C# compiler wraps
+`@onclick`.
+
+### Where components live
+
+`Components/Pages/Home.vbrazor` compiles into `YourApp.Components.Home`. A
+folder called `Pages` is where the namespace starts from rather than part of
+it — the same rule views follow.
+
+---
+
 ## `.vbp` pages: Classic ASP, modernised
 
 > **Under active development.** The parser, the compiler, the hosting and the
@@ -479,6 +538,7 @@ Installed once per machine, not referenced by a project. Then, from anywhere:
 | `dotnet new webapp -lang VB` | Razor Pages |
 | `dotnet new webapi -lang VB` | Web API |
 | `dotnet new web -lang VB` | empty ASP.NET Core |
+| `dotnet new blazor -lang VB` | a Blazor app with `.vbrazor` components |
 | `dotnet new vbpages` | a site of `.vbp` pages |
 
 These are the same short names the C# templates use, so `-lang VB` selects the
@@ -586,7 +646,7 @@ Razor for Visual Basic:
 
 | Path | |
 |---|---|
-| `src/Basalt.Razor.Vb` | parser, code writer, source mappings, source generator |
+| `src/Basalt.Razor.Vb` | parser, view and component writers, source mappings |
 | `src/Basalt.Razor.Vb.AspNetCore` | the ASP.NET Core integration — `AddVbViews` |
 | `src/Basalt.Razor.Vb.Generator` | the build-time generator entry point |
 | `src/Basalt.Razor.Vb.LanguageServer` | the LSP server all four editors run |
@@ -637,6 +697,9 @@ shows something else.
   the Rider plugin but have had less use. Reports are welcome.
 - **`.vbp` pages** are under active development — the newest part of the
   repository, and the one whose shape is most likely to still change.
+- **Blazor components** cover routing, parameters, event handlers and the
+  three render modes. Child components placed inside one another, generic
+  components and `RenderFragment` parameters are not implemented yet.
 - **The designer** is missing distance guides while dragging, a grid row/column
   overlay, and a colour picker in the property grid.
 

@@ -156,21 +156,57 @@ public static class VbComponentWriter
                 && nodes[i + 2] is HtmlNode after
                 && AttributeNameAt(html.Text) is { } name)
             {
-                // The markup before the attribute still has to be written; the
-                // attribute itself becomes an AddAttribute call once the
-                // element is open.
+                // The markup before the attribute ends inside the tag it
+                // belongs to — "<button " — so it cannot be written as literal
+                // markup: Blazor refuses an attribute that does not follow an
+                // element frame, and the page failed at render with
+                // "Attributes may only be added immediately after frames of
+                // type Element or Component". The element is opened properly
+                // and only what precedes the tag is written as markup.
                 var before = html.Text.Substring(
                     0, html.Text.Length - name.Length - 2);
 
-                WriteMarkup(builder, before, ref sequence, pad, pending);
+                var tagAt = before.LastIndexOf('<');
+
+                if (tagAt >= 0 && before.IndexOf('>', tagAt) < 0)
+                {
+                    WriteMarkup(builder, before.Substring(0, tagAt), ref sequence, pad, pending);
+
+                    var element = Name(before.Substring(tagAt + 1).TrimStart());
+
+                    builder.AppendLine($"{pad}__builder.OpenElement({sequence++}, \"{element}\")");
+
+                    // Any attributes already written inside the tag before this
+                    // one, which would otherwise be lost with the literal.
+                    var written = before.Substring(tagAt + 1 + element.Length);
+
+                    WriteAttributes(builder, written, ref sequence, pad);
+                }
+                else
+                {
+                    WriteMarkup(builder, before, ref sequence, pad, pending);
+                }
 
                 builder.AppendLine(
-                    $"{pad}__builder.AddAttribute({sequence++}, \"{name}\", {expression.Expression})");
+                    $"{pad}__builder.AddAttribute({sequence++}, \"{name}\", " +
+                    $"{Expression(expression.Expression)})");
 
-                // The closing literal opens whatever follows, so only its
-                // leading quote is consumed here.
+                // The closing literal starts with the quote that ended the
+                // attribute value, and — when the tag ends there — with the
+                // ">" closing the tag as well. Both belong to markup already
+                // turned into calls: leaving them in put a stray ">" in the
+                // page, and Blazor writes the tag's own bracket.
+                var rest = after.Text.Substring(1);
+                var skipped = 1;
+
+                if (rest.StartsWith(">", StringComparison.Ordinal))
+                {
+                    rest = rest.Substring(1);
+                    skipped = 2;
+                }
+
                 nodes = Replace(nodes, i + 2, new HtmlNode(
-                    after.Text.Substring(1), after.Position + 1, after.Line));
+                    rest, after.Position + skipped, after.Line));
 
                 i++;
                 continue;
@@ -438,11 +474,31 @@ public static class VbComponentWriter
             // has to reach AddAttribute as an expression or the handler is
             // registered as the literal string.
             var written = value.StartsWith("@", StringComparison.Ordinal)
-                ? value.Substring(1)
+                ? Expression(value.Substring(1))
                 : Quoted(value);
 
             builder.AppendLine($"{pad}__builder.AddAttribute({sequence++}, \"{name}\", {written})");
         }
+    }
+
+    /// <summary>
+    /// An attribute value that is Visual Basic rather than text.
+    /// </summary>
+    /// <remarks>
+    /// A method reference is wrapped in an EventCallback. AddAttribute has no
+    /// overload taking a bare delegate, so onclick="@AddressOf Go" compiled to
+    /// a call that did not resolve — "no accessible AddAttribute can be called
+    /// with these arguments", pointing at generated code rather than at the
+    /// template. The C# compiler does the same wrapping for @onclick.
+    /// </remarks>
+    private static string Expression(string code)
+    {
+        var trimmed = code.Trim();
+
+        return trimmed.StartsWith("AddressOf", StringComparison.Ordinal)
+            ? "Global.Microsoft.AspNetCore.Components.EventCallback.Factory.Create(Me, " +
+              trimmed + ")"
+            : trimmed;
     }
 
     /// <summary>The attributes in a tag, as name and value.</summary>

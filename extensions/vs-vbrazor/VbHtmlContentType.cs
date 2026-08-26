@@ -33,6 +33,13 @@ public static class VbHtmlContentDefinition
     // same parser, and registering only the view left pages as plain text in
     // Visual Studio — no colouring, no completion, and no formatting — while
     // the other three editors handled them.
+    // Blazor components: the same syntax as a view, compiled into a different
+    // class, so they share the content type and the server behind it.
+    [Export]
+    [FileExtension(".vbrazor")]
+    [ContentType(ContentTypeName)]
+    internal static FileExtensionToContentTypeDefinition? VbComponentFileExtension { get; set; }
+
     [Export]
     [FileExtension(".vbp")]
     [ContentType(ContentTypeName)]

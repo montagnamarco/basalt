@@ -1138,6 +1138,24 @@ public sealed class VbHtmlParser
     {
         var raw = false;
 
+        // "@AddressOf Handler" is one expression, not the word AddressOf
+        // followed by text. Read as a member chain it stopped at the keyword
+        // and left the method name in the markup, so onclick="@AddressOf Go"
+        // produced AddAttribute(.., AddressOf) and an unterminated string
+        // after it — the component did not compile.
+        //
+        // The keyword stays in the expression rather than becoming a flag:
+        // it is Visual Basic as written, and every writer passes it through
+        // untouched.
+        var prefix = string.Empty;
+
+        if (LooksLikeKeywordAt(_index, "AddressOf"))
+        {
+            Advance("AddressOf".Length);
+            SkipSpacesAndTabs();
+            prefix = "AddressOf ";
+        }
+
         // @Html.Raw(...) writes its argument without encoding.
         if (LooksLikeKeywordAt(_index, "Html.Raw"))
         {
@@ -1160,7 +1178,7 @@ public sealed class VbHtmlParser
             expression = ReadMemberChain();
         }
 
-        into.Add(new ExpressionNode(expression.Trim(), raw, start, line, awaited));
+        into.Add(new ExpressionNode(prefix + expression.Trim(), raw, start, line, awaited));
     }
 
     /// <summary>

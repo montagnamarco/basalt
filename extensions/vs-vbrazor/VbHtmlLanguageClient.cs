@@ -28,7 +28,7 @@ public sealed class VbHtmlLanguageClient : ILanguageClient
 
     // Both, because the server answers both: watching only the view meant a
     // page edited outside the editor was never reported to the server.
-    public IEnumerable<string>? FilesToWatch => new[] { "**/*.vbhtml", "**/*.vbp" };
+    public IEnumerable<string>? FilesToWatch => new[] { "**/*.vbhtml", "**/*.vbp", "**/*.vbrazor" };
 
     public bool ShowNotificationOnInitializeFailed => true;
 

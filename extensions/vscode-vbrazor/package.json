@@ -34,7 +34,8 @@
           "vbhtml"
         ],
         "extensions": [
-          ".vbhtml"
+          ".vbhtml",
+          ".vbrazor"
         ],
         "configuration": "./language-configuration.json"
       },
