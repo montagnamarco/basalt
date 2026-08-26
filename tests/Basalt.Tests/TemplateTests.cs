@@ -183,10 +183,10 @@ public sealed class TemplateTests
     [Fact]
     public void EveryPageInThePagesTemplateIsAPage()
     {
-        // A .vbp under Pages that the generator will not compile is a file
+        // A .vbpage under Pages that the generator will not compile is a file
         // that silently answers nothing.
         var pages = Directory.GetFiles(
-            Path.Combine(TemplateRoot, "BasaltVbPages", "Pages"), "*.vbp",
+            Path.Combine(TemplateRoot, "BasaltVbPages", "Pages"), "*.vbpage",
             SearchOption.AllDirectories);
 
         Assert.NotEmpty(pages);
@@ -244,7 +244,7 @@ public sealed class TemplateTests
     [Fact]
     public void ThePagesTemplateKeepsItsOwnGroup()
     {
-        // No official counterpart to join: a site of .vbp pages is not a
+        // No official counterpart to join: a site of .vbpage pages is not a
         // Visual Basic spelling of anything Microsoft ships.
         var path = Path.Combine(
             TemplateRoot, "BasaltVbPages", ".template.config", "template.json");

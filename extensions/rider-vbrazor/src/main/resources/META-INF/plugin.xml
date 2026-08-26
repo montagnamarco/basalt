@@ -76,8 +76,8 @@
         <fileType
             name="Basalt Page (Visual Basic)"
             implementationClass="com.basalt.vbrazor.VbPageFileType"
-            language="vbp"
-            extensions="vbp" />
+            language="vbpage"
+            extensions="vbpage" />
 
         <platform.lsp.serverSupportProvider
             implementation="com.basalt.vbrazor.VbHtmlLspServerSupportProvider" />

@@ -530,7 +530,7 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
 
     internal static FormattingResult Format(string text, int caret)
     {
-        // A .vbp page is written with <% %> rather than @, so the Razor parser
+        // A .vbpage page is written with <% %> rather than @, so the Razor parser
         // sees one long run of markup and finds nothing to lay out. The pages
         // were left exactly as typed while views were being tidied, which is
         // the sort of gap nobody reports as a bug — it just quietly feels

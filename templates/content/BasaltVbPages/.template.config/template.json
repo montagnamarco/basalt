@@ -7,7 +7,7 @@
     "Visual Basic"
   ],
   "identity": "Basalt.VisualBasic.Pages",
-  "name": "Web site of .vbp pages, Visual Basic",
+  "name": "Web site of .vbpage pages, Visual Basic",
   "description": "A site where a file is a page, in the shape of Classic ASP and PHP: no controllers, no models, and the file's own path is its URL.",
   "shortName": "vbpages",
   "tags": {
@@ -41,7 +41,7 @@
     },
     {
       "condition": "(HostIdentifier != \"dotnetcli\" && HostIdentifier != \"dotnetcli-preview\")",
-      "path": "Pages/Index.vbp"
+      "path": "Pages/Index.vbpage"
     }
   ],
   "defaultName": "VbPages"

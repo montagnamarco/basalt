@@ -33,7 +33,7 @@ public abstract class VbPage
     /// <summary>Where the output goes.</summary>
     protected TextWriter Output { get; private set; } = TextWriter.Null;
 
-    /// <summary>Writes the page. Generated from the .vbp file.</summary>
+    /// <summary>Writes the page. Generated from the .vbpage file.</summary>
     public abstract Task RenderAsync();
 
     /// <summary>Runs the page against a request.</summary>

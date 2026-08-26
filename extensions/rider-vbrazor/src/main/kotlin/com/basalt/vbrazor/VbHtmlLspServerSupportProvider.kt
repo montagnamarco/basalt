@@ -25,10 +25,10 @@ class VbHtmlLspServerSupportProvider : LspServerSupportProvider {
         file: VirtualFile,
         serverStarter: LspServerSupportProvider.LspServerStarter
     ) {
-        // Both extensions: a .vbp page is answered by the same server, and
+        // Both extensions: a .vbpage page is answered by the same server, and
         // guarding on the view alone left pages with a registered file type,
         // a grammar, and no server behind them.
-        if (file.extension !in setOf("vbhtml", "vbp", "vbrazor", "vb")) return
+        if (file.extension !in setOf("vbhtml", "vbpage", "vbrazor", "vb")) return
 
         // Without the server the file still opens; only the language features
         // are missing, which is better than refusing to show it.
@@ -93,7 +93,7 @@ private class VbHtmlLspServerDescriptor(project: Project) :
     ProjectWideLspServerDescriptor(project, "Razor (Visual Basic)") {
 
     override fun isSupportedFile(file: VirtualFile): Boolean =
-        file.extension in setOf("vbhtml", "vbp", "vbrazor")
+        file.extension in setOf("vbhtml", "vbpage", "vbrazor")
 
     /**
      * Colouring, from the server rather than from a grammar here.
@@ -137,7 +137,7 @@ private class VbHtmlLspServerDescriptor(project: Project) :
             // it with ours would be a downgrade. What Rider does not do there
             // is the typing behaviour, and that arrives through the caret
             // listener without needing exclusivity.
-            file.extension in setOf("vbhtml", "vbp", "vbrazor")
+            file.extension in setOf("vbhtml", "vbpage", "vbrazor")
     }
 
     override fun createCommandLine(): GeneralCommandLine {

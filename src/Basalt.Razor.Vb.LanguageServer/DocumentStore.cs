@@ -7,7 +7,7 @@ namespace Basalt.Razor.Vb.LanguageServer;
 public sealed record OpenDocument(string Uri, string Text, int Version)
 {
     /// <summary>
-    /// Whether this is a .vbp page rather than a Razor view.
+    /// Whether this is a .vbpage page rather than a Razor view.
     /// </summary>
     /// <remarks>
     /// The two hold the same Visual Basic behind different delimiters — @ in
@@ -15,7 +15,7 @@ public sealed record OpenDocument(string Uri, string Text, int Version)
     /// same everything else.
     /// </remarks>
     public bool IsPage { get; } =
-        Uri.EndsWith(".vbp", StringComparison.OrdinalIgnoreCase);
+        Uri.EndsWith(".vbpage", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// The parsed view, computed once and kept.
@@ -24,7 +24,7 @@ public sealed record OpenDocument(string Uri, string Text, int Version)
     /// times per keystroke would be felt.
     /// </summary>
     public VbHtmlDocument Parsed { get; } =
-        Uri.EndsWith(".vbp", StringComparison.OrdinalIgnoreCase)
+        Uri.EndsWith(".vbpage", StringComparison.OrdinalIgnoreCase)
             ? AsView(Basalt.Razor.Vb.Classic.VbPageParser.Parse(Text))
             : VbHtmlParser.Parse(Text);
 

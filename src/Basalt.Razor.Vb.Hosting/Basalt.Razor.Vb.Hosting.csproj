@@ -8,11 +8,11 @@
 
     <PackageId>Basalt.Razor.Vb.Hosting</PackageId>
     <Description>
-      .vbp pages for ASP.NET Core, in the Classic ASP style: a page is a file,
+      .vbpage pages for ASP.NET Core, in the Classic ASP style: a page is a file,
       a URL is a path. Compiles them on demand while the site runs, so saving
       a file is enough to see the change.
     </Description>
-    <PackageTags>vb;visualbasic;vbp;aspnetcore;classic-asp;hot-reload</PackageTags>
+    <PackageTags>vb;visualbasic;vbpage;aspnetcore;classic-asp;hot-reload</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

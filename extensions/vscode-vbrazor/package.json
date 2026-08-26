@@ -21,7 +21,7 @@
   ],
   "activationEvents": [
     "onLanguage:vbhtml",
-    "onLanguage:vbp",
+    "onLanguage:vbpage",
     "onCommand:vbrazor.newProject"
   ],
   "main": "./out/extension.js",
@@ -40,13 +40,13 @@
         "configuration": "./language-configuration.json"
       },
       {
-        "id": "vbp",
+        "id": "vbpage",
         "aliases": [
           "Basalt Page (Visual Basic)",
-          "vbp"
+          "vbpage"
         ],
         "extensions": [
-          ".vbp"
+          ".vbpage"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -62,9 +62,9 @@
         }
       },
       {
-        "language": "vbp",
-        "scopeName": "text.html.vbp",
-        "path": "./syntaxes/vbp.tmLanguage.json",
+        "language": "vbpage",
+        "scopeName": "text.html.vbpage",
+        "path": "./syntaxes/vbpage.tmLanguage.json",
         "embeddedLanguages": {
           "source.asp.vb.net": "vb",
           "text.html.basic": "html"
@@ -108,7 +108,7 @@
         "editor.formatOnSave": true,
         "editor.formatOnType": true
       },
-      "[vbp]": {
+      "[vbpage]": {
         "editor.formatOnSave": true,
         "editor.formatOnType": true
       }

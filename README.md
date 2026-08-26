@@ -17,7 +17,7 @@ Along the way it grew a few things that stand on their own:
 - **Blazor components in Visual Basic.** A `.vbrazor` file compiles into a
   real `ComponentBase`, with parameters, event handlers and routing. Server,
   WebAssembly and Auto all work from the same compiled class.
-- **`.vbp` pages** — Classic ASP's philosophy, brought up to date: a page is a
+- **`.vbpage` pages** — Classic ASP's philosophy, brought up to date: a page is a
   file, a URL is a path, save and refresh. **Under active development.**
 - **QuickBASIC**, which is here for the fun of it. See
   [below](#quickbasic-for-the-fun-of-it).
@@ -37,7 +37,7 @@ use them in whatever editor you already have.
 - [The language](#the-language)
 - [Serving views under ASP.NET Core](#serving-views-under-aspnet-core)
 - [Blazor components](#blazor-components)
-- [`.vbp` pages: Classic ASP, modernised](#vbp-pages-classic-asp-modernised)
+- [`.vbpage` pages: Classic ASP, modernised](#vbpage-pages-classic-asp-modernised)
 - [IDE support for `.vbhtml`](#ide-support-for-vbhtml)
 - [Project templates](#project-templates)
 - [QuickBASIC, for the fun of it](#quickbasic-for-the-fun-of-it)
@@ -154,7 +154,7 @@ restore time, at build time, or at start-up. None of them depends on the IDE.
 |---|---|---|
 | **`Basalt.Razor.Vb.AspNetCore`** | Serves `.vbhtml` views from MVC and Razor Pages | Any web project with Razor views. **Start here** — it pulls in the generator for you |
 | **`Basalt.Razor.Vb`** | The compiler: source generator, parser, runtime | Comes in automatically with the one above. Reference it directly only for views outside a web app |
-| **`Basalt.Razor.Vb.Hosting`** | `.vbp` pages, compiled while the site runs | Only for Classic ASP-style pages |
+| **`Basalt.Razor.Vb.Hosting`** | `.vbpage` pages, compiled while the site runs | Only for Classic ASP-style pages |
 | **`Basalt.Templates`** | `dotnet new` templates for VB web projects | Installed once per machine, not referenced by a project |
 
 ### `Basalt.Razor.Vb` — turns views into classes
@@ -191,7 +191,7 @@ Referencing both is fine and changes nothing.
 This is the package to install for an MVC or Razor Pages site. A Web API with
 no views needs neither.
 
-### `Basalt.Razor.Vb.Hosting` — `.vbp` pages
+### `Basalt.Razor.Vb.Hosting` — `.vbpage` pages
 
 Only for the Classic ASP-style pages. Separate for a concrete reason: it
 carries the Visual Basic compiler, which is tens of megabytes, and a site that
@@ -221,7 +221,7 @@ See [Project templates](#project-templates). Uninstall with
 |---|---|
 | MVC or Razor Pages site with `.vbhtml` views | `Basalt.Razor.Vb.AspNetCore` |
 | Web API, no views | nothing |
-| A site of `.vbp` pages | `Basalt.Razor.Vb.Hosting` |
+| A site of `.vbpage` pages | `Basalt.Razor.Vb.Hosting` |
 | Razor templates outside a web app (mail, reports) | `Basalt.Razor.Vb` |
 
 ---
@@ -444,7 +444,7 @@ it — the same rule views follow.
 
 ---
 
-## `.vbp` pages: Classic ASP, modernised
+## `.vbpage` pages: Classic ASP, modernised
 
 > **Under active development.** The parser, the compiler, the hosting and the
 > editor support all work and are covered by tests — but this is the newest
@@ -457,11 +457,11 @@ is a file, a URL is a path, there are no controllers or models to declare, and
 you save the file and refresh the browser.
 
 That directness is what made those tools easy to start with, and what the
-modern frameworks traded away for structure. `.vbp` is an attempt to have it
+modern frameworks traded away for structure. `.vbpage` is an attempt to have it
 back on top of ASP.NET Core — the old feel, with a real compiler underneath and
 none of the old drawbacks.
 
-```vbp
+```vbpage
 <%@ Import Namespace="System.Linq" %>
 <html>
   <body>
@@ -520,7 +520,7 @@ answer back. Your types, your references, your project.
 The half that made VB feel like VB, in every editor rather than only in
 Basalt: type `end if` and it becomes `End If`; type `if x=1 then` and it
 becomes `If x = 1 Then`. Blocks inside `@Code` are indented to their depth,
-and `<% %>` blocks in a `.vbp` page are tidied on their own line.
+and `<% %>` blocks in a `.vbpage` page are tidied on their own line.
 
 The markup is left exactly as written. Where a tag breaks and how attributes
 wrap are opinions people hold strongly, and a formatter that rearranged a
@@ -540,7 +540,7 @@ alone — a template is unparseable most of the time it is being typed into.
 | VS Code | on save and while typing, enabled by the extension for these files only |
 | Basalt | ⌥⌘D, on save, and while typing |
 
-Both `.vbhtml` and `.vbp` are handled.
+Both `.vbhtml` and `.vbpage` are handled.
 
 ### Rider
 
@@ -577,7 +577,7 @@ Installed once per machine, not referenced by a project. Then, from anywhere:
 | `dotnet new webapi -lang VB` | Web API |
 | `dotnet new web -lang VB` | empty ASP.NET Core |
 | `dotnet new blazor -lang VB` | a Blazor app with `.vbrazor` components |
-| `dotnet new vbpages` | a site of `.vbp` pages |
+| `dotnet new vbpages` | a site of `.vbpage` pages |
 
 These are the same short names the C# templates use, so `-lang VB` selects the
 Visual Basic one exactly the way `-lang F#` selects F#.
@@ -688,10 +688,10 @@ Razor for Visual Basic:
 | `src/Basalt.Razor.Vb.AspNetCore` | the ASP.NET Core integration — `AddVbViews` |
 | `src/Basalt.Razor.Vb.Generator` | the build-time generator entry point |
 | `src/Basalt.Razor.Vb.LanguageServer` | the LSP server all four editors run |
-| `src/Basalt.Razor.Vb.Hosting` | `.vbp` pages and on-the-fly compilation |
+| `src/Basalt.Razor.Vb.Hosting` | `.vbpage` pages and on-the-fly compilation |
 | `extensions/` | the Rider, Visual Studio and VS Code plugins, all named Basalt |
 | `templates/` | `dotnet new` templates |
-| `samples/` | a working MVC site and a `.vbp` site |
+| `samples/` | a working MVC site and a `.vbpage` site |
 
 And the rest:
 
@@ -710,7 +710,7 @@ disagree about what a view means.
 
 **Compile-time, not runtime.** Views are classes in your assembly. No runtime
 compilation, no first-request delay, no Razor SDK dependency at run time. The
-`.vbp` model is the deliberate exception, and only in development.
+`.vbpage` model is the deliberate exception, and only in development.
 
 **Nothing forked.** MVC, Razor Pages, dependency injection, model binding and
 validation are stock ASP.NET Core. The integration is three registrations. There
@@ -733,7 +733,7 @@ shows something else.
   `addTagHelper`/`removeTagHelper`/`tagHelperPrefix` are not implemented yet.
 - **The Visual Studio and VS Code extensions** are built from the same server as
   the Rider plugin but have had less use. Reports are welcome.
-- **`.vbp` pages** are under active development — the newest part of the
+- **`.vbpage` pages** are under active development — the newest part of the
   repository, and the one whose shape is most likely to still change.
 - **Blazor components** cover routing, parameters, event handlers, child
   components, `ChildContent`, `@bind`, cascading values and generics. A

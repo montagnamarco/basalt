@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Routing;
 namespace Basalt.Web;
 
 /// <summary>
-/// Routes <c>.vbp</c> pages by their path, the way a web server serves files.
+/// Routes <c>.vbpage</c> pages by their path, the way a web server serves files.
 /// </summary>
 public static class VbPageEndpoints
 {
@@ -16,7 +16,7 @@ public static class VbPageEndpoints
     /// <remarks>
     /// One call, and a page added later needs no second one: the file's own
     /// path is its route, which is the whole point of working this way. A
-    /// page at Pages/Shop/Cart.vbp answers at /shop/cart.
+    /// page at Pages/Shop/Cart.vbpage answers at /shop/cart.
     /// </remarks>
     public static IEndpointRouteBuilder MapVbPages(
         this IEndpointRouteBuilder endpoints, params Assembly[] pageAssemblies)

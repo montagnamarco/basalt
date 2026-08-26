@@ -14,7 +14,7 @@
     </header>
 
     <main>
-        <p>This page is <code>Pages/About.vbp</code>, and it answers on <code>/about</code>.</p>
+        <p>This page is <code>Pages/About.vbpage</code>, and it answers on <code>/about</code>.</p>
 
         <h2>The blocks</h2>
         <dl>

@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Compiles every .vbp into a class, at build time. -->
+    <!-- Compiles every .vbpage into a class, at build time. -->
     <PackageReference Include="Basalt.Razor.Vb" Version="1.0.0" />
     <PackageReference Include="Basalt.Razor.Vb.AspNetCore" Version="1.0.0" />
 

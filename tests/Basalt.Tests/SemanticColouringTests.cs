@@ -194,12 +194,12 @@ public sealed class SemanticColouringTests
     [Fact]
     public void APageIsColouredToo()
     {
-        // A .vbp holds the same Visual Basic behind different delimiters. The
+        // A .vbpage holds the same Visual Basic behind different delimiters. The
         // server ignored the extension entirely, so a page got no colouring
         // and no completion at all.
         const string page = "<h1>hi</h1>\n<% Dim n = 42 %>\n<p><%= n %></p>\n";
 
-        var types = Tokens(page, "file:///p.vbp").Select(t => t.Type).Distinct().ToList();
+        var types = Tokens(page, "file:///p.vbpage").Select(t => t.Type).Distinct().ToList();
 
         Assert.Contains(SemanticTokenType.Number, types);
     }
@@ -212,7 +212,7 @@ public sealed class SemanticColouringTests
         // first line.
         const string page = "<h1>hi</h1>\n<% Dim n = 42 %>\n";
 
-        var numbers = Tokens(page, "file:///p.vbp")
+        var numbers = Tokens(page, "file:///p.vbpage")
             .Where(t => t.Type == SemanticTokenType.Number)
             .ToList();
 

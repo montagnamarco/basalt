@@ -144,7 +144,7 @@ public sealed class VbHtmlFormattingTests
     [Fact]
     public void LaysOutAPageOfAngleBracketBlocks()
     {
-        // A .vbp page is written with <% %>, which the Razor parser reads as
+        // A .vbpage page is written with <% %>, which the Razor parser reads as
         // one long run of markup: it found nothing to format and pages were
         // left exactly as typed while views were being tidied.
         var result = VbHtmlFormattingProvider.Format(

@@ -19,7 +19,7 @@
     </header>
 
     <main>
-        <p>A site of <code>.vbp</code> pages, written in Visual Basic.</p>
+        <p>A site of <code>.vbpage</code> pages, written in Visual Basic.</p>
 
         <ul>
         <% For Each feature In Features %>
@@ -28,7 +28,7 @@
         </ul>
 
         <p>
-            Edit <code>Pages/Index.vbp</code>, save, and reload this page.
+            Edit <code>Pages/Index.vbpage</code>, save, and reload this page.
             Nothing to rebuild.
         </p>
     </main>

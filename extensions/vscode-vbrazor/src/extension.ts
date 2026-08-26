@@ -31,11 +31,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     };
 
     const clientOptions: LanguageClientOptions = {
-        // Both: a .vbp page is the same Visual Basic behind different
+        // Both: a .vbpage page is the same Visual Basic behind different
         // delimiters, and the server answers about either.
         documentSelector: [
             { scheme: 'file', language: 'vbhtml' },
-            { scheme: 'file', language: 'vbp' }
+            { scheme: 'file', language: 'vbpage' }
         ],
         synchronize: {
             // The .vb files too: a view's model lives in one, and the server
@@ -44,7 +44,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             // since changed.
             fileEvents: [
                 vscode.workspace.createFileSystemWatcher('**/*.vbhtml'),
-                vscode.workspace.createFileSystemWatcher('**/*.vbp'),
+                vscode.workspace.createFileSystemWatcher('**/*.vbpage'),
                 vscode.workspace.createFileSystemWatcher('**/*.vb'),
                 vscode.workspace.createFileSystemWatcher('**/*.vbproj')
             ]
@@ -80,7 +80,7 @@ function formatLinesOnLeaving(context: vscode.ExtensionContext): void {
         const editor = event.textEditor;
         const document = editor.document;
 
-        if (document.languageId !== 'vbhtml' && document.languageId !== 'vbp') return;
+        if (document.languageId !== 'vbhtml' && document.languageId !== 'vbpage') return;
 
         const line = editor.selection.active.line;
         const previous = lastLine;

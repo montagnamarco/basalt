@@ -36,26 +36,26 @@ object VbHtmlFileType : LanguageFileType(VbHtmlLanguage) {
 }
 
 /**
- * The language a .vbp page is written in.
+ * The language a .vbpage page is written in.
  *
  * Separate from the view's language because the delimiters differ — &lt;% %&gt;
  * rather than @ — and the platform keys a grammar and a file type to a
  * language, not to an extension.
  */
-object VbPageLanguage : Language("vbp", "text/vbp") {
+object VbPageLanguage : Language("vbpage", "text/vbpage") {
     private fun readResolve(): Any = VbPageLanguage
 
     override fun getDisplayName(): String = "Basalt Page (Visual Basic)"
 }
 
-/** The .vbp file type. */
+/** The .vbpage file type. */
 object VbPageFileType : LanguageFileType(VbPageLanguage) {
 
     override fun getName(): String = "Basalt Page (Visual Basic)"
 
     override fun getDescription(): String = "Page written in Visual Basic, in the Classic ASP shape"
 
-    override fun getDefaultExtension(): String = "vbp"
+    override fun getDefaultExtension(): String = "vbpage"
 
     override fun getIcon(): Icon? = null
 }

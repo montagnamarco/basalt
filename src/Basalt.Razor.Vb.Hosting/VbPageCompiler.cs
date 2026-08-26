@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.VisualBasic;
 namespace Basalt.Razor.Vb.Hosting;
 
 /// <summary>
-/// Compiles a <c>.vbp</c> page while the site is running, and again when the
+/// Compiles a <c>.vbpage</c> page while the site is running, and again when the
 /// file changes.
 /// </summary>
 /// <remarks>
@@ -32,7 +32,7 @@ public sealed class VbPageCompiler : IDisposable
     /// <summary>
     /// Watches a folder of pages.
     /// </summary>
-    /// <param name="root">The folder holding the .vbp files.</param>
+    /// <param name="root">The folder holding the .vbpage files.</param>
     /// <param name="watch">
     /// Whether to notice changes on disk. A watcher costs a handle and a
     /// thread, which a site that never edits its pages has no use for.
@@ -43,7 +43,7 @@ public sealed class VbPageCompiler : IDisposable
 
         if (!watch || !Directory.Exists(_root)) return;
 
-        _watcher = new FileSystemWatcher(_root, "*.vbp")
+        _watcher = new FileSystemWatcher(_root, "*.vbpage")
         {
             IncludeSubdirectories = true,
             NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,

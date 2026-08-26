@@ -290,14 +290,14 @@ public sealed class ExtensionReadmeTests
     [Fact]
     public void BothFileTypesReachTheServer()
     {
-        // A .vbp page has its own file type and its own grammar; without the
+        // A .vbpage page has its own file type and its own grammar; without the
         // guard admitting it too, it had both and no server behind them —
         // colouring from the grammar, and nothing else at all.
         var provider = Read(
             "rider-vbrazor", "src", "main", "kotlin", "com", "basalt", "vbrazor",
             "VbHtmlLspServerSupportProvider.kt");
 
-        Assert.Contains("\"vbp\"", provider, StringComparison.Ordinal);
+        Assert.Contains("\"vbpage\"", provider, StringComparison.Ordinal);
         Assert.Contains("\"vbhtml\"", provider, StringComparison.Ordinal);
     }
 
@@ -307,7 +307,7 @@ public sealed class ExtensionReadmeTests
         var riderManifest = Read(
             "rider-vbrazor", "src", "main", "resources", "META-INF", "plugin.xml");
 
-        Assert.Contains("extensions=\"vbp\"", riderManifest, StringComparison.Ordinal);
+        Assert.Contains("extensions=\"vbpage\"", riderManifest, StringComparison.Ordinal);
 
         var vsCode = System.Text.Json.JsonDocument.Parse(
             File.ReadAllText(Path.Combine(Root(), "vscode-vbrazor", "package.json")));
@@ -319,6 +319,6 @@ public sealed class ExtensionReadmeTests
             .ToList();
 
         Assert.Contains("vbhtml", languages);
-        Assert.Contains("vbp", languages);
+        Assert.Contains("vbpage", languages);
     }
 }

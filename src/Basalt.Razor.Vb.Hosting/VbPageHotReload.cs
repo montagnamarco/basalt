@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Routing;
 namespace Basalt.Razor.Vb.Hosting;
 
 /// <summary>
-/// Serves <c>.vbp</c> pages straight from disk, recompiling on every change.
+/// Serves <c>.vbpage</c> pages straight from disk, recompiling on every change.
 /// </summary>
 public static class VbPageHotReload
 {
@@ -68,7 +68,7 @@ public static class VbPageHotReload
     /// The page a URL asks for.
     /// </summary>
     /// <remarks>
-    /// "/shop/cart" is Shop/Cart.vbp, and "/shop" is Shop/Index.vbp — the
+    /// "/shop/cart" is Shop/Cart.vbpage, and "/shop" is Shop/Index.vbpage — the
     /// convention every web server has had since the first one.
     /// </remarks>
     private static VbPageCompiler.Result? FindPage(VbPageCompiler compiler, string route)
@@ -91,12 +91,12 @@ public static class VbPageHotReload
     {
         if (route.Length == 0)
         {
-            yield return "Index.vbp";
+            yield return "Index.vbpage";
             yield break;
         }
 
-        yield return route + ".vbp";
-        yield return Path.Combine(route, "Index.vbp");
+        yield return route + ".vbpage";
+        yield return Path.Combine(route, "Index.vbpage");
     }
 
     /// <summary>

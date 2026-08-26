@@ -1,17 +1,17 @@
 # Basalt.Razor.Vb.Hosting
 
-`.vbp` pages for ASP.NET Core, compiled while the site is running.
+`.vbpage` pages for ASP.NET Core, compiled while the site is running.
 
 > **Under active development.** This is the newest part of
 > [Basalt](https://github.com/montagnamarco/basalt) and the one whose shape is
 > most likely to change.
 
-## What a `.vbp` page is
+## What a `.vbpage` page is
 
 Classic ASP's philosophy, on top of ASP.NET Core: a page is a file, a URL is a
 path, and there are no controllers or models to declare.
 
-```vbp
+```vbpage
 <%@ Import Namespace="System.Linq" %>
 <html>
   <body>

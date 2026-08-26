@@ -3,7 +3,7 @@
 <html>
 <head><title>Basalt Pages</title></head>
 <body>
-    <h1>Hello from a .vbp page</h1>
+    <h1>Hello from a .vbpage page</h1>
 
     <% Dim names = {"Ada", "Grace", "Margaret"} %>
 

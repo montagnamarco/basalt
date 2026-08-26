@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace Basalt.Razor.Vb.Generator;
 
 /// <summary>
-/// Compiles <c>.vbp</c> pages into classes, one per file.
+/// Compiles <c>.vbpage</c> pages into classes, one per file.
 /// </summary>
 /// <remarks>
 /// The Classic ASP idea with the compiler kept: a page is a file you drop in
@@ -21,7 +21,7 @@ public sealed class VbPageGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var pages = context.AdditionalTextsProvider
-            .Where(file => file.Path.EndsWith(".vbp", StringComparison.OrdinalIgnoreCase))
+            .Where(file => file.Path.EndsWith(".vbpage", StringComparison.OrdinalIgnoreCase))
             .Select((file, ct) => (file.Path, Text: file.GetText(ct)?.ToString() ?? ""));
 
         var rootNamespace = context.AnalyzerConfigOptionsProvider.Select((options, _) =>
@@ -81,8 +81,8 @@ public sealed class VbPageGenerator : IIncrementalGenerator
           + $"    Public Class {ViewNaming.Escape(className)}");
 
         var hint = folder.Length > 0
-            ? $"{folder.Replace('.', '_')}_{className}.vbp.g.vb"
-            : $"{className}.vbp.g.vb";
+            ? $"{folder.Replace('.', '_')}_{className}.vbpage.g.vb"
+            : $"{className}.vbpage.g.vb";
 
         production.AddSource(hint, SourceText.From(code, Encoding.UTF8));
     }
@@ -99,7 +99,7 @@ public sealed class VbPageGenerator : IIncrementalGenerator
     {
         var relative = Relative(path, projectDirectory);
 
-        var withoutExtension = relative.Substring(0, relative.Length - ".vbp".Length);
+        var withoutExtension = relative.Substring(0, relative.Length - ".vbpage".Length);
         var segments = withoutExtension.Split('/', '\\')
             .Where(s => s.Length > 0)
             .ToList();
@@ -151,7 +151,7 @@ public sealed class VbPageGenerator : IIncrementalGenerator
 
     private static readonly DiagnosticDescriptor PageProblem = new(
         "VBP100",
-        "Problem in a .vbp page",
+        "Problem in a .vbpage page",
         "{0}",
         "Basalt.Pages",
         DiagnosticSeverity.Error,

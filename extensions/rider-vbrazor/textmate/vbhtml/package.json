@@ -11,9 +11,9 @@
         ]
       },
       {
-        "id": "vbp",
+        "id": "vbpage",
         "extensions": [
-          ".vbp"
+          ".vbpage"
         ]
       }
     ],
@@ -24,9 +24,9 @@
         "path": "./vbhtml.tmLanguage.json"
       },
       {
-        "language": "vbp",
-        "scopeName": "text.html.vbp",
-        "path": "./vbp.tmLanguage.json"
+        "language": "vbpage",
+        "scopeName": "text.html.vbpage",
+        "path": "./vbpage.tmLanguage.json"
       }
     ]
   }

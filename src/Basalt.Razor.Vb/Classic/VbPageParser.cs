@@ -3,7 +3,7 @@ using System.Text;
 namespace Basalt.Razor.Vb.Classic;
 
 /// <summary>
-/// Reads a <c>.vbp</c> page: HTML with Visual Basic between <c>&lt;% %&gt;</c>.
+/// Reads a <c>.vbpage</c> page: HTML with Visual Basic between <c>&lt;% %&gt;</c>.
 /// </summary>
 /// <remarks>
 /// The shape of Classic ASP and of PHP, which is a different idea from Razor

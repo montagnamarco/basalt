@@ -7,8 +7,8 @@ Imports Basalt.Razor.Vb.Hosting
 ''' A site where a file is a page.
 ''' </summary>
 ''' <remarks>
-''' No controllers and no models: a .vbp in the Pages folder answers on its
-''' own path, and Pages/Shop/Cart.vbp is /shop/cart. The shape Classic ASP and
+''' No controllers and no models: a .vbpage in the Pages folder answers on its
+''' own path, and Pages/Shop/Cart.vbpage is /shop/cart. The shape Classic ASP and
 ''' PHP have, with the compiler kept.
 ''' </remarks>
 Public Module Program

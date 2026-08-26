@@ -257,7 +257,7 @@ internal static class Selector
     /// Both file types the server understands.
     /// </summary>
     /// <remarks>
-    /// A .vbp page is the same Visual Basic in a different wrapper: the
+    /// A .vbpage page is the same Visual Basic in a different wrapper: the
     /// delimiters are &lt;% %&gt; rather than @, and everything the editor
     /// asks about — a name, a member, an error — has the same answer. Left
     /// out, a page got no colouring and no completion at all.
@@ -265,7 +265,7 @@ internal static class Selector
     public static TextDocumentSelector ForVbHtml { get; } =
         new(
             TextDocumentFilter.ForPattern("**/*.vbhtml"),
-            TextDocumentFilter.ForPattern("**/*.vbp"),
+            TextDocumentFilter.ForPattern("**/*.vbpage"),
 
             // Blazor components: the same syntax as a view, compiled into a
             // different class. The editor asks the same questions of both.
@@ -285,7 +285,7 @@ internal static class Selector
     public static TextDocumentSelector ForFormatting { get; } =
         new(
             TextDocumentFilter.ForPattern("**/*.vbhtml"),
-            TextDocumentFilter.ForPattern("**/*.vbp"),
+            TextDocumentFilter.ForPattern("**/*.vbpage"),
             TextDocumentFilter.ForPattern("**/*.vbrazor"),
             TextDocumentFilter.ForPattern("**/*.vb"));
 }
