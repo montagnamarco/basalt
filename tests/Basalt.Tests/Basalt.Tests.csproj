@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\Basalt.Workspace\Basalt.Workspace.csproj" />
 
     <ProjectReference Include="..\..\src\Basalt.Core\Basalt.Core.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Vb6\Basalt.Vb6.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Designer\Basalt.Designer.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Shell\Basalt.Shell.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />

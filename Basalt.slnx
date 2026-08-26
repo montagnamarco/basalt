@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Basalt.Core/Basalt.Core.csproj" />
     <Project Path="src/Basalt.Designer/Basalt.Designer.csproj" />
+  <Project Path="src/Basalt.Vb6/Basalt.Vb6.csproj" />
     <Project Path="src/Basalt.Extensibility/Basalt.Extensibility.csproj" />
     <Project Path="src/Basalt.Razor.Vb.AspNetCore/Basalt.Razor.Vb.AspNetCore.csproj" />
     <Project Path="src/Basalt.Razor.Vb.Generator/Basalt.Razor.Vb.Generator.csproj" />
