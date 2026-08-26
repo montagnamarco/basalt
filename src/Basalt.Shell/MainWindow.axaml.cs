@@ -441,7 +441,19 @@ public partial class MainWindow : Window
         // away in the other half, which is where it gets repaired.
         if (session is null) return BrokenDesignerView(document);
 
-        var surface = new DesignSurface { Session = session };
+        var surface = new DesignSurface
+        {
+            Session = session,
+
+            // A form opened from a .frm gets the designer Visual Basic 6 had:
+            // the dotted grid, the grey surface and the small filled handles
+            // are most of why one is recognisable at a glance, and someone
+            // opening a twenty-year-old form is expecting to recognise it.
+            Look = document.FilePath is { } path
+                && path.EndsWith(".frm", StringComparison.OrdinalIgnoreCase)
+                    ? DesignerLook.VisualBasic6
+                    : DesignerLook.Modern,
+        };
 
         surface.SelectionChanged += (_, _) => _properties?.Show(session);
 
@@ -4453,6 +4465,14 @@ var editor = new CodeEditor(document, ViewModel);
                 new FilePickerFileType("Soluzioni e progetti .NET")
                 {
                     Patterns = ["*.sln", "*.slnx", "*.csproj", "*.vbproj"]
+                },
+
+                // A Visual Basic 6 project opens by being converted, and a
+                // filter that does not offer it means nobody finds out that
+                // it can be.
+                new FilePickerFileType("Progetti Visual Basic 6")
+                {
+                    Patterns = ["*.vbp"]
                 }
             ]
         });

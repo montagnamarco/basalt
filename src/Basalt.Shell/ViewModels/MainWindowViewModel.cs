@@ -121,12 +121,46 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// </summary>
     public event EventHandler<(string Path, bool IsSolution)>? Opened;
 
+    /// <summary>
+    /// Turns a Visual Basic 6 project into one this IDE can open.
+    /// </summary>
+    /// <remarks>
+    /// Written beside the .vbp rather than over it. What could not be brought
+    /// over — a control from an OCX this machine does not have — is put in the
+    /// output window, because a conversion that quietly leaves something out
+    /// is found later and by accident.
+    /// </remarks>
+    private string ConvertVisualBasic6Project(string vbpPath)
+    {
+        var result = Basalt.Vb6.ProjectConversion.Convert(vbpPath);
+
+        AppendOutput($"[vb6] {Path.GetFileName(vbpPath)} -> {Path.GetFileName(result.ProjectPath)}");
+
+        foreach (var source in result.Sources)
+            AppendOutput($"[vb6] {source}");
+
+        foreach (var ocx in result.MissingObjects)
+            AppendOutput(
+                $"[warning] {ocx} is not available here. Controls from it open " +
+                "as placeholders.");
+
+        return result.ProjectPath;
+    }
+
     public async Task OpenSolutionAsync(string path)
     {
         IsBusy = true;
         StatusMessage = Localizer.Get(StringKeys.StatusOpening, Path.GetFileName(path));
         try
         {
+            // A Visual Basic 6 project is opened by writing a .NET one beside
+            // it and opening that: from there it is an ordinary project, with
+            // the IntelliSense and the debugger that already work. The .frm
+            // and .bas files are left exactly as Visual Basic 6 wrote them and
+            // are read during the build.
+            if (Path.GetExtension(path).Equals(".vbp", StringComparison.OrdinalIgnoreCase))
+                path = ConvertVisualBasic6Project(path);
+
             SolutionPath = path;
             Explorer.Load(path);
             Opened?.Invoke(this, (path, true));
@@ -222,8 +256,19 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
             try
             {
+                // A Visual Basic 6 form is read and turned into the markup the
+                // designer works on. Its controls carry Canvas.Left and
+                // Canvas.Top, which is what a .frm is: everything positioned
+                // absolutely and staying where it was put.
+                var markup = document.FilePath is { } path
+                    && path.EndsWith(".frm", StringComparison.OrdinalIgnoreCase)
+                        ? Basalt.Vb6.FormToAxaml.Convert(
+                            Basalt.Vb6.FormFile.Parse(document.Text),
+                            Path.GetFileNameWithoutExtension(path))
+                        : document.Text;
+
                 session = new DesignerSession(
-                    XamlDocument.Parse(document.Text, document.FilePath), language);
+                    XamlDocument.Parse(markup, document.FilePath), language);
             }
             catch (System.Xml.XmlException ex)
             {

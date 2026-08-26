@@ -105,7 +105,10 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
     private static NodeKind Classify(string path) =>
         Path.GetExtension(path).ToLowerInvariant() switch
         {
-            ".axaml" or ".xaml" => NodeKind.XamlFile,
+            // A .frm opens in the designer too: it is read and turned into
+            // the markup the designer works on, and the file itself is never
+            // rewritten.
+            ".axaml" or ".xaml" or ".frm" => NodeKind.XamlFile,
             ".cshtml" or ".vbhtml" or ".razor" => NodeKind.RazorFile,
             ".cs" or ".vb" => NodeKind.SourceFile,
             ".csproj" or ".vbproj" or ".sln" or ".slnx" => NodeKind.Project,

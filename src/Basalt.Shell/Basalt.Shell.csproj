@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Basalt.Core\Basalt.Core.csproj" />
     <ProjectReference Include="..\Basalt.Workspace\Basalt.Workspace.csproj" />
     <ProjectReference Include="..\Basalt.Designer\Basalt.Designer.csproj" />
+    <ProjectReference Include="..\Basalt.Vb6\Basalt.Vb6.csproj" />
     <ProjectReference Include="..\Basalt.Extensibility\Basalt.Extensibility.csproj" />
   </ItemGroup>
 
