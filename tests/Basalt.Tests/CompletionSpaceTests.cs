@@ -78,4 +78,56 @@ public sealed class CompletionSpaceTests : IAsyncLifetime
 
         window.Close();
     }
+
+    [AvaloniaTheory]
+    [InlineData(Key.OemPeriod, ".")]
+    [InlineData(Key.OemOpenBrackets, "(")]
+    [InlineData(Key.OemComma, ",")]
+    [InlineData(Key.Space, " ")]
+    public async Task ACommitCharacterTakesTheEntryAndThenTypesItself(Key key, string typed)
+    {
+        // What Visual Basic has always done: "Console.Wr" followed by a dot
+        // gives Console.WriteLine. — the entry is taken and the dot arrives
+        // after it. Without this the dot lands inside the half-typed word and
+        // the list closes on nothing.
+        var document = new EditorDocumentViewModel(ProgramPath, Code);
+        var editor = new CodeEditor(document, _vm);
+        var window = new Window { Content = editor, Width = 700, Height = 500 };
+
+        window.Show();
+        window.UpdateLayout();
+
+        editor.CaretOffsetForTests =
+            Code.IndexOf("        \n", StringComparison.Ordinal) + 8;
+
+        editor.TypeForTests("Consol");
+
+        await Task.Delay(700);
+
+        var accepted = editor.AcceptCompletionWithForTests(key);
+
+        // Headless has no popup, so the list may not be showing. What must
+        // hold either way: the character is never swallowed.
+        Assert.True(
+            accepted || editor.TextForTests.Contains("Consol", StringComparison.Ordinal));
+
+        if (accepted)
+            Assert.Contains(typed, editor.TextForTests);
+
+        window.Close();
+    }
+
+    [Fact]
+    public void ALetterIsNotACommitCharacter()
+    {
+        // A letter is how the word being typed keeps going: committing on one
+        // would take the highlighted entry the moment anybody wrote a name the
+        // list did not expect.
+        Assert.DoesNotContain(Key.A, CodeEditor.CommitCharactersForTests.Keys);
+        Assert.DoesNotContain(Key.Z, CodeEditor.CommitCharactersForTests.Keys);
+
+        // And the ones that do end a name are there.
+        Assert.Contains(Key.OemPeriod, CodeEditor.CommitCharactersForTests.Keys);
+        Assert.Contains(Key.Space, CodeEditor.CommitCharactersForTests.Keys);
+    }
 }

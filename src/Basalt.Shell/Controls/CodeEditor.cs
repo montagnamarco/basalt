@@ -988,47 +988,75 @@ public sealed class CodeEditor : UserControl
         };
 
     /// <summary>
-    /// Keys the completion list answers to beyond its own.
-    ///
-    /// Space is the one that matters: it takes the highlighted entry and then
-    /// types the space, so a line can be written without stopping to reach
-    /// for Tab. A space typed when nothing is highlighted is only a space.
+    /// The characters that take the highlighted entry and then type themselves.
     /// </summary>
+    /// <remarks>
+    /// What Visual Basic has always done, and what makes the list feel like
+    /// help rather than an obstacle: "Console.Wr" followed by a dot gives
+    /// Console.WriteLine. — the entry is taken and the dot arrives after it.
+    ///
+    /// Each of these ends a name: nobody types a dot in the middle of one, so
+    /// a dot means the word is finished whatever the list is showing. A letter
+    /// is not here, because a letter is how the word being typed keeps going.
+    /// </remarks>
+    internal static IReadOnlyDictionary<Key, string> CommitCharactersForTests => CommitCharacters;
+
+    private static readonly Dictionary<Key, string> CommitCharacters = new()
+    {
+        [Key.Space] = " ",
+        [Key.OemPeriod] = ".",
+        [Key.OemOpenBrackets] = "(",
+        [Key.OemComma] = ",",
+    };
+
+    /// <summary>
+    /// Keys the completion list answers to beyond its own.
+    /// </summary>
+    /// <remarks>
+    /// Tab and Enter are the list's own — AvaloniaEdit commits on both — so
+    /// only the characters that also have to be typed are handled here. One
+    /// typed when nothing is highlighted is only itself.
+    /// </remarks>
     private void OnCompletionKeyDown(object? sender, KeyEventArgs e)
     {
         if (_completionWindow is null) return;
 
-        if (e.Key != Key.Space || e.KeyModifiers != KeyModifiers.None) return;
+        if (e.KeyModifiers != KeyModifiers.None) return;
+
+        if (!CommitCharacters.TryGetValue(e.Key, out var character)) return;
 
         if (_completionWindow.CompletionList.SelectedItem is null) return;
 
-        // Committed first, then the space: the other order would insert the
-        // space into the word being replaced.
+        // Committed first, then the character: the other order would insert it
+        // into the word being replaced.
         _completionWindow.CompletionList.RequestInsertion(e);
 
-        _editor.Document.Insert(_editor.CaretOffset, " ");
+        _editor.Document.Insert(_editor.CaretOffset, character);
 
         e.Handled = true;
     }
 
     /// <summary>
-    /// Presses the space bar on the completion list, for the tests.
+    /// Presses a key on the completion list, for the tests.
     ///
     /// Returns whether there was an entry to take: a headless run has no
     /// screen to put the popup on, so there often is not.
     /// </summary>
-    internal bool AcceptCompletionWithSpaceForTests()
+    internal bool AcceptCompletionWithForTests(Key key)
     {
         if (_completionWindow?.CompletionList.SelectedItem is null) return false;
 
         OnCompletionKeyDown(this, new KeyEventArgs
         {
             RoutedEvent = InputElement.KeyDownEvent,
-            Key = Key.Space
+            Key = key
         });
 
         return true;
     }
+
+    internal bool AcceptCompletionWithSpaceForTests() =>
+        AcceptCompletionWithForTests(Key.Space);
 
     private OverloadInsightWindow? _signatureWindow;
 
@@ -1269,6 +1297,22 @@ public sealed class CodeEditor : UserControl
     /// order they finish, and the last to arrive wins. After "Console." that
     /// meant the 3854 names in scope replacing Console's own members.
     /// </summary>
+    /// <summary>
+    /// How long typing has to pause before completion is asked for.
+    /// </summary>
+    /// <remarks>
+    /// Short enough not to be felt. It was 180ms, which is long enough that a
+    /// list asked for on the first letter of a word arrives after the second
+    /// has been typed — the pause everyone notices and nobody can name.
+    ///
+    /// Not zero: the cancellation below stops a stale answer from winning, but
+    /// it cannot stop the request being made, and a request per keystroke is
+    /// work Roslyn does and throws away. Forty milliseconds is under the
+    /// threshold where a delay reads as one and still collapses a burst of
+    /// typing into a single ask.
+    /// </remarks>
+    private const int CompletionPauseMilliseconds = 40;
+
     private void RequestCompletionAfterPause()
     {
         _completionDebounce?.Cancel();
@@ -1278,7 +1322,7 @@ public sealed class CodeEditor : UserControl
 
         Guarded.Run(async () =>
         {
-            await Task.Delay(180, token).ConfigureAwait(true);
+            await Task.Delay(CompletionPauseMilliseconds, token).ConfigureAwait(true);
 
             if (token.IsCancellationRequested) return;
 
