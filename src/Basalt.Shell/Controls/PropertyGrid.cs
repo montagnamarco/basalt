@@ -43,7 +43,14 @@ public sealed class PropertyGrid : UserControl
     private GridLength _nameWidth = new(120, GridUnitType.Pixel);
 
     /// <summary>Raised when a property is given a new value, or reset with null.</summary>
-    public event Action<string, string?>? PropertyChanged;
+    /// <remarks>
+    /// Not PropertyChanged: AvaloniaObject has an event by that name, and one
+    /// here hid it. Anyone subscribing to grid.PropertyChanged expecting
+    /// Avalonia's — to watch the control's own properties — would have been
+    /// handed this one instead, and the compiler's only complaint is a
+    /// warning nobody reads twice.
+    /// </remarks>
+    public event Action<string, string?>? PropertyEdited;
 
     public PropertyGrid()
     {
@@ -588,6 +595,6 @@ public sealed class PropertyGrid : UserControl
     {
         if (value == property.CurrentValue) return;
 
-        PropertyChanged?.Invoke(property.Name, value);
+        PropertyEdited?.Invoke(property.Name, value);
     }
 }

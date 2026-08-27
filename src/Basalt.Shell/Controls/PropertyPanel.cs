@@ -30,7 +30,7 @@ public sealed class PropertyPanel : UserControl
             Margin = new Thickness(Spacing.Normal, Spacing.Tight, Spacing.Normal, 0),
         };
 
-        _grid.PropertyChanged += (name, value) => _session?.SetProperty(name, value);
+        _grid.PropertyEdited += (name, value) => _session?.SetProperty(name, value);
 
         var layout = new Grid
         {

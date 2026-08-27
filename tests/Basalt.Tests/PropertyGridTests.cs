@@ -145,7 +145,7 @@ public sealed class PropertyGridTests
         string? changed = null;
         string? value = null;
 
-        grid.PropertyChanged += (name, written) => { changed = name; value = written; };
+        grid.PropertyEdited += (name, written) => { changed = name; value = written; };
 
         var box = grid.GetVisualDescendants().OfType<CheckBox>().Single();
         box.IsChecked = true;

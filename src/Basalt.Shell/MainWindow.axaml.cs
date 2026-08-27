@@ -4000,10 +4000,20 @@ var editor = new CodeEditor(document, ViewModel);
             () => _search.FocusSearchBox(), DispatcherPriority.Background);
     }
 
-    private async void OpenDiagnostic(IdeDiagnostic diagnostic)
+    /// <summary>Opens the file a problem points at.</summary>
+    /// <remarks>
+    /// Guarded rather than "async void": anything thrown while opening the
+    /// file reached the runtime from there and took the application down with
+    /// it, and opening a file does a great deal — reads it, rebuilds the
+    /// Recent list, and on macOS the menu bar with it.
+    /// </remarks>
+    private void OpenDiagnostic(IdeDiagnostic diagnostic)
     {
         if (diagnostic.FilePath is null || !File.Exists(diagnostic.FilePath)) return;
-        await ViewModel.OpenFileAsync(diagnostic.FilePath);
+
+        Guarded.Run(
+            () => ViewModel.OpenFileAsync(diagnostic.FilePath),
+            ViewModel.WriteOutput, "ide");
     }
 
     /// <summary>
@@ -4014,15 +4024,44 @@ var editor = new CodeEditor(document, ViewModel);
     {
         var entries = BuildMenuEntries(viewModel);
 
-        if (IdeMenu.UsesSystemMenuBar)
-        {
-            NativeMenu.SetMenu(this, IdeMenu.BuildNative(entries));
-            WindowMenu.IsVisible = false;
-        }
-        else
+        if (!IdeMenu.UsesSystemMenuBar)
         {
             WindowMenu.ItemsSource = IdeMenu.BuildManaged(entries);
+            return;
         }
+
+        WindowMenu.IsVisible = false;
+
+        var rebuilt = IdeMenu.BuildNative(entries);
+
+        // The menu already installed is refilled rather than replaced.
+        //
+        // On macOS the menu bar belongs to the operating system, and Avalonia
+        // hands it the NativeMenu it was given. Setting a different instance
+        // while that one is being pushed across kills the application:
+        // "The menu being updated does not match". Opening a file rebuilds
+        // the Recent list, and opening one from the Problems panel does it
+        // from inside a menu update, which is exactly when the two collide.
+        //
+        // Refilling the same instance means the object the platform holds
+        // never changes, so there is nothing for it to disagree about.
+        if (NativeMenu.GetMenu(this) is { } installed)
+        {
+            installed.Items.Clear();
+
+            foreach (var item in rebuilt.Items.ToList())
+            {
+                // Detached first: an item still belonging to the menu it was
+                // built in cannot be added to another, and the rebuilt menu
+                // is thrown away in a moment anyway.
+                rebuilt.Items.Remove(item);
+                installed.Items.Add(item);
+            }
+
+            return;
+        }
+
+        NativeMenu.SetMenu(this, rebuilt);
     }
 
     /// <summary>The real menu, for tests.</summary>
@@ -4163,6 +4202,9 @@ var editor = new CodeEditor(document, ViewModel);
     }
 
     internal IReadOnlyList<MenuEntry> MenuEntriesForTests() => BuildMenuEntries(ViewModel);
+
+    /// <summary>Rebuilds the menu, as opening a file does.</summary>
+    internal void RebuildMenuForTests() => InstallMenu(ViewModel);
 
     /// <summary>The editor a refactoring would act on.</summary>
     internal AvaloniaEdit.TextEditor? CurrentEditorForTests() => CurrentEditor();

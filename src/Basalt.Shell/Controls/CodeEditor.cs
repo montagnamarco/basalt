@@ -577,15 +577,26 @@ public sealed class CodeEditor : UserControl
         // out what to offer used to reach the runtime, where it either took
         // the application down or — worse for finding it — was swallowed and
         // the list simply never appeared.
-        Guarded.Run(() => OnTextEnteredAsync(e), _shell.WriteOutput, "editor");
+        Guarded.Run(() => OnTextEnteredAsync(e.Text), _shell.WriteOutput, "editor");
     }
 
-    private async Task OnTextEnteredAsync(TextInputEventArgs e)
+    /// <summary>What to offer after a character was typed.</summary>
+    /// <param name="typed">
+    /// The text, taken by value rather than read off the event.
+    /// </param>
+    /// <remarks>
+    /// The caller checks that the event carries something, but the check does
+    /// not survive the await: the arguments are mutable and this runs later,
+    /// so the compiler was right to warn that e.Text[0] could be indexing
+    /// nothing. A dead key or an input method sends a text event with no text.
+    /// </remarks>
+    private async Task OnTextEnteredAsync(string typed)
     {
+        if (typed.Length == 0) return;
 
         // The dot is the natural trigger in both languages, and it is worth
         // answering at once: the member list is what the dot was typed for.
-        if (e.Text == ".")
+        if (typed == ".")
         {
             await ShowCompletionAsync();
             return;
@@ -597,7 +608,7 @@ public sealed class CodeEditor : UserControl
         // the middle of one the list is already open and filtering itself.
         if (_completionWindow is null
             && _suggestAutomatically
-            && char.IsLetter(e.Text[0])
+            && char.IsLetter(typed[0])
             && WordBeforeCaret().Length >= 1)
         {
             // After a pause, not on the keystroke: seven letters used to mean
@@ -609,7 +620,7 @@ public sealed class CodeEditor : UserControl
         }
 
         // The parameters of the call being written.
-        if (e.Text is "(" or ",")
+        if (typed is "(" or ",")
         {
             await ShowSignatureHelpAsync();
             return;
@@ -617,7 +628,7 @@ public sealed class CodeEditor : UserControl
 
         // A closing brace lands unindented as it is typed; re-indenting it here
         // is what makes it snap back to its block level.
-        if (_shell.TriggersFormatting(e.Text[0], _document.Language))
+        if (_shell.TriggersFormatting(typed[0], _document.Language))
             await FormatCurrentLineAsync();
 
         // Visual Basic is deliberately not formatted per keystroke. Formatting
