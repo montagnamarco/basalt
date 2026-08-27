@@ -293,4 +293,78 @@ public sealed class StartupProjectTests : IDisposable
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
     }
+
+    [AvaloniaFact]
+    public async Task AWordInACommentDoesNotMakeAProjectRunnable()
+    {
+        // The defect this replaces: "Exe" was looked for anywhere in the file,
+        // and it appears inside "exercising". A test project was chosen as the
+        // one to run, so Build reported no project or built the wrong thing —
+        // decided, in the end, by a sentence of English prose in a comment.
+        var directory = Path.Combine(_root, "Libreria");
+        Directory.CreateDirectory(directory);
+
+        await File.WriteAllTextAsync(Path.Combine(directory, "Libreria.vbproj"), """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <!-- A library, exercising the views it is given. -->
+              <PropertyGroup>
+                <TargetFramework>net10.0</TargetFramework>
+              </PropertyGroup>
+            </Project>
+            """);
+
+        var vm = new MainWindowViewModel();
+
+        await vm.OpenSolutionAsync(Path.Combine(directory, "Libreria.vbproj"));
+
+        Assert.Empty(vm.RunnableProjects);
+    }
+
+    [AvaloniaFact]
+    public async Task PrefersTheProjectNamedLikeTheSolution()
+    {
+        // A solution with a program and a tool has an obvious answer, and
+        // taking whichever the filesystem listed first gets it wrong about
+        // half the time — which is how a language server came to be what Run
+        // started.
+        await WriteProjectAsync("Anagrafica", "WinExe");
+        await WriteProjectAsync("Anagrafica.Tool", "Exe");
+
+        var solution = Path.Combine(_root, "Anagrafica.slnx");
+
+        await File.WriteAllTextAsync(solution, "<Solution />");
+
+        var vm = new MainWindowViewModel();
+
+        await vm.OpenSolutionAsync(solution);
+
+        Assert.NotNull(vm.StartupProject);
+        Assert.EndsWith("Anagrafica.vbproj", vm.StartupProject);
+    }
+
+    [AvaloniaFact]
+    public async Task IgnoresACopyInTheBuildOutput()
+    {
+        // A project picked out of bin builds into a folder that the next clean
+        // deletes.
+        await WriteProjectAsync("Programma", "Exe");
+
+        var output = Path.Combine(_root, "Altro", "bin", "Debug");
+        Directory.CreateDirectory(output);
+
+        await File.WriteAllTextAsync(Path.Combine(output, "Copia.vbproj"), """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <OutputType>Exe</OutputType>
+                <TargetFramework>net10.0</TargetFramework>
+              </PropertyGroup>
+            </Project>
+            """);
+
+        var vm = new MainWindowViewModel();
+
+        await vm.OpenSolutionAsync(Path.Combine(_root, "Programma.slnx"));
+
+        Assert.DoesNotContain(vm.RunnableProjects, p => p.Contains("Copia"));
+    }
 }

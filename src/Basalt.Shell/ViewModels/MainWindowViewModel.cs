@@ -1064,18 +1064,58 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         var projects = Directory
             .EnumerateFiles(directory, "*.*proj", SearchOption.AllDirectories)
             .Where(p => Path.GetExtension(p) is ".csproj" or ".vbproj")
-            .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            // Build output holds copies of the project file, and one picked
+            // from there builds into a folder that is deleted on the next
+            // clean.
+            .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
+                     && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
             .ToList();
 
-        // An executable project is preferred, recognizable from OutputType.
-        return projects.FirstOrDefault(IsExecutable) ?? projects.FirstOrDefault();
+        // An executable project, and among several the one whose name matches
+        // the solution's: a solution called Basalt with a Basalt.Shell and a
+        // Basalt.Razor.Vb.LanguageServer has an obvious answer, and taking
+        // whichever the filesystem listed first gets it wrong about half the
+        // time.
+        var executables = projects.Where(IsExecutable).ToList();
+
+        if (executables.Count == 0) return projects.FirstOrDefault();
+        if (executables.Count == 1) return executables[0];
+
+        var solutionName = Path.GetFileNameWithoutExtension(solutionOrProjectPath);
+
+        return executables.FirstOrDefault(p =>
+                   Path.GetFileNameWithoutExtension(p)
+                       .Equals(solutionName, StringComparison.OrdinalIgnoreCase))
+            // Then the shallowest: a program sits beside its solution far more
+            // often than a tool three folders down does.
+            ?? executables.OrderBy(p => p.Count(c => c == Path.DirectorySeparatorChar))
+                          .ThenBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase)
+                          .First();
     }
 
+    /// <summary>Whether a project builds something that can be run.</summary>
+    /// <remarks>
+    /// By reading OutputType rather than looking for "Exe" anywhere in the
+    /// file. The word appears inside "exercising" in a comment, so a test
+    /// project was picked as the one to run and Build reported "no project" or
+    /// built the wrong thing — decided, in the end, by a sentence of English
+    /// prose.
+    ///
+    /// A project with no OutputType is a library: the SDK defaults it to
+    /// Library, and a web project that means to be run says WinExe or Exe like
+    /// any other.
+    /// </remarks>
     private static bool IsExecutable(string projectPath)
     {
         try
         {
-            return File.ReadAllText(projectPath).Contains("Exe", StringComparison.OrdinalIgnoreCase);
+            var match = System.Text.RegularExpressions.Regex.Match(
+                File.ReadAllText(projectPath),
+                @"<OutputType>\s*(\w+)\s*</OutputType>",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            return match.Success
+                && match.Groups[1].Value.EndsWith("Exe", StringComparison.OrdinalIgnoreCase);
         }
         catch (IOException)
         {
