@@ -501,4 +501,99 @@ public class Vb6FormTests
 
         Assert.Equal(original, unchanged);
     }
+
+    [Fact]
+    public void WritesAControlTheDesignerAdded()
+    {
+        // Without this a control drawn in the designer is lost the moment the
+        // file is saved: drawn, visible, and gone, with nothing saying why.
+        var markup = FormToAxaml.Convert(FormFile.Parse(Form))
+            .Replace("</Canvas>",
+                "<TextBox x:Name=\"txtNuovo\" Canvas.Left=\"20\" Canvas.Top=\"160\" " +
+                "Width=\"100\" Height=\"20\" /></Canvas>");
+
+        var updated = AxamlToForm.Apply(Form, markup);
+
+        Assert.Contains("Begin VB.TextBox txtNuovo", updated);
+
+        // Read back, not merely present: a control written in a shape the
+        // parser cannot read is the same as one that was never written.
+        var again = FormFile.Parse(updated);
+        var added = again.Root.Children.FirstOrDefault(c => c.Name == "txtNuovo");
+
+        Assert.NotNull(added);
+        Assert.Equal("VB.TextBox", added!.Type);
+        Assert.Equal(300, added.Number("Left"));
+        Assert.Equal(1500, added.Number("Width"));
+    }
+
+    [Fact]
+    public void KeepsTheFormStructurallyValidWhenAddingAControl()
+    {
+        // Every Begin needs its End, and a control written after the form's
+        // own End is outside the form — Visual Basic 6 refuses to open the
+        // file at all rather than showing it wrong.
+        var markup = FormToAxaml.Convert(FormFile.Parse(Form))
+            .Replace("</Canvas>",
+                "<Button x:Name=\"cmdNuovo\" Canvas.Left=\"10\" Canvas.Top=\"10\" /></Canvas>");
+
+        var lines = AxamlToForm.Apply(Form, markup)
+            .Replace("\r\n", "\n").Split('\n')
+            .Select(l => l.Trim())
+            .ToList();
+
+        var begins = lines.Count(l =>
+            l.StartsWith("Begin ", StringComparison.Ordinal));
+
+        Assert.Equal(begins, lines.Count(l => l == "End"));
+
+        // Inside the form: the last End is the form's.
+        Assert.True(
+            lines.FindIndex(l => l.Contains("cmdNuovo")) < lines.FindLastIndex(l => l == "End"),
+            "the control was written outside the form");
+    }
+
+    [Fact]
+    public void SurvivesTwoControlsWithTheSameName()
+    {
+        // Visual Basic 6 allowed it through control arrays. A duplicate took
+        // the whole save down with an exception naming a dictionary key rather
+        // than a form, which tells the author nothing about their file.
+        var markup = FormToAxaml.Convert(FormFile.Parse(Form))
+            .Replace("</Canvas>",
+                "<TextBox x:Name=\"txtNome\" Canvas.Left=\"10\" Canvas.Top=\"10\" /></Canvas>");
+
+        var updated = AxamlToForm.Apply(Form, markup);
+
+        Assert.Contains("txtNome", updated);
+    }
+
+    [Fact]
+    public void ReadsWhatComesAfterAControlWithSubProperties()
+    {
+        // A BeginProperty block is skipped, and the skip used to advance past
+        // its EndProperty as well — taking the control's own End with it. The
+        // stack stayed one deep for the rest of the file, so every control
+        // after an OCX was read as being inside it. Nothing noticed while
+        // nothing came after one.
+        const string withOcx = """
+            Begin VB.Form Form1 
+               Begin MSComctlLib.ListView lvwElenco 
+                  BeginProperty ColumnHeader(1) {BDD1F052-858B-11D1-B16A-00C0F0283628} 
+                     Text            =   "Nome"
+                  EndProperty
+               End
+               Begin VB.CommandButton cmdDopo 
+                  Left            =   120
+               End
+            End
+            """;
+
+        var form = FormFile.Parse(withOcx);
+
+        // Both on the form, not one inside the other.
+        Assert.Equal(2, form.Root.Children.Count);
+        Assert.Contains(form.Root.Children, c => c.Name == "cmdDopo");
+        Assert.Empty(form.Root.Children.First(c => c.Name == "lvwElenco").Children);
+    }
 }

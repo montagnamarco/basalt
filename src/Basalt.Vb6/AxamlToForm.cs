@@ -29,10 +29,20 @@ public static class AxamlToForm
     {
         var edited = XElement.Parse(markup);
 
-        var positions = edited.Descendants()
-            .Select(e => (Name: NameOf(e), Element: e))
-            .Where(x => x.Name is { Length: > 0 })
-            .ToDictionary(x => x.Name!, x => x.Element, StringComparer.OrdinalIgnoreCase);
+        // The first of each name wins rather than throwing. A form with two
+        // controls called the same thing is not something we should refuse to
+        // save — Visual Basic 6 allowed it through control arrays, and a
+        // duplicate here took the whole save down with an exception naming a
+        // key rather than a form.
+        var positions = new Dictionary<string, XElement>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var element in edited.Descendants())
+        {
+            var name = NameOf(element);
+
+            if (name is { Length: > 0 } && !positions.ContainsKey(name))
+                positions[name] = element;
+        }
 
         // Kept as they were written, because a .frm is CRLF and a file that
         // comes back with different endings is a whole-file change in every
@@ -40,13 +50,44 @@ public static class AxamlToForm
         var newline = original.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
         var lines = original.Replace("\r\n", "\n").Split('\n');
 
-        var written = new StringBuilder();
-        var current = (string?)null;
-        var depth = 0;
+        // Which names the file already knows. Anything in the markup that is
+        // not here is a control the designer added, and it has to be written
+        // into the form or it is lost the moment the file is saved — drawn,
+        // visible, and gone, with nothing saying why.
+        var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var line in lines)
         {
             var trimmed = line.Trim();
+
+            if (!trimmed.StartsWith("Begin ", StringComparison.Ordinal)) continue;
+
+            if (NameIn(trimmed) is { Length: > 0 } name) known.Add(name);
+        }
+
+        var added = positions
+            .Where(p => !known.Contains(p.Key))
+            .ToList();
+
+        var written = new StringBuilder();
+        var current = (string?)null;
+        var depth = 0;
+        var inserted = false;
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+
+            // Before the form's own End, which closes the outermost Begin: a
+            // control written after it is outside the form and Visual Basic 6
+            // refuses to open the file at all.
+            if (!inserted && depth == 1 && trimmed == "End" && added.Count > 0)
+            {
+                foreach (var (name, element) in added)
+                    WriteNewControl(written, name, element, newline);
+
+                inserted = true;
+            }
 
             // Only the designer half. After the VB_ attributes it is the
             // author's Visual Basic, where a property name means something
@@ -85,6 +126,69 @@ public static class AxamlToForm
             ? text.Substring(0, text.Length - newline.Length)
             : text;
     }
+
+    /// <summary>
+    /// Writes a control the designer added, as Visual Basic 6 would have.
+    /// </summary>
+    /// <remarks>
+    /// Three-space indentation and the property names lined up in column
+    /// twenty, which is what Visual Basic wrote: a form that comes back
+    /// formatted differently from the rest of itself reads as damaged even
+    /// when it opens.
+    /// </remarks>
+    private static void WriteNewControl(
+        StringBuilder written, string name, XElement element, string newline)
+    {
+        var type = Vb6TypeFor(element.Name.LocalName);
+
+        written.Append($"   Begin {type} {name} ").Append(newline);
+
+        foreach (var (property, attribute) in new[]
+                 {
+                     ("Height", "Height"),
+                     ("Left", "Canvas.Left"),
+                     ("Top", "Canvas.Top"),
+                     ("Width", "Width"),
+                 })
+        {
+            if (Twips(element, attribute) is { } value)
+                written.Append("      ").Append(property.PadRight(16))
+                       .Append("=   ").Append(value).Append(newline);
+        }
+
+        if (element.Attribute("Content")?.Value is { } content)
+            written.Append("      ").Append("Caption".PadRight(16))
+                   .Append("=   \"").Append(content.Replace("\"", "\"\""))
+                   .Append('"').Append(newline);
+
+        written.Append("   End").Append(newline);
+    }
+
+    /// <summary>
+    /// The Visual Basic 6 control an Avalonia one stands for.
+    /// </summary>
+    /// <remarks>
+    /// The reverse of the mapping the reader uses, and not quite its inverse:
+    /// several VB6 controls become the same Avalonia one — a Line and a Shape
+    /// are both a Rectangle — so a new Rectangle has to be called something,
+    /// and Shape is the one that can be either.
+    /// </remarks>
+    private static string Vb6TypeFor(string avalonia) => avalonia switch
+    {
+        "TextBox" => "VB.TextBox",
+        "Button" => "VB.CommandButton",
+        "TextBlock" => "VB.Label",
+        "CheckBox" => "VB.CheckBox",
+        "RadioButton" => "VB.OptionButton",
+        "ComboBox" => "VB.ComboBox",
+        "ListBox" => "VB.ListBox",
+        "HeaderedContentControl" => "VB.Frame",
+        "Border" => "VB.PictureBox",
+        "Image" => "VB.Image",
+        "ScrollBar" => "VB.HScrollBar",
+        "Rectangle" => "VB.Shape",
+        _ => "VB.Label",
+    };
 
     /// <summary>
     /// The line as it should now read, or null to leave it alone.

@@ -98,12 +98,18 @@ public sealed class FormFile
             {
                 var depth = 1;
 
-                while (++i < lines.Length && depth > 0)
+                // Stopping on the EndProperty rather than past it: the loop
+                // advanced i and then the for advanced it again, so the line
+                // after EndProperty was skipped. That line is the control's
+                // own End, and losing it left the stack one deep for the rest
+                // of the file — everything after an OCX went inside it, and a
+                // control added at the end was never seen as the form's.
+                while (i + 1 < lines.Length && depth > 0)
                 {
-                    var inner = lines[i].Trim();
+                    var inner = lines[++i].Trim();
 
                     if (inner.StartsWith("BeginProperty", StringComparison.Ordinal)) depth++;
-                    if (inner.StartsWith("EndProperty", StringComparison.Ordinal)) depth--;
+                    else if (inner.StartsWith("EndProperty", StringComparison.Ordinal)) depth--;
                 }
 
                 continue;
