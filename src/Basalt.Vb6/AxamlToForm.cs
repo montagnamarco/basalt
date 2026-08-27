@@ -70,19 +70,43 @@ public static class AxamlToForm
         // deletion and an addition instead, the block is rebuilt from what we
         // understand and everything we do not — a font, an OCX's own
         // properties — is lost.
+        // By position in the tree rather than by an attribute carried in the
+        // markup: Avalonia rejects any attribute that is not a real property
+        // of the control — x:Uid, a custom namespace and a plain Uid were all
+        // refused — and a designer that will not load the form is worse than
+        // one that cannot tell a rename from a replacement.
+        //
+        // The order of controls is what the .frm and the markup agree on: the
+        // markup is generated from the file, so the nth named element is the
+        // nth Begin. A control renamed in place keeps its position.
+        var inMarkup = edited.Descendants()
+            .Select(NameOf)
+            .Where(name => name is { Length: > 0 })
+            .Select(name => name!)
+            .ToList();
+
+        var inFile = new List<string>();
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+
+            if (!trimmed.StartsWith("Begin ", StringComparison.Ordinal)) continue;
+
+            if (NameIn(trimmed) is { Length: > 0 } name) inFile.Add(name);
+        }
+
+        // The form's own Begin comes first in the file and has no element in
+        // the markup, which is a Window rather than a control.
+        if (inFile.Count == inMarkup.Count + 1) inFile.RemoveAt(0);
+
         var renames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var element in edited.Descendants())
-        {
-            var was = element.Attribute("Uid")?.Value;
-            var now = NameOf(element);
-
-            if (was is { Length: > 0 } && now is { Length: > 0 }
-                && !string.Equals(was, now, StringComparison.OrdinalIgnoreCase)
-                && known.Contains(was)
-                && !known.Contains(now))
-                renames[was] = now;
-        }
+        if (inFile.Count == inMarkup.Count)
+            for (var i = 0; i < inFile.Count; i++)
+                if (!string.Equals(inFile[i], inMarkup[i], StringComparison.OrdinalIgnoreCase)
+                    && !known.Contains(inMarkup[i]))
+                    renames[inFile[i]] = inMarkup[i];
 
         var added = positions
             .Where(p => !known.Contains(p.Key) && !renames.ContainsValue(p.Key))

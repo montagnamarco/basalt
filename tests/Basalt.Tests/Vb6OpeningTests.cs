@@ -134,4 +134,25 @@ public class Vb6OpeningTests
         // And an .axaml keeps the modern one.
         Assert.False(DesignerLook.Modern.ShowsGrid);
     }
+
+    [AvaloniaFact]
+    public void AvaloniaLoadsTheMarkupAFormIsTurnedInto()
+    {
+        // Parsed as XML is not the same as loaded by Avalonia, and this is the
+        // difference that reached the screen: an attribute added to carry the
+        // form's own names through the designer was valid XML and not a
+        // property of any control, so every .frm opened to a wall of red —
+        // "Unable to resolve suitable regular or attached property Uid" —
+        // while every test still passed.
+        var form = Basalt.Vb6.FormFile.Parse(
+            File.ReadAllText(Path.Combine(SampleDirectory(), "Form1.frm")));
+
+        var markup = Basalt.Vb6.FormToAxaml.Convert(form, "Form1")
+            .Replace(" x:Class=\"Form1\"", "");
+
+        var window = Assert.IsType<Avalonia.Controls.Window>(
+            Avalonia.Markup.Xaml.AvaloniaRuntimeXamlLoader.Load(markup));
+
+        Assert.Equal("Anagrafica", window.Title);
+    }
 }
