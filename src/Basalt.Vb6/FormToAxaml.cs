@@ -78,6 +78,12 @@ public static class FormToAxaml
             : Placeholder(control, ns);
 
         element.SetAttributeValue(x + "Name", control.Name);
+
+        // The name the .frm knows it by, kept separately so a rename can be
+        // recognised as one. Without it a renamed control looks like the old
+        // one deleted and a new one added: the block is rebuilt from what we
+        // understand, and a font or an OCX's own properties are lost.
+        element.SetAttributeValue("Uid", control.Name);
         element.SetAttributeValue("Canvas.Left", Pixels(control.Number("Left")));
         element.SetAttributeValue("Canvas.Top", Pixels(control.Number("Top")));
 

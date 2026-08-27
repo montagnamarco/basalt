@@ -425,13 +425,18 @@ public class Vb6FormTests
         // offsets pointing at binary beside it — and rewriting one from what
         // we read throws all of that away the first time somebody nudges a
         // button.
-        var form = FormFile.Parse(Form);
+        // Through the document rather than by rewriting a run of attributes:
+        // a text replacement breaks the moment anything is added between two
+        // of them, and says nothing about why when it does.
+        var markup = System.Xml.Linq.XElement.Parse(FormToAxaml.Convert(FormFile.Parse(Form)));
 
-        var moved = FormToAxaml.Convert(form)
-            .Replace("x:Name=\"cmdOk\" Canvas.Left=\"88\" Canvas.Top=\"72\"",
-                     "x:Name=\"cmdOk\" Canvas.Left=\"128\" Canvas.Top=\"92\"");
+        var button = markup.Descendants()
+            .First(e => e.Attributes().Any(a => a.Value == "cmdOk"));
 
-        var updated = AxamlToForm.Apply(Form, moved);
+        button.SetAttributeValue("Canvas.Left", "128");
+        button.SetAttributeValue("Canvas.Top", "92");
+
+        var updated = AxamlToForm.Apply(Form, markup.ToString());
 
         var before = Form.Replace("\r\n", "\n").Split('\n');
         var after = updated.Replace("\r\n", "\n").Split('\n');
@@ -670,5 +675,70 @@ public class Vb6FormTests
         Assert.Equal(
             lines.Count(l => l.StartsWith("Begin ", StringComparison.Ordinal)),
             lines.Count(l => l == "End"));
+    }
+
+    /// <summary>The markup for the sample, with one control renamed.</summary>
+    private static string Renaming(string was, string now)
+    {
+        var markup = System.Xml.Linq.XElement.Parse(FormToAxaml.Convert(FormFile.Parse(Form)));
+
+        markup.Descendants()
+            .First(e => e.Attributes().Any(a => a.Value == was))
+            .SetAttributeValue(
+                System.Xml.Linq.XName.Get(
+                    "Name", "http://schemas.microsoft.com/winfx/2006/xaml"),
+                now);
+
+        return markup.ToString();
+    }
+
+    [Fact]
+    public void RenamingAControlTakesItsHandlersWithIt()
+    {
+        // The worst kind of defect if it goes wrong: Visual Basic 6 wired an
+        // event by the name of the procedure, so leaving cmdOk_Click behind
+        // after renaming cmdOk stops the button responding — with no error,
+        // because the method is still a perfectly good method.
+        var updated = AxamlToForm.Apply(Form, Renaming("cmdOk", "cmdConferma"));
+
+        Assert.Contains("Begin VB.CommandButton cmdConferma", updated);
+        Assert.Contains("cmdConferma_Click", updated);
+        Assert.DoesNotContain("cmdOk_Click", updated);
+
+        // And the class generated from it wires the handler to the new name.
+        var written = FormToVisualBasic.Write(FormFile.Parse(updated), "Form1");
+
+        Assert.Contains("Handles cmdConferma.Click", written.Code);
+    }
+
+    [Fact]
+    public void RenamingChangesTheNameAndNothingElse()
+    {
+        // Treated as a deletion and an addition, the block is rebuilt from
+        // what this converter understands and everything it does not — a font,
+        // an OCX's own properties — is quietly lost.
+        var updated = AxamlToForm.Apply(Form, Renaming("cmdOk", "cmdConferma"));
+
+        var differences = Form.Replace("\r\n", "\n").Split('\n')
+            .Zip(updated.Replace("\r\n", "\n").Split('\n'))
+            .Where(pair => pair.First != pair.Second)
+            .ToList();
+
+        // The Begin line and the handler's declaration. Nothing else.
+        Assert.Equal(2, differences.Count);
+        Assert.Contains(differences, d => d.First.Contains("Begin VB.CommandButton"));
+        Assert.Contains(differences, d => d.First.Contains("Sub cmdOk_Click"));
+    }
+
+    [Fact]
+    public void RenamingAControlFromAnOcxKeepsItsProperties()
+    {
+        // The case the rebuild would have ruined: a control this converter
+        // cannot read is still renamed, and what it holds is copied through.
+        var updated = AxamlToForm.Apply(Form, Renaming("lvwElenco", "lvwDati"));
+
+        Assert.Contains("Begin MSComctlLib.ListView lvwDati", updated);
+        Assert.Contains("BeginProperty ColumnHeader(1)", updated);
+        Assert.DoesNotContain("lvwElenco", updated);
     }
 }

@@ -65,8 +65,27 @@ public static class AxamlToForm
             if (NameIn(trimmed) is { Length: > 0 } name) known.Add(name);
         }
 
+        // A control whose Uid names something the file has, under a name the
+        // file does not, was renamed rather than replaced. Treated as a
+        // deletion and an addition instead, the block is rebuilt from what we
+        // understand and everything we do not — a font, an OCX's own
+        // properties — is lost.
+        var renames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var element in edited.Descendants())
+        {
+            var was = element.Attribute("Uid")?.Value;
+            var now = NameOf(element);
+
+            if (was is { Length: > 0 } && now is { Length: > 0 }
+                && !string.Equals(was, now, StringComparison.OrdinalIgnoreCase)
+                && known.Contains(was)
+                && !known.Contains(now))
+                renames[was] = now;
+        }
+
         var added = positions
-            .Where(p => !known.Contains(p.Key))
+            .Where(p => !known.Contains(p.Key) && !renames.ContainsValue(p.Key))
             .ToList();
 
         // And the other way: a control the file knows and the markup no longer
@@ -91,6 +110,7 @@ public static class AxamlToForm
             ? new HashSet<string>(
                 known.Where(name =>
                     !positions.ContainsKey(name)
+                    && !renames.ContainsKey(name)
                     && !string.Equals(name, formName, StringComparison.OrdinalIgnoreCase)),
                 StringComparer.OrdinalIgnoreCase)
             : [];
@@ -99,6 +119,7 @@ public static class AxamlToForm
         var current = (string?)null;
         var depth = 0;
         var inserted = false;
+        var inCode = false;
 
         for (var index = 0; index < lines.Length; index++)
         {
@@ -119,12 +140,37 @@ public static class AxamlToForm
             // Only the designer half. After the VB_ attributes it is the
             // author's Visual Basic, where a property name means something
             // else entirely.
-            if (trimmed.StartsWith("Attribute VB_", StringComparison.Ordinal)) current = null;
+            if (trimmed.StartsWith("Attribute VB_", StringComparison.Ordinal))
+            {
+                current = null;
+                inCode = true;
+            }
+
+            // A renamed control takes its handlers with it. Visual Basic 6
+            // wired an event by the name of the procedure, so leaving
+            // cmdOk_Click behind after renaming cmdOk to cmdConferma stops the
+            // button responding — with no error, because the method is still
+            // a perfectly good method.
+            if (inCode && renames.Count > 0)
+            {
+                written.Append(RenameHandlers(line, renames)).Append(newline);
+                continue;
+            }
 
             if (trimmed.StartsWith("Begin ", StringComparison.Ordinal))
             {
                 depth++;
                 current = NameIn(trimmed);
+
+                // Only the name on the Begin line changes; every property
+                // below it, including the ones this converter never read, is
+                // left exactly where it was.
+                if (current is { Length: > 0 } && renames.TryGetValue(current, out var renamed))
+                {
+                    written.Append(ReplaceName(line, current, renamed)).Append(newline);
+                    current = renamed;
+                    continue;
+                }
 
                 // The whole block, not just its Begin line: a control's
                 // properties left behind are lines belonging to nothing, and
@@ -168,6 +214,48 @@ public static class AxamlToForm
         return text.EndsWith(newline, StringComparison.Ordinal)
             ? text.Substring(0, text.Length - newline.Length)
             : text;
+    }
+
+    /// <summary>
+    /// Renames the handlers a renamed control had.
+    /// </summary>
+    /// <remarks>
+    /// The declaration only — "Private Sub cmdOk_Click()" — and not every
+    /// mention of the name. A rename that also rewrote cmdOk.Caption inside
+    /// the body would be right more often than not, but it would also rewrite
+    /// a string that happened to contain the name, and a translator that edits
+    /// what a program says to its user is worse than one that does too little.
+    /// </remarks>
+    private static string RenameHandlers(
+        string line, IReadOnlyDictionary<string, string> renames)
+    {
+        foreach (var (was, now) in renames)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(
+                line,
+                $@"^(\s*(?:Private|Public|Friend)?\s*Sub\s+){System.Text.RegularExpressions.Regex.Escape(was)}(_\w+\s*\()",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            if (match.Success)
+                return match.Groups[1].Value + now + line.Substring(match.Groups[2].Index);
+        }
+
+        return line;
+    }
+
+    /// <summary>
+    /// The Begin line with the control called something else.
+    /// </summary>
+    /// <remarks>
+    /// The last occurrence, because a name can repeat the type: "Begin
+    /// VB.Frame Frame" is a frame called Frame, and replacing the first match
+    /// renames the type instead of the control.
+    /// </remarks>
+    private static string ReplaceName(string line, string was, string now)
+    {
+        var at = line.LastIndexOf(was, StringComparison.OrdinalIgnoreCase);
+
+        return at < 0 ? line : line.Substring(0, at) + now + line.Substring(at + was.Length);
     }
 
     /// <summary>
