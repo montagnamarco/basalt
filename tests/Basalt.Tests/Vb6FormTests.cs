@@ -596,4 +596,79 @@ public class Vb6FormTests
         Assert.Contains(form.Root.Children, c => c.Name == "cmdDopo");
         Assert.Empty(form.Root.Children.First(c => c.Name == "lvwElenco").Children);
     }
+
+    /// <summary>The markup for the sample, with one control taken out.</summary>
+    private static string Without(string name)
+    {
+        var markup = System.Xml.Linq.XElement.Parse(FormToAxaml.Convert(FormFile.Parse(Form)));
+
+        markup.Descendants()
+            .First(e => e.Attributes().Any(a => a.Value == name))
+            .Remove();
+
+        return markup.ToString();
+    }
+
+    [Fact]
+    public void RemovesAControlTheDesignerDeleted()
+    {
+        // Left in, it came back the next time the form was opened — and the
+        // code handling it kept compiling, so nothing said the two disagreed.
+        var updated = AxamlToForm.Apply(Form, Without("cmdOk"));
+
+        Assert.DoesNotContain("Begin VB.CommandButton cmdOk", updated);
+
+        // The whole block, not just its Begin: properties left behind are
+        // lines belonging to nothing and Visual Basic 6 refuses the file.
+        Assert.DoesNotContain(FormFile.Parse(updated).Root.Children, c => c.Name == "cmdOk");
+
+        // And the handler stays. Deleting a control is not a reason to throw
+        // away code somebody wrote, and Visual Basic 6 kept it too.
+        Assert.Contains("cmdOk_Click", updated);
+    }
+
+    [Fact]
+    public void KeepsEverythingTheDeletionDidNotTouch()
+    {
+        var updated = AxamlToForm.Apply(Form, Without("cmdOk"));
+        var form = FormFile.Parse(updated);
+
+        // The frame with its contents, and the control from the OCX.
+        var frame = form.Root.Children.First(c => c.Name == "fraDati");
+
+        Assert.Contains(frame.Children, c => c.Name == "txtNome");
+        Assert.Contains(form.Root.Children, c => c.Name == "lvwElenco");
+        Assert.Contains("BeginProperty ColumnHeader(1)", updated);
+    }
+
+    [Fact]
+    public void NeverTreatsTheFormItselfAsDeleted()
+    {
+        // The form's Begin is not a control, and its name is not in the markup
+        // — the markup is a Window and only the controls inside carry names.
+        // Counted as deleted, the whole designer block was skipped and the
+        // file came back holding nothing but its code.
+        var updated = AxamlToForm.Apply(Form, Without("cmdOk"));
+
+        Assert.Contains("Begin VB.Form Form1", updated);
+        Assert.Contains("Caption         =   \"Anagrafica\"", updated);
+    }
+
+    [Fact]
+    public void RemovesAFrameWithEverythingInsideIt()
+    {
+        // A frame holds other controls, and stopping at the first End would
+        // leave its contents behind as lines belonging to nothing.
+        var updated = AxamlToForm.Apply(Form, Without("fraDati"));
+
+        Assert.DoesNotContain("fraDati", updated);
+        Assert.DoesNotContain("txtNome", updated);
+
+        // Balanced, or Visual Basic 6 will not open the file.
+        var lines = updated.Replace("\r\n", "\n").Split('\n').Select(l => l.Trim()).ToList();
+
+        Assert.Equal(
+            lines.Count(l => l.StartsWith("Begin ", StringComparison.Ordinal)),
+            lines.Count(l => l == "End"));
+    }
 }

@@ -69,13 +69,40 @@ public static class AxamlToForm
             .Where(p => !known.Contains(p.Key))
             .ToList();
 
+        // And the other way: a control the file knows and the markup no longer
+        // does was deleted in the designer. Left in, it came back the next
+        // time the form was opened — and the code handling it kept compiling,
+        // so nothing said the two disagreed.
+        //
+        // Only when the markup has controls at all: an empty or unreadable
+        // document would otherwise read as "everything was deleted" and take
+        // the form with it.
+        // The form's own Begin is not a control and its name is not in the
+        // markup — the markup is a Window, and only the controls inside it
+        // carry names. Counted as deleted, the form's whole designer block was
+        // skipped and the file came back holding nothing but its code.
+        var formName = lines
+            .Select(l => l.Trim())
+            .Where(l => l.StartsWith("Begin ", StringComparison.Ordinal))
+            .Select(NameIn)
+            .FirstOrDefault(n => n is { Length: > 0 });
+
+        var removed = positions.Count > 0
+            ? new HashSet<string>(
+                known.Where(name =>
+                    !positions.ContainsKey(name)
+                    && !string.Equals(name, formName, StringComparison.OrdinalIgnoreCase)),
+                StringComparer.OrdinalIgnoreCase)
+            : [];
+
         var written = new StringBuilder();
         var current = (string?)null;
         var depth = 0;
         var inserted = false;
 
-        foreach (var line in lines)
+        for (var index = 0; index < lines.Length; index++)
         {
+            var line = lines[index];
             var trimmed = line.Trim();
 
             // Before the form's own End, which closes the outermost Begin: a
@@ -98,6 +125,22 @@ public static class AxamlToForm
             {
                 depth++;
                 current = NameIn(trimmed);
+
+                // The whole block, not just its Begin line: a control's
+                // properties left behind are lines belonging to nothing, and
+                // Visual Basic 6 refuses to open the file.
+                if (current is { Length: > 0 } && removed.Contains(current))
+                {
+                    // Skip stops on the block's own End, so the depth this
+                    // Begin added is undone by consuming that line rather than
+                    // here. Decrementing as well took the form's own level
+                    // away, and every later End closed something that was no
+                    // longer open — the whole file came back empty.
+                    Skip(lines, ref index);
+                    depth--;
+                    current = null;
+                    continue;
+                }
             }
             else if (trimmed == "End" && depth > 0)
             {
@@ -125,6 +168,30 @@ public static class AxamlToForm
         return text.EndsWith(newline, StringComparison.Ordinal)
             ? text.Substring(0, text.Length - newline.Length)
             : text;
+    }
+
+    /// <summary>
+    /// Moves past a control's whole block, Begin to matching End.
+    /// </summary>
+    /// <remarks>
+    /// Counting nested Begins, because a Frame holds other controls and
+    /// stopping at the first End would leave its contents behind as lines
+    /// belonging to nothing.
+    /// </remarks>
+    private static void Skip(string[] lines, ref int index)
+    {
+        var depth = 1;
+
+        while (index + 1 < lines.Length && depth > 0)
+        {
+            var line = lines[++index].Trim();
+
+            if (line.StartsWith("Begin ", StringComparison.Ordinal)
+                && !line.StartsWith("BeginProperty", StringComparison.Ordinal))
+                depth++;
+            else if (line == "End")
+                depth--;
+        }
     }
 
     /// <summary>
