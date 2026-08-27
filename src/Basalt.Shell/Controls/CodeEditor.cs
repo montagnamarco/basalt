@@ -28,6 +28,21 @@ public sealed class CodeEditor : UserControl
     private readonly MainWindowViewModel _shell;
     private CompletionWindow? _completionWindow;
 
+    /// <summary>What is being suggested, drawn without entering the document.</summary>
+    private readonly GhostTextGenerator _ghostText = new();
+
+    private CancellationTokenSource? _suggestionDebounce;
+
+    /// <summary>
+    /// Who suggests what to write next, when anybody does.
+    /// </summary>
+    /// <remarks>
+    /// Settable so a test can supply one that answers immediately: the real
+    /// providers need an account and a network, and an editor whose suggestion
+    /// path is only exercised against those is one nobody can test.
+    /// </remarks>
+    public Basalt.Extensibility.IInlineSuggestionProvider? SuggestionProvider { get; set; }
+
     /// <summary>
     /// Whether the completion list opens on its own while typing.
     ///
@@ -72,6 +87,11 @@ public sealed class CodeEditor : UserControl
 
         _squiggles = new DiagnosticSquiggles(_editor.Document);
         _editor.TextArea.TextView.BackgroundRenderers.Add(_squiggles);
+
+        // Where a suggestion is drawn. Registered even with no provider
+        // signed in: it draws nothing until something is suggested, and
+        // adding it later would mean rebuilding the view.
+        _editor.TextArea.TextView.ElementGenerators.Add(_ghostText);
 
         // Left of the line numbers, so a click to set a breakpoint cannot be
         // mistaken for a click to select a line.
@@ -547,6 +567,12 @@ public sealed class CodeEditor : UserControl
     {
         if (string.IsNullOrEmpty(e.Text)) return;
 
+        // Whatever was suggested was suggested for the line as it was a
+        // keystroke ago. Left on screen it reads as an answer to what is there
+        // now, which is worse than showing nothing: the request below asks
+        // again for the line as it stands.
+        ClearSuggestion();
+
         // Guarded, and no longer "async void": anything thrown while working
         // out what to offer used to reach the runtime, where it either took
         // the application down or — worse for finding it — was swallowed and
@@ -578,6 +604,7 @@ public sealed class CodeEditor : UserControl
             // seven round trips through Roslyn, five of them still in flight
             // when the next one started.
             RequestCompletionAfterPause();
+            RequestSuggestionAfterPause();
             return;
         }
 
@@ -792,6 +819,34 @@ public sealed class CodeEditor : UserControl
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        // A suggestion answers to Tab before anything else does. Only when one
+        // is showing: Tab is indentation the rest of the time, and taking it
+        // away would be a worse trade than any suggestion is worth.
+        if (_ghostText.IsShowing && e.KeyModifiers == KeyModifiers.None)
+        {
+            if (e.Key == Key.Tab)
+            {
+                e.Handled = AcceptSuggestion();
+                return;
+            }
+
+            if (e.Key == Key.Escape)
+            {
+                ClearSuggestion();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // A word at a time, for a suggestion that starts well and goes wrong.
+        if (_ghostText.IsShowing
+            && e.Key == Key.Right
+            && e.KeyModifiers.HasFlag(KeyModifiers.Alt))
+        {
+            e.Handled = AcceptSuggestion(wordOnly: true);
+            return;
+        }
+
         // Ctrl+Space invokes completion at any position.
         if (e.Key == Key.Space && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
@@ -1285,6 +1340,108 @@ public sealed class CodeEditor : UserControl
 
         ToolTip.SetTip(_editor, _hover);
         ToolTip.SetIsOpen(_editor, true);
+    }
+
+
+    /// <summary>
+    /// Asks for a suggestion once typing pauses.
+    /// </summary>
+    /// <remarks>
+    /// Longer than the completion pause, and deliberately: a suggestion costs
+    /// a round trip to a service rather than a query against a compilation
+    /// already in memory, and one per keystroke would be both slow and
+    /// expensive. Long enough that it arrives when someone stops to think,
+    /// which is when a suggestion is wanted.
+    /// </remarks>
+    private const int SuggestionPauseMilliseconds = 300;
+
+    private void RequestSuggestionAfterPause()
+    {
+        _suggestionDebounce?.Cancel();
+
+        // Cleared straight away: a suggestion made for what was on the line a
+        // moment ago is worse than none, because it reads as an answer to what
+        // is there now.
+        ClearSuggestion();
+
+        if (SuggestionProvider is not { IsAvailable: true } provider) return;
+
+        _suggestionDebounce = new CancellationTokenSource();
+
+        var token = _suggestionDebounce.Token;
+        var at = _editor.CaretOffset;
+
+        Guarded.Run(async () =>
+        {
+            await Task.Delay(SuggestionPauseMilliseconds, token).ConfigureAwait(true);
+
+            if (token.IsCancellationRequested) return;
+
+            var suggestion = await provider
+                .SuggestAsync(_document.FilePath, _editor.Text, at, token)
+                .ConfigureAwait(true);
+
+            if (token.IsCancellationRequested || suggestion is null) return;
+
+            // The caret has to still be where the suggestion was asked for.
+            // Shown anyway, it appears in the middle of a word somebody has
+            // gone on typing.
+            if (_editor.CaretOffset != at) return;
+
+            ShowSuggestion(suggestion);
+        },
+        _ => { }, "editor");
+    }
+
+    /// <summary>Shows a suggestion in the editor.</summary>
+    private void ShowSuggestion(Basalt.Extensibility.InlineSuggestion suggestion)
+    {
+        if (suggestion.FirstLine.Length == 0) return;
+
+        _suggestion = suggestion;
+        _ghostText.Show(suggestion.FirstLine, suggestion.Position);
+        _editor.TextArea.TextView.Redraw();
+    }
+
+    /// <summary>Takes a suggestion away.</summary>
+    private void ClearSuggestion()
+    {
+        if (!_ghostText.IsShowing) return;
+
+        _suggestion = null;
+        _ghostText.Clear();
+        _editor.TextArea.TextView.Redraw();
+    }
+
+    private Basalt.Extensibility.InlineSuggestion? _suggestion;
+
+    /// <summary>Whether something is being suggested.</summary>
+    public bool IsSuggesting => _ghostText.IsShowing;
+
+    /// <summary>
+    /// Writes the suggestion into the document.
+    /// </summary>
+    /// <param name="wordOnly">
+    /// Take only the first word. A suggestion is often right at the start and
+    /// wrong further along, and this is how somebody keeps the useful part
+    /// without deleting the rest afterwards.
+    /// </param>
+    public bool AcceptSuggestion(bool wordOnly = false)
+    {
+        if (_suggestion is not { } suggestion) return false;
+
+        var text = wordOnly ? suggestion.FirstWord : suggestion.FirstLine;
+
+        if (text.Length == 0) return false;
+
+        var at = Math.Clamp(suggestion.Position, 0, _editor.Document.TextLength);
+
+        ClearSuggestion();
+
+        _editor.Document.Insert(at, text);
+        _editor.CaretOffset = at + text.Length;
+
+        return true;
     }
 
     private CancellationTokenSource? _completionDebounce;
