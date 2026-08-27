@@ -139,4 +139,61 @@ public sealed class SolutionTemplatesTests : IDisposable
         try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
         catch (IOException) { }
     }
+
+    [Fact]
+    public async Task TheVisualBasic6TemplateWritesWhatVisualBasic6Wrote()
+    {
+        // A .vbp and a .frm, not a .vbproj: the point of this template is a
+        // project that opens both here and in Visual Basic 6, and Basalt
+        // writes the .NET project beside it when the .vbp is opened.
+        var result = await SolutionTemplates.CreateAsync(
+            _root, "Anagrafica", ProjectTemplate.VisualBasic6);
+
+        Assert.EndsWith(".vbp", result.ProjectPath);
+
+        var directory = Path.GetDirectoryName(result.ProjectPath)!;
+        var form = File.ReadAllText(Path.Combine(directory, "Form1.frm"));
+
+        // CRLF, because that is what a .frm is. A file with Unix endings is
+        // one no copy of Visual Basic 6 ever produced.
+        Assert.Contains("\r\n", form);
+
+        // And it reads back as a form, which is the only thing that matters:
+        // a template that writes something the parser cannot read is a
+        // template that produces nothing.
+        var parsed = Basalt.Vb6.FormFile.Parse(form);
+
+        Assert.Contains(parsed.Root.Children, c => c.Name == "cmdSaluta");
+        Assert.Contains("cmdSaluta_Click", parsed.Code);
+    }
+
+    [Fact]
+    public async Task TheBlazorTemplateWritesAComponentAndHostsIt()
+    {
+        var result = await SolutionTemplates.CreateAsync(
+            _root, "Sito", ProjectTemplate.Blazor);
+
+        var directory = Path.GetDirectoryName(result.ProjectPath)!;
+
+        Assert.True(File.Exists(Path.Combine(directory, "Components", "Home.vbrazor")));
+
+        var project = File.ReadAllText(result.ProjectPath);
+
+        // Declared in the project rather than left to the package's props:
+        // those are imported for a PackageReference and not for a project
+        // one, so a .vbrazor reached the compiler as nothing at all and the
+        // component was never generated.
+        Assert.Contains("*.vbrazor", project);
+
+        var program = File.ReadAllText(Path.Combine(directory, "Program.vb"));
+
+        // Without the root namespace, which the project deliberately leaves
+        // empty: Visual Basic prepends RootNamespace to every Namespace
+        // statement, so naming it here would look for Sito.Sito.Components.
+        Assert.Contains("Global.Components.Home", program);
+
+        // And the antiforgery middleware, without which a component answers
+        // 500 and the error names middleware rather than the page.
+        Assert.Contains("UseAntiforgery", program);
+    }
 }

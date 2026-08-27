@@ -35,6 +35,26 @@ public enum ProjectTemplate
     TestProject,
 
     /// <summary>
+    /// A Blazor application whose components are written in Visual Basic.
+    /// </summary>
+    /// <remarks>
+    /// The .vbrazor components are compiled by the same generator the views
+    /// use, so this needs no runtime of its own — only the reference and a
+    /// component to start from.
+    /// </remarks>
+    Blazor,
+
+    /// <summary>
+    /// A Visual Basic 6 project, written the way Visual Basic 6 wrote them.
+    /// </summary>
+    /// <remarks>
+    /// A .vbp and a .frm, not a .vbproj: the point is a project that opens
+    /// both here and in Visual Basic 6, and Basalt writes the .NET project
+    /// beside it when the .vbp is opened.
+    /// </remarks>
+    VisualBasic6,
+
+    /// <summary>
     /// A QuickBASIC program compiled to a native executable.
     ///
     /// Not a .NET project: there is no project file, only the source, which
@@ -50,11 +70,20 @@ internal static class ProjectTemplateExtensions
         template is ProjectTemplate.WebApi
                  or ProjectTemplate.RazorPages
                  or ProjectTemplate.Mvc
-                 or ProjectTemplate.WebApp;
+                 or ProjectTemplate.WebApp
+                 or ProjectTemplate.Blazor;
 
-    /// <summary>Whether the template renders Razor views.</summary>
+    /// <summary>
+    /// Whether the template needs the Visual Basic Razor compiler.
+    /// </summary>
+    /// <remarks>
+    /// Blazor as well as the view-based templates: a .vbrazor component is
+    /// compiled by the same generator, so the reference is the same one.
+    /// </remarks>
     public static bool UsesViews(this ProjectTemplate template) =>
-        template is ProjectTemplate.RazorPages or ProjectTemplate.Mvc;
+        template is ProjectTemplate.RazorPages
+                 or ProjectTemplate.Mvc
+                 or ProjectTemplate.Blazor;
 }
 
 /// <summary>
@@ -83,6 +112,13 @@ public static class SolutionTemplates
         // program, and the compiler takes it directly.
         if (template == ProjectTemplate.QuickBasic)
             return await CreateQuickBasicAsync(projectDirectory, solutionName, ct)
+                .ConfigureAwait(false);
+
+        // A Visual Basic 6 project is a .vbp and a .frm, not a .vbproj: the
+        // point is a project that opens both here and in Visual Basic 6, and
+        // Basalt writes the .NET project beside it when the .vbp is opened.
+        if (template == ProjectTemplate.VisualBasic6)
+            return await CreateVisualBasic6Async(projectDirectory, solutionName, ct)
                 .ConfigureAwait(false);
 
         var projectPath = Path.Combine(projectDirectory, $"{solutionName}.vbproj");
@@ -125,6 +161,10 @@ public static class SolutionTemplates
 
             case ProjectTemplate.Mvc:
                 await WriteMvcAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                break;
+
+            case ProjectTemplate.Blazor:
+                await WriteBlazorAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
                 break;
         }
 
@@ -212,6 +252,158 @@ public static class SolutionTemplates
 
         return new NewSolutionResult(sourcePath, sourcePath, null);
     }
+
+    /// <summary>
+    /// Writes a Blazor application whose components are Visual Basic.
+    /// </summary>
+    /// <remarks>
+    /// A .vbrazor component and the two calls that host it. Nothing else is
+    /// needed: the components are compiled by the same generator the views
+    /// use, so the project carries a package reference and no runtime of its
+    /// own.
+    /// </remarks>
+    private static async Task WriteBlazorAsync(
+        string projectDirectory, string name, CancellationToken ct)
+    {
+        var components = Path.Combine(projectDirectory, "Components");
+
+        Directory.CreateDirectory(components);
+
+        await File.WriteAllTextAsync(
+            Path.Combine(components, "Home.vbrazor"), $"""
+            @Page "/"
+
+            <h1>@Titolo</h1>
+
+            <p>Conteggio: @count</p>
+
+            <button onclick="@AddressOf Incrementa">Aggiungi</button>
+
+            @Functions
+                <Global.Microsoft.AspNetCore.Components.Parameter>
+                Public Property Titolo As String = "{name}"
+
+                Private count As Integer
+
+                Private Sub Incrementa()
+                    count += 1
+                End Sub
+            @End Functions
+
+            """, ct).ConfigureAwait(false);
+
+        await File.WriteAllTextAsync(
+            Path.Combine(projectDirectory, "Program.vb"), $"""
+            Imports Microsoft.AspNetCore.Builder
+            Imports Microsoft.Extensions.DependencyInjection
+
+            Public Module Program
+
+                Public Sub Main(args As String())
+                    Dim builder = WebApplication.CreateBuilder(args)
+
+                    builder.Services.AddRazorComponents()
+
+                    Dim app = builder.Build()
+
+                    app.UseAntiforgery()
+                    app.MapRazorComponents(Of Global.Components.Home)()
+
+                    app.Run()
+                End Sub
+
+            End Module
+
+            """, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Writes a Visual Basic 6 project, in the format Visual Basic 6 wrote.
+    /// </summary>
+    /// <remarks>
+    /// CRLF throughout, because that is what a .frm is: a file with Unix
+    /// endings is one no copy of Visual Basic 6 ever produced, and the point
+    /// of this template is a project that opens in both.
+    ///
+    /// The .vbproj is not written here. It is written when the .vbp is opened,
+    /// so the two cannot drift apart — and so the folder holds only what
+    /// Visual Basic 6 would have put in it.
+    /// </remarks>
+    private static async Task<NewSolutionResult> CreateVisualBasic6Async(
+        string projectDirectory, string name, CancellationToken ct)
+    {
+        var projectPath = Path.Combine(projectDirectory, $"{name}.vbp");
+        var formPath = Path.Combine(projectDirectory, "Form1.frm");
+
+        await File.WriteAllTextAsync(projectPath, Crlf($"""
+            Type=Exe
+            Form=Form1.frm
+            Startup="Form1"
+            Name="{name}"
+            MajorVer=1
+            MinorVer=0
+            RevisionVer=0
+
+            """), ct).ConfigureAwait(false);
+
+        await File.WriteAllTextAsync(formPath, Crlf($$"""
+            VERSION 5.00
+            Begin VB.Form Form1 
+               Caption         =   "{{name}}"
+               ClientHeight    =   3195
+               ClientWidth     =   4680
+               StartUpPosition =   3  'Windows Default
+               Begin VB.TextBox txtNome 
+                  Height          =   285
+                  Left            =   1320
+                  TabIndex        =   1
+                  Top             =   480
+                  Width           =   2295
+               End
+               Begin VB.CommandButton cmdSaluta 
+                  Caption         =   "Saluta"
+                  Height          =   375
+                  Left            =   1320
+                  TabIndex        =   0
+                  Top             =   1080
+                  Width           =   1215
+               End
+               Begin VB.Label lblNome 
+                  Caption         =   "Nome:"
+                  Height          =   255
+                  Left            =   240
+                  TabIndex        =   2
+                  Top             =   525
+                  Width           =   975
+               End
+            End
+            Attribute VB_Name = "Form1"
+            Attribute VB_GlobalNameSpace = False
+            Attribute VB_Creatable = False
+            Attribute VB_PredeclaredId = True
+            Attribute VB_Exposed = False
+            Option Explicit
+
+            Private Sub cmdSaluta_Click()
+                If Trim$(txtNome.Text) = "" Then
+                    MsgBox "Inserire il nome", vbExclamation
+                    Exit Sub
+                End If
+                MsgBox "Ciao " & txtNome.Text
+            End Sub
+
+            Private Sub Form_Load()
+                txtNome.Text = ""
+            End Sub
+
+            """), ct).ConfigureAwait(false);
+
+        return new NewSolutionResult(projectPath, projectPath, formPath);
+    }
+
+    /// <summary>The text with the line endings Visual Basic 6 wrote.</summary>
+    private static string Crlf(string text) =>
+        text.Replace("\r\n", "\n").Replace("\n", "\r\n");
 
     private static string ProjectFile(ProjectTemplate template)
     {
@@ -623,6 +815,14 @@ public static class SolutionTemplates
             <ProjectReference Include="$(RazorVbPath)/Basalt.Razor.Vb.Generator/Basalt.Razor.Vb.Generator.csproj"
                               OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
             <AdditionalFiles Include="Views/**/*.vbhtml" />
+
+            <!--
+              Declared here rather than coming from the package's props: those
+              are imported for a PackageReference and not for a project one,
+              so a .vbrazor reached the compiler as nothing at all and the
+              component was never generated.
+            -->
+            <AdditionalFiles Include="Components/**/*.vbrazor" />
           </ItemGroup>
         """;
     }

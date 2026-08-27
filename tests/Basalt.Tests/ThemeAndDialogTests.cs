@@ -59,9 +59,16 @@ public class ThemeAndDialogTests
     [AvaloniaFact]
     public void DefaultsToTheDesktopTemplate()
     {
+        // By what is selected rather than by where it sits: the list is
+        // grouped by language, so the desktop template is no longer the first
+        // row — the first row is a heading. An index says nothing about which
+        // template a reader would get.
         var dialog = new NewSolutionDialog();
 
-        Assert.Equal(0, dialog.FindControl<ListBox>("TemplateList")!.SelectedIndex);
+        var selected = Assert.IsType<ListBoxItem>(
+            dialog.FindControl<ListBox>("TemplateList")!.SelectedItem);
+
+        Assert.Equal("AvaloniaApp", selected.Tag);
     }
 
     [AvaloniaFact]
@@ -113,5 +120,41 @@ public class ThemeAndDialogTests
 
         var background = Assert.IsType<SolidColorBrush>(window.Background);
         Assert.Equal(Colors.White, background.Color);
+    }
+
+    [AvaloniaFact]
+    public void OpensWithATemplateChosen()
+    {
+        // The list is grouped by language now, and a heading is not something
+        // anyone can create: opening with one selected leaves the dialog
+        // showing no choice at all, and Create falls back to whatever the
+        // code's default happens to be.
+        var dialog = new NewSolutionDialog();
+        var list = dialog.FindControl<ListBox>("TemplateList")!;
+
+        var selected = Assert.IsType<ListBoxItem>(list.SelectedItem);
+
+        Assert.IsType<string>(selected.Tag);
+    }
+
+    [AvaloniaFact]
+    public void GroupsTheTemplatesByLanguage()
+    {
+        // Basalt is an IDE for Visual Basic and its dialects, and the first
+        // question anyone has is which dialect they are writing — not whether
+        // the result is a window or a service.
+        var dialog = new NewSolutionDialog();
+        var list = dialog.FindControl<ListBox>("TemplateList")!;
+
+        var headings = list.Items.OfType<TextBlock>().Select(t => t.Text).ToList();
+
+        Assert.Contains(headings, h => h?.Contains("VISUAL BASIC .NET") == true);
+        Assert.Contains(headings, h => h?.Contains("DIALECTS") == true);
+
+        // And the two newest are there to be chosen.
+        var tags = list.Items.OfType<ListBoxItem>().Select(i => i.Tag as string).ToList();
+
+        Assert.Contains("Blazor", tags);
+        Assert.Contains("VisualBasic6", tags);
     }
 }

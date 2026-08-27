@@ -39,9 +39,11 @@
         <StackPanel Spacing="6">
           <TextBlock Text="Tipo di progetto" FontWeight="SemiBold" FontSize="12" />
 
-          <ListBox x:Name="TemplateList" SelectedIndex="0" Height="240"
+          <ListBox x:Name="TemplateList" SelectedIndex="1" Height="300"
                    BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
                    Background="{DynamicResource EditorBackgroundBrush}">
+            <TextBlock Text="VISUAL BASIC .NET" FontWeight="Bold" FontSize="11" Margin="4,8,4,2"
+                         Foreground="{DynamicResource DescriptionForegroundBrush}" />
             <ListBoxItem Tag="AvaloniaApp">
               <StackPanel Margin="4,6">
                 <TextBlock Text="Desktop Application" FontWeight="SemiBold" />
@@ -61,39 +63,7 @@
             <ListBoxItem Tag="ClassLibrary">
               <StackPanel Margin="4,6">
                 <TextBlock Text="Class Library" FontWeight="SemiBold" />
-                <TextBlock Text="Reusable component with no entry point."
-                           Foreground="{DynamicResource DescriptionForegroundBrush}"
-                           FontSize="11" TextWrapping="Wrap" />
-              </StackPanel>
-            </ListBoxItem>
-            <ListBoxItem Tag="WebApi">
-              <StackPanel Margin="4,6">
-                <TextBlock Text="ASP.NET Core Web API" FontWeight="SemiBold" />
-                <TextBlock Text="HTTP service returning JSON from minimal endpoints."
-                           Foreground="{DynamicResource DescriptionForegroundBrush}"
-                           FontSize="11" TextWrapping="Wrap" />
-              </StackPanel>
-            </ListBoxItem>
-            <ListBoxItem Tag="WebApp">
-              <StackPanel Margin="4,6">
-                <TextBlock Text="ASP.NET Core Web App" FontWeight="SemiBold" />
-                <TextBlock Text="Minimal web application serving a single page."
-                           Foreground="{DynamicResource DescriptionForegroundBrush}"
-                           FontSize="11" TextWrapping="Wrap" />
-              </StackPanel>
-            </ListBoxItem>
-            <ListBoxItem Tag="RazorPages">
-              <StackPanel Margin="4,6">
-                <TextBlock Text="ASP.NET Core Razor Pages" FontWeight="SemiBold" />
-                <TextBlock Text="Page-based web application. Visual Basic uses .vbhtml templates."
-                           Foreground="{DynamicResource DescriptionForegroundBrush}"
-                           FontSize="11" TextWrapping="Wrap" />
-              </StackPanel>
-            </ListBoxItem>
-            <ListBoxItem Tag="Mvc">
-              <StackPanel Margin="4,6">
-                <TextBlock Text="ASP.NET Core MVC" FontWeight="SemiBold" />
-                <TextBlock Text="Controllers and views. Visual Basic uses .vbhtml templates."
+                <TextBlock Text="Reusable library, no entry point."
                            Foreground="{DynamicResource DescriptionForegroundBrush}"
                            FontSize="11" TextWrapping="Wrap" />
               </StackPanel>
@@ -102,6 +72,58 @@
               <StackPanel Margin="4,6">
                 <TextBlock Text="Test Project" FontWeight="SemiBold" />
                 <TextBlock Text="Unit tests with xunit, discovered and run from the test window."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <TextBlock Text="VISUAL BASIC ON THE WEB" FontWeight="Bold" FontSize="11" Margin="4,8,4,2"
+                         Foreground="{DynamicResource DescriptionForegroundBrush}" />
+            <ListBoxItem Tag="WebApi">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core Web API" FontWeight="SemiBold" />
+                <TextBlock Text="HTTP service returning JSON."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="WebApp">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core Empty" FontWeight="SemiBold" />
+                <TextBlock Text="Minimal web application serving one page."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="RazorPages">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core Razor Pages" FontWeight="SemiBold" />
+                <TextBlock Text="Page-based web application, written in .vbhtml."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="Mvc">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="ASP.NET Core MVC" FontWeight="SemiBold" />
+                <TextBlock Text="Controllers and views, written in .vbhtml."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="Blazor">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="Blazor" FontWeight="SemiBold" />
+                <TextBlock Text="Interactive components written in .vbrazor — the Razor .NET never gave Visual Basic."
+                           Foreground="{DynamicResource DescriptionForegroundBrush}"
+                           FontSize="11" TextWrapping="Wrap" />
+              </StackPanel>
+            </ListBoxItem>
+            <TextBlock Text="OTHER DIALECTS" FontWeight="Bold" FontSize="11" Margin="4,8,4,2"
+                         Foreground="{DynamicResource DescriptionForegroundBrush}" />
+            <ListBoxItem Tag="VisualBasic6">
+              <StackPanel Margin="4,6">
+                <TextBlock Text="Visual Basic 6" FontWeight="SemiBold" />
+                <TextBlock Text="A .vbp and a .frm, as Visual Basic 6 wrote them. Opens here and there."
                            Foreground="{DynamicResource DescriptionForegroundBrush}"
                            FontSize="11" TextWrapping="Wrap" />
               </StackPanel>

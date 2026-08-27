@@ -87,6 +87,10 @@ public partial class NewSolutionDialog : Window
         // The template is carried on the item itself rather than derived from
         // its position, so reordering the list cannot silently change what the
         // dialog creates.
+        // A heading is not a template. It cannot be reached with the mouse —
+        // a TextBlock in a ListBox is not selectable — but the keyboard walks
+        // through everything, and landing on one would otherwise create
+        // whatever the fallback happens to be.
         var template = TemplateList.SelectedItem is ListBoxItem { Tag: string tag }
                     && Enum.TryParse<ProjectTemplate>(tag, out var chosen)
             ? chosen
