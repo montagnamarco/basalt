@@ -3401,6 +3401,57 @@ var editor = new CodeEditor(document, ViewModel);
             () => RunGitAsync(git => git.UnstageAsync([change.Path])),
             ViewModel.WriteOutput, "ide");
 
+        _gitChanges.StageAllRequested += (_, _) => Guarded.Run(
+            async () =>
+            {
+                // The paths are read from what the panel is showing rather
+                // than passing "." to git: a stage-all that reaches files the
+                // user cannot see in the list is a stage-all that surprises.
+                var paths = _gitChanges.Unstaged.Select(r => r.Change.Path).ToList();
+
+                if (paths.Count > 0
+                    && await RunGitAsync(git => git.StageAsync(paths)))
+                    await RefreshGitAsync();
+            },
+            ViewModel.WriteOutput, "ide");
+
+        _gitChanges.UnstageAllRequested += (_, _) => Guarded.Run(
+            async () =>
+            {
+                var paths = _gitChanges.Staged.Select(r => r.Change.Path).ToList();
+
+                if (paths.Count > 0
+                    && await RunGitAsync(git => git.UnstageAsync(paths)))
+                    await RefreshGitAsync();
+            },
+            ViewModel.WriteOutput, "ide");
+
+        _gitChanges.RemoteRequested += (_, command) => Guarded.Run(
+            async () =>
+            {
+                if (ViewModel.Repository is not { } git) return;
+
+                try
+                {
+                    var message = command == GitChangesPanel.RemoteCommand.Pull
+                        ? await git.PullAsync().ConfigureAwait(true)
+                        : await git.PushAsync().ConfigureAwait(true);
+
+                    // What git printed, in the output pane. These commands
+                    // report on standard error even when they succeed, and
+                    // swallowing that leaves a push that did nothing looking
+                    // exactly like one that worked.
+                    if (message.Trim().Length > 0) ViewModel.WriteOutput($"[git] {message.Trim()}");
+                }
+                catch (Exception ex) when (ex is InvalidOperationException or IOException)
+                {
+                    ViewModel.WriteOutput($"[git] {ex.Message}");
+                }
+
+                await RefreshGitAsync();
+            },
+            ViewModel.WriteOutput, "ide");
+
         _gitChanges.CommitRequested += (_, request) => Guarded.Run(
             async () =>
             {
@@ -3581,7 +3632,12 @@ var editor = new CodeEditor(document, ViewModel);
             if (_gitChanges is not null)
             {
                 var status = await git.GetStatusAsync().ConfigureAwait(true);
-                _gitChanges.Show(ViewModel.CurrentBranch, status);
+
+                // Counted against what was last fetched, so this asks git
+                // nothing over the network and can be read on every refresh.
+                var upstream = await git.GetUpstreamStateAsync().ConfigureAwait(true);
+
+                _gitChanges.Show(ViewModel.CurrentBranch, status, upstream);
             }
 
             if (_gitHistory is not null)

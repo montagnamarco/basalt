@@ -1,7 +1,10 @@
 using Avalonia;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
+using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Basalt.Core.Services;
 using Basalt.Workspace.SourceControl;
@@ -12,9 +15,33 @@ namespace Basalt.Shell.Controls;
 public sealed record CommitRequest(string Message, bool Amend);
 
 /// <summary>A changed file as the list shows it.</summary>
+/// <remarks>
+/// The path is split in two: the name is what someone is looking for and the
+/// folder is only context, and shown as one string the name sits at the right
+/// where it is the first thing an ellipsis eats. Twenty rows reading
+/// "src/Basalt.Shell/Controls/Too…" tell you nothing at all.
+/// </remarks>
 public sealed record ChangeRow(FileChange Change)
 {
     public string Display => $"{Marker} {Change.Path}";
+
+    /// <summary>The file's own name.</summary>
+    public string Name => System.IO.Path.GetFileName(Change.Path);
+
+    /// <summary>The folder it sits in, or empty at the repository root.</summary>
+    public string Folder
+    {
+        get
+        {
+            var folder = System.IO.Path.GetDirectoryName(Change.Path) ?? "";
+
+            // Forward slashes whatever the platform: this is a path as git
+            // reports it, not one to open a file with, and a backslash in the
+            // middle of the panel on Windows reads as a different repository
+            // from the same one on a Mac.
+            return folder.Replace('\\', '/');
+        }
+    }
 
     /// <summary>The single letter git itself uses for the kind of change.</summary>
     public string Marker => Change.Kind switch
@@ -25,6 +52,24 @@ public sealed record ChangeRow(FileChange Change)
         FileChangeKind.Renamed => "R",
         FileChangeKind.Conflicted => "!",
         _ => "?"
+    };
+
+    /// <summary>
+    /// What the letter is drawn in.
+    /// </summary>
+    /// <remarks>
+    /// The same colours every git client uses, which is the point: someone
+    /// scanning the list is looking for the red one, and reads the letter only
+    /// once they have found the row.
+    /// </remarks>
+    public Color Colour => Change.Kind switch
+    {
+        FileChangeKind.Added => Color.FromRgb(0x2E, 0xA0, 0x43),
+        FileChangeKind.Modified => Color.FromRgb(0xBF, 0x87, 0x00),
+        FileChangeKind.Deleted => Color.FromRgb(0xCF, 0x22, 0x2E),
+        FileChangeKind.Renamed => Color.FromRgb(0x37, 0x94, 0xFF),
+        FileChangeKind.Conflicted => Color.FromRgb(0xCF, 0x22, 0x2E),
+        _ => Color.FromRgb(0x8A, 0x8A, 0x8A)
     };
 }
 
@@ -43,6 +88,25 @@ public sealed class GitChangesPanel : UserControl
     private readonly Button _commit;
     private readonly CheckBox _amend;
     private readonly TextBlock _branch;
+    private readonly TextBlock _upstream;
+    private readonly Button _pull;
+    private readonly Button _push;
+    private readonly TextBlock _stagedCount;
+    private readonly TextBlock _unstagedCount;
+    private readonly Button _stageAll;
+    private readonly Button _unstageAll;
+    private readonly TextBlock _summaryLength;
+
+    /// <summary>
+    /// Where a commit subject stops being a subject.
+    /// </summary>
+    /// <remarks>
+    /// Fifty characters is the convention git's own tooling assumes, and a
+    /// count that turns amber as it is approached is how someone learns it
+    /// without being refused a longer one — the rule is a convention, and
+    /// there are good commits that break it.
+    /// </remarks>
+    private const int SubjectLimit = 50;
 
     public GitChangesPanel()
     {
@@ -50,22 +114,64 @@ public sealed class GitChangesPanel : UserControl
         {
             FontWeight = FontWeight.SemiBold,
             FontSize = 12,
-            Margin = new Thickness(8, 6, 8, 4)
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis
         };
+
+        // The counts against the remote, which is the question the header is
+        // actually there to answer: whether there is anything to send and
+        // anything waiting to come down.
+        _upstream = new TextBlock
+        {
+            FontSize = 11,
+            Opacity = 0.7,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        _pull = SmallButton(IconKind.Pull, "Pull");
+        _push = SmallButton(IconKind.Push, "Push");
+
+        _pull.Click += (_, _) => RemoteRequested?.Invoke(this, RemoteCommand.Pull);
+        _push.Click += (_, _) => RemoteRequested?.Invoke(this, RemoteCommand.Push);
 
         _message = new TextBox
         {
             PlaceholderText = "Commit message",
             AcceptsReturn = true,
-            MinHeight = 52,
-            Margin = new Thickness(8, 0, 8, 4)
+            MinHeight = 60,
+            MaxHeight = 140,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(Spacing.Normal, 0, Spacing.Normal, 0)
+        };
+
+        _message.TextChanged += (_, _) => UpdateCommitState();
+
+        // Ctrl+Enter commits. Reaching for the button after typing a message
+        // is the one gesture in this panel done dozens of times a day.
+        _message.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter
+                && e.KeyModifiers.HasFlag(
+                    OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control))
+            {
+                RequestCommit();
+                e.Handled = true;
+            }
+        };
+
+        _summaryLength = new TextBlock
+        {
+            FontSize = 10,
+            Opacity = 0.55,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right
         };
 
         _amend = new CheckBox
         {
             Content = "Amend the last commit",
             FontSize = 11,
-            Margin = new Thickness(8, 0, 8, 2)
+            VerticalAlignment = VerticalAlignment.Center
         };
 
         // Ticking amend loads the previous message, since the usual reason to
@@ -73,13 +179,16 @@ public sealed class GitChangesPanel : UserControl
         _amend.IsCheckedChanged += (_, _) =>
         {
             if (_amend.IsChecked == true) AmendRequested?.Invoke(this, EventArgs.Empty);
+
+            UpdateCommitState();
         };
 
         _commit = new Button
         {
             Content = "Commit",
-            Margin = new Thickness(8, 0, 8, 6),
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            Margin = new Thickness(Spacing.Normal, 0, Spacing.Normal, Spacing.Normal),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Center
         };
 
         _commit.Click += (_, _) => RequestCommit();
@@ -102,21 +211,46 @@ public sealed class GitChangesPanel : UserControl
         _staged.ContextMenu = BuildMenuFor(_staged, staged: true);
         _unstaged.ContextMenu = BuildMenuFor(_unstaged, staged: false);
 
+        _stagedCount = CountLabel();
+        _unstagedCount = CountLabel();
+
+        _stageAll = LinkButton("Stage all");
+        _unstageAll = LinkButton("Unstage all");
+
+        _stageAll.Click += (_, _) => StageAllRequested?.Invoke(this, EventArgs.Empty);
+        _unstageAll.Click += (_, _) => UnstageAllRequested?.Invoke(this, EventArgs.Empty);
+
+        // Auto rather than a fixed share each. Two staged files and twenty
+        // unstaged given half the panel apiece leaves the top list mostly
+        // empty and scrolls the one being read; sized to their contents the
+        // lists take what they need, and the whole panel scrolls once there
+        // is more than fits.
         var layout = new Grid
         {
-            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,*,Auto,*")
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto")
         };
 
-        AddRow(layout, _branch, 0);
+        AddRow(layout, BranchBar(), 0);
         AddRow(layout, _message, 1);
-        AddRow(layout, _amend, 2);
+        AddRow(layout, MessageFooter(), 2);
         AddRow(layout, _commit, 3);
-        AddRow(layout, Header("Staged"), 4);
-        AddRow(layout, _staged, 5);
-        AddRow(layout, Header("Changes"), 6);
-        AddRow(layout, _unstaged, 7);
+        AddRow(layout, new Separator { Opacity = 0.25, Margin = new Thickness(0, 0, 0, 2) }, 4);
+        AddRow(layout, SectionHeader("Staged", _stagedCount, _unstageAll), 5);
+        AddRow(layout, _staged, 6);
+        AddRow(layout, SectionHeader("Changes", _unstagedCount, _stageAll), 7);
+        AddRow(layout, _unstaged, 8);
 
-        Content = layout;
+        // Only the lists scroll, and only once they outgrow the panel: the
+        // message box and the Commit button stay put, since a commit button
+        // that scrolls out of view is one people stop finding.
+        Content = new ScrollViewer
+        {
+            Content = layout,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
+
+        UpdateCommitState();
     }
 
     /// <summary>Raised with the message and whether it should amend.</summary>
@@ -126,6 +260,20 @@ public sealed class GitChangesPanel : UserControl
     public event EventHandler? AmendRequested;
     public event EventHandler<FileChange>? StageRequested;
     public event EventHandler<FileChange>? UnstageRequested;
+
+    /// <summary>Raised to stage or unstage everything at once.</summary>
+    /// <remarks>
+    /// A commit that takes in the whole working tree is the common case, and
+    /// doing it by double-tapping twenty rows is twenty chances to miss one.
+    /// </remarks>
+    public event EventHandler? StageAllRequested;
+    public event EventHandler? UnstageAllRequested;
+
+    /// <summary>What the header's two buttons ask for.</summary>
+    public enum RemoteCommand { Pull, Push }
+
+    /// <summary>Raised when the user asks to exchange commits with the remote.</summary>
+    public event EventHandler<RemoteCommand>? RemoteRequested;
 
     /// <summary>Raised when the user asks to see a file's diff.</summary>
     public event EventHandler<FileChange>? DiffRequested;
@@ -162,7 +310,7 @@ public sealed class GitChangesPanel : UserControl
 
             MenuAction.Separator,
             new("Open Diff", () => Choose(ChangeCommand.OpenDiff))
-                { IsAvailable = HasFile, Icon = IconKind.Branch },
+                { IsAvailable = HasFile, Icon = IconKind.Diff },
             new("Open File", () => Choose(ChangeCommand.OpenFile))
                 { IsAvailable = HasFile, Icon = IconKind.Open },
             MenuAction.Separator,
@@ -190,8 +338,21 @@ public sealed class GitChangesPanel : UserControl
     internal string CommitMessage
     {
         get => _message.Text ?? "";
-        set => _message.Text = value;
+        set
+        {
+            _message.Text = value;
+            UpdateCommitState();
+        }
     }
+
+    /// <summary>Whether Commit can be pressed at all.</summary>
+    internal bool CanCommit => _commit.IsEnabled;
+
+    /// <summary>What the header says about the remote.</summary>
+    internal string UpstreamText => _upstream.Text ?? "";
+
+    internal bool CanPush => _push.IsEnabled;
+    internal bool CanPull => _pull.IsEnabled;
 
     private static void AddRow(Grid grid, Control child, int row)
     {
@@ -199,24 +360,142 @@ public sealed class GitChangesPanel : UserControl
         grid.Children.Add(child);
     }
 
-    private static TextBlock Header(string text) => new()
+    /// <summary>The branch, how it stands against the remote, and the two buttons.</summary>
+    private Control BranchBar()
     {
-        Text = text,
-        FontSize = 11,
-        Opacity = 0.7,
-        Margin = new Thickness(8, 6, 8, 2)
+        var name = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Spacing.Tight,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new IconView { Kind = IconKind.Branch, IconSize = 13 },
+                _branch,
+                _upstream
+            }
+        };
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Spacing.Tight,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Children = { _pull, _push }
+        };
+
+        var bar = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Margin = new Thickness(Spacing.Normal, Spacing.Normal, Spacing.Normal, Spacing.Normal),
+            Children = { name, buttons }
+        };
+
+        Grid.SetColumn(buttons, 1);
+
+        return bar;
+    }
+
+    /// <summary>Amend on the left, the subject's length on the right.</summary>
+    private Control MessageFooter()
+    {
+        var footer = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Margin = new Thickness(Spacing.Normal, 2, Spacing.Normal, Spacing.Tight),
+            Children = { _amend, _summaryLength }
+        };
+
+        Grid.SetColumn(_summaryLength, 1);
+
+        return footer;
+    }
+
+    /// <summary>A heading with its count and the action that applies to it.</summary>
+    private static Control SectionHeader(string text, TextBlock count, Button action)
+    {
+        var left = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Spacing.Tight,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = text,
+                    FontSize = 11,
+                    FontWeight = FontWeight.SemiBold,
+                    Opacity = 0.75,
+                    VerticalAlignment = VerticalAlignment.Center
+                },
+                count
+            }
+        };
+
+        var header = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Margin = new Thickness(Spacing.Normal, Spacing.Normal, Spacing.Tight, 2),
+            Children = { left, action }
+        };
+
+        Grid.SetColumn(action, 1);
+
+        return header;
+    }
+
+    /// <summary>How many files, in a pill beside the heading.</summary>
+    private static TextBlock CountLabel() => new()
+    {
+        FontSize = 10,
+        Opacity = 0.6,
+        VerticalAlignment = VerticalAlignment.Center,
+        FontFamily = Monospace
     };
+
+    private static readonly FontFamily Monospace =
+        new("Menlo,Consolas,DejaVu Sans Mono,monospace");
+
+    /// <summary>A button that reads as a link rather than as a control.</summary>
+    /// <remarks>
+    /// Stage all sits inside a heading, and a raised button there competes
+    /// with Commit for the eye — which is the one button in the panel that
+    /// should be obvious.
+    /// </remarks>
+    private static Button LinkButton(string text) => new()
+    {
+        Content = new TextBlock { Text = text, FontSize = 10 },
+        Background = Brushes.Transparent,
+        BorderThickness = new Thickness(0),
+        Padding = new Thickness(Spacing.Tight, 0),
+        Opacity = 0.75,
+        VerticalAlignment = VerticalAlignment.Center
+    };
+
+    /// <summary>An icon button for the header.</summary>
+    private static Button SmallButton(IconKind kind, string tip)
+    {
+        var button = new Button
+        {
+            Content = new IconView { Kind = kind, IconSize = 14 },
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(Spacing.Tight, 2),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        ToolTip.SetTip(button, tip);
+
+        return button;
+    }
 
     private ListBox BuildList()
     {
         var list = new ListBox
         {
-            ItemTemplate = new FuncDataTemplate<ChangeRow>((row, _) => new TextBlock
-            {
-                Text = row?.Display,
-                FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-                FontSize = 12
-            })
+            ItemTemplate = new FuncDataTemplate<ChangeRow>(
+                (row, _) => Row(row), supportsRecycling: false)
         };
 
         list.SelectionChanged += (_, _) =>
@@ -227,12 +506,159 @@ public sealed class GitChangesPanel : UserControl
         return list;
     }
 
-    public void Show(string? branch, IReadOnlyList<FileChange> changes)
+    /// <summary>One changed file: its letter, its name, then its folder.</summary>
+    private static Control Row(ChangeRow? row)
     {
-        _branch.Text = branch is null ? "No branch" : $"On {branch}";
+        if (row is null) return new TextBlock();
 
-        _staged.ItemsSource = changes.Where(c => c.Staged).Select(c => new ChangeRow(c)).ToList();
-        _unstaged.ItemsSource = changes.Where(c => !c.Staged).Select(c => new ChangeRow(c)).ToList();
+        var marker = new TextBlock
+        {
+            Text = row.Marker,
+            FontFamily = Monospace,
+            FontSize = 11,
+            FontWeight = FontWeight.Bold,
+            Foreground = new SolidColorBrush(row.Colour),
+            Width = 12,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var name = new TextBlock
+        {
+            Text = row.Name,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        // The folder is dimmed and given the room that is left. When the panel
+        // is narrow it is the folder that disappears, and the name — the thing
+        // being looked for — stays whole.
+        var folder = new TextBlock
+        {
+            Text = row.Folder,
+            FontSize = 10,
+            Opacity = 0.5,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+
+        var layout = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*"),
+            Children = { marker, name, folder }
+        };
+
+        Grid.SetColumn(name, 1);
+        Grid.SetColumn(folder, 2);
+
+        folder.Margin = new Thickness(Spacing.Normal, 0, 0, 0);
+
+        ToolTip.SetTip(layout, row.Change.Path);
+
+        return layout;
+    }
+
+    public void Show(string? branch, IReadOnlyList<FileChange> changes) =>
+        Show(branch, changes, upstream: null);
+
+    /// <summary>
+    /// What the working tree looks like, and how the branch stands.
+    /// </summary>
+    /// <param name="upstream">
+    /// Null when it has not been read: the header then says only the branch
+    /// name rather than claiming the branch is in step with a remote nobody
+    /// has asked about.
+    /// </param>
+    public void Show(
+        string? branch, IReadOnlyList<FileChange> changes, UpstreamState? upstream)
+    {
+        _branch.Text = branch ?? "No branch";
+
+        var staged = changes.Where(c => c.Staged).Select(c => new ChangeRow(c)).ToList();
+        var unstaged = changes.Where(c => !c.Staged).Select(c => new ChangeRow(c)).ToList();
+
+        _staged.ItemsSource = staged;
+        _unstaged.ItemsSource = unstaged;
+
+        _stagedCount.Text = staged.Count == 0 ? "" : staged.Count.ToString();
+        _unstagedCount.Text = unstaged.Count == 0 ? "" : unstaged.Count.ToString();
+
+        _unstageAll.IsVisible = staged.Count > 0;
+        _stageAll.IsVisible = unstaged.Count > 0;
+
+        ShowUpstream(upstream);
+        UpdateCommitState();
+    }
+
+    /// <summary>Says what there is to send and to receive.</summary>
+    private void ShowUpstream(UpstreamState? upstream)
+    {
+        if (upstream is null)
+        {
+            _upstream.Text = "";
+            _pull.IsEnabled = true;
+            _push.IsEnabled = true;
+            return;
+        }
+
+        if (upstream.IsUntracked)
+        {
+            // Publishing a branch is a push, so the button stays live; there
+            // is nothing to pull from a remote that has never heard of it.
+            _upstream.Text = "not published";
+            _pull.IsEnabled = false;
+            _push.IsEnabled = true;
+            return;
+        }
+
+        _upstream.Text = upstream.IsInStep
+            ? "up to date"
+            : string.Join(
+                "  ",
+                new[]
+                {
+                    upstream.Ahead > 0 ? $"↑{upstream.Ahead}" : null,
+                    upstream.Behind > 0 ? $"↓{upstream.Behind}" : null
+                }.Where(part => part is not null));
+
+        // Greyed rather than hidden. A button that comes and goes moves the
+        // one beside it, and the second press lands on the wrong one.
+        _pull.IsEnabled = upstream.Behind > 0;
+        _push.IsEnabled = upstream.Ahead > 0;
+    }
+
+    /// <summary>
+    /// Whether Commit can be pressed, and what the length counter says.
+    /// </summary>
+    /// <remarks>
+    /// A commit with nothing staged fails at git and prints an error, and one
+    /// with an empty message opens an editor that is not there. Refusing both
+    /// in the panel says so before the attempt.
+    ///
+    /// Amending is the exception: correcting the previous message is a commit
+    /// with nothing staged, and it is the reason amend exists.
+    /// </remarks>
+    private void UpdateCommitState()
+    {
+        var message = (_message.Text ?? "").Trim();
+        var amending = _amend.IsChecked == true;
+
+        _commit.IsEnabled = message.Length > 0 && (amending || Staged.Count > 0);
+
+        _commit.Content = amending ? "Amend" : "Commit";
+
+        var subject = (_message.Text ?? "").Replace("\r\n", "\n").Split('\n')[0];
+
+        _summaryLength.Text = subject.Length == 0 ? "" : subject.Length.ToString();
+
+        _summaryLength.Foreground = subject.Length > SubjectLimit
+            ? new SolidColorBrush(Color.FromRgb(0xBF, 0x87, 0x00))
+            : null;
+
+        ToolTip.SetTip(
+            _commit,
+            _commit.IsEnabled
+                ? null
+                : message.Length == 0 ? "Write a message first" : "Stage something to commit");
     }
 
     /// <summary>
@@ -245,6 +671,8 @@ public sealed class GitChangesPanel : UserControl
     {
         _message.Text = "";
         _amend.IsChecked = false;
+
+        UpdateCommitState();
     }
 
     /// <summary>Whether the next commit should replace the previous one.</summary>
@@ -259,6 +687,10 @@ public sealed class GitChangesPanel : UserControl
         var message = _message.Text ?? "";
         if (message.Trim().Length == 0) return;
 
+        // Nothing staged and not amending is a commit git refuses; the panel
+        // has already greyed the button, and this is the keyboard path.
+        if (!IsAmending && Staged.Count == 0) return;
+
         CommitRequested?.Invoke(this, new CommitRequest(message, IsAmending));
     }
 
@@ -267,6 +699,12 @@ public sealed class GitChangesPanel : UserControl
     internal void StageForTests(ChangeRow row) => StageRequested?.Invoke(this, row.Change);
 
     internal void UnstageForTests(ChangeRow row) => UnstageRequested?.Invoke(this, row.Change);
+
+    internal void StageAllForTests() => StageAllRequested?.Invoke(this, EventArgs.Empty);
+
+    internal void PressPullForTests() => _pull.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+    internal void PressPushForTests() => _push.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 }
 
 /// <summary>

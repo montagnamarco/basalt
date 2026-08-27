@@ -392,6 +392,38 @@ public sealed class GitSourceControlService : ISourceControlService
     public Task DiscardChangesAsync(IReadOnlyList<string> paths, CancellationToken ct = default) =>
         RunOrThrowAsync(["restore", "--staged", "--worktree", "--", .. paths], ct);
 
+    public async Task<UpstreamState> GetUpstreamStateAsync(CancellationToken ct = default)
+    {
+        var upstream = await RunAsync(
+            ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+            ct: ct).ConfigureAwait(false);
+
+        // A branch that was never pushed has no upstream, and git says so by
+        // failing. That is not an error to report: it is the ordinary state
+        // of a branch made a minute ago.
+        if (upstream.ExitCode != 0) return new UpstreamState(null, 0, 0);
+
+        var name = upstream.Output.Trim();
+
+        var counts = await RunAsync(
+            ["rev-list", "--left-right", "--count", $"{name}...HEAD"],
+            ct: ct).ConfigureAwait(false);
+
+        if (counts.ExitCode != 0) return new UpstreamState(name, 0, 0);
+
+        // Left is the upstream side and right is ours: --left-right counts
+        // each side of the three-dot range, so behind comes first.
+        var parts = counts.Output.Split(
+            [' ', '\t', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length < 2
+            || !int.TryParse(parts[0], out var behind)
+            || !int.TryParse(parts[1], out var ahead))
+            return new UpstreamState(name, 0, 0);
+
+        return new UpstreamState(name, ahead, behind);
+    }
+
     public Task<string> FetchAsync(CancellationToken ct = default) =>
         RunForMessageAsync(["fetch", "--all", "--prune"], ct);
 

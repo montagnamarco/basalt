@@ -106,4 +106,73 @@ public sealed class GitServiceTests : IDisposable
         try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
         catch (IOException) { /* irrelevant */ }
     }
+
+    [Fact]
+    public async Task UnRamoMaiInviatoNonHaUnRemoto()
+    {
+        // Not "0 ahead, 0 behind": that claims the branch is in step with
+        // something, and a branch made a minute ago is in step with nothing.
+        await File.WriteAllTextAsync(Path.Combine(_root, "a.vb"), "Public Class A\nEnd Class");
+        Run("add", "-A");
+        Run("commit", "-m", "primo");
+
+        var state = await _git.GetUpstreamStateAsync();
+
+        Assert.True(state.IsUntracked);
+        Assert.Null(state.Upstream);
+    }
+
+    [Fact]
+    public async Task ContaICommitDaInviareEDaRicevere()
+    {
+        // Against a second repository on disk rather than a real remote: git
+        // treats a folder as a remote perfectly well, and a test that needs
+        // the network is a test that fails on a train.
+        await File.WriteAllTextAsync(Path.Combine(_root, "a.vb"), "Public Class A\nEnd Class");
+        Run("add", "-A");
+        Run("commit", "-m", "primo");
+
+        var remote = Path.Combine(_root, "..", "remoto-" + Guid.NewGuid().ToString("N"));
+
+        Directory.CreateDirectory(remote);
+        RunIn(remote, "init", "--bare", "-b", "principale");
+
+        Run("remote", "add", "origin", remote);
+        Run("push", "-u", "origin", "principale");
+
+        Assert.True((await _git.GetUpstreamStateAsync()).IsInStep);
+
+        // Two commits made here and not sent.
+        await File.WriteAllTextAsync(Path.Combine(_root, "b.vb"), "Public Class B\nEnd Class");
+        Run("add", "-A");
+        Run("commit", "-m", "secondo");
+
+        await File.WriteAllTextAsync(Path.Combine(_root, "c.vb"), "Public Class C\nEnd Class");
+        Run("add", "-A");
+        Run("commit", "-m", "terzo");
+
+        var state = await _git.GetUpstreamStateAsync();
+
+        // Ahead and behind the right way round. The two numbers come out of
+        // one command in a fixed order, and swapping them offers to pull when
+        // there is nothing to pull and hides work that was never sent.
+        Assert.Equal(2, state.Ahead);
+        Assert.Equal(0, state.Behind);
+        Assert.False(state.IsInStep);
+        Assert.False(state.IsUntracked);
+
+        Directory.Delete(remote, recursive: true);
+    }
+
+    private static void RunIn(string directory, params string[] arguments)
+    {
+        var info = new System.Diagnostics.ProcessStartInfo("git")
+        {
+            WorkingDirectory = directory,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        foreach (var a in arguments) info.ArgumentList.Add(a);
+        System.Diagnostics.Process.Start(info)!.WaitForExit();
+    }
 }
