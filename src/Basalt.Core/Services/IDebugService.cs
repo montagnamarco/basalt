@@ -27,6 +27,14 @@ public interface IDebugService
     Task AttachAsync(int processId, CancellationToken ct = default);
     Task SetBreakpointsAsync(string filePath, IReadOnlyList<Breakpoint> breakpoints, CancellationToken ct = default);
     Task ContinueAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Stops a running program where it is.
+    ///
+    /// The way into a program that is not going to reach a breakpoint on its
+    /// own — one waiting on a window, or looping longer than expected.
+    /// </summary>
+    Task PauseAsync(CancellationToken ct = default);
     Task StepOverAsync(CancellationToken ct = default);
     Task StepIntoAsync(CancellationToken ct = default);
     Task StepOutAsync(CancellationToken ct = default);

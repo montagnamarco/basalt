@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using Basalt.Core.Services;
 using Basalt.Extensibility.Interpretation;
 using Basalt.QuickBasic.Interpretation;
@@ -36,6 +37,9 @@ public sealed class DebugSession : IDisposable
     public event EventHandler? Resumed;
     public event EventHandler<int>? Exited;
     public event EventHandler<string>? OutputReceived;
+
+    /// <summary>The program is running, whether or not it will ever stop.</summary>
+    public event EventHandler? Started;
 
     /// <summary>Raised when the breakpoints of a file change.</summary>
     public event EventHandler<string>? BreakpointsChanged;
@@ -154,20 +158,41 @@ public sealed class DebugSession : IDisposable
 
             if (adapter is null)
             {
+                // Naming only what is missing leaves the user with a name and
+                // nowhere to go. The three places that are looked in are the
+                // three places a copy can be put, so they are the answer.
                 Failed?.Invoke(this,
-                    "The debugger (netcoredbg) was not found. Install it to debug.");
+                    "The debugger (netcoredbg) was not found, so there is "
+                  + "nothing to debug with. Put a copy in "
+                  + Path.Combine("~", ".basalt", "debugger",
+                        DebugAdapterLocator.RuntimeIdentifier)
+                  + ", or on the PATH, or point BASALT_NETCOREDBG at it. "
+                  + "Run without debugging works meanwhile.");
                 return;
             }
 
             _service = new NetCoreDebugService(adapter);
         }
 
-        _service.Paused += OnPaused;
-        _service.Resumed += OnResumed;
-        _service.Exited += OnExited;
-        _service.OutputReceived += (_, text) => OutputReceived?.Invoke(this, text);
-        _service.Faulted += (_, ex) => Failed?.Invoke(this, ex.Message);
+        // Every one of these arrives on the reader thread that pumps the
+        // debug adapter, and every subscriber is a control. Touching Avalonia
+        // from there does nothing visible on macOS rather than failing
+        // loudly, which is how a breakpoint could be hit — the debugger
+        // reported it correctly — while the window sat on "starting".
+        //
+        // Marshalled once here rather than in each subscriber: this is the
+        // edge where the background thread ends, and a handler added later
+        // would otherwise have to remember on its own.
+        _service.Paused += (_, frame) => OnUiThread(() => OnPaused(this, frame));
+        _service.Resumed += (_, _) => OnUiThread(() => OnResumed(this, EventArgs.Empty));
+        _service.Exited += (_, code) => OnUiThread(() => OnExited(this, code));
+        _service.OutputReceived += (_, text) => OnUiThread(() => OutputReceived?.Invoke(this, text));
+        _service.Started += (_, _) => OnUiThread(() => Started?.Invoke(this, EventArgs.Empty));
+        _service.Faulted += (_, ex) => OnUiThread(() => Failed?.Invoke(this, ex.Message));
 
+        // Not marshalled: the interpreter blocks inside a statement waiting
+        // for the answer, so posting to the interface thread and returning
+        // would answer with nothing typed. The handler moves itself.
         if (_service is InterpreterDebugService interpreted)
             interpreted.InputRequested += (_, request) => InputRequested?.Invoke(this, request);
 
@@ -217,6 +242,42 @@ public sealed class DebugSession : IDisposable
     /// </summary>
     public event EventHandler<InputRequest>? InputRequested;
 
+    /// <summary>
+    /// Runs something on the interface thread, where there is one.
+    ///
+    /// Posted rather than invoked and waited for: the reader thread has to
+    /// get back to the adapter, and blocking it while the interface works
+    /// would stall the very messages the interface is about to ask for.
+    ///
+    /// Where no interface is running the work is done on the spot. Posting
+    /// it would queue it against a dispatcher that nothing is pumping, and
+    /// the event would simply never arrive — which is the same silence this
+    /// method exists to cure, only moved.
+    /// </summary>
+    private void OnUiThread(Action work)
+    {
+        if (MarshalToInterface && !Dispatcher.UIThread.CheckAccess())
+            Dispatcher.UIThread.Post(work);
+        else
+            work();
+    }
+
+    /// <summary>
+    /// Whether events should be handed to the interface thread.
+    /// </summary>
+    /// <remarks>
+    /// Set by the window that owns the session, rather than guessed from the
+    /// thread that built it. Guessing was wrong twice over: a dispatcher
+    /// exists in the tests too but nothing pumps it, so posted work is never
+    /// run, and whether the constructing thread happens to be the interface
+    /// one depends on what ran before.
+    ///
+    /// Off by default, which is the case that always works — the events are
+    /// raised where they arrive. The window turns it on because only there
+    /// is a dispatcher actually running.
+    /// </remarks>
+    public bool MarshalToInterface { get; set; }
+
     private void OnPaused(object? sender, StackFrame frame)
     {
         CurrentFrame = frame;
@@ -238,6 +299,20 @@ public sealed class DebugSession : IDisposable
 
     public Task ContinueAsync(CancellationToken ct = default) =>
         _service?.ContinueAsync(ct) ?? Task.CompletedTask;
+
+    /// <summary>
+    /// Breaks into a running program.
+    ///
+    /// Only worth offering where the debugger can do it: an interpreted
+    /// program has no way to interrupt itself, so <see cref="CanPause"/>
+    /// says so and the button is greyed rather than doing nothing.
+    /// </summary>
+    public Task PauseAsync(CancellationToken ct = default) =>
+        CanPause ? _service!.PauseAsync(ct) : Task.CompletedTask;
+
+    /// <summary>Whether a running program can be broken into.</summary>
+    public bool CanPause =>
+        _service is NetCoreDebugService && IsRunning && !IsPaused;
 
     public Task StepOverAsync(CancellationToken ct = default) =>
         _service?.StepOverAsync(ct) ?? Task.CompletedTask;

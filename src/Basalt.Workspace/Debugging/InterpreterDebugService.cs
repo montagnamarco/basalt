@@ -44,6 +44,9 @@ public sealed class InterpreterDebugService : IDebugSessionService
         remove => _interpreter.InputRequested -= value;
     }
 
+    /// <summary>The program is running.</summary>
+    public event EventHandler? Started;
+
     public event EventHandler<Core.Services.StackFrame>? Paused;
     public event EventHandler? Resumed;
     public event EventHandler<int>? Exited;
@@ -97,6 +100,10 @@ public sealed class InterpreterDebugService : IDebugSessionService
 
         ApplyBreakpoints();
 
+        // Said before running rather than after: RunAsync only returns once
+        // the program is over, and "it started" is news while it is still on.
+        Started?.Invoke(this, EventArgs.Empty);
+
         await _interpreter.RunAsync(ct).ConfigureAwait(false);
     }
 
@@ -125,6 +132,16 @@ public sealed class InterpreterDebugService : IDebugSessionService
 
         await _interpreter.RunAsync(ct).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Not supported: the interpreter has no way to break into itself.
+    /// 
+    /// It runs a statement at a time on a thread of its own and only checks
+    /// for breakpoints between them, so there is nothing to interrupt. Doing
+    /// nothing quietly would leave the button looking broken; the caller
+    /// greys it out instead, and this is the honest answer if one asks.
+    /// </summary>
+    public Task PauseAsync(CancellationToken ct = default) => Task.CompletedTask;
 
     public async Task StepOverAsync(CancellationToken ct = default)
     {

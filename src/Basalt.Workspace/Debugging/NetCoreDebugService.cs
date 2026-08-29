@@ -42,6 +42,9 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// <summary>Text the debugged program wrote to its console.</summary>
     public event EventHandler<string>? OutputReceived;
 
+    /// <summary>The program is running, whether or not it will ever stop.</summary>
+    public event EventHandler? Started;
+
     /// <summary>
     /// Something went wrong on a background thread.
     ///
@@ -250,6 +253,53 @@ public sealed class NetCoreDebugService : IDebugSessionService
     public Task ContinueAsync(CancellationToken ct = default) =>
         ResumeAsync("continue", ct);
 
+    /// <summary>
+    /// Breaks into a running program.
+    ///
+    /// Not routed through ResumeAsync, which refuses unless the program is
+    /// stopped: this is the one command that means anything only while it
+    /// is running. The "stopped" event that follows does the rest.
+    /// </summary>
+    public async Task PauseAsync(CancellationToken ct = default)
+    {
+        if (_client is null || IsPaused) return;
+
+        // The adapter names a thread on its own only once something has
+        // stopped, and the "thread" event that would name one can arrive
+        // after the program is already reported running. Asked with no
+        // thread, netcoredbg refuses the request outright (0x80070057), so
+        // the threads are fetched when none is known yet.
+        if (_currentThread == 0) await AdoptAThreadAsync(ct).ConfigureAwait(false);
+
+        if (_currentThread == 0) return;
+
+        await _client.SendAsync("pause", new JsonObject
+        {
+            ["threadId"] = _currentThread
+        }, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Takes the first thread the adapter admits to having.</summary>
+    private async Task AdoptAThreadAsync(CancellationToken ct)
+    {
+        if (_client is null) return;
+
+        var answer = await _client
+            .SendAsync("threads", new JsonObject(), ct)
+            .ConfigureAwait(false);
+
+        if (answer?["body"]?["threads"] is not JsonArray threads) return;
+
+        foreach (var thread in threads)
+        {
+            if (thread?["id"]?.GetValue<int>() is { } id and not 0)
+            {
+                _currentThread = id;
+                return;
+            }
+        }
+    }
+
     public Task StepOverAsync(CancellationToken ct = default) =>
         ResumeAsync("next", ct);
 
@@ -449,6 +499,27 @@ public sealed class NetCoreDebugService : IDebugSessionService
             case "continued":
                 IsPaused = false;
                 Resumed?.Invoke(this, EventArgs.Empty);
+                break;
+
+            // The program is up. For anything that does not exit by itself —
+            // a window, a web host — this is the only word the adapter ever
+            // sends to say so, and without it the interface cannot tell
+            // "still starting" from "running fine".
+            case "process":
+                Started?.Invoke(this, EventArgs.Empty);
+                break;
+
+            // Which thread to name when breaking in. Only a "stopped" event
+            // said so before, so before the first stop there was no thread to
+            // name and netcoredbg refused the request outright — the one
+            // moment breaking in is the only way to stop at all.
+            case "thread":
+                if (dapEvent.Body?["threadId"]?.GetValue<int>() is { } thread
+                    && dapEvent.Body?["reason"]?.GetValue<string>() == "started"
+                    && _currentThread == 0)
+                {
+                    _currentThread = thread;
+                }
                 break;
 
             case "exited":

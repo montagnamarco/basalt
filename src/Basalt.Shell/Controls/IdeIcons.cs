@@ -12,6 +12,7 @@ public enum IconKind
     XmlFile, JsonFile, TextFile, ImageFile, DesignerFile,
     New, Open, Save, SaveAll, Undo, Redo, Cut, Copy, Paste,
     Find, Replace, Build, Run, Stop, Debug, StepOver, StepInto, StepOut,
+    Continue, Pause,
     Breakpoint, Settings, Terminal, Branch, Commit, Refresh,
     Error, Warning, Information,
 
@@ -76,7 +77,7 @@ public static class IdeIcons
         IconKind.Solution => Color.FromRgb(0x68, 0x21, 0x7A),
         IconKind.Project => Color.FromRgb(0x00, 0x69, 0xC0),
         IconKind.Folder or IconKind.FolderOpen => Color.FromRgb(0xDC, 0xB6, 0x7A),
-        IconKind.Run => Color.FromRgb(0x2E, 0xA0, 0x43),
+        IconKind.Run or IconKind.Continue => Color.FromRgb(0x2E, 0xA0, 0x43),
         IconKind.Stop or IconKind.Error or IconKind.Breakpoint => Color.FromRgb(0xE5, 0x14, 0x00),
         IconKind.Warning => Color.FromRgb(0xBF, 0x87, 0x00),
         IconKind.Information => Color.FromRgb(0x37, 0x94, 0xFF),
@@ -146,6 +147,11 @@ public static class IdeIcons
 
         IconKind.Build => "M3,10 L8,2 L13,10 Z M2,12 H14 V14 H2 Z",
         IconKind.Run => "M4,2 L13,8 L4,14 Z",
+
+        // Continue is Run's triangle against a bar, the way a player draws
+        // "resume"; Pause is the two bars on their own.
+        IconKind.Continue => "M3,3 V13 M6,3 L14,8 L6,13 Z",
+        IconKind.Pause => "M4,3 H6.5 V13 H4 Z M9.5,3 H12 V13 H9.5 Z",
         IconKind.Stop => "M3,3 H13 V13 H3 Z",
 
         IconKind.Debug => "M5,4 A3,3 0 0 1 11,4 M4,6 H12 V11 A4,4 0 0 1 4,11 Z "

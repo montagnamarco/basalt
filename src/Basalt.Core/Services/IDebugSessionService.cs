@@ -19,6 +19,15 @@ public interface IDebugSessionService : IDebugService, IDisposable
     /// <summary>What the program printed.</summary>
     event EventHandler<string>? OutputReceived;
 
+    /// <summary>
+    /// The program is up and running.
+    ///
+    /// A program that never ends by itself — a window, a web host — reports
+    /// nothing else once it starts, so without this the interface cannot
+    /// tell it apart from one that is still being launched.
+    /// </summary>
+    event EventHandler? Started;
+
     /// <summary>Something went wrong that the user should be told about.</summary>
     event EventHandler<Exception>? Faulted;
 
