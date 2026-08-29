@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Empty, or VB prefixes it to every type and the class the loader
+         looks for is called Basalt.Sample.Plugin.SamplePlugin twice over. -->
+    <RootNamespace></RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Basalt.Extensibility/Basalt.Extensibility.csproj">
+      <!-- The host already has it: a plugin that shipped its own copy would
+           implement a different IPlugin from the one being looked for. -->
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>

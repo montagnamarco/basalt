@@ -1,0 +1,7 @@
+{
+  "name": "Sample Plugin",
+  "version": "1.0.0",
+  "description": "Adds a command and a toolbox control, to show how a plugin is written.",
+  "author": "Basalt",
+  "assembly": "Basalt.Sample.Plugin.dll"
+}

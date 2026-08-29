@@ -33,6 +33,13 @@ public static class TestSettingsPath
 
         Environment.SetEnvironmentVariable(
             "BASALT_SETTINGS", Path.Combine(folder, "settings.json"));
+
+        // And the plugins: without this the suite loads whatever the person
+        // running it happens to have installed, so a test passes on one
+        // machine and fails on another for reasons nothing in the repository
+        // explains.
+        Environment.SetEnvironmentVariable(
+            "BASALT_PLUGINS", Path.Combine(folder, "plugins"));
     }
 }
 
