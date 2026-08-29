@@ -78,12 +78,28 @@ public sealed class DesignerHost : UserControl
     /// <summary>The text editor, once it has been asked for.</summary>
     public Control? TextView => _textView;
 
+    /// <summary>What the markup said when the drawing was last built.</summary>
+    private string? _designerBuiltFrom;
+
     /// <summary>Puts the drawing on screen.</summary>
     public void ShowDesigner()
     {
         // Built on first use and then kept: rebuilding would throw away the
         // selection, and for the editor the caret and the undo history.
-        _designerView ??= _designer();
+        //
+        // Except when the markup was edited by hand in the other half of the
+        // tab. Keeping the old drawing then showed a tree that no longer
+        // matched the file, and the next thing drawn wrote that stale tree
+        // back over what had been typed.
+        if (_designerView is not null && Document.Text != _designerBuiltFrom)
+            _designerView = null;
+
+        if (_designerView is null)
+        {
+            _designerView = _designer();
+            _designerBuiltFrom = Document.Text;
+        }
+
         _host.Content = _designerView;
 
         _designerButton.IsChecked = true;

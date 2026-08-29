@@ -18,8 +18,12 @@ namespace Basalt.Shell.Controls;
 public sealed class PropertyPanel : UserControl
 {
     private readonly PropertyGrid _grid = new();
+    private readonly GridTrackEditor _tracks = new();
     private readonly TextBlock _element;
     private DesignerSession? _session;
+
+    /// <summary>Raised when the grid's rows or columns changed.</summary>
+    public event EventHandler? LayoutChanged;
 
     public PropertyPanel()
     {
@@ -32,13 +36,18 @@ public sealed class PropertyPanel : UserControl
 
         _grid.PropertyEdited += (name, value) => _session?.SetProperty(name, value);
 
+        // The rows and columns sit above the properties: they are the shape
+        // of the form, and the properties are what fills it.
+        _tracks.Changed += (_, _) => LayoutChanged?.Invoke(this, EventArgs.Empty);
+
         var layout = new Grid
         {
-            RowDefinitions = new RowDefinitions("Auto,*"),
-            Children = { _element, _grid },
+            RowDefinitions = new RowDefinitions("Auto,Auto,*"),
+            Children = { _element, _tracks, _grid },
         };
 
-        Grid.SetRow(_grid, 1);
+        Grid.SetRow(_tracks, 1);
+        Grid.SetRow(_grid, 2);
 
         Content = layout;
     }
@@ -46,10 +55,15 @@ public sealed class PropertyPanel : UserControl
     /// <summary>The grid behind the panel, for tests.</summary>
     internal PropertyGrid Properties => _grid;
 
+    /// <summary>The rows and columns editor, for tests.</summary>
+    internal GridTrackEditor Tracks => _tracks;
+
     /// <summary>Shows the properties of the element selected in the given session.</summary>
     public void Show(DesignerSession? session)
     {
         _session = session;
+
+        _tracks.Show(session);
 
         if (session?.Selection is not { } selection)
         {

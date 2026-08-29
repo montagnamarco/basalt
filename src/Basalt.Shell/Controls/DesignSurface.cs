@@ -73,6 +73,9 @@ public sealed class DesignSurface : ContentControl
     /// <summary>The container a dragged control would land in.</summary>
     private XElement? _dropTarget;
 
+    /// <summary>Where the pointer is, so the hint can say where in the container.</summary>
+    private Point _dropAt;
+
     /// <summary>Where a rubber-band selection started, while one is running.</summary>
     private Point? _bandOrigin;
     private Point _bandTo;
@@ -125,6 +128,7 @@ public sealed class DesignSurface : ContentControl
         // press and the surface never learns it was clicked. At design time
         // the click means "select this", not "press this".
         AddHandler(PointerPressedEvent, TunnelPressed, RoutingStrategies.Tunnel);
+        AddHandler(DoubleTappedEvent, TunnelDoubleTapped, RoutingStrategies.Tunnel);
         AddHandler(PointerMovedEvent, TunnelMoved, RoutingStrategies.Tunnel);
         AddHandler(PointerReleasedEvent, TunnelReleased, RoutingStrategies.Tunnel);
 
@@ -137,6 +141,267 @@ public sealed class DesignSurface : ContentControl
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
+
+        // Ctrl and the wheel, as every drawing program does it; the wheel
+        // alone scrolls, which is what a wheel does everywhere else.
+        AddHandler(PointerWheelChangedEvent, OnWheel, RoutingStrategies.Tunnel);
+
+        ContextMenu = BuildContextMenu();
+    }
+
+    /// <summary>Raised when the menu asks for something the window owns.</summary>
+    public event EventHandler<DesignerMenuCommand>? MenuCommand;
+
+    /// <summary>
+    /// Raised when a control is double-clicked, to wire it to code.
+    /// </summary>
+    /// <remarks>
+    /// The surface knows which control was hit; only the window can open a
+    /// file and put the caret in it.
+    /// </remarks>
+    public event EventHandler? HandlerRequested;
+
+    /// <summary>What the designer's context menu can ask for.</summary>
+    public enum DesignerMenuCommand
+    {
+        Cut,
+        Copy,
+        Paste,
+        Delete,
+        SelectParent,
+        AlignLeft,
+        AlignRight,
+        AlignTop,
+        AlignBottom,
+        SameWidth,
+        SameHeight,
+        BringToFront,
+        SendToBack,
+        ZoomToFit,
+        ResetZoom,
+    }
+
+    /// <summary>
+    /// The menu that comes up on the surface.
+    /// </summary>
+    /// <remarks>
+    /// Right-clicking is where a person looks for what can be done to the
+    /// thing under the pointer, and the designer answered with nothing at
+    /// all: the commands existed only in the menu bar, which is a long way
+    /// from the control being worked on.
+    ///
+    /// Availability is decided when the menu opens, so entries grey out
+    /// rather than vanish — a menu that changes shape is one you have to
+    /// read again every time.
+    /// </remarks>
+    private ContextMenu BuildContextMenu()
+    {
+        bool Selected() => _session?.Selection is not null;
+        bool Several() => (_session?.SelectedElements.Count ?? 0) > 1;
+
+        MenuAction Ask(string header, DesignerMenuCommand command, Func<bool> available) =>
+            new(header, () => MenuCommand?.Invoke(this, command)) { IsAvailable = available };
+
+        return ContextMenus.Build(
+        [
+            Ask(Localizer.Get(StringKeys.DesignerCut), DesignerMenuCommand.Cut, Selected) with
+                { Icon = IconKind.Cut, Gesture = "Ctrl+X" },
+            Ask(Localizer.Get(StringKeys.DesignerCopy), DesignerMenuCommand.Copy, Selected) with
+                { Icon = IconKind.Copy, Gesture = "Ctrl+C" },
+            Ask(Localizer.Get(StringKeys.DesignerPaste), DesignerMenuCommand.Paste, () => _session?.CanPaste == true) with
+                { Icon = IconKind.Paste, Gesture = "Ctrl+V" },
+            Ask(Localizer.Get(StringKeys.DesignerDelete), DesignerMenuCommand.Delete, Selected),
+
+            MenuAction.Separator,
+
+            Ask(Localizer.Get(StringKeys.DesignerSelectContainer), DesignerMenuCommand.SelectParent,
+                () => _session?.Selection?.Parent is not null) with { Gesture = "Escape" },
+
+            MenuAction.Separator,
+
+            // In front and behind: among siblings a control is drawn in the
+            // order it is written, so this is what "bring to front" means in
+            // XAML and there is no other way to say it.
+            Ask(Localizer.Get(StringKeys.DesignerBringToFront), DesignerMenuCommand.BringToFront, Selected),
+            Ask(Localizer.Get(StringKeys.DesignerSendToBack), DesignerMenuCommand.SendToBack, Selected),
+
+            MenuAction.Separator,
+
+            // Aligning needs something to align to, so it wants two.
+            Ask(Localizer.Get(StringKeys.DesignerAlignLeftItem), DesignerMenuCommand.AlignLeft, Several),
+            Ask(Localizer.Get(StringKeys.DesignerAlignRightItem), DesignerMenuCommand.AlignRight, Several),
+            Ask(Localizer.Get(StringKeys.DesignerAlignTopItem), DesignerMenuCommand.AlignTop, Several),
+            Ask(Localizer.Get(StringKeys.DesignerAlignBottomItem), DesignerMenuCommand.AlignBottom, Several),
+            Ask(Localizer.Get(StringKeys.DesignerSameWidthItem), DesignerMenuCommand.SameWidth, Several),
+            Ask(Localizer.Get(StringKeys.DesignerSameHeightItem), DesignerMenuCommand.SameHeight, Several),
+
+            MenuAction.Separator,
+
+            Ask(Localizer.Get(StringKeys.DesignerFitToWindow), DesignerMenuCommand.ZoomToFit, () => true),
+            Ask(Localizer.Get(StringKeys.DesignerActualSize), DesignerMenuCommand.ResetZoom, () => true),
+        ]);
+    }
+
+    /// <summary>The context menu, for tests.</summary>
+    internal ContextMenu? MenuForTests => ContextMenu;
+
+    private void OnWheel(object? sender, PointerWheelEventArgs e)
+    {
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control)
+            || e.KeyModifiers.HasFlag(KeyModifiers.Meta))
+        {
+            // Zoomed about the pointer, so the thing under it stays under it:
+            // magnifying about the corner sends whatever you were looking at
+            // off the edge, and you have to chase it with the scrollbars.
+            var before = ToContent(e.GetPosition(this));
+
+            Zoom *= e.Delta.Y > 0 ? 1.1 : 1 / 1.1;
+
+            var after = ToContent(e.GetPosition(this));
+
+            PanBy((after.X - before.X) * Zoom, (after.Y - before.Y) * Zoom);
+        }
+        else
+        {
+            PanBy(e.Delta.X * WheelStep, e.Delta.Y * WheelStep);
+        }
+
+        e.Handled = true;
+    }
+
+    /// <summary>How far one notch of the wheel scrolls.</summary>
+    private const double WheelStep = 40;
+
+    /// <summary>The panel holding the preview and its adorners.</summary>
+    private Panel? _scaled;
+
+    /// <summary>How much the surface is magnified.</summary>
+    /// <remarks>
+    /// A window is designed at the size it will run, which is regularly
+    /// larger than the panel it is being drawn in: without this the far side
+    /// of an 800-wide window is simply unreachable.
+    /// </remarks>
+    public double Zoom
+    {
+        get => _zoom;
+        set
+        {
+            var wanted = Math.Clamp(value, MinimumZoom, MaximumZoom);
+
+            if (Math.Abs(wanted - _zoom) < 0.001) return;
+
+            _zoom = wanted;
+            ApplyView();
+
+            ZoomChanged?.Invoke(this, _zoom);
+        }
+    }
+
+    private double _zoom = 1;
+
+    /// <summary>Raised when the magnification changes, for whoever shows it.</summary>
+    public event EventHandler<double>? ZoomChanged;
+
+    public const double MinimumZoom = 0.25;
+    public const double MaximumZoom = 4;
+
+    /// <summary>How far the view is scrolled, in surface pixels.</summary>
+    private Point _pan;
+
+    /// <summary>Puts the zoom and the pan onto the panel.</summary>
+    private void ApplyView()
+    {
+        if (_scaled is null) return;
+
+        // Scaled about the top left rather than the centre: the origin is
+        // where the window being designed starts, and scaling about the
+        // middle moves that corner off screen as soon as you zoom in.
+        _scaled.RenderTransformOrigin = RelativePoint.TopLeft;
+
+        _scaled.RenderTransform = new TransformGroup
+        {
+            Children =
+            {
+                new ScaleTransform(_zoom, _zoom),
+                new TranslateTransform(_pan.X, _pan.Y),
+            },
+        };
+    }
+
+    /// <summary>Puts the view back to actual size, at the origin.</summary>
+    public void ResetView()
+    {
+        _pan = default;
+        Zoom = 1;
+
+        // Zoom raises nothing when it was already 1, so the pan is applied
+        // here rather than left to it.
+        ApplyView();
+    }
+
+    /// <summary>
+    /// Fits what is being designed into the space there is.
+    /// </summary>
+    /// <remarks>
+    /// Never magnifies past actual size: a small user control blown up to
+    /// fill the panel is not what the user is drawing, and the pixel sizes
+    /// they are typing would stop matching what they see.
+    /// </remarks>
+    public void ZoomToFit()
+    {
+        if (_scaled is null || Bounds.Width <= 0 || Bounds.Height <= 0) return;
+
+        var content = _scaled.Children.FirstOrDefault();
+
+        var width = content?.Bounds.Width ?? 0;
+        var height = content?.Bounds.Height ?? 0;
+
+        if (width <= 0 || height <= 0) return;
+
+        const double margin = 24;
+
+        var fit = Math.Min(
+            (Bounds.Width - margin) / width,
+            (Bounds.Height - margin) / height);
+
+        _pan = default;
+        Zoom = Math.Min(1, fit);
+
+        ApplyView();
+    }
+
+    /// <summary>Moves the view by the given amount, for a middle-drag or a scroll.</summary>
+    public void PanBy(double dx, double dy)
+    {
+        _pan = new Point(_pan.X + dx, _pan.Y + dy);
+        ApplyView();
+    }
+
+    /// <summary>Where a point on the surface falls on the unscaled preview.</summary>
+    /// <remarks>
+    /// Every hit test and every drag measurement works in the preview's own
+    /// coordinates; the pointer arrives in the surface's. Without undoing the
+    /// zoom here, a click at 200% selected whatever was under half the
+    /// distance from the corner.
+    /// </remarks>
+    private Point ToContent(Point onSurface) =>
+        new((onSurface.X - _pan.X) / _zoom, (onSurface.Y - _pan.Y) / _zoom);
+
+    /// <summary>
+    /// Double-clicking a control asks for its handler.
+    /// </summary>
+    /// <remarks>
+    /// Only where something is selected, which the press that preceded the
+    /// double click has already seen to: double-clicking the background is
+    /// not a request for anything.
+    /// </remarks>
+    private void TunnelDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (_session?.Selection is null) return;
+
+        HandlerRequested?.Invoke(this, EventArgs.Empty);
+
+        e.Handled = true;
     }
 
     private void TunnelKeyDown(object? sender, KeyEventArgs e)
@@ -153,9 +418,10 @@ public sealed class DesignSurface : ContentControl
         // The container that would take it, outlined while the pointer is
         // over it: without this a drop is a guess about where the control
         // will end up, and a nested panel is easy to miss by a few pixels.
-        _dropTarget = e.DragEffects == DragDropEffects.Copy
-            ? ContainerAt(e.GetPosition(this))
-            : null;
+        var over = ToContent(e.GetPosition(this));
+
+        _dropTarget = e.DragEffects == DragDropEffects.Copy ? ContainerAt(over) : null;
+        _dropAt = over;
 
         DrawSelectionAdorner();
 
@@ -169,20 +435,25 @@ public sealed class DesignSurface : ContentControl
         if (_session is null) return;
         if (e.DataTransfer.TryGetValue(ToolboxPanel.DragFormat) is not { } item) return;
 
-        var at = e.GetPosition(this);
+        var at = ToContent(e.GetPosition(this));
         var container = ContainerAt(at);
 
         var inserted = _session.InsertFromToolbox(item, container);
 
-        // Dropped where the pointer was, not at the container's origin: a
-        // control that lands in the corner however carefully it was placed
-        // makes the gesture pointless.
+        // Dropped where the pointer was, but said in the container's own
+        // terms: a cell for a Grid, an edge for a DockPanel, coordinates for
+        // a Canvas. Writing a Margin everywhere put the control under the
+        // pointer on this screen and nowhere sensible on any other.
         if (container is not null && BoundsOf(container) is { } bounds)
         {
             var inside = at - bounds.Position;
 
             _session.Select(inserted);
-            _session.MoveSelection(Math.Round(inside.X), Math.Round(inside.Y));
+
+            _session.PlaceDrop(
+                inserted,
+                inside.X, inside.Y,
+                bounds.Width, bounds.Height);
         }
 
         SelectionChanged?.Invoke(this, _session.Selection);
@@ -256,12 +527,29 @@ public sealed class DesignSurface : ContentControl
         // moving a control refreshes and rebuilds in the same breath.
         (_adorners.Parent as Panel)?.Children.Remove(_adorners);
 
+        // The preview and the adorners share one panel, so the zoom scales
+        // both together and a handle stays on the corner it belongs to. A
+        // transform on the preview alone would drift them apart.
         var overlay = new Panel();
         overlay.Children.Add(result.Root!);
+
+        // A form with nothing on it is a blank rectangle, which says neither
+        // "empty" nor "broken" nor what to do about it. The hint goes under
+        // the adorners so it never covers a control, and disappears the
+        // moment there is one.
+        if (!XamlDocument.ControlChildren(rootElement).Any())
+            overlay.Children.Add(EmptyHint());
+
         overlay.Children.Add(_adorners);
+
+        _scaled = overlay;
+        ApplyView();
+
         Content = overlay;
 
         DrawSelectionAdorner();
+
+        DesignedSizeChanged?.Invoke(this, DesignedSize);
     }
 
     /// <summary>
@@ -302,7 +590,7 @@ public sealed class DesignSurface : ContentControl
 
         Focus();
 
-        var at = e.GetPosition(this);
+        var at = ToContent(e.GetPosition(this));
 
         // A press on a handle of the current selection resizes it; anything
         // else selects first. Checked before hit-testing because the handles
@@ -356,11 +644,13 @@ public sealed class DesignSurface : ContentControl
     {
         base.OnPointerMoved(e);
 
-        LastPointerPosition = e.GetPosition(this);
+        LastPointerPosition = ToContent(e.GetPosition(this));
+
+        ShowCursorFor(LastPointerPosition);
 
         if (_bandOrigin is not null)
         {
-            _bandTo = e.GetPosition(this);
+            _bandTo = ToContent(e.GetPosition(this));
             DrawSelectionAdorner();
             e.Handled = true;
             return;
@@ -368,7 +658,7 @@ public sealed class DesignSurface : ContentControl
 
         if (_drag is null) return;
 
-        _drag.Delta = e.GetPosition(this) - _drag.Origin;
+        _drag.Delta = ToContent(e.GetPosition(this)) - _drag.Origin;
 
         // Below the threshold nothing has happened yet: a hand on a trackpad
         // never presses and releases at the same point, and without this
@@ -475,7 +765,50 @@ public sealed class DesignSurface : ContentControl
 
         if (drag.Handle is null)
         {
-            _session.MoveSelection(drag.Delta.X, drag.Delta.Y);
+            // Dragged, so the control goes where it was dropped, said the way
+            // its container lays out: in a Grid that is another cell, not a
+            // Margin measured from the first one.
+            var landed = drag.Bounds.Position + drag.Delta;
+
+            var selection = _session.Selection;
+
+            // Dropped over a different panel, so it moves into it. Only ever
+            // repositioning within the panel it started in meant rearranging
+            // a form was delete-and-add-again, losing everything set on the
+            // control.
+            var over = ContainerAt(landed + new Point(1, 1));
+
+            if (selection is not null
+                && over is not null
+                && !ReferenceEquals(over, selection.Parent)
+                && !ReferenceEquals(over, selection)
+                && BoundsOf(over) is { } target)
+            {
+                var inside = landed - target.Position;
+
+                _session.Reparent(
+                    selection, over,
+                    inside.X, inside.Y,
+                    target.Width, target.Height);
+
+                return;
+            }
+
+            if (selection?.Parent is { } container
+                && BoundsOf(container) is { } bounds)
+            {
+                var inside = landed - bounds.Position;
+
+                _session.DragSelectionTo(
+                    inside.X, inside.Y,
+                    bounds.Width, bounds.Height,
+                    drag.Delta.X, drag.Delta.Y);
+            }
+            else
+            {
+                _session.MoveSelection(drag.Delta.X, drag.Delta.Y);
+            }
+
             return;
         }
 
@@ -497,6 +830,49 @@ public sealed class DesignSurface : ContentControl
         if (e.Key == Key.Escape && _drag is not null)
         {
             _drag = null;
+            DrawSelectionAdorner();
+            e.Handled = true;
+            return;
+        }
+
+        // The zoom keys every editor has. Both the main row and the numeric
+        // pad, because a keyboard has two plus signs and only one of them
+        // would otherwise work.
+        var command = e.KeyModifiers.HasFlag(KeyModifiers.Control)
+                   || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
+
+        if (command)
+        {
+            switch (e.Key)
+            {
+                case Key.OemPlus or Key.Add:
+                    Zoom *= 1.25;
+                    e.Handled = true;
+                    return;
+
+                case Key.OemMinus or Key.Subtract:
+                    Zoom /= 1.25;
+                    e.Handled = true;
+                    return;
+
+                case Key.D0 or Key.NumPad0:
+                    ResetView();
+                    e.Handled = true;
+                    return;
+
+                case Key.D9 or Key.NumPad9:
+                    ZoomToFit();
+                    e.Handled = true;
+                    return;
+            }
+        }
+
+        // Escape with nothing being dragged goes up to the container, which
+        // is the only way to reach one that its own children cover.
+        if (e.Key == Key.Escape && _session.Selection?.Parent is { } above)
+        {
+            _session.Select(above);
+            SelectionChanged?.Invoke(this, _session.Selection);
             DrawSelectionAdorner();
             e.Handled = true;
             return;
@@ -606,6 +982,158 @@ public sealed class DesignSurface : ContentControl
         return innermost;
     }
 
+    /// <summary>
+    /// Shows what the pointer would do where it is.
+    /// </summary>
+    /// <remarks>
+    /// The surface never changed the cursor, so a resize handle looked
+    /// exactly like the background: whether a corner could be grabbed, and in
+    /// which direction it would stretch, could only be found by trying. The
+    /// arrow is the one part of the interface that is always under the eye.
+    /// </remarks>
+    private void ShowCursorFor(Point at)
+    {
+        // Mid-drag the cursor is whatever started the drag: changing it under
+        // the pointer while the button is down reads as the grab slipping.
+        if (_drag is not null || _bandOrigin is not null) return;
+
+        var handle = SelectionBounds() is { } bounds
+            ? HandleAt(bounds, at, HandleSize)
+            : null;
+
+        Cursor = handle switch
+        {
+            Handle.TopLeft or Handle.BottomRight => new Cursor(StandardCursorType.TopLeftCorner),
+            Handle.TopRight or Handle.BottomLeft => new Cursor(StandardCursorType.TopRightCorner),
+            Handle.Top or Handle.Bottom => new Cursor(StandardCursorType.SizeNorthSouth),
+            Handle.Left or Handle.Right => new Cursor(StandardCursorType.SizeWestEast),
+
+            // Over a control that is already selected, so a press would move
+            // it: the four-way arrow says so.
+            _ when IsOverSelection(at) => new Cursor(StandardCursorType.SizeAll),
+
+            _ => Cursor.Default,
+        };
+    }
+
+    /// <summary>Whether a point is over something already selected.</summary>
+    private bool IsOverSelection(Point at) =>
+        _session?.SelectedElements.Any(element =>
+            BoundsOf(element) is { } bounds && bounds.Contains(at)) == true;
+
+    /// <summary>
+    /// How big the window being designed will actually be.
+    /// </summary>
+    /// <remarks>
+    /// The surface draws the form at whatever size the panel gives it, which
+    /// is not the size it will run at: without this the numbers a person is
+    /// laying out against are invisible, and a form designed in a narrow
+    /// panel is a guess.
+    ///
+    /// Null where the document says nothing — a UserControl takes the size of
+    /// whatever hosts it, and inventing one would be a claim the file does
+    /// not make.
+    /// </remarks>
+    public (double Width, double Height)? DesignedSize
+    {
+        get
+        {
+            if (_session?.Document.Root is not { } root) return null;
+
+            var width = Number(root, "Width");
+            var height = Number(root, "Height");
+
+            return width is null || height is null ? null : (width.Value, height.Value);
+        }
+    }
+
+    /// <summary>Raised when the designed size changes, for whoever shows it.</summary>
+    public event EventHandler<(double Width, double Height)?>? DesignedSizeChanged;
+
+    private static double? Number(XElement element, string name) =>
+        double.TryParse(
+            element.Attribute(name)?.Value,
+            System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var value)
+            ? value
+            : null;
+
+    /// <summary>Shows what a control is becoming while it is resized.</summary>
+    private void DrawSizeLabel(Rect bounds)
+    {
+        var label = new Border
+        {
+            Background = Brushes.DodgerBlue,
+            Padding = new Thickness(Spacing.Small, Spacing.Hairline),
+            IsHitTestVisible = false,
+            Child = new TextBlock
+            {
+                Text = Localizer.Get(
+                    StringKeys.DesignerSurfaceSize,
+                    Math.Round(bounds.Width),
+                    Math.Round(bounds.Height)),
+                FontSize = 11,
+                Foreground = Brushes.White,
+            },
+        };
+
+        // Under the bottom-right corner, out of the way of the handles and of
+        // whatever is being sized.
+        Canvas.SetLeft(label, bounds.Right + Spacing.Tight);
+        Canvas.SetTop(label, bounds.Bottom + Spacing.Tight);
+
+        _adorners.Children.Add(label);
+    }
+
+    /// <summary>What an empty form says for itself.</summary>
+    private static Control EmptyHint() => new TextBlock
+    {
+        Text = Localizer.Get(StringKeys.DesignerEmptyHint),
+        Opacity = 0.45,
+        FontSize = 13,
+        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        TextAlignment = TextAlignment.Center,
+        IsHitTestVisible = false,
+    };
+
+    /// <summary>Where the selection is drawn. For tests.</summary>
+    internal Rect? SelectionBoundsForTests => SelectionBounds();
+
+    /// <summary>Sets the cursor for a point, as moving there does. For tests.</summary>
+    internal void ShowCursorForTests(Point content) => ShowCursorFor(content);
+
+    /// <summary>Whether the "drag something here" hint is up. For tests.</summary>
+    internal bool IsShowingEmptyHint =>
+        Content is Panel panel
+        && panel.Children.OfType<TextBlock>().Any(t =>
+            t.Text == Localizer.Get(StringKeys.DesignerEmptyHint));
+
+    /// <summary>Resolves a content point to a container. For tests.</summary>
+    internal XElement? ContainerAtForTests(Point content) => ContainerAt(content);
+
+    /// <summary>Shows the drop feedback, as dragging over does. For tests.</summary>
+    internal void ShowDropAtForTests(Point content)
+    {
+        _dropTarget = ContainerAt(content);
+        _dropAt = content;
+
+        DrawSelectionAdorner();
+    }
+
+    /// <summary>How many adorners are drawn. For tests.</summary>
+    internal int AdornerCountForTests => _adorners.Children.Count;
+
+    /// <summary>Sends a key to the surface, as pressing it does. For tests.</summary>
+    internal void PressForTests(Key key, KeyModifiers modifiers = KeyModifiers.None) =>
+        OnKeyDown(new KeyEventArgs
+        {
+            Key = key,
+            KeyModifiers = modifiers,
+            RoutedEvent = KeyDownEvent,
+        });
+
     /// <summary>Where the pointer last was, for a drop.</summary>
     public Point LastPointerPosition { get; private set; }
 
@@ -698,7 +1226,15 @@ public sealed class DesignSurface : ContentControl
         // Offset by the drag so far, so the outline follows the pointer while
         // the button is down: without it the control appears to stay put until
         // the drag ends, and there is no telling where it will land.
-        if (_drag is { Started: true } drag) bounds = Preview(bounds, drag);
+        if (_drag is { Started: true } drag)
+        {
+            bounds = Preview(bounds, drag);
+
+            // The numbers while the handle is moving, which is when they are
+            // wanted: reading them off the property grid afterwards means
+            // dragging blind and correcting.
+            if (drag.Handle is not null) DrawSizeLabel(bounds);
+        }
 
         // Visual Basic 6 draws the handles and nothing between them. Drawing
         // both a frame and filled handles reads as neither look.
@@ -748,13 +1284,13 @@ public sealed class DesignSurface : ContentControl
         if (_dropTarget is not { } target) return;
         if (BoundsOf(target) is not { } bounds) return;
 
+        // The container, faintly: it says which panel takes the control.
         var outline = new Border
         {
             Width = bounds.Width,
             Height = bounds.Height,
             BorderBrush = Brushes.MediumSeaGreen,
             BorderThickness = new Thickness(2),
-            Background = new SolidColorBrush(Color.FromArgb(20, 60, 179, 113)),
             IsHitTestVisible = false,
         };
 
@@ -762,6 +1298,104 @@ public sealed class DesignSurface : ContentControl
         Canvas.SetTop(outline, bounds.Y);
 
         _adorners.Children.Add(outline);
+
+        // And where in it, which the outline alone never said: a Grid of four
+        // cells looked identical wherever the pointer was.
+        DrawDropHint(target, bounds);
+    }
+
+    /// <summary>Shows the place inside the container the control will take.</summary>
+    private void DrawDropHint(XElement target, Rect bounds)
+    {
+        var inside = _dropAt - bounds.Position;
+
+        var children = XamlDocument
+            .ControlChildren(target)
+            .Select(child => BoundsOf(child) is { } box
+                ? new DesignerLayout.Rect(
+                    box.X - bounds.X, box.Y - bounds.Y, box.Width, box.Height)
+                : new DesignerLayout.Rect(0, 0, 0, 0))
+            .ToList();
+
+        var hint = DesignerLayout.HintFor(
+            target,
+            new DesignerLayout.Point(inside.X, inside.Y),
+            new DesignerLayout.Size(bounds.Width, bounds.Height),
+            children);
+
+        if (hint.Region is { } region) DrawHintRegion(bounds, region);
+        if (hint.Line is { } line) DrawHintLine(bounds, line);
+        if (hint.Label is { Length: > 0 } label) DrawHintLabel(bounds, hint, label);
+    }
+
+    /// <summary>Fills the cell or the edge the control will occupy.</summary>
+    private void DrawHintRegion(Rect bounds, DesignerLayout.Rect region)
+    {
+        var fill = new Border
+        {
+            Width = region.Width,
+            Height = region.Height,
+            Background = new SolidColorBrush(Color.FromArgb(60, 60, 179, 113)),
+            BorderBrush = Brushes.MediumSeaGreen,
+            BorderThickness = new Thickness(1),
+            IsHitTestVisible = false,
+        };
+
+        Canvas.SetLeft(fill, bounds.X + region.X);
+        Canvas.SetTop(fill, bounds.Y + region.Y);
+
+        _adorners.Children.Add(fill);
+    }
+
+    /// <summary>
+    /// Draws where a control will be inserted in a panel that stacks.
+    /// </summary>
+    /// <remarks>
+    /// A line rather than a region: in a stack the question is the order, and
+    /// filling a rectangle would claim a place the panel does not work in.
+    /// </remarks>
+    private void DrawHintLine(Rect bounds, (DesignerLayout.Point From, DesignerLayout.Point To) line)
+    {
+        var vertical = Math.Abs(line.From.X - line.To.X) < 0.5;
+
+        var bar = new Border
+        {
+            Width = vertical ? 3 : Math.Abs(line.To.X - line.From.X),
+            Height = vertical ? Math.Abs(line.To.Y - line.From.Y) : 3,
+            Background = Brushes.MediumSeaGreen,
+            IsHitTestVisible = false,
+        };
+
+        // Centred on the line, so it marks the join rather than sitting
+        // just past it.
+        Canvas.SetLeft(bar, bounds.X + line.From.X - (vertical ? 1.5 : 0));
+        Canvas.SetTop(bar, bounds.Y + line.From.Y - (vertical ? 0 : 1.5));
+
+        _adorners.Children.Add(bar);
+    }
+
+    /// <summary>Names the cell or the edge, so it need not be counted.</summary>
+    private void DrawHintLabel(Rect bounds, DesignerLayout.DropHint hint, string label)
+    {
+        var text = new Border
+        {
+            Background = Brushes.MediumSeaGreen,
+            Padding = new Thickness(Spacing.Small, Spacing.Hairline),
+            IsHitTestVisible = false,
+            Child = new TextBlock
+            {
+                Text = label,
+                FontSize = 11,
+                Foreground = Brushes.White,
+            },
+        };
+
+        var region = hint.Region ?? new DesignerLayout.Rect(0, 0, bounds.Width, bounds.Height);
+
+        Canvas.SetLeft(text, bounds.X + region.X + Spacing.Tight);
+        Canvas.SetTop(text, bounds.Y + region.Y + Spacing.Tight);
+
+        _adorners.Children.Add(text);
     }
 
     /// <summary>Draws the rubber band, when one is being dragged.</summary>
