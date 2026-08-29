@@ -1,3 +1,4 @@
+using Basalt.Core.Localization;
 using Avalonia;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -227,7 +228,7 @@ public sealed class GitChangesPanel : UserControl
         // is more than fits.
         var layout = new Grid
         {
-            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto")
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto")
         };
 
         AddRow(layout, BranchBar(), 0);
@@ -235,10 +236,14 @@ public sealed class GitChangesPanel : UserControl
         AddRow(layout, MessageFooter(), 2);
         AddRow(layout, _commit, 3);
         AddRow(layout, new Separator { Opacity = 0.25, Margin = new Thickness(0, 0, 0, 2) }, 4);
-        AddRow(layout, SectionHeader("Staged", _stagedCount, _unstageAll), 5);
+        _stagedHeader = SectionHeader("Staged", _stagedCount, _unstageAll);
+        _unstagedHeader = SectionHeader("Changes", _unstagedCount, _stageAll);
+
+        AddRow(layout, _stagedHeader, 5);
         AddRow(layout, _staged, 6);
-        AddRow(layout, SectionHeader("Changes", _unstagedCount, _stageAll), 7);
+        AddRow(layout, _unstagedHeader, 7);
         AddRow(layout, _unstaged, 8);
+        AddRow(layout, _nothing, 9);
 
         // Only the lists scroll, and only once they outgrow the panel: the
         // message box and the Commit button stay put, since a commit button
@@ -252,6 +257,22 @@ public sealed class GitChangesPanel : UserControl
 
         UpdateCommitState();
     }
+
+    /// <summary>The two section headings, hidden together with their lists.</summary>
+    private readonly Control _stagedHeader;
+    private readonly Control _unstagedHeader;
+
+    /// <summary>Says there is nothing to commit, when there is nothing.</summary>
+    private readonly TextBlock _nothing = new()
+    {
+        FontSize = 12,
+        Opacity = 0.6,
+        Margin = new Thickness(Spacing.Normal, Spacing.Normal),
+        IsVisible = false,
+    };
+
+    /// <summary>Whether the panel is saying there is nothing to commit. For tests.</summary>
+    internal bool IsShowingEmptyState => _nothing.IsVisible;
 
     /// <summary>Raised with the message and whether it should amend.</summary>
     public event EventHandler<CommitRequest>? CommitRequested;
@@ -584,6 +605,22 @@ public sealed class GitChangesPanel : UserControl
 
         _unstageAll.IsVisible = staged.Count > 0;
         _stageAll.IsVisible = unstaged.Count > 0;
+
+        // A clean tree showed two bare headings and nothing else, which reads
+        // as a panel that failed to load rather than as "there is nothing to
+        // commit". Said in words, and only when there is genuinely nothing:
+        // a section that is empty because everything is staged says so
+        // through the other section being full.
+        var nothingAtAll = staged.Count == 0 && unstaged.Count == 0;
+
+        _nothing.IsVisible = nothingAtAll;
+        _nothing.Text = Localizer.Get(StringKeys.GitNothingToCommit);
+
+        // The headings go with them. Leaving "Staged" and "Changes" above the
+        // message keeps exactly the emptiness the message is there to
+        // replace, and says it twice.
+        _stagedHeader.IsVisible = !nothingAtAll;
+        _unstagedHeader.IsVisible = !nothingAtAll;
 
         ShowUpstream(upstream);
         UpdateCommitState();

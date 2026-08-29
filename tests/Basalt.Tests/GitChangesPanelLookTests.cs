@@ -258,3 +258,31 @@ public class GitChangesPanelLookTests
         window.Close();
     }
 }
+
+/// <summary>What the panel says when there is nothing to commit.</summary>
+public class GitEmptyStateTests
+{
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void SaysTheTreeIsCleanRatherThanShowingTwoEmptyHeadings()
+    {
+        // Two bare headings read as a panel that failed to load, not as
+        // "there is nothing to commit".
+        var panel = new Basalt.Shell.Controls.GitChangesPanel();
+
+        panel.Show("master", []);
+
+        Assert.True(panel.IsShowingEmptyState);
+    }
+
+    [Avalonia.Headless.XUnit.AvaloniaFact]
+    public void StopsSayingItOnceThereIsSomethingToCommit()
+    {
+        var panel = new Basalt.Shell.Controls.GitChangesPanel();
+
+        panel.Show("master",
+            [new Basalt.Core.Services.FileChange(
+                "/repo/One.vb", Basalt.Core.Services.FileChangeKind.Modified, Staged: false)]);
+
+        Assert.False(panel.IsShowingEmptyState);
+    }
+}
