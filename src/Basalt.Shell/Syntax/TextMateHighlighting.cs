@@ -148,7 +148,12 @@ public sealed class TextMateHighlighting : IDisposable
         // turns up in a solution — a project reference, something copied in.
         // TextMate colours it so it reads as code rather than as a wall of
         // grey; nothing else is offered for it.
-        ".cs"
+        ".cs",
+
+        // The query editor of the database panel writes into a .sql buffer,
+        // so it gets the same colouring as any other language rather than a
+        // second highlighter written for one panel.
+        ".sql"
     };
 
     /// <summary>
