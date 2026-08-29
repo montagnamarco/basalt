@@ -168,6 +168,9 @@ public sealed class IdeSettings
     public ToolbarSettings Toolbar { get; set; } = new();
     public RecentSettings Recent { get; set; } = new();
 
+    /// <summary>What was open in each solution when it was last closed.</summary>
+    public SessionSettings Session { get; set; } = new();
+
     /// <summary>
     /// Settings contributed by a language, keyed by language id.
     ///
