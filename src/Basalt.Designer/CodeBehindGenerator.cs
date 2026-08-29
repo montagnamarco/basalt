@@ -18,7 +18,7 @@ public static class CodeBehindGenerator
     public static string FileExtension(SourceLanguage language) => language switch
     {
         SourceLanguage.VisualBasic => ".vb",
-        _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Linguaggio non gestito.")
+        _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unsupported language.")
     };
 
     /// <summary>Conventional code-behind path: "MainWindow.axaml" → "MainWindow.axaml.vb".</summary>
@@ -29,7 +29,7 @@ public static class CodeBehindGenerator
     {
         var fullName = document.ClassName
             ?? throw new InvalidOperationException(
-                "Il document non dichiara x:Class: impossibile generare il code-behind.");
+                "The document declares no x:Class, so no code-behind can be generated.");
 
         var lastDot = fullName.LastIndexOf('.');
         var namespaceName = lastDot < 0 ? null : fullName[..lastDot];
@@ -39,7 +39,7 @@ public static class CodeBehindGenerator
         return language switch
         {
             SourceLanguage.VisualBasic => GenerateVisualBasic(namespaceName, typeName, isWindow),
-            _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Linguaggio non gestito.")
+            _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unsupported language.")
         };
     }
 
@@ -95,6 +95,6 @@ public static class CodeBehindGenerator
                         ' TODO: implementare
                     End Sub
                 """,
-            _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Linguaggio non gestito.")
+            _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unsupported language.")
         };
 }
