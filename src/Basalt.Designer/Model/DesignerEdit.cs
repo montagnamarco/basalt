@@ -26,7 +26,7 @@ public sealed class SetAttributeEdit : IDesignerEdit
         _oldValue = element.Attribute(attribute)?.Value;
     }
 
-    public string Description => $"Imposta {_attribute.LocalName}";
+    public string Description => $"Set {_attribute.LocalName}";
 
     public void Apply() => Write(_newValue);
     public void Undo() => Write(_oldValue);
@@ -65,7 +65,7 @@ public sealed class InsertElementEdit : IDesignerEdit
     /// </summary>
     public XElement? Inserted { get; private set; }
 
-    public string Description => $"Inserisci {_template.Name.LocalName}";
+    public string Description => $"Insert {_template.Name.LocalName}";
 
     public void Apply()
     {
@@ -73,17 +73,24 @@ public sealed class InsertElementEdit : IDesignerEdit
 
         if (_index < 0 || _index >= siblings.Count)
         {
-            _parent.Add(_template);
-            Inserted = (XElement)_parent.LastNode!;
+            XamlFormatting.AddIndented(_parent, _template);
+            Inserted = (XElement)_parent.Elements().Last();
         }
         else
         {
             siblings[_index].AddBeforeSelf(_template);
             Inserted = (XElement)siblings[_index].PreviousNode!;
+
+            XamlFormatting.IndentBefore(Inserted, siblings[_index]);
         }
     }
 
-    public void Undo() => Inserted?.Remove();
+    public void Undo()
+    {
+        // The whitespace put in with it goes too, or every insert and undo
+        // leaves a blank line behind and the file slowly grows them.
+        XamlFormatting.RemoveWithWhitespace(Inserted);
+    }
 }
 
 /// <summary>Removes a control, remembering where it was.</summary>
@@ -95,13 +102,23 @@ public sealed class RemoveElementEdit : IDesignerEdit
 
     public RemoveElementEdit(XElement element) => _element = element;
 
-    public string Description => $"Elimina {_element.Name.LocalName}";
+    public string Description => $"Delete {_element.Name.LocalName}";
 
     public void Apply()
     {
         _parent = _element.Parent;
-        _previousSibling = _element.PreviousNode;
-        _element.Remove();
+
+        // The element the undo will put it back after, skipping the
+        // whitespace that is about to go with it.
+        _previousSibling = _element.PreviousNode is XText space && IsLayout(space)
+            ? space.PreviousNode
+            : _element.PreviousNode;
+
+        XamlFormatting.RemoveWithWhitespace(_element);
+
+        // A container left with nothing but blank lines in it reads as
+        // broken. Emptied outright, so it closes on its own tag again.
+        if (_parent is not null) XamlFormatting.TidyIfEmpty(_parent);
     }
 
     public void Undo()
@@ -110,6 +127,88 @@ public sealed class RemoveElementEdit : IDesignerEdit
             _previousSibling.AddAfterSelf(_element);
         else
             _parent?.AddFirst(_element);
+
+        if (_parent is not null) XamlFormatting.Reindent(_parent);
+    }
+
+    private static bool IsLayout(XText text) =>
+        text.Value.Length > 0 && text.Value.All(char.IsWhiteSpace);
+}
+
+/// <summary>
+/// Moves a control into another container, or to another place among its
+/// siblings.
+/// </summary>
+/// <remarks>
+/// Without this a control could only ever be repositioned inside the panel it
+/// was first dropped in: rearranging a form meant deleting a control and
+/// adding it again somewhere else, losing everything set on it.
+///
+/// The element is detached before being added, which is what keeps the same
+/// instance in the tree — LINQ-to-XML copies an element that still belongs to
+/// a document rather than moving it, and the caller's references, the
+/// selection among them, would then point at a node no longer in the file.
+/// </remarks>
+public sealed class MoveElementEdit : IDesignerEdit
+{
+    private readonly XElement _element;
+    private readonly XElement _newParent;
+    private readonly int _index;
+
+    private XElement? _oldParent;
+    private XNode? _wasAfter;
+
+    public MoveElementEdit(XElement element, XElement newParent, int index = -1)
+    {
+        _element = element;
+        _newParent = newParent;
+        _index = index;
+    }
+
+    public string Description => $"Move {_element.Name.LocalName}";
+
+    public void Apply()
+    {
+        _oldParent = _element.Parent;
+
+        // Past the whitespace that is about to go with it, or the undo would
+        // put the element back after a node no longer in the tree.
+        _wasAfter = _element.PreviousNode is XText space
+                    && space.Value.All(char.IsWhiteSpace)
+            ? space.PreviousNode
+            : _element.PreviousNode;
+
+        XamlFormatting.RemoveWithWhitespace(_element);
+
+        var siblings = XamlDocument.ControlChildren(_newParent).ToList();
+
+        if (_index < 0 || _index >= siblings.Count)
+        {
+            XamlFormatting.AddIndented(_newParent, _element);
+        }
+        else
+        {
+            siblings[_index].AddBeforeSelf(_element);
+            XamlFormatting.IndentBefore(_element, siblings[_index]);
+        }
+
+        // The panel it came from may now be empty, or left with a gap where
+        // it used to sit.
+        if (_oldParent is not null && !ReferenceEquals(_oldParent, _newParent))
+            XamlFormatting.TidyIfEmpty(_oldParent);
+    }
+
+    public void Undo()
+    {
+        XamlFormatting.RemoveWithWhitespace(_element);
+
+        if (_wasAfter is not null) _wasAfter.AddAfterSelf(_element);
+        else _oldParent?.AddFirst(_element);
+
+        // Both ends: the one it went back to, and the one it came out of.
+        if (_oldParent is not null) XamlFormatting.Reindent(_oldParent);
+
+        XamlFormatting.TidyIfEmpty(_newParent);
     }
 }
 

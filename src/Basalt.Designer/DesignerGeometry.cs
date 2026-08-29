@@ -106,10 +106,12 @@ public static class DesignerGeometry
         };
     }
 
-    private static IDesignerEdit SetNumber(XElement element, string name, double value) =>
+    /// <summary>Writes a number, for whoever else has to place an element.</summary>
+    internal static IDesignerEdit SetNumber(XElement element, string name, double value) =>
         new SetAttributeEdit(element, name, Write(value));
 
-    private static IDesignerEdit SetText(XElement element, string name, string value) =>
+    /// <summary>Writes an attribute verbatim.</summary>
+    internal static IDesignerEdit SetText(XElement element, string name, string value) =>
         new SetAttributeEdit(element, name, value);
 
     private static double Number(XElement element, string name) =>
