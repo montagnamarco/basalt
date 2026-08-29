@@ -96,6 +96,28 @@ public sealed class OutlineTool : IdeTool
     }
 }
 
+/// <summary>The controls of the form being designed.</summary>
+public sealed class ElementTreeTool : IdeTool
+{
+    public ElementTreeTool()
+    {
+        Id = "ElementTree";
+        Title = Localizer.Get(StringKeys.ToolElementTree);
+        Icon = IconKind.Outline;
+    }
+}
+
+/// <summary>A database, its tables, and a place to query it.</summary>
+public sealed class DatabaseTool : IdeTool
+{
+    public DatabaseTool()
+    {
+        Id = "Database";
+        Title = Localizer.Get(StringKeys.ToolDatabase);
+        Icon = IconKind.JsonFile;
+    }
+}
+
 /// <summary>Everywhere a symbol is used.</summary>
 public sealed class ReferencesTool : IdeTool
 {

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Basalt.Core.Model;
 using Basalt.Core.Localization;
+using Basalt.Core.Settings;
 using Basalt.Core.Services;
 using Basalt.Designer;
 using Basalt.Designer.Model;
@@ -48,11 +49,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         Diagnostics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ErrorSummary));
         OpenDocuments.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsWelcomeVisible));
         _runService.OutputReceived += (_, line) => AppendOutput(line);
-        _runService.Exited += (_, code) =>
-        {
-            IsRunning = false;
-            AppendOutput(Localizer.Get(StringKeys.StatusApplicationExited, code));
-        };
+        // Process.Exited is raised on a threadpool thread. Setting a property
+        // from there raises PropertyChanged on that thread too, and the
+        // handlers are controls: reading DataContext threw and took the whole
+        // IDE down whenever a run ended. AppendOutput already knew to move
+        // itself; the property beside it did not.
+        _runService.Exited += (_, code) => OnRunExited(code);
     }
 
     /// <summary>
@@ -181,8 +183,100 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         return result.ProjectPath;
     }
 
+    /// <summary>
+    /// What was open, so it can be put back next time.
+    /// </summary>
+    /// <remarks>
+    /// Captured rather than tracked as it changes: the state is only wanted
+    /// at the moment a solution closes, and keeping it up to date on every
+    /// tab would be work done for nothing.
+    /// </remarks>
+    public SolutionSession CaptureSession() => new()
+    {
+        SolutionPath = SolutionPath ?? "",
+        OpenFiles = [.. OpenDocuments.Select(d => d.FilePath)],
+        ActiveFile = ActiveDocument?.FilePath,
+        InDesigner = [.. OpenDocuments.Where(d => d.OpenInDesigner).Select(d => d.FilePath)],
+    };
+
+    /// <summary>
+    /// Reopens what a solution had open when it was last closed.
+    /// </summary>
+    /// <remarks>
+    /// A file that has gone since is skipped rather than reported: it was
+    /// deleted or moved on purpose, and a dialog about it on every startup
+    /// would be the IDE nagging about a decision already made.
+    /// </remarks>
+    public async Task RestoreSessionAsync(SolutionSession session)
+    {
+        foreach (var file in session.OpenFiles)
+        {
+            if (!File.Exists(file)) continue;
+
+            await OpenFileAsync(file, session.InDesigner.Contains(file)).ConfigureAwait(true);
+        }
+
+        if (session.ActiveFile is { Length: > 0 } active
+            && OpenDocuments.FirstOrDefault(d =>
+                string.Equals(d.FilePath, active, StringComparison.Ordinal)) is { } document)
+        {
+            ActivateDocument(document);
+        }
+    }
+
+    /// <summary>Records what the current solution has open, if any.</summary>
+    public void RememberSession()
+    {
+        if (SolutionPath is not { Length: > 0 }) return;
+        if (LoadSettings is null || SaveSettings is null) return;
+
+        var settings = LoadSettings();
+
+        settings.Session.Remember(CaptureSession());
+
+        SaveSettings(settings);
+    }
+
+    /// <summary>
+    /// Closes everything belonging to the solution being left.
+    /// </summary>
+    /// <remarks>
+    /// Opening a second solution used to leave the first one's files in their
+    /// tabs, where they belong to a project that is no longer loaded: their
+    /// diagnostics are stale and going to a definition lands nowhere.
+    /// </remarks>
+    public void CloseAllDocuments()
+    {
+        foreach (var document in OpenDocuments.ToList()) _designerSessions.Remove(document);
+
+        OpenDocuments.Clear();
+        ActiveDocument = null;
+    }
+
+    /// <summary>
+    /// Where the remembered sessions are kept, when there is somewhere.
+    /// </summary>
+    /// <remarks>
+    /// Set by the window, which owns the settings file. Null in a test that
+    /// never asked for the behaviour, where opening a solution should not
+    /// start writing to the user's settings.
+    /// </remarks>
+    public Func<IdeSettings>? LoadSettings { get; set; }
+
+    /// <summary>Writes the settings back; set together with <see cref="LoadSettings"/>.</summary>
+    public Action<IdeSettings>? SaveSettings { get; set; }
+
     public async Task OpenSolutionAsync(string path)
     {
+        // What the solution being left had open, before it is left: after the
+        // documents are closed there is nothing to record.
+        RememberSession();
+
+        // And the documents themselves. Opening a second solution used to
+        // leave the first one's files in their tabs, belonging to a project
+        // no longer loaded.
+        CloseAllDocuments();
+
         IsBusy = true;
         StatusMessage = Localizer.Get(StringKeys.StatusOpening, Path.GetFileName(path));
         try
@@ -206,6 +300,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             foreach (var warning in _languageService.LoadWarnings) AppendOutput($"[warning] {warning}");
 
             await DetectRepositoryAsync(path).ConfigureAwait(true);
+
+            // Back to whatever was open last time, which is what makes
+            // reopening a project resuming rather than starting again.
+            if (LoadSettings?.Invoke().Session.For(path) is { } remembered)
+                await RestoreSessionAsync(remembered).ConfigureAwait(true);
+
             StatusMessage = Localizer.Get(StringKeys.StatusOpened, Path.GetFileName(path));
         }
         catch (Exception ex)
@@ -275,12 +375,44 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly Dictionary<EditorDocumentViewModel, DesignerSession> _designerSessions = [];
 
     /// <summary>
+    /// Whether a session still stands for what the document says.
+    /// </summary>
+    /// <remarks>
+    /// Compared as text rather than by a dirty flag: the session writes the
+    /// document itself on every edit, so a flag would have to be cleared in
+    /// the one place that already knows, and one missed clear brings the
+    /// stale tree back.
+    ///
+    /// A Visual Basic 6 form is left alone: its document holds .frm text
+    /// while the session holds the markup converted from it, so the two are
+    /// never equal and comparing them would rebuild on every keystroke.
+    /// </remarks>
+    private static bool SameMarkup(DesignerSession session, EditorDocumentViewModel document)
+    {
+        if (document.FilePath is { } path
+            && path.EndsWith(".frm", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return string.Equals(session.Document.ToXaml(), document.Text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// Design session for the given document, created on first request.
     /// Returns null for documents opened in the text editor.
     /// </summary>
     public DesignerSession? DesignerSessionFor(EditorDocumentViewModel document)
     {
         if (!document.OpenInDesigner) return null;
+
+        // A session built from text the user has since edited by hand is a
+        // stale tree, and the next designer edit writes it back over what
+        // they typed. Rebuilt when the text no longer matches what the
+        // session holds, so the two halves of the tab agree.
+        if (_designerSessions.TryGetValue(document, out var cached)
+            && !SameMarkup(cached, document))
+        {
+            _designerSessions.Remove(document);
+        }
 
         if (!_designerSessions.TryGetValue(document, out var session))
         {
@@ -460,6 +592,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
             return;
         }
+
+        // The compiler reads the disk, not the editors. Without this a
+        // control drawn in the designer and never saved was simply not in
+        // the build: the window came up empty and nothing said why, which
+        // looked like the designer having lost the work.
+        await SaveAllAsync().ConfigureAwait(true);
 
         IsBusy = true;
         BuildOutput.Clear();
@@ -983,6 +1121,35 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// prints, which belongs in the same place as build and run output.
     /// </summary>
     public void WriteOutput(string line) => AppendOutput(line);
+
+    /// <summary>Puts the IDE back to "nothing running", wherever the news came from.</summary>
+    private void OnRunExited(int code) => OnUiThread(() =>
+    {
+        IsRunning = false;
+        AppendOutput(Localizer.Get(StringKeys.StatusApplicationExited, code));
+    });
+
+    /// <summary>Reports a finished run, as the process does. For tests.</summary>
+    internal void ReportRunExitedForTests(int code) => OnRunExited(code);
+
+    /// <summary>Says a program is running, for tests that need it to stop.</summary>
+    internal void SetRunningForTests(bool running) => IsRunning = running;
+
+    /// <summary>
+    /// Runs something on the interface thread.
+    /// </summary>
+    /// <remarks>
+    /// Anything that reaches this view model from a process, a build or a
+    /// debugger arrives on a thread of its own, and everything listening to
+    /// it is a control. Posted rather than waited for: the thread that
+    /// reported has other work, and blocking it to let the interface catch
+    /// up is how a deadlock starts.
+    /// </remarks>
+    private static void OnUiThread(Action work)
+    {
+        if (Dispatcher.UIThread.CheckAccess()) work();
+        else Dispatcher.UIThread.Post(work);
+    }
 
     private void AppendOutput(string line)
     {

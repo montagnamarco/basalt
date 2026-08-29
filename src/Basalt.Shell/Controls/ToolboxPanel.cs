@@ -237,6 +237,9 @@ public sealed class ToolboxPanel : UserControl
     /// controls people reach for first at the top of each group, which
     /// alphabetical order would scatter.
     /// </remarks>
+    /// <summary>Rebuilds the list, after a plugin has added to it.</summary>
+    public void Reload() => _list.ItemsSource = WithHeadings();
+
     private static List<object> WithHeadings()
     {
         var rows = new List<object>();

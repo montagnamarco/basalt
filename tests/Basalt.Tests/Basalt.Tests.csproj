@@ -31,6 +31,12 @@
 
     <ProjectReference Include="..\..\src\Basalt.Core\Basalt.Core.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Vb6\Basalt.Vb6.csproj" />
+    <!-- Built, not referenced: the test loads it from disk the way the IDE
+         does, so the loading path itself is what is being tested. -->
+    <ProjectReference Include="..\..\samples\Basalt.Sample.Plugin\Basalt.Sample.Plugin.vbproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Basalt.Data\Basalt.Data.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Designer\Basalt.Designer.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Shell\Basalt.Shell.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Razor.Vb\Basalt.Razor.Vb.csproj" />

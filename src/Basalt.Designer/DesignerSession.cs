@@ -100,6 +100,169 @@ public sealed class DesignerSession
     }
 
     /// <summary>
+    /// Moves the selection to where it was dragged, in its container's terms.
+    /// </summary>
+    /// <remarks>
+    /// A Grid or a DockPanel is told which cell or edge the control now
+    /// belongs to; anywhere else this is the old pixel move, which is still
+    /// the right answer inside a Canvas.
+    ///
+    /// The offsets are where the pointer ended up inside the container, which
+    /// only the surface can measure.
+    /// </remarks>
+    public void DragSelectionTo(
+        double offsetX, double offsetY,
+        double containerWidth, double containerHeight,
+        double dx, double dy)
+    {
+        if (Selection is not { Parent: { } container }) return;
+
+        var kind = DesignerLayout.KindOf(container);
+
+        if (kind is DesignerLayout.LayoutKind.Coordinates or DesignerLayout.LayoutKind.Single)
+        {
+            MoveSelection(dx, dy);
+            return;
+        }
+
+        var edits = DesignerLayout.PlaceDrop(
+            Selection, container,
+            new DesignerLayout.Point(offsetX, offsetY),
+            new DesignerLayout.Size(containerWidth, containerHeight));
+
+        // A StackPanel decides the order itself, so a drag inside one has
+        // nothing to write: saying so beats writing a Margin that fights it.
+        if (edits.Count > 0) ApplyAsOne("Move", edits);
+    }
+
+    /// <summary>
+    /// Moves the selection into another container.
+    /// </summary>
+    /// <remarks>
+    /// The positioning attributes of the container it leaves are stripped:
+    /// a Canvas.Left carried into a Grid is an attribute the layout ignores,
+    /// and a Grid.Row carried into a StackPanel is the same. Leaving them
+    /// behind made a control that had been moved twice carry the leftovers
+    /// of every panel it had ever been in.
+    ///
+    /// The whole thing is one undo step, because to the user it is one move.
+    /// </remarks>
+    public void Reparent(
+        XElement element, XElement newParent,
+        double offsetX, double offsetY,
+        double containerWidth, double containerHeight)
+    {
+        if (ReferenceEquals(element.Parent, newParent)) return;
+
+        // Into itself or into its own child would detach the subtree the
+        // element is being put inside, which loses it.
+        if (element == newParent || newParent.Ancestors().Contains(element)) return;
+
+        if (!CanAccept(newParent)) return;
+
+        var edits = new List<IDesignerEdit>
+        {
+            new MoveElementEdit(element, newParent),
+        };
+
+        edits.AddRange(DesignerLayout.ClearPositioning(element));
+
+        // Where it lands is decided by the container it is going into, so the
+        // attributes are worked out from that one rather than from the panel
+        // it is leaving. The edits are built now and applied in order, so the
+        // whole move is a single step in the history.
+        edits.AddRange(DesignerLayout.PlaceDrop(
+            element, newParent,
+            new DesignerLayout.Point(offsetX, offsetY),
+            new DesignerLayout.Size(containerWidth, containerHeight)));
+
+        ApplyAsOne("Move", edits);
+    }
+
+    /// <summary>
+    /// Wires the selected control to a method in the code-behind.
+    /// </summary>
+    /// <remarks>
+    /// The gesture Visual Basic was built around: double-click a button and
+    /// you are in the code that runs when it is pressed. Three things have to
+    /// happen together — the control gets a name if it has none, the XAML
+    /// gets the attribute, and the code-behind gets the method — and all
+    /// three are one action to the user, so one step in the history.
+    ///
+    /// Returns where the handler is, so the caller can open the file there.
+    /// Null when there is nothing selected or no code-behind to write to.
+    /// </remarks>
+    public HandlerLocation? AttachHandler(string? eventName = null)
+    {
+        if (Selection is not { } element) return null;
+        if (Document.FilePath is not { } xamlPath) return null;
+
+        var chosen = eventName ?? EventHandlers.DefaultEventFor(element.Name.LocalName);
+
+        var edits = new List<IDesignerEdit>();
+
+        // A handler refers to its control by name, so an unnamed one cannot
+        // have a handler at all: it is given one rather than refused.
+        var name = XamlDocument.GetName(element);
+
+        if (name is not { Length: > 0 })
+        {
+            name = EventHandlers.SuggestName(element, Document.Root);
+
+            edits.Add(new SetAttributeEdit(element, XamlDocument.XamlNs + "Name", name));
+        }
+
+        var method = EventHandlers.NameFor(name, chosen);
+
+        // Already wired to something else: that is the user's choice, and
+        // overwriting it would lose whatever they pointed it at.
+        var existing = element.Attribute(chosen)?.Value;
+
+        if (existing is { Length: > 0 }) method = existing;
+        else edits.Add(new SetAttributeEdit(element, chosen, method));
+
+        if (edits.Count > 0) ApplyAsOne("Handler", edits);
+
+        var codePath = CodeBehindGenerator.CodeBehindPath(xamlPath, Language);
+
+        var code = File.Exists(codePath)
+            ? File.ReadAllText(codePath)
+            : CodeBehindGenerator.Generate(Document, Language);
+
+        var had = EventHandlers.Contains(code, method, Language);
+
+        if (!had) code = EventHandlers.AddHandler(code, method, chosen, Language);
+
+        return new HandlerLocation(codePath, method, code, !had);
+    }
+
+    /// <summary>
+    /// Draws the selection over, or under, the controls beside it.
+    /// </summary>
+    /// <remarks>
+    /// Among siblings a control is drawn in the order it is written, so this
+    /// is a move within the parent rather than a ZIndex: writing one would
+    /// leave the file saying two different things about the same order.
+    /// </remarks>
+    public void BringToFront(bool toFront = true)
+    {
+        if (Selection is not { Parent: { } parent } selection) return;
+
+        var siblings = XamlDocument.ControlChildren(parent).ToList();
+
+        if (siblings.Count < 2) return;
+
+        // Already there, so nothing to record: an undo step that changes
+        // nothing is one the user has to press twice.
+        var at = siblings.IndexOf(selection);
+
+        if (toFront && at == siblings.Count - 1) return;
+        if (!toFront && at == 0) return;
+
+        Apply(new MoveElementEdit(selection, parent, toFront ? -1 : 0));
+    }
+
+    /// <summary>
     /// Resizes the selection, as one undoable step.
     /// </summary>
     /// <param name="dx">How far the origin moves, when a left handle was dragged.</param>
@@ -157,6 +320,101 @@ public sealed class DesignerSession
     }
 
     /// <summary>Inserts a toolbox control into the given container.</summary>
+    /// <summary>
+    /// Places a just-dropped control the way its container lays out.
+    /// </summary>
+    /// <remarks>
+    /// Separate from the insert because only the surface knows where the
+    /// pointer was and how big the container is on screen; the session knows
+    /// what the XAML should say about it.
+    /// </remarks>
+    public void PlaceDrop(
+        XElement inserted,
+        double offsetX, double offsetY,
+        double containerWidth, double containerHeight)
+    {
+        if (inserted.Parent is not { } container) return;
+
+        var edits = DesignerLayout.PlaceDrop(
+            inserted, container,
+            new DesignerLayout.Point(offsetX, offsetY),
+            new DesignerLayout.Size(containerWidth, containerHeight));
+
+        foreach (var edit in edits) Apply(edit);
+    }
+
+    /// <summary>
+    /// The grid whose rows and columns the editor should show.
+    /// </summary>
+    /// <remarks>
+    /// The selection when it is a Grid, otherwise the Grid it sits in: the
+    /// rows are wanted just as often while looking at a button inside them
+    /// as while looking at the grid itself.
+    /// </remarks>
+    public XElement? GridInScope =>
+        Selection is { } selection
+            ? selection.Name.LocalName == "Grid"
+                ? selection
+                : selection.Parent?.Name.LocalName == "Grid" ? selection.Parent : null
+            : null;
+
+    /// <summary>The rows or columns of the grid in scope, as written.</summary>
+    public IReadOnlyList<string> TracksOf(DesignerLayout.Track track) =>
+        GridInScope is { } grid ? DesignerLayout.TracksOf(grid, track) : [];
+
+    /// <summary>Rewrites the rows or columns of the grid in scope.</summary>
+    public void SetTracks(DesignerLayout.Track track, IReadOnlyList<string> sizes)
+    {
+        if (GridInScope is not { } grid) return;
+
+        ApplyAsOne(
+            track == DesignerLayout.Track.Row ? "Rows" : "Columns",
+            DesignerLayout.SetTracks(grid, track, sizes));
+    }
+
+    /// <summary>Adds a row or column to the grid in scope.</summary>
+    public void AddTrack(DesignerLayout.Track track, string size = "*")
+    {
+        if (GridInScope is not { } grid) return;
+
+        // A grid with nothing declared already has one implicit track, so the
+        // first addition has to write both of them or the new one would be
+        // the only one and everything already inside would move into it.
+        var existing = DesignerLayout.TracksOf(grid, track);
+        var sizes = existing.Count == 0 ? ["*", size] : (List<string>)[.. existing, size];
+
+        SetTracks(track, sizes);
+    }
+
+    /// <summary>
+    /// Removes a row or column from the grid in scope.
+    /// </summary>
+    /// <remarks>
+    /// The controls that were in it come back to the one before, and those
+    /// below move up: leaving them pointing past the end puts them all in the
+    /// last track, which looks like the designer scrambled the form.
+    /// </remarks>
+    public void RemoveTrack(DesignerLayout.Track track, int index)
+    {
+        if (GridInScope is not { } grid) return;
+
+        var existing = DesignerLayout.TracksOf(grid, track);
+
+        if (index < 0 || index >= existing.Count) return;
+
+        var remaining = existing.ToList();
+        remaining.RemoveAt(index);
+
+        var edits = new List<IDesignerEdit>(DesignerLayout.SetTracks(grid, track, remaining));
+        edits.AddRange(DesignerLayout.AfterRemoving(grid, track, index));
+
+        ApplyAsOne(track == DesignerLayout.Track.Row ? "Remove row" : "Remove column", edits);
+    }
+
+    /// <summary>How the container of the selection places what is inside it.</summary>
+    public DesignerLayout.LayoutKind SelectionLayout =>
+        DesignerLayout.KindOf(Selection?.Parent);
+
     public XElement InsertFromToolbox(ToolboxItem item, XElement? container = null, int index = -1)
     {
         var parent = container ?? Selection ?? Document.Root;
@@ -360,6 +618,13 @@ public sealed class DesignerSession
     ];
 
     /// <summary>Whether an element can take another child.</summary>
+    /// <summary>Whether a control can hold another inside it.</summary>
+    /// <remarks>
+    /// Asked by the tree, which has to decide whether a row dropped on
+    /// another goes *into* it or *beside* it.
+    /// </remarks>
+    public static bool CanHoldChildren(XElement element) => CanAccept(element);
+
     private static bool CanAccept(XElement element)
     {
         var name = element.Name.LocalName;

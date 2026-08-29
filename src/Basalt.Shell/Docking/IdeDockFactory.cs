@@ -30,6 +30,8 @@ public sealed class IdeDockFactory : Factory
     public OutputTool Output { get; } = new();
     public SearchTool Search { get; } = new();
     public OutlineTool Outline { get; } = new();
+    public ElementTreeTool ElementTree { get; } = new();
+    public DatabaseTool Database { get; } = new();
     public ReferencesTool References { get; } = new();
     public CallStackTool CallStack { get; } = new();
     public VariablesTool Variables { get; } = new();
@@ -75,7 +77,7 @@ public sealed class IdeDockFactory : Factory
             Title = "DestraSopra",
             Alignment = Alignment.Right,
             Proportion = 0.45,
-            VisibleDockables = CreateList<IDockable>(Toolbox, Outline),
+            VisibleDockables = CreateList<IDockable>(Toolbox, ElementTree, Outline),
             ActiveDockable = Toolbox
         };
 
@@ -111,7 +113,7 @@ public sealed class IdeDockFactory : Factory
             Proportion = 0.28,
             VisibleDockables = CreateList<IDockable>(
                 Problems, Output, Search, References,
-                CallStack, Variables, Breakpoints, Tests, GitHistory, GitDiff, terminal),
+                CallStack, Variables, Breakpoints, Tests, Database, GitHistory, GitDiff, terminal),
             ActiveDockable = Problems
         };
 

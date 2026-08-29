@@ -35,6 +35,43 @@
             Background="{DynamicResource SideBarBackgroundBrush}"
             BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,0,0,1" />
 
+    <!--
+      Banner del debug: mentre una sessione e' in corso la finestra deve
+      dirlo senza che si debba cercare un pannello. Sta sotto la toolbar,
+      dove in Visual Studio compare la barra gialla della pausa, ed e'
+      nascosto del tutto quando non si sta debuggando: una striscia sempre
+      presente diventa invisibile proprio quando conta.
+    -->
+    <Border DockPanel.Dock="Top" x:Name="DebugBanner"
+            IsVisible="False" Padding="10,4,12,4"
+            Background="{DynamicResource DebugBannerBackgroundBrush}"
+            BorderBrush="{DynamicResource DebugBannerBorderBrush}"
+            BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="7"
+                    VerticalAlignment="Center">
+          <Ellipse x:Name="DebugBannerDot" Width="8" Height="8"
+                   VerticalAlignment="Center"
+                   Fill="{DynamicResource DebugBannerForegroundBrush}" />
+          <TextBlock x:Name="DebugBannerText" FontSize="12" FontWeight="SemiBold"
+                     VerticalAlignment="Center"
+                     Foreground="{DynamicResource DebugBannerForegroundBrush}" />
+        </StackPanel>
+
+        <TextBlock Grid.Column="1" x:Name="DebugBannerDetail" FontSize="12"
+                   Margin="16,0,12,0" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis"
+                   Foreground="{DynamicResource DebugBannerForegroundBrush}" />
+
+        <Button Grid.Column="2" x:Name="DebugBannerStop" Click="OnDebugBannerStop"
+                Padding="8,1" FontSize="12" Background="Transparent"
+                BorderBrush="{DynamicResource DebugBannerForegroundBrush}"
+                BorderThickness="1"
+                Foreground="{DynamicResource DebugBannerForegroundBrush}"
+                Content="Stop" />
+      </Grid>
+    </Border>
+
     <!-- Barra di stato, blu come quella di VS Code -->
     <Border DockPanel.Dock="Bottom"
             Background="{DynamicResource StatusBarBackgroundBrush}" Padding="10,3">
@@ -117,6 +154,12 @@
                        Foreground="{DynamicResource StatusBarForegroundBrush}"
                        FontSize="12" />
           </Button>
+          <!-- How big the form being designed will really be, which the
+               surface cannot show: it draws at whatever size the panel is. -->
+          <TextBlock x:Name="DesignerSizeLabel"
+                     Foreground="{DynamicResource StatusBarForegroundBrush}"
+                     FontSize="12" VerticalAlignment="Center" />
+
           <TextBlock x:Name="DebugStateLabel"
                      Foreground="{DynamicResource StatusBarForegroundBrush}"
                      FontSize="12" VerticalAlignment="Center" />

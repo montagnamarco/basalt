@@ -81,6 +81,54 @@
   <data name="Tool_Output" xml:space="preserve"><value>Output</value></data>
   <data name="Tool_Search" xml:space="preserve"><value>Search</value></data>
   <data name="Tool_Outline" xml:space="preserve"><value>Outline</value></data>
+  <data name="Tool_ElementTree" xml:space="preserve"><value>Structure</value></data>
+  <data name="Designer_EmptyHint" xml:space="preserve"><value>Drag a control from the toolbox to begin</value></data>
+  <data name="Database_Open" xml:space="preserve"><value>Open…</value></data>
+  <data name="Database_Run" xml:space="preserve"><value>Run</value></data>
+  <data name="Database_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Database_Stopped" xml:space="preserve"><value>Stopped.</value></data>
+  <data name="Database_NothingOpen" xml:space="preserve"><value>Open a database file to look inside it</value></data>
+  <data name="Database_Opened" xml:space="preserve"><value>Opened {0}</value></data>
+  <data name="Database_Rows" xml:space="preserve"><value>{0} rows in {1} ms</value></data>
+  <data name="Database_Capped" xml:space="preserve"><value>First {0} rows in {1} ms</value></data>
+  <data name="Database_Affected" xml:space="preserve"><value>{0} rows changed in {1} ms</value></data>
+  <data name="Tool_Database" xml:space="preserve"><value>Database</value></data>
+  <data name="Git_NothingToCommit" xml:space="preserve"><value>No changes — the working tree is clean</value></data>
+  <data name="Git_NothingStaged" xml:space="preserve"><value>Nothing staged yet</value></data>
+  <data name="Git_NoRepository" xml:space="preserve"><value>This folder is not a git repository</value></data>
+  <data name="Designer_SurfaceSize" xml:space="preserve"><value>{0} × {1}</value></data>
+  <data name="Designer_Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="Designer_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Designer_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="Designer_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Designer_SelectContainer" xml:space="preserve"><value>Select Container</value></data>
+  <data name="Designer_BringToFront" xml:space="preserve"><value>Bring to Front</value></data>
+  <data name="Designer_SendToBack" xml:space="preserve"><value>Send to Back</value></data>
+  <data name="Designer_AlignLeft" xml:space="preserve"><value>Align Left</value></data>
+  <data name="Designer_AlignRight" xml:space="preserve"><value>Align Right</value></data>
+  <data name="Designer_AlignTop" xml:space="preserve"><value>Align Top</value></data>
+  <data name="Designer_AlignBottom" xml:space="preserve"><value>Align Bottom</value></data>
+  <data name="Designer_SameWidth" xml:space="preserve"><value>Same Width</value></data>
+  <data name="Designer_SameHeight" xml:space="preserve"><value>Same Height</value></data>
+  <data name="Designer_FitToWindow" xml:space="preserve"><value>Fit to Window</value></data>
+  <data name="Designer_ActualSize" xml:space="preserve"><value>Actual Size</value></data>
+  <data name="Designer_Rows" xml:space="preserve"><value>Rows</value></data>
+  <data name="Designer_Columns" xml:space="preserve"><value>Columns</value></data>
+  <data name="Designer_AddRow" xml:space="preserve"><value>Add a row</value></data>
+  <data name="Designer_AddColumn" xml:space="preserve"><value>Add a column</value></data>
+  <data name="Designer_ContainingGrid" xml:space="preserve"><value>Containing grid</value></data>
+  <data name="Menu_Designer" xml:space="preserve"><value>Designer</value></data>
+  <data name="Menu_Designer_AlignLeft" xml:space="preserve"><value>Allinea a sinistra</value></data>
+  <data name="Menu_Designer_AlignRight" xml:space="preserve"><value>Allinea a destra</value></data>
+  <data name="Menu_Designer_AlignTop" xml:space="preserve"><value>Allinea in alto</value></data>
+  <data name="Menu_Designer_AlignBottom" xml:space="preserve"><value>Allinea in basso</value></data>
+  <data name="Menu_Designer_SameWidth" xml:space="preserve"><value>Stessa larghezza</value></data>
+  <data name="Menu_Designer_SameHeight" xml:space="preserve"><value>Stessa altezza</value></data>
+  <data name="Menu_Designer_ZoomIn" xml:space="preserve"><value>Ingrandisci</value></data>
+  <data name="Menu_Designer_ZoomOut" xml:space="preserve"><value>Riduci</value></data>
+  <data name="Menu_Designer_ZoomReset" xml:space="preserve"><value>Dimensione reale</value></data>
+  <data name="Menu_Designer_ZoomToFit" xml:space="preserve"><value>Adatta alla finestra</value></data>
+  <data name="Menu_Designer_SelectParent" xml:space="preserve"><value>Seleziona il contenitore</value></data>
   <data name="Menu_Debug" xml:space="preserve"><value>Debug</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
   <data name="Menu_Git" xml:space="preserve"><value>Git</value></data>
@@ -106,6 +154,8 @@
   <data name="Menu_Tools_Settings" xml:space="preserve"><value>Settings…</value></data>
   <data name="Menu_Debug_Start" xml:space="preserve"><value>Start Debugging</value></data>
   <data name="Menu_Debug_Stop" xml:space="preserve"><value>Stop Debugging</value></data>
+  <data name="Menu_Debug_Continue" xml:space="preserve"><value>Continue</value></data>
+  <data name="Menu_Debug_Pause" xml:space="preserve"><value>Break All</value></data>
   <data name="Menu_Debug_StepOver" xml:space="preserve"><value>Step Over</value></data>
   <data name="Menu_Debug_StepInto" xml:space="preserve"><value>Step Into</value></data>
   <data name="Menu_Debug_StepOut" xml:space="preserve"><value>Step Out</value></data>

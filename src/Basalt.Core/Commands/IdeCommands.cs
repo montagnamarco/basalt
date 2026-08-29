@@ -71,6 +71,8 @@ public static class IdeCommands
 
     public const string DebugStart = "debug.start";
     public const string DebugStartWithout = "debug.startWithoutDebugging";
+    public const string DebugContinue = "debug.continue";
+    public const string DebugPause = "debug.pause";
     public const string DebugStop = "debug.stop";
     public const string DebugStepOver = "debug.stepOver";
     public const string DebugStepInto = "debug.stepInto";
@@ -88,6 +90,23 @@ public static class IdeCommands
     public const string GitPull = "git.pull";
     public const string GitPush = "git.push";
     public const string GitBranches = "git.branches";
+
+    // The designer's own. Align exists in the arithmetic and was reachable
+    // only from the tests; a command that nothing can invoke is a feature
+    // nobody has.
+    public const string DesignerAlignLeft = "designer.alignLeft";
+    public const string DesignerAlignRight = "designer.alignRight";
+    public const string DesignerAlignTop = "designer.alignTop";
+    public const string DesignerAlignBottom = "designer.alignBottom";
+    public const string DesignerAlignHorizontalCentre = "designer.alignHorizontalCentre";
+    public const string DesignerAlignVerticalCentre = "designer.alignVerticalCentre";
+    public const string DesignerSameWidth = "designer.sameWidth";
+    public const string DesignerSameHeight = "designer.sameHeight";
+    public const string DesignerZoomIn = "designer.zoomIn";
+    public const string DesignerZoomOut = "designer.zoomOut";
+    public const string DesignerZoomReset = "designer.zoomReset";
+    public const string DesignerZoomToFit = "designer.zoomToFit";
+    public const string DesignerSelectParent = "designer.selectParent";
 
     public const string ToolsSettings = "tools.settings";
     public const string ViewGeneratedCode = "view.generatedCode";
@@ -211,6 +230,15 @@ public static class IdeCommands
                 { DefaultGesture = "F5" },
             new(DebugStartWithout, "Start Without Debugging", CommandCategory.Debug)
                 { DefaultGesture = "Ctrl+F5" },
+            // F5 both starts and continues, as in Visual Basic. Continue is
+            // listed in its own right so it can be found by name, bound to
+            // something else, and put on the toolbar.
+            new(DebugContinue, "Continue", CommandCategory.Debug),
+            // No default gesture: Visual Studio uses Ctrl+Alt+Break, and Break
+            // is not a key the recorder can capture, so binding it would leave
+            // a shortcut nobody could change. The menu and the command palette
+            // reach it, and the user can bind a key that does record.
+            new(DebugPause, "Break All", CommandCategory.Debug),
             new(DebugStop, "Stop Debugging", CommandCategory.Debug)
                 { DefaultGesture = "Shift+F5" },
             new(DebugStepOver, "Step Over", CommandCategory.Debug)
@@ -235,6 +263,30 @@ public static class IdeCommands
             new(GitPull, "Pull", CommandCategory.Git),
             new(GitPush, "Push", CommandCategory.Git),
             new(GitBranches, "Branches", CommandCategory.Git),
+
+            new(DesignerAlignLeft, "Align Left", CommandCategory.Designer),
+            new(DesignerAlignRight, "Align Right", CommandCategory.Designer),
+            new(DesignerAlignTop, "Align Top", CommandCategory.Designer),
+            new(DesignerAlignBottom, "Align Bottom", CommandCategory.Designer),
+            new(DesignerAlignHorizontalCentre, "Centre Horizontally", CommandCategory.Designer),
+            new(DesignerAlignVerticalCentre, "Centre Vertically", CommandCategory.Designer),
+            new(DesignerSameWidth, "Same Width", CommandCategory.Designer),
+            new(DesignerSameHeight, "Same Height", CommandCategory.Designer),
+
+            // No default keys for the two zooms: navigating back and forward
+            // already hold Ctrl+- and Ctrl+Shift+-, and moving through the
+            // code is the older claim. Ctrl and the wheel does it on the
+            // surface, the menu names it, and anyone who wants a key can
+            // bind one — better than shadowing a command that was here
+            // first.
+            new(DesignerZoomIn, "Zoom In", CommandCategory.Designer),
+            new(DesignerZoomOut, "Zoom Out", CommandCategory.Designer),
+            new(DesignerZoomReset, "Actual Size", CommandCategory.Designer)
+                { DefaultGesture = "Ctrl+0" },
+            new(DesignerZoomToFit, "Fit to Window", CommandCategory.Designer)
+                { DefaultGesture = "Ctrl+9" },
+            new(DesignerSelectParent, "Select Container", CommandCategory.Designer)
+                { DefaultGesture = "Escape" },
 
             new(ToolsSettings, "Settings…", CommandCategory.Tools)
                 { DefaultGesture = "Ctrl+," },

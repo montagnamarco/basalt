@@ -29,7 +29,22 @@ namespace Basalt.Shell;
 
 public partial class MainWindow : Window
 {
-    private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext!;
+    /// <summary>
+    /// What the window shows.
+    /// </summary>
+    /// <remarks>
+    /// Held directly rather than read back out of DataContext. Reading it
+    /// asks Avalonia for a control property, which throws outright when the
+    /// caller is on another thread — and a handler for a view model event can
+    /// be. That is how the IDE came down whenever a run ended: the property
+    /// was raised from a threadpool thread, and the handler died reading this.
+    ///
+    /// The raise is marshalled now, and this makes the getter safe whether it
+    /// is or not.
+    /// </remarks>
+    private MainWindowViewModel ViewModel => _viewModel;
+
+    private readonly MainWindowViewModel _viewModel;
 
     private readonly IdeDockFactory _factory = new();
 
@@ -98,7 +113,10 @@ public partial class MainWindow : Window
     /// The debugging session, which outlives any one open file: a breakpoint
     /// set and then closed must still stop when the program runs.
     /// </summary>
-    private readonly DebugSession _debug = new();
+    // Marshalling on: the adapter answers on a reader thread of its own, and
+    // every subscriber here is a control. Set by the window because only a
+    // running window has a dispatcher that is actually pumped.
+    private readonly DebugSession _debug = new() { MarshalToInterface = true };
 
     /// <summary>Breakpoint margins of the open editors, indexed by file.</summary>
     private readonly Dictionary<string, BreakpointMargin> _margins = new(StringComparer.Ordinal);
@@ -111,6 +129,7 @@ public partial class MainWindow : Window
     private SolutionExplorerPanel? _solutionExplorer;
     private ToolboxPanel? _toolbox;
     private PropertyPanel? _properties;
+    private ElementTreePanel? _elementTree;
 
     /// <summary>The surface the pointer was last over, for toolbox drops.</summary>
     private DesignSurface? _activeSurface;
@@ -127,7 +146,23 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         var viewModel = new MainWindowViewModel();
+        _viewModel = viewModel;
+
+        // The window owns the settings file, so it is what lends the view
+        // model a way to remember what was open.
+        viewModel.LoadSettings = () => _settingsStore.Load();
+        viewModel.SaveSettings = settings => _settingsStore.Save(settings);
+
         viewModel.ActiveDocumentChanged += (_, _) => ShowActiveDocument();
+
+        // Stop is lit only while something is running, and a run that ended
+        // on its own left it lit with nothing to stop.
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.IsRunning))
+                ShowDebugState();
+        };
+
         DataContext = viewModel;
 
         InstallMenu(viewModel);
@@ -169,14 +204,69 @@ public partial class MainWindow : Window
         _toolbox = new ToolboxPanel();
         _toolbox.ControlChosen += (_, item) =>
         {
-            // Into whatever container the pointer is over, so a control
-            // dropped on a nested panel goes in that panel rather than in the
-            // root of the document.
-            var container = _activeSurface?.ContainerAt(_activeSurface.LastPointerPosition);
+            // Beside whatever is selected, which is what the user just put
+            // there. The pointer position was used before, but by the time a
+            // toolbox entry is double-clicked the pointer has left the
+            // surface and that reading is stale: adding a second control
+            // aimed it at wherever the mouse happened to cross last, which
+            // is why a second button would not go into a StackPanel.
+            //
+            // InsertFromToolbox walks up from whatever it is given until
+            // something can hold a child, so naming the selection is enough:
+            // a Button selected inside a StackPanel sends the new control to
+            // the panel.
+            var designer = ViewModel.ActiveDesigner;
 
-            ViewModel.ActiveDesigner?.InsertFromToolbox(item, container);
-            _properties?.Show(ViewModel.ActiveDesigner);
+            var container = designer?.Selection
+                ?? _activeSurface?.ContainerAt(_activeSurface.LastPointerPosition);
+
+            designer?.InsertFromToolbox(item, container);
+            _properties?.Show(designer);
         };
+
+        // The tree reaches what the surface cannot click: a container its own
+        // children cover completely.
+        _elementTree = new ElementTreePanel();
+
+        _elementTree.ElementSelected += (_, element) =>
+        {
+            var designer = ViewModel.ActiveDesigner;
+            if (designer is null) return;
+
+            designer.Select(element);
+
+            _activeSurface?.Refresh();
+            _properties?.Show(designer);
+        };
+
+        // Dragged onto a container it goes inside it; onto a plain control
+        // it joins that control's parent, which is what "put it next to this
+        // one" means and is what the gesture looks like.
+        _elementTree.ElementMoved += (_, move) =>
+        {
+            if (ViewModel.ActiveDesigner is not { } designer) return;
+
+            var into = DesignerSession.CanHoldChildren(move.Onto) ? move.Onto : move.Onto.Parent;
+
+            if (into is null) return;
+
+            designer.Reparent(move.Moved, into, 0, 0, 0, 0);
+
+            _activeSurface?.Refresh();
+            _properties?.Show(designer);
+            _elementTree?.Show(designer);
+        };
+
+        _contents[_factory.ElementTree] = _elementTree;
+
+        // The panel knows about databases; only the window can put a file
+        // picker on screen.
+        var database = new DatabasePanel();
+
+        database.OpenRequested += (_, _) => Guarded.Run(
+            () => ChooseDatabaseAsync(database), ViewModel.WriteOutput, "database");
+
+        _contents[_factory.Database] = database;
 
         _properties = new PropertyPanel();
 
@@ -240,6 +330,10 @@ public partial class MainWindow : Window
 
         ViewModel.Operations.Changed += (_, _) =>
             Dispatcher.UIThread.Post(ShowRunningOperation);
+
+        // Last, so a plugin adding a command or a control has the toolbox and
+        // the registry already there to add it to.
+        LoadPlugins();
     }
 
     /// <summary>
@@ -455,7 +549,24 @@ public partial class MainWindow : Window
                     : DesignerLook.Modern,
         };
 
-        surface.SelectionChanged += (_, _) => _properties?.Show(session);
+        surface.MenuCommand += (_, command) => RunDesignerMenu(session, surface, command);
+
+        surface.DesignedSizeChanged += (_, size) => ShowDesignedSize(size);
+
+        surface.HandlerRequested += (_, _) => Guarded.Run(
+            () => AttachHandlerAsync(session),
+            ViewModel.WriteOutput, "designer");
+
+        surface.SelectionChanged += (_, _) =>
+        {
+            _properties?.Show(session);
+            _elementTree?.Follow(session.Selection);
+        };
+
+        // Rebuilt whenever the markup changes: a control added or moved is a
+        // different shape, and a tree showing the old one points at nodes no
+        // longer in the file.
+        session.DocumentModified += (_, _) => _elementTree?.Show(session);
 
         // Remembered so the toolbox knows where to put a new control: the
         // panel and the surface are built separately, and without this a
@@ -630,7 +741,12 @@ var editor = new CodeEditor(document, ViewModel);
         Dispatcher.UIThread.Post(GiveTabsTheirMenus, DispatcherPriority.Loaded);
 
         if (document.OpenInDesigner)
-            _properties?.Show(ViewModel.DesignerSessionFor(document));
+        {
+            var designer = ViewModel.DesignerSessionFor(document);
+
+            _properties?.Show(designer);
+            _elementTree?.Show(designer);
+        }
     }
 
     /// <summary>Opens a search result and puts the caret on the hit.</summary>
@@ -784,10 +900,40 @@ var editor = new CodeEditor(document, ViewModel);
             ViewModel.WriteOutput, "debug");
 
         _debug.Resumed += (_, _) => { OnDebuggerResumed(); ShowDebugState(); };
-        _debug.Exited += (_, _) => { OnDebuggerResumed(); ShowDebugState(); };
+
+        _debug.Exited += (_, code) =>
+        {
+            OnDebuggerResumed();
+
+            // Which is the whole of what a run without breakpoints has to
+            // say: without it a program that started and ended looks the
+            // same as one that never started.
+            ViewModel.WriteOutput($"[debug] {_debugTarget ?? "The program"} exited with code {code}.");
+
+            _debugTarget = null;
+            ShowDebugState();
+        };
+
+        // A program with a window or a web host never stops on its own, so
+        // "running" is the last thing that will ever be said about it. Until
+        // this was heard the banner stayed on "starting" for a program that
+        // had in fact started perfectly well.
+        _debug.Started += (_, _) => ShowDebugState();
+
         _debug.BreakpointsChanged += (_, file) => RefreshBreakpointDisplay(file);
         _debug.OutputReceived += (_, text) => ViewModel.WriteOutput(text);
-        _debug.Failed += (_, message) => ViewModel.WriteOutput(message + Environment.NewLine);
+
+        _debug.Failed += (_, message) =>
+        {
+            // A failure is the case where nothing visible happens otherwise:
+            // the message is worth nothing in a panel behind another one.
+            ViewModel.WriteOutput("[debug] " + message);
+            ShowTool(_factory.Output);
+
+            _debugTarget = null;
+            ShowDebugState();
+        };
+
         _debug.InputRequested += OnInputRequested;
     }
 
@@ -933,8 +1079,16 @@ var editor = new CodeEditor(document, ViewModel);
             _ => "Text"
         };
 
-    /// <summary>Shows what the debugger is doing, or nothing when it is idle.</summary>
-    private void ShowDebugState()
+    /// <summary>
+    /// Shows what the debugger is doing, everywhere it is shown.
+    ///
+    /// A debugging session changes what half the window means — which
+    /// buttons do anything, which panels are worth looking at — so the
+    /// places that say so are refreshed together rather than each from its
+    /// own event: the status label, the banner under the toolbar, and the
+    /// greying of the step buttons drifted apart when they were separate.
+    /// </summary>
+    private void ShowDebugState(string? detail = null)
     {
         DebugStateLabel.Text = _debug switch
         {
@@ -942,7 +1096,56 @@ var editor = new CodeEditor(document, ViewModel);
             { IsRunning: true } => "Running",
             _ => ""
         };
+
+        ShowDebugBanner(detail);
+
+        // The step buttons do nothing unless the program is stopped, and a
+        // button that does nothing should look like it.
+        _toolbar?.RefreshAvailability();
     }
+
+    /// <summary>
+    /// Draws the strip that says a session is in progress.
+    ///
+    /// Hidden outright when nothing is being debugged: a banner that is
+    /// always there stops being read exactly when it starts mattering.
+    /// </summary>
+    private void ShowDebugBanner(string? detail)
+    {
+        if (!_debug.IsRunning)
+        {
+            DebugBanner.IsVisible = false;
+
+            // Emptied as well as hidden: left as it was, the next session
+            // opens showing the name of the last one until its own is known.
+            DebugBannerText.Text = "";
+            DebugBannerDetail.Text = "";
+
+            return;
+        }
+
+        DebugBanner.IsVisible = true;
+
+        DebugBannerText.Text = _debug.IsPaused
+            ? "Debugging — paused"
+            : "Debugging — running";
+
+        // Where it stopped, which is the one thing worth reading at a glance;
+        // while running there is nothing truer to say than what is running.
+        DebugBannerDetail.Text = detail ?? (_debug.CurrentFrame is { } frame
+            ? $"{frame.Method}"
+              + (frame.FilePath is { } file
+                  ? $" — {Path.GetFileName(file)}:{frame.Line}"
+                  : "")
+            : _debugTarget ?? "");
+    }
+
+    /// <summary>What is being debugged, for the banner to name.</summary>
+    private string? _debugTarget;
+
+    /// <summary>Stops debugging from the banner's own button.</summary>
+    private void OnDebugBannerStop(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        Guarded.Run(StopDebuggingAsync, ViewModel.WriteOutput, "debug");
 
     /// <summary>
     /// Offers the fixes for the problem at the caret.
@@ -1690,6 +1893,12 @@ var editor = new CodeEditor(document, ViewModel);
 
         if (_debug.IsRunning) return;
 
+        // Pressing Start used to build in silence and, when anything went
+        // wrong, write one line into a panel that was not on top: from the
+        // outside nothing happened at all. Everything a session says goes to
+        // Output, so Output is brought to the front before anything is said.
+        ShowTool(_factory.Output);
+
         // A QuickBASIC program is debugged by interpreting its source, so
         // there is nothing to build first: the file itself is what runs.
         if (ViewModel.ActiveDocument is { FilePath: var path }
@@ -1700,9 +1909,19 @@ var editor = new CodeEditor(document, ViewModel);
             // different program than the one on screen.
             await ViewModel.ActiveDocument.SaveAsync();
 
+            _debugTarget = Path.GetFileName(path);
+            ViewModel.WriteOutput($"[debug] Starting {_debugTarget}.");
+            ShowStartingBanner();
+
             await _debug.StartAsync(path, Path.GetDirectoryName(path));
+            ShowDebugState();
             return;
         }
+
+        // Said before the build, not after: a build takes seconds, and until
+        // it ends this is the only sign that the key was even received.
+        ViewModel.WriteOutput("[debug] Building before debugging…");
+        ShowStartingBanner();
 
         var assembly = await ViewModel.BuildForDebuggingAsync();
 
@@ -1711,11 +1930,36 @@ var editor = new CodeEditor(document, ViewModel);
             // Saying "no assembly" when the build failed names the symptom and
             // hides the cause. The errors are already in the Problems panel,
             // so the message points there and brings it to the front.
+            _debugTarget = null;
+            ShowDebugState();
             ReportWhyThereIsNothingToDebug();
             return;
         }
 
+        _debugTarget = Path.GetFileName(assembly);
+        ViewModel.WriteOutput($"[debug] Starting {_debugTarget}.");
+        ShowStartingBanner();
+
         await _debug.StartAsync(assembly, ViewModel.StartupDirectory);
+
+        // StartAsync reports a failure through Failed rather than throwing,
+        // so the banner is settled from what actually came up, not from
+        // having asked: a missing debugger leaves nothing running.
+        ShowDebugState();
+    }
+
+    /// <summary>
+    /// Shows the banner before anything is running.
+    ///
+    /// Building and launching take long enough to look like nothing
+    /// happening, and the banner is the only part of the window that can say
+    /// otherwise while there is still no session to read state from.
+    /// </summary>
+    private void ShowStartingBanner()
+    {
+        DebugBanner.IsVisible = true;
+        DebugBannerText.Text = "Debugging — starting";
+        DebugBannerDetail.Text = _debugTarget ?? "";
     }
 
     /// <summary>
@@ -1803,19 +2047,40 @@ var editor = new CodeEditor(document, ViewModel);
             new ToolbarAction(IconKind.Run, Localizer.Get(StringKeys.MenuRunWithoutDebugging),
                 () => { })
                 { Command = ViewModel.RunCommand, CommandId = IdeCommands.DebugStartWithout },
+            // Stops whichever is going. Bound to StopRunCommand alone it did
+            // nothing at all during a debug session, while looking like the
+            // way out of one.
             new ToolbarAction(IconKind.Stop, Localizer.Get(StringKeys.MenuRunStop),
-                () => { })
-                { Command = ViewModel.StopRunCommand, CommandId = IdeCommands.DebugStop },
+                () => _ = StopEverythingAsync())
+                { CommandId = IdeCommands.DebugStop,
+                  IsAvailable = () => _debug.IsRunning || ViewModel.IsRunning },
 
+            // The stepping buttons only mean anything while the program is
+            // stopped. They were always lit, so pressing one during a run did
+            // nothing and looked broken; now the toolbar says when they work,
+            // which is also how the user notices a session is paused.
             new ToolbarAction(IconKind.Debug, Localizer.Get(StringKeys.MenuDebugStart),
                 () => _ = StartOrContinueDebuggingAsync())
                 { StartsGroup = true, CommandId = IdeCommands.DebugStart },
+
+            // Continue and Break are the pair the run is steered with, and
+            // only one of them is ever the one to press: each is lit exactly
+            // when the program is in the state it acts on.
+            new ToolbarAction(IconKind.Continue, Localizer.Get(StringKeys.MenuDebugContinue),
+                () => _ = _debug.ContinueAsync())
+                { CommandId = IdeCommands.DebugContinue, IsAvailable = () => _debug.IsPaused },
+            new ToolbarAction(IconKind.Pause, Localizer.Get(StringKeys.MenuDebugPause),
+                () => _ = _debug.PauseAsync())
+                { CommandId = IdeCommands.DebugPause, IsAvailable = () => _debug.CanPause },
             new ToolbarAction(IconKind.StepOver, Localizer.Get(StringKeys.MenuDebugStepOver),
-                () => _ = _debug.StepOverAsync()) { CommandId = IdeCommands.DebugStepOver },
+                () => _ = _debug.StepOverAsync())
+                { CommandId = IdeCommands.DebugStepOver, IsAvailable = () => _debug.IsPaused },
             new ToolbarAction(IconKind.StepInto, Localizer.Get(StringKeys.MenuDebugStepInto),
-                () => _ = _debug.StepIntoAsync()) { CommandId = IdeCommands.DebugStepInto },
+                () => _ = _debug.StepIntoAsync())
+                { CommandId = IdeCommands.DebugStepInto, IsAvailable = () => _debug.IsPaused },
             new ToolbarAction(IconKind.StepOut, Localizer.Get(StringKeys.MenuDebugStepOut),
-                () => _ = _debug.StepOutAsync()) { CommandId = IdeCommands.DebugStepOut },
+                () => _ = _debug.StepOutAsync())
+                { CommandId = IdeCommands.DebugStepOut, IsAvailable = () => _debug.IsPaused },
 
             new ToolbarAction(IconKind.Tests, Localizer.Get(StringKeys.MenuTestRunAll),
                 () => _ = RunTestsAsync(TestExplorerPanel.RunScope.All))
@@ -1997,6 +2262,223 @@ var editor = new CodeEditor(document, ViewModel);
     {
         change();
         _toolbar?.RefreshAvailability();
+    }
+
+    /// <summary>
+    /// Lines the selected controls up.
+    /// </summary>
+    /// <remarks>
+    /// The arithmetic has always been here; nothing could reach it. Measuring
+    /// is the surface's job because only it knows what the layout did with
+    /// the controls — one with no Margin still sits somewhere.
+    /// </remarks>
+    private void AlignSelection(AlignmentCommand command)
+    {
+        _activeSurface?.Align(command);
+
+        _properties?.Show(ViewModel.ActiveDesigner);
+    }
+
+    /// <summary>
+    /// Selects the container of what is selected.
+    /// </summary>
+    /// <remarks>
+    /// The only way to reach a panel its own children cover: a click always
+    /// lands on the topmost thing under the pointer, which is never the
+    /// container.
+    /// </remarks>
+    private void SelectContainer()
+    {
+        if (ViewModel.ActiveDesigner is not { Selection.Parent: { } above } designer) return;
+
+        designer.Select(above);
+
+        _activeSurface?.Refresh();
+        _properties?.Show(designer);
+        _elementTree?.Follow(above);
+    }
+
+    /// <summary>
+    /// The designer being looked at, or null when a text editor is.
+    /// </summary>
+    /// <remarks>
+    /// A document open in the designer can still be showing its markup in the
+    /// other half of the tab, and there the editing keys mean text.
+    /// </remarks>
+    private DesignerSession? DesignerInFront =>
+        _activeSurface?.IsEffectivelyVisible == true ? ViewModel.ActiveDesigner : null;
+
+    /// <summary>Brings the panels back in step after controls were moved about.</summary>
+    private void AfterDesignerClipboard(DesignerSession designer)
+    {
+        _properties?.Show(designer);
+        _elementTree?.Show(designer);
+    }
+
+    /// <summary>
+    /// Stops whatever is going: a debug session, a plain run, or both.
+    /// </summary>
+    /// <remarks>
+    /// One button, because to the user there is one thing running and one way
+    /// to end it. Which of the two it was is the IDE's business.
+    /// </remarks>
+    private async Task StopEverythingAsync()
+    {
+        if (_debug.IsRunning) await StopDebuggingAsync();
+
+        if (ViewModel.IsRunning) ViewModel.StopRunCommand.Execute(null);
+    }
+
+    /// <summary>Does what the designer's context menu asked for.</summary>
+    private void RunDesignerMenu(
+        DesignerSession session, DesignSurface surface, DesignSurface.DesignerMenuCommand command)
+    {
+        switch (command)
+        {
+            case DesignSurface.DesignerMenuCommand.Cut: session.CutSelection(); break;
+            case DesignSurface.DesignerMenuCommand.Copy: session.CopySelection(); break;
+            case DesignSurface.DesignerMenuCommand.Paste: session.PasteClipboard(); break;
+            case DesignSurface.DesignerMenuCommand.Delete: session.RemoveSelected(); break;
+
+            case DesignSurface.DesignerMenuCommand.SelectParent: SelectContainer(); break;
+
+            case DesignSurface.DesignerMenuCommand.BringToFront: session.BringToFront(); break;
+            case DesignSurface.DesignerMenuCommand.SendToBack: session.BringToFront(false); break;
+
+            case DesignSurface.DesignerMenuCommand.AlignLeft:
+                surface.Align(AlignmentCommand.Left); break;
+            case DesignSurface.DesignerMenuCommand.AlignRight:
+                surface.Align(AlignmentCommand.Right); break;
+            case DesignSurface.DesignerMenuCommand.AlignTop:
+                surface.Align(AlignmentCommand.Top); break;
+            case DesignSurface.DesignerMenuCommand.AlignBottom:
+                surface.Align(AlignmentCommand.Bottom); break;
+            case DesignSurface.DesignerMenuCommand.SameWidth:
+                surface.Align(AlignmentCommand.SameWidth); break;
+            case DesignSurface.DesignerMenuCommand.SameHeight:
+                surface.Align(AlignmentCommand.SameHeight); break;
+
+            case DesignSurface.DesignerMenuCommand.ZoomToFit: surface.ZoomToFit(); break;
+            case DesignSurface.DesignerMenuCommand.ResetZoom: surface.ResetView(); break;
+        }
+
+        _properties?.Show(session);
+        _elementTree?.Show(session);
+    }
+
+    /// <summary>
+    /// Shows how big the form being designed will be.
+    /// </summary>
+    /// <remarks>
+    /// Empty for anything that has no size of its own — a UserControl takes
+    /// the size of whatever hosts it — rather than inventing a number the
+    /// file does not state.
+    /// </remarks>
+    private void ShowDesignedSize((double Width, double Height)? size) =>
+        DesignerSizeLabel.Text = size is { } known
+            ? Localizer.Get(
+                StringKeys.DesignerSurfaceSize,
+                known.Width.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture),
+                known.Height.ToString("0.##", System.Globalization.CultureInfo.CurrentCulture))
+            : "";
+
+    /// <summary>
+    /// Wires the selected control to code and opens it there.
+    /// </summary>
+    /// <remarks>
+    /// The half a person sees: double-clicking a button should land the caret
+    /// in the method that runs when it is pressed, whether that method was
+    /// just written or has been there for weeks.
+    /// </remarks>
+    private async Task AttachHandlerAsync(DesignerSession session)
+    {
+        if (session.AttachHandler() is not { } handler) return;
+
+        // Written only when there is something new: opening the file is the
+        // point even when the handler was already there.
+        if (handler.WasCreated)
+            await File.WriteAllTextAsync(handler.FilePath, handler.Code).ConfigureAwait(true);
+
+        var line = EventHandlers.LineOf(handler.Code, handler.MethodName, session.Language);
+
+        await OpenAtAsync(handler.FilePath, line, 1);
+
+        _properties?.Show(session);
+        _elementTree?.Show(session);
+    }
+
+    /// <summary>
+    /// What a plugin is given to work with.
+    /// </summary>
+    /// <remarks>
+    /// A small surface on purpose. Everything here is something the IDE can
+    /// keep working across versions; handing a plugin the window itself would
+    /// make every internal rename a breaking change for somebody.
+    /// </remarks>
+    private sealed class ShellPluginHost(MainWindow window) : IPluginHost
+    {
+        public void AddCommand(string id, string title, Action invoke)
+        {
+            window._commands.Register(new IdeCommand(id, title, CommandCategory.Tools));
+            window._pluginCommands[id] = invoke;
+        }
+
+        public void AddToolboxItem(string displayName, string elementName, string category, string xaml)
+        {
+            ToolboxCatalog.Add(new ToolboxItem(displayName, elementName, category, xaml));
+
+            window._toolbox?.Reload();
+        }
+
+        public void Write(string message) => window.ViewModel.WriteOutput($"[plugin] {message}");
+    }
+
+    /// <summary>What the plugins added, so the commands can be run.</summary>
+    private readonly Dictionary<string, Action> _pluginCommands = [];
+
+    /// <summary>The plugins found at startup, loaded or not.</summary>
+    private readonly PluginLoader _plugins = new();
+
+    /// <summary>
+    /// Loads the installed plugins.
+    /// </summary>
+    /// <remarks>
+    /// After the window is built, so a plugin adding a command or a control
+    /// has something to add it to. Failures are written to the output rather
+    /// than shown: an extension that will not load is worth knowing about,
+    /// but not worth a dialog in front of the work.
+    /// </remarks>
+    private void LoadPlugins()
+    {
+        _plugins.LoadFrom(PluginLoader.DefaultFolder, new ShellPluginHost(this));
+
+        foreach (var failed in _plugins.Failed)
+            ViewModel.WriteOutput($"[plugin] {failed.Manifest.Name} did not load: {failed.Error}");
+
+        var loaded = _plugins.Plugins.Count(p => p.IsLoaded);
+
+        if (loaded > 0) ViewModel.WriteOutput($"[plugin] {loaded} loaded.");
+    }
+
+    /// <summary>Asks for a database file and opens it in the panel.</summary>
+    private async Task ChooseDatabaseAsync(DatabasePanel panel)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = Localizer.Get(StringKeys.DatabaseOpen),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("SQLite databases")
+                {
+                    Patterns = ["*.db", "*.sqlite", "*.sqlite3", "*.db3"]
+                },
+                new FilePickerFileType("All files") { Patterns = ["*"] }
+            ]
+        });
+
+        if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
+            await panel.OpenAsync(path);
     }
 
     /// <summary>Shows what this is and which version is running.</summary>
@@ -2341,6 +2823,19 @@ var editor = new CodeEditor(document, ViewModel);
                 await ViewModel.RunCommand.ExecuteAsync(null);
                 break;
 
+            case IdeCommands.DebugContinue when _debug.IsPaused:
+                await _debug.ContinueAsync();
+                break;
+
+            case IdeCommands.DebugContinue:
+                // Nothing is stopped, so Continue means what F5 means: begin.
+                await StartOrContinueDebuggingAsync();
+                break;
+
+            case IdeCommands.DebugPause:
+                await _debug.PauseAsync();
+                break;
+
             case IdeCommands.DebugStop:
                 await StopDebuggingAsync();
                 break;
@@ -2427,6 +2922,23 @@ var editor = new CodeEditor(document, ViewModel);
 
             // Chosen from the palette they used to do nothing: the editor's
             // own bindings cover the keyboard, and nothing covered the rest.
+            // To the designer when one is in front, since there the same keys
+            // mean controls rather than text. The session has had cut, copy
+            // and paste all along with nothing able to call them.
+            case IdeCommands.EditCut when DesignerInFront is { } cutting:
+                cutting.CutSelection();
+                AfterDesignerClipboard(cutting);
+                break;
+
+            case IdeCommands.EditCopy when DesignerInFront is { } copying:
+                copying.CopySelection();
+                break;
+
+            case IdeCommands.EditPaste when DesignerInFront is { } pasting:
+                pasting.PasteClipboard();
+                AfterDesignerClipboard(pasting);
+                break;
+
             case IdeCommands.EditCut:
                 CurrentEditor()?.Cut();
                 break;
@@ -2517,6 +3029,64 @@ var editor = new CodeEditor(document, ViewModel);
 
             case IdeCommands.RefactorChangeSignature:
                 await ChangeSignatureAsync();
+                break;
+
+            // The designer's own, which act on whichever surface is in front.
+            case IdeCommands.DesignerAlignLeft:
+                AlignSelection(AlignmentCommand.Left);
+                break;
+
+            case IdeCommands.DesignerAlignRight:
+                AlignSelection(AlignmentCommand.Right);
+                break;
+
+            case IdeCommands.DesignerAlignTop:
+                AlignSelection(AlignmentCommand.Top);
+                break;
+
+            case IdeCommands.DesignerAlignBottom:
+                AlignSelection(AlignmentCommand.Bottom);
+                break;
+
+            case IdeCommands.DesignerAlignHorizontalCentre:
+                AlignSelection(AlignmentCommand.HorizontalCentre);
+                break;
+
+            case IdeCommands.DesignerAlignVerticalCentre:
+                AlignSelection(AlignmentCommand.VerticalCentre);
+                break;
+
+            case IdeCommands.DesignerSameWidth:
+                AlignSelection(AlignmentCommand.SameWidth);
+                break;
+
+            case IdeCommands.DesignerSameHeight:
+                AlignSelection(AlignmentCommand.SameHeight);
+                break;
+
+            case IdeCommands.DesignerZoomIn:
+                if (_activeSurface is { } zoomIn) zoomIn.Zoom *= 1.25;
+                break;
+
+            case IdeCommands.DesignerZoomOut:
+                if (_activeSurface is { } zoomOut) zoomOut.Zoom /= 1.25;
+                break;
+
+            case IdeCommands.DesignerZoomReset:
+                _activeSurface?.ResetView();
+                break;
+
+            case IdeCommands.DesignerZoomToFit:
+                _activeSurface?.ZoomToFit();
+                break;
+
+            case IdeCommands.DesignerSelectParent:
+                SelectContainer();
+                break;
+
+            // Added by a plugin, which named it and said what it does.
+            case var plugin when _pluginCommands.TryGetValue(plugin, out var invoke):
+                invoke();
                 break;
 
             case IdeCommands.ToolsSettings:
@@ -3017,7 +3587,14 @@ var editor = new CodeEditor(document, ViewModel);
     private async Task StopDebuggingAsync()
     {
         await _debug.StopAsync();
+
         OnDebuggerResumed();
+
+        // The banner and the greyed buttons are read from the session, and
+        // stopping never told them: the strip stayed up over a session that
+        // had already ended, which is worse than never having shown one.
+        _debugTarget = null;
+        ShowDebugState();
     }
 
     /// <summary>Builds the test window and connects it to the runner.</summary>
@@ -4201,6 +4778,19 @@ var editor = new CodeEditor(document, ViewModel);
         return entries;
     }
 
+    /// <summary>Shows the starting banner, as pressing Start does.</summary>
+    internal void ShowStartingBannerForTests(string target)
+    {
+        _debugTarget = target;
+        ShowStartingBanner();
+    }
+
+    /// <summary>Stops debugging, as the Stop button does. For tests.</summary>
+    internal Task StopDebuggingForTests() => StopDebuggingAsync();
+
+    /// <summary>Settles every part that shows the debugging state.</summary>
+    internal void ShowDebugStateForTests() => ShowDebugState();
+
     internal IReadOnlyList<MenuEntry> MenuEntriesForTests() => BuildMenuEntries(ViewModel);
 
     /// <summary>Rebuilds the menu, as opening a file does.</summary>
@@ -4388,11 +4978,53 @@ var editor = new CodeEditor(document, ViewModel);
                 Action: () => _ = ShowSettingsAsync(),
                 Gesture: new KeyGesture(Key.OemComma, PlatformCommandModifier)) { Icon = IconKind.Settings }
         ]),
+        // The designer's own menu. Aligning and zooming were implemented and
+        // reachable from nowhere; a command nothing can invoke is a feature
+        // nobody has.
+        new(Localizer.Get(StringKeys.MenuDesigner), Children:
+        [
+            // No gesture shown for these two: Ctrl+- and Ctrl+Shift+- belong
+            // to navigating back and forward, so naming a key here would
+            // promise one that does something else.
+            new(Localizer.Get(StringKeys.MenuDesignerZoomIn),
+                Action: () => { if (_activeSurface is { } s) s.Zoom *= 1.25; }),
+            new(Localizer.Get(StringKeys.MenuDesignerZoomOut),
+                Action: () => { if (_activeSurface is { } s) s.Zoom /= 1.25; }),
+            new(Localizer.Get(StringKeys.MenuDesignerZoomReset),
+                Action: () => _activeSurface?.ResetView(),
+                Gesture: new KeyGesture(Key.D0, PlatformCommandModifier)),
+            new(Localizer.Get(StringKeys.MenuDesignerZoomToFit),
+                Action: () => _activeSurface?.ZoomToFit(),
+                Gesture: new KeyGesture(Key.D9, PlatformCommandModifier)),
+            MenuEntry.Separator,
+            new(Localizer.Get(StringKeys.MenuDesignerSelectParent),
+                Action: SelectContainer,
+                Gesture: new KeyGesture(Key.Escape)),
+            MenuEntry.Separator,
+            new(Localizer.Get(StringKeys.MenuDesignerAlignLeft),
+                Action: () => AlignSelection(AlignmentCommand.Left)),
+            new(Localizer.Get(StringKeys.MenuDesignerAlignRight),
+                Action: () => AlignSelection(AlignmentCommand.Right)),
+            new(Localizer.Get(StringKeys.MenuDesignerAlignTop),
+                Action: () => AlignSelection(AlignmentCommand.Top)),
+            new(Localizer.Get(StringKeys.MenuDesignerAlignBottom),
+                Action: () => AlignSelection(AlignmentCommand.Bottom)),
+            MenuEntry.Separator,
+            new(Localizer.Get(StringKeys.MenuDesignerSameWidth),
+                Action: () => AlignSelection(AlignmentCommand.SameWidth)),
+            new(Localizer.Get(StringKeys.MenuDesignerSameHeight),
+                Action: () => AlignSelection(AlignmentCommand.SameHeight)),
+        ]),
         new(Localizer.Get(StringKeys.MenuDebug), Children:
         [
             new(Localizer.Get(StringKeys.MenuDebugStart),
                 Action: () => _ = StartOrContinueDebuggingAsync(),
                 Gesture: new KeyGesture(Key.F5)) { Icon = IconKind.Debug },
+            new(Localizer.Get(StringKeys.MenuDebugContinue),
+                Action: () => _ = _debug.ContinueAsync(),
+                Gesture: new KeyGesture(Key.F5)) { Icon = IconKind.Continue },
+            new(Localizer.Get(StringKeys.MenuDebugPause),
+                Action: () => _ = _debug.PauseAsync()) { Icon = IconKind.Pause },
             new(Localizer.Get(StringKeys.MenuDebugStop),
                 Action: () => _ = StopDebuggingAsync(),
                 Gesture: new KeyGesture(Key.F5, KeyModifiers.Shift)) { Icon = IconKind.Stop },
@@ -4506,6 +5138,11 @@ var editor = new CodeEditor(document, ViewModel);
     /// </summary>
     protected override void OnClosed(EventArgs e)
     {
+        // Before anything is torn down: after the panels are disposed there
+        // is nothing left to record, and closing the window is the commonest
+        // way a session ends.
+        ViewModel.RememberSession();
+
         foreach (var content in _contents.Values) (content as IDisposable)?.Dispose();
         _contents.Clear();
 
@@ -4556,11 +5193,11 @@ var editor = new CodeEditor(document, ViewModel);
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Apri soluzione o progetto",
+            Title = "Open solution or project",
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Soluzioni e progetti .NET")
+                new FilePickerFileType(".NET solutions and projects")
                 {
                     Patterns = ["*.sln", "*.slnx", "*.csproj", "*.vbproj"]
                 },
@@ -4568,7 +5205,7 @@ var editor = new CodeEditor(document, ViewModel);
                 // A Visual Basic 6 project opens by being converted, and a
                 // filter that does not offer it means nobody finds out that
                 // it can be.
-                new FilePickerFileType("Progetti Visual Basic 6")
+                new FilePickerFileType("Visual Basic 6 projects")
                 {
                     Patterns = ["*.vbp"]
                 }

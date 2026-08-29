@@ -3,7 +3,7 @@ namespace Basalt.Core.Commands;
 /// <summary>Where a command belongs, for grouping in the settings.</summary>
 public enum CommandCategory
 {
-    File, Edit, View, Navigate, Refactor, Build, Debug, Test, Git, Tools, Window, Help
+    File, Edit, View, Navigate, Refactor, Build, Debug, Test, Git, Designer, Tools, Window, Help
 }
 
 /// <summary>

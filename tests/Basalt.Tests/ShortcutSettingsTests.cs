@@ -76,12 +76,19 @@ public class ShortcutRecorderTests
     /// <summary>Whether the recorder can produce this gesture from a key press.</summary>
     private static bool CanBeRecorded(string gesture)
     {
-        var parts = gesture.Split('+', StringSplitOptions.RemoveEmptyEntries);
-        var keyName = parts[^1];
+        // "Ctrl++" is Ctrl and the plus key, and splitting on '+' throws the
+        // key away: the separator and the key are the same character. The
+        // trailing one is taken off first so the rest splits cleanly.
+        var plusIsTheKey = gesture.EndsWith("++", StringComparison.Ordinal);
+
+        var parts = (plusIsTheKey ? gesture[..^1] : gesture)
+            .Split('+', StringSplitOptions.RemoveEmptyEntries);
+
+        var keyName = plusIsTheKey ? "+" : parts[^1];
 
         var modifiers = KeyModifiers.None;
 
-        foreach (var part in parts[..^1])
+        foreach (var part in plusIsTheKey ? parts : parts[..^1])
         {
             modifiers |= part switch
             {
@@ -97,6 +104,7 @@ public class ShortcutRecorderTests
             "," => Key.OemComma,
             "." => Key.OemPeriod,
             "-" => Key.OemMinus,
+            "+" => Key.OemPlus,
             "/" => Key.Oem2,
             "`" => Key.Oem3,
             _ when keyName.Length == 1 && char.IsDigit(keyName[0]) =>
