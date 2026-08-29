@@ -44,7 +44,7 @@ public static class FormTemplates
         var xamlPath = Path.Combine(directory, $"{typeName}.axaml");
 
         if (File.Exists(xamlPath))
-            throw new IOException($"Esiste già un file {typeName}.axaml in questa cartella.");
+            throw new IOException($"There is already a file named {typeName}.axaml in this folder.");
 
         var xaml = WindowXaml(className, title ?? typeName);
         await File.WriteAllTextAsync(xamlPath, xaml, ct).ConfigureAwait(false);

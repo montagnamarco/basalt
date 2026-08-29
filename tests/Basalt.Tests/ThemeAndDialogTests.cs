@@ -81,7 +81,7 @@ public class ThemeAndDialogTests
         var nome = dialog.FindControl<TextBox>("NameBox")!.Text!;
 
         Assert.Contains(nome, preview.Text);
-        Assert.Contains("Verrà creata in", preview.Text);
+        Assert.Contains("Will be created in", preview.Text);
     }
 
     [AvaloniaFact]

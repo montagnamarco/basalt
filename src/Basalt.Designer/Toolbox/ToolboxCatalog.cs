@@ -18,46 +18,69 @@ public sealed record ToolboxItem(
 /// </summary>
 public static class ToolboxCatalog
 {
+    /// <summary>
+    /// Controls a plugin has added.
+    /// </summary>
+    /// <remarks>
+    /// Kept apart from the built-in list rather than mixed into it, so the
+    /// two can be told apart: a plugin that is removed should take its
+    /// controls with it, and a built-in one can never be shadowed by
+    /// accident.
+    /// </remarks>
+    private static readonly List<ToolboxItem> Added = [];
+
+    /// <summary>Adds a control, as a plugin does.</summary>
+    public static void Add(ToolboxItem item)
+    {
+        Added.RemoveAll(existing =>
+            string.Equals(existing.ElementName, item.ElementName, StringComparison.Ordinal));
+
+        Added.Add(item);
+    }
+
+    /// <summary>Everything on offer, built in and contributed.</summary>
+    public static IReadOnlyList<ToolboxItem> All => [.. Items, .. Added];
+
     public static IReadOnlyList<ToolboxItem> Items { get; } =
     [
         // Layout containers
-        new("Griglia", "Grid", "Layout", "<Grid />"),
-        new("Pannello impilato", "StackPanel", "Layout", "<StackPanel />"),
-        new("Pannello con bordi", "DockPanel", "Layout", "<DockPanel />"),
-        new("Pannello a fluire", "WrapPanel", "Layout", "<WrapPanel />"),
-        new("Pannello a coordinate", "Canvas", "Layout", "<Canvas />"),
-        new("Bordo", "Border", "Layout", """<Border BorderBrush="Gray" BorderThickness="1" Padding="8" />"""),
-        new("Area scorrevole", "ScrollViewer", "Layout", "<ScrollViewer />"),
-        new("Separatore", "Separator", "Layout", "<Separator />"),
-        new("Espansore", "Expander", "Layout", """<Expander Header="Espansore" />"""),
+        new("Grid", "Grid", "Layout", "<Grid />"),
+        new("Stack Panel", "StackPanel", "Layout", "<StackPanel />"),
+        new("Dock Panel", "DockPanel", "Layout", "<DockPanel />"),
+        new("Wrap Panel", "WrapPanel", "Layout", "<WrapPanel />"),
+        new("Canvas", "Canvas", "Layout", "<Canvas />"),
+        new("Border", "Border", "Layout", """<Border BorderBrush="Gray" BorderThickness="1" Padding="8" />"""),
+        new("Scroll Viewer", "ScrollViewer", "Layout", "<ScrollViewer />"),
+        new("Separator", "Separator", "Layout", "<Separator />"),
+        new("Expander", "Expander", "Layout", """<Expander Header="Expander" />"""),
 
         // Common controls
-        new("Pulsante", "Button", "Comuni", """<Button Content="Pulsante" />"""),
-        new("Etichetta", "TextBlock", "Comuni", """<TextBlock Text="Etichetta" />"""),
-        new("Casella di testo", "TextBox", "Comuni", """<TextBox Width="150" />"""),
-        new("Casella di controllo", "CheckBox", "Comuni", """<CheckBox Content="Opzione" />"""),
-        new("Pulsante di opzione", "RadioButton", "Comuni", """<RadioButton Content="Scelta" />"""),
-        new("Casella combinata", "ComboBox", "Comuni", """<ComboBox Width="150" />"""),
-        new("Interruttore", "ToggleSwitch", "Comuni", "<ToggleSwitch />"),
-        new("Dispositivo di scorrimento", "Slider", "Comuni", """<Slider Width="150" />"""),
-        new("Barra di avanzamento", "ProgressBar", "Comuni", """<ProgressBar Width="150" Value="50" />"""),
-        new("Immagine", "Image", "Comuni", """<Image Width="100" Height="100" />"""),
-        new("Calendario", "Calendar", "Comuni", "<Calendar />"),
-        new("Selettore data", "DatePicker", "Comuni", "<DatePicker />"),
+        new("Button", "Button", "Common", """<Button Content="Button" />"""),
+        new("Text Block", "TextBlock", "Common", """<TextBlock Text="Text" />"""),
+        new("Text Box", "TextBox", "Common", """<TextBox Width="150" />"""),
+        new("Check Box", "CheckBox", "Common", """<CheckBox Content="Option" />"""),
+        new("Radio Button", "RadioButton", "Common", """<RadioButton Content="Choice" />"""),
+        new("Combo Box", "ComboBox", "Common", """<ComboBox Width="150" />"""),
+        new("Toggle Switch", "ToggleSwitch", "Common", "<ToggleSwitch />"),
+        new("Slider", "Slider", "Common", """<Slider Width="150" />"""),
+        new("Progress Bar", "ProgressBar", "Common", """<ProgressBar Width="150" Value="50" />"""),
+        new("Image", "Image", "Common", """<Image Width="100" Height="100" />"""),
+        new("Calendar", "Calendar", "Common", "<Calendar />"),
+        new("Date Picker", "DatePicker", "Common", "<DatePicker />"),
 
         // Lists
-        new("Casella di riepilogo", "ListBox", "Elenchi", """<ListBox Width="150" Height="100" />"""),
-        new("Vista list", "ListView", "Elenchi", """<ListView Width="150" Height="100" />"""),
-        new("Vista albero", "TreeView", "Elenchi", """<TreeView Width="150" Height="100" />"""),
-        new("Griglia dati", "DataGrid", "Elenchi", """<DataGrid Width="200" Height="120" />"""),
-        new("Controllo a schede", "TabControl", "Elenchi", "<TabControl />"),
+        new("List Box", "ListBox", "Lists", """<ListBox Width="150" Height="100" />"""),
+        new("List View", "ListView", "Lists", """<ListView Width="150" Height="100" />"""),
+        new("Tree View", "TreeView", "Lists", """<TreeView Width="150" Height="100" />"""),
+        new("Data Grid", "DataGrid", "Lists", """<DataGrid Width="200" Height="120" />"""),
+        new("Tab Control", "TabControl", "Lists", "<TabControl />"),
 
         // Menu
         new("Menu", "Menu", "Menu", "<Menu />"),
-        new("Voce di menu", "MenuItem", "Menu", """<MenuItem Header="Voce" />"""),
-        new("Barra di stato", "StackPanel", "Menu", """<StackPanel Orientation="Horizontal" />""")
+        new("Menu Item", "MenuItem", "Menu", """<MenuItem Header="Item" />"""),
+        new("Status Bar", "StackPanel", "Menu", """<StackPanel Orientation="Horizontal" />""")
     ];
 
     public static IEnumerable<IGrouping<string, ToolboxItem>> ByCategory() =>
-        Items.GroupBy(i => i.Category);
+        All.GroupBy(i => i.Category);
 }

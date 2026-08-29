@@ -74,7 +74,7 @@ public sealed class XamlPreviewRenderer
             {
                 Window window => new PreviewResult(UnwrapWindow(window), null),
                 Control control => new PreviewResult(control, null),
-                _ => new PreviewResult(null, $"La radice del document non è un controllo: {instance?.GetType().Name ?? "null"}.")
+                _ => new PreviewResult(null, $"The root of the document is not a control: {instance?.GetType().Name ?? "null"}.")
             };
         }
         catch (Exception ex)

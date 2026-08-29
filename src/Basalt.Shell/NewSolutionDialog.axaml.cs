@@ -42,7 +42,7 @@ public partial class NewSolutionDialog : Window
 
         PreviewLabel.Text = string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(parent)
             ? ""
-            : $"Verrà creata in {Path.Combine(parent, name)}";
+            : $"Will be created in {Path.Combine(parent, name)}";
     }
 
     private async void OnBrowse(object? sender, RoutedEventArgs e)
