@@ -19,6 +19,31 @@ public sealed class XamlDocument
     {
         Xml = xml;
         FilePath = filePath;
+        Indent = MeasureIndent(xml);
+    }
+
+    /// <summary>
+    /// How far one level is indented in this file.
+    /// </summary>
+    /// <remarks>
+    /// From the first line that is indented at all. A file written with four
+    /// spaces should not come back with two the first time it is saved.
+    /// </remarks>
+    private static int MeasureIndent(XDocument xml)
+    {
+        foreach (var node in xml.DescendantNodes().OfType<XText>())
+        {
+            if (!node.Value.All(char.IsWhiteSpace)) continue;
+
+            var lastBreak = node.Value.LastIndexOf('\n');
+            if (lastBreak < 0) continue;
+
+            var spaces = node.Value.Length - lastBreak - 1;
+
+            if (spaces > 0) return spaces;
+        }
+
+        return 2;
     }
 
     public XDocument Xml { get; }
@@ -43,15 +68,36 @@ public sealed class XamlDocument
     public async Task SaveAsync(string? filePath = null, CancellationToken ct = default)
     {
         var target = filePath ?? FilePath
-            ?? throw new InvalidOperationException("Nessun path indicato per il salvataggio.");
+            ?? throw new InvalidOperationException("No path was given to save to.");
 
         await File.WriteAllTextAsync(target, ToXaml(), ct).ConfigureAwait(false);
         FilePath = target;
     }
 
-    public string ToXaml() => Xml.Declaration is null
-        ? Xml.ToString(SaveOptions.DisableFormatting)
-        : Xml.Declaration + Environment.NewLine + Xml.ToString(SaveOptions.DisableFormatting);
+    /// <summary>
+    /// The document as markup, laid out to be read.
+    /// </summary>
+    /// <remarks>
+    /// Formatted here because this is the one place every path goes through —
+    /// saving, the markup half of the tab, and the build. Writing the tree
+    /// out verbatim kept whatever shape the file happened to have, so a form
+    /// written on one line stayed on one line no matter how much the designer
+    /// added to it.
+    ///
+    /// <see cref="Indent"/> is the file's own, measured when it was opened,
+    /// so a project indented with four spaces stays that way.
+    /// </remarks>
+    public string ToXaml() => XamlFormatter.Format(Xml, Indent);
+
+    /// <summary>
+    /// Spaces per level, taken from the file as it was opened.
+    /// </summary>
+    /// <remarks>
+    /// Measured once rather than on every write: after the first format the
+    /// document is in this style anyway, and re-measuring would only ever
+    /// confirm it.
+    /// </remarks>
+    public int Indent { get; private set; } = 2;
 
     /// <summary>
     /// The name Avalonia uses to bind the element to the code-behind.
