@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.VisualTree;
 using Basalt.Core.Model;
 using Basalt.Designer;
 using Basalt.Designer.Model;
@@ -173,5 +174,210 @@ public class DesignerRulerTests
             surface.ContainerAtForTests(new Point(10, 10))?.Name.LocalName);
 
         host.Close();
+    }
+}
+
+/// <summary>
+/// Clicking after the view has been scrolled or magnified.
+/// </summary>
+/// <remarks>
+/// Hit-testing measures where a control is drawn, with TranslatePoint against
+/// the surface, so what comes back already carries the pan, the zoom and the
+/// rulers. Converting the pointer to the form's coordinates first removed all
+/// three a second time: after scrolling, a click landed on whatever sat that
+/// far away — usually the panel behind the control being aimed at.
+/// </remarks>
+public class DesignerHitTestingTests
+{
+    private const string Form = """
+        <Window xmlns="https://github.com/avaloniaui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                x:Class="App.MainWindow" Width="300" Height="200">
+          <Canvas>
+            <Button x:Name="Ok" Canvas.Left="40" Canvas.Top="30" Width="100" Height="28" />
+          </Canvas>
+        </Window>
+        """;
+
+    private static (DesignSurface Surface, Window Host, DesignerSession Session) Shown()
+    {
+        var session = new DesignerSession(XamlDocument.Parse(Form), SourceLanguage.VisualBasic);
+        var surface = new DesignSurface { Session = session };
+        var host = new Window { Content = surface, Width = 460, Height = 340 };
+
+        host.Show();
+        host.UpdateLayout();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        host.UpdateLayout();
+
+        session.Select(session.Document.Root.Descendants().First(e => e.Name.LocalName == "Button"));
+        surface.RefreshNow();
+
+        host.UpdateLayout();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        return (surface, host, session);
+    }
+
+    private static void Settle(Window host)
+    {
+        host.UpdateLayout();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void ClickingTheControlSelectsItBeforeAnythingIsScrolled()
+    {
+        var (surface, host, _) = Shown();
+
+        var middle = surface.SelectionBoundsForTests!.Value.Center;
+
+        Assert.Equal("Button", surface.SelectedByClickForTests(middle));
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void ClickingTheControlStillSelectsItAfterScrolling()
+    {
+        // The one that was broken: the control moves, the click follows it,
+        // and the wrong thing was selected.
+        var (surface, host, _) = Shown();
+
+        surface.PanBy(-60, -40);
+        Settle(host);
+
+        var middle = surface.SelectionBoundsForTests!.Value.Center;
+
+        Assert.Equal("Button", surface.SelectedByClickForTests(middle));
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void ClickingTheControlStillSelectsItWhenMagnified()
+    {
+        var (surface, host, _) = Shown();
+
+        surface.Zoom = 2;
+        Settle(host);
+
+        var middle = surface.SelectionBoundsForTests!.Value.Center;
+
+        Assert.Equal("Button", surface.SelectedByClickForTests(middle));
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void ClickingTheControlStillSelectsItScrolledAndMagnified()
+    {
+        // Both at once, which is the state a form is actually worked on in.
+        var (surface, host, _) = Shown();
+
+        surface.Zoom = 1.5;
+        surface.PanBy(-30, -20);
+        Settle(host);
+
+        var middle = surface.SelectionBoundsForTests!.Value.Center;
+
+        Assert.Equal("Button", surface.SelectedByClickForTests(middle));
+
+        host.Close();
+    }
+}
+
+/// <summary>
+/// Where the selection is drawn, as against where the control is.
+/// </summary>
+/// <remarks>
+/// The adorners are measured with BoundsOf and drawn on a canvas of their
+/// own, and the two have to agree about which coordinates they mean. They did
+/// not: the canvas lived inside the scaled panel while the measurement was
+/// taken against the surface, so selecting a control outlined a spot up and
+/// to the left of it. Drawing them inside Refresh made it worse — the
+/// content had only just been put in, so there was nothing to measure and
+/// every handle went to the origin.
+/// </remarks>
+public class SelectionAdornerTests
+{
+    private const string Form = """
+        <Window xmlns="https://github.com/avaloniaui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                x:Class="App.MainWindow" Width="300" Height="200">
+          <Canvas>
+            <Button x:Name="Ok" Canvas.Left="40" Canvas.Top="30" Width="100" Height="28" />
+          </Canvas>
+        </Window>
+        """;
+
+    /// <summary>Where the button is drawn, and where its outline is.</summary>
+    private static (Point Control, Point? Adorner) Positions(double zoom = 1, Vector pan = default)
+    {
+        var session = new DesignerSession(XamlDocument.Parse(Form), SourceLanguage.VisualBasic);
+        var surface = new DesignSurface { Session = session };
+        var host = new Window { Content = surface, Width = 460, Height = 340 };
+
+        host.Show();
+        host.UpdateLayout();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        host.UpdateLayout();
+
+        session.Select(session.Document.Root.Descendants().First(e => e.Name.LocalName == "Button"));
+        surface.RefreshNow();
+
+        if (zoom != 1) surface.Zoom = zoom;
+        if (pan != default) surface.PanBy(pan.X, pan.Y);
+
+        host.UpdateLayout();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        host.UpdateLayout();
+
+        var drawn = surface.GetVisualDescendants().OfType<Button>().First();
+        var control = drawn.TranslatePoint(default, host)!.Value;
+
+        // The frame is the one adorner as wide as the control itself.
+        var frame = surface.GetVisualDescendants()
+            .OfType<Canvas>()
+            .Where(c => !c.IsHitTestVisible)
+            .SelectMany(c => c.Children.OfType<Control>())
+            .FirstOrDefault(c => c.Width > 50);
+
+        var adorner = frame?.TranslatePoint(default, host);
+
+        host.Close();
+
+        return (control, adorner);
+    }
+
+    [AvaloniaFact]
+    public void OutlineTheControlItself()
+    {
+        // The one that was wrong: the outline sat up and to the left.
+        var (control, adorner) = Positions();
+
+        Assert.NotNull(adorner);
+        Assert.Equal(control.X, adorner!.Value.X, 1);
+        Assert.Equal(control.Y, adorner.Value.Y, 1);
+    }
+
+    [AvaloniaFact]
+    public void OutlineItStillWhenTheViewIsScrolled()
+    {
+        var (control, adorner) = Positions(pan: new Vector(-40, -30));
+
+        Assert.NotNull(adorner);
+        Assert.Equal(control.X, adorner!.Value.X, 1);
+        Assert.Equal(control.Y, adorner.Value.Y, 1);
+    }
+
+    [AvaloniaFact]
+    public void OutlineItStillWhenMagnified()
+    {
+        var (control, adorner) = Positions(zoom: 2);
+
+        Assert.NotNull(adorner);
+        Assert.Equal(control.X, adorner!.Value.X, 1);
+        Assert.Equal(control.Y, adorner.Value.Y, 1);
     }
 }

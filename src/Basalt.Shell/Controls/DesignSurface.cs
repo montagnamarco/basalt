@@ -120,8 +120,26 @@ public sealed class DesignSurface : ContentControl
         // The rulers measure where the preview ended up, and nothing can be
         // measured until the layout has placed it: asking during Refresh
         // returns nothing, because Refresh is what puts the content in.
-        LayoutUpdated += (_, _) => ShowRulerState();
+        // Both the rulers and the adorners measure where the preview ended
+        // up, and nothing can be measured until the layout has placed it:
+        // drawing them inside Refresh put every handle at the origin, because
+        // Refresh is what puts the content in.
+        LayoutUpdated += (_, _) =>
+        {
+            ShowRulerState();
 
+            // Only when the adorners are stale: redrawing on every layout
+            // pass would rebuild them while a drag is in progress.
+            if (_adornersStale)
+            {
+                _adornersStale = false;
+                DrawSelectionAdorner();
+            }
+        };
+
+        // Transparent for now: a resource cannot be looked up from a
+        // constructor, because the control is not in the tree yet and there
+        // is nothing above it to look in. Set when it is attached.
         Background = Brushes.Transparent;
         ClipToBounds = true;
 
@@ -282,6 +300,15 @@ public sealed class DesignSurface : ContentControl
     /// <summary>The panel holding the preview and its adorners.</summary>
     private Panel? _scaled;
 
+    /// <summary>What the renderer produced, measured against for coordinates.</summary>
+    private Control? _preview;
+
+    /// <summary>The form's own ground, whose corner is the form's origin.</summary>
+    private Control? _ground;
+
+    /// <summary>Whether the adorners are waiting for a layout to measure against.</summary>
+    private bool _adornersStale;
+
     /// <summary>The scales down the top and the left.</summary>
     private readonly DesignerRulers _rulers = new();
 
@@ -312,7 +339,7 @@ public sealed class DesignSurface : ContentControl
     /// <summary>Where a control sits along the content's own X axis.</summary>
     private double ContentXOf(XElement element) =>
         _controlToElement.FirstOrDefault(p => ReferenceEquals(p.Value, element)).Key is { } control
-        && _scaled?.Children.FirstOrDefault() is { } preview
+        && _preview is { } preview
         && control.TranslatePoint(default, preview) is { } at
             ? at.X
             : 0;
@@ -320,7 +347,7 @@ public sealed class DesignSurface : ContentControl
     /// <summary>Where a control sits along the content's own Y axis.</summary>
     private double ContentYOf(XElement element) =>
         _controlToElement.FirstOrDefault(p => ReferenceEquals(p.Value, element)).Key is { } control
-        && _scaled?.Children.FirstOrDefault() is { } preview
+        && _preview is { } preview
         && control.TranslatePoint(default, preview) is { } at
             ? at.Y
             : 0;
@@ -340,10 +367,15 @@ public sealed class DesignSurface : ContentControl
         // The content is also centred by the layout, which is neither pan nor
         // zoom and cannot be derived from either: asking where the preview
         // actually is answers all three at once.
-        _rulers.Origin = _scaled?.Children.FirstOrDefault() is { } preview
-            && preview.TranslatePoint(default, this) is { } corner
-                ? corner
-                : new Point(DesignerRulers.Thickness, DesignerRulers.Thickness);
+        // Measured from the form's own ground, which is sized to the window
+        // and pinned to its top left. The preview beside it is stretched by
+        // the layout, so its corner is where the panel starts rather than
+        // where the form does — the rulers read -200 at the form's edge.
+        var start = _ground ?? _preview;
+
+        _rulers.Origin = start?.TranslatePoint(default, this) is { } corner
+            ? corner
+            : new Point(DesignerRulers.Thickness, DesignerRulers.Thickness);
 
         _rulers.Highlight = _session?.Selection is { } selection
             && BoundsOf(selection) is { } bounds
@@ -466,17 +498,25 @@ public sealed class DesignSurface : ContentControl
     /// zoom here, a click at 200% selected whatever was under half the
     /// distance from the corner.
     /// </remarks>
-    private Point ToContent(Point onSurface)
-    {
-        // The rulers push the content aside, so their thickness has to come
-        // off before the zoom is undone: without it every click lands
-        // eighteen pixels from where it was made.
-        var aside = _showRulers ? DesignerRulers.Thickness : 0;
-
-        return new(
-            (onSurface.X - _pan.X - aside) / _zoom,
-            (onSurface.Y - _pan.Y - aside) / _zoom);
-    }
+    /// <summary>
+    /// A point on the surface, in the form's own coordinates.
+    /// </summary>
+    /// <remarks>
+    /// For the rulers and the drop hints, which speak in the numbers the XAML
+    /// is written in. **Not** for hit-testing: ContainerAt and BoundsOf
+    /// measure with TranslatePoint against the surface, so what comes back
+    /// already carries the pan, the zoom and the rulers. Converting first
+    /// removed all three a second time, and after scrolling a click landed on
+    /// whatever was that far away — usually the panel behind the control.
+    ///
+    /// Measured against the preview rather than computed, for the same reason
+    /// the rulers are: the layout centres the content, which is neither pan
+    /// nor zoom.
+    /// </remarks>
+    private Point ToContent(Point onSurface) =>
+        _preview?.TranslatePoint(default, this) is { } corner
+            ? new Point((onSurface.X - corner.X) / _zoom, (onSurface.Y - corner.Y) / _zoom)
+            : onSurface;
 
     /// <summary>
     /// Double-clicking a control asks for its handler.
@@ -509,7 +549,7 @@ public sealed class DesignSurface : ContentControl
         // The container that would take it, outlined while the pointer is
         // over it: without this a drop is a guess about where the control
         // will end up, and a nested panel is easy to miss by a few pixels.
-        var over = ToContent(e.GetPosition(this));
+        var over = e.GetPosition(this);
 
         _dropTarget = e.DragEffects == DragDropEffects.Copy ? ContainerAt(over) : null;
         _dropAt = over;
@@ -526,7 +566,7 @@ public sealed class DesignSurface : ContentControl
         if (_session is null) return;
         if (e.DataTransfer.TryGetValue(ToolboxPanel.DragFormat) is not { } item) return;
 
-        var at = ToContent(e.GetPosition(this));
+        var at = e.GetPosition(this);
         var container = ContainerAt(at);
 
         var inserted = _session.InsertFromToolbox(item, container);
@@ -606,6 +646,29 @@ public sealed class DesignSurface : ContentControl
         _pendingRefresh.Start();
     }
 
+    /// <summary>
+    /// Takes the colours once there is somewhere to take them from.
+    /// </summary>
+    /// <remarks>
+    /// Resources live above the control in the tree, so a lookup in the
+    /// constructor finds nothing and silently falls back. Attaching is the
+    /// first moment the answer exists.
+    /// </remarks>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (this.TryFindResource("DesignerOutsideBrush", out var outside)
+            && outside is IBrush shade)
+        {
+            Background = shade;
+        }
+
+        // The form's ground is taken at the same time, and the preview is
+        // rebuilt so it picks the colour up.
+        Refresh();
+    }
+
     private void OnRefreshDue(object? sender, EventArgs e)
     {
         _pendingRefresh?.Stop();
@@ -667,17 +730,46 @@ public sealed class DesignSurface : ContentControl
                           ?? _session.Document.Root;
         MapControls(result.Root!, rootElement);
 
-        // Detached from the previous overlay first: a visual belongs to one
-        // parent, and adding it to a second throws. Nothing caught it while
-        // the surface only ever rebuilt on a document change from elsewhere;
-        // moving a control refreshes and rebuilds in the same breath.
-        (_adorners.Parent as Panel)?.Children.Remove(_adorners);
-
         // The preview and the adorners share one panel, so the zoom scales
         // both together and a handle stays on the corner it belongs to. A
         // transform on the preview alone would drift them apart.
         var overlay = new Panel();
+
+        // The form's own ground, behind whatever it holds and only as big as
+        // the window is: stretched to the panel it would cover everything and
+        // say nothing, which is what a transparent surface already did.
+        var size = DesignedSize;
+
+        var formGround = new Border
+        {
+            Background = this.TryFindResource("DesignerFormBrush", out var ground)
+                      && ground is IBrush paper
+                ? paper
+                : Brushes.White,
+            BorderBrush = this.TryFindResource("PanelBorderBrush", out var edge)
+                       && edge is IBrush line
+                ? line
+                : Brushes.Gray,
+            BorderThickness = new Thickness(1),
+            IsHitTestVisible = false,
+
+            // Where the document says nothing — a UserControl — it takes the
+            // size of whatever it holds, and so does its ground.
+            Width = size?.Width ?? double.NaN,
+            Height = size?.Height ?? double.NaN,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+        };
+
+        overlay.Children.Add(formGround);
+
+        _ground = formGround;
+
         overlay.Children.Add(result.Root!);
+
+        // Held by name rather than found by position: the ground panel goes
+        // in before it, so "the first child" is no longer the preview.
+        _preview = result.Root;
 
         // A form with nothing on it is a blank rectangle, which says neither
         // "empty" nor "broken" nor what to do about it. The hint goes under
@@ -686,7 +778,14 @@ public sealed class DesignSurface : ContentControl
         if (!XamlDocument.ControlChildren(rootElement).Any())
             overlay.Children.Add(EmptyHint());
 
-        overlay.Children.Add(_adorners);
+        // The adorners are NOT put in here.
+        //
+        // Inside the scaled panel they are drawn in the content's coordinates
+        // while BoundsOf measures against the surface, so the frame and the
+        // handles landed short by the pan, the zoom and the rulers together:
+        // selecting a button drew its outline somewhere up and to the left of
+        // it. They go beside the rulers instead, in the same space they are
+        // measured in.
 
         _scaled = overlay;
         ApplyView();
@@ -701,13 +800,21 @@ public sealed class DesignSurface : ContentControl
         var withRulers = new Panel();
 
         withRulers.Children.Add(overlay);
+
+        // Detached first: a visual belongs to one parent, and every refresh
+        // builds a new panel to hold it.
+        (_adorners.Parent as Panel)?.Children.Remove(_adorners);
+
+        withRulers.Children.Add(_adorners);
         withRulers.Children.Add(_rulers);
 
         Content = withRulers;
 
         ShowRulerState();
 
-        DrawSelectionAdorner();
+        // Marked rather than drawn: the content has only just been put in,
+        // so there is nothing to measure against yet.
+        _adornersStale = true;
 
         DesignedSizeChanged?.Invoke(this, DesignedSize);
     }
@@ -750,7 +857,7 @@ public sealed class DesignSurface : ContentControl
 
         Focus();
 
-        var at = ToContent(e.GetPosition(this));
+        var at = e.GetPosition(this);
 
         // A press on a handle of the current selection resizes it; anything
         // else selects first. Checked before hit-testing because the handles
@@ -811,7 +918,7 @@ public sealed class DesignSurface : ContentControl
     {
         base.OnPointerMoved(e);
 
-        LastPointerPosition = ToContent(e.GetPosition(this));
+        LastPointerPosition = e.GetPosition(this);
 
         ShowCursorFor(e.GetPosition(this));
 
@@ -821,7 +928,7 @@ public sealed class DesignSurface : ContentControl
 
         if (_bandOrigin is not null)
         {
-            _bandTo = ToContent(e.GetPosition(this));
+            _bandTo = e.GetPosition(this);
             DrawSelectionAdorner();
             e.Handled = true;
             return;
@@ -829,7 +936,7 @@ public sealed class DesignSurface : ContentControl
 
         if (_drag is null) return;
 
-        _drag.Delta = ToContent(e.GetPosition(this)) - _drag.Origin;
+        _drag.Delta = e.GetPosition(this) - _drag.Origin;
 
         // Below the threshold nothing has happened yet: a hand on a trackpad
         // never presses and releases at the same point, and without this
@@ -1173,8 +1280,6 @@ public sealed class DesignSurface : ContentControl
             ? HandleAt(bounds, onSurface, HandleSize)
             : null;
 
-        var at = ToContent(onSurface);
-
         Cursor = handle switch
         {
             Handle.TopLeft or Handle.BottomRight => new Cursor(StandardCursorType.TopLeftCorner),
@@ -1184,7 +1289,10 @@ public sealed class DesignSurface : ContentControl
 
             // Over a control that is already selected, so a press would move
             // it: the four-way arrow says so.
-            _ when IsOverSelection(at) => new Cursor(StandardCursorType.SizeAll),
+            // In surface coordinates, like the handles above: BoundsOf
+            // measures there, and the converted point compares against the
+            // wrong space.
+            _ when IsOverSelection(onSurface) => new Cursor(StandardCursorType.SizeAll),
 
             _ => Cursor.Default,
         };
@@ -1292,6 +1400,10 @@ public sealed class DesignSurface : ContentControl
 
     /// <summary>The rulers, for tests.</summary>
     internal DesignerRulers RulersForTests => _rulers;
+
+    /// <summary>What a click at a window point would select. For tests.</summary>
+    internal string? SelectedByClickForTests(Point onSurface) =>
+        ContainerAt(onSurface)?.Name.LocalName;
 
     /// <summary>Shows the drop feedback, as dragging over does. For tests.</summary>
     internal void ShowDropAtForTests(Point content)

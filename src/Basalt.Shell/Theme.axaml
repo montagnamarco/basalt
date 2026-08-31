@@ -27,6 +27,8 @@
     <Color x:Key="DebugBannerBackground">#FFF4E5</Color>
     <Color x:Key="DebugBannerForeground">#7A4B00</Color>
     <Color x:Key="DebugBannerBorder">#E8C99B</Color>
+    <Color x:Key="DesignerOutside">#E4E6EA</Color>
+    <Color x:Key="DesignerForm">#FFFFFF</Color>
     <Color x:Key="TitleBarBackground">#F8F8F8</Color>
     <Color x:Key="PanelBorder">#D0D0D0</Color>
     <Color x:Key="ListHoverBackground">#E8E8E8</Color>
@@ -65,6 +67,8 @@
     <Color x:Key="DebugBannerBackground">#3A2E1A</Color>
     <Color x:Key="DebugBannerForeground">#F0C070</Color>
     <Color x:Key="DebugBannerBorder">#5A472A</Color>
+    <Color x:Key="DesignerOutside">#1A1A1A</Color>
+    <Color x:Key="DesignerForm">#2B2B2B</Color>
     <Color x:Key="TitleBarBackground">#181818</Color>
     <Color x:Key="PanelBorder">#3C3C3C</Color>
     <Color x:Key="ListHoverBackground">#2A2D2E</Color>
@@ -99,6 +103,8 @@
     <Color x:Key="DebugBannerBackground">#FFF4E5</Color>
     <Color x:Key="DebugBannerForeground">#7A4B00</Color>
     <Color x:Key="DebugBannerBorder">#E8C99B</Color>
+    <Color x:Key="DesignerOutside">#E4E6EA</Color>
+    <Color x:Key="DesignerForm">#FFFFFF</Color>
     <Color x:Key="TitleBarBackground">#EEEEF2</Color>
     <Color x:Key="PanelBorder">#CCCEDB</Color>
     <Color x:Key="ListHoverBackground">#C9DEF5</Color>
@@ -133,6 +139,8 @@
     <Color x:Key="DebugBannerBackground">#FFFFFF</Color>
     <Color x:Key="DebugBannerForeground">#000000</Color>
     <Color x:Key="DebugBannerBorder">#000000</Color>
+    <Color x:Key="DesignerOutside">#C0C0C0</Color>
+    <Color x:Key="DesignerForm">#FFFFFF</Color>
     <Color x:Key="TitleBarBackground">#FFFFFF</Color>
     <Color x:Key="PanelBorder">#000000</Color>
     <Color x:Key="ListHoverBackground">#000000</Color>
@@ -167,6 +175,8 @@
     <Color x:Key="DebugBannerBackground">#000000</Color>
     <Color x:Key="DebugBannerForeground">#FFD700</Color>
     <Color x:Key="DebugBannerBorder">#FFD700</Color>
+    <Color x:Key="DesignerOutside">#000000</Color>
+    <Color x:Key="DesignerForm">#1A1A1A</Color>
     <Color x:Key="TitleBarBackground">#000000</Color>
     <Color x:Key="PanelBorder">#FFFFFF</Color>
     <Color x:Key="ListHoverBackground">#FFFFFF</Color>
@@ -201,6 +211,8 @@
     <Color x:Key="DebugBannerBackground">#EEE8D5</Color>
     <Color x:Key="DebugBannerForeground">#A5760B</Color>
     <Color x:Key="DebugBannerBorder">#D6CCB0</Color>
+    <Color x:Key="DesignerOutside">#DDD6C1</Color>
+    <Color x:Key="DesignerForm">#FDF6E3</Color>
     <Color x:Key="TitleBarBackground">#EEE8D5</Color>
     <Color x:Key="PanelBorder">#D9D2C0</Color>
     <Color x:Key="ListHoverBackground">#E4DCC7</Color>
@@ -235,6 +247,8 @@
     <Color x:Key="DebugBannerBackground">#0B3A45</Color>
     <Color x:Key="DebugBannerForeground">#B58900</Color>
     <Color x:Key="DebugBannerBorder">#12525F</Color>
+    <Color x:Key="DesignerOutside">#00212B</Color>
+    <Color x:Key="DesignerForm">#073642</Color>
     <Color x:Key="TitleBarBackground">#073642</Color>
     <Color x:Key="PanelBorder">#0E4453</Color>
     <Color x:Key="ListHoverBackground">#0E4453</Color>
@@ -268,6 +282,8 @@
   <SolidColorBrush x:Key="DebugBannerBackgroundBrush" Color="{DynamicResource DebugBannerBackground}" />
   <SolidColorBrush x:Key="DebugBannerForegroundBrush" Color="{DynamicResource DebugBannerForeground}" />
   <SolidColorBrush x:Key="DebugBannerBorderBrush" Color="{DynamicResource DebugBannerBorder}" />
+  <SolidColorBrush x:Key="DesignerOutsideBrush" Color="{DynamicResource DesignerOutside}" />
+  <SolidColorBrush x:Key="DesignerFormBrush" Color="{DynamicResource DesignerForm}" />
   <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="{DynamicResource TitleBarBackground}" />
   <SolidColorBrush x:Key="PanelBorderBrush" Color="{DynamicResource PanelBorder}" />
   <SolidColorBrush x:Key="ListHoverBackgroundBrush" Color="{DynamicResource ListHoverBackground}" />
