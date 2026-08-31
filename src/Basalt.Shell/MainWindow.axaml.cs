@@ -2422,7 +2422,22 @@ var editor = new CodeEditor(document, ViewModel);
         // Written only when there is something new: opening the file is the
         // point even when the handler was already there.
         if (handler.WasCreated)
+        {
+            // Into the open document if there is one, and only then to disk.
+            // Writing the file alone left the editor showing the copy it had
+            // read before — the handler was on disk, the tab did not have it,
+            // and a double click looked like it had done nothing.
+            var open = ViewModel.OpenDocuments.FirstOrDefault(d =>
+                string.Equals(d.FilePath, handler.FilePath, StringComparison.Ordinal));
+
+            if (open is not null) open.Text = handler.Code;
+
             await File.WriteAllTextAsync(handler.FilePath, handler.Code).ConfigureAwait(true);
+
+            // Saved as well, so the tab does not open with a dirty dot over a
+            // change the user did not type.
+            if (open is not null) await open.SaveAsync().ConfigureAwait(true);
+        }
 
         var line = EventHandlers.LineOf(handler.Code, handler.MethodName, session.Language);
 
