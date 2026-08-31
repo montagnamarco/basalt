@@ -46,6 +46,65 @@ public static class EventHandlers
     };
 
     /// <summary>
+    /// The events a control offers, most useful first.
+    /// </summary>
+    /// <remarks>
+    /// A chosen list rather than everything reflection can find. A Button
+    /// has some ninety events once the inherited ones are counted, and a
+    /// list that long is one nobody reads: these are the ones a form
+    /// actually handles, and the rest can still be written by hand.
+    ///
+    /// The control's own come first, then the ones every control has, so
+    /// Click is at the top for a Button rather than sorted under P.
+    /// </remarks>
+    public static IReadOnlyList<string> EventsFor(string elementName)
+    {
+        var own = elementName switch
+        {
+            "Button" or "RepeatButton" or "ToggleButton" or "MenuItem" =>
+                new[] { "Click" },
+            "TextBox" or "AutoCompleteBox" =>
+                ["TextChanged"],
+            "CheckBox" or "RadioButton" or "ToggleSwitch" =>
+                ["IsCheckedChanged", "Click"],
+            "ComboBox" or "ListBox" or "ListView" or "TreeView" or "TabControl" =>
+                ["SelectionChanged"],
+            "Slider" or "NumericUpDown" =>
+                ["ValueChanged"],
+            "Calendar" or "DatePicker" =>
+                ["SelectedDateChanged"],
+            "Window" =>
+                ["Opened", "Closing", "Closed"],
+            _ => [],
+        };
+
+        return [.. own, .. Common.Where(e => !own.Contains(e))];
+    }
+
+    /// <summary>
+    /// The events every control has.
+    /// </summary>
+    /// <remarks>
+    /// Pointer and keyboard before focus and layout: a form handles a click
+    /// or a key far more often than it handles being laid out.
+    /// </remarks>
+    private static readonly string[] Common =
+    [
+        "PointerPressed",
+        "PointerReleased",
+        "PointerMoved",
+        "PointerEntered",
+        "PointerExited",
+        "DoubleTapped",
+        "KeyDown",
+        "KeyUp",
+        "GotFocus",
+        "LostFocus",
+        "Loaded",
+        "SizeChanged",
+    ];
+
+    /// <summary>
     /// The name a handler gets: the control, then the event.
     /// </summary>
     /// <remarks>
