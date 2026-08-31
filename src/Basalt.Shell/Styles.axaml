@@ -112,9 +112,16 @@
     high, so a column of switches reads as a list of unrelated things however
     small the gap between them is made.
   -->
+  <!--
+    Height 20, not less: the box inside measures 20 whatever it is scaled to,
+    and a shorter control cuts its bottom edge off — the ticked ones came out
+    with the blue clipped. The scale is what makes it read small; this only
+    has to leave room for what is being scaled.
+  -->
   <Style Selector="CheckBox">
     <Setter Property="MinHeight" Value="0" />
-    <Setter Property="Height" Value="18" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Height" Value="20" />
     <Setter Property="Padding" Value="6,0,0,0" />
     <Setter Property="FontSize" Value="12" />
   </Style>
@@ -126,10 +133,56 @@
     <Setter Property="FontSize" Value="12" />
   </Style>
 
-  <!-- The boxes themselves, which Fluent draws at 20 for a 32-high control. -->
+  <!--
+    The boxes themselves, which Fluent draws at 20 for a 32-high control.
+    Fourteen here: in the property grid a tick is one row of forty, and at
+    fifteen it still stood taller than the combo beside it.
+  -->
+  <!--
+    The box itself.
+
+    Fluent writes Width="20" into the template, and a value set on the element
+    beats any style: setting 15, then 14, then 13 here changed nothing, and
+    measuring showed the element still reporting 20. It is scaled down instead
+    — a transform is applied after layout, so nothing the template says can
+    override it.
+
+    Scaled about its own middle, so it shrinks in place rather than drifting
+    towards one corner of the row.
+  -->
   <Style Selector="CheckBox /template/ Border#NormalRectangle">
-    <Setter Property="Width" Value="15" />
-    <Setter Property="Height" Value="15" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="RenderTransform">
+      <ScaleTransform ScaleX="0.7" ScaleY="0.7" />
+    </Setter>
+  </Style>
+
+  <!--
+    The cell the box sits in, which Fluent lays out at 20 by 32 whatever size
+    the box itself is given. Sizing only the Border left it centred in a cell
+    half again as tall as the row, so the box looked large and its neighbours
+    looked misaligned — the measurement said 20 every time.
+  -->
+  <!--
+    The cell the box sits in.
+
+    Left at the box's own 20 rather than squeezed: the box still *measures*
+    20 whatever it is scaled to, so a narrower cell clips it — the ticked one
+    came out with its bottom edge cut off. The scale is what makes it look
+    smaller; the cell only has to not cut it.
+  -->
+  <Style Selector="CheckBox /template/ Grid#RootGrid > Grid">
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
+  <!--
+    The tick, scaled with the box so the two keep their proportions.
+  -->
+  <Style Selector="CheckBox /template/ Viewbox">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
   </Style>
 
   <Style Selector="RadioButton /template/ Ellipse#OuterEllipse">

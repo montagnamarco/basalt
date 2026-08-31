@@ -332,11 +332,20 @@ public sealed class PropertyGrid : UserControl
 
     private Control BuildBoolean(DesignableProperty property)
     {
+        // Sized down from the platform default: a tick here is one row of
+        // forty in a panel, not a decision the user opened a dialog for, and
+        // at its natural size it makes its row taller than every other.
         var box = new CheckBox
         {
             IsChecked = bool.TryParse(property.CurrentValue, out var value) && value,
             Margin = new Thickness(Spacing.Tight, 0),
             MinHeight = 0,
+
+            // No local height: a value set here beats the style, and the
+            // style is where the size of a check box is decided for the whole
+            // IDE. Setting 22 from code is what kept them the tallest thing
+            // in the row after the style said 18.
+            VerticalAlignment = VerticalAlignment.Center,
         };
 
         box.IsCheckedChanged += (_, _) => Set(property, box.IsChecked?.ToString());
@@ -353,7 +362,9 @@ public sealed class PropertyGrid : UserControl
             HorizontalAlignment = HorizontalAlignment.Stretch,
             FontSize = 11,
             MinHeight = 0,
+            Height = Spacing.EditorHeight,
             Padding = Spacing.RowPadding,
+            VerticalContentAlignment = VerticalAlignment.Center,
         };
 
         combo.SelectionChanged += (_, _) => Set(property, combo.SelectedItem as string);
@@ -363,14 +374,20 @@ public sealed class PropertyGrid : UserControl
 
     private Control BuildNumber(DesignableProperty property)
     {
+        // The same height as every other editor, and the spinner off: two
+        // arrows take a third of the width of a narrow column, and a number
+        // in a property grid is typed far more often than nudged.
         var box = new NumericUpDown
         {
             Value = decimal.TryParse(property.CurrentValue, out var value) ? value : null,
             FontSize = 11,
             MinHeight = 0,
+            Height = Spacing.EditorHeight,
+            Padding = Spacing.RowPadding,
             Increment = 1,
-            ShowButtonSpinner = true,
+            ShowButtonSpinner = false,
             HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
         };
 
         box.ValueChanged += (_, _) =>

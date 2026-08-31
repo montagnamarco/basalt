@@ -29,6 +29,26 @@ public static class Spacing
     /// <summary>Inside a row of a list.</summary>
     public static Thickness RowPadding { get; } = new(8, 4);
 
+    /// <summary>
+    /// How tall an editor in the property grid is.
+    /// </summary>
+    /// <remarks>
+    /// One height for all of them. Left to themselves a check box, a combo
+    /// and a numeric box each pick their own, so a column of properties comes
+    /// out ragged and the rows stop reading as a list.
+    /// </remarks>
+    public const double EditorHeight = 22;
+
+    /// <summary>
+    /// How big a check box is drawn in the property grid.
+    /// </summary>
+    /// <remarks>
+    /// Smaller than the platform default, which is sized for a form where a
+    /// tick is a decision the user came for. Here it is one row of forty in a
+    /// panel, and at its natural size it makes its row taller than the rest.
+    /// </remarks>
+    public const double CheckBoxSize = 14;
+
     /// <summary>Inside a panel, around its content.</summary>
     public static Thickness PanelPadding { get; } = new(12);
 
