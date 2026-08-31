@@ -130,6 +130,58 @@ public sealed class SolutionExplorerPanel : UserControl
         foreach (var child in node.Children) Close(child);
     }
 
+    /// <summary>
+    /// The folders that are open, so they can be opened again next time.
+    /// </summary>
+    /// <remarks>
+    /// By path rather than by position: a project reopened after a file was
+    /// added or removed has a differently shaped tree, and an index into it
+    /// would unfold whatever now sits where the folder used to.
+    /// </remarks>
+    public IReadOnlyList<string> ExpandedFolders()
+    {
+        if (DataContext is not MainWindowViewModel viewModel) return [];
+
+        var open = new List<string>();
+
+        void Walk(SolutionTreeNode node)
+        {
+            if (node.IsExpanded && node.Path is { Length: > 0 }) open.Add(node.Path);
+
+            foreach (var child in node.Children) Walk(child);
+        }
+
+        foreach (var root in viewModel.Explorer.Roots) Walk(root);
+
+        return open;
+    }
+
+    /// <summary>
+    /// Opens the folders that were open last time.
+    /// </summary>
+    /// <remarks>
+    /// A folder that has gone since is simply not found, which is the right
+    /// answer: it was deleted or renamed on purpose, and there is nothing to
+    /// tell the user about it.
+    /// </remarks>
+    public void ExpandFolders(IReadOnlyList<string> folders)
+    {
+        if (DataContext is not MainWindowViewModel viewModel) return;
+        if (folders.Count == 0) return;
+
+        var wanted = folders.ToHashSet(StringComparer.Ordinal);
+
+        void Walk(SolutionTreeNode node)
+        {
+            if (node.Path is { Length: > 0 } path && wanted.Contains(path))
+                node.IsExpanded = true;
+
+            foreach (var child in node.Children) Walk(child);
+        }
+
+        foreach (var root in viewModel.Explorer.Roots) Walk(root);
+    }
+
     /// <summary>Asked when the tree should follow the document being edited.</summary>
     public event EventHandler? SyncRequested;
 

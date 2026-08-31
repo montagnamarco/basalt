@@ -197,7 +197,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         OpenFiles = [.. OpenDocuments.Select(d => d.FilePath)],
         ActiveFile = ActiveDocument?.FilePath,
         InDesigner = [.. OpenDocuments.Where(d => d.OpenInDesigner).Select(d => d.FilePath)],
+        ExpandedFolders = [.. ReadExpandedFolders?.Invoke() ?? []],
     };
+
+    /// <summary>
+    /// How the window lends its solution explorer to the session.
+    /// </summary>
+    /// <remarks>
+    /// The tree is a control and lives in the window; what was open in it is
+    /// part of the session and lives here. Two callbacks rather than a
+    /// reference to the panel, so this stays testable without one.
+    /// </remarks>
+    public Func<IReadOnlyList<string>>? ReadExpandedFolders { get; set; }
+
+    /// <summary>Opens the folders a session remembered.</summary>
+    public Action<IReadOnlyList<string>>? WriteExpandedFolders { get; set; }
 
     /// <summary>
     /// Reopens what a solution had open when it was last closed.
@@ -215,6 +229,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
             await OpenFileAsync(file, session.InDesigner.Contains(file)).ConfigureAwait(true);
         }
+
+        // After the files, so the tree has been rebuilt for whatever they
+        // brought with them.
+        WriteExpandedFolders?.Invoke(session.ExpandedFolders);
 
         if (session.ActiveFile is { Length: > 0 } active
             && OpenDocuments.FirstOrDefault(d =>

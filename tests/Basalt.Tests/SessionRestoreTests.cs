@@ -171,3 +171,56 @@ public sealed class SessionRestoreTests : IDisposable
         Assert.Null(session.For("/s0.sln"));
     }
 }
+
+/// <summary>Remembering which folders were unfolded in the solution tree.</summary>
+public class ExpandedFolderTests
+{
+    [Fact]
+    public void CarriesTheOpenFoldersThroughTheSession()
+    {
+        // The tree is a control and the session is not, so the two are
+        // bridged by callbacks: this is the part that must not be dropped.
+        var vm = new MainWindowViewModel
+        {
+            LoadSettings = () => new Basalt.Core.Settings.IdeSettings(),
+            SaveSettings = _ => { },
+            ReadExpandedFolders = () => ["/repo/src", "/repo/src/App"],
+        };
+
+        Assert.Equal(["/repo/src", "/repo/src/App"], vm.CaptureSession().ExpandedFolders);
+    }
+
+    [AvaloniaFact]
+    public async Task OpensThemAgainWhenTheSessionComesBack()
+    {
+        var opened = new List<string>();
+
+        var vm = new MainWindowViewModel
+        {
+            LoadSettings = () => new Basalt.Core.Settings.IdeSettings(),
+            SaveSettings = _ => { },
+            WriteExpandedFolders = folders => opened.AddRange(folders),
+        };
+
+        await vm.RestoreSessionAsync(new Basalt.Core.Settings.SolutionSession
+        {
+            ExpandedFolders = ["/repo/src"],
+        });
+
+        Assert.Equal(["/repo/src"], opened);
+    }
+
+    [Fact]
+    public void AsksForNothingWhenThereIsNoTree()
+    {
+        // A view model without a window behind it — every test that does not
+        // need one — must still be able to capture a session.
+        var vm = new MainWindowViewModel
+        {
+            LoadSettings = () => new Basalt.Core.Settings.IdeSettings(),
+            SaveSettings = _ => { },
+        };
+
+        Assert.Empty(vm.CaptureSession().ExpandedFolders);
+    }
+}
