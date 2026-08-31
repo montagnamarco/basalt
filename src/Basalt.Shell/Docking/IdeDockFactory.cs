@@ -32,6 +32,7 @@ public sealed class IdeDockFactory : Factory
     public OutlineTool Outline { get; } = new();
     public ElementTreeTool ElementTree { get; } = new();
     public DatabaseTool Database { get; } = new();
+    public EventsTool Events { get; } = new();
     public ReferencesTool References { get; } = new();
     public CallStackTool CallStack { get; } = new();
     public VariablesTool Variables { get; } = new();
@@ -87,7 +88,7 @@ public sealed class IdeDockFactory : Factory
             Title = "DestraSotto",
             Alignment = Alignment.Right,
             Proportion = 0.55,
-            VisibleDockables = CreateList<IDockable>(Properties, Assistant),
+            VisibleDockables = CreateList<IDockable>(Properties, Events, Assistant),
             ActiveDockable = Properties
         };
 

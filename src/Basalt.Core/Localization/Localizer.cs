@@ -160,6 +160,9 @@ public static class StringKeys
     public const string ToolOutline = "Tool_Outline";
     public const string ToolElementTree = "Tool_ElementTree";
     public const string DesignerEmptyHint = "Designer_EmptyHint";
+    public const string MenuDesignerRulers = "Menu_Designer_Rulers";
+    public const string EventsNothingSelected = "Events_NothingSelected";
+    public const string ToolEvents = "Tool_Events";
     public const string DatabaseOpen = "Database_Open";
     public const string DatabaseRun = "Database_Run";
     public const string DatabaseStop = "Database_Stop";

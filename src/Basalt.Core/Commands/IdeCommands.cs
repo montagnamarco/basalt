@@ -107,6 +107,7 @@ public static class IdeCommands
     public const string DesignerZoomReset = "designer.zoomReset";
     public const string DesignerZoomToFit = "designer.zoomToFit";
     public const string DesignerSelectParent = "designer.selectParent";
+    public const string DesignerToggleRulers = "designer.toggleRulers";
 
     public const string ToolsSettings = "tools.settings";
     public const string ViewGeneratedCode = "view.generatedCode";
@@ -285,6 +286,7 @@ public static class IdeCommands
                 { DefaultGesture = "Ctrl+0" },
             new(DesignerZoomToFit, "Fit to Window", CommandCategory.Designer)
                 { DefaultGesture = "Ctrl+9" },
+            new(DesignerToggleRulers, "Rulers", CommandCategory.Designer),
             new(DesignerSelectParent, "Select Container", CommandCategory.Designer)
                 { DefaultGesture = "Escape" },
 

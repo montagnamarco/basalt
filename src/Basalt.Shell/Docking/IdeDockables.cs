@@ -107,6 +107,17 @@ public sealed class ElementTreeTool : IdeTool
     }
 }
 
+/// <summary>The events of the control being designed.</summary>
+public sealed class EventsTool : IdeTool
+{
+    public EventsTool()
+    {
+        Id = "Events";
+        Title = Localizer.Get(StringKeys.ToolEvents);
+        Icon = IconKind.Debug;
+    }
+}
+
 /// <summary>A database, its tables, and a place to query it.</summary>
 public sealed class DatabaseTool : IdeTool
 {

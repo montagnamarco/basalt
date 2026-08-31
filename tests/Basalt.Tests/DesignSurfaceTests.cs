@@ -76,9 +76,27 @@ public sealed class DesignSurfaceTests
             .First(e => e.Name.LocalName == "Button");
 
     /// <summary>Where the button is drawn, in window coordinates.</summary>
-    private static Point Centre(DesignerSession session) => new(
-        Left(session) + 40,
-        Top(session) + 12);
+    /// <summary>
+    /// A point on the form, in the window's own coordinates.
+    /// </summary>
+    /// <remarks>
+    /// The rulers push the content aside, so a position read off the XAML is
+    /// not where that point is on screen. Converted here rather than in every
+    /// gesture: the offset belongs to the surface, not to any one test.
+    /// </remarks>
+    private static Point OnForm(double x, double y) =>
+        new(x + DesignerRulers.Thickness, y + DesignerRulers.Thickness);
+
+    /// <summary>
+    /// The middle of the button, in the window's own coordinates.
+    /// </summary>
+    /// <remarks>
+    /// The rulers push the content aside, so a position taken from the XAML
+    /// is not where that control is on screen. Added here rather than in each
+    /// test: the offset is a property of the surface, not of any one gesture.
+    /// </remarks>
+    private static Point Centre(DesignerSession session) =>
+        OnForm(Left(session) + 40, Top(session) + 12);
 
     private static double Left(DesignerSession session) =>
         double.Parse(Button(session).Attribute("Canvas.Left")?.Value ?? "0",
@@ -247,7 +265,13 @@ public sealed class DesignSurfaceTests
             .OfType<Avalonia.Controls.Button>()
             .First(b => (b.Content as string) == "Go");
 
-        var corner = new Point(20 + drawn.Bounds.Width, 30 + drawn.Bounds.Height);
+        // Measured rather than computed. Where a control is drawn depends on
+        // the rulers, on the layout centring the preview, and on the theme's
+        // idea of how tall a button is: adding those up by hand is how this
+        // test breaks for reasons that have nothing to do with resizing.
+        var box = surface.SelectionBoundsForTests!.Value;
+
+        var corner = new Point(box.Right, box.Bottom);
 
         window.MouseDown(corner, MouseButton.Left);
         window.MouseMove(corner + new Vector(20, 10));
@@ -270,13 +294,15 @@ public sealed class DesignSurfaceTests
     {
         // Only writing the size would grow the control away from the handle
         // being dragged, which is the opposite of what the gesture means.
-        var (window, _, session) = Open();
+        var (window, surface, session) = Open();
 
         window.MouseDown(Centre(session), MouseButton.Left);
         window.MouseUp(Centre(session), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
-        var corner = new Point(20, 30);
+        // Measured, for the same reason as the bottom-right handle: where a
+        // control is drawn is not what the XAML says about it.
+        var corner = surface.SelectionBoundsForTests!.Value.Position;
 
         window.MouseDown(corner, MouseButton.Left);
         window.MouseMove(corner + new Vector(-10, -6));
@@ -349,12 +375,12 @@ public sealed class DesignSurfaceTests
     {
         var (window, _, session) = Open(TwoControls);
 
-        window.MouseDown(new Point(60, 42), MouseButton.Left);
-        window.MouseUp(new Point(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
-        window.MouseDown(new Point(190, 132), MouseButton.Left, RawInputModifiers.Shift);
-        window.MouseUp(new Point(190, 132), MouseButton.Left);
+        window.MouseDown(OnForm(190, 132), MouseButton.Left, RawInputModifiers.Shift);
+        window.MouseUp(OnForm(190, 132), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(2, session.SelectedElements.Count);
@@ -365,12 +391,12 @@ public sealed class DesignSurfaceTests
     {
         var (window, surface, session) = Open(TwoControls);
 
-        window.MouseDown(new Point(60, 42), MouseButton.Left);
-        window.MouseUp(new Point(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
-        window.MouseDown(new Point(190, 132), MouseButton.Left, RawInputModifiers.Shift);
-        window.MouseUp(new Point(190, 132), MouseButton.Left);
+        window.MouseDown(OnForm(190, 132), MouseButton.Left, RawInputModifiers.Shift);
+        window.MouseUp(OnForm(190, 132), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         surface.Align(AlignmentCommand.Left);
@@ -390,14 +416,14 @@ public sealed class DesignSurfaceTests
     {
         var (window, _, session) = Open(TwoControls);
 
-        window.MouseDown(new Point(60, 42), MouseButton.Left);
-        window.MouseUp(new Point(60, 42), MouseButton.Left);
-        window.MouseDown(new Point(190, 132), MouseButton.Left, RawInputModifiers.Shift);
-        window.MouseUp(new Point(190, 132), MouseButton.Left);
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(190, 132), MouseButton.Left, RawInputModifiers.Shift);
+        window.MouseUp(OnForm(190, 132), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
-        window.MouseDown(new Point(60, 42), MouseButton.Left);
-        window.MouseUp(new Point(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Single(session.SelectedElements);
@@ -408,8 +434,8 @@ public sealed class DesignSurfaceTests
     {
         var (window, _, session) = Open(TwoControls);
 
-        window.MouseDown(new Point(60, 42), MouseButton.Left);
-        window.MouseUp(new Point(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         var first = session.Selection;
@@ -442,8 +468,8 @@ public sealed class DesignSurfaceTests
     {
         var (window, _, session) = Open(TwoControls);
 
-        window.MouseDown(new Point(60, 42), MouseButton.Left);
-        window.MouseUp(new Point(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         var first = session.Selection;
@@ -460,9 +486,9 @@ public sealed class DesignSurfaceTests
         var (window, _, session) = Open(TwoControls);
 
         // From above and left of the first to below and right of the second.
-        window.MouseDown(new Point(5, 5), MouseButton.Left);
-        window.MouseMove(new Point(300, 200));
-        window.MouseUp(new Point(300, 200), MouseButton.Left);
+        window.MouseDown(OnForm(5, 5), MouseButton.Left);
+        window.MouseMove(OnForm(300, 200));
+        window.MouseUp(OnForm(300, 200), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(2, session.SelectedElements.Count);
@@ -477,9 +503,9 @@ public sealed class DesignSurfaceTests
         var (window, _, session) = Open(TwoControls);
 
         // Covers the first, clips the corner of the second.
-        window.MouseDown(new Point(5, 5), MouseButton.Left);
-        window.MouseMove(new Point(160, 130));
-        window.MouseUp(new Point(160, 130), MouseButton.Left);
+        window.MouseDown(OnForm(5, 5), MouseButton.Left);
+        window.MouseMove(OnForm(160, 130));
+        window.MouseUp(OnForm(160, 130), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Single(session.SelectedElements);
@@ -491,14 +517,14 @@ public sealed class DesignSurfaceTests
     {
         var (window, _, session) = Open(TwoControls);
 
-        window.MouseDown(new Point(60, 42), MouseButton.Left);
-        window.MouseUp(new Point(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         Assert.NotNull(session.Selection);
 
-        window.MouseDown(new Point(320, 250), MouseButton.Left);
-        window.MouseUp(new Point(320, 250), MouseButton.Left);
+        window.MouseDown(OnForm(320, 250), MouseButton.Left);
+        window.MouseUp(OnForm(320, 250), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(session.Selection);
@@ -556,9 +582,9 @@ public sealed class DesignSurfaceTests
         // every test here dragged down and to the right.
         var (window, _, session) = Open(TwoControls);
 
-        window.MouseDown(new Point(300, 200), MouseButton.Left);
-        window.MouseMove(new Point(5, 5));
-        window.MouseUp(new Point(5, 5), MouseButton.Left);
+        window.MouseDown(OnForm(300, 200), MouseButton.Left);
+        window.MouseMove(OnForm(5, 5));
+        window.MouseUp(OnForm(5, 5), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
         // And it still selects: a band is a band whichever way it is drawn.

@@ -130,6 +130,7 @@ public partial class MainWindow : Window
     private ToolboxPanel? _toolbox;
     private PropertyPanel? _properties;
     private ElementTreePanel? _elementTree;
+    private EventsPanel? _events;
 
     /// <summary>The surface the pointer was last over, for toolbox drops.</summary>
     private DesignSurface? _activeSurface;
@@ -152,6 +153,11 @@ public partial class MainWindow : Window
         // model a way to remember what was open.
         viewModel.LoadSettings = () => _settingsStore.Load();
         viewModel.SaveSettings = settings => _settingsStore.Save(settings);
+
+        // The tree is a control here; what was unfolded in it belongs to the
+        // session, which the view model keeps.
+        viewModel.ReadExpandedFolders = () => _solutionExplorer?.ExpandedFolders() ?? [];
+        viewModel.WriteExpandedFolders = folders => _solutionExplorer?.ExpandFolders(folders);
 
         viewModel.ActiveDocumentChanged += (_, _) => ShowActiveDocument();
 
@@ -255,9 +261,25 @@ public partial class MainWindow : Window
             _activeSurface?.Refresh();
             _properties?.Show(designer);
             _elementTree?.Show(designer);
+            _events?.Show(designer);
         };
 
         _contents[_factory.ElementTree] = _elementTree;
+
+        // The events of whatever is selected, and a way to wire the ones a
+        // double click on the surface does not reach.
+        _events = new EventsPanel();
+
+        _events.HandlerRequested += (_, name) =>
+        {
+            if (ViewModel.ActiveDesigner is not { } designer) return;
+
+            Guarded.Run(
+                () => AttachHandlerAsync(designer, name),
+                ViewModel.WriteOutput, "designer");
+        };
+
+        _contents[_factory.Events] = _events;
 
         // The panel knows about databases; only the window can put a file
         // picker on screen.
@@ -561,6 +583,7 @@ public partial class MainWindow : Window
         {
             _properties?.Show(session);
             _elementTree?.Follow(session.Selection);
+            _events?.Show(session);
         };
 
         // Rebuilt whenever the markup changes: a control added or moved is a
@@ -746,6 +769,7 @@ var editor = new CodeEditor(document, ViewModel);
 
             _properties?.Show(designer);
             _elementTree?.Show(designer);
+            _events?.Show(designer);
         }
     }
 
@@ -2364,6 +2388,7 @@ var editor = new CodeEditor(document, ViewModel);
 
         _properties?.Show(session);
         _elementTree?.Show(session);
+        _events?.Show(session);
     }
 
     /// <summary>
@@ -2390,9 +2415,9 @@ var editor = new CodeEditor(document, ViewModel);
     /// in the method that runs when it is pressed, whether that method was
     /// just written or has been there for weeks.
     /// </remarks>
-    private async Task AttachHandlerAsync(DesignerSession session)
+    private async Task AttachHandlerAsync(DesignerSession session, string? eventName = null)
     {
-        if (session.AttachHandler() is not { } handler) return;
+        if (session.AttachHandler(eventName) is not { } handler) return;
 
         // Written only when there is something new: opening the file is the
         // point even when the handler was already there.
@@ -3082,6 +3107,10 @@ var editor = new CodeEditor(document, ViewModel);
 
             case IdeCommands.DesignerSelectParent:
                 SelectContainer();
+                break;
+
+            case IdeCommands.DesignerToggleRulers:
+                if (_activeSurface is { } ruled) ruled.ShowRulers = !ruled.ShowRulers;
                 break;
 
             // Added by a plugin, which named it and said what it does.
@@ -4996,6 +5025,8 @@ var editor = new CodeEditor(document, ViewModel);
             new(Localizer.Get(StringKeys.MenuDesignerZoomToFit),
                 Action: () => _activeSurface?.ZoomToFit(),
                 Gesture: new KeyGesture(Key.D9, PlatformCommandModifier)),
+            new(Localizer.Get(StringKeys.MenuDesignerRulers),
+                Action: () => { if (_activeSurface is { } s) s.ShowRulers = !s.ShowRulers; }),
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDesignerSelectParent),
                 Action: SelectContainer,

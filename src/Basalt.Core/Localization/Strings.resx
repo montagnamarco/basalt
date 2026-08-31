@@ -83,6 +83,9 @@
   <data name="Tool_Outline" xml:space="preserve"><value>Outline</value></data>
   <data name="Tool_ElementTree" xml:space="preserve"><value>Structure</value></data>
   <data name="Designer_EmptyHint" xml:space="preserve"><value>Drag a control from the toolbox to begin</value></data>
+  <data name="Menu_Designer_Rulers" xml:space="preserve"><value>Rulers</value></data>
+  <data name="Events_NothingSelected" xml:space="preserve"><value>Select a control to see its events</value></data>
+  <data name="Tool_Events" xml:space="preserve"><value>Events</value></data>
   <data name="Database_Open" xml:space="preserve"><value>Open…</value></data>
   <data name="Database_Run" xml:space="preserve"><value>Run</value></data>
   <data name="Database_Stop" xml:space="preserve"><value>Stop</value></data>
