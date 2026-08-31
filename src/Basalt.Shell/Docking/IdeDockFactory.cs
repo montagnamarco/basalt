@@ -58,50 +58,58 @@ public sealed class IdeDockFactory : Factory
             VisibleDockables = CreateList<IDockable>()
         };
 
-        var pannelloSinistro = new ToolDock
+        // Laid out as Visual Basic 6 was, because that is the arrangement the
+        // people this is for already know: the toolbox down the left, the
+        // project tree at the top right with the properties beneath it, and
+        // the output along the bottom.
+        //
+        // The toolbox is narrow. In Visual Basic 6 it is a column of icons
+        // beside the form, not a panel competing with it for width.
+        var toolboxColumn = new ToolDock
         {
             Id = "Sinistra",
             Title = "Sinistra",
             Alignment = Alignment.Left,
-            Proportion = 0.2,
-            VisibleDockables = CreateList<IDockable>(SolutionExplorer, GitChanges, GitBranches),
-            ActiveDockable = SolutionExplorer
-        };
-
-        // The right-hand side is two panels stacked, not one with four tabs:
-        // the toolbox and the properties are used together — drop a control,
-        // then set what you just dropped — and as tabs each hides the other
-        // at the moment it is wanted.
-        var destraSopra = new ToolDock
-        {
-            Id = "DestraSopra",
-            Title = "DestraSopra",
-            Alignment = Alignment.Right,
-            Proportion = 0.45,
+            Proportion = 0.11,
             VisibleDockables = CreateList<IDockable>(Toolbox, ElementTree, Outline),
             ActiveDockable = Toolbox
         };
 
-        var destraSotto = new ToolDock
+        // Top right: what is in the solution. Visual Basic 6 called it the
+        // Project Explorer and put it here, above the properties.
+        var projectPanel = new ToolDock
+        {
+            Id = "DestraSopra",
+            Title = "DestraSopra",
+            Alignment = Alignment.Right,
+            Proportion = 0.35,
+            VisibleDockables = CreateList<IDockable>(SolutionExplorer, GitChanges, GitBranches),
+            ActiveDockable = SolutionExplorer
+        };
+
+        // Beneath it, the properties of whatever is selected — the pairing
+        // that made the Visual Basic 6 designer what it was: pick a control
+        // in the tree, set it in the grid below without moving your eyes.
+        var propertiesPanel = new ToolDock
         {
             Id = "DestraSotto",
             Title = "DestraSotto",
             Alignment = Alignment.Right,
-            Proportion = 0.55,
+            Proportion = 0.65,
             VisibleDockables = CreateList<IDockable>(Properties, Events, Assistant),
             ActiveDockable = Properties
         };
 
-        var pannelloDestro = new ProportionalDock
+        var rightColumn = new ProportionalDock
         {
             Id = "Destra",
             Title = "Destra",
             Orientation = Orientation.Vertical,
-            Proportion = 0.22,
+            Proportion = 0.24,
             VisibleDockables = CreateList<IDockable>(
-                destraSopra,
+                projectPanel,
                 new ProportionalDockSplitter(),
-                destraSotto)
+                propertiesPanel)
         };
 
         var terminal = CreateTerminal();
@@ -112,9 +120,15 @@ public sealed class IdeDockFactory : Factory
             Title = "Inferiore",
             Alignment = Alignment.Bottom,
             Proportion = 0.28,
+            // Ordered by how often they are wanted, and grouped by what they
+            // are about: what is wrong, what was printed, what was searched
+            // for, then the debugging three together, then the rest. A strip
+            // of a dozen tabs in the order they happened to be written is one
+            // nobody learns the shape of.
             VisibleDockables = CreateList<IDockable>(
                 Problems, Output, Search, References,
-                CallStack, Variables, Breakpoints, Tests, Database, GitHistory, GitDiff, terminal),
+                CallStack, Variables, Breakpoints,
+                Tests, Database, GitHistory, GitDiff, terminal),
             ActiveDockable = Problems
         };
 
@@ -134,11 +148,11 @@ public sealed class IdeDockFactory : Factory
             Id = "Corpo",
             Orientation = Orientation.Horizontal,
             VisibleDockables = CreateList<IDockable>(
-                pannelloSinistro,
+                toolboxColumn,
                 new ProportionalDockSplitter(),
                 colonnaCentrale,
                 new ProportionalDockSplitter(),
-                pannelloDestro)
+                rightColumn)
         };
 
         var radice = CreateRootDock();
