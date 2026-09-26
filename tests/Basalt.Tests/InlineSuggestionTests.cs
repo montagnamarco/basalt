@@ -38,6 +38,25 @@ public class InlineSuggestionTests
         End Module
         """.ReplaceLineEndings("\n");
 
+    /// <summary>
+    /// Waits for a suggestion to be shown, or for five seconds to pass.
+    /// </summary>
+    /// <remarks>
+    /// A fixed 600 ms passed alone and failed under the load of the whole
+    /// suite: the request is debounced and answered on another thread, so
+    /// the wait has to be for the suggestion, not for a guess at its timing.
+    /// </remarks>
+    private static async Task SuggestedAsync(CodeEditor editor)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+
+        while (!editor.IsSuggesting && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50);
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        }
+    }
+
     private static (Window Window, CodeEditor Editor) Open(string? suggests = null)
     {
         var document = new EditorDocumentViewModel("/x/Program.vb", Code);
@@ -85,7 +104,7 @@ public class InlineSuggestionTests
         editor.CaretOffsetForTests = Code.IndexOf("\n\n", StringComparison.Ordinal) + 1;
         editor.TypeForTests("Co");
 
-        await Task.Delay(600);
+        await SuggestedAsync(editor);
 
         Assert.True(editor.IsSuggesting, "nothing was suggested");
 
@@ -104,7 +123,7 @@ public class InlineSuggestionTests
         editor.CaretOffsetForTests = Code.IndexOf("\n\n", StringComparison.Ordinal) + 1;
         editor.TypeForTests("Co");
 
-        await Task.Delay(600);
+        await SuggestedAsync(editor);
 
         Assert.True(editor.AcceptSuggestion(), "there was nothing to accept");
         Assert.Contains("Console.WriteLine()", editor.TextForTests);
@@ -123,7 +142,7 @@ public class InlineSuggestionTests
         editor.CaretOffsetForTests = Code.IndexOf("\n\n", StringComparison.Ordinal) + 1;
         editor.TypeForTests("Di");
 
-        await Task.Delay(600);
+        await SuggestedAsync(editor);
 
         Assert.True(editor.AcceptSuggestion(wordOnly: true));
         Assert.Contains("Dim", editor.TextForTests);
@@ -159,7 +178,7 @@ public class InlineSuggestionTests
         editor.CaretOffsetForTests = Code.IndexOf("\n\n", StringComparison.Ordinal) + 1;
         editor.TypeForTests("Co");
 
-        await Task.Delay(600);
+        await SuggestedAsync(editor);
 
         Assert.True(editor.IsSuggesting);
 
