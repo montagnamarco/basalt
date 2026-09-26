@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Runtime.Loader;
 using Basalt.Razor.Vb;
 using Basalt.Razor.Vb.Classic;
 using Basalt.Web;
@@ -26,8 +27,9 @@ public sealed class VbPageCompiler : IDisposable
     private readonly ConcurrentDictionary<string, Compiled> _pages = new(StringComparer.OrdinalIgnoreCase);
     private readonly FileSystemWatcher? _watcher;
 
-    /// <summary>A page as it was last compiled.</summary>
-    private sealed record Compiled(Type? Type, string? Error, DateTime WrittenAt);
+    /// <summary>A page as it was last compiled, and the context holding its assembly.</summary>
+    private sealed record Compiled(
+        Type? Type, string? Error, DateTime WrittenAt, AssemblyLoadContext? Context = null);
 
     /// <summary>
     /// Watches a folder of pages.
@@ -103,16 +105,36 @@ public sealed class VbPageCompiler : IDisposable
 
         var compiled = Compile(path, writtenAt);
 
+        if (_pages.TryGetValue(path, out var replaced)) Release(replaced);
+
         _pages[path] = compiled;
 
         return new Result(compiled.Type, compiled.Error);
     }
 
     /// <summary>Forgets a page, so the next request compiles it again.</summary>
-    public void Forget(string path) => _pages.TryRemove(Path.GetFullPath(path), out _);
+    public void Forget(string path)
+    {
+        if (_pages.TryRemove(Path.GetFullPath(path), out var forgotten)) Release(forgotten);
+    }
 
     /// <summary>Forgets every page.</summary>
-    public void ForgetAll() => _pages.Clear();
+    public void ForgetAll()
+    {
+        foreach (var path in _pages.Keys.ToList()) Forget(path);
+    }
+
+    /// <summary>
+    /// Lets a compiled page's assembly go.
+    /// </summary>
+    /// <remarks>
+    /// Every edit used to load one more assembly that could never leave: a
+    /// morning of editing a page was a few hundred of them held for the life
+    /// of the process. Unloading is cooperative — a request still rendering
+    /// the old page keeps it alive until it finishes — so this is safe to
+    /// call while the site is serving.
+    /// </remarks>
+    private static void Release(Compiled compiled) => compiled.Context?.Unload();
 
     private Compiled Compile(string path, DateTime writtenAt)
     {
@@ -151,7 +173,7 @@ public sealed class VbPageCompiler : IDisposable
 
         var compilation = VisualBasicCompilation.Create(
             $"BasaltPage{generation}",
-            [VisualBasicSyntaxTree.ParseText(SourceText.From(code), path: path)],
+            [VisualBasicSyntaxTree.ParseText(SourceText.From(code, System.Text.Encoding.UTF8), path: path)],
             References,
             new VisualBasicCompilationOptions(
                 OutputKind.DynamicallyLinkedLibrary,
@@ -161,8 +183,16 @@ public sealed class VbPageCompiler : IDisposable
                 optionInfer: true));
 
         using var stream = new MemoryStream();
+        using var symbols = new MemoryStream();
 
-        var emitted = compilation.Emit(stream);
+        // With a PDB, so an exception thrown by a page names the .vbpage and
+        // its line — the pragmas the writer emits map it there — and a
+        // debugger attached to the site can stop inside the page.
+        var emitted = compilation.Emit(
+            stream,
+            symbols,
+            options: new Microsoft.CodeAnalysis.Emit.EmitOptions(
+                debugInformationFormat: Microsoft.CodeAnalysis.Emit.DebugInformationFormat.PortablePdb));
 
         if (!emitted.Success)
         {
@@ -174,15 +204,25 @@ public sealed class VbPageCompiler : IDisposable
         }
 
         stream.Position = 0;
+        symbols.Position = 0;
 
-        var assembly = Assembly.Load(stream.ToArray());
+        // Its own collectible context, released when the page is compiled
+        // again. Types it cannot resolve itself come from the site's context,
+        // so a page sees the same Basalt.Web and models the site does.
+        var context = new AssemblyLoadContext($"BasaltPage{generation}", isCollectible: true);
+        var assembly = context.LoadFromStream(stream, symbols);
 
         var type = assembly.GetTypes()
             .FirstOrDefault(t => !t.IsAbstract && typeof(VbPage).IsAssignableFrom(t));
 
-        return type is null
-            ? new Compiled(null, "The page compiled but produced no page class.", writtenAt)
-            : new Compiled(type, null, writtenAt);
+        if (type is null)
+        {
+            context.Unload();
+
+            return new Compiled(null, "The page compiled but produced no page class.", writtenAt);
+        }
+
+        return new Compiled(type, null, writtenAt, context);
     }
 
     private int _generation;
@@ -262,5 +302,9 @@ public sealed class VbPageCompiler : IDisposable
         ];
     }
 
-    public void Dispose() => _watcher?.Dispose();
+    public void Dispose()
+    {
+        _watcher?.Dispose();
+        ForgetAll();
+    }
 }

@@ -144,4 +144,71 @@ public sealed class VbPageHotReloadTests : IDisposable
 
         Assert.True(result.Succeeded, result.Error ?? "no reason given");
     }
+
+    [Fact]
+    public void AnEditedPageLetsItsOldAssemblyGo()
+    {
+        // Every edit used to load an assembly that could never leave the
+        // process. The one compiled before an edit must now be collectable.
+        var path = Write("Index.vbpage", "<h1>first</h1>");
+
+        using var compiler = new VbPageCompiler(_root, watch: false);
+
+        var first = FirstContext(compiler);
+
+        File.WriteAllText(path, "<h1>second</h1>");
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(1));
+
+        Assert.True(compiler.Load("Index.vbpage").Succeeded);
+
+        for (var attempt = 0; attempt < 10 && first.IsAlive; attempt++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        Assert.False(first.IsAlive, "the assembly of the page before the edit is still loaded");
+    }
+
+    /// <summary>
+    /// The load context of the first compilation, held only weakly.
+    /// </summary>
+    /// <remarks>
+    /// In a method of its own and not inlined, so no local of the test keeps
+    /// the page's type — and with it the context — alive.
+    /// </remarks>
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static WeakReference FirstContext(VbPageCompiler compiler)
+    {
+        var result = compiler.Load("Index.vbpage");
+
+        Assert.True(result.Succeeded, result.Error ?? "no reason given");
+
+        var context = System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(result.Type!.Assembly)!;
+
+        Assert.True(context.IsCollectible);
+
+        return new WeakReference(context);
+    }
+
+    [Fact]
+    public async Task AnExceptionInAPageNamesThePageAndItsLine()
+    {
+        // Compiled without a PDB, a page that threw said only "BasaltPage3",
+        // and a debugger attached to the site could not stop inside it.
+        Write("Index.vbpage", "<p>before</p>\n<% Throw New InvalidOperationException(\"boom\") %>\n");
+
+        using var compiler = new VbPageCompiler(_root, watch: false);
+
+        var result = compiler.Load("Index.vbpage");
+
+        Assert.True(result.Succeeded, result.Error ?? "no reason given");
+
+        var page = (Basalt.Web.VbPage)Activator.CreateInstance(result.Type!)!;
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            page.ExecuteAsync(new Microsoft.AspNetCore.Http.DefaultHttpContext(), new StringWriter()));
+
+        Assert.Contains("Index.vbpage:line 2", thrown.StackTrace, StringComparison.Ordinal);
+    }
 }
