@@ -70,7 +70,10 @@ public sealed class VbHtmlDefinitionHandler : DefinitionHandlerBase
                     case StatementNode statement:
                         var index = IndexOfDeclaration(statement.Code, name);
 
-                        if (index >= 0) found = statement.Position + index;
+                        // From where the code starts: Position is the "@Code"
+                        // keyword (or a later run's own start), and Code is
+                        // the body, so an index into it is an offset from there.
+                        if (index >= 0) found = statement.BodyPosition + index;
                         break;
 
                     case DirectiveNode directive

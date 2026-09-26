@@ -231,8 +231,11 @@ public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
                         // token: painting the whole block one colour made a
                         // Code block a solid stripe, where a string, a
                         // number and a comment all read the same.
-                        Add(statement.Position, KeywordLength(document.Text, statement.Position),
-                            SemanticTokenType.Keyword);
+                        if (!statement.IsContinuation)
+                        {
+                            Add(statement.Position, KeywordLength(document.Text, statement.Position),
+                                SemanticTokenType.Keyword);
+                        }
 
                         AddVisualBasic(statement.BodyPosition, statement.Code);
                         break;

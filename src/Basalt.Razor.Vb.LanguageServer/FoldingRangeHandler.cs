@@ -42,7 +42,7 @@ public sealed class VbHtmlFoldingRangeHandler : FoldingRangeHandlerBase
         {
             switch (node)
             {
-                case StatementNode statement:
+                case StatementNode { IsContinuation: false } statement:
                     Add(statement.Line, EndLine(text, statement.Position, "End Code"));
                     break;
 

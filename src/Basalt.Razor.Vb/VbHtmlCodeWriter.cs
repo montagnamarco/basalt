@@ -273,6 +273,11 @@ public static class VbHtmlCodeWriter
         if (!string.IsNullOrWhiteSpace(document.DefaultLayout))
             builder.AppendLine($"            Layout = {Quote(document.DefaultLayout!)}");
 
+        // Then the one @Layout named, which overrides the _ViewStart's; a
+        // Layout assigned later in a code block still overrides both.
+        if (!string.IsNullOrWhiteSpace(document.Layout))
+            builder.AppendLine($"            Layout = {Quote(document.Layout!)}");
+
         WriteNodes(builder, document.Nodes, indent: 3, mappings, filePath, host);
 
         if (IsWeb(host))

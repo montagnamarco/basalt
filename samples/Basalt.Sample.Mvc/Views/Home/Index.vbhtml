@@ -5,6 +5,7 @@
 <p>temp: @TempData("note")</p>
 <p>Orders: @Model.Orders</p>
 @Await Html.PartialAsync("_Badge")
+@Await Component.InvokeAsync("Stock", New With {.count = Model.Orders})
 <a href="@Url.Action("Index", "Admin")">admin</a>
 <a asp-controller="Admin" asp-action="Index">helper link</a>
 <a asp-page="/Hello">helper page</a>

@@ -41,6 +41,49 @@ public sealed class UnsupportedDirectiveTests
     }
 
     [Fact]
+    public void LayoutWithAStringIsSupportedNow()
+    {
+        var document = VbHtmlParser.Parse("@Layout \"_AdminLayout\"\n<p>a</p>");
+
+        Assert.Empty(document.Diagnostics);
+        Assert.Equal("_AdminLayout", document.Layout);
+    }
+
+    [Fact]
+    public void ACommentAfterTheLayoutIsNotPartOfIt()
+    {
+        Assert.Equal("_Wide", VbHtmlParser.Parse("@Layout \"_Wide\" ' for reports\n").Layout);
+    }
+
+    [Fact]
+    public void AViewStartMayUseTheDirective()
+    {
+        // The VBH008 message suggests it for a _ViewStart, where it used to be
+        // ignored: only an assignment in a code block was read there.
+        Assert.Equal("_Admin", ViewImports.LayoutFrom(VbHtmlParser.Parse("@Layout \"_Admin\"\n")));
+    }
+
+    [Fact]
+    public void AComponentGetsItsLayoutAsBlazorsAttribute()
+    {
+        var code = VbComponentWriter.Write(
+            VbHtmlParser.Parse("@Layout \"MainLayout\"\n<p>a</p>\n"), "C", "N");
+
+        Assert.Contains("Components.Layout(GetType(MainLayout))", code);
+    }
+
+    [Fact]
+    public void LayoutOnItsOwnIsStillAnExpression()
+    {
+        // The view's Layout property, written out: not the directive.
+        var document = VbHtmlParser.Parse("<p>@Layout</p>");
+
+        Assert.Empty(document.Diagnostics);
+        Assert.Null(document.Layout);
+        Assert.Contains(document.Nodes.OfType<ExpressionNode>(), e => e.Expression == "Layout");
+    }
+
+    [Fact]
     public void PointsLayoutAtTheWayThatWorks()
     {
         var problem = Problem("@layout MainLayout\n<p>a</p>");

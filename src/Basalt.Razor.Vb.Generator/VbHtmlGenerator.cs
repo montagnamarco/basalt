@@ -69,8 +69,13 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
             foreach (var template in all)
             {
                 // The shared files are not views: generating them as classes
-                // would produce a page nobody asked for.
-                if (ViewImports.IsShared(template.Path)) continue;
+                // would produce a page nobody asked for. Except _ViewStart
+                // under ASP.NET Core, which MVC runs itself, as it runs a C#
+                // one, before the page it applies to and never before a
+                // partial.
+                if (ViewImports.IsShared(template.Path) &&
+                    !(viewHost == ViewHost.AspNetCore && IsViewStart(template.Path)))
+                    continue;
 
                 Emit(production, template, root, compilationLanguage, shared, viewHost,
                     projectDirectory);
@@ -122,7 +127,11 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     private static string ViewRegistration(
         Template template, string namespaceName, string? projectDirectory)
     {
-        var identifier = ProjectRelativePath(template.Path, projectDirectory);
+        // A _ViewStart is looked for by its .cshtml name — MVC builds the
+        // list of them itself, and only with that extension.
+        var identifier = IsViewStart(template.Path)
+            ? ApplicationRelativePath(template.Path, projectDirectory)
+            : ProjectRelativePath(template.Path, projectDirectory);
         var typeName = $"Global.{namespaceName}.{ViewNaming.Escape(template.ClassName)}";
 
         return $"""
@@ -182,6 +191,23 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     }
 
     /// <summary>
+    /// The folders from a shared file down to a template, as a namespace suffix:
+    /// "Admin.Reports" for Pages/Admin/Reports/Index beside Pages/_ViewImports.
+    /// </summary>
+    private static string FoldersBetween(string sharedPath, string templatePath)
+    {
+        var sharedFolder = (Path.GetDirectoryName(sharedPath) ?? "").TrimEnd('/', '\\');
+        var templateFolder = Path.GetDirectoryName(templatePath) ?? "";
+
+        if (templateFolder.Length <= sharedFolder.Length) return "";
+
+        var below = templateFolder.Substring(sharedFolder.Length)
+            .Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+
+        return string.Join(".", below.Select(ViewNaming.MakeClassName));
+    }
+
+    /// <summary>
     /// The shared files that apply to a template, outermost first.
     ///
     /// Outermost first so a file deeper in the tree is applied last and wins,
@@ -209,6 +235,24 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
             Checksum: TemplateChecksum.Of(source));
     }
 
+
+    /// <summary>
+    /// The folder of a template as a hint-name prefix: /Views/Home → Views_Home.
+    /// </summary>
+    private static string HintFor(string path)
+    {
+        var folder = Path.GetDirectoryName(path) ?? "";
+        var hint = new StringBuilder(folder.Length);
+
+        foreach (var c in folder)
+            hint.Append(char.IsLetterOrDigit(c) ? c : '_');
+
+        return hint.ToString().Trim('_');
+    }
+
+    /// <summary>Whether a template is a _ViewStart.</summary>
+    private static bool IsViewStart(string path) =>
+        string.Equals(Path.GetFileName(path), ViewImports.ViewStartFileName, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Whether a template is a layout, by the convention Razor uses: a name
@@ -251,7 +295,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
             {
                 var sharedDocument = VbHtmlParser.Parse(file.Text);
 
-                ViewImports.ApplyTo(document, sharedDocument);
+                ViewImports.ApplyTo(document, sharedDocument, FoldersBetween(file.Path, template.Path));
 
                 // A layout must not be given a layout of its own: _ViewStart
                 // applies to the pages inside the layout, not to the layout
@@ -261,7 +305,13 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
                 // first, so the nearest _ViewStart must overwrite the ones
                 // above it. With ??= the outermost won instead, and a
                 // controller's own layout was silently ignored.
-                if (!IsLayout(template.Path) &&
+                //
+                // Only where nothing runs _ViewStart. Under ASP.NET Core MVC
+                // does, and baking its layout into every view gave one to
+                // partial views and view components too: their markup came
+                // back wrapped in a second copy of the page.
+                if (host != ViewHost.AspNetCore &&
+                    !IsLayout(template.Path) &&
                     ViewImports.LayoutFrom(sharedDocument) is { Length: > 0 } layout)
                     document.DefaultLayout = layout;
             }
@@ -288,6 +338,13 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         // that itself sits in a folder called Areas is not taken for an area.
         var relativePath = RelativeToProject(template.Path, projectDirectory);
         var rootFolder = ViewNaming.RootFolderFor(relativePath ?? template.Path);
+
+        // A _ViewStart at the project root belongs to no Views or Pages
+        // folder; given the Views namespace it was the same class as
+        // Views/_ViewStart, and the build failed on the duplicate.
+        if (IsViewStart(template.Path) && relativePath is not null &&
+            relativePath.IndexOf('/', 1) < 0)
+            rootFolder = "ProjectRoot";
 
         // MVC finds a view by its path from the project folder. Without one
         // the view is registered under its bare file name, which MVC never
@@ -341,10 +398,10 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
 
 
 
-        // The hint name must stay unique across folders, or two Index views
-        // would collide: from the whole namespace, so Views, Pages and each
-        // area keep apart what the folders below them alone do not.
-        var prefix = namespaceName.Replace('.', '_') + "_";
+        // The hint name must stay unique, or two Index views would collide:
+        // from the path in the project, which is unique by definition, where
+        // a namespace is not — two _ViewImports may name the same one.
+        var prefix = HintFor(relativePath ?? template.Path) + "_";
 
         production.AddSource(
             $"{prefix}{template.ClassName}.vbhtml.g.vb", SourceText.From(code, Encoding.UTF8));

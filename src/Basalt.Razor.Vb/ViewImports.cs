@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+
 namespace Basalt.Razor.Vb;
 
 /// <summary>
@@ -38,7 +41,22 @@ public static class ViewImports
     /// The view's own directives win: a template that declares its own model
     /// type means it, and a shared file cannot know better.
     /// </summary>
-    public static void ApplyTo(VbHtmlDocument view, VbHtmlDocument shared)
+    public static void ApplyTo(VbHtmlDocument view, VbHtmlDocument shared) =>
+        ApplyTo(view, shared, folderBelowShared: "");
+
+    /// <summary>
+    /// Applies a shared file to a view that sits <paramref name="folderBelowShared"/>
+    /// below it, as a dotted namespace suffix ("Admin.Reports"; empty beside it).
+    /// </summary>
+    /// <remarks>
+    /// @Inject and @Namespace used to stop at the shared file: a service
+    /// injected once for every view was undefined in each of them, and the
+    /// namespace a folder asked for was ignored. The view's own directives
+    /// still win. A namespace carries on down the folders, as C# does:
+    /// "@Namespace App.Pages" in Pages makes Pages/Admin/Index
+    /// App.Pages.Admin.
+    /// </remarks>
+    public static void ApplyTo(VbHtmlDocument view, VbHtmlDocument shared, string folderBelowShared)
     {
         foreach (var import in shared.Imports)
             if (!view.Imports.Contains(import))
@@ -46,6 +64,19 @@ public static class ViewImports
 
         view.ModelType ??= shared.ModelType;
         view.Inherits ??= shared.Inherits;
+
+        foreach (var service in shared.Injected)
+        {
+            if (!view.Injected.Any(s => string.Equals(s.Name, service.Name, StringComparison.OrdinalIgnoreCase)))
+                view.Injected.Add(service);
+        }
+
+        if (!string.IsNullOrWhiteSpace(shared.Namespace) && !view.DeclaresNamespace)
+        {
+            view.Namespace = folderBelowShared.Length == 0
+                ? shared.Namespace
+                : $"{shared.Namespace}.{folderBelowShared}";
+        }
     }
 
     /// <summary>
@@ -56,6 +87,10 @@ public static class ViewImports
     /// </summary>
     public static string? LayoutFrom(VbHtmlDocument viewStart)
     {
+        // The directive, @Layout "_Layout", which the VBH008 message itself
+        // suggests for a _ViewStart.
+        if (!string.IsNullOrWhiteSpace(viewStart.Layout)) return viewStart.Layout;
+
         foreach (var node in viewStart.Nodes)
         {
             if (node is not StatementNode statement) continue;

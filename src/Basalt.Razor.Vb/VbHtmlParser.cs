@@ -318,11 +318,11 @@ public sealed class VbHtmlParser
 
         // "@<p>" is a transition to markup inside a code block, which Razor
         // needs because a statement and an element cannot otherwise be told
-        // apart there. The element and its content are literal output; the at
-        // sign is only the mark that says so.
+        // apart there. The element is output, and "@x" inside it is a value:
+        // it used to be written as the two characters.
         if (!AtEnd && Current == '<' && IsElementStart(_index))
         {
-            ParseElementAsMarkup(into, document, start, line);
+            ParseElementWithContent(into, document, start, line);
             return;
         }
 
@@ -350,11 +350,32 @@ public sealed class VbHtmlParser
             return;
         }
 
+        // @Layout "_Layout": the layout as a string, which is what a view's
+        // Layout property takes. Only with the quote: @layout MainLayout is
+        // the Blazor directive, which takes a type and is not supported yet,
+        // and @Layout on its own is an expression that writes the property.
+        if (LooksLikeLayoutDirective())
+        {
+            Advance("Layout".Length);
+
+            // Between the quotes, so a comment after them ("' shared") is not
+            // part of the name.
+            var rest = ReadToEndOfLine();
+            var open = rest.IndexOf('"');
+            var close = rest.IndexOf('"', open + 1);
+            var value = close > open ? rest.Substring(open + 1, close - open - 1) : rest.Trim().Trim('"');
+
+            document.Layout = value;
+            into.Add(new DirectiveNode("Layout", value, start, line));
+            return;
+        }
+
         if (TryReadKeyword("Namespace", out _))
         {
             var value = ReadToEndOfLine().Trim();
 
             document.Namespace = value;
+            document.DeclaresNamespace = true;
             into.Add(new DirectiveNode("Namespace", value, start, line));
             return;
         }
@@ -923,8 +944,65 @@ public sealed class VbHtmlParser
 
         while (bodyStart < _text.Length && char.IsWhiteSpace(_text[bodyStart])) bodyStart++;
 
+        // Markup inside the block ends the statements before it and starts a
+        // new run after it, each run mapped from where its own code begins.
+        var wroteMarkup = false;
+        var flushedAny = false;
+
+        void FlushCode()
+        {
+            var text = code.ToString();
+            var trimmed = text.Trim();
+
+            if (trimmed.Length > 0)
+            {
+                var leading = text.Length - text.TrimStart().Length;
+                var segmentStart = _index - text.Length + leading;
+                var segmentLine = _line - CountBreaks(text, leading, text.Length);
+
+                // The first run carries the "@Code" keyword; a later one is
+                // placed where its own code starts.
+                into.Add(flushedAny
+                    ? new StatementNode(trimmed, segmentStart, segmentLine, segmentLine, segmentStart,
+                        isContinuation: true)
+                    : new StatementNode(trimmed, start, line, segmentLine, segmentStart));
+
+                flushedAny = true;
+            }
+
+            code.Clear();
+        }
+
         while (!AtEnd)
         {
+            // "@<li>…</li>" or "@:text" at the start of a line: markup inside
+            // the block, as a Visual Basic view written for MVC 5 has it. The
+            // "@" and the line it sits on used to be passed to the compiler
+            // as code, which failed on the first one.
+            if (Current == '@' && AtStartOfCodeLine(code) && _index + 1 < _text.Length &&
+                (_text[_index + 1] == ':' || (_text[_index + 1] == '<' && IsElementStart(_index + 1))))
+            {
+                FlushCode();
+
+                var transitionStart = _index;
+                var transitionLine = _line;
+
+                Advance();
+
+                if (Current == ':')
+                {
+                    Advance();
+                    ParseLineOfText(into, document, transitionStart, transitionLine);
+                }
+                else
+                {
+                    ParseElementWithContent(into, document, transitionStart, transitionLine);
+                }
+
+                wroteMarkup = true;
+                continue;
+            }
+
             // A string or a comment may contain the closing keyword, and used
             // to end the block there: Dim s = "End Code" cut it in half.
             if (Current == '"')
@@ -946,10 +1024,17 @@ public sealed class VbHtmlParser
 
             if (Current == 'E' && LooksLikeKeywordAt(_index, "End Code"))
             {
-                Advance("End Code".Length);
+                if (wroteMarkup)
+                {
+                    FlushCode();
+                }
+                else
+                {
+                    into.Add(new StatementNode(
+                        code.ToString().Trim(), start, line, bodyLine, bodyStart));
+                }
 
-                into.Add(new StatementNode(
-                    code.ToString().Trim(), start, line, bodyLine, bodyStart));
+                Advance("End Code".Length);
                 return;
             }
 
@@ -960,7 +1045,265 @@ public sealed class VbHtmlParser
         document.Diagnostics.Add(new VbHtmlDiagnostic(
             "VBH001", "'@Code' is not closed by a matching 'End Code'.", line, 1));
 
-        into.Add(new StatementNode(code.ToString().Trim(), start, line, bodyLine, bodyStart));
+        if (wroteMarkup)
+            FlushCode();
+        else
+            into.Add(new StatementNode(code.ToString().Trim(), start, line, bodyLine, bodyStart));
+    }
+
+    /// <summary>
+    /// Whether nothing but indentation stands between the last line break of
+    /// the code read so far and here.
+    /// </summary>
+    private static bool AtStartOfCodeLine(StringBuilder code)
+    {
+        for (var at = code.Length - 1; at >= 0; at--)
+        {
+            if (code[at] == '\n') return true;
+            if (code[at] != ' ' && code[at] != '\t' && code[at] != '\r') return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>How many line breaks a stretch of text holds.</summary>
+    private static int CountBreaks(string text, int from, int to)
+    {
+        var breaks = 0;
+
+        for (var at = from; at < to; at++)
+            if (text[at] == '\n') breaks++;
+
+        return breaks;
+    }
+
+    /// <summary>
+    /// Reads an element, "@&lt;li&gt;…&lt;/li&gt;", as markup whose content may
+    /// hold expressions.
+    /// </summary>
+    /// <remarks>
+    /// The extent is found first, counting nested elements of the same name
+    /// as <see cref="ParseElementAsMarkup"/> does; then the markup inside it
+    /// is read with its transitions, so "@x" in it is written as a value, not
+    /// as the two characters.
+    /// </remarks>
+    private void ParseElementWithContent(
+        List<VbHtmlNode> into, VbHtmlDocument document, int start, int line)
+    {
+        // Style and script hold CSS and JavaScript, where "@media" and
+        // "@keyframes" are not Visual Basic: their content stays literal, as
+        // it always was.
+        if (IsRawTextElementAt(_index))
+        {
+            ParseElementAsMarkup(into, document, start, line);
+            return;
+        }
+
+        var end = EndOfElement(_index);
+
+        // An element whose closing tag cannot be found — "<li>" left open —
+        // is taken to the end of its line rather than to the end of the file,
+        // which swallowed "End Code" and everything after it.
+        if (end < 0) end = EndOfLineAt(_index);
+
+        var literal = new StringBuilder();
+        var literalStart = _index;
+        var literalLine = _line;
+
+        void FlushLiteral()
+        {
+            if (literal.Length == 0) return;
+
+            into.Add(new HtmlNode(literal.ToString(), literalStart, literalLine));
+            literal.Clear();
+        }
+
+        while (!AtEnd && _index < end)
+        {
+            if (Current == '@' && !IsInsideWord())
+            {
+                if (_index + 1 < _text.Length && _text[_index + 1] == '@')
+                {
+                    literal.Append('@');
+                    Advance(2);
+                    continue;
+                }
+
+                // A comment inside the element produces nothing.
+                if (_index + 1 < _text.Length && _text[_index + 1] == '*')
+                {
+                    FlushLiteral();
+                    SkipComment(document);
+
+                    literalStart = _index;
+                    literalLine = _line;
+                    continue;
+                }
+
+                var transitionStart = _index;
+                var transitionLine = _line;
+
+                Advance();
+                FlushLiteral();
+                ParseTransition(into, document, transitionStart, transitionLine);
+
+                literalStart = _index;
+                literalLine = _line;
+                continue;
+            }
+
+            // A style or script nested inside is CSS or JavaScript as well:
+            // copied as written, to its end.
+            if (Current == '<' && IsRawTextElementAt(_index) && EndOfElement(_index) is var rawEnd && rawEnd > 0)
+            {
+                while (_index < rawEnd && !AtEnd)
+                {
+                    literal.Append(Current);
+                    Advance();
+                }
+
+                continue;
+            }
+
+            literal.Append(Current);
+            Advance();
+        }
+
+        FlushLiteral();
+    }
+
+    /// <summary>Whether a style or script element opens here.</summary>
+    private bool IsRawTextElementAt(int at)
+    {
+        if (at + 1 >= _text.Length || _text[at + 1] == '/') return false;
+
+        var name = ElementNameAt(at);
+
+        return name.Equals("style", StringComparison.OrdinalIgnoreCase) ||
+               name.Equals("script", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Where the element starting here ends, just past its closing tag, or -1.
+    /// </summary>
+    private int EndOfElement(int at)
+    {
+        var name = ElementNameAt(at);
+
+        if (name.Length == 0) return -1;
+
+        var firstTagEnd = _text.IndexOf('>', at);
+
+        if (firstTagEnd < 0) return -1;
+
+        // A void element has no closing tag, written with a slash or not:
+        // "<br>" waited for a "</br>" that never comes.
+        if (VoidElements.Contains(name)) return firstTagEnd + 1;
+
+        // Never past the end of the code block the element sits in: a tag
+        // left open must not reach a matching one further down the page.
+        var limit = EndCodeLineAfter(at);
+
+        var index = at;
+        var depth = 0;
+
+        while (index < _text.Length)
+        {
+            var open = _text.IndexOf('<', index);
+
+            if (open < 0 || open >= limit) return -1;
+
+            var closing = open + 1 < _text.Length && _text[open + 1] == '/';
+            var here = ElementNameAt(closing ? open + 1 : open);
+
+            // Not a tag at all — "@(i < 3)" — so the next ">" is not its end.
+            if (here.Length == 0)
+            {
+                index = open + 1;
+                continue;
+            }
+
+            var tagEnd = _text.IndexOf('>', open);
+
+            if (tagEnd < 0) return -1;
+
+            index = tagEnd + 1;
+
+            if (!string.Equals(here, name, StringComparison.OrdinalIgnoreCase)) continue;
+
+            var selfClosing = _text[tagEnd - 1] == '/';
+
+            if (closing)
+            {
+                depth--;
+                if (depth == 0) return index;
+            }
+            else if (!selfClosing)
+            {
+                depth++;
+            }
+            else if (depth == 0)
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>The elements HTML defines without a closing tag.</summary>
+    private static readonly HashSet<string> VoidElements = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "area", "base", "br", "col", "embed", "hr", "img", "input",
+        "link", "meta", "param", "source", "track", "wbr",
+    };
+
+    /// <summary>Where the line holding an offset ends.</summary>
+    private int EndOfLineAt(int at)
+    {
+        var end = _text.IndexOf('\n', at);
+
+        return end < 0 ? _text.Length : end;
+    }
+
+    /// <summary>
+    /// Where the next line beginning with "End Code" starts, or the end of the text.
+    /// </summary>
+    private int EndCodeLineAfter(int at)
+    {
+        // Found once per document: scanning from each element to the next
+        // "End Code" made parsing grow with elements times file size, and the
+        // language server parses on every keystroke.
+        _endCodeLines ??= FindEndCodeLines();
+
+        foreach (var lineStart in _endCodeLines)
+            if (lineStart >= at) return lineStart;
+
+        return _text.Length;
+    }
+
+    private List<int>? _endCodeLines;
+
+    /// <summary>Where each line beginning with "End Code" starts, in order.</summary>
+    private List<int> FindEndCodeLines()
+    {
+        var starts = new List<int>();
+        var from = 0;
+
+        while (true)
+        {
+            var found = _text.IndexOf("End Code", from, StringComparison.OrdinalIgnoreCase);
+
+            if (found < 0) return starts;
+
+            var lineStart = found;
+
+            while (lineStart > 0 && (_text[lineStart - 1] == ' ' || _text[lineStart - 1] == '\t')) lineStart--;
+
+            if (lineStart == 0 || _text[lineStart - 1] == '\n') starts.Add(lineStart);
+
+            from = found + "End Code".Length;
+        }
     }
 
     /// <summary>
@@ -976,8 +1319,17 @@ public sealed class VbHtmlParser
     private string? UnsupportedDirective()
     {
         foreach (var name in NotSupported)
-            if (LooksLikeKeywordAt(_index, name))
+        {
+            if (!LooksLikeKeywordAt(_index, name)) continue;
+
+            // A directive is followed by its argument or ends the line;
+            // "@Layout</p>" is the view's Layout property written out, and
+            // used to be refused as though it were the directive.
+            var after = _index + name.Length;
+
+            if (after >= _text.Length || char.IsWhiteSpace(_text[after]))
                 return name;
+        }
 
         return null;
     }
@@ -998,8 +1350,8 @@ public sealed class VbHtmlParser
     /// <summary>What to say about a directive that is not supported.</summary>
     private static string Explain(string name) => name.ToLowerInvariant() switch
     {
-        "layout" => "Set the layout inside a @Code block — Layout = \"_Layout.vbhtml\" — "
-                  + "or in a _ViewStart.vbhtml.",
+        "layout" => "Write the layout as a string — @Layout \"_Layout\" — or set it in a "
+                  + "_ViewStart.vbhtml. The Blazor form, @layout with a type, is not supported yet.",
 
         "helper" => "@helper is a WebPages feature that ASP.NET Core never carried "
                   + "forward. Use @Functions instead.",
@@ -1012,6 +1364,22 @@ public sealed class VbHtmlParser
 
         _ => $"@{name} is not supported by Basalt."
     };
+
+    /// <summary>
+    /// Whether "Layout" here opens the directive: the word, spaces, then a quote.
+    /// </summary>
+    private bool LooksLikeLayoutDirective()
+    {
+        if (!LooksLikeKeywordAt(_index, "Layout")) return false;
+
+        var at = _index + "Layout".Length;
+
+        if (at >= _text.Length || (_text[at] != ' ' && _text[at] != '\t')) return false;
+
+        while (at < _text.Length && (_text[at] == ' ' || _text[at] == '\t')) at++;
+
+        return at < _text.Length && _text[at] == '"';
+    }
 
     /// <summary>
     /// Whether "Model" here opens the directive rather than an expression.

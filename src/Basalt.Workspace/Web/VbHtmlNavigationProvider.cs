@@ -225,6 +225,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
                                     SymbolKind.Constant),
         SectionNode section => ($"@Section {section.Name}", SymbolKind.Namespace),
         FunctionsNode => ("@Functions", SymbolKind.Module),
+        StatementNode { IsContinuation: true } => (null, SymbolKind.Class),
         StatementNode => ("@Code", SymbolKind.Method),
         BlockNode block => (block.Opening, SymbolKind.Method),
         _ => (null, SymbolKind.Class)

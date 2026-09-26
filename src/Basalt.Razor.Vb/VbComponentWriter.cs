@@ -154,6 +154,14 @@ public static class VbComponentWriter
         if (!string.IsNullOrWhiteSpace(route))
             builder.AppendLine($"    <Global.Microsoft.AspNetCore.Components.Route(\"{route}\")>");
 
+        // @Layout "MainLayout": a component's layout is a type, given through
+        // Blazor's attribute. It was parsed and then ignored.
+        if (!string.IsNullOrWhiteSpace(document.Layout))
+        {
+            builder.AppendLine(
+                $"    <Global.Microsoft.AspNetCore.Components.Layout(GetType({document.Layout}))>");
+        }
+
         var baseType = string.IsNullOrWhiteSpace(document.Inherits)
             ? ComponentBaseTypeName
             : document.Inherits;

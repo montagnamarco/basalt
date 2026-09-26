@@ -64,6 +64,30 @@ public sealed class VbViewsOverHttpTests
     }
 
     [Fact]
+    public async Task AViewComponentRendersFromAViewAndFromAPage()
+    {
+        // Its own view is a .vbhtml under Views/Shared/Components, found
+        // through the same expander. From a page it needs Component on the
+        // page class, which pages did not have.
+        var view = await GetAsync("/");
+        var page = await GetAsync("/Stock");
+
+        Assert.Contains("<span class=\"stock\">In stock: 3</span>", view);
+        Assert.Contains("<span class=\"stock\">In stock: 7</span>", page);
+    }
+
+    [Fact]
+    public async Task ALayoutDirectiveChoosesTheLayout()
+    {
+        // @Layout "_AdminLayout" used to be refused with VBH008, and the only
+        // way to choose a layout was an assignment in a code block.
+        var html = await GetAsync("/Plain");
+
+        Assert.Contains("<header>Admin area</header>", html);
+        Assert.Contains("Laid out by its own directive", html);
+    }
+
+    [Fact]
     public void TheCSharpViewFactoryIsLeftInPlace()
     {
         // MVC takes the last IRazorPageFactoryProvider registered. AddVbViews

@@ -57,7 +57,7 @@ public sealed class VbHtmlDocumentSymbolHandler : DocumentSymbolHandlerBase
                     symbols.Add(Symbol("@Functions", SymbolKind.Module, functions.Line));
                     break;
 
-                case StatementNode statement:
+                case StatementNode { IsContinuation: false } statement:
                     symbols.Add(Symbol("@Code", SymbolKind.Function, statement.Line));
                     break;
 

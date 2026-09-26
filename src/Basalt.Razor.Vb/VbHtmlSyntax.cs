@@ -70,13 +70,26 @@ public sealed class ExpressionNode : VbHtmlNode
 public sealed class StatementNode : VbHtmlNode
 {
     public StatementNode(
-        string code, int position, int line, int? bodyLine = null, int? bodyPosition = null)
+        string code, int position, int line, int? bodyLine = null, int? bodyPosition = null,
+        bool isContinuation = false)
         : base(position, line)
     {
         Code = code;
         BodyLine = bodyLine ?? line;
         BodyPosition = bodyPosition ?? position;
+        IsContinuation = isContinuation;
     }
+
+    /// <summary>
+    /// Whether this is a later run of statements in a @Code block, after
+    /// markup written inside it, rather than the one the block opens with.
+    /// </summary>
+    /// <remarks>
+    /// Its Position is where its own code starts, not the "@Code" keyword:
+    /// what highlights, folds or outlines the keyword must skip it, and what
+    /// looks for its code from Position finds this run and not the first.
+    /// </remarks>
+    public bool IsContinuation { get; }
 
     public string Code { get; }
 
@@ -272,12 +285,24 @@ public sealed class VbHtmlDocument
     public string? DefaultLayout { get; set; }
 
     /// <summary>
+    /// The layout the template names with @Layout "…", which wins over a
+    /// _ViewStart's as it does when written in a code block.
+    /// </summary>
+    public string? Layout { get; set; }
+
+    /// <summary>
     /// A namespace the template asked for with @Namespace.
     ///
     /// Overrides the one derived from the folder, which is what a project
     /// with an unusual layout needs.
     /// </summary>
     public string? Namespace { get; set; }
+
+    /// <summary>
+    /// Whether the template wrote @Namespace itself, rather than being given
+    /// one by a _ViewImports file: its own wins over any shared one.
+    /// </summary>
+    public bool DeclaresNamespace { get; set; }
 
     /// <summary>Interfaces the view implements, from @Implements.</summary>
     public List<string> Implements { get; } = [];
