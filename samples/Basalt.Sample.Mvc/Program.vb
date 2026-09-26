@@ -19,6 +19,9 @@ Public Module Program
 
         Dim app = builder.Build()
 
+        ' Areas first, as ASP.NET Core documents: the default route would
+        ' otherwise read /Office as a controller named Office.
+        app.MapControllerRoute("areas", "{area:exists}/{controller=Home}/{action=Index}/{id?}")
         app.MapDefaultControllerRoute()
         app.MapRazorPages()
 

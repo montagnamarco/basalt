@@ -63,8 +63,25 @@ public static class ViewNaming
             var name = Path.GetFileName(current);
             if (string.IsNullOrEmpty(name)) break;
 
-            if (string.Equals(name, "Pages", StringComparison.OrdinalIgnoreCase)) return "Pages";
-            if (string.Equals(name, "Views", StringComparison.OrdinalIgnoreCase)) return "Views";
+            var isPages = string.Equals(name, "Pages", StringComparison.OrdinalIgnoreCase);
+            var isViews = string.Equals(name, "Views", StringComparison.OrdinalIgnoreCase);
+
+            if (!isPages && !isViews) continue;
+
+            var root = isPages ? "Pages" : "Views";
+
+            // Inside an MVC area — Areas/Admin/Views — the area is part of the
+            // root. Without it Areas/Admin/Views/Home/Index and
+            // Views/Home/Index were the same class, and the build failed on
+            // the duplicate as soon as a site had both.
+            var area = Path.GetDirectoryName(current);
+            var areas = string.IsNullOrEmpty(area) ? null : Path.GetDirectoryName(area);
+
+            if (areas is { Length: > 0 } &&
+                string.Equals(Path.GetFileName(areas), "Areas", StringComparison.OrdinalIgnoreCase))
+                return $"Areas.{Escape(MakeClassName(Path.GetFileName(area)!))}.{root}";
+
+            return root;
         }
 
         // Not in a recognised layout: Views, which is what a loose template

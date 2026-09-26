@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -30,6 +31,52 @@ public sealed class VbViewsOverHttpTests
             Assert.Fail(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
         return await response.Content.ReadAsStringAsync();
+    }
+
+    [Fact]
+    public async Task AnAreaAndTheRootEachServeTheirOwnViewOfTheSameName()
+    {
+        // Areas/Office/Views/Home/Index and Views/Home/Index. They generated
+        // the same class, and the view was found by the end of its type name,
+        // so one of them could never be served.
+        var area = await GetAsync("/Office");
+        var root = await GetAsync("/");
+
+        Assert.Contains("<h1>Area home</h1>", area);
+        Assert.DoesNotContain("Area home", root);
+        Assert.Contains("<h1>Hello Ada</h1>", root);
+    }
+
+    [Fact]
+    public async Task APageAnswersOnTheRouteItsPageDirectiveNames()
+    {
+        // @Page "{id:int}" was parsed and dropped: the page answered only at
+        // /Item, with no id, and /Item/5 was a 404.
+        var html = await GetAsync("/Item/5");
+
+        Assert.Contains("<h1>Item 5</h1>", html);
+
+        // And the constraint holds.
+        var notANumber = await _factory.CreateClient()
+            .GetAsync("/Item/five", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, notANumber.StatusCode);
+    }
+
+    [Fact]
+    public void TheCSharpViewFactoryIsLeftInPlace()
+    {
+        // MVC takes the last IRazorPageFactoryProvider registered. AddVbViews
+        // used to add one of its own, which answered nothing for .cshtml and
+        // so replaced the C# factory: a site ported one view at a time lost
+        // every C# view. Visual Basic views now go through MVC's factory.
+        var providers = _factory.Services
+            .GetServices<Microsoft.AspNetCore.Mvc.Razor.IRazorPageFactoryProvider>()
+            .ToList();
+
+        var provider = Assert.Single(providers);
+
+        Assert.Equal("DefaultRazorPageFactoryProvider", provider.GetType().Name);
     }
 
     [Fact]

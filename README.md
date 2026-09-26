@@ -169,10 +169,9 @@ The engine. It carries three things that are useless apart:
 
 At build time the props collect every `.vbhtml` in the project and hand them to
 the compiler as `AdditionalFiles`. The generator parses each one and emits a
-Visual Basic class inheriting `RazorPage(Of TModel)`. `AddVbViews()` registers
-the view factory that finds those classes in the assembly; Razor Pages also
-carry a `[RazorCompiledItem]` attribute, which is how ASP.NET Core discovers
-them.
+Visual Basic class inheriting `RazorPage(Of TModel)`, carrying a
+`[RazorCompiledItem]` attribute with its path, so ASP.NET Core finds it the way
+it finds a compiled C# view.
 
 `Views/Home/Index.vbhtml` becomes the type `YourSite.Views.Home.Index` inside
 your own assembly. Nothing is compiled at runtime, so there is no first-request
@@ -246,9 +245,9 @@ that understands Visual Basic block structure — `If … Then` / `End If`,
 ends with a keyword, not a brace.
 
 **3. The writer emits Visual Basic.** One class per view, inheriting
-`RazorPage(Of TModel)` (or `RazorPages.Page` for a `.cshtml`-style page). A page
-carries a `[RazorCompiledItem]` attribute so ASP.NET Core discovers it without
-being told; an MVC view is found by the view factory `AddVbViews()` registers.
+`RazorPage(Of TModel)` (or `RazorPages.Page` for a `.cshtml`-style page),
+carrying a `[RazorCompiledItem]` attribute so ASP.NET Core discovers it without
+being told, as it does a C# view or page.
 
 **4. Source mappings are recorded.** Every fragment of Visual Basic that came
 from the template carries a mapping back to its original line and column, and
@@ -336,15 +335,18 @@ compile time — `asp-for` emits the matching `name`, `id` and current value on
 
 ## Serving views under ASP.NET Core
 
-`AddVbViews()` registers three things, and each answers a specific question the
+`AddVbViews()` registers two things, and each answers a specific question the
 framework asks:
 
 - an **`IViewLocationExpander`**, so MVC looks for `.vbhtml` beside `.cshtml`
   when resolving a view name;
-- an **`IRazorPageFactoryProvider`**, so a resolved path is turned into an
-  instance of the generated class;
 - a **`CompiledRazorAssemblyPart`** for the compiled views, so discovery finds
   them the way it finds C# ones.
+
+Every view and page carries a `[RazorCompiledItem]` attribute naming its path,
+exactly as a compiled C# view does, so MVC's own factory turns a resolved path
+into the generated class. Nothing replaces it, which is why `.cshtml` views keep
+working beside `.vbhtml` ones.
 
 That is the entire integration surface. Controllers, filters, model binding,
 validation, dependency injection, layouts, sections, partials and view

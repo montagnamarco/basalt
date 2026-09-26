@@ -115,6 +115,17 @@ public static class VbHtmlCodeWriter
             builder.AppendLine(
                 "    <Global.Microsoft.AspNetCore.Razor.Hosting.RazorCompiledItemMetadata(" +
                 $"\"Identifier\", {Quote(identifier)})>");
+
+            // The route template "@Page" carried, as C# writes it: MVC reads it
+            // from here to build the page's route. Without it @Page "{id:int}"
+            // was parsed and dropped, and the page answered only at its bare
+            // path.
+            if (document.PageRoute is { Length: > 0 } route)
+            {
+                builder.AppendLine(
+                    "    <Global.Microsoft.AspNetCore.Razor.Hosting.RazorCompiledItemMetadata(" +
+                    $"\"RouteTemplate\", {Quote(route)})>");
+            }
         }
 
         // Escaped: Error.vbhtml is in every scaffolded MVC project and Error
@@ -202,6 +213,14 @@ public static class VbHtmlCodeWriter
                 "        <Global.Microsoft.AspNetCore.Mvc.Razor.Internal.RazorInject>");
             builder.AppendLine(
                 "        Public Property Url As Global.Microsoft.AspNetCore.Mvc.IUrlHelper");
+
+            // @Component.InvokeAsync in a page, as in a view: the page host
+            // lacked it, so a view component that worked in a view did not
+            // compile once the markup moved to a Razor Page.
+            builder.AppendLine(
+                "        <Global.Microsoft.AspNetCore.Mvc.Razor.Internal.RazorInject>");
+            builder.AppendLine(
+                "        Public Property Component As Global.Microsoft.AspNetCore.Mvc.IViewComponentHelper");
 
             foreach (var service in document.Injected)
             {

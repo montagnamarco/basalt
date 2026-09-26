@@ -41,18 +41,27 @@ internal static class GeneratorRun
             .Where(path => path.Length > 0)
             .Select(path => MetadataReference.CreateFromFile(path)),
         MetadataReference.CreateFromFile(typeof(VbHtmlView).Assembly.Location),
+        MetadataReference.CreateFromFile(Path.Combine(AppContext.BaseDirectory, "Basalt.Razor.Vb.AspNetCore.dll")),
     ];
 
     /// <summary>What one run produced.</summary>
     public sealed record Outcome(
         IReadOnlyList<Diagnostic> Diagnostics,
         IReadOnlyDictionary<string, string> Sources,
-        Exception? Exception);
+        Exception? Exception,
+        IReadOnlyList<Diagnostic> CompilationErrors);
 
     /// <summary>
     /// Runs one generator, by type name, over templates given as path and text.
     /// </summary>
-    public static Outcome Run(string generatorTypeName, params (string Path, string Text)[] templates)
+    public static Outcome Run(string generatorTypeName, params (string Path, string Text)[] templates) =>
+        Run(generatorTypeName, projectDirectory: null, templates);
+
+    /// <summary>
+    /// Runs one generator with BasaltProjectDir set, as the package props set it.
+    /// </summary>
+    public static Outcome Run(
+        string generatorTypeName, string? projectDirectory, params (string Path, string Text)[] templates)
     {
         var type = Generators.Value.GetType($"Basalt.Razor.Vb.Generator.{generatorTypeName}", throwOnError: true)!;
         var generator = ((IIncrementalGenerator)Activator.CreateInstance(type)!).AsSourceGenerator();
@@ -69,14 +78,44 @@ internal static class GeneratorRun
             .ToImmutableArray();
 
         var driver = VisualBasicGeneratorDriver.Create(
-            [generator], additional, parseOptions: VisualBasicParseOptions.Default);
+            [generator], additional, parseOptions: VisualBasicParseOptions.Default,
+            analyzerConfigOptionsProvider: new Options(projectDirectory));
 
-        var result = driver.RunGenerators(compilation).GetRunResult().Results.Single();
+        var ran = driver.RunGeneratorsAndUpdateCompilation(compilation, out var updated, out _);
+        var result = ran.GetRunResult().Results.Single();
+
+        var errors = updated.GetDiagnostics()
+            .Where(d => d.Severity == DiagnosticSeverity.Error)
+            .ToList();
 
         return new Outcome(
             result.Diagnostics,
             result.GeneratedSources.ToDictionary(s => s.HintName, s => s.SourceText.ToString()),
-            result.Exception);
+            result.Exception,
+            errors);
+    }
+
+    /// <summary>The build properties the generator reads, as MSBuild hands them over.</summary>
+    private sealed class Options(string? projectDirectory) : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptionsProvider
+    {
+        public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GlobalOptions { get; } =
+            new Values(projectDirectory);
+
+        public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GetOptions(SyntaxTree tree) =>
+            new Values(null);
+
+        public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GetOptions(AdditionalText textFile) =>
+            new Values(null);
+    }
+
+    private sealed class Values(string? projectDirectory) : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions
+    {
+        public override bool TryGetValue(string key, out string value)
+        {
+            value = projectDirectory ?? "";
+
+            return key == "build_property.BasaltProjectDir" && projectDirectory is not null;
+        }
     }
 
     private sealed class Template(string path, string text) : AdditionalText

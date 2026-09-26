@@ -98,11 +98,12 @@ public static class VbViewsServiceCollectionExtensions
             }
         });
 
-        // Added rather than replaced: the C# factory stays, so a project part
-        // way through a port keeps serving its .cshtml views.
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IRazorPageFactoryProvider>(
-            new VbRazorPageFactoryProvider(assemblies)));
-
+        // No factory of our own. Every view carries [RazorCompiledItem], as a
+        // C# view does, so MVC's own factory finds it by path through the
+        // compiled Razor parts above. A second IRazorPageFactoryProvider used
+        // to be registered here, and MVC takes only the last one: it replaced
+        // the C# factory, so a site part way through a port stopped serving
+        // its .cshtml views.
         return services;
     }
 }

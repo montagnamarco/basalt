@@ -142,6 +142,23 @@ public sealed class TemplateTests
     }
 
     [Fact]
+    public void TheRazorPagesTemplateHasThePageItsErrorHandlerSendsTo()
+    {
+        // Program.vb sends unhandled exceptions to /Error outside Development,
+        // and there was no Error page: a production error became a 404.
+        var folder = Path.Combine(TemplateRoot, "BasaltVbRazorPages");
+        var program = File.ReadAllText(Path.Combine(folder, "Program.vb"));
+
+        Assert.Contains("UseExceptionHandler(\"/Error\")", program);
+
+        var page = File.ReadAllText(Path.Combine(folder, "Pages", "Error.vbhtml"));
+
+        Assert.Contains("@Page", page);
+        Assert.Contains("ErrorModel", page);
+        Assert.True(File.Exists(Path.Combine(folder, "Pages", "Error.vbhtml.vb")));
+    }
+
+    [Fact]
     public void EveryTemplateThatServesViewsCallsAddVbViews()
     {
         foreach (var name in new[] { "BasaltVbMvc", "BasaltVbRazorPages" })
