@@ -154,7 +154,10 @@ public class VbComponentWriterTests
         var written = VbComponentWriter.WriteWithMap(
             VbHtmlParser.Parse("<p>@Nome</p>\n"), "C", "N", "/x/C.vbrazor").Code;
 
-        foreach (var line in written.Split('\n'))
+        // Any line break, not only "\n": AppendLine writes "\r\n" on Windows,
+        // and the "\r" left on each line made every directive look glued to
+        // trailing text.
+        foreach (var line in written.ReplaceLineEndings("\n").Split('\n'))
         {
             var trimmed = line.TrimStart();
 

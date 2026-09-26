@@ -73,6 +73,8 @@ public sealed class VbNetTargetTests : IDisposable
     /// <summary>What the C target prints, as the answer to compare against.</summary>
     private async Task<string> RunCAsync(string source, string name)
     {
+        Clang.SkipUnlessInstalled();
+
         var path = Path.Combine(_root, $"{name}.bas");
         var binary = Path.Combine(_root, $"{name}-c");
 

@@ -32,6 +32,10 @@ public sealed class ExtractMethodTests
     private static Task<RefactoringPreview> ExtractAsync(
         string source, string fragment, string name = "Helper")
     {
+        // The fragments are written with "\n"; a raw string literal takes the
+        // line breaks of the checkout, which are "\r\n" on Windows.
+        source = source.ReplaceLineEndings("\n");
+
         var (solution, path) = Build(source);
         var start = source.IndexOf(fragment, StringComparison.Ordinal);
 

@@ -21,6 +21,8 @@ public sealed class QuickBasicCompilerTests : IDisposable
     /// <summary>Compiles a program and returns what running it printed.</summary>
     private async Task<string> RunAsync(string source, string? input = null)
     {
+        Clang.SkipUnlessInstalled();
+
         var output = Path.Combine(_root, "program");
 
         var outcome = await _compiler.CompileAsync(new CompilationRequest(source, output));
@@ -53,6 +55,8 @@ public sealed class QuickBasicCompilerTests : IDisposable
     {
         // Everything below fails for this one reason if it is missing; this
         // says so directly rather than through eight confusing failures.
+        Clang.SkipUnlessInstalled();
+
         Assert.True(_compiler.IsAvailable, "clang was not found.");
     }
 
@@ -285,6 +289,7 @@ public sealed class QuickBasicCompilerTests : IDisposable
     public async Task BuildsForTheOtherArchitecture()
     {
         Assert.SkipUnless(OperatingSystem.IsMacOS(), "Both architectures are native only on macOS.");
+        Clang.SkipUnlessInstalled();
 
         // The point of going through C: the same program builds for another
         // machine with one flag.
@@ -311,6 +316,21 @@ public sealed class QuickBasicCompilerTests : IDisposable
     }
 
     [Fact]
+    public async Task SaysWhenThereIsNoCCompiler()
+    {
+        // Runs everywhere, clang or not: a compiler path that cannot exist.
+        // The build used to end in an unhandled Win32Exception naming the
+        // process and a working directory, which reads as Basalt crashing.
+        var missing = new NativeCompiler(Path.Combine(_root, "no-such-clang"));
+
+        var outcome = await missing.CompileAsync(
+            new CompilationRequest("PRINT 1", Path.Combine(_root, "never")));
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains(outcome.Diagnostics, d => d.Id == "QB102" && d.Message.Contains("LLVM"));
+    }
+
+    [Fact]
     public async Task RefusesToBuildAProgramWithAnError()
     {
         // Generated C from a wrong program would make the user read clang's
@@ -325,6 +345,8 @@ public sealed class QuickBasicCompilerTests : IDisposable
     [Fact]
     public async Task KeepsTheGeneratedCodeWhenAskedTo()
     {
+        Clang.SkipUnlessInstalled();
+
         var output = Path.Combine(_root, "kept");
 
         var outcome = await _compiler.CompileAsync(

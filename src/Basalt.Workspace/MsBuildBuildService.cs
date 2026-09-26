@@ -101,6 +101,12 @@ public sealed partial class MsBuildBuildService : IBuildService
         var results = new List<IdeDiagnostic>();
         var seen = new HashSet<string>();
 
+        // MSBuild on Windows ends its lines with "\r\n". In multiline mode "$"
+        // matches only before "\n", so the "\r" defeated the optional
+        // "[project]" suffix, the message swallowed it, and the same error
+        // repeated by two targets was listed twice.
+        output = output.ReplaceLineEndings("\n");
+
         foreach (Match m in DiagnosticPattern.Matches(output))
         {
             var diagnostic = new IdeDiagnostic(

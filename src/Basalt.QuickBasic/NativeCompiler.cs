@@ -137,6 +137,21 @@ public sealed class NativeCompiler
                 GeneratedCode = c
             };
         }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // No clang on the PATH. Said in words the user can act on: the
+            // exception's own message names the process and a working
+            // directory, and reads like Basalt is broken rather than missing
+            // one tool.
+            var message = $"The C compiler '{_clang}' was not found. Install LLVM (clang) and make sure it is on the PATH.";
+
+            diagnostics.Add(new Diagnostic("QB102", message, 1, 1));
+
+            return new CompilationOutcome(false, null, diagnostics, message)
+            {
+                GeneratedCode = c
+            };
+        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             diagnostics.Add(new Diagnostic("QB101", ex.Message, 1, 1));

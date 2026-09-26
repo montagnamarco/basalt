@@ -657,7 +657,13 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
         if (tree.GetDiagnostics().Any(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)) return code;
 
         using var workspace = new AdhocWorkspace();
-        var formatted = Formatter.Format(tree.GetRoot(), workspace).ToFullString();
+        // Roslyn writes the line breaks it touches as Environment.NewLine, so on
+        // Windows the scratch method came back with "\r\n" where it went in with
+        // "\n", the markers below were not found and every block was left
+        // unspaced. Back to "\n", which is what this class works in throughout.
+        var formatted = Formatter.Format(tree.GetRoot(), workspace)
+            .ToFullString()
+            .Replace("\r\n", "\n");
 
         var start = formatted.IndexOf(")\n", StringComparison.Ordinal);
         var end = formatted.LastIndexOf("End Sub", StringComparison.Ordinal);

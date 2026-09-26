@@ -28,13 +28,15 @@ public class InlineSuggestionTests
             Task.FromResult<InlineSuggestion?>(new InlineSuggestion(text, position));
     }
 
-    private const string Code = """
+    // In "\n": the caret is placed by searching for "\n\n", and a raw literal
+    // takes the checkout's line breaks, which are "\r\n" on Windows.
+    private static readonly string Code = """
         Module Program
             Sub Main()
 
             End Sub
         End Module
-        """;
+        """.ReplaceLineEndings("\n");
 
     private static (Window Window, CodeEditor Editor) Open(string? suggests = null)
     {

@@ -103,8 +103,7 @@ public sealed class GitServiceTests : IDisposable
 
     public void Dispose()
     {
-        try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
-        catch (IOException) { /* irrelevant */ }
+        ScratchFolder.Delete(_root);
     }
 
     [Fact]
@@ -161,7 +160,7 @@ public sealed class GitServiceTests : IDisposable
         Assert.False(state.IsInStep);
         Assert.False(state.IsUntracked);
 
-        Directory.Delete(remote, recursive: true);
+        ScratchFolder.Delete(remote);
     }
 
     private static void RunIn(string directory, params string[] arguments)

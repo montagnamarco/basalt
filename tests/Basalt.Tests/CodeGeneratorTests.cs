@@ -170,6 +170,8 @@ public sealed class CodeGeneratorTests
         [Fact]
         public async Task BuildsCWhenNoTargetIsNamed()
         {
+            Clang.SkipUnlessInstalled();
+
             // What a project that predates the choice still gets.
             var (result, _) = await BuildAsync("PRINT 1", null);
 

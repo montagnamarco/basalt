@@ -81,7 +81,17 @@
     The runtime must exist before it can be packed, and a project reference
     would make the analyzer depend on it at load time.
   -->
-  <Target Name="BuildRuntimeBeforePack" BeforeTargets="Pack">
+  <!--
+    Through BeforePack, not BeforeTargets="Pack": a BeforeTargets target runs
+    after the target's own dependencies, and GenerateNuspec - the one that
+    reads the runtime's path - is one of them. It worked only on a machine
+    where a Release build had already put the runtime there.
+  -->
+  <PropertyGroup>
+    <BeforePack>BuildRuntimeBeforePack;$(BeforePack)</BeforePack>
+  </PropertyGroup>
+
+  <Target Name="BuildRuntimeBeforePack">
     <MSBuild Projects="../Basalt.Razor.Vb/Basalt.Razor.Vb.csproj"
              Properties="Configuration=$(Configuration)" />
   </Target>

@@ -164,7 +164,14 @@ public sealed class PluginLoader
                 .FirstOrDefault(t => typeof(IPlugin).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false });
 
             if (type is null)
+            {
+                // Nothing of it will ever run, so the context goes: otherwise
+                // the file stays open until the IDE quits, and on Windows the
+                // user cannot delete or replace the folder they got wrong.
+                context.Unload();
+
                 return new LoadedPlugin(manifest, folder, null, "The assembly holds no IPlugin.");
+            }
 
             if (Activator.CreateInstance(type) is not IPlugin plugin)
                 return new LoadedPlugin(manifest, folder, null, $"{type.Name} could not be created.");

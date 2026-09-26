@@ -20,7 +20,7 @@ public sealed class PluginLoaderTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(_root, recursive: true); } catch (IOException) { }
+        ScratchFolder.Delete(_root);
     }
 
     /// <summary>A host that records what a plugin asked for.</summary>
@@ -184,7 +184,7 @@ public sealed class SamplePluginTests : IDisposable
 
     public void Dispose()
     {
-        try { Directory.Delete(_root, recursive: true); } catch (IOException) { }
+        ScratchFolder.Delete(_root);
     }
 
     private sealed class Recorder : Basalt.Extensibility.IPluginHost

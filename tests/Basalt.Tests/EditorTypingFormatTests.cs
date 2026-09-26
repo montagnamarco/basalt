@@ -124,7 +124,9 @@ public sealed class EditorTypingFormatTests : IDisposable
         await code.FormatCurrentLineAsync();
 
         // The line above stays unindented; only the caret's line moves.
-        Assert.Contains("\nPublic Sub M()\n", editor.Text);
+        // Compared with "\n": the raw literal carries the checkout's line
+        // breaks, which are "\r\n" on Windows, and the editor keeps them.
+        Assert.Contains("\nPublic Sub M()\n", editor.Text.ReplaceLineEndings("\n"));
         Assert.Contains("        Dim x = 1", editor.Text);
     }
 

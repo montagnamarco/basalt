@@ -43,6 +43,8 @@ public sealed class InterpretedAndCompiledAgreeTests : IDisposable
     /// <summary>What the compiled program prints.</summary>
     private async Task<string> CompiledAsync(string source, string name)
     {
+        Clang.SkipUnlessInstalled();
+
         var path = Path.Combine(_root, $"{name}.bas");
         var binary = Path.Combine(_root, name);
 

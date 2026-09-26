@@ -48,6 +48,8 @@ public sealed class QuickBasicEndToEndTests : IDisposable
     [Fact]
     public async Task BuildsAndRunsTheTemplateProgram()
     {
+        Clang.SkipUnlessInstalled();
+
         var result = await SolutionTemplates.CreateAsync(
             _root, "Squares", ProjectTemplate.QuickBasic);
 
@@ -99,6 +101,8 @@ public sealed class QuickBasicEndToEndTests : IDisposable
     [Fact]
     public async Task TimesTheBuild()
     {
+        Clang.SkipUnlessInstalled();
+
         var source = Path.Combine(_root, "quick.bas");
         await File.WriteAllTextAsync(source, "PRINT 1");
 

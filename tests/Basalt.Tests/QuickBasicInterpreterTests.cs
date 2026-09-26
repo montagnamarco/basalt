@@ -52,7 +52,8 @@ public sealed class QuickBasicInterpreterTests
     public async Task PrintsANumberTheWayQuickBasicDoes()
     {
         // A leading space when positive, a trailing one always.
-        Assert.Equal(" 42 \n", await RunAsync("PRINT 42"));
+        // The line ends the way the console's lines end on this platform.
+        Assert.Equal(" 42 " + Environment.NewLine, await RunAsync("PRINT 42"));
     }
 
     [Fact]
