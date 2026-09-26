@@ -167,11 +167,164 @@ public sealed class PtyConnectionTests : IDisposable
         Assert.Contains("xterm-256color", output);
     }
 
+    /// <summary>
+    /// Starts cmd.exe on the ConPTY pseudo-console, wired into the same
+    /// transcript-collecting <see cref="_pty"/>/<see cref="_transcript"/>
+    /// fields the Unix tests above use, so <see cref="ReadUntilAsync"/> and
+    /// <see cref="Dispose"/> work the same way on either platform.
+    /// </summary>
+    /// <summary>
+    /// Whether this session can host a process on a pseudo-console at all.
+    /// </summary>
+    /// <remarks>
+    /// A disconnected remote session has no desktop for the console to
+    /// attach to: every child, cmd.exe or ping.exe alike, dies at start with
+    /// STATUS_DLL_INIT_FAILED (0xC0000142) while an ordinary process runs.
+    /// That is the machine, not the code, so the tests say so and skip.
+    /// </remarks>
+    private static readonly Lazy<bool> ConPtyHostsProcesses = new(() =>
+    {
+        if (!OperatingSystem.IsWindows()) return false;
+
+        try
+        {
+            var shell = Environment.GetEnvironmentVariable("COMSPEC") ?? "cmd.exe";
+
+            using var probe = new WindowsPtyConnection(shell, [], Path.GetTempPath());
+
+            // The child can die a moment after CreateProcessW returns, so a
+            // shell still running after a few seconds is the proof.
+            var exitCode = 0;
+            probe.Exited += (_, code) => exitCode = code;
+
+            var deadline = DateTime.UtcNow.AddSeconds(3);
+
+            while (probe.IsRunning && DateTime.UtcNow < deadline) Thread.Sleep(50);
+
+            return probe.IsRunning || exitCode != unchecked((int)0xC0000142);
+        }
+        catch (IOException ex) when (ex.Message.Contains("0xC0000142", StringComparison.Ordinal))
+        {
+            return false;
+        }
+    });
+
+    private static void SkipUnlessConPtyWorksHere()
+    {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "ConPTY is Windows-only.");
+        Assert.SkipUnless(ConPtyHostsProcesses.Value,
+            "This session cannot attach a process to a pseudo-console (STATUS_DLL_INIT_FAILED): no interactive desktop.");
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private IPtyConnection StartWindows(int columns = 80, int rows = 24)
+    {
+        var shell = Environment.GetEnvironmentVariable("COMSPEC") ?? "cmd.exe";
+        _pty = new WindowsPtyConnection(shell, [], _root, columns, rows);
+
+        _pty.OutputReceived += (_, text) =>
+        {
+            lock (_transcript) _transcript.Append(text);
+        };
+
+        return _pty;
+    }
+
+    [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public async Task TheWindowsTerminalRunsCmdAndExitsWhenTold()
+    {
+        SkipUnlessConPtyWorksHere();
+
+        var pty = StartWindows();
+        pty.Write("echo basalt-probe\r\n");
+
+        // Cooked-mode ConPTY echoes what was typed and then the shell's own
+        // reply, so this also proves the child received the keystrokes.
+        var output = await ReadUntilAsync(t => t.Contains("basalt-probe"));
+        Assert.Contains("basalt-probe", output);
+
+        var exited = false;
+        var exitCode = -1;
+        pty.Exited += (_, code) =>
+        {
+            exited = true;
+            exitCode = code;
+        };
+
+        pty.Write("exit\r\n");
+
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        while (!exited && DateTime.UtcNow < deadline) await Task.Delay(25);
+
+        Assert.True(exited, "the Exited event must fire when the shell exits");
+        Assert.Equal(0, exitCode);
+    }
+
+    [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public void ResizingTheWindowsTerminalDoesNotThrowWhileRunning()
+    {
+        SkipUnlessConPtyWorksHere();
+
+        // Unlike the Unix workaround, ConPTY genuinely resizes a live
+        // terminal, so this exercises the real call rather than a recorded
+        // no-op.
+        var pty = StartWindows(columns: 80, rows: 24);
+
+        var exception = Record.Exception(() => pty.Resize(132, 50));
+
+        Assert.Null(exception);
+        Assert.True(pty.IsRunning, "the terminal must survive a resize");
+    }
+
+    [Fact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public async Task DisposingTheWindowsTerminalKillsTheChild()
+    {
+        SkipUnlessConPtyWorksHere();
+
+        var pty = (WindowsPtyConnection)StartWindows();
+        var processId = pty.ProcessId;
+
+        pty.Dispose();
+
+        // The fixture's own Dispose() would otherwise touch an already
+        // disposed connection; this test disposes it deliberately, so there
+        // is nothing left for the fixture to do.
+        _pty = null;
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        var stillRunning = ProcessExists(processId);
+        while (stillRunning && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(25);
+            stillRunning = ProcessExists(processId);
+        }
+
+        Assert.False(stillRunning, "the child process must not outlive Dispose()");
+    }
+
+    private static bool ProcessExists(int processId)
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById(processId);
+            return !process.HasExited;
+        }
+        catch (ArgumentException)
+        {
+            // No process with this id: it already exited.
+            return false;
+        }
+    }
+
     public void Dispose()
     {
         // Terminating the shell before disposing keeps stray processes from
         // outliving the test and holding the runner open.
-        if (_pty is { IsRunning: true }) _pty.Write("exit\n");
+        if (_pty is { IsRunning: true })
+            _pty.Write(OperatingSystem.IsWindows() ? "exit\r\n" : "exit\n");
         _pty?.Dispose();
         try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
         catch (IOException) { }

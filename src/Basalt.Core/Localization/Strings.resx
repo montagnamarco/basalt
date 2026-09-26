@@ -234,6 +234,7 @@
 
   <!-- Terminal -->
   <data name="Terminal_InputHint" xml:space="preserve"><value>Type a command and press Enter</value></data>
+  <data name="Terminal_CouldNotStart" xml:space="preserve"><value>The terminal could not start: {0}</value></data>
 
   <!-- Status messages -->
   <data name="Status_Ready" xml:space="preserve"><value>Ready</value></data>

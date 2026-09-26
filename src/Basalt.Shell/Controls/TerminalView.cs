@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Basalt.Core.Localization;
 using Basalt.Workspace.Terminal;
 
 namespace Basalt.Shell.Controls;
@@ -61,11 +62,23 @@ public sealed class TerminalView : UserControl, IDisposable
 
         BuildContextMenu();
 
-        _pty = CreateConnection(workingDirectory, shell);
+        _screen.Changed += OnScreenChanged;
+
+        try
+        {
+            _pty = CreateConnection(workingDirectory, shell);
+        }
+        catch (Exception ex) when (ex is IOException or DllNotFoundException or EntryPointNotFoundException
+                                       or System.ComponentModel.Win32Exception)
+        {
+            // Said in the panel rather than thrown from a constructor on the
+            // interface thread, which took the whole IDE down.
+            _pty = new UnavailablePtyConnection(ex.Message);
+            _screen.Append(Localizer.Get(StringKeys.TerminalCouldNotStart, ex.Message));
+        }
+
         _pty.OutputReceived += OnOutputReceived;
         _pty.Exited += OnExited;
-
-        _screen.Changed += OnScreenChanged;
 
         // Typing anywhere in the panel goes to the terminal.
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
@@ -129,6 +142,14 @@ public sealed class TerminalView : UserControl, IDisposable
     private static IPtyConnection CreateConnection(string workingDirectory, string shell)
     {
         var chosen = shell.Length > 0 && File.Exists(shell) ? shell : DefaultShell();
+
+        if (OperatingSystem.IsWindows())
+        {
+            // cmd.exe, PowerShell and pwsh do not understand "-i": on Windows
+            // a console session is interactive by default, and cmd.exe treats
+            // an unknown switch as the name of a file to run.
+            return new WindowsPtyConnection(chosen, [], workingDirectory);
+        }
 
         // An interactive login shell prints a prompt and reads its startup
         // files, which is what makes the panel behave like a real terminal.

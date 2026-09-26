@@ -308,6 +308,7 @@ public static class StringKeys
     public const string ButtonCancel = "Button_Cancel";
 
     public const string TerminalInputHint = "Terminal_InputHint";
+    public const string TerminalCouldNotStart = "Terminal_CouldNotStart";
 
     public const string StatusReady = "Status_Ready";
     public const string StatusOpening = "Status_Opening";
