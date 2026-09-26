@@ -155,13 +155,14 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
 
     private static Template ReadTemplate(AdditionalText file, CancellationToken ct)
     {
-        var text = file.GetText(ct)?.ToString() ?? string.Empty;
+        var source = file.GetText(ct);
 
         return new Template(
             Path: file.Path,
             ClassName: ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(file.Path)),
             FolderNamespace: ViewNaming.FolderNamespaceFor(file.Path),
-            Text: text);
+            Text: source?.ToString() ?? string.Empty,
+            Checksum: TemplateChecksum.Of(source));
     }
 
 
@@ -270,7 +271,9 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
             document.PageIdentifier = ApplicationRelativePath(template.Path, projectDirectory);
 
         var code = VbHtmlCodeWriter
-            .WriteWithMap(document, template.ClassName, namespaceName, template.Path, templateHost)
+            .WriteWithMap(
+                document, template.ClassName, namespaceName, template.Path, templateHost,
+                template.Checksum)
             .Code;
 
 
@@ -326,7 +329,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     /// </summary>
 
     private sealed record Template(
-        string Path, string ClassName, string FolderNamespace, string Text);
+        string Path, string ClassName, string FolderNamespace, string Text, string? Checksum);
 
     private static readonly DiagnosticDescriptor TemplateProblem = new(
         id: "VBH100",

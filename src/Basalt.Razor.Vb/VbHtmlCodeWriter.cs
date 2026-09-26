@@ -57,7 +57,7 @@ public static class VbHtmlCodeWriter
     /// </summary>
     public static Generated WriteWithMap(
         VbHtmlDocument document, string className, string namespaceName, string? filePath,
-        ViewHost host = ViewHost.Standalone)
+        ViewHost host = ViewHost.Standalone, string? checksum = null)
     {
         var builder = new StringBuilder();
         var mappings = new List<SourceMapping>();
@@ -92,6 +92,11 @@ public static class VbHtmlCodeWriter
             builder.AppendLine($"Imports {import}");
 
         builder.AppendLine();
+
+        // SHA-256 of the template as read from disk, when the caller has it,
+        // so a debugger can tell the file it opens from an edited copy.
+        ExternalSourceWriter.WriteChecksum(builder, filePath, checksum);
+
         // A template may name its own namespace, which is what a project
         // with an unusual folder layout needs.
         if (!string.IsNullOrWhiteSpace(document.Namespace))
@@ -268,10 +273,18 @@ public static class VbHtmlCodeWriter
 
         // Members the template declared for itself, written into the class
         // rather than into Execute: a method cannot live inside a method.
-        foreach (var members in document.Functions)
+        //
+        // Mapped line for line, so a breakpoint inside a method declared here
+        // binds to the template: unmapped, the debugger saw only generated
+        // code nobody wrote and the breakpoint never bound.
+        foreach (var members in FunctionsIn(document.Nodes))
         {
-            foreach (var line in SplitLines(members))
-                builder.AppendLine($"        {line}");
+            WriteMapped(builder, mappings, filePath, members.BodyPosition,
+                members.Code.Length, members.BodyLine, () =>
+                {
+                    foreach (var line in ExternalSourceWriter.LinesOf(members.Code))
+                        builder.AppendLine($"        {line}");
+                });
 
             builder.AppendLine();
         }
@@ -299,29 +312,8 @@ public static class VbHtmlCodeWriter
 
     /// <summary>
     /// Writes something that came from the template, wrapped in a pragma and
-    /// recorded in the mapping table.
-    ///
-    /// The two are produced here together and nowhere else, so a mapping
-    /// without its pragma — or the other way round — cannot happen. That is
-    /// the whole reason this method exists rather than two calls at each site.
-    ///
-    /// #ExternalSource maps by line, not by column: Visual Basic has no
-    /// column-accurate form of it, unlike the C# #line the Razor compiler
-    /// uses. An error therefore lands on the right line of the template but
-    /// not necessarily under the right character.
+    /// recorded in the mapping table. See <see cref="ExternalSourceWriter"/>.
     /// </summary>
-    /// <summary>How many lines a run of the builder holds.</summary>
-    private static int LinesIn(StringBuilder builder, int start, int length)
-    {
-        var lines = 1;
-        var end = start + length;
-
-        for (var at = start; at < end && at < builder.Length; at++)
-            if (builder[at] == '\n' && at + 1 < end) lines++;
-
-        return lines;
-    }
-
     private static void WriteMapped(
         StringBuilder builder,
         List<SourceMapping> mappings,
@@ -329,68 +321,40 @@ public static class VbHtmlCodeWriter
         int originalPosition,
         int originalLength,
         int originalLine,
-        Action write)
-    {
-        if (filePath is null)
-        {
-            write();
-            return;
-        }
-
-        builder.AppendLine($"#ExternalSource({PragmaPath(filePath)}, {originalLine})");
-
-        var generatedStart = builder.Length;
-        var generatedLine = CountLines(builder, generatedStart);
-
-        write();
-
-        var generatedLength = builder.Length - generatedStart;
-
-        builder.AppendLine("#End ExternalSource");
-
-        mappings.Add(new SourceMapping(
-            new SourceSpan(originalPosition, originalLength),
-            new SourceSpan(generatedStart, generatedLength),
-            originalLine,
-            generatedLine));
-
-        // A multi-line region needs one entry per line. Its lines are written
-        // out in the same order they were read, so the second template line
-        // is the second generated line, and so on. Without this a caret
-        // anywhere below the first line of a Code block mapped to nothing at
-        // all, and every delegated feature went quiet there.
-        var writtenLines = LinesIn(builder, generatedStart, generatedLength);
-
-        for (var offset = 1; offset < writtenLines; offset++)
-        {
-            mappings.Add(new SourceMapping(
-                new SourceSpan(originalPosition, originalLength),
-                new SourceSpan(generatedStart, generatedLength),
-                originalLine + offset,
-                generatedLine + offset));
-        }
-    }
+        Action write) =>
+        ExternalSourceWriter.WriteMapped(
+            builder, mappings, filePath, originalPosition, originalLength, originalLine, write);
 
     /// <summary>
-    /// A file path as a pragma can carry it.
-    ///
-    /// A quote in the name would end the string early, and a stray one turns
-    /// the rest of the generated file into nonsense. Razor hit the same class
-    /// of problem with Windows separators and had to fix it; this doubles the
-    /// quotes rather than trusting the name.
+    /// Every @Functions block, in the order written, wherever it sits.
     /// </summary>
-    private static string PragmaPath(string path) =>
-        "\"" + path.Replace("\"", "\"\"") + "\"";
-
-    /// <summary>How many lines have been written so far, counted from one.</summary>
-    private static int CountLines(StringBuilder builder, int upTo)
+    /// <remarks>
+    /// Found in the tree rather than read from the document's list of bodies:
+    /// the node carries where its body starts, which the mapping needs.
+    /// </remarks>
+    internal static IEnumerable<FunctionsNode> FunctionsIn(IEnumerable<VbHtmlNode> nodes)
     {
-        var lines = 1;
+        foreach (var node in nodes)
+        {
+            switch (node)
+            {
+                case FunctionsNode functions:
+                    yield return functions;
+                    break;
 
-        for (var i = 0; i < upTo; i++)
-            if (builder[i] == '\n') lines++;
+                case BlockNode block:
+                    foreach (var inner in FunctionsIn(block.Body)) yield return inner;
 
-        return lines;
+                    foreach (var clause in block.Clauses)
+                        foreach (var inner in FunctionsIn(clause.Body)) yield return inner;
+
+                    break;
+
+                case SectionNode section:
+                    foreach (var inner in FunctionsIn(section.Body)) yield return inner;
+                    break;
+            }
+        }
     }
 
     private static void WriteNodes(
@@ -584,7 +548,7 @@ public static class VbHtmlCodeWriter
                 WriteMapped(builder, mappings, filePath, statement.BodyPosition,
                     statement.Code.Length, statement.BodyLine, () =>
                     {
-                        foreach (var line in SplitLines(statement.Code))
+                        foreach (var line in ExternalSourceWriter.LinesOf(statement.Code))
                             builder.AppendLine($"{pad}{line}");
                     });
                 return;
@@ -630,21 +594,66 @@ public static class VbHtmlCodeWriter
                     block.Opening.Length, block.Line, () =>
                         builder.AppendLine($"{pad}{block.Opening}"));
 
-                WriteNodes(builder, block.Body, indent + 1, mappings, filePath, host);
+                WriteNodes(builder, BodyOf(block), indent + 1, mappings, filePath, host);
 
+                // Continuations and the closing keyword are mapped too: an
+                // ElseIf or a Case carries a condition of its own, and "Next"
+                // or "End If" is a line a breakpoint can be put on.
                 foreach (var clause in block.Clauses)
                 {
-                    builder.AppendLine($"{pad}{clause.Keyword}");
+                    WriteClosingOrClause(builder, mappings, filePath, pad,
+                        clause.Keyword, clause.Position, clause.Line);
+
                     WriteNodes(builder, clause.Body, indent + 1, mappings, filePath, host);
                 }
 
-                builder.AppendLine($"{pad}{block.Closing}");
+                WriteClosingOrClause(builder, mappings, filePath, pad,
+                    block.Closing, block.ClosingPosition, block.ClosingLine);
                 return;
         }
     }
 
-    private static IEnumerable<string> SplitLines(string code) =>
-        code.Split('\n').Select(l => l.TrimEnd('\r')).Where(l => l.Trim().Length > 0);
+    /// <summary>
+    /// What a block's opening section holds, as far as the writer is concerned.
+    /// </summary>
+    /// <remarks>
+    /// Between "Select Case x" and its first "Case" Visual Basic allows no
+    /// statement at all, and the line break after "@Select Case" was written
+    /// there as markup: a template with a Select Case never compiled (BC30058).
+    /// Whitespace there is dropped; anything else is left for the compiler to
+    /// report, since it is a mistake in the template.
+    /// </remarks>
+    internal static List<VbHtmlNode> BodyOf(BlockNode block)
+    {
+        if (!block.Opening.StartsWith("Select", StringComparison.OrdinalIgnoreCase))
+            return block.Body;
+
+        return block.Body
+            .Where(node => node is not HtmlNode html || html.Text.Trim().Length > 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Writes a continuation clause or a closing keyword, mapped when the
+    /// parser recorded where it was.
+    /// </summary>
+    /// <remarks>
+    /// A position of -1 is a node built without one — by a test, or a block
+    /// never closed — and is written unmapped rather than mapped to nowhere.
+    /// </remarks>
+    internal static void WriteClosingOrClause(
+        StringBuilder builder, List<SourceMapping> mappings, string? filePath,
+        string pad, string text, int position, int line)
+    {
+        if (position < 0)
+        {
+            builder.AppendLine($"{pad}{text}");
+            return;
+        }
+
+        ExternalSourceWriter.WriteMapped(builder, mappings, filePath, position,
+            text.Length, line, () => builder.AppendLine($"{pad}{text}"));
+    }
 
     /// <summary>
     /// Renders text as a Visual Basic string literal.

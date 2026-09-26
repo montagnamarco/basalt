@@ -113,7 +113,8 @@ public static class VbComponentWriter
         string className,
         string namespaceName,
         string? filePath,
-        string? route = null)
+        string? route = null,
+        string? checksum = null)
     {
         var builder = new StringBuilder();
         var mappings = new List<SourceMapping>();
@@ -137,6 +138,10 @@ public static class VbComponentWriter
             builder.AppendLine($"Imports {import}");
 
         if (document.Imports.Count > 0) builder.AppendLine();
+
+        // SHA-256 of the template as read from disk, when the caller has it.
+        ExternalSourceWriter.WriteChecksum(builder, filePath, checksum);
+
 
         builder.AppendLine($"Namespace {namespaceName}");
         builder.AppendLine();
@@ -178,10 +183,19 @@ public static class VbComponentWriter
 
         // @functions and @code both land here: methods, fields and properties
         // on the component itself.
-        foreach (var functions in document.Nodes.OfType<FunctionsNode>())
+        //
+        // Mapped line for line, like a view's @Functions, so a breakpoint in
+        // an event handler declared here binds to the template.
+        foreach (var functions in VbHtmlCodeWriter.FunctionsIn(document.Nodes))
         {
             builder.AppendLine();
-            builder.AppendLine(functions.Code);
+
+            ExternalSourceWriter.WriteMapped(builder, mappings, filePath,
+                functions.BodyPosition, functions.Code.Length, functions.BodyLine, () =>
+                {
+                    foreach (var line in ExternalSourceWriter.LinesOf(functions.Code))
+                        builder.AppendLine($"        {line}");
+                });
         }
 
         builder.AppendLine("    End Class");
@@ -448,9 +462,17 @@ public static class VbComponentWriter
                 break;
 
             case StatementNode statement:
+                // From the body, line for line, as a view does: the whole block
+                // written as one line put its second line at the left margin
+                // and anchored the pragma at "@Code" rather than at the first
+                // statement, a line early.
                 WriteMapped(builder, mappings, filePath,
-                    statement.BodyPosition, statement.Code.Length, statement.Line,
-                    () => builder.AppendLine($"{pad}{statement.Code}"));
+                    statement.BodyPosition, statement.Code.Length, statement.BodyLine,
+                    () =>
+                    {
+                        foreach (var line in ExternalSourceWriter.LinesOf(statement.Code))
+                            builder.AppendLine($"{pad}{line}");
+                    });
                 break;
 
             case BlockNode block:
@@ -462,18 +484,20 @@ public static class VbComponentWriter
                     block.Position + 1, block.Opening.Length, block.Line,
                     () => builder.AppendLine($"{pad}{block.Opening}"));
 
-                foreach (var child in block.Body)
+                foreach (var child in VbHtmlCodeWriter.BodyOf(block))
                     WriteNode(builder, child, ref sequence, indent + 4, mappings, filePath);
 
                 foreach (var clause in block.Clauses)
                 {
-                    builder.AppendLine($"{pad}{clause.Keyword}");
+                    VbHtmlCodeWriter.WriteClosingOrClause(builder, mappings, filePath, pad,
+                        clause.Keyword, clause.Position, clause.Line);
 
                     foreach (var child in clause.Body)
                         WriteNode(builder, child, ref sequence, indent + 4, mappings, filePath);
                 }
 
-                builder.AppendLine($"{pad}{block.Closing}");
+                VbHtmlCodeWriter.WriteClosingOrClause(builder, mappings, filePath, pad,
+                    block.Closing, block.ClosingPosition, block.ClosingLine);
                 break;
 
             case FunctionsNode:
@@ -491,14 +515,9 @@ public static class VbComponentWriter
     }
 
     /// <summary>
-    /// Writes one fragment, recording where it came from.
+    /// Writes one fragment, recording where it came from. See
+    /// <see cref="ExternalSourceWriter"/>, which views share.
     /// </summary>
-    /// <remarks>
-    /// The same shape the view writer uses, and for the same reason:
-    /// #ExternalSource makes the Visual Basic compiler blame the template
-    /// rather than generated code nobody wrote, and the mapping lets the
-    /// editor move a caret between the two.
-    /// </remarks>
     private static void WriteMapped(
         StringBuilder builder,
         List<SourceMapping> mappings,
@@ -507,52 +526,10 @@ public static class VbComponentWriter
         int originalLength,
         int originalLine,
         Action write,
-        int offset = 0)
-    {
-        if (filePath is null)
-        {
-            write();
-            return;
-        }
+        int offset = 0) =>
+        ExternalSourceWriter.WriteMapped(
+            builder, mappings, filePath, originalPosition, originalLength, originalLine, write, offset);
 
-        builder.AppendLine($"#ExternalSource(\"{filePath.Replace("\\", "\\\\")}\", {originalLine + 1})");
-
-        var start = builder.Length;
-        var generatedLine = CountLines(builder, start);
-
-        write();
-
-        var length = builder.Length - start;
-
-        // A directive has to start its own line, and a fragment written with
-        // Append rather than AppendLine leaves the builder mid-line: without
-        // this the directive was glued to the end of the expression and the
-        // generated file did not compile.
-        if (builder.Length > 0 && builder[builder.Length - 1] != '\n')
-            builder.AppendLine();
-
-        builder.AppendLine("#End ExternalSource");
-
-        // The offset skips whatever the line puts in front of the expression,
-        // so a caret in the template lands on the matching character rather
-        // than at the start of the statement carrying it.
-        mappings.Add(new SourceMapping(
-            new SourceSpan(originalPosition, originalLength),
-            new SourceSpan(start + offset, Math.Max(0, length - offset)),
-            originalLine,
-            generatedLine));
-    }
-
-    /// <summary>How many lines precede an offset.</summary>
-    private static int CountLines(StringBuilder builder, int offset)
-    {
-        var lines = 0;
-
-        for (var i = 0; i < offset && i < builder.Length; i++)
-            if (builder[i] == '\n') lines++;
-
-        return lines;
-    }
 
     /// <summary>
     /// Writes a run of markup as element calls.

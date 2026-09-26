@@ -36,6 +36,12 @@
     <ProjectReference Include="..\..\samples\Basalt.Sample.Plugin\Basalt.Sample.Plugin.vbproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <!-- Built, not referenced: it compiles the parser in as linked sources,
+         so referencing it would define every parser type twice. The tests
+         load it from disk as the compiler does. -->
+    <ProjectReference Include="..\..\src\Basalt.Razor.Vb.Generator\Basalt.Razor.Vb.Generator.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\Basalt.Data\Basalt.Data.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Designer\Basalt.Designer.csproj" />
     <ProjectReference Include="..\..\src\Basalt.Shell\Basalt.Shell.csproj" />

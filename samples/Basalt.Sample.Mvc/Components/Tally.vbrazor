@@ -1,0 +1,6 @@
+@* Not routed: here so the build compiles a component and its PDB can be read. *@
+<p>Tally: @count</p>
+
+@Functions
+    Private count As Integer = 3
+@End Functions

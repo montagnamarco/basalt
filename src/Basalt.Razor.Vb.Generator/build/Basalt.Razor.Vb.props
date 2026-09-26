@@ -27,7 +27,9 @@
     project can still remove or add to the set.
   -->
   <ItemGroup Condition="'$(BasaltRazorVbViewsCollected)' == 'basalt.razor.vb'">
-    <AdditionalFiles Include="**/*.vbp"
+    <!-- .vbpage, spelled out: the glob was "*.vbp", which names Visual Basic 6
+         project files, not pages. -->
+    <AdditionalFiles Include="**/*.vbpage"
                      Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
     <AdditionalFiles Include="**/*.vbhtml"
                      Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />

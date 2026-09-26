@@ -12,3 +12,5 @@ VBRZ010 | Basalt.Razor.Vb | Warning | A .vbrazor component appears in a non-Visu
 VBRZ011 | Basalt.Razor.Vb | Error | A .vbrazor component could not be read.
 VBRZ012 | Basalt.Razor.Vb | Warning | A .vbrazor component in a project that does not reference Blazor.
 VBP100 | Basalt.Pages | Error | A .vbpage page could not be generated.
+VBRZ013 | Basalt.Razor.Vb | Error | A .vbrazor component has a template problem the parser reported.
+VBRZ014 | Basalt.Razor.Vb | Warning | A .vbrazor component uses a directive that is not supported yet and is ignored.

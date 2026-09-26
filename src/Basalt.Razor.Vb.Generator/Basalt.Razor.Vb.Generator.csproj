@@ -130,6 +130,7 @@
     <Compile Include="../Basalt.Razor.Vb/TagHelperRewriting.cs" Link="Parser/TagHelperRewriting.cs" />
     <Compile Include="../Basalt.Razor.Vb/VbHtmlCodeWriter.cs" Link="Parser/VbHtmlCodeWriter.cs" />
     <Compile Include="../Basalt.Razor.Vb/VbComponentWriter.cs" Link="Parser/VbComponentWriter.cs" />
+    <Compile Include="../Basalt.Razor.Vb/ExternalSourceWriter.cs" Link="Parser/ExternalSourceWriter.cs" />
   </ItemGroup>
 
 </Project>

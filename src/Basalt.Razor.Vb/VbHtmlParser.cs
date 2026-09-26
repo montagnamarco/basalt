@@ -650,6 +650,13 @@ public sealed class VbHtmlParser
     private void ParseFunctionsBlock(
         List<VbHtmlNode> into, VbHtmlDocument document, int start, int line)
     {
+        // Where the members begin, past the line break after the keyword, so
+        // they can be mapped line for line like the body of a code block.
+        var bodyLine = line + LineBreaksBefore();
+        var bodyStart = _index;
+
+        while (bodyStart < _text.Length && char.IsWhiteSpace(_text[bodyStart])) bodyStart++;
+
         var body = ReadUntilKeyword("End Functions", out var closed);
 
         if (!closed)
@@ -661,7 +668,7 @@ public sealed class VbHtmlParser
         }
 
         document.Functions.Add(body.Trim());
-        into.Add(new FunctionsNode(body.Trim(), start, line));
+        into.Add(new FunctionsNode(body.Trim(), start, line, bodyLine, bodyStart));
     }
 
     /// <summary>
@@ -1121,6 +1128,11 @@ public sealed class VbHtmlParser
 
             if (string.Equals(stopped, closing, StringComparison.OrdinalIgnoreCase))
             {
+                // ParseInto has just consumed the keyword, which sits on the
+                // current line: nothing after it has been read yet.
+                block.ClosingPosition = _index - stopped.Length;
+                block.ClosingLine = _line;
+
                 // "@Next i" names the loop variable after the keyword. It
                 // belongs to the closing statement, and used to be left
                 // behind as literal text — so the page got a stray " i".
@@ -1133,9 +1145,13 @@ public sealed class VbHtmlParser
             }
 
             // A continuation: read its own clause and start a new section.
+            var keywordPosition = _index - stopped.Length;
+            var keywordLine = _line;
+
             var continuationClause = ReadToEndOfLine().TrimEnd();
 
-            var section = new BlockClause($"{stopped} {continuationClause.Trim()}".Trim());
+            var section = new BlockClause(
+                $"{stopped} {continuationClause.Trim()}".Trim(), keywordPosition, keywordLine);
             block.Clauses.Add(section);
             current = section.Body;
         }

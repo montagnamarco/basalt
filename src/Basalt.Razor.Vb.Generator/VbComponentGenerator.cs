@@ -44,6 +44,22 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor ComponentProblem = new(
+        "VBRZ013",
+        "Problem in a .vbrazor component",
+        "{0}",
+        "Basalt.Razor.Vb",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    private static readonly DiagnosticDescriptor ComponentDirectiveIgnored = new(
+        "VBRZ014",
+        "A directive in a .vbrazor component is not supported yet",
+        "{0}",
+        "Basalt.Razor.Vb",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
     private static readonly DiagnosticDescriptor NoBlazor = new(
         "VBRZ012",
         "Blazor is not referenced",
@@ -113,6 +129,27 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
             return;
         }
 
+        // What the parser found wrong, where it found it. They used to be
+        // dropped: an unclosed @If produced a component that failed later
+        // with a compiler error about generated code, or silently rendered
+        // half the markup.
+        foreach (var diagnostic in document.Diagnostics)
+        {
+            var at = new LinePosition(
+                Math.Max(0, diagnostic.Line - 1), Math.Max(0, diagnostic.Column - 1));
+
+            // A directive the parser does not support yet (@rendermode,
+            // @typeparam, ...) is skipped and the component still builds, as
+            // it did before these were reported: a warning, not an error that
+            // would break a project which compiled yesterday.
+            var descriptor = diagnostic.Id == "VBH008" ? ComponentDirectiveIgnored : ComponentProblem;
+
+            production.ReportDiagnostic(Diagnostic.Create(
+                descriptor,
+                Location.Create(template.Path, new TextSpan(0, 0), new LinePositionSpan(at, at)),
+                diagnostic.Message));
+        }
+
         // The folder the component sits in becomes part of its namespace, the
         // way it does for a view: two components with the same file name in
         // different folders are two classes, not one collision.
@@ -128,18 +165,31 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
             ? "Components"
             : $"Components.{folder}";
 
-        var source = VbComponentWriter.Write(document, template.ClassName, namespaceName);
+        // With the template's path, so the generated code carries
+        // #ExternalSource: without it a component compiled into the build had
+        // no line in the PDB pointing at the .vbrazor, and no breakpoint in
+        // one could ever bind.
+        var source = VbComponentWriter
+            .WriteWithMap(
+                document, template.ClassName, namespaceName, template.Path,
+                checksum: template.Checksum)
+            .Code;
 
         production.AddSource(
             $"{template.ClassName}.Component.g.vb",
             SourceText.From(source, System.Text.Encoding.UTF8));
     }
 
-    private static Component Read(AdditionalText file, CancellationToken ct) =>
-        new(
-            Path: file.Path,
-            Text: file.GetText(ct)?.ToString() ?? string.Empty,
-            ClassName: ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(file.Path)));
+    private static Component Read(AdditionalText file, CancellationToken ct)
+    {
+        var source = file.GetText(ct);
 
-    private sealed record Component(string Path, string Text, string ClassName);
+        return new(
+            Path: file.Path,
+            Text: source?.ToString() ?? string.Empty,
+            ClassName: ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(file.Path)),
+            Checksum: TemplateChecksum.Of(source));
+    }
+
+    private sealed record Component(string Path, string Text, string ClassName, string? Checksum);
 }

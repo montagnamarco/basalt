@@ -124,6 +124,19 @@ public sealed class BlockNode : VbHtmlNode
     /// </summary>
     public string Closing { get; internal set; }
 
+    /// <summary>
+    /// Where the closing keyword sits in the template, past its "@"; -1 when
+    /// the block was never closed.
+    /// </summary>
+    /// <remarks>
+    /// Recorded so the closing line can carry its own #ExternalSource: a
+    /// breakpoint on "@Next" or "@End If" otherwise had no line to bind to.
+    /// </remarks>
+    public int ClosingPosition { get; internal set; } = -1;
+
+    /// <summary>The one-based line of the closing keyword.</summary>
+    public int ClosingLine { get; internal set; }
+
     public List<VbHtmlNode> Body { get; } = new();
 
     /// <summary>
@@ -136,9 +149,27 @@ public sealed class BlockNode : VbHtmlNode
 /// <summary>A continuation inside a block, such as ElseIf or Case.</summary>
 public sealed class BlockClause
 {
-    public BlockClause(string keyword) => Keyword = keyword;
+    public BlockClause(string keyword, int position = -1, int line = 0)
+    {
+        Keyword = keyword;
+        Position = position;
+        Line = line;
+    }
 
     public string Keyword { get; }
+
+    /// <summary>
+    /// Where the keyword sits in the template, past its "@"; -1 when unknown.
+    /// </summary>
+    /// <remarks>
+    /// An ElseIf or Case carries a condition of its own, and without a
+    /// position it could be neither mapped for the editor nor given a line
+    /// for the debugger.
+    /// </remarks>
+    public int Position { get; }
+
+    /// <summary>The one-based line of the keyword.</summary>
+    public int Line { get; }
 
     public List<VbHtmlNode> Body { get; } = new();
 }
@@ -171,10 +202,27 @@ public sealed class SectionNode : VbHtmlNode
 /// </summary>
 public sealed class FunctionsNode : VbHtmlNode
 {
-    public FunctionsNode(string code, int position, int line) : base(position, line) =>
+    public FunctionsNode(
+        string code, int position, int line, int? bodyLine = null, int? bodyPosition = null)
+        : base(position, line)
+    {
         Code = code;
+        BodyLine = bodyLine ?? line;
+        BodyPosition = bodyPosition ?? position;
+    }
 
     public string Code { get; }
+
+    /// <summary>Where <see cref="Code"/> begins in the template.</summary>
+    /// <remarks>
+    /// Past the keyword and the line break after it, as for a code block: the
+    /// members are mapped line for line from here, which is what lets a
+    /// breakpoint inside a method declared in @Functions bind at all.
+    /// </remarks>
+    public int BodyPosition { get; }
+
+    /// <summary>The one-based line <see cref="Code"/> begins on.</summary>
+    public int BodyLine { get; }
 }
 
 public sealed class DirectiveNode : VbHtmlNode

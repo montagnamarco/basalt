@@ -158,6 +158,17 @@ public static class VbHtmlCodeRegions
 
         while (at < line.Length && (line[at] == ' ' || line[at] == '\t')) at++;
 
+        // A component writes an expression into a local of its own,
+        // "Dim __v3 = ", before handing it to AddContent. Without skipping it
+        // a caret after "Model." landed inside "__v3", and completion was
+        // asked about the local instead of the model.
+        if (string.CompareOrdinal(line, at, ComponentLocal, 0, ComponentLocal.Length) == 0)
+        {
+            var equals = line.IndexOf(" = ", at, StringComparison.Ordinal);
+
+            if (equals >= 0) return equals + " = ".Length;
+        }
+
         foreach (var call in Wrappers)
         {
             if (at + call.Length <= line.Length &&
@@ -173,6 +184,9 @@ public static class VbHtmlCodeRegions
     /// "WriteRaw(" is not read as "Write" followed by something else.
     /// </summary>
     private static readonly string[] Wrappers = ["WriteRaw(", "Write("];
+
+    /// <summary>How the component writer's expression locals begin.</summary>
+    private const string ComponentLocal = "Dim __v";
 
     /// <summary>How much whitespace a line starts with.</summary>
     private static int LeadingWhitespace(string text)
