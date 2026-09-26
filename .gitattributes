@@ -1,0 +1,4 @@
+# Shell scripts run under bash, which reads a carriage return as part of each
+# command: a Windows checkout with CRLF could not run build/pack.sh even from
+# Git Bash.
+*.sh text eol=lf
