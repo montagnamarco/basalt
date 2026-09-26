@@ -66,12 +66,15 @@ public sealed class VbHtmlRangeFormattingHandler : DocumentRangeFormattingHandle
 
     public VbHtmlRangeFormattingHandler(DocumentStore documents) => _documents = documents;
 
-    public override async Task<TextEditContainer?> Handle(
+    public override async Task<TextEditContainer> Handle(
         DocumentRangeFormattingParams request, CancellationToken ct)
     {
         var document = _documents.Get(request.TextDocument.Uri.ToString());
 
-        if (document is null) return null;
+        // An empty list rather than null: this base class, unlike the other
+        // two, declares its result non-nullable, and to the client "no edits"
+        // means the same thing either way.
+        if (document is null) return new TextEditContainer();
 
         var start = Offsets.ToOffset(document.Text, request.Range.Start);
         var end = Offsets.ToOffset(document.Text, request.Range.End);
@@ -81,7 +84,7 @@ public sealed class VbHtmlRangeFormattingHandler : DocumentRangeFormattingHandle
                 new LanguageDocument(document.Uri, document.Text), start, end - start, ct)
             .ConfigureAwait(false);
 
-        return Edits.ReplacingWholeDocument(document.Text, result.Text);
+        return Edits.ReplacingWholeDocument(document.Text, result.Text) ?? new TextEditContainer();
     }
 
     protected override DocumentRangeFormattingRegistrationOptions CreateRegistrationOptions(
@@ -128,7 +131,7 @@ public sealed class VbHtmlOnTypeFormattingHandler : DocumentOnTypeFormattingHand
         // Only on Enter. The trigger list also carries a space, and closing a
         // block halfway through typing its condition would be maddening.
         var text = request.Character == "\n"
-            ? await Closed(languageDocument with { Text = result.Text }, request.Position, ct)
+            ? await ClosedAsync(languageDocument with { Text = result.Text }, request.Position, ct)
                 .ConfigureAwait(false)
             : result.Text;
 
@@ -143,7 +146,7 @@ public sealed class VbHtmlOnTypeFormattingHandler : DocumentOnTypeFormattingHand
     /// <summary>
     /// The document with the block this line opened closed below it.
     /// </summary>
-    private async Task<string> Closed(
+    private async Task<string> ClosedAsync(
         LanguageDocument document, Position position, CancellationToken ct)
     {
         var closing = await _formatter

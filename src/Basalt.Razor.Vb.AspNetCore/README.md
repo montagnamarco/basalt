@@ -92,9 +92,10 @@ the code.
 | `@<p>` markup transitions | yes |
 | Control flow: `If`, `For Each`, `Select Case`, `Using`, … | yes |
 | `asp-controller`, `asp-action`, `asp-page` on `<a>` and `<form>` | yes |
-| Other tag helpers (`asp-for`, validation) | not yet — the attribute is dropped |
+| `asp-for` on `<input>`, `<textarea>` and `<label>` | partly — name, id and value by textual rewrite; no validation attributes, no `[Display]` |
+| Other tag helpers (validation, `select`, `environment`, …) | not yet — the attribute is dropped |
 | Tag helpers of your own | not yet |
-| Blazor components | no |
+| Blazor components | `.vbrazor`, compiled by the `Basalt.Razor.Vb` generator; static rendering only for now |
 
 ### About tag helpers
 

@@ -16,7 +16,7 @@ public sealed class ProcessRunService : IDisposable
     public void Start(string projectPath, string configuration = "Debug")
     {
         if (IsRunning)
-            throw new InvalidOperationException("L'applicazione è già in esecuzione.");
+            throw new InvalidOperationException("The application is already running.");
 
         var startInfo = new ProcessStartInfo("dotnet")
         {

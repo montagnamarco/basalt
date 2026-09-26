@@ -27,7 +27,7 @@ public sealed class VbViewsOverHttpTests
         // The body carries the reason when it is not OK; without it the
         // failure is a bare status code and says nothing about why.
         if (response.StatusCode != HttpStatusCode.OK)
-            Assert.Fail(await response.Content.ReadAsStringAsync());
+            Assert.Fail(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
 
         return await response.Content.ReadAsStringAsync();
     }
@@ -107,7 +107,7 @@ public sealed class VbViewsOverHttpTests
         // the whole site returns 500 — every page, not just the one.
         var html = await GetAsync("/");
 
-        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(html, "<html>").Count);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "<html>"));
     }
 
     [Fact]
@@ -268,7 +268,7 @@ public sealed class VbViewsOverHttpTests
         // ship without CSRF protection and nothing would look wrong.
         var response = await _factory.CreateClient()
             .PostAsync("/Contact", new FormUrlEncodedContent(
-                new Dictionary<string, string> { ["Name"] = "Ada" }));
+                new Dictionary<string, string> { ["Name"] = "Ada" }), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -278,7 +278,7 @@ public sealed class VbViewsOverHttpTests
     {
         var client = _factory.CreateClient();
 
-        var page = await client.GetStringAsync("/Contact");
+        var page = await client.GetStringAsync("/Contact", TestContext.Current.CancellationToken);
         Assert.Contains("not posted yet", page);
 
         var token = System.Text.RegularExpressions.Regex.Match(
@@ -291,12 +291,12 @@ public sealed class VbViewsOverHttpTests
             {
                 ["Name"] = "Ada",
                 ["__RequestVerificationToken"] = token,
-            }));
+            }), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         // BindProperty filled Name, and OnPost read it.
-        Assert.Contains("posted by Ada", await response.Content.ReadAsStringAsync());
+        Assert.Contains("posted by Ada", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]

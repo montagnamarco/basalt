@@ -19,6 +19,12 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.8.0" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Rule metadata the analyzer release-tracking check reads. -->
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
   <!--
     The reader and the writers as sources rather than as a reference: a
     generator runs inside the compiler and can only load netstandard2.0

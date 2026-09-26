@@ -14,7 +14,7 @@ public partial class NewSolutionDialog : Window
     {
         InitializeComponent();
 
-        NameBox.Text = "MiaApplicazione";
+        NameBox.Text = "MyApplication";
         PathBox.Text = DefaultParentDirectory();
 
         NameBox.TextChanged += (_, _) => UpdatePreview();

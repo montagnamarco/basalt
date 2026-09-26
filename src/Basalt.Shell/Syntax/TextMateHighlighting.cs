@@ -118,7 +118,8 @@ public sealed class TextMateHighlighting : IDisposable
 
         if (extension == ".vbhtml") return VbHtmlGrammar.ScopeName;
 
-        // Roslyn colours Visual Basic, and it does so semantically.
+        // Visual Basic keeps the editor's built-in lexical definition for now;
+        // a Roslyn classifier (semantic colouring) is planned but not written.
         if (extension == ".vb") return null;
 
         if (!Handled.Contains(extension)) return null;

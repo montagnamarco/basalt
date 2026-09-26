@@ -31,7 +31,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor WrongLanguage = new(
         "VBRZ010",
         "Blazor components in Visual Basic need a Visual Basic project",
-        "'{0}' is a Visual Basic component and this project is not Visual Basic, so nothing was generated for it.",
+        "'{0}' is a Visual Basic component and this project is not Visual Basic, so nothing was generated for it",
         "Basalt.Razor.Vb",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);

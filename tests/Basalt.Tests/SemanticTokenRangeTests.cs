@@ -61,7 +61,7 @@ public class SemanticTokenRangeTests
         // NullReferenceException; 5 tokens once the client declared support.
         var handler = new VbHtmlSemanticTokensHandler(new DocumentStore());
 
-        var document = await handler.GetTokensDocumentForTest();
+        var document = await handler.GetTokensDocumentForTestAsync();
 
         Assert.NotNull(document);
     }

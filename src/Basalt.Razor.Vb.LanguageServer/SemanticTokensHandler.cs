@@ -458,7 +458,7 @@ public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
     /// A seam for the tests: the failure this guards against happens before
     /// any capability exchange, which a test cannot otherwise reach.
     /// </remarks>
-    internal Task<SemanticTokensDocument> GetTokensDocumentForTest() =>
+    internal Task<SemanticTokensDocument> GetTokensDocumentForTestAsync() =>
         GetSemanticTokensDocument(null!, CancellationToken.None);
 
     protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(

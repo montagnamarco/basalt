@@ -92,7 +92,7 @@ public static class CodeBehindGenerator
             SourceLanguage.VisualBasic =>
                 $"""
                     Private Sub {handlerName}(sender As Object, e As {eventArgsType})
-                        ' TODO: implementare
+                        ' TODO: implement
                     End Sub
                 """,
             _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unsupported language.")

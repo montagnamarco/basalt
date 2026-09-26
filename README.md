@@ -66,8 +66,10 @@ exists.
   and identifiers follow the project's real symbols
   (`console.writeline` → `Console.WriteLine`). Strings and comments are left
   alone
-- **Integrated terminals** on a real pseudo-terminal — shell prompts, colours,
-  `vim` and `top` all work
+- **Integrated terminals** on a pseudo-terminal on macOS and Linux, where shell
+  prompts work; colours, cursor addressing and full-screen programs such as
+  `vim` are not rendered yet, and on Windows the terminal does not start yet
+  (ConPTY is planned)
 - **Git**: branch, status, staging, commit, history
 - **Dockable panels** that split, float into their own window, and restore
 - **New Solution** generating VB.NET solutions that are verified by tests that
@@ -167,8 +169,10 @@ The engine. It carries three things that are useless apart:
 
 At build time the props collect every `.vbhtml` in the project and hand them to
 the compiler as `AdditionalFiles`. The generator parses each one and emits a
-Visual Basic class inheriting `RazorPage(Of TModel)`, carrying a
-`[RazorCompiledItem]` attribute so ASP.NET Core's discovery finds it.
+Visual Basic class inheriting `RazorPage(Of TModel)`. `AddVbViews()` registers
+the view factory that finds those classes in the assembly; Razor Pages also
+carry a `[RazorCompiledItem]` attribute, which is how ASP.NET Core discovers
+them.
 
 `Views/Home/Index.vbhtml` becomes the type `YourSite.Views.Home.Index` inside
 your own assembly. Nothing is compiled at runtime, so there is no first-request
@@ -242,9 +246,9 @@ that understands Visual Basic block structure — `If … Then` / `End If`,
 ends with a keyword, not a brace.
 
 **3. The writer emits Visual Basic.** One class per view, inheriting
-`RazorPage(Of TModel)` (or `RazorPages.Page` for a `.cshtml`-style page),
-carrying a `[RazorCompiledItem]` attribute so ASP.NET Core's discovery finds it
-without being told.
+`RazorPage(Of TModel)` (or `RazorPages.Page` for a `.cshtml`-style page). A page
+carries a `[RazorCompiledItem]` attribute so ASP.NET Core discovers it without
+being told; an MVC view is found by the view factory `AddVbViews()` registers.
 
 **4. Source mappings are recorded.** Every fragment of Visual Basic that came
 from the template carries a mapping back to its original line and column, and
@@ -312,7 +316,7 @@ same way. Markup and code nest freely in both directions.
 | `@ModelType T` | the view's model type |
 | `@Imports Ns` | a namespace import for this view |
 | `@Inherits Base` | an explicit base class |
-| `@Layout "…"` | the layout to wrap this view in |
+| `Layout = "…"` inside `@Code` | the layout to wrap this view in (`@Layout` as a directive is not supported yet) |
 | `@Section Name … @End Section` | a named section for the layout |
 | `@Code … @End Code` | a block of statements |
 | `@Functions … @End Functions` | methods and fields on the generated class |
@@ -381,9 +385,10 @@ dotnet new blazor -lang VB -o MyApp
 cd MyApp && dotnet run
 ```
 
-**Server, WebAssembly and Auto need nothing different.** They differ in where
-a component runs, not in what is compiled for it, so the same `.vbrazor`
-serves all three.
+**Only static server rendering is verified today.** The template is not
+interactive yet — its counter button does nothing — and `@rendermode`,
+interactive Server, WebAssembly and Auto have not been tested with `.vbrazor`
+components. They are planned, not promised.
 
 ### What the compiler does differently
 

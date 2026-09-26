@@ -141,7 +141,7 @@
 
         <StackPanel Spacing="6">
           <TextBlock Text="Nome della soluzione" FontWeight="SemiBold" FontSize="12" />
-          <TextBox x:Name="NameBox" PlaceholderText="MiaApplicazione" />
+          <TextBox x:Name="NameBox" PlaceholderText="MyApplication" />
         </StackPanel>
 
         <StackPanel Spacing="6">
