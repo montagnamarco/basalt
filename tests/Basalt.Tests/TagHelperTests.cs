@@ -143,6 +143,55 @@ public sealed class TagHelperTests
     }
 
     [Fact]
+    public void ATextAreaShowsItsValueAsContent()
+    {
+        // A textarea has no value attribute: written as one, the browser
+        // ignored it and every edit form opened with its text areas empty.
+        var code = Generate("""<textarea asp-for="Notes"></textarea>""");
+
+        Assert.Contains("Write(Model.Notes)", code);
+        Assert.DoesNotContain("value=", code);
+        Assert.Contains("""<textarea name=""Notes"" id=""Notes"">""", code);
+    }
+
+    [Fact]
+    public void AnAttributeWithoutAValueDoesNotStopTheRewriting()
+    {
+        // "required" used to end the reading of the tag, and asp-for went to
+        // the browser as it was, with no name, id or value.
+        var code = Generate("""<input asp-for="Name" required>""");
+
+        Assert.Contains("Write(Model.Name)", code);
+        Assert.Contains(" required ", code);
+        Assert.DoesNotContain("asp-for", code);
+    }
+
+    [Fact]
+    public void AHelperInATagWithAnExpressionIsStillRewritten()
+    {
+        // The parser cuts the markup at the "@", so the tag never reached the
+        // rewriting whole, and the link went out with asp-action and no href.
+        var code = Generate("""<a asp-action="Edit" class="@css">x</a>""");
+
+        Assert.Contains("""Url.Action("Edit", Nothing)""", code);
+        Assert.Contains("css", code);
+        Assert.DoesNotContain("asp-action", code);
+    }
+
+    [Fact]
+    public void ANestedPropertyGetsTheIdTheFrameworkWouldGiveIt()
+    {
+        // Address.City posts back under its own name and is identified as
+        // Address_City, as ASP.NET Core does; the label must point there.
+        var code = Generate(
+            """<label asp-for="Address.City">City</label><input asp-for="Address.City" />""");
+
+        Assert.Contains("name=\"\"Address.City\"\"", code);
+        Assert.Contains("id=\"\"Address_City\"\"", code);
+        Assert.Contains("""Write("Address_City")""", code);
+    }
+
+    [Fact]
     public void TheStandaloneRuntimeLeavesThemAlone()
     {
         // Outside a web application there is no Url helper to call.
