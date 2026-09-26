@@ -370,6 +370,25 @@ public sealed class VbHtmlParser
             return;
         }
 
+        // The tag helper directives, as C# Razor has them: which tag helpers
+        // are in scope. They used to be refused with VBH008.
+        foreach (var kind in TagHelperDirectiveNames)
+        {
+            if (!LooksLikeKeywordAt(_index, kind)) continue;
+
+            var after = _index + kind.Length;
+
+            if (after < _text.Length && !char.IsWhiteSpace(_text[after])) continue;
+
+            Advance(kind.Length);
+
+            var value = ReadToEndOfLine().Trim().Trim('"').Trim();
+
+            document.TagHelperDirectives.Add(new TagHelperDirective(kind, value));
+            into.Add(new DirectiveNode(kind, value, start, line));
+            return;
+        }
+
         if (TryReadKeyword("Namespace", out _))
         {
             var value = ReadToEndOfLine().Trim();
@@ -1341,9 +1360,13 @@ public sealed class VbHtmlParser
     /// will contain them, and saying "not supported" is more use than writing
     /// the word into the page.
     /// </summary>
+    /// <summary>The directives that decide which tag helpers apply.</summary>
+    private static readonly string[] TagHelperDirectiveNames =
+        ["addTagHelper", "removeTagHelper", "tagHelperPrefix"];
+
     private static readonly string[] NotSupported =
     [
-        "addTagHelper", "removeTagHelper", "tagHelperPrefix",
+        // The tag helper directives are read before this list is consulted.
         "typeparam", "rendermode", "preservewhitespace", "helper", "layout"
     ];
 
@@ -1358,9 +1381,6 @@ public sealed class VbHtmlParser
 
         "typeparam" or "rendermode" or "preservewhitespace" =>
             $"@{name} belongs to Blazor components, which Basalt does not render.",
-
-        "addtaghelper" or "removetaghelper" or "taghelperprefix" =>
-            $"@{name} is not supported: Basalt has no tag helpers.",
 
         _ => $"@{name} is not supported by Basalt."
     };

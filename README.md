@@ -327,9 +327,18 @@ same way. Markup and code nest freely in both directions.
 
 ### Tag helpers
 
-`asp-controller`, `asp-action`, `asp-page` and `asp-for` are rewritten at
-compile time — `asp-for` emits the matching `name`, `id` and current value on
-`input`, `label` and `textarea`.
+With `@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers` in `_ViewImports.vbhtml`
+(the templates add it), tag helpers run exactly as in a `.cshtml`: the generator
+finds every `ITagHelper` in the assemblies you name — the framework's and your
+own, written in VB — and emits the same runtime calls the C# compiler does.
+Forms get their antiforgery token, `asp-for` its `data-val-*` attributes and
+`[Display]` label, `select asp-items`, `asp-route-*`, `<partial>`,
+`<environment>` and the rest all work. `@removeTagHelper`, `@tagHelperPrefix` and
+`<!element>` opt-out work as in C#.
+
+Without `@addTagHelper` the older compile-time rewriting of `asp-controller`,
+`asp-action`, `asp-page` and `asp-for` still applies, so existing views keep
+working. `<vc:name>` view component tags are not generated yet.
 
 ---
 
@@ -735,9 +744,9 @@ shows something else.
 
 - **Rider's New Solution dialog** does not offer VB for web projects
   ([above](#project-templates)). Use `dotnet new`.
-- **Tag helpers** cover `asp-controller`, `asp-action`, `asp-page` and
-  `asp-for`. `asp-validation-for`, `@inject` on tag helpers, and
-  `addTagHelper`/`removeTagHelper`/`tagHelperPrefix` are not implemented yet.
+- **Tag helpers**: `<vc:name>` view component tags are not generated yet, and
+  attribute values are matched by name only (a `[type=text]` selector in
+  `[HtmlTargetElement]` is treated as "has a type attribute").
 - **The Visual Studio and VS Code extensions** are built from the same server as
   the Rider plugin but have had less use. Reports are welcome.
 - **`.vbpage` pages** are under active development — the newest part of the

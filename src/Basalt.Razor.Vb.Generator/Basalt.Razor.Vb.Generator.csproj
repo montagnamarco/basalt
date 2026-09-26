@@ -131,6 +131,9 @@
     <Compile Include="../Basalt.Razor.Vb/VbHtmlCodeWriter.cs" Link="Parser/VbHtmlCodeWriter.cs" />
     <Compile Include="../Basalt.Razor.Vb/VbComponentWriter.cs" Link="Parser/VbComponentWriter.cs" />
     <Compile Include="../Basalt.Razor.Vb/ExternalSourceWriter.cs" Link="Parser/ExternalSourceWriter.cs" />
+    <Compile Include="../Basalt.Razor.Vb/TagHelperCatalog.cs" Link="Parser/TagHelperCatalog.cs" />
+    <Compile Include="../Basalt.Razor.Vb/TagHelperBinding.cs" Link="Parser/TagHelperBinding.cs" />
+    <Compile Include="../Basalt.Razor.Vb/TagHelperWriter.cs" Link="Parser/TagHelperWriter.cs" />
   </ItemGroup>
 
 </Project>

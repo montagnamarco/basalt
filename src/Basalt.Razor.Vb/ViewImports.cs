@@ -65,6 +65,11 @@ public static class ViewImports
         view.ModelType ??= shared.ModelType;
         view.Inherits ??= shared.Inherits;
 
+        // Before the view's own, in the order the shared files come: a
+        // @removeTagHelper in the view has to act on what they added.
+        view.TagHelperDirectives.InsertRange(
+            view.TagHelperDirectives.Count(d => d.IsInherited), shared.TagHelperDirectives.Select(d => d with { IsInherited = true }));
+
         foreach (var service in shared.Injected)
         {
             if (!view.Injected.Any(s => string.Equals(s.Name, service.Name, StringComparison.OrdinalIgnoreCase)))

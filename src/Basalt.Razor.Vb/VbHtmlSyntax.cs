@@ -310,6 +310,12 @@ public sealed class VbHtmlDocument
     /// <summary>Attributes to put on the generated class, from @Attribute.</summary>
     public List<string> Attributes { get; } = [];
 
+    /// <summary>
+    /// @addTagHelper, @removeTagHelper and @tagHelperPrefix, in the order
+    /// written, shared files first: the order decides what is in scope.
+    /// </summary>
+    public List<TagHelperDirective> TagHelperDirectives { get; } = [];
+
     /// <summary>Namespaces imported by <c>@Imports</c>.</summary>
     public List<string> Imports { get; } = new();
 
@@ -355,4 +361,13 @@ public sealed class VbHtmlDiagnostic
     public string Message { get; }
     public int Line { get; }
     public int Column { get; }
+}
+
+/// <summary>One of the directives that decide which tag helpers apply.</summary>
+/// <param name="Kind">"addTagHelper", "removeTagHelper" or "tagHelperPrefix".</param>
+/// <param name="Value">What follows it, unquoted: "*, Microsoft.AspNetCore.Mvc.TagHelpers".</param>
+public sealed record TagHelperDirective(string Kind, string Value)
+{
+    /// <summary>Whether it came from a _ViewImports file rather than the view itself.</summary>
+    public bool IsInherited { get; init; }
 }

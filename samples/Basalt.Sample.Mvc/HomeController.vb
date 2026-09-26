@@ -9,4 +9,8 @@ Public Class HomeController
         Return View(New Customer With {.Name = "Ada", .Orders = 3})
     End Function
 
+    Public Function Helpers(Optional id As Integer = 0) As IActionResult
+        Return View(New Order With {.Customer = "Ada"})
+    End Function
+
 End Class

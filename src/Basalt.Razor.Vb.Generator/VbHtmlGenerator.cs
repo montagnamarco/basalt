@@ -57,12 +57,16 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
                 ? value
                 : null);
 
+        // The tag helpers the project can use, compared by content so an
+        // edit that adds none does not regenerate every view.
+        var tagHelpers = context.CompilationProvider.Select(TagHelperDiscovery.Discover);
+
         var everything = templates.Collect().Combine(rootNamespace).Combine(language)
-            .Combine(host).Combine(projectDir);
+            .Combine(host).Combine(projectDir).Combine(tagHelpers);
 
         context.RegisterSourceOutput(everything, (production, data) =>
         {
-            var ((((all, root), compilationLanguage), viewHost), projectDirectory) = data;
+            var (((((all, root), compilationLanguage), viewHost), projectDirectory), tagHelperIndex) = data;
 
             var shared = all.Where(t => ViewImports.IsShared(t.Path)).ToList();
 
@@ -78,7 +82,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
                     continue;
 
                 Emit(production, template, root, compilationLanguage, shared, viewHost,
-                    projectDirectory);
+                    projectDirectory, tagHelperIndex.Catalog);
             }
         });
     }
@@ -272,7 +276,8 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         string language,
         IReadOnlyList<Template> shared,
         ViewHost host,
-        string? projectDirectory)
+        string? projectDirectory,
+        TagHelperCatalog tagHelpers)
     {
         // Only Visual Basic projects get Visual Basic views. In a C# project a
         // .vbhtml file is reported rather than silently ignored, because a
@@ -393,7 +398,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         var code = VbHtmlCodeWriter
             .WriteWithMap(
                 document, template.ClassName, namespaceName, template.Path, templateHost,
-                template.Checksum)
+                template.Checksum, tagHelpers)
             .Code;
 
 

@@ -103,9 +103,17 @@ public sealed class UnsupportedDirectiveTests
     }
 
     [Fact]
-    public void SaysSoAboutTagHelpers()
+    public void TagHelperDirectivesAreSupportedNow()
     {
-        Assert.NotNull(Problem("@addTagHelper *, MyApp\n<p>a</p>"));
+        // Refused until the tag helper engine existed; kept as a test, like
+        // @page above, because a regression would silently drop every tag
+        // helper in a site.
+        var document = VbHtmlParser.Parse("@addTagHelper *, MyApp\n<p>a</p>");
+
+        Assert.Null(Problem("@addTagHelper *, MyApp\n<p>a</p>"));
+        Assert.Equal(
+            new TagHelperDirective("addTagHelper", "*, MyApp"),
+            Assert.Single(document.TagHelperDirectives));
     }
 
     [Fact]

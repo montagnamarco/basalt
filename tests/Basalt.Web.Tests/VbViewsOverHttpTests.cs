@@ -63,6 +63,117 @@ public sealed class VbViewsOverHttpTests
         Assert.Equal(HttpStatusCode.NotFound, notANumber.StatusCode);
     }
 
+    /// <summary>
+    /// The element a regular expression finds, for tests that check its
+    /// attributes without depending on their order.
+    /// </summary>
+    private static string Element(string html, string pattern)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(html, pattern);
+
+        Assert.True(match.Success, $"No match for {pattern} in:\n{html}");
+
+        return match.Value;
+    }
+
+    [Fact]
+    public async Task AFormGetsItsAntiforgeryTokenFromTheTagHelper()
+    {
+        // FormTagHelper and RenderAtEndOfFormTagHelper, as in a .cshtml: the
+        // hidden token is added without the view asking.
+        var html = await GetAsync("/Home/Helpers");
+
+        Assert.Contains("name=\"__RequestVerificationToken\"", html);
+        Assert.Contains("action=\"/Home/Helpers\"", Element(html, "<form[^>]*>"));
+    }
+
+    [Fact]
+    public async Task ValidationAttributesComeFromTheModelsMetadata()
+    {
+        // [Required] and [Range] become data-val attributes, which the
+        // textual rewriting never produced; the label reads [Display].
+        var html = await GetAsync("/Home/Helpers");
+
+        var customer = Element(html, "<input[^>]*name=\"Customer\"[^>]*>");
+        var quantity = Element(html, "<input[^>]*name=\"Quantity\"[^>]*>");
+
+        Assert.Contains("data-val-required", customer);
+        Assert.Contains("data-val-range", quantity);
+        Assert.Contains("type=\"number\"", quantity);
+        Assert.Contains(">Customer name</label>", html);
+        Assert.Contains("data-valmsg-for=\"Customer\"", html);
+    }
+
+    [Fact]
+    public async Task ASelectListsItsItemsWithTheValueSelected()
+    {
+        var html = await GetAsync("/Home/Helpers");
+
+        var select = Element(html, "<select[^>]*>[\\s\\S]*?</select>");
+
+        Assert.Contains("<option value=\"red\">Red</option>", select);
+        Assert.Contains("<option selected=\"selected\" value=\"green\">Green</option>", select);
+    }
+
+    [Fact]
+    public async Task RouteValuesPartialsEnvironmentAndTheSitesOwnTagHelpers()
+    {
+        var html = await GetAsync("/Home/Helpers");
+
+        // asp-route-id fills RouteValues, one entry per prefixed attribute.
+        Assert.Contains("href=\"/Home/Helpers/42\"", html);
+
+        // <partial> renders the partial.
+        Assert.Contains("<span class=\"badge\">VB</span>", html);
+
+        // <environment> keeps only what applies (the tests run in Development).
+        Assert.Contains("in development", html);
+        Assert.DoesNotContain("not development", html);
+
+        // A tag helper written in Visual Basic in the site itself.
+        Assert.Contains("<strong>QUIET PLEASE!</strong>", html);
+
+        // And no asp-* attribute reaches the browser.
+        Assert.DoesNotContain("asp-", html);
+    }
+
+    [Fact]
+    public async Task AnAttributeWithOneValueIsConditionalOnATagHelperElementToo()
+    {
+        // disabled="@False" rendered disabled="False", which disables the
+        // field; as in a .cshtml it is left out, and True writes its name.
+        var html = await GetAsync("/Home/Helpers");
+
+        Assert.DoesNotContain("disabled", Element(html, "<input[^>]*id=\"off\"[^>]*>"));
+        Assert.Contains("readonly=\"readonly\"", Element(html, "<input[^>]*id=\"on\"[^>]*>"));
+    }
+
+    [Fact]
+    public async Task TagStructureCommentsAndAttributeNamesFollowRazor()
+    {
+        var html = await GetAsync("/Home/Helpers");
+
+        // <partial name="_Badge"> without a slash: PartialTagHelper declares no
+        // end tag, and the element was left unbound waiting for one.
+        Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(html, "<span class=\"badge\">VB</span>").Count);
+
+        // A tag helper inside an HTML comment does not run.
+        Assert.Contains("<!-- <shout text=\"commented\"></shout> -->", html);
+
+        // LevelID is level-id, as Razor names it.
+        Assert.Contains("<strong>LEVEL!!!</strong>", html);
+    }
+
+    [Fact]
+    public async Task ATextAreaShowsItsValueAsContent()
+    {
+        var html = await GetAsync("/Home/Helpers");
+
+        // ASP.NET Core writes a line break before the value, so a value that
+        // itself starts with one survives the browser dropping the first.
+        Assert.EndsWith("Ada</textarea>", Element(html, "<textarea[^>]*>[^<]*</textarea>"));
+    }
+
     [Fact]
     public async Task AViewComponentRendersFromAViewAndFromAPage()
     {
@@ -389,7 +500,13 @@ public sealed class VbViewsOverHttpTests
         // the first edit of an existing record.
         var html = await GetAsync("/");
 
-        Assert.Contains("""<input name="Name" id="Name" value="Ada" />""", html);
+        // Written by ASP.NET Core's own InputTagHelper now, as in a .cshtml:
+        // the type is taken from the property and every attribute is there.
+        var input = System.Text.RegularExpressions.Regex.Match(html, "<input[^>]*name=\"Name\"[^>]*>").Value;
+
+        Assert.Contains("value=\"Ada\"", input);
+        Assert.Contains("id=\"Name\"", input);
+        Assert.Contains("type=\"text\"", input);
     }
 
     [Fact]

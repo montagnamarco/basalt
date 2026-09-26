@@ -1,4 +1,6 @@
-# Basalt.Razor.Vb.AspNetCore
+| Tag helpers, with `@addTagHelper` (`asp-for`, validation, `select`, `environment`, `partial`, forms with antiforgery, …) | yes — the framework's own, run as in C# |
+| Tag helpers of your own, in VB or C# | yes |
+| `<vc:name>` view component tags | not yet |# Basalt.Razor.Vb.AspNetCore
 
 ASP.NET Core MVC and Razor Pages sites written in Visual Basic, with `.vbhtml`
 views.
@@ -99,11 +101,11 @@ the code.
 
 ### About tag helpers
 
-ASP.NET Core's tag helpers parse markup into a tree and run a class over each
-element. Basalt keeps markup as text, so the ones above are rewritten in place
-instead: `asp-action` becomes a call to `Url.Action`. The rest are removed
-rather than left alone — an unknown `asp-` attribute in the page looks like it
-did something, and the link goes nowhere.
+With `@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers` in `_ViewImports.vbhtml`,
+the generator finds the tag helper classes and writes the same calls the C#
+Razor compiler writes, so each one runs exactly as in a `.cshtml`. A view
+without the directive keeps the older compile-time rewriting of `asp-action`,
+`asp-controller`, `asp-page` and `asp-for`.
 
 ## Requirements
 
