@@ -313,43 +313,79 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
     ///
     /// An empty line has no token for the formatter to anchor to, so a
     /// placeholder declaration is inserted, the text formatted, and the
-    /// resulting column measured. "Dim" is used because it is valid in every
-    /// position a new line can appear: class body, method body, or any nested
-    /// block.
+    /// resulting column measured. A statement probe works for block bodies;
+    /// a continuation needs an expression that can join the preceding statement.
     /// </summary>
     public async Task<int> GetIndentationAsync(
         string text, SourceLanguage language, int position, CancellationToken ct = default)
     {
         if (language is not SourceLanguage.VisualBasic) return 0;
 
-        const string probe = "zzIndentProbe";
-        var placeholder = language == SourceLanguage.VisualBasic ? $"Dim {probe}" : $"var {probe};";
+        return await Task.Run(async () =>
+        {
+            var probe = $"zzIndentProbe_{Guid.NewGuid():N}";
+            var at = Math.Clamp(position, 0, text.Length);
 
-        var at = Math.Clamp(position, 0, text.Length);
+            // The probe must sit on a line of its own. Roslyn decides whether
+            // this identifier continues the preceding statement or starts one.
+            var needsNewLine = at > 0 && text[at - 1] != '\n';
+            var prefix = needsNewLine ? "\n" : "";
+            var candidate = text[..at] + prefix + probe + text[at..];
+            var document = CreateScratchDocument(candidate, language);
+            var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+            var probePosition = at + prefix.Length;
+            var token = root?.FindToken(probePosition);
+            var statement = token?.Parent?.FirstAncestorOrSelf<Microsoft.CodeAnalysis.VisualBasic.Syntax.StatementSyntax>();
+            var continuation = token?.Span.Start == probePosition && statement?.Span.Start < probePosition;
 
-        // The placeholder must sit on a line of its own. Appended to an
-        // existing line it would be measured at that line's end column, which
-        // is not where a new line would start.
-        var needsNewLine = at > 0 && text[at - 1] != '\n';
-        var prefix = needsNewLine ? "\n" : "";
+            // A declaration cannot be used as an operand or argument: Roslyn
+            // would recover it as invalid syntax and report column zero. Keep
+            // the identifier when it belongs to a statement on an earlier line.
+            var keywordLength = 0;
+            if (!continuation)
+            {
+                const string keyword = "Dim ";
+                keywordLength = keyword.Length;
+                candidate = text[..at] + prefix + keyword + probe + text[at..];
+                document = document.WithText(SourceText.From(candidate));
+            }
 
-        var candidate = text[..at] + prefix + placeholder + text[at..];
+            var formatted = await Formatter.FormatAsync(document, cancellationToken: ct).ConfigureAwait(false);
+            var result = (await formatted.GetTextAsync(ct).ConfigureAwait(false)).ToString();
+            var index = result.IndexOf(probe, StringComparison.Ordinal);
+            if (index < 0) return 0;
+            if (continuation)
+            {
+                // The formatter preserves continuation indentation instead
+                // of choosing a smart-indent column. Use its statement layout
+                // and Roslyn's parsed argument positions as the anchors.
+                var formattedSource = SourceText.From(result);
+                var formattedRoot = await formatted.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+                var probeToken = formattedRoot?.FindToken(index);
+                var probeLine = formattedSource.Lines.GetLineFromPosition(index);
+                var arguments = probeToken?.Parent?.Ancestors()
+                    .OfType<Microsoft.CodeAnalysis.VisualBasic.Syntax.ArgumentListSyntax>()
+                    .FirstOrDefault(list => list.Span.Start < probeLine.Start);
+                if (arguments?.Arguments.FirstOrDefault() is { } firstArgument
+                    && firstArgument.Span.Start < probeLine.Start)
+                {
+                    var firstLine = formattedSource.Lines.GetLineFromPosition(firstArgument.Span.Start);
+                    var openingLine = formattedSource.Lines.GetLineFromPosition(arguments.OpenParenToken.Span.Start);
+                    if (firstLine.LineNumber == openingLine.LineNumber)
+                        return firstArgument.Span.Start - firstLine.Start;
+                }
 
-        var document = CreateScratchDocument(candidate, language);
-        var formatted = await Formatter.FormatAsync(document, cancellationToken: ct)
-            .ConfigureAwait(false);
-
-        var result = (await formatted.GetTextAsync(ct).ConfigureAwait(false)).ToString();
-
-        var index = result.IndexOf(probe, StringComparison.Ordinal);
-        if (index < 0) return 0;
-
-        // Column of the placeholder's own line start, minus the keyword before it.
-        var lineStart = result.LastIndexOf('\n', Math.Max(0, index - 1)) + 1;
-        var column = index - lineStart;
-
-        var keywordLength = language == SourceLanguage.VisualBasic ? "Dim ".Length : "var ".Length;
-        return Math.Max(0, column - keywordLength);
+                var anchor = probeToken?.Parent?.FirstAncestorOrSelf<Microsoft.CodeAnalysis.VisualBasic.Syntax.StatementSyntax>();
+                if (anchor is not null)
+                {
+                    var anchorLine = formattedSource.Lines.GetLineFromPosition(anchor.Span.Start);
+                    var indentationSize = _workspace.Options.GetOption(FormattingOptions.IndentationSize, language.ToRoslynName());
+                    return anchor.Span.Start - anchorLine.Start + indentationSize;
+                }
+            }
+            var lineStart = result.LastIndexOf('\n', Math.Max(0, index - 1)) + 1;
+            return Math.Max(0, index - lineStart - keywordLength);
+        }, ct).ConfigureAwait(false);
     }
 
     public void Dispose() => _workspace.Dispose();
