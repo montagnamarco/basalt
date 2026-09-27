@@ -551,6 +551,21 @@ Blazor template's layout and menu are styled this way; in the MVC sample a
 browser test reads the colour `Clicker.vbrazor.css` gives Clicker's
 paragraphs, and not another page's.
 
+### Collocated JavaScript
+
+`Counter.vbrazor.js` beside `Counter.vbrazor` is served at
+`./Components/Counter.vbrazor.js`, as `Counter.razor.js` is, for the component
+to import as a module:
+
+```vbrazor
+@Inject IJSRuntime JS
+...
+scripts = Await JS.InvokeAsync(Of IJSObjectReference)("import", "./Components/Counter.vbrazor.js")
+shouted = Await scripts.InvokeAsync(Of String)("shout", name)
+```
+
+The MVC sample's Clicker does exactly this, and a browser test calls it.
+
 ### Where components live
 
 A component is namespaced by its folders from the project, as a `.razor` file

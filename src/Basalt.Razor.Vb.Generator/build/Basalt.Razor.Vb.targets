@@ -60,6 +60,65 @@
   </ItemGroup>
 
   <!--
+    Collocated JavaScript: Counter.vbrazor.js beside Counter.vbrazor is served
+    at ./Components/Counter.vbrazor.js, to be imported as a module with
+    IJSRuntime, as Counter.razor.js is. The SDK looks only for .razor.js and
+    .cshtml.js, so the same steps it takes for those are taken here for
+    .vbrazor.js: define the static web assets and their endpoints, mark them
+    as modules, and take them out of Content and None.
+  -->
+  <Target Name="_BasaltResolveVbRazorJSModules"
+          AfterTargets="ResolveJSModuleStaticWebAssets">
+    <ItemGroup>
+      <_BasaltVbRazorJSCandidate Include="@(Content->Distinct())" Condition="$([System.String]::Copy('%(Identity)').EndsWith('.vbrazor.js', System.StringComparison.OrdinalIgnoreCase))" />
+      <_BasaltVbRazorJSCandidate Include="@(None->Distinct())" Exclude="@(Content)" Condition="$([System.String]::Copy('%(Identity)').EndsWith('.vbrazor.js', System.StringComparison.OrdinalIgnoreCase))" />
+    </ItemGroup>
+
+    <DefineStaticWebAssets Condition="'@(_BasaltVbRazorJSCandidate)' != ''"
+      CandidateAssets="@(_BasaltVbRazorJSCandidate)"
+      SourceId="$(PackageId)"
+      RelativePathPattern="**/*.vbrazor.js"
+      ContentRoot="$(MSBuildProjectDirectory)"
+      SourceType="Discovered"
+      BasePath="$(StaticWebAssetBasePath)"
+      AssetMergeSource="$(StaticWebAssetMergeTarget)"
+      FingerprintCandidates="$(StaticWebAssetsFingerprintContent)"
+      FingerprintPatterns="@(StaticWebAssetFingerprintPattern)">
+      <Output TaskParameter="Assets" ItemName="_BasaltVbRazorJSModule" />
+    </DefineStaticWebAssets>
+
+    <DefineStaticWebAssetEndpoints Condition="'@(_BasaltVbRazorJSModule)' != ''"
+      CandidateAssets="@(_BasaltVbRazorJSModule)"
+      ExistingEndpoints="@(StaticWebAssetEndpoint)"
+      ContentTypeMappings="@(StaticWebAssetContentTypeMapping)">
+      <Output TaskParameter="Endpoints" ItemName="_BasaltVbRazorJSModuleEndpoint" />
+    </DefineStaticWebAssetEndpoints>
+
+    <ItemGroup Condition="'@(_BasaltVbRazorJSModuleEndpoint)' != ''">
+      <_BasaltVbRazorJSModuleProperty Include="Append">
+        <UpdateTarget>Property</UpdateTarget>
+        <Name>script-type</Name>
+        <Value>module</Value>
+      </_BasaltVbRazorJSModuleProperty>
+    </ItemGroup>
+
+    <UpdateStaticWebAssetEndpoints Condition="'@(_BasaltVbRazorJSModuleProperty)' != ''"
+      EndpointsToUpdate="@(_BasaltVbRazorJSModuleEndpoint)"
+      AllEndpoints="@(_BasaltVbRazorJSModuleEndpoint)"
+      Operations="@(_BasaltVbRazorJSModuleProperty)">
+      <Output TaskParameter="UpdatedEndpoints" ItemName="_BasaltVbRazorJSModuleEndpointWithProperty" />
+    </UpdateStaticWebAssetEndpoints>
+
+    <ItemGroup>
+      <StaticWebAsset Remove="@(_BasaltVbRazorJSModule)" />
+      <StaticWebAsset Include="@(_BasaltVbRazorJSModule)" />
+      <StaticWebAssetEndpoint Include="@(_BasaltVbRazorJSModuleEndpointWithProperty)" />
+      <Content Remove="@(_BasaltVbRazorJSModule->'%(OriginalItemSpec)')" />
+      <None Remove="@(_BasaltVbRazorJSModule->'%(OriginalItemSpec)')" />
+    </ItemGroup>
+  </Target>
+
+  <!--
     A project that references this package but has no views has almost
     certainly misplaced them, and would otherwise get a silent empty build.
   -->

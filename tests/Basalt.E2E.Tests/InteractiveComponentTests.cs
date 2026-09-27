@@ -33,7 +33,7 @@ public sealed class InteractiveComponentTests(SampleSite site, Browser browser)
         {
             if (DateTime.UtcNow > deadline) Assert.Fail("The circuit never answered a click.");
 
-            await page.Locator("button").ClickAsync();
+            await page.Locator("button").First.ClickAsync();
             await Task.Delay(200, TestContext.Current.CancellationToken);
         }
 
@@ -49,7 +49,7 @@ public sealed class InteractiveComponentTests(SampleSite site, Browser browser)
 
         var before = int.Parse((await clicks.TextContentAsync())!.Replace("Clicks: ", ""));
 
-        await page.Locator("button").ClickAsync();
+        await page.Locator("button").First.ClickAsync();
 
         await Assertions.Expect(clicks).ToHaveTextAsync($"Clicks: {before + 1}",
             new() { Timeout = (float)Patience.TotalMilliseconds });
@@ -64,6 +64,21 @@ public sealed class InteractiveComponentTests(SampleSite site, Browser browser)
         await page.Locator("input").PressSequentiallyAsync("Ada");
 
         await Assertions.Expect(page.Locator("#greeting")).ToHaveTextAsync("Hello Ada",
+            new() { Timeout = (float)Patience.TotalMilliseconds });
+    }
+
+    [Fact]
+    public async Task ACollocatedModuleIsImportedAndCalled()
+    {
+        // Clicker.vbrazor.js, imported with IJSRuntime from
+        // ./Components/Clicker.vbrazor.js: the package serves it as the SDK
+        // serves a .razor.js, and the component calls into it.
+        var page = await OpenConnectedAsync();
+
+        await page.Locator("input").PressSequentiallyAsync("ada");
+        await page.Locator("#shout").ClickAsync();
+
+        await Assertions.Expect(page.Locator("#shouted")).ToHaveTextAsync("ADA!",
             new() { Timeout = (float)Patience.TotalMilliseconds });
     }
 }

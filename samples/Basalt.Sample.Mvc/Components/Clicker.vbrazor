@@ -1,5 +1,7 @@
 @Page "/clicker"
 @rendermode InteractiveServer
+@Imports Microsoft.JSInterop
+@Inject IJSRuntime JS
 
 <p>Clicks: @count</p>
 
@@ -9,8 +11,26 @@
 
 <p id="greeting">Hello @name</p>
 
+<button id="shout" @onclick="AddressOf ShoutAsync">Shout</button>
+
+<p id="shouted">@shouted</p>
+
 @Code
     Private count As Integer
 
     Private name As String = ""
+
+    ' Clicker.vbrazor.js, collocated with this component and imported as a
+    ' module, the way a .razor component imports its .razor.js.
+    Private scripts As IJSObjectReference
+
+    Private shouted As String = ""
+
+    Private Async Function ShoutAsync() As Task
+        If scripts Is Nothing Then
+            scripts = Await JS.InvokeAsync(Of IJSObjectReference)("import", "./Components/Clicker.vbrazor.js")
+        End If
+
+        shouted = Await scripts.InvokeAsync(Of String)("shout", name)
+    End Function
 End Code
