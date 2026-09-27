@@ -119,10 +119,11 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
             var parameters = await ComponentParametersAsync(document, position, ct).ConfigureAwait(false);
             var directives = DirectiveAttributes(document, position);
             var tagHelpers = await TagHelperAttributesAsync(document, position, ct).ConfigureAwait(false);
+            var routes = await RouteValuesAsync(document, position, ct).ConfigureAwait(false);
 
-            return parameters.Count == 0 && directives.Count == 0 && tagHelpers.Count == 0
+            return parameters.Count == 0 && directives.Count == 0 && tagHelpers.Count == 0 && routes.Count == 0
                 ? markup
-                : [.. parameters, .. directives, .. tagHelpers, .. markup];
+                : [.. routes, .. parameters, .. directives, .. tagHelpers, .. markup];
         }
 
         if (_ask is null) return [];
@@ -259,6 +260,75 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         }
 
         return [.. items.Values.OrderBy(item => item.DisplayText, StringComparer.OrdinalIgnoreCase)];
+    }
+
+    /// <summary>The controllers, actions and pages a view's asp-* values can name.</summary>
+    public Func<string, CancellationToken, Task<RouteCatalog?>>? AskRoutes { get; init; }
+
+    /// <summary>
+    /// The project's controllers inside asp-controller="", the controller's
+    /// actions inside asp-action="", and its Razor Pages inside asp-page="".
+    /// </summary>
+    /// <remarks>
+    /// The controller asp-action refers to is the one the same tag names, or
+    /// else the view's own, by its folder under Views, as MVC takes it.
+    /// </remarks>
+    private async Task<IReadOnlyList<CompletionItem>> RouteValuesAsync(
+        LanguageDocument document, int position, CancellationToken ct)
+    {
+        if (AskRoutes is null || TemplateGeneration.IsComponent(document.FilePath) ||
+            TemplateGeneration.IsPage(document.FilePath))
+            return [];
+
+        var context = HtmlContextReader.At(document.Text, position);
+        if (context.Kind != HtmlContextKind.AttributeValue) return [];
+
+        var attribute = context.Attribute.ToLowerInvariant();
+        if (attribute is not ("asp-controller" or "asp-action" or "asp-page")) return [];
+
+        if (await AskRoutes(document.FilePath, ct).ConfigureAwait(false) is not { } routes) return [];
+
+        IEnumerable<(string Name, SymbolKind Kind)> values = attribute switch
+        {
+            "asp-controller" => routes.Actions.Keys.Select(name => (name, SymbolKind.Class)),
+            "asp-page" => routes.Pages.Select(page => (page, SymbolKind.File)),
+            _ => ControllerOf(document, position) is { } controller && routes.Actions.TryGetValue(controller, out var actions)
+                ? actions.Select(action => (action, SymbolKind.Method))
+                : []
+        };
+
+        return [.. values.OrderBy(value => value.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(value => new CompletionItem(value.Name, value.Name, value.Kind))];
+    }
+
+    /// <summary>The controller an asp-action is for: the tag's asp-controller, or the view's folder.</summary>
+    private static string? ControllerOf(LanguageDocument document, int position)
+    {
+        var text = document.Text;
+        var tagStart = text.LastIndexOf('<', Math.Max(0, Math.Min(position, text.Length) - 1));
+        var tagEnd = text.IndexOf('>', Math.Max(tagStart, 0));
+        if (tagEnd < 0) tagEnd = text.Length;
+
+        if (tagStart >= 0)
+        {
+            var tag = text[tagStart..tagEnd];
+            var at = tag.IndexOf("asp-controller=\"", StringComparison.OrdinalIgnoreCase);
+
+            if (at >= 0)
+            {
+                var start = at + "asp-controller=\"".Length;
+                var end = tag.IndexOf('"', start);
+
+                if (end > start) return tag[start..end];
+            }
+        }
+
+        var folder = Path.GetDirectoryName(document.FilePath);
+        var parent = folder is null ? null : Path.GetDirectoryName(folder);
+
+        return parent is not null && string.Equals(Path.GetFileName(parent), "Views", StringComparison.OrdinalIgnoreCase)
+            ? Path.GetFileName(folder)
+            : null;
     }
 
     /// <summary>

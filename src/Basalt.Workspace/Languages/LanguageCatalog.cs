@@ -91,7 +91,8 @@ public static class LanguageCatalog
                 // and @context inside a typed RenderFragment was undeclared —
                 // both false errors, on code the build accepted.
                 roslyn.GetComponentCatalogAsync(templatePath, currentText, ct),
-            askTagHelpers: (templatePath, ct) => roslyn.GetTagHelperCatalogAsync(templatePath, ct));
+            askTagHelpers: (templatePath, ct) => roslyn.GetTagHelperCatalogAsync(templatePath, ct),
+            askRoutes: (templatePath, ct) => roslyn.GetRouteCatalogAsync(templatePath, ct));
 
         // QuickBASIC comes from its own project, which references only the
         // extensibility contracts: it is the proof that a language can be

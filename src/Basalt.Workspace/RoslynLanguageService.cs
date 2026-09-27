@@ -468,6 +468,122 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
     /// Read once per compilation, as the component catalog is. Which of them
     /// a view has in scope is its @addTagHelper lines' business.
     /// </remarks>
+    /// <summary>
+    /// The controllers, actions and Razor Pages of the project containing a
+    /// view, for its asp-controller, asp-action and asp-page values.
+    /// </summary>
+    /// <remarks>
+    /// Controllers as MVC finds them: public, not abstract, deriving from
+    /// ControllerBase, named without their "Controller" suffix; actions their
+    /// public instance methods not marked NonAction. Pages are the .vbhtml
+    /// files under Pages that carry @Page, by the path asp-page takes.
+    /// </remarks>
+    public async Task<Web.RouteCatalog?> GetRouteCatalogAsync(string templatePath, CancellationToken ct = default)
+    {
+        if (_workspace is null || string.IsNullOrEmpty(templatePath)) return null;
+
+        var project = FindProjectContaining(templatePath);
+        if (project?.FilePath is null) return null;
+
+        Compilation? compilation;
+
+        try
+        {
+            compilation = await project.GetCompilationAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+
+        if (compilation is null) return null;
+
+        var controllerBase = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.ControllerBase");
+        var nonAction = compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Mvc.NonActionAttribute");
+        var actions = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+
+        if (controllerBase is not null)
+        {
+            foreach (var type in AllTypes(compilation.Assembly.GlobalNamespace))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (type.IsAbstract || type.DeclaredAccessibility != Accessibility.Public || !DerivesFrom(type, controllerBase))
+                    continue;
+
+                var name = type.Name.EndsWith("Controller", StringComparison.Ordinal)
+                    ? type.Name[..^"Controller".Length]
+                    : type.Name;
+
+                actions[name] = [.. type.GetMembers()
+                    .OfType<IMethodSymbol>()
+                    .Where(method => method.MethodKind == MethodKind.Ordinary && !method.IsStatic &&
+                                     method.DeclaredAccessibility == Accessibility.Public &&
+                                     !method.GetAttributes().Any(attribute =>
+                                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, nonAction)))
+                    .Select(method => method.Name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Order(StringComparer.OrdinalIgnoreCase)];
+            }
+        }
+
+        return new Web.RouteCatalog(actions, PagesOf(Path.GetDirectoryName(project.FilePath)!));
+    }
+
+    private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol scope)
+    {
+        foreach (var member in scope.GetMembers())
+        {
+            if (member is INamespaceSymbol inner)
+            {
+                foreach (var type in AllTypes(inner)) yield return type;
+            }
+            else if (member is INamedTypeSymbol type)
+            {
+                yield return type;
+            }
+        }
+    }
+
+    private static bool DerivesFrom(INamedTypeSymbol type, INamedTypeSymbol baseType)
+    {
+        for (var current = type.BaseType; current is not null; current = current.BaseType)
+            if (SymbolEqualityComparer.Default.Equals(current, baseType)) return true;
+
+        return false;
+    }
+
+    /// <summary>The Razor Pages under a project's Pages folder, by the path asp-page takes.</summary>
+    private static IReadOnlyList<string> PagesOf(string projectDirectory)
+    {
+        var pages = Path.Combine(projectDirectory, "Pages");
+        if (!Directory.Exists(pages)) return [];
+
+        var found = new List<string>();
+
+        foreach (var file in Directory.EnumerateFiles(pages, "*.vbhtml", SearchOption.AllDirectories))
+        {
+            if (Path.GetFileName(file).StartsWith('_')) continue;
+
+            try
+            {
+                var parsed = VbHtmlParser.Parse(File.ReadAllText(file));
+
+                if (!parsed.Nodes.OfType<DirectiveNode>().Any(node => node.Name.Equals("Page", StringComparison.OrdinalIgnoreCase)))
+                    continue;
+            }
+            catch (IOException)
+            {
+                continue;
+            }
+
+            var relative = Path.GetRelativePath(pages, file);
+            found.Add("/" + Path.ChangeExtension(relative, null)!.Replace('\\', '/'));
+        }
+
+        return [.. found.Order(StringComparer.OrdinalIgnoreCase)];
+    }
+
     public async Task<TagHelperCatalog?> GetTagHelperCatalogAsync(string templatePath, CancellationToken ct = default)
     {
         if (_workspace is null || string.IsNullOrEmpty(templatePath)) return null;

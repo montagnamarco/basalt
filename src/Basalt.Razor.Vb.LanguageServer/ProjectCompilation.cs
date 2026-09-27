@@ -372,7 +372,11 @@ public sealed class ProjectCompilation : IDisposable
 
                 // The tag helpers the view's project offers, for asp-*.
                 askTagHelpers: (templatePath, token) =>
-                    _roslyn.GetTagHelperCatalogAsync(templatePath, token));
+                    _roslyn.GetTagHelperCatalogAsync(templatePath, token),
+
+                // The controllers, actions and pages asp-* values can name.
+                askRoutes: (templatePath, token) =>
+                    _roslyn.GetRouteCatalogAsync(templatePath, token));
 
             IsReady = true;
         }
