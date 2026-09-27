@@ -23,6 +23,12 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
     private readonly ILanguageServerFacade _server;
     private readonly ProjectCompilation _compilation;
 
+    /// <summary>
+    /// The compiler's diagnostics, asked once typing pauses. A quarter of a
+    /// second is below what reads as lag and above the gap between keys.
+    /// </summary>
+    private readonly KeyedDebouncer _semantic = new(TimeSpan.FromMilliseconds(250));
+
     public VbHtmlTextDocumentHandler(
         DocumentStore documents, ILanguageServerFacade server, ProjectCompilation compilation)
     {
@@ -128,6 +134,7 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
         DidCloseTextDocumentParams request, CancellationToken ct)
     {
         _documents.Remove(request.TextDocument.Uri.ToString());
+        _semantic.Cancel(request.TextDocument.Uri.ToString());
 
         // The editor stops showing diagnostics for a closed file only if the
         // server says there are none left.
@@ -153,7 +160,7 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
         // Roslyn about a whole project takes long enough to be felt, and an
         // editor that pauses on every keystroke is worse than one whose
         // squiggles arrive a moment late.
-        _ = PublishSemanticAsync(uri, version, document);
+        _ = _semantic.ScheduleAsync(uri.ToString(), token => PublishSemanticAsync(uri, version, document, token));
     }
 
     /// <summary>
@@ -164,7 +171,8 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
     /// parser can find — an unclosed block and a bad directive. A misspelt
     /// property or a wrong type went unmarked until the build.
     /// </remarks>
-    private async Task PublishSemanticAsync(DocumentUri uri, int? version, OpenDocument document)
+    private async Task PublishSemanticAsync(
+        DocumentUri uri, int? version, OpenDocument document, CancellationToken ct)
     {
         if (_compilation.Provider.Diagnostics is not { } diagnostics) return;
 
@@ -173,7 +181,7 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
             var found = await diagnostics
                 .GetDiagnosticsAsync(
                     new Basalt.Extensibility.LanguageDocument(
-                        uri.GetFileSystemPath(), document.Text))
+                        uri.GetFileSystemPath(), document.Text), ct)
                 .ConfigureAwait(false);
 
             // Only if the document is still the one asked about: a keystroke
@@ -184,6 +192,10 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
             if (current is null || current.Version != document.Version) return;
 
             Publish(uri, version, [.. Describe(document.Parsed), .. found.Select(Translate)]);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // A newer keystroke replaced the question.
         }
         catch (Exception)
         {
