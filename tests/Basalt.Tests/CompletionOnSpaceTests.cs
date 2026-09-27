@@ -44,6 +44,12 @@ public sealed class CompletionOnSpaceTests : IAsyncLifetime
     private (Window Window, CodeEditor Code, TextEditor Editor) Open(string statement)
     {
         var text = Source(statement);
+
+        return Open(text, text.IndexOf(statement, StringComparison.Ordinal) + statement.Length);
+    }
+
+    private (Window Window, CodeEditor Code, TextEditor Editor) Open(string text, int caret)
+    {
         var code = new CodeEditor(new EditorDocumentViewModel(Path.Combine(_root, "Typing.vb"), text), _shell)
         {
             AutoFormatWhileTyping = false
@@ -52,7 +58,7 @@ public sealed class CompletionOnSpaceTests : IAsyncLifetime
         window.Show();
         window.UpdateLayout();
         var editor = code.GetVisualDescendants().OfType<TextEditor>().Single();
-        editor.CaretOffset = text.IndexOf(statement, StringComparison.Ordinal) + statement.Length;
+        editor.CaretOffset = caret;
         editor.TextArea.Focus();
         return (window, code, editor);
     }
@@ -113,6 +119,49 @@ public sealed class CompletionOnSpaceTests : IAsyncLifetime
 
             Assert.True(editor.Text.Contains(expected, StringComparison.Ordinal),
                 editor.Document.GetText(editor.Document.GetLineByNumber(3)));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task OverridesWritesTheWholeMemberTheWayVisualStudioDoes()
+    {
+        // Visual Studio writes the member, its body and the call to MyBase.
+        // Written as the list's filter text, Tab left "Public Overrides Area"
+        // behind, which is not Visual Basic.
+        const string line = "    Public Overrides";
+        var text = "Public Class Shape\n" +
+                   "    Public Overridable Function Area(scale As Double) As Double\n" +
+                   "        Return 0\n" +
+                   "    End Function\n" +
+                   "End Class\n\n" +
+                   "Public Class Square\n" +
+                   "    Inherits Shape\n\n" +
+                   line + "\n" +
+                   "End Class\n";
+        var (window, code, editor) = Open(text, text.IndexOf(line, StringComparison.Ordinal) + line.Length);
+        try
+        {
+            window.KeyTextInput(" ");
+            await WaitForListAsync(code);
+
+            window.KeyTextInput("Ar");
+            await Task.Delay(100);
+            window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            window.KeyRelease(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+
+            const string expected = "Public Overrides Function Area(scale As Double) As Double";
+            var deadline = DateTime.UtcNow.AddSeconds(15);
+
+            while (!editor.Text.Contains(expected, StringComparison.Ordinal) && DateTime.UtcNow < deadline)
+                await Task.Delay(20);
+
+            Assert.Contains(expected, editor.Text);
+            Assert.Equal(1, editor.Text.Split("Overrides").Length - 1);
+            Assert.Contains("End Function", editor.Text[editor.Text.IndexOf(expected, StringComparison.Ordinal)..]);
         }
         finally
         {

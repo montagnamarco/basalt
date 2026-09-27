@@ -106,4 +106,35 @@ public sealed class CompletionTriggerTests : IDisposable
         // Named relative to what is imported: Text.StringBuilder here.
         Assert.EndsWith("StringBuilder", preselected.DisplayText, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task OverridesOffersTheOverridableMembersAndWritesTheWholeMember()
+    {
+        var (service, file) = await OpenAsync();
+        var typed = "    Public Overrides ";
+        var code = "Public Class Shape\n" +
+                   "    Public Overridable Function Area(scale As Double) As Double\n" +
+                   "        Return 0\n" +
+                   "    End Function\n" +
+                   "End Class\n\n" +
+                   "Public Class Square\n" +
+                   "    Inherits Shape\n\n" +
+                   typed + "\n" +
+                   "End Class\n";
+        var caret = code.IndexOf(typed, StringComparison.Ordinal) + typed.Length;
+
+        Assert.True(await service.ShouldTriggerCompletionAsync(file, caret, code, ' '));
+
+        var items = await service.GetCompletionsAsync(file, caret, code, typed: ' ');
+        var area = Assert.Single(items, item => item.DisplayText.StartsWith("Area", StringComparison.Ordinal));
+
+        var commit = await area.ResolveCommit!(CancellationToken.None);
+
+        Assert.NotNull(commit);
+        var written = code[..commit.Start] + commit.Text + code[(commit.Start + commit.Length)..];
+
+        Assert.Contains("Public Overrides Function Area(scale As Double) As Double", written);
+        Assert.Contains("End Function\nEnd Class", written.Replace("\r\n", "\n"));
+        Assert.Equal(1, written.Split("Public Overrides").Length - 1);
+    }
 }

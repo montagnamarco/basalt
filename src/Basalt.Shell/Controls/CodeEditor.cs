@@ -1566,8 +1566,9 @@ public sealed class CodeEditor : UserControl
     /// answer replaces it only while that text is still there, where it was
     /// written: a commit character typed after it, "." or "(", is kept. The
     /// edit is applied only when Roslyn's change starts where the entry was
-    /// written; one reaching elsewhere (an override writing a whole member)
-    /// is left to that provider's own commit, not guessed at here.
+    /// written. An override after "Public Overrides " does: Roslyn replaces
+    /// the entry with the whole member and its MyBase call, as Visual Studio
+    /// writes it.
     /// </remarks>
     private void OnCompletionCommitted(EditorCompletionData entry, int start, string written)
     {
