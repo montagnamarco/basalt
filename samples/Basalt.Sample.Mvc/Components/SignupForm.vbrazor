@@ -1,0 +1,39 @@
+@Page "/signup"
+@rendermode InteractiveServer
+@Imports Microsoft.AspNetCore.Components.Forms
+
+<EditForm Model="@model" OnValidSubmit="Sub() done = True">
+    <DataAnnotationsValidator />
+
+    <InputText id="name" @bind-Value="model.Name" />
+    <ValidationMessage For="@(Function() model.Name)" />
+
+    <InputNumber id="age" @bind-Value="model.Age" />
+    <ValidationMessage For="@(Function() model.Age)" />
+
+    <button type="submit">Sign up</button>
+</EditForm>
+
+@If ready Then
+    @<span id="ready"></span>
+End If
+
+@If done Then
+    @<p id="thanks">Thanks, @model.Name.</p>
+End If
+
+@Code
+    Private model As New Global.Basalt.Sample.Mvc.Signup()
+    Private done As Boolean
+
+    ' Shown once the component runs interactively: OnAfterRender is not called
+    ' while prerendering, so a browser test knows when the circuit is up.
+    Private ready As Boolean
+
+    Protected Overrides Sub OnAfterRender(firstRender As Boolean)
+        If firstRender Then
+            ready = True
+            StateHasChanged()
+        End If
+    End Sub
+End Code

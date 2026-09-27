@@ -169,9 +169,9 @@ public class TypedComponentTests
 
         var page = SourceOf(sources, "Page");
 
-        Assert.Contains("\"Count\", 5)", page);
+        Assert.Contains("\"Count\", CType(5, Integer))", page);
         Assert.Contains("\"Label\", \"five\")", page);
-        Assert.Contains("\"Big\", true)", page);
+        Assert.Contains("\"Big\", CType(true, Boolean))", page);
     }
 
     [Fact]
@@ -331,7 +331,7 @@ public class TypedComponentTests
             Path.Combine(Site, "Components", "Page.vbrazor"), catalog: new OneComponent(shape));
 
         var count = Page.IndexOf("42", StringComparison.Ordinal);
-        var countWritten = generated.Code.IndexOf("\"Count\", 42", StringComparison.Ordinal) + "\"Count\", ".Length;
+        var countWritten = generated.Code.IndexOf("\"Count\", CType(42", StringComparison.Ordinal) + "\"Count\", CType(".Length;
 
         Assert.Equal(countWritten, generated.Map.ToGenerated(count));
 
@@ -511,6 +511,40 @@ public class TypedComponentTests
     }
 
     [Fact]
+    public void AFormsValidationMessageGetsTheExpressionOfItsField()
+    {
+        // For="@(Function() model.Name)" went to AddComponentParameter as an
+        // Object, so Visual Basic made it an anonymous delegate rather than the
+        // Expression(Of Func(Of String)) ValidationMessage takes; it compiled
+        // and failed at render.
+        var page = SourceOf(Compile(
+            [
+                """
+                Namespace Components
+                    Public Class Person
+                        <System.ComponentModel.DataAnnotations.Required> Public Property Name As String = ""
+                    End Class
+                End Namespace
+                """,
+            ],
+            Component("Page", """
+                @Imports Microsoft.AspNetCore.Components.Forms
+                <EditForm Model="@model">
+                    <DataAnnotationsValidator />
+                    <InputText @bind-Value="model.Name" />
+                    <ValidationMessage For="@(Function() model.Name)" />
+                </EditForm>
+                @Code
+                    Private model As New Person()
+                End Code
+                """)), "Page");
+
+        Assert.Contains("ValidationMessage(Of String)", page);
+        Assert.Contains("CType(Function() model.Name, Global.System.Linq.Expressions.Expression(Of Global.System.Func(Of String)))", page);
+        Assert.Contains("\"ValueExpression\"", page);
+    }
+
+    [Fact]
     public void AFrameworkComponentsParametersAreKnownToo()
     {
         // NavLink comes from a referenced library: Match takes an enum, so the
@@ -521,6 +555,6 @@ public class TypedComponentTests
                 <NavLink href="" Match="NavLinkMatch.All">Home</NavLink>
                 """));
 
-        Assert.Contains("\"Match\", NavLinkMatch.All)", SourceOf(sources, "Page"));
+        Assert.Contains("\"Match\", CType(NavLinkMatch.All, Global.Microsoft.AspNetCore.Components.Routing.NavLinkMatch))", SourceOf(sources, "Page"));
     }
 }

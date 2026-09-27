@@ -1276,6 +1276,19 @@ public sealed class VbComponentWriter
             return;
         }
 
+        // Converted to the parameter's type, as C# checks it with TypeCheck:
+        // AddComponentParameter takes Object, so For="@(Function() model.Name)"
+        // became an anonymous delegate rather than the Expression(Of Func(Of
+        // String)) ValidationMessage takes, and failed at render. A value of
+        // the wrong type is now a compile error on the template instead.
+        if (parameter is { Kind: ParameterKind.Value } && value.IsCode &&
+            SubstituteTypeParameters(parameter.TypeName, shape, typeArguments) is var parameterType &&
+            (shape is null || !shape.TypeParameters.Any(t => System.Text.RegularExpressions.Regex.IsMatch(parameterType, $@"\b{t}\b"))))
+        {
+            WriteValueCall(builder, pad, before + "CType(", value, $", {parameterType}))", mappings, filePath);
+            return;
+        }
+
         WriteValueCall(builder, pad, before, value, ")", mappings, filePath);
     }
 

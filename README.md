@@ -528,6 +528,14 @@ A value naming a local of the render tree, such as a loop variable, cannot be
 inferred this way yet; write the type argument in the tag there,
 `<Grid(Of Order) …>`.
 
+A value for a typed parameter is converted to the parameter's type, as C#
+checks it, so `<ValidationMessage For="@(Function() model.Name)" />` gets the
+expression tree it needs and a value of the wrong type is a compile error on
+the template. Forms work as in C#: `EditForm`, `DataAnnotationsValidator`,
+the `Input*` components with `@bind-Value`, `ValidationMessage` — the MVC
+sample's `/signup` page is validated and submitted in a browser by the
+end-to-end tests.
+
 Every component imports what a `.razor` file does: `Microsoft.AspNetCore.Components`,
 `System.Collections.Generic`, `System.Linq` and `System.Threading.Tasks`.
 
