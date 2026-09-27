@@ -10,14 +10,14 @@ namespace Basalt.Workspace;
 /// <summary>Text inserted at the supplied caret, with a UTF-16 caret offset within that text.</summary>
 public sealed record DocumentationCommentInsertion(string Text, int CaretOffset);
 
-/// <summary>Creates documentation for Visual Basic methods and constructors using Roslyn syntax.</summary>
+/// <summary>Creates documentation for Visual Basic methods, constructors, properties and events using Roslyn syntax.</summary>
 public static class VisualBasicDocumentationCommentService
 {
     /// <summary>
     /// Examines the current editor snapshot after the third apostrophe was typed.
     /// The caret and returned offset count UTF-16 code units. Returns null unless
     /// the caret ends a standalone, undocumented triple-apostrophe line immediately
-    /// before a method or constructor at type scope. Parsing runs off the caller thread.
+    /// before a method, constructor, property or event at type scope. Parsing runs off the caller thread.
     /// The insertion preserves the trigger line's indentation and line ending;
     /// the returned caret sits on the blank summary line.
     /// </summary>
@@ -48,13 +48,19 @@ public static class VisualBasicDocumentationCommentService
         var root = tree.GetRoot(cancellationToken);
         var declaration = root.DescendantNodes()
             .FirstOrDefault(node => node.SpanStart >= caretPosition
-                && node is MethodStatementSyntax or SubNewStatementSyntax);
+                && node is MethodStatementSyntax or SubNewStatementSyntax
+                    or PropertyStatementSyntax or EventStatementSyntax);
         if (declaration is null || declaration.ContainsDiagnostics
             || source[caretPosition..declaration.SpanStart].Any(character => !char.IsWhiteSpace(character)))
             return null;
 
-        var container = declaration.Parent is MethodBlockBaseSyntax block
-            ? block.Parent : declaration.Parent;
+        var container = declaration.Parent switch
+        {
+            MethodBlockBaseSyntax block => block.Parent,
+            PropertyBlockSyntax block => block.Parent,
+            EventBlockSyntax block => block.Parent,
+            _ => declaration.Parent
+        };
         if (container is not TypeBlockSyntax)
             return null;
 
@@ -91,7 +97,13 @@ public static class VisualBasicDocumentationCommentService
         }
         else
         {
-            parameters = ((SubNewStatementSyntax)declaration).ParameterList;
+            parameters = declaration switch
+            {
+                SubNewStatementSyntax constructor => constructor.ParameterList,
+                PropertyStatementSyntax property => property.ParameterList,
+                EventStatementSyntax eventDeclaration => eventDeclaration.ParameterList,
+                _ => null
+            };
         }
 
         foreach (var parameter in parameters?.Parameters
@@ -104,6 +116,8 @@ public static class VisualBasicDocumentationCommentService
 
         if (declaration.IsKind(SyntaxKind.FunctionStatement))
             builder.Append(continuation).Append("<returns></returns>");
+        else if (declaration is PropertyStatementSyntax)
+            builder.Append(continuation).Append("<value></value>");
 
         return new DocumentationCommentInsertion(builder.ToString(), caretOffset);
     }

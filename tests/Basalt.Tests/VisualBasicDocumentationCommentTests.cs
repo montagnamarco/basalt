@@ -1,4 +1,8 @@
 using Basalt.Workspace;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.VisualBasic;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using System.Xml.Linq;
 
 namespace Basalt.Tests;
 
@@ -85,5 +89,105 @@ public sealed class VisualBasicDocumentationCommentTests
         var cancellation = new CancellationToken(canceled: true);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             VisualBasicDocumentationCommentService.GenerateAsync("'''", 3, cancellation));
+    }
+
+    [Theory]
+    [InlineData("Public Property Name As String")]
+    [InlineData("Public ReadOnly Property Name As String")]
+    [InlineData("Public WriteOnly Property Name As String\n        Set(value As String)\n        End Set\n    End Property")]
+    [InlineData("Public Property Name As String\n        Get\n            Return Nothing\n        End Get\n        Set(value As String)\n        End Set\n    End Property")]
+    public async Task GeneratesPropertyValueDocumentation(string declaration)
+    {
+        var result = await GenerateAsync("Class C\n    '''|\n    " + declaration + "\nEnd Class");
+        Assert.NotNull(result);
+        Assert.Equal(" <summary>\n    ''' \n    ''' </summary>\n    ''' <value></value>", result.Text);
+        Assert.Equal(" <summary>\n    ''' ".Length, result.CaretOffset);
+    }
+
+    [Fact]
+    public async Task GeneratesIndexerParametersAndPropertyValue()
+    {
+        var source = """
+            Interface I
+                '''|
+                Default Property Item([Class] As Integer, index As String) As String
+            End Interface
+            """;
+        var result = await GenerateAsync(source);
+        Assert.NotNull(result);
+        Assert.Equal(" <summary>\n    ''' \n    ''' </summary>\n    ''' <param name=\"Class\"></param>\n    ''' <param name=\"index\"></param>\n    ''' <value></value>", result.Text);
+        await AssertCompilerDocumentationAsync(source, result, SyntaxKind.PropertyStatement, "summary", "param", "param", "value");
+    }
+
+    [Theory]
+    [InlineData("Public Event Changed()", " <summary>\n    ''' \n    ''' </summary>")]
+    [InlineData("Public Event Changed([Class] As Integer, text As String)", " <summary>\n    ''' \n    ''' </summary>\n    ''' <param name=\"Class\"></param>\n    ''' <param name=\"text\"></param>")]
+    [InlineData("Public Event Changed As ChangedHandler", " <summary>\n    ''' \n    ''' </summary>")]
+    public async Task GeneratesEventDocumentationWithoutPropertyOrReturnTags(string declaration, string expected)
+    {
+        var source = "Class C\n    Public Delegate Sub ChangedHandler(value As Integer)\n    '''|\n    " + declaration + "\nEnd Class";
+        var result = await GenerateAsync(source);
+        Assert.NotNull(result);
+        Assert.Equal(expected, result.Text);
+        var tags = declaration.Contains("[Class]", StringComparison.Ordinal)
+            ? new[] { "summary", "param", "param" } : ["summary"];
+        await AssertCompilerDocumentationAsync(source, result, SyntaxKind.EventStatement, tags);
+    }
+
+    [Fact]
+    public async Task SupportsCustomEventsWithoutDocumentingAccessorParameters()
+    {
+        var result = await GenerateAsync("""
+            Class C
+                Public Delegate Sub ChangedHandler(value As Integer)
+                '''|
+                Public Custom Event Changed As ChangedHandler
+                    AddHandler(value As ChangedHandler)
+                    End AddHandler
+                    RemoveHandler(value As ChangedHandler)
+                    End RemoveHandler
+                    RaiseEvent(value As Integer)
+                    End RaiseEvent
+                End Event
+            End Class
+            """);
+        Assert.NotNull(result);
+        Assert.Equal(" <summary>\n    ''' \n    ''' </summary>", result.Text);
+    }
+
+    [Theory]
+    [InlineData("Class C\n    ''' <value>Existing</value>\n    '''|\n    Property Name As String\nEnd Class")]
+    [InlineData("Class C\n    '''|\n    ''' <summary>Existing</summary>\n    Event Changed(value As Integer)\nEnd Class")]
+    [InlineData("Class C\n    Property Name As String\n        '''|\n        Get\n            Return Nothing\n        End Get\n    End Property\nEnd Class")]
+    [InlineData("Class C\n    '''|\n    Property Item(As Integer) As String\nEnd Class")]
+    [InlineData("Class C\n    '''|\n    Event Changed(As Integer)\nEnd Class")]
+    public async Task RejectsInvalidPropertyAndEventContexts(string source)
+    {
+        Assert.Null(await GenerateAsync(source));
+    }
+
+    private static async Task AssertCompilerDocumentationAsync(
+        string markedSource, DocumentationCommentInsertion insertion, SyntaxKind declarationKind, params string[] tags)
+    {
+        var caret = markedSource.IndexOf('|');
+        var source = markedSource.Remove(caret, 1).Insert(caret, insertion.Text);
+        var tree = VisualBasicSyntaxTree.ParseText(source,
+            new VisualBasicParseOptions(documentationMode: DocumentationMode.Diagnose));
+        var compilation = VisualBasicCompilation.Create("Documentation",
+            [tree], [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
+            new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var root = await tree.GetRootAsync();
+        var declaration = root.DescendantNodes().Single(node => node.IsKind(declarationKind));
+        var model = compilation.GetSemanticModel(tree);
+        ISymbol? symbol = declaration switch
+        {
+            PropertyStatementSyntax property => model.GetDeclaredSymbol(property),
+            EventStatementSyntax eventDeclaration => model.GetDeclaredSymbol(eventDeclaration),
+            _ => null
+        };
+        Assert.NotNull(symbol);
+        var xml = XElement.Parse(symbol.GetDocumentationCommentXml()!);
+        Assert.Equal(tags, xml.Elements().Select(element => element.Name.LocalName));
+        Assert.DoesNotContain(compilation.GetDiagnostics(), diagnostic => diagnostic.Id.StartsWith("BC423", StringComparison.Ordinal));
     }
 }
