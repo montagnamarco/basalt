@@ -61,7 +61,8 @@ internal sealed class VisualBasicSnippetInput(TextEditor editor, Action<Action> 
         }
 
         var version = document.Version;
-        if (_armed is not { } armed || armed.Version != version || armed.Caret != caret)
+        if (snippet.Shortcut != "?" &&
+            (_armed is not { } armed || armed.Version != version || armed.Caret != caret))
         {
             _armed = (version, caret);
             return Task.CompletedTask;
@@ -77,11 +78,12 @@ internal sealed class VisualBasicSnippetInput(TextEditor editor, Action<Action> 
         var valid = await Task.Run(async () =>
         {
             var root = await VisualBasicSyntaxTree.ParseText(text).GetRootAsync().ConfigureAwait(false);
-            var token = root.FindToken(start);
+            var token = root.FindToken(start, findInsideTrivia: true);
             // A matching word inside XML text, a string, or comment trivia is
             // not a VB shortcut. Ask the same parser used for editing services.
             return token.Span.Start == start && token.Span.End == caret &&
-                (token.RawKind == (int)SyntaxKind.IdentifierToken || SyntaxFacts.IsKeywordKind(token.Kind()));
+                (token.RawKind == (int)SyntaxKind.IdentifierToken || SyntaxFacts.IsKeywordKind(token.Kind()) ||
+                 snippet.Shortcut == "?" && token.IsKind(SyntaxKind.QuestionToken));
         });
         if (!valid || request != _request || editor.Document != document || document.Version != version ||
             editor.CaretOffset != caret || editor.SelectionLength != 0) return;

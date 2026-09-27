@@ -128,6 +128,7 @@ public class VbSnippetsTests
     [InlineData("try")]
     [InlineData("class")]
     [InlineData("property")]
+    [InlineData("?")]
     public void OffersTheShortcutsVisualBasicShipsWith(string shortcut)
     {
         Assert.NotNull(VbSnippets.ByShortcut(shortcut));

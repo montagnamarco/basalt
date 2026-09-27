@@ -14,6 +14,23 @@ public sealed class VisualBasicSnippetTypingTests
     private const string Prefix = "Class C\n    Sub M()\n        ";
     private const string Suffix = "\n        Dim following = 1\n    End Sub\nEnd Class";
 
+    [AvaloniaFact]
+    public async Task QuestionTabWritesConsoleOutputWithTheCaretInsideParentheses()
+    {
+        using var session = new Session("?");
+        session.Press(Key.Tab);
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (!session.Editor.Text.Contains("Console.WriteLine()", StringComparison.Ordinal) && DateTime.UtcNow < deadline)
+            await Task.Delay(10);
+
+        Assert.Equal(Prefix + "Console.WriteLine()" + Suffix, session.Editor.Text);
+        Assert.Equal(Prefix.Length + "Console.WriteLine(".Length, session.Editor.CaretOffset);
+        session.Code.AutoFormatWhileTyping = false;
+        session.Editor.Document.UndoStack.Undo();
+        Assert.Equal(Prefix + "?" + Suffix, session.Editor.Text);
+        Assert.False(session.Editor.Document.UndoStack.CanUndo);
+    }
+
     [AvaloniaTheory]
     [InlineData("\n")]
     [InlineData("\r\n")]
@@ -112,11 +129,17 @@ public sealed class VisualBasicSnippetTypingTests
     }
 
     [AvaloniaTheory]
-    [InlineData("Class C\n    Sub M()\n        Dim xml = <node>\nif\n</node>\n    End Sub\nEnd Class")]
-    [InlineData("Class C\n    Sub M()\n        Dim text = \"first\nif\nlast\"\n    End Sub\nEnd Class")]
-    public async Task TextThatLooksLikeAShortcutDoesNotExpandInsideLiterals(string source)
+    [InlineData("Class C\n    Sub M()\n        Dim xml = <node>\nif\n</node>\n    End Sub\nEnd Class", "if")]
+    [InlineData("Class C\n    Sub M()\n        Dim text = \"first\nif\nlast\"\n    End Sub\nEnd Class", "if")]
+    [InlineData("Class C\n    Sub M()\n        Dim xml = <node>\n?\n</node>\n    End Sub\nEnd Class", "?")]
+    [InlineData("Class C\n    Sub M()\n        Dim text = \"first\n?\nlast\"\n    End Sub\nEnd Class", "?")]
+    public async Task TextThatLooksLikeAShortcutDoesNotExpandInsideLiterals(string source, string shortcut)
     {
-        var editor = new TextEditor { Text = source, CaretOffset = source.IndexOf("\nif\n", StringComparison.Ordinal) + 3 };
+        var editor = new TextEditor
+        {
+            Text = source,
+            CaretOffset = source.IndexOf("\n" + shortcut + "\n", StringComparison.Ordinal) + shortcut.Length + 1
+        };
         var input = new VisualBasicSnippetInput(editor, action => action());
         await input.HandleKey(new KeyEventArgs { Key = Key.Tab })!;
         await input.HandleKey(new KeyEventArgs { Key = Key.Tab })!;

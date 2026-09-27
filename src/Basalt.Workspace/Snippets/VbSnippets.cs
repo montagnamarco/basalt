@@ -10,6 +10,8 @@ public static class VbSnippets
 {
     public static IReadOnlyList<CodeSnippet> All { get; } =
     [
+        new("?", "Console.WriteLine", "Console.WriteLine($end$)"),
+
         new("for", "For loop", "For $i$ As Integer = 0 To $count$\n    $end$\nNext")
         {
             Description = "Counted loop."

@@ -827,7 +827,10 @@ public sealed class CodeEditor : UserControl
         {
             // Committing a snippet keyword is already the first Tab in Tab, Tab.
             if (e.Key == Key.Tab && _snippets.HandleKey(e) is { } armSnippet)
+            {
+                CancelPendingCompletion();
                 Guarded.Run(() => armSnippet, _shell.WriteOutput, "editor");
+            }
             return;
         }
 
@@ -864,6 +867,9 @@ public sealed class CodeEditor : UserControl
 
         if (_document.Language == SourceLanguage.VisualBasic && _snippets.HandleKey(e) is { } snippetTask)
         {
+            // The Tab belongs to the snippet now: the list typing its shortcut
+            // queued would otherwise open a moment later, over the expansion.
+            CancelPendingCompletion();
             e.Handled = true;
             Guarded.Run(() => snippetTask, _shell.WriteOutput, "editor");
             return;
@@ -1513,6 +1519,13 @@ public sealed class CodeEditor : UserControl
     /// typing into a single ask.
     /// </remarks>
     private const int CompletionPauseMilliseconds = 40;
+
+    /// <summary>Drops a completion list that is queued or on its way.</summary>
+    private void CancelPendingCompletion()
+    {
+        _completionDebounce?.Cancel();
+        _completionRequests.Invalidate();
+    }
 
     private void RequestCompletionAfterPause()
     {

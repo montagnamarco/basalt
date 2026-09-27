@@ -421,6 +421,33 @@ public sealed class CompletionKeyboardTests : IAsyncLifetime
     }
 
     [AvaloniaFact]
+    public async Task ArmingASnippetCancelsTheCompletionQueuedByTypingItsShortcut()
+    {
+        var (window, code, editor) = await OpenAsync("if", "If");
+        try
+        {
+            window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+            window.KeyRelease(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+            editor.Text = Source("");
+            editor.CaretOffset = editor.Document.GetLineByNumber(5).EndOffset;
+            window.KeyTextInput("if");
+            var requests = code.CompletionRequestsForTests;
+            window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            window.KeyRelease(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            await Task.Delay(600);
+
+            Assert.Equal(requests, code.CompletionRequestsForTests);
+            Assert.False(code.CompletionOpenForTests);
+            window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            window.KeyRelease(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (editor.SelectedText != "condition" && DateTime.UtcNow < deadline) await Task.Delay(10);
+            Assert.Equal(Source("If condition Then\n            \n        End If"), editor.Text);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
     public async Task TabCommitsTheKeywordAndTheNextTabExpandsItsSnippet()
     {
         var (window, code, editor) = await OpenAsync("if", "If");
