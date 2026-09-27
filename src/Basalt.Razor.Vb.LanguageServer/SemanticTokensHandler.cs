@@ -260,7 +260,24 @@ public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
                         AddClosing(block);
                         break;
 
+                    case FunctionsNode functions:
+                        // Members the view declares: Visual Basic like a code
+                        // block's body, which the walk used to skip whole.
+                        Add(functions.Position, KeywordLength(document.Text, functions.Position),
+                            SemanticTokenType.Keyword);
 
+                        AddVisualBasic(functions.BodyPosition, functions.Code);
+                        AddClosingAfter(functions.BodyPosition + functions.Code.Length, "End Functions");
+                        break;
+
+                    case SectionNode section:
+                        // Markup with expressions in it, like the page's own.
+                        Add(section.Position, KeywordLength(document.Text, section.Position),
+                            SemanticTokenType.Keyword);
+
+                        Walk(section.Body);
+                        AddClosingAfter(section.Position + KeywordLength(document.Text, section.Position), "End Section");
+                        break;
                 }
             }
         }
@@ -285,6 +302,15 @@ public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
             if (at < 0) return;
 
             Add(at, block.Closing.Length, SemanticTokenType.Keyword);
+        }
+
+        /// <summary>Colours the first closing keyword written after a position.</summary>
+        void AddClosingAfter(int after, string closing)
+        {
+            var at = document.Text.IndexOf(
+                closing, Math.Clamp(after, 0, document.Text.Length), StringComparison.OrdinalIgnoreCase);
+
+            if (at >= 0) Add(at, closing.Length, SemanticTokenType.Keyword);
         }
 
         /// <summary>

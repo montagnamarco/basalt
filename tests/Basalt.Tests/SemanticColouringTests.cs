@@ -81,6 +81,38 @@ public sealed class SemanticColouringTests
     }
 
     [Fact]
+    public void MembersDeclaredInFunctionsAreColouredAsCode()
+    {
+        // The walk knew code blocks and not @Functions: a view's own methods
+        // stayed black between a blue "@Functions" that was never coloured
+        // either.
+        const string view = "<p>@Twice(2)</p>\n@Functions\n    Function Twice(n As Integer) As Integer\n" +
+                            "        Return n * 2 ' doubled\n    End Function\nEnd Functions\n";
+
+        var tokens = Tokens(view);
+        var coloured = tokens.Select(token => (Text: TextOf(view, token), token.Type)).ToList();
+
+        Assert.Contains(("@Functions", SemanticTokenType.Keyword), coloured);
+        Assert.Contains(("Function", SemanticTokenType.Keyword), coloured);
+        Assert.Contains(("Integer", SemanticTokenType.Keyword), coloured);
+        Assert.Contains(("2", SemanticTokenType.Number), coloured);
+        Assert.Contains(("' doubled", SemanticTokenType.Comment), coloured);
+        Assert.Contains(("End Functions", SemanticTokenType.Keyword), coloured);
+    }
+
+    [Fact]
+    public void ASectionIsColouredWithWhatItHolds()
+    {
+        const string view = "@Section Scripts\n    <p>@DateTime.Now</p>\nEnd Section\n";
+
+        var coloured = Tokens(view).Select(token => (Text: TextOf(view, token), token.Type)).ToList();
+
+        Assert.Contains(("@Section", SemanticTokenType.Keyword), coloured);
+        Assert.Contains(("@DateTime.Now", SemanticTokenType.Variable), coloured);
+        Assert.Contains(("End Section", SemanticTokenType.Keyword), coloured);
+    }
+
+    [Fact]
     public void TokensAreInOrder()
     {
         // The protocol encodes each token as an offset from the one before,
