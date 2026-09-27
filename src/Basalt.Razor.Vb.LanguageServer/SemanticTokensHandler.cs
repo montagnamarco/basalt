@@ -16,23 +16,34 @@ namespace Basalt.Razor.Vb.LanguageServer;
 public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
 {
     private readonly DocumentStore _documents;
+    private readonly ProjectCompilation? _compilation;
 
-    public VbHtmlSemanticTokensHandler(DocumentStore documents) => _documents = documents;
+    public VbHtmlSemanticTokensHandler(DocumentStore documents, ProjectCompilation? compilation = null)
+    {
+        _documents = documents;
+        _compilation = compilation;
+    }
 
-    protected override Task Tokenize(
+    protected override async Task Tokenize(
         SemanticTokensBuilder builder, ITextDocumentIdentifierParams identifier,
         CancellationToken ct)
     {
         var document = _documents.Get(identifier.TextDocument.Uri.ToString());
 
-        if (document is null) return Task.CompletedTask;
+        if (document is null) return;
 
         // A range request asks about the lines on screen. Colouring a large
         // file is otherwise paid for in full on every edit, when the editor
         // only ever shows a screenful.
         var range = (identifier as SemanticTokensRangeParams)?.Range;
 
-        foreach (var (line, character, length, type) in Tokens(document))
+        var names = _compilation is null
+            ? []
+            : await _compilation
+                .ClassifyNamesAsync(identifier.TextDocument.Uri.GetFileSystemPath(), document.Text, ct)
+                .ConfigureAwait(false);
+
+        foreach (var (line, character, length, type) in WithNames(document, Tokens(document), names))
         {
             ct.ThrowIfCancellationRequested();
 
@@ -41,9 +52,62 @@ public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
             // No modifiers: nothing here is static, readonly or deprecated.
             builder.Push(line, character, length, type, Array.Empty<SemanticTokenModifier>());
         }
-
-        return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// The scanned tokens with Roslyn's names laid over them.
+    /// </summary>
+    /// <remarks>
+    /// The scan knows keywords, strings, numbers and comments, and has to
+    /// guess at names: everything after a dot came out as a property, a
+    /// class as plain text. Roslyn knows what each name is. Tokens may not
+    /// overlap, so where a name falls inside a scanned token, the name wins
+    /// and the scanned token goes: "@Model.Name" was one variable-coloured
+    /// run, and is now the model and its property.
+    /// </remarks>
+    internal static IReadOnlyList<(int Line, int Character, int Length, SemanticTokenType Type)> WithNames(
+        OpenDocument document,
+        IReadOnlyList<(int Line, int Character, int Length, SemanticTokenType Type)> scanned,
+        IReadOnlyList<Basalt.Workspace.Web.ViewClassification.Name> names)
+    {
+        var named = new List<(int Line, int Character, int Length, SemanticTokenType Type)>();
+
+        foreach (var name in names)
+        {
+            if (TypeOfName(name.Kind) is not { } type) continue;
+
+            var (line, character) = LineAndCharacterOf(document.Text, name.Start);
+            named.Add((line, character, name.Length, type));
+        }
+
+        bool Overlaps((int Line, int Character, int Length, SemanticTokenType Type) token) =>
+            named.Any(name => name.Line == token.Line &&
+                              name.Character < token.Character + token.Length &&
+                              token.Character < name.Character + name.Length);
+
+        return [.. scanned.Where(token => !Overlaps(token))
+            .Concat(named)
+            .OrderBy(token => token.Line)
+            .ThenBy(token => token.Character)];
+    }
+
+    /// <summary>The protocol's type for one of Roslyn's classification names.</summary>
+    private static SemanticTokenType? TypeOfName(string kind) => kind switch
+    {
+        "class name" or "record class name" or "module name" or "delegate name" => SemanticTokenType.Class,
+        "struct name" or "record struct name" => SemanticTokenType.Struct,
+        "interface name" => SemanticTokenType.Interface,
+        "enum name" => SemanticTokenType.Enum,
+        "type parameter name" => SemanticTokenType.TypeParameter,
+        "method name" or "extension method name" => SemanticTokenType.Method,
+        "property name" or "field name" or "constant name" => SemanticTokenType.Property,
+        "enum member name" => SemanticTokenType.EnumMember,
+        "event name" => SemanticTokenType.Event,
+        "parameter name" => SemanticTokenType.Parameter,
+        "local name" => SemanticTokenType.Variable,
+        "namespace name" => SemanticTokenType.Namespace,
+        _ => null
+    };
 
     /// <summary>
     /// Whether a line falls in the range asked about.
@@ -476,7 +540,20 @@ public sealed class VbHtmlSemanticTokensHandler : SemanticTokensHandlerBase
             SemanticTokenType.Number,
             SemanticTokenType.Comment,
             SemanticTokenType.Property,
-            SemanticTokenType.Operator),
+            SemanticTokenType.Operator,
+
+            // Roslyn's names, added after the scan's so their indices, which
+            // are the wire format, stay where they were.
+            SemanticTokenType.Class,
+            SemanticTokenType.Struct,
+            SemanticTokenType.Interface,
+            SemanticTokenType.Enum,
+            SemanticTokenType.TypeParameter,
+            SemanticTokenType.Method,
+            SemanticTokenType.EnumMember,
+            SemanticTokenType.Event,
+            SemanticTokenType.Parameter,
+            SemanticTokenType.Namespace),
         TokenModifiers = new Container<SemanticTokenModifier>()
     };
 

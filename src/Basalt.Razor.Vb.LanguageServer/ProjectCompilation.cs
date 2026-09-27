@@ -91,6 +91,22 @@ public sealed class ProjectCompilation : IDisposable
         return entry with { InsertionText = commit.Text };
     }
 
+    /// <summary>
+    /// What each name in a template's Visual Basic is, by Roslyn; none until
+    /// the solution has loaded.
+    /// </summary>
+    internal async Task<IReadOnlyList<ViewClassification.Name>> ClassifyNamesAsync(
+        string path, string text, CancellationToken ct)
+    {
+        if (!IsReady) return [];
+
+        return await ViewClassification.ClassifyAsync(
+                path, text, ViewHost.AspNetCore,
+                (code, token) => _roslyn.GetNameClassificationsAsync("__vbhtml_generated.vb", code, token),
+                ct)
+            .ConfigureAwait(false);
+    }
+
     private sealed class DiagnosticsCapture
     {
         internal IReadOnlyList<string>? Ids { get; set; }

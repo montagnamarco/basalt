@@ -1105,6 +1105,38 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
     }
 
     /// <summary>
+    /// What Roslyn says each name in a text is: a class, a method, a local.
+    /// </summary>
+    /// <remarks>
+    /// Roslyn's own classification names ("class name", "method name"), for a
+    /// file the workspace holds or text it does not, generated Razor above
+    /// all. Only names: keywords, strings and comments a scan finds exactly.
+    /// </remarks>
+    public async Task<IReadOnlyList<(int Start, int Length, string Kind)>> GetNameClassificationsAsync(
+        string filePath, string text, CancellationToken ct = default)
+    {
+        var document = GetDocument(filePath) ?? ScratchDocument(text);
+        if (document is null) return [];
+
+        document = document.WithText(SourceText.From(text));
+
+        // Off the caller's thread, as diagnostics are: classifying binds the
+        // whole text.
+        return await Task.Run(
+            async () =>
+            {
+                var spans = await Microsoft.CodeAnalysis.Classification.Classifier
+                    .GetClassifiedSpansAsync(document, new TextSpan(0, text.Length), ct)
+                    .ConfigureAwait(false);
+
+                return (IReadOnlyList<(int, int, string)>)[.. spans
+                    .Where(span => span.ClassificationType.EndsWith(" name", StringComparison.Ordinal))
+                    .Select(span => (span.TextSpan.Start, span.TextSpan.Length, span.ClassificationType))];
+            },
+            ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// The fixes offered for the problems at a position.
     ///
     /// These come from Roslyn's own code fix providers, so "import the missing
