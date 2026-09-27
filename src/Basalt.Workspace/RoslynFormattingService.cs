@@ -184,19 +184,25 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
         if (HasUnterminatedString(source, line, position))
             return new TypingFormattingResult(text, caret, Changed: false);
 
+        // A declaration edit can change its associated closing keyword. This
+        // is the only typing correction allowed to touch another line.
+        var terminators = VisualBasicMethodTerminatorCorrector.GetChanges(source, line, position, ct);
+        var synchronized = terminators.Count == 0 ? source : source.WithChanges(terminators);
+
         // Casing first: it rewrites tokens in place and never moves anything,
         // so the spans the formatter works with afterwards stay valid.
         var casing = await VisualBasicCaseCorrector
-            .GetKeywordChangesAsync(text, line.Span, ct)
+            .GetKeywordChangesAsync(synchronized.ToString(), line.Span, ct)
             .ConfigureAwait(false);
 
-        var cased = casing.Count == 0 ? source : source.WithChanges(casing);
+        var cased = casing.Count == 0 ? synchronized : synchronized.WithChanges(casing);
+        var conventions = casing.Concat(terminators).ToList();
 
         // Then spacing and indentation for the same line.
         var document = CreateScratchDocument(cased.ToString(), language);
         var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
         if (root is null)
-            return Result(text, cased.ToString(), caret, casing);
+            return Result(text, cased.ToString(), caret, conventions);
 
         var span = ContextSpan(cased, root, cased.Lines.GetLineFromPosition(position), position);
 
@@ -213,7 +219,7 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             .Where(change => !TouchesCaretWhitespace(change, cased, position))
             .ToList();
 
-        if (layout.Count == 0) return Result(text, cased.ToString(), caret, casing);
+        if (layout.Count == 0) return Result(text, cased.ToString(), caret, conventions);
 
         var final = cased.WithChanges(layout);
 

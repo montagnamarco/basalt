@@ -48,6 +48,7 @@ public interface IFormattingService
     /// <summary>
     /// Applies Visual Basic editing conventions to the line holding the caret:
     /// canonical keyword casing, spacing around operators, and indentation.
+    /// An edited method declaration also synchronizes its associated terminator.
     ///
     /// The whole line is corrected rather than just the word last typed. In
     /// "end if" the word "end" was finished earlier, and correcting only the

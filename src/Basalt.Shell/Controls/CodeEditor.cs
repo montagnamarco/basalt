@@ -451,7 +451,6 @@ public sealed class CodeEditor : UserControl
         if (content.Trim().Length == 0) return;
 
         var snapshot = _editor.Text;
-        var caretBefore = _editor.CaretOffset;
 
         var result = _document.Language == SourceLanguage.VisualBasic
             ? await _shell
@@ -477,23 +476,10 @@ public sealed class CodeEditor : UserControl
         // The user kept typing while this ran: their text wins.
         if (!string.Equals(snapshot, _editor.Text, StringComparison.Ordinal)) return;
 
-        var updated = corrected.Split('\n');
-        var index = lineNumber - 1;
-        if (index >= updated.Length) return;
-
-        var replacement = updated[index];
-        if (string.Equals(content, replacement, StringComparison.Ordinal)) return;
-
         _suppressTextChanged = true;
         try
         {
-            _editor.Document.Replace(line.Offset, line.Length, replacement);
-
-            // Re-indenting a line shifts everything after it, so the caret is
-            // moved by the same amount when it sits past the edit.
-            var delta = replacement.Length - content.Length;
-            var caretAfter = caretBefore > line.EndOffset ? caretBefore + delta : caretBefore;
-            _editor.CaretOffset = Math.Clamp(caretAfter, 0, _editor.Document.TextLength);
+            EditorTypingChanges.Apply(_editor, snapshot, corrected);
         }
         finally
         {
@@ -687,10 +673,19 @@ public sealed class CodeEditor : UserControl
 
         if (string.Equals(withIdentifiers, _editor.Text, StringComparison.Ordinal)) return;
 
-        // Only the caret's line is rewritten, never the whole document.
-        // Replacing Document.Text discards keystrokes that arrive while the
-        // replacement is in flight, which showed up as dropped characters.
-        ReplaceCurrentLine(withIdentifiers, result.Caret);
+        // The declaration and its associated terminator can both change.
+        // Preserve a caret that moved while the language service was working.
+        _suppressTextChanged = true;
+        try
+        {
+            EditorTypingChanges.Apply(_editor, snapshot, withIdentifiers,
+                _editor.CaretOffset == caret ? result.Caret : null);
+        }
+        finally
+        {
+            _suppressTextChanged = false;
+        }
+        _document.Text = _editor.Text;
     }
 
     /// <summary>
@@ -747,48 +742,14 @@ public sealed class CodeEditor : UserControl
             return;
         }
 
-        // 1. Canonical casing, spacing and indentation for the line being left.
-        await ApplyVisualBasicConventionsAsync();
-
-        var caret = _editor.CaretOffset;
-        var currentLine = _editor.Document.GetLineByOffset(caret);
-        var lineIndex = currentLine.LineNumber - 1;
-        var text = _editor.Text;
-
-        // 2. Indentation for the line about to be created.
-        var innerIndent = await _shell
-            .GetIndentationAsync(text, SourceLanguage.VisualBasic, currentLine.EndOffset)
-            .ConfigureAwait(true);
-
-        // 3. The closing line, when this line opened a block.
-        var closing = await _shell
-            .GetBlockClosingAsync(text, SourceLanguage.VisualBasic, lineIndex)
-            .ConfigureAwait(true);
-
-        var builder = new System.Text.StringBuilder();
-        builder.Append('\n').Append(new string(' ', innerIndent));
-
-        var caretAfter = caret + builder.Length;
-
-        if (closing is not null)
+        await VisualBasicEnterInput.HandleAsync(_editor, _shell, _document.FilePath, action =>
         {
-            // The closing line sits one level out from the block's body.
-            var closingIndent = Math.Max(0, innerIndent - _editor.Options.IndentationSize);
-            builder.Append('\n').Append(new string(' ', closingIndent)).Append(closing);
-        }
-
-        _suppressTextChanged = true;
-        try
-        {
-            _editor.Document.Insert(caret, builder.ToString());
-            _editor.CaretOffset = Math.Clamp(caretAfter, 0, _editor.Document.TextLength);
-        }
-        finally
-        {
-            _suppressTextChanged = false;
-        }
-
-        _document.Text = _editor.Text;
+            _suppressTextChanged = true;
+            try { action(); }
+            finally { _suppressTextChanged = false; }
+            _lastCaretLine = _editor.Document.GetLineByOffset(_editor.CaretOffset).LineNumber;
+            _document.Text = _editor.Text;
+        });
     }
 
     /// <summary>Inserts a newline the way the editor would, with no extra work.</summary>
@@ -910,7 +871,7 @@ public sealed class CodeEditor : UserControl
             if (_document.Language == SourceLanguage.VisualBasic)
             {
                 e.Handled = true;
-                await HandleVisualBasicEnterAsync();
+                Guarded.Run(HandleVisualBasicEnterAsync, _shell.WriteOutput, "editor");
                 return;
             }
 
