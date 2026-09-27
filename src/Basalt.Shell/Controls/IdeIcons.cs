@@ -57,6 +57,13 @@ public static class IdeIcons
     }
 
     /// <summary>
+    /// Whether an icon is drawn filled rather than outlined. Only the
+    /// application's own: its honeycomb cells are too small to outline at
+    /// sixteen pixels without running together.
+    /// </summary>
+    public static bool IsFilled(IconKind kind) => kind == IconKind.Application;
+
+    /// <summary>
     /// The outline as path data, before it becomes geometry.
     ///
     /// Parsing one needs a render backend, which a plain unit test has no
@@ -84,7 +91,7 @@ public static class IdeIcons
         IconKind.Branch or IconKind.Commit => Color.FromRgb(0x2E, 0xA0, 0x43),
 
         // Basalt is dark rock; the lava is what gives it colour.
-        IconKind.Application => Color.FromRgb(0xD9, 0x53, 0x1E),
+        IconKind.Application => Color.FromRgb(0xE4, 0x57, 0x2E),
         _ => null
     };
 
@@ -231,20 +238,23 @@ public static class IdeIcons
         IconKind.Diff => "M1.5,2.5 H7 V13.5 H1.5 Z M9,2.5 H14.5 V13.5 H9 Z M3,5.5 H5.5 M3,8 H5.5 M10.5,8 H13 M10.5,10.5 H13",
         IconKind.Zoom => "M3,3 H13 V13 H3 Z M6,6 H10 V10 H6 Z",
 
-        // Basalt: the rock the IDE is named after, which cools into hexagonal
-        // columns. The same two-column figure as basalt-small.svg, so the
-        // window, the dock and the About box cannot show different icons.
+        // Basalt: the rock the IDE is named after. Cooling lava cracks into
+        // hexagonal columns, whose tops fit together as a honeycomb: seven of
+        // them, as in basalt.svg, the same icon in the window, the dock and
+        // the About box. Filled, not stroked (see IsFilled): outlined at
+        // sixteen pixels the cells run into one another.
         //
-        // Two rather than the three in the full artwork: rendered at sixteen
-        // pixels three of them merge into one smudge with no shape in it, which
-        // is only visible by rasterising and looking.
+        // The proportions of basalt-small.svg, a quarter size, with a gap of
+        // a whole unit between cells, which is what keeps them apart on
+        // screen; checked by rasterising, in ApplicationIconTests.
         IconKind.Application =>
-            // The shorter column: its hexagonal top, then the shaft.
-            "M3.08,8.11 L5.25,8.72 L7.42,8.11 L7.42,6.89 L5.25,6.28 L3.08,6.89 Z "
-          + "M3.08,8.11 L3.08,6.89 L5.25,6.28 L7.42,6.89 L7.42,8.11 L7.42,12.50 L3.08,12.50 Z "
-            // The taller one, in front.
-          + "M8.08,5.61 L10.25,6.22 L12.42,5.61 L12.42,4.39 L10.25,3.77 L8.08,4.39 Z "
-          + "M8.08,5.61 L8.08,4.39 L10.25,3.77 L12.42,4.39 L12.42,5.61 L12.42,12.50 L8.08,12.50 Z",
+            "M8,5.9 L9.82,6.95 L9.82,9.05 L8,10.1 L6.18,9.05 L6.18,6.95 Z "
+          + "M12.64,5.9 L14.46,6.95 L14.46,9.05 L12.64,10.1 L10.82,9.05 L10.82,6.95 Z "
+          + "M10.32,9.92 L12.14,10.97 L12.14,13.07 L10.32,14.12 L8.5,13.07 L8.5,10.97 Z "
+          + "M5.68,9.92 L7.5,10.97 L7.5,13.07 L5.68,14.12 L3.86,13.07 L3.86,10.97 Z "
+          + "M3.36,5.9 L5.18,6.95 L5.18,9.05 L3.36,10.1 L1.54,9.05 L1.54,6.95 Z "
+          + "M5.68,1.88 L7.5,2.93 L7.5,5.03 L5.68,6.08 L3.86,5.03 L3.86,2.93 Z "
+          + "M10.32,1.88 L12.14,2.93 L12.14,5.03 L10.32,6.08 L8.5,5.03 L8.5,2.93 Z",
 
         IconKind.Settings => "M8,5.5 A2.5,2.5 0 1 1 8,10.5 A2.5,2.5 0 0 1 8,5.5 "
                            + "M8,1 V3 M8,13 V15 M1,8 H3 M13,8 H15 "

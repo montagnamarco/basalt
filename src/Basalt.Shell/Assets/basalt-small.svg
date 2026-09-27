@@ -1,23 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="16" height="16">
   <!--
-    The same rock at sixteen pixels, where the full icon cannot go: rendered
-    that small, three columns merge into one orange smudge with no shape in it
-    at all. Two, drawn larger, still read as two.
-
-    Checked by rasterising and looking rather than by reasoning about it — the
-    three-column version looks perfectly correct in the editor and fails only
-    on screen.
+    The same honeycomb at sixteen and twenty-four pixels. Drawn with wider
+    gaps (a whole pixel at sixteen) and lighter greys: at the full artwork's
+    proportions the gaps fall between pixels and the ring of hexagonal
+    columns turns into one grey blot around the orange. Checked by
+    rasterising and looking, not by reasoning about it.
   -->
 
-  <rect width="64" height="64" rx="12" fill="#1B1B1F"/>
-
-  <!-- the shorter column -->
-  <path d="M12.34,32.45 L12.34,27.55 L21.00,25.10 L21.00,50.00 L12.34,50.00 Z" fill="#C2491A"/>
-  <path d="M21.00,25.10 L29.66,27.55 L29.66,32.45 L29.66,50.00 L21.00,50.00 Z" fill="#8A3210"/>
-  <path d="M12.34,32.45 L21.00,34.90 L29.66,32.45 L29.66,27.55 L21.00,25.10 L12.34,27.55 Z" fill="#E2963A"/>
-
-  <!-- the taller one -->
-  <path d="M32.34,22.45 L32.34,17.55 L41.00,15.10 L41.00,50.00 L32.34,50.00 Z" fill="#D9531E"/>
-  <path d="M41.00,15.10 L49.66,17.55 L49.66,22.45 L49.66,50.00 L41.00,50.00 Z" fill="#96360F"/>
-  <path d="M32.34,22.45 L41.00,24.90 L49.66,22.45 L49.66,17.55 L41.00,15.10 L32.34,17.55 Z" fill="#F2A03D"/>
+  <rect width="64" height="64" rx="14" fill="#17191C"/>
+  <path d="M32,23.6 L39.27,27.8 L39.27,36.2 L32,40.4 L24.73,36.2 L24.73,27.8 Z" fill="#E4572E"/>
+  <path d="M50.55,23.6 L57.82,27.8 L57.82,36.2 L50.55,40.4 L43.27,36.2 L43.27,27.8 Z" fill="#8C949C"/>
+  <path d="M41.27,39.66 L48.55,43.86 L48.55,52.26 L41.27,56.46 L34,52.26 L34,43.86 Z" fill="#7B838C"/>
+  <path d="M22.73,39.66 L30,43.86 L30,52.26 L22.73,56.46 L15.45,52.26 L15.45,43.86 Z" fill="#98A0A8"/>
+  <path d="M13.45,23.6 L20.73,27.8 L20.73,36.2 L13.45,40.4 L6.18,36.2 L6.18,27.8 Z" fill="#737B84"/>
+  <path d="M22.73,7.54 L30,11.74 L30,20.14 L22.73,24.34 L15.45,20.14 L15.45,11.74 Z" fill="#868E97"/>
+  <path d="M41.27,7.54 L48.55,11.74 L48.55,20.14 L41.27,24.34 L34,20.14 L34,11.74 Z" fill="#7A828B"/>
 </svg>

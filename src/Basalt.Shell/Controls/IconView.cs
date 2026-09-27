@@ -68,9 +68,7 @@ public sealed class IconView : Control
 
         using var _ = context.PushTransform(Matrix.CreateScale(scale, scale));
 
-        // Stroked rather than filled: the paths are outlines, and a stroke of
-        // just over a pixel reads clearly at the sizes these are shown at.
-        context.DrawGeometry(null, new Pen(brush, 1.25), geometry);
+        Draw(context, Kind, brush, geometry);
     }
 
     /// <summary>
@@ -109,7 +107,7 @@ public sealed class IconView : Control
 
             using var _ = context.PushTransform(Matrix.CreateScale(scale, scale));
 
-            context.DrawGeometry(null, new Pen(brush, 1.25), geometry);
+            Draw(context, kind, brush, geometry);
         }
 
         Rasterized[key] = target;
@@ -118,4 +116,17 @@ public sealed class IconView : Control
     }
 
     private static readonly Dictionary<(IconKind, Color?, int), Bitmap> Rasterized = [];
+
+    /// <summary>
+    /// Stroked rather than filled, as the paths are outlines and a stroke of
+    /// just over a pixel reads clearly at the sizes these are shown at —
+    /// except the few IdeIcons.IsFilled names.
+    /// </summary>
+    private static void Draw(DrawingContext context, IconKind kind, IBrush brush, Geometry geometry)
+    {
+        if (IdeIcons.IsFilled(kind))
+            context.DrawGeometry(brush, null, geometry);
+        else
+            context.DrawGeometry(null, new Pen(brush, 1.25), geometry);
+    }
 }

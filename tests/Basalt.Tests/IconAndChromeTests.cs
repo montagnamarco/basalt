@@ -72,7 +72,7 @@ public class IdeIconsTests
     }
 
     [AvaloniaFact]
-    public void HasAnApplicationIconThatIsAVolcano()
+    public void HasAnApplicationIconShapedLikeTheRock()
     {
         // Basalt is volcanic rock, and the icon says so. Checked as real
         // geometry rather than as a non-empty string: a malformed path is a

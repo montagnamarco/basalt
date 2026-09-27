@@ -98,25 +98,46 @@ public class ApplicationIconTests
     }
 
     [AvaloniaFact]
-    public void TheDrawnIconStillHasTwoColumnsAtSixteenPixels()
+    public void TheDrawnIconIsAHoneycombWhoseCellsStayApart()
     {
-        // Rasterised and counted, not reasoned about. The three-column
-        // artwork looks perfectly correct in an editor and turns into one
-        // orange smudge at the size the menu bar and the tabs use — which is
-        // why the drawn icon carries two columns and the file carries three.
+        // Seven hexagonal cells, the middle one and the ring around it, with a
+        // gap between them: drawn without one, at sixteen pixels the ring
+        // runs into a single grey blot.
         var geometry = IdeIcons.PathFor(IconKind.Application)!;
 
-        // The gap between the columns, at the height they overlap: a single
-        // merged shape would fill it.
-        var atMidHeight = new Avalonia.Point(7.75, 9);
+        Assert.True(geometry.FillContains(new Avalonia.Point(8, 8)), "no middle cell");
+        Assert.True(geometry.FillContains(new Avalonia.Point(12.64, 8)), "no cell to its right");
+        Assert.True(geometry.FillContains(new Avalonia.Point(5.68, 12)), "no cell below left");
 
-        Assert.False(
-            geometry.FillContains(atMidHeight),
-            "the two columns have merged into one shape");
+        // Between the middle cell and the one to its right.
+        Assert.False(geometry.FillContains(new Avalonia.Point(10.32, 8)), "the cells have merged into one shape");
+    }
 
-        // And both columns are really there.
-        Assert.True(geometry.FillContains(new Avalonia.Point(5.25, 9)), "no left column");
-        Assert.True(geometry.FillContains(new Avalonia.Point(10.25, 9)), "no right column");
+    [AvaloniaFact]
+    public void TheGapBetweenCellsSurvivesRasterisingAtSixteenPixels()
+    {
+        // Read from the pixels, as they are drawn for the macOS menu: the
+        // geometry can keep its cells apart while the rendering fills the gap.
+        var bitmap = (Avalonia.Media.Imaging.RenderTargetBitmap)IconView.Rasterize(IconKind.Application, size: 16)!;
+
+        // Rasterised at twice the size, for a retina screen.
+        var pixels = new byte[32 * 32 * 4];
+        var handle = System.Runtime.InteropServices.GCHandle.Alloc(pixels, System.Runtime.InteropServices.GCHandleType.Pinned);
+
+        try
+        {
+            bitmap.CopyPixels(new Avalonia.PixelRect(0, 0, 32, 32), handle.AddrOfPinnedObject(), pixels.Length, 32 * 4);
+        }
+        finally
+        {
+            handle.Free();
+        }
+
+        byte Alpha(int x, int y) => pixels[(y * 32 + x) * 4 + 3];
+
+        Assert.True(Alpha(16, 16) > 200, "the middle cell is not drawn");
+        Assert.True(Alpha(25, 16) > 200, "the cell to its right is not drawn");
+        Assert.True(Alpha(20, 16) < 60, $"the gap between them is filled (alpha {Alpha(20, 16)})");
     }
 
     [AvaloniaFact]
