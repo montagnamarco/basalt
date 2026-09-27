@@ -36,7 +36,8 @@ public sealed class RoslynCompletionProvider : ICompletionProvider
     public static ExtCompletionItem Convert(Core.Model.CompletionItem item) =>
         new(item.DisplayText, item.InsertionText, MapKind(item.Kind))
         {
-            Description = item.Description
+            Description = item.Description,
+            IsPreselected = item.IsPreselected
         };
 
     private static SymbolKind MapKind(CompletionKind kind) => kind switch

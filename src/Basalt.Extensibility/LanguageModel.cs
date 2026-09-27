@@ -83,6 +83,12 @@ public sealed record CompletionItem(
     /// the list having to know why they are likely.
     /// </summary>
     public int Priority { get; init; }
+
+    /// <summary>
+    /// The entry the list selects when it opens: the declared type after
+    /// "= New ", as Visual Studio preselects it.
+    /// </summary>
+    public bool IsPreselected { get; init; }
 }
 
 /// <summary>A symbol declared in a document, as shown in the outline.</summary>

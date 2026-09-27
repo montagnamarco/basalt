@@ -36,12 +36,15 @@ public sealed class ProjectCompilation : IDisposable
     {
         internal string? GeneratedText { get; set; }
         internal int Position { get; set; }
+
+        /// <summary>The character whose typing asked, if one did.</summary>
+        internal char? Typed { get; init; }
     }
 
     internal async Task<(IReadOnlyList<CompletionItem> Items, CompletionCapture Capture)>
-        GetCompletionsAsync(LanguageDocument document, int position, CancellationToken ct)
+        GetCompletionsAsync(LanguageDocument document, int position, CancellationToken ct, char? typed = null)
     {
-        var capture = new CompletionCapture();
+        var capture = new CompletionCapture { Typed = typed };
         var previous = _completionCapture.Value;
         _completionCapture.Value = capture;
         try
@@ -54,6 +57,38 @@ public sealed class ProjectCompilation : IDisposable
         {
             _completionCapture.Value = previous;
         }
+    }
+
+    /// <summary>
+    /// The preselected entry, carrying the text Roslyn writes when it is
+    /// committed rather than the name the list shows.
+    /// </summary>
+    /// <remarks>
+    /// After "Dim b As System.Text.StringBuilder = New " the list preselects
+    /// StringBuilder, and a file that does not import System.Text needs
+    /// Text.StringBuilder written; the IDE commits through GetChangeAsync for
+    /// that reason. A client commits insertText over the word at its caret,
+    /// so Roslyn's text is used only when its change replaces exactly that
+    /// word and nothing before it; positions in the generated code are never
+    /// sent back. One entry, asked once per list: the preselected one is the
+    /// one Tab or Enter writes without the user choosing.
+    /// </remarks>
+    private static async Task<CompletionItem> WithCommittedTextAsync(
+        CompletionItem entry, Basalt.Core.Model.CompletionItem item, string generated, int position, CancellationToken ct)
+    {
+        if (item.ResolveCommit is not { } resolve) return entry;
+
+        var commit = await resolve(ct).ConfigureAwait(false);
+        if (commit is null || commit.Start + commit.Length != position) return entry;
+
+        for (var index = commit.Start; index < position; index++)
+        {
+            var character = generated[index];
+
+            if (!char.IsLetterOrDigit(character) && character != '_') return entry;
+        }
+
+        return entry with { InsertionText = commit.Text };
     }
 
     internal Task<string?> GetCompletionDescriptionAsync(
@@ -214,11 +249,25 @@ public sealed class ProjectCompilation : IDisposable
                         capture.GeneratedText = text;
                         capture.Position = position;
                     }
+                    var typed = _completionCapture.Value?.Typed;
                     var items = await _roslyn
-                        .GetCompletionsAsync(generatedPath, position, text, token)
+                        .GetCompletionsAsync(generatedPath, position, text, token, typed)
                         .ConfigureAwait(false);
 
-                    return items.Select(RoslynCompletionProvider.Convert).ToList();
+                    var converted = new List<CompletionItem>(items.Count);
+
+                    foreach (var item in items)
+                    {
+                        var entry = RoslynCompletionProvider.Convert(item);
+
+                        if (item.IsPreselected)
+                            entry = await WithCommittedTextAsync(entry, item, text, position, token)
+                                .ConfigureAwait(false);
+
+                        converted.Add(entry);
+                    }
+
+                    return converted;
                 },
                 askQuickInfo: async (text, position, token) =>
                 {

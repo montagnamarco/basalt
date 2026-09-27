@@ -100,17 +100,25 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
 
         var offset = OffsetOf(document.Text, request.Position);
 
+        // Roslyn answers a typed character differently from an explicit
+        // request: after "= New " it preselects the declared type.
+        var typed = request.Context is { TriggerKind: CompletionTriggerKind.TriggerCharacter } context &&
+                    context.TriggerCharacter is { Length: 1 } character
+            ? character[0]
+            : (char?)null;
+
         // With a compilation the code half is answered properly: the view is
         // generated to Visual Basic and Roslyn is asked about the generated
         // position, which is how Basalt answers the same question.
         if (_compilation.IsReady && _compilation.Provider.Completion is not null)
         {
             var revision = _compilation.Revision;
+
             var (answered, capture) = await _compilation
                 .GetCompletionsAsync(
                     new LanguageDocument(
                         request.TextDocument.Uri.GetFileSystemPath(), document.Text),
-                    offset, ct)
+                    offset, ct, typed)
                 .ConfigureAwait(false);
 
             if (answered.Count > 0)
@@ -140,6 +148,13 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
             }
         }
 
+        // A space in Visual Basic that Roslyn had nothing for gets nothing:
+        // the markup reading below would take "a < b " for a tag and offer
+        // attributes.
+        if (typed == ' ' && (VbHtmlCodeRegions.IsInCode(document.Text, offset) ||
+                             VbHtmlCodeRegions.IsAfterStatementBody(document.Text, offset)))
+            return new CompletionList();
+
         return new CompletionList(Suggest(document, offset));
     }
 
@@ -153,6 +168,7 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
             FilterText = item.FilterText,
             Documentation = item.Description,
             Kind = KindOf(item.Kind),
+            Preselect = item.IsPreselected,
         };
 
     private static CompletionItemKind KindOf(IdeSymbolKind kind) => kind switch
@@ -315,7 +331,10 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
             DocumentSelector = Selector.ForVbHtml,
             ResolveProvider = true,
 
-            // "@" opens the directives, "." the members, "<" the tags.
-            TriggerCharacters = new Container<string>("@", ".", "<")
+            // "@" opens the directives, "." the members, "<" the tags, and a
+            // space in code the types after As and New, as in Visual Studio.
+            // A space where nothing can follow gets an empty list, which the
+            // client does not show.
+            TriggerCharacters = new Container<string>("@", ".", "<", " ")
         };
 }

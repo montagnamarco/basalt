@@ -24,6 +24,60 @@ public static class VbHtmlCodeRegions
     }
 
     /// <summary>
+    /// Whether a position sits in the whitespace after a statement block's
+    /// body, before its "End Code".
+    /// </summary>
+    /// <remarks>
+    /// The body is kept trimmed, so <see cref="IsInCode"/> ends at its last
+    /// character: right for hover and navigation, which have nothing to say
+    /// about blank space, but not for completion, where the caret after
+    /// "= New " on the block's last line is exactly where a space has just
+    /// asked for the types.
+    /// </remarks>
+    public static bool IsAfterStatementBody(string text, int position)
+    {
+        var parsed = VbHtmlParser.Parse(text);
+
+        return AfterBody(parsed.Nodes, position, text);
+    }
+
+    private static bool AfterBody(IReadOnlyList<VbHtmlNode> nodes, int position, string text)
+    {
+        foreach (var node in nodes)
+        {
+            switch (node)
+            {
+                case StatementNode statement:
+                    var bodyAt = text.IndexOf(statement.Code, statement.Position, StringComparison.Ordinal);
+                    if (bodyAt < 0) break;
+
+                    var bodyEnd = bodyAt + statement.Code.Length;
+                    var whitespaceEnd = bodyEnd;
+
+                    while (whitespaceEnd < text.Length && text[whitespaceEnd] is ' ' or '\t' or '\r' or '\n')
+                        whitespaceEnd++;
+
+                    if (position > bodyEnd && position <= whitespaceEnd) return true;
+                    break;
+
+                case BlockNode block:
+                    if (AfterBody(block.Body, position, text)) return true;
+
+                    foreach (var clause in block.Clauses)
+                        if (AfterBody(clause.Body, position, text)) return true;
+
+                    break;
+
+                case SectionNode section:
+                    if (AfterBody(section.Body, position, text)) return true;
+                    break;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// How far a member chain runs from an offset.
     ///
     /// "@Model." stops parsing at "Model", but the dot and whatever follows

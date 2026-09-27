@@ -80,8 +80,16 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     public async Task<IReadOnlyList<CompletionItem>> GetCompletionsAsync(
         LanguageDocument document, int position, CancellationToken ct = default)
     {
-        // Which half the caret is in decides who answers.
-        if (!TemplateGeneration.IsInCode(document.FilePath, document.Text, position))
+        var spaces = SpacesBeforeCaret(document.Text, position);
+
+        // Which half the caret is in decides who answers. A statement block's
+        // trailing whitespace counts as code here, and only here: after
+        // "= New " on the block's last line a space has asked for the types.
+        var inCode = TemplateGeneration.IsInCode(document.FilePath, document.Text, position) ||
+                     (spaces.Length > 0 && !TemplateGeneration.IsPage(document.FilePath) &&
+                      VbHtmlCodeRegions.IsAfterStatementBody(document.Text, position));
+
+        if (!inCode)
             return await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
 
         if (_ask is null) return [];
@@ -92,7 +100,46 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         if (CaretInGenerated(document.FilePath, document.Text, generated, position) is not { } at)
             return [];
 
-        return await _ask(generated.Code, at, ct).ConfigureAwait(false);
+        var (code, caret) = WithSpacesBefore(generated.Code, at, spaces);
+
+        return await _ask(code, caret, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The spaces and tabs typed just before the caret, or none when they
+    /// reach back to the start of the line, where they are indentation.
+    /// </summary>
+    internal static string SpacesBeforeCaret(string template, int position)
+    {
+        var start = position;
+
+        while (start > 0 && template[start - 1] is ' ' or '\t')
+            start--;
+
+        if (start == 0 || template[start - 1] is '\n' or '\r') return "";
+
+        return template[start..position];
+    }
+
+    /// <summary>
+    /// The generated code with the spaces typed before the caret, where the
+    /// writer left them out.
+    /// </summary>
+    /// <remarks>
+    /// Inside a line the writer keeps them and the caret already follows
+    /// them. At the end of a statement it drops them, and the caret is
+    /// carried to the end of the word: Roslyn, told a space was typed, found
+    /// none and offered nothing. They are put back for this question only;
+    /// the writer, its mappings and what gets compiled are unchanged.
+    /// </remarks>
+    internal static (string Code, int Caret) WithSpacesBefore(string code, int at, string spaces)
+    {
+        if (spaces.Length == 0) return (code, at);
+
+        if (at >= spaces.Length && string.CompareOrdinal(code, at - spaces.Length, spaces, 0, spaces.Length) == 0)
+            return (code, at);
+
+        return (code.Insert(at, spaces), at + spaces.Length);
     }
 
     /// <summary>
@@ -140,12 +187,80 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     /// </remarks>
     private static int? CaretInGenerated(
         string path, string template, TemplateGeneration.Generated generated, int position) =>
-        generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Strict)
+        StatementLineCaret(path, template, generated, position)
+        ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Strict)
         ?? (TemplateGeneration.IsPage(path) ? null : VbHtmlCodeRegions.CaretInGenerated(
             template, generated.Code, generated.Map, position))
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inclusive)
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inferred)
         ?? NearestBefore(generated.Map, position);
+
+    /// <summary>
+    /// The caret carried by line, on a line the writer copied as it stands:
+    /// a line of a statement block's body.
+    /// </summary>
+    /// <remarks>
+    /// There the line mapping is exact and the span arithmetic is not: the
+    /// writer re-indents a body running over several lines, so an offset
+    /// measured from the body's start drifts by the indentation of every
+    /// line before, and the caret after "= New" on the body's second line
+    /// landed on the next one.
+    ///
+    /// Checked rather than assumed: the generated line must carry the
+    /// template's text up to the caret, after its own indentation, or the
+    /// answer is left to the span mapping. A line the writer rewrote, an
+    /// expression put inside Write(...) say, never matches.
+    /// </remarks>
+    private static int? StatementLineCaret(
+        string path, string template, TemplateGeneration.Generated generated, int position)
+    {
+        if (TemplateGeneration.IsPage(path)) return null;
+
+        var templateLineStart = template.LastIndexOf('\n', Math.Max(0, position - 1)) + 1;
+        if (position < templateLineStart) templateLineStart = 0;
+
+        var templateLine = 1 + template.Take(templateLineStart).Count(character => character == '\n');
+
+        if (generated.Map.ToGeneratedLine(templateLine) is not { } generatedLine) return null;
+
+        var code = generated.Code;
+        var generatedLineStart = StartOfLine(code, generatedLine);
+        if (generatedLineStart < 0) return null;
+
+        var generatedLineEnd = code.IndexOf('\n', generatedLineStart);
+        if (generatedLineEnd < 0) generatedLineEnd = code.Length;
+        if (generatedLineEnd > generatedLineStart && code[generatedLineEnd - 1] == '\r') generatedLineEnd--;
+
+        var typed = template[templateLineStart..position].TrimStart(' ', '\t');
+        var content = code[generatedLineStart..generatedLineEnd].TrimStart(' ', '\t');
+        var contentStart = generatedLineEnd - content.Length;
+
+        if (content.StartsWith(typed, StringComparison.Ordinal))
+            return contentStart + typed.Length;
+
+        // The writer drops a statement's trailing spaces: the caret after
+        // them goes to the end of the line, where they are put back.
+        var word = typed.TrimEnd(' ', '\t');
+
+        if (word.Length > 0 && content == word)
+            return contentStart + word.Length;
+
+        return null;
+    }
+
+    /// <summary>Where a 1-based line begins, or -1 when there is no such line.</summary>
+    private static int StartOfLine(string text, int line)
+    {
+        var at = 0;
+
+        for (var current = 1; current < line; current++)
+        {
+            at = text.IndexOf('\n', at) + 1;
+            if (at == 0) return -1;
+        }
+
+        return at;
+    }
 
     /// <summary>
     /// The end of the last mapping that starts before a position.
