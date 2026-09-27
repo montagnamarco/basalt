@@ -59,10 +59,35 @@ public sealed partial class EditorDocumentViewModel : ObservableObject
 
     partial void OnIsModifiedChanged(bool value) => OnPropertyChanged(nameof(Title));
 
+    /// <summary>How many times a save waits out a file another program has open.</summary>
+    private const int SaveAttempts = 10;
+
     public async Task SaveAsync(CancellationToken ct = default)
     {
-        await File.WriteAllTextAsync(FilePath, Text, ct).ConfigureAwait(false);
-        OriginalText = Text;
-        IsModified = false;
+        var text = Text;
+
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await File.WriteAllTextAsync(FilePath, text, ct).ConfigureAwait(false);
+                break;
+            }
+            catch (IOException ex) when (attempt < SaveAttempts && IsHeldByAnotherProgram(ex))
+            {
+                // An antivirus or indexer opening a file just written holds it
+                // for a moment; seen as a failed save in the test suite. Visual
+                // Studio waits it out too. About a second in all, then the
+                // error reaches the user as before.
+                await Task.Delay(20 * attempt, ct).ConfigureAwait(false);
+            }
+        }
+
+        OriginalText = text;
+        IsModified = !string.Equals(Text, text, StringComparison.Ordinal);
     }
+
+    /// <summary>A sharing or lock violation: the file is open elsewhere, not missing or read-only.</summary>
+    private static bool IsHeldByAnotherProgram(IOException ex) =>
+        (ex.HResult & 0xFFFF) is 32 or 33;
 }
