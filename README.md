@@ -861,9 +861,8 @@ shows something else.
   components, `ChildContent` and named fragments, `@bind`, cascading values
   and generics. A generic component's type arguments are inferred, except from
   a value naming a render-tree local such as a loop variable, where the tag
-  has to write them. The IDE's editor does not know other components'
-  parameters yet, so it may flag a named fragment or `context` the build
-  accepts.
+  has to write them. The editor sees another component's changed parameters
+  once the project's compilation next changes.
 - **The designer** is missing distance guides while dragging, a grid row/column
   overlay, and a colour picker in the property grid.
 
