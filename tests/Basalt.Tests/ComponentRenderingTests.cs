@@ -151,4 +151,55 @@ public class ComponentRenderingTests
         // The inner Card's own line break follows its </section>.
         Assert.Contains("<div class=\"body\"><section><header></header><div class=\"body\"><em>deep</em></div></section></div>", html.Replace("\n", ""));
     }
+
+    [Fact]
+    public async Task AComponentLibraryInVisualBasicIsUsedLikeAnyOther()
+    {
+        // A Razor class library written in Visual Basic, compiled on its own
+        // and referenced: its components are found, typed and inferred from
+        // metadata as the project's own are.
+        var library = GeneratorRun.Run("VbComponentGenerator",
+            new GeneratorRun.Setup { ProjectDirectory = Site, OptionStrict = true, AssemblyName = "Widgets", RootNamespace = "Widgets" },
+            Component("Badge", $"""
+                <span class="badge">@(Count + 1) @ChildContent</span>
+                @Code
+                    {Parameter} Public Property Count As Integer
+                    {Parameter} Public Property ChildContent As RenderFragment
+                End Code
+                """),
+            Component("Tile", $"""
+                @typeparam TItem
+                <div class="tile">@Item</div>
+                @Code
+                    {Parameter} Public Property Item As TItem
+                End Code
+                """));
+
+        var widgets = Emit(library);
+
+        var app = GeneratorRun.Run("VbComponentGenerator",
+            new GeneratorRun.Setup
+            {
+                ProjectDirectory = Site,
+                OptionStrict = true,
+                AssemblyName = "App",
+                RootNamespace = "App",
+                References = [Microsoft.CodeAnalysis.MetadataReference.CreateFromImage(widgets)],
+            },
+            Component("Page", """
+                @Imports Widgets.Components
+                <Badge Count="2">new</Badge>
+                <Tile Item="@(40 + 2)" />
+                """));
+
+        var page = Assert.Single(app.Sources).Value;
+
+        Assert.Contains("OpenComponent(Of Global.Widgets.Components.Badge)", page);
+        Assert.Contains("OpenComponent(Of Global.Widgets.Components.Tile(Of Integer))", page);
+
+        var html = await RenderAsync("Page", app, widgets);
+
+        Assert.Contains("<span class=\"badge\">3 new</span>", html);
+        Assert.Contains("<div class=\"tile\">42</div>", html);
+    }
 }

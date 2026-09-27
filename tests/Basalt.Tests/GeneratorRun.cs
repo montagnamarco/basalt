@@ -90,21 +90,52 @@ internal static class GeneratorRun
         bool optionStrict,
         IReadOnlyDictionary<string, string>? properties,
         string[] code,
-        params (string Path, string Text)[] templates)
+        params (string Path, string Text)[] templates) =>
+        Run(generatorTypeName,
+            new Setup { ProjectDirectory = projectDirectory, OptionStrict = optionStrict, Properties = properties, Code = code },
+            templates);
+
+    /// <summary>How the project a generator runs in is set up, beyond its templates.</summary>
+    public sealed record Setup
     {
+        public string? ProjectDirectory { get; init; }
+
+        public bool OptionStrict { get; init; }
+
+        public IReadOnlyDictionary<string, string>? Properties { get; init; }
+
+        public string[] Code { get; init; } = [];
+
+        /// <summary>More assemblies to reference: a component library, say.</summary>
+        public IReadOnlyList<MetadataReference> References { get; init; } = [];
+
+        public string AssemblyName { get; init; } = "Generated";
+
+        public string? RootNamespace { get; init; }
+    }
+
+    /// <summary>Runs one generator in a project set up as given.</summary>
+    public static Outcome Run(string generatorTypeName, Setup setup, params (string Path, string Text)[] templates)
+    {
+        var projectDirectory = setup.ProjectDirectory;
+        var optionStrict = setup.OptionStrict;
+        var properties = setup.Properties;
+        var code = setup.Code;
+
         var type = Generators.Value.GetType($"Basalt.Razor.Vb.Generator.{generatorTypeName}", throwOnError: true)!;
         var generator = ((IIncrementalGenerator)Activator.CreateInstance(type)!).AsSourceGenerator();
 
         var compilation = VisualBasicCompilation.Create(
-            "Generated",
+            setup.AssemblyName,
             [
                 VisualBasicSyntaxTree.ParseText("Module Program\nEnd Module"),
                 .. code.Select(source => VisualBasicSyntaxTree.ParseText(source)),
             ],
-            References,
+            [.. References, .. setup.References],
             new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                 .WithGlobalImports(GlobalImport.Parse("Microsoft.VisualBasic", "System"))
-                .WithOptionStrict(optionStrict ? OptionStrict.On : OptionStrict.Off));
+                .WithOptionStrict(optionStrict ? OptionStrict.On : OptionStrict.Off)
+                .WithRootNamespace(setup.RootNamespace ?? ""));
 
         var additional = templates
             .Select(t => (AdditionalText)new Template(t.Path, t.Text))

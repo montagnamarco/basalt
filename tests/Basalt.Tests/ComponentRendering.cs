@@ -30,6 +30,12 @@ internal static class ComponentRendering
     {
         var outcome = GeneratorRun.Run("VbComponentGenerator", Site, optionStrict: true, properties: null, code, templates);
 
+        return await RenderAsync(componentName, outcome);
+    }
+
+    /// <summary>The assembly a run compiled, as bytes a test can reference or load.</summary>
+    public static byte[] Emit(GeneratorRun.Outcome outcome)
+    {
         Assert.Null(outcome.Exception);
         Assert.Empty(outcome.CompilationErrors);
 
@@ -39,13 +45,21 @@ internal static class ComponentRendering
 
         Assert.True(emitted.Success, string.Join(Environment.NewLine, emitted.Diagnostics));
 
-        image.Position = 0;
+        return image.ToArray();
+    }
+
+    /// <summary>Renders a component a run compiled, the libraries it references loaded beside it.</summary>
+    public static async Task<string> RenderAsync(string componentName, GeneratorRun.Outcome outcome, params byte[][] libraries)
+    {
+        var image = Emit(outcome);
 
         var context = new AssemblyLoadContext("rendering-" + Guid.NewGuid().ToString("N"), isCollectible: true);
 
         try
         {
-            var assembly = context.LoadFromStream(image);
+            foreach (var library in libraries) context.LoadFromStream(new MemoryStream(library));
+
+            var assembly = context.LoadFromStream(new MemoryStream(image));
             var type = assembly.GetTypes().Single(t => t.Name == componentName && typeof(IComponent).IsAssignableFrom(t));
 
             await using var services = new ServiceCollection().AddLogging().BuildServiceProvider();

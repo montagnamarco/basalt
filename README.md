@@ -566,6 +566,16 @@ shouted = Await scripts.InvokeAsync(Of String)("shout", name)
 
 The MVC sample's Clicker does exactly this, and a browser test calls it.
 
+### Component libraries
+
+A Razor class library can be written in Visual Basic: a project on
+`Microsoft.NET.Sdk.Razor` referencing `Basalt.Razor.Vb`, its `.vbrazor`
+components used from an app like any other library's — found, typed and
+inferred from the compiled library. Its `.vbrazor.css` travel with it: the
+app's `YourApp.styles.css` imports `_content/YourLibrary/…bundle.scp.css`, as
+for a C# library. Checked by rendering a library's components from an app in
+the tests, and by running an app from the template with such a library.
+
 ### Where components live
 
 A component is namespaced by its folders from the project, as a `.razor` file
