@@ -135,8 +135,9 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     }
 
     /// <summary>
-    /// A component's parameters, where an attribute is being written in its
-    /// tag: "&lt;Counter " offers Step and IncrementBy, and "@bind-Value"
+    /// In a component's markup: the components in scope, where a tag's name
+    /// is being written, and a component's parameters, where an attribute is
+    /// being written in its tag: "&lt;Counter " offers Step and IncrementBy, and "@bind-Value"
     /// where the component has Value and ValueChanged.
     /// </summary>
     /// <remarks>
@@ -150,6 +151,19 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         if (AskCatalog is null || !TemplateGeneration.IsComponent(document.FilePath)) return [];
 
         var context = HtmlContextReader.At(document.Text, position);
+
+        // "<Co": the components in scope, before HTML's own elements.
+        if (context.Kind == HtmlContextKind.ElementName)
+        {
+            var listing = await AskCatalog(document.FilePath, document.Text, ct).ConfigureAwait(false) as IComponentListing;
+
+            return listing is null
+                ? []
+                : [.. listing.ComponentNames().Select(name => new CompletionItem(name, name, SymbolKind.Class)
+                    {
+                        Description = "Component."
+                    })];
+        }
 
         if (context.Kind != HtmlContextKind.AttributeName || context.Element is not { Length: > 0 } element ||
             !char.IsUpper(element[0]))

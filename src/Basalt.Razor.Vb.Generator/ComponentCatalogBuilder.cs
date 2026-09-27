@@ -190,10 +190,21 @@ internal static class ComponentCatalogBuilder
     /// <summary>Answers from one component's class, as its code would see names.</summary>
     private sealed class SemanticCatalog(
         SemanticModel model, int position, INamedTypeSymbol component, IReadOnlyDictionary<string, IReadOnlyList<string>> inferred)
-        : IComponentCatalog
+        : IComponentCatalog, IComponentListing
     {
         public IReadOnlyList<string>? InferTypeArguments(TypeInference request) =>
             inferred.TryGetValue(request.Key, out var arguments) ? arguments : null;
+
+        /// <summary>Every concrete component a tag here could name, without namespaces.</summary>
+        public IReadOnlyList<string> ComponentNames() =>
+            model.LookupNamespacesAndTypes(position)
+                .OfType<INamedTypeSymbol>()
+                .Where(type => type.TypeKind == TypeKind.Class && !type.IsAbstract &&
+                               type.AllInterfaces.Contains(component, SymbolEqualityComparer.Default))
+                .Select(type => type.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
         private readonly Dictionary<(string, int), ComponentShape?> _found = new();
 

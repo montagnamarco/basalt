@@ -77,6 +77,31 @@ public sealed class ComponentParameterCompletionTests : IDisposable
     }
 
     [Fact]
+    public async Task TheComponentsInScopeAreOfferedAsTags()
+    {
+        using var compilation = new ProjectCompilation();
+        compilation.StartLoading(_root);
+        await compilation.Loaded;
+        Assert.True(compilation.IsReady, compilation.Problem);
+
+        var documents = new DocumentStore();
+        var uri = DocumentUri.FromFileSystemPath(Path.Combine(_root, "Home.vbrazor"));
+        documents.Update(uri.ToString(), "<h1>Home</h1>\n<Co", 1);
+
+        var items = await new VbHtmlCompletionHandler(documents, compilation).Handle(new CompletionParams
+        {
+            TextDocument = new TextDocumentIdentifier(uri),
+            Position = new Position(1, "<Co".Length)
+        }, default);
+
+        Assert.Contains(items, item => item.Label == "Counter" && item.Kind == CompletionItemKind.Class);
+
+        // A module and HTML's elements are not components.
+        Assert.DoesNotContain(items, item => item.Label == "Program" && item.Kind == CompletionItemKind.Class);
+        Assert.Contains(items, item => item.Label == "code");
+    }
+
+    [Fact]
     public async Task AViewsTagsAreNotComponents()
     {
         using var compilation = new ProjectCompilation();

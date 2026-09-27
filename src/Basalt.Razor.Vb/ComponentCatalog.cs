@@ -40,6 +40,23 @@ public interface IComponentCatalog
 }
 
 /// <summary>
+/// A catalog that can also say which components are in scope, for an editor
+/// offering tags.
+/// </summary>
+/// <remarks>
+/// Apart from <see cref="IComponentCatalog"/>, which the writer needs and
+/// every catalog implements: listing is an editor's question only.
+/// </remarks>
+public interface IComponentListing
+{
+    /// <summary>
+    /// The names a tag can use for the components visible from the
+    /// template's class, as Visual Basic's lookup sees them from there.
+    /// </summary>
+    IReadOnlyList<string> ComponentNames();
+}
+
+/// <summary>
 /// A generic component written without type arguments, and the values its
 /// tag gives the parameters whose types name its type parameters.
 /// </summary>
