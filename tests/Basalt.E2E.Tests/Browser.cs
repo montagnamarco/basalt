@@ -61,6 +61,20 @@ public sealed class Browser : IAsyncLifetime
         return await Instance.NewPageAsync();
     }
 
+    /// <summary>Saves the observed page when the acceptance runner requests evidence.</summary>
+    public async Task CaptureAsync(IPage page, string name)
+    {
+        var directory = Environment.GetEnvironmentVariable("BASALT_ACCEPTANCE_ARTIFACTS");
+        if (string.IsNullOrWhiteSpace(directory)) return;
+
+        Directory.CreateDirectory(directory);
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(directory, name + ".png"),
+            FullPage = true
+        });
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Instance is not null) await Instance.DisposeAsync();

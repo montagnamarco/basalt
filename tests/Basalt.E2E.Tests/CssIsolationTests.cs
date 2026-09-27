@@ -26,6 +26,7 @@ public sealed class CssIsolationTests(SampleSite site, Browser browser)
 
         await page.GotoAsync(site.Address + "/clicker");
         await Assertions.Expect(page.Locator("p").First).ToHaveCSSAsync("color", Green, Patiently);
+        await browser.CaptureAsync(page, "css-scoped-component");
 
         await page.GotoAsync(site.Address + "/signup");
         await Assertions.Expect(page.Locator("#ready")).ToBeAttachedAsync(new() { Timeout = 20_000 });
@@ -35,5 +36,6 @@ public sealed class CssIsolationTests(SampleSite site, Browser browser)
         await Assertions.Expect(page.Locator("#thanks")).ToBeVisibleAsync(new() { Timeout = 20_000 });
 
         await Assertions.Expect(page.Locator("#thanks")).Not.ToHaveCSSAsync("color", Green, Patiently);
+        await browser.CaptureAsync(page, "css-unrelated-component");
     }
 }

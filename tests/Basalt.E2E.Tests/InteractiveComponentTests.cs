@@ -53,6 +53,7 @@ public sealed class InteractiveComponentTests(SampleSite site, Browser browser)
 
         await Assertions.Expect(clicks).ToHaveTextAsync($"Clicks: {before + 1}",
             new() { Timeout = (float)Patience.TotalMilliseconds });
+        await browser.CaptureAsync(page, "clicker-count");
     }
 
     [Fact]
@@ -65,6 +66,7 @@ public sealed class InteractiveComponentTests(SampleSite site, Browser browser)
 
         await Assertions.Expect(page.Locator("#greeting")).ToHaveTextAsync("Hello Ada",
             new() { Timeout = (float)Patience.TotalMilliseconds });
+        await browser.CaptureAsync(page, "clicker-input-binding");
     }
 
     [Fact]
@@ -80,5 +82,6 @@ public sealed class InteractiveComponentTests(SampleSite site, Browser browser)
 
         await Assertions.Expect(page.Locator("#shouted")).ToHaveTextAsync("ADA!",
             new() { Timeout = (float)Patience.TotalMilliseconds });
+        await browser.CaptureAsync(page, "clicker-javascript-module");
     }
 }

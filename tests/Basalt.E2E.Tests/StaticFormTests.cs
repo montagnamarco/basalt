@@ -22,10 +22,12 @@ public sealed class StaticFormTests(SampleSite site, Browser browser)
         await page.Locator("button[type=submit]").ClickAsync();
 
         await Assertions.Expect(page.Locator(".validation-message").First).ToHaveTextAsync("That is not an e-mail address.", Text);
+        await browser.CaptureAsync(page, "static-form-invalid");
 
         await page.Locator("#email").FillAsync("ada@example.com");
         await page.Locator("button[type=submit]").ClickAsync();
 
         await Assertions.Expect(page.Locator("#subscribed")).ToHaveTextAsync("Subscribed ada@example.com", Text);
+        await browser.CaptureAsync(page, "static-form-valid");
     }
 }

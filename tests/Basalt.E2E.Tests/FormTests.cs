@@ -31,10 +31,12 @@ public sealed class FormTests(SampleSite site, Browser browser)
 
         await Assertions.Expect(page.Locator(".validation-message").First).ToHaveTextAsync("Tell us your name.", Text);
         await Assertions.Expect(page.Locator("#thanks")).ToHaveCountAsync(0);
+        await browser.CaptureAsync(page, "interactive-form-invalid");
 
         await page.Locator("#name").FillAsync("Ada");
         await page.Locator("button[type=submit]").ClickAsync();
 
         await Assertions.Expect(page.Locator("#thanks")).ToHaveTextAsync("Thanks, Ada.", Text);
+        await browser.CaptureAsync(page, "interactive-form-valid");
     }
 }

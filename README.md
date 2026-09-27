@@ -772,6 +772,18 @@ dotnet test tests/Basalt.Tests
 dotnet run --project src/Basalt.Shell     # the IDE
 ```
 
+After restoring the checkout, `build/acceptance.ps1` runs the core, HTTP and
+browser test projects sequentially and writes a Markdown report, logs, TRX
+results and browser screenshots under `artifacts/acceptance/`. Run it with
+PowerShell 5.1 on Windows or `pwsh` on other platforms. Use `-Suite Web,Browser`
+to select projects, or `-List` to show the selection without running tests.
+Use `-NoBuild` only after building the intended test binaries, for example when
+the running IDE locks its executable and only its DLL has been rebuilt.
+It installs nothing: browser tests use installed Edge on Windows or Playwright
+Chromium, and debugger tests need netcoredbg. Exit 1 means failure; exit 2 means
+incomplete coverage because tests were skipped. A passing selected run does
+not establish every IDE journey or equivalence with Visual Studio.
+
 The Rider plugin, server included:
 
 ```bash
