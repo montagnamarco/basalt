@@ -27,6 +27,9 @@ public sealed class CodeEditor : UserControl
     private readonly EditorDocumentViewModel _document;
     private readonly MainWindowViewModel _shell;
     private CompletionWindow? _completionWindow;
+    private bool _completionSuggestionMode;
+    private readonly EditorRequestGate _completionRequests = new();
+    private readonly EditorRequestGate _signatureRequests = new();
 
     /// <summary>What is being suggested, drawn without entering the document.</summary>
     private readonly GhostTextGenerator _ghostText = new();
@@ -535,6 +538,9 @@ public sealed class CodeEditor : UserControl
     /// </summary>
     private void OnTextInputForBrackets(object? sender, TextInputEventArgs e)
     {
+        if (_document.Language == SourceLanguage.VisualBasic)
+            VisualBasicCompletionInput.HandleText(_completionWindow, e, _completionSuggestionMode);
+
         if (!AutoCloseBrackets) return;
         if (e.Text is not { Length: 1 } input) return;
 
@@ -561,6 +567,7 @@ public sealed class CodeEditor : UserControl
         _editor.CaretOffset += action.CaretOffset;
 
         e.Handled = true;
+        OnTextEntered(sender, e);
     }
 
     private void OnTextEntered(object? sender, TextInputEventArgs e)
@@ -833,6 +840,17 @@ public sealed class CodeEditor : UserControl
 
     private async void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None)
+        {
+            _completionDebounce?.Cancel();
+            _completionRequests.Invalidate();
+            _signatureRequests.Invalidate();
+            _signatureWindow?.Close();
+        }
+
+        if (_document.Language == SourceLanguage.VisualBasic &&
+            VisualBasicCompletionInput.HandleKey(_editor, _completionWindow, e)) return;
+
         // A suggestion answers to Tab before anything else does. Only when one
         // is showing: Tab is indentation the rest of the time, and taking it
         // away would be a worse trade than any suggestion is worth.
@@ -861,8 +879,23 @@ public sealed class CodeEditor : UserControl
             return;
         }
 
-        // Ctrl+Space invokes completion at any position.
-        if (e.Key == Key.Space && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (_document.Language == SourceLanguage.VisualBasic && e.Key == Key.Space &&
+            e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Alt))
+        {
+            _completionSuggestionMode = !_completionSuggestionMode;
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Space && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+        {
+            e.Handled = true;
+            await ShowSignatureHelpAsync();
+            return;
+        }
+
+        // Both shortcuts invoke the member list at the current position.
+        if (e.Key is Key.Space or Key.J && e.KeyModifiers == KeyModifiers.Control)
         {
             e.Handled = true;
             await ShowCompletionAsync();
@@ -1129,6 +1162,8 @@ public sealed class CodeEditor : UserControl
 
     private OverloadInsightWindow? _signatureWindow;
 
+    internal int SignatureHelpCountForTests => _signatureWindow?.Provider?.Count ?? 0;
+
     /// <summary>
     /// Shows what the call being written expects.
     ///
@@ -1138,13 +1173,18 @@ public sealed class CodeEditor : UserControl
     /// </summary>
     private async Task ShowSignatureHelpAsync()
     {
+        var request = _signatureRequests.Begin(_editor);
         _signatureWindow?.Close();
         _signatureWindow = null;
 
+        // Finish routing the initiating keystroke before presenting a popup.
+        await Task.Yield();
+
         var described = await _shell
-            .DescribeCallAsync(_document.FilePath, _editor.CaretOffset, _editor.Text)
+            .DescribeCallAsync(_document.FilePath, request.Position, request.Text)
             .ConfigureAwait(true);
 
+        if (!_signatureRequests.IsCurrent(_editor, request)) return;
         if (described is null || described.Overloads.Count == 0) return;
 
         _signatureWindow = new OverloadInsightWindow(_editor.TextArea)
@@ -1517,21 +1557,26 @@ public sealed class CodeEditor : UserControl
         if (TraceCompletion) _shell.WriteOutput($"[completion] {message}");
     }
 
+    internal Task ShowCompletionForTestsAsync() => ShowCompletionAsync();
+
+    internal string? SelectedCompletionForTests => _completionWindow?.CompletionList.SelectedItem?.Text;
+
+    internal Task ShowSignatureHelpForTestsAsync() => ShowSignatureHelpAsync();
+
     private async Task ShowCompletionAsync(CancellationToken ct = default)
     {
         CompletionRequestsForTests++;
+        var request = _completionRequests.Begin(_editor);
 
-        // Where the question is being asked from, and what was written when
-        // it was asked.
-        var askedAt = _editor.CaretOffset;
-        var askedFor = _editor.Document.TextLength;
+        // Keep a cached Roslyn answer from opening a popup inside text input.
+        await Task.Yield();
 
         // The editor's text is newer than the workspace's copy while typing.
         var completions = await _shell
-            .GetCompletionsAsync(_document.FilePath, askedAt, _editor.Text)
+            .GetCompletionsAsync(_document.FilePath, request.Position, request.Text)
             .ConfigureAwait(true);
 
-        Trace($"asked at {askedAt}, got {completions.Count}");
+        Trace($"asked at {request.Position}, got {completions.Count}");
 
         if (ct.IsCancellationRequested)
         {
@@ -1539,15 +1584,9 @@ public sealed class CodeEditor : UserControl
             return;
         }
 
-        // Whether more was typed while the answer was being computed, not
-        // whether the caret sits exactly where it did: TextEntered runs while
-        // the editor is still placing the caret for the character just typed,
-        // so comparing positions threw away good answers on a real machine
-        // and kept them only when the reply came back fast enough to win the
-        // race — which headless always did, and a real screen never did.
-        if (_editor.Document.TextLength != askedFor)
+        if (!_completionRequests.IsCurrent(_editor, request))
         {
-            Trace($"more was typed: {askedFor} -> {_editor.Document.TextLength}");
+            Trace("document, caret or latest request changed while waiting");
             return;
         }
 
@@ -1572,28 +1611,33 @@ public sealed class CodeEditor : UserControl
             return;
         }
 
-        _completionWindow = new CompletionWindow(_editor.TextArea)
+        _completionWindow?.Close();
+        var window = new CompletionWindow(_editor.TextArea)
         {
             // The window replaces the word being typed, not just what follows
             // the caret; without this the letters already typed are doubled.
             StartOffset = _editor.CaretOffset - typed.Length
         };
+        _completionWindow = window;
 
         // A cap keeps a list of thousands from being built for a window that
         // shows a dozen rows; the ordering means the cut falls on the least
         // relevant entries.
         foreach (var match in ranked.Take(200))
-            _completionWindow.CompletionList.CompletionData.Add(new RoslynCompletionData(match.Item));
+            _completionWindow.CompletionList.CompletionData.Add(new EditorCompletionData(match.Item));
 
         _completionWindow.CompletionList.SelectedItem =
             _completionWindow.CompletionList.CompletionData.FirstOrDefault();
 
-        _completionWindow.Closed += (_, _) => _completionWindow = null;
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_completionWindow, window)) _completionWindow = null;
+        };
 
-        // Space accepts the highlighted entry and types the space, the way
-        // Visual Studio does: reaching for Tab or Enter breaks the flow of
-        // writing a line.
-        _completionWindow.CompletionList.KeyDown += OnCompletionKeyDown;
+        // VB commits from layout-translated text input. Other providers keep
+        // the existing key-based fallback.
+        if (_document.Language != SourceLanguage.VisualBasic)
+            _completionWindow.CompletionList.KeyDown += OnCompletionKeyDown;
 
         _completionWindow.Show();
 
@@ -1618,20 +1662,4 @@ public sealed class CodeEditor : UserControl
         return text[start..caret];
     }
 
-    /// <summary>Adapts a Roslyn completion entry to the AvaloniaEdit list.</summary>
-    private sealed class RoslynCompletionData : ICompletionData
-    {
-        private readonly CompletionItem _item;
-
-        public RoslynCompletionData(CompletionItem item) => _item = item;
-
-        public IImage? Image => CompletionIcons.For(_item.Kind);
-        public string Text => _item.InsertionText;
-        public object Content => _item.DisplayText;
-        public object Description => _item.Description ?? _item.Kind.ToString();
-        public double Priority => 0;
-
-        public void Complete(TextArea textArea, ISegment completionSegment, EventArgs insertionRequestEventArgs) =>
-            textArea.Document.Replace(completionSegment, Text);
-    }
 }
