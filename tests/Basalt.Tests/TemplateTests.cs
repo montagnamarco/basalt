@@ -82,8 +82,10 @@ public sealed class TemplateTests
 
         var sourceName = document.RootElement.GetProperty("sourceName").GetString();
 
+        // Beside template.json, or in a folder a "sources" entry maps from,
+        // as the Blazor template's server and .Client projects are.
         Assert.True(
-            File.Exists(Path.Combine(TemplateRoot, name, $"{sourceName}.vbproj")),
+            Directory.GetFiles(Path.Combine(TemplateRoot, name), $"{sourceName}.vbproj", SearchOption.AllDirectories).Length > 0,
             $"{name} has no {sourceName}.vbproj");
     }
 
@@ -310,11 +312,13 @@ public sealed class TemplateTests
 
         // And the project file has to say the same, or the substitution has
         // nothing to replace.
-        var project = Directory
-            .GetFiles(Path.Combine(TemplateRoot, name), "*.vbproj")
-            .Single();
+        // Every project, the Blazor template's .Client one included.
+        var projects = Directory.GetFiles(Path.Combine(TemplateRoot, name), "*.vbproj", SearchOption.AllDirectories);
 
-        Assert.Contains("net10.0", File.ReadAllText(project), StringComparison.Ordinal);
+        Assert.NotEmpty(projects);
+
+        foreach (var project in projects)
+            Assert.Contains("net10.0", File.ReadAllText(project), StringComparison.Ordinal);
     }
 
     [Theory]
@@ -341,6 +345,22 @@ public sealed class TemplateTests
         Assert.Contains(project, outputs);
     }
 
+    /// <summary>
+    /// The folders a template's output is copied from: its "sources", or the
+    /// template's own folder when it has none. An output path is relative to
+    /// the output, so it is looked for in each.
+    /// </summary>
+    private static IEnumerable<string> SourceFolders(JsonDocument template)
+    {
+        if (!template.RootElement.TryGetProperty("sources", out var sources))
+            return [""];
+
+        return sources.EnumerateArray()
+            .Select(source => source.TryGetProperty("source", out var from) ? from.GetString() ?? "" : "")
+            .Select(from => from.TrimStart('.', '/'))
+            .ToList();
+    }
+
     [Theory]
     [MemberData(nameof(Templates))]
     public void EveryOutputIsAFileTheTemplateHas(string name)
@@ -363,7 +383,7 @@ public sealed class TemplateTests
             var onDisk = relative.Replace(sourceName, sourceName, StringComparison.Ordinal);
 
             Assert.True(
-                File.Exists(Path.Combine(folder, onDisk)),
+                SourceFolders(document).Any(source => File.Exists(Path.Combine(folder, source, onDisk))),
                 $"{name} promises {relative}, which is not in the template");
         }
     }
