@@ -1,5 +1,6 @@
 using Basalt.Extensibility;
 using Basalt.Razor.Vb;
+using Basalt.Razor.Vb.Web;
 
 namespace Basalt.Workspace.Web;
 
@@ -113,7 +114,12 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
                       VbHtmlCodeRegions.IsAfterStatementBody(document.Text, position));
 
         if (!inCode)
-            return await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
+        {
+            var markup = await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
+            var parameters = await ComponentParametersAsync(document, position, ct).ConfigureAwait(false);
+
+            return parameters.Count == 0 ? markup : [.. parameters, .. markup];
+        }
 
         if (_ask is null) return [];
 
@@ -126,6 +132,56 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         var (code, caret) = WithSpacesBefore(generated.Code, at, spaces);
 
         return await _ask(code, caret, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// A component's parameters, where an attribute is being written in its
+    /// tag: "&lt;Counter " offers Step and IncrementBy, and "@bind-Value"
+    /// where the component has Value and ValueChanged.
+    /// </summary>
+    /// <remarks>
+    /// From the catalog the build uses to write the tag, so what is offered
+    /// is what compiles. Only in a component: a view's tags are HTML and
+    /// tag helpers.
+    /// </remarks>
+    private async Task<IReadOnlyList<CompletionItem>> ComponentParametersAsync(
+        LanguageDocument document, int position, CancellationToken ct)
+    {
+        if (AskCatalog is null || !TemplateGeneration.IsComponent(document.FilePath)) return [];
+
+        var context = HtmlContextReader.At(document.Text, position);
+
+        if (context.Kind != HtmlContextKind.AttributeName || context.Element is not { Length: > 0 } element ||
+            !char.IsUpper(element[0]))
+            return [];
+
+        var catalog = await AskCatalog(document.FilePath, document.Text, ct).ConfigureAwait(false);
+
+        if (catalog?.Find(element, -1) is not { } shape) return [];
+
+        var names = new HashSet<string>(shape.Parameters.Select(parameter => parameter.Name), StringComparer.OrdinalIgnoreCase);
+        var items = new List<CompletionItem>();
+
+        foreach (var parameter in shape.Parameters)
+        {
+            items.Add(new CompletionItem(parameter.Name, parameter.Name, SymbolKind.Property)
+            {
+                Detail = parameter.TypeName,
+                Description = $"Parameter of {element}."
+            });
+
+            if (names.Contains(parameter.Name + "Changed"))
+            {
+                items.Add(new CompletionItem("@bind-" + parameter.Name, "@bind-" + parameter.Name, SymbolKind.Property)
+                {
+                    Detail = parameter.TypeName,
+                    Description = $"Binds {parameter.Name} both ways, through {parameter.Name}Changed.",
+                    FilterText = "bind-" + parameter.Name
+                });
+            }
+        }
+
+        return items;
     }
 
     /// <summary>
