@@ -340,6 +340,69 @@ public class TypedComponentTests
     }
 
     [Fact]
+    public void AComponentWithTypeParamIsGeneric()
+    {
+        // @typeparam was refused as unsupported: a generic component had to be
+        // written in a .vb file by hand.
+        var sources = Compile([],
+            Component("Grid", $"""
+                @typeparam TItem As {"{IComparable}"}
+                <ul>
+                @For Each item In Items
+                    @<li>@Row(item)</li>
+                Next
+                </ul>
+                @Code
+                    {Parameter} Public Property Items As Global.System.Collections.Generic.IEnumerable(Of TItem)
+                    {Parameter} Public Property Row As Microsoft.AspNetCore.Components.RenderFragment(Of TItem)
+                End Code
+                """),
+            Component("Page", """
+                <Grid(Of String) Items="@names">
+                    <Row>@context.Length</Row>
+                </Grid>
+                @Code
+                    Private names As String() = {"a", "bb"}
+                End Code
+                """));
+
+        Assert.Contains("Partial Public Class Grid(Of TItem As {IComparable})", SourceOf(sources, "Grid"));
+        Assert.Contains("Function(context As String)", SourceOf(sources, "Page"));
+    }
+
+    [Fact]
+    public void TypeArgumentsNamingTheParentsOwnParametersAreSubstitutedAllAtOnce()
+    {
+        // <Pair(Of TValue, TKey)> inside a component generic over TKey and
+        // TValue: substituted one after the other, both became TKey.
+        var sources = Compile([],
+            Component("Pair", $"""
+                @typeparam TKey
+                @typeparam TValue
+                <p>@Row(Nothing)</p>
+                @Code
+                    {Parameter} Public Property OnPick As Microsoft.AspNetCore.Components.EventCallback(Of TValue)
+                    {Parameter} Public Property Row As Microsoft.AspNetCore.Components.RenderFragment(Of TKey)
+                End Code
+                """),
+            Component("Outer", """
+                @typeparam TKey
+                @typeparam TValue
+                <Pair(Of TValue, TKey) OnPick="Sub(key) lastKey = key">
+                    <Row>@context</Row>
+                </Pair>
+                @Code
+                    Private lastKey As TKey
+                End Code
+                """));
+
+        var outer = SourceOf(sources, "Outer");
+
+        Assert.Contains("Create(Of TKey)(Me, Sub(key) lastKey = key)", outer);
+        Assert.Contains("Function(context As TValue)", outer);
+    }
+
+    [Fact]
     public void AFrameworkComponentsParametersAreKnownToo()
     {
         // NavLink comes from a referenced library: Match takes an enum, so the

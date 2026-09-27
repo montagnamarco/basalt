@@ -405,6 +405,28 @@ public sealed class VbHtmlParser
             return;
         }
 
+        // @typeparam TItem, or with Visual Basic's constraints:
+        // @typeparam TItem As {IComparable, New}. The component becomes generic.
+        if (LooksLikeKeywordAt(_index, "typeparam") &&
+            _index + "typeparam".Length < _text.Length &&
+            _text[_index + "typeparam".Length] is ' ' or '	')
+        {
+            Advance("typeparam".Length);
+
+            var value = ReadToEndOfLine().Trim();
+
+            document.TypeParameters.Add(value);
+            into.Add(new DirectiveNode("typeparam", value, start, line));
+
+            // A view has none; the component callers drop this.
+            document.Diagnostics.Add(new VbHtmlDiagnostic(
+                VbHtmlDiagnostic.TypeParameterInViewId,
+                "@typeparam belongs to Blazor components (.vbrazor); a view cannot be generic.",
+                line,
+                1));
+            return;
+        }
+
         if (TryReadKeyword("Implements", out _))
         {
             var value = ReadToEndOfLine().Trim();
@@ -1421,7 +1443,7 @@ public sealed class VbHtmlParser
     private static readonly string[] NotSupported =
     [
         // The tag helper directives are read before this list is consulted.
-        "typeparam", "preservewhitespace", "helper", "layout"
+        "preservewhitespace", "helper", "layout"
     ];
 
     /// <summary>What to say about a directive that is not supported.</summary>
@@ -1433,7 +1455,7 @@ public sealed class VbHtmlParser
         "helper" => "@helper is a WebPages feature that ASP.NET Core never carried "
                   + "forward. Use @Functions instead.",
 
-        "typeparam" or "preservewhitespace" =>
+        "preservewhitespace" =>
             $"@{name} belongs to Blazor components and is not supported in .vbrazor yet.",
 
         _ => $"@{name} is not supported by Basalt."

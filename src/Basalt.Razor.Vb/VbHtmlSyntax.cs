@@ -317,6 +317,12 @@ public sealed class VbHtmlDocument
     /// <summary>Interfaces the view implements, from @Implements.</summary>
     public List<string> Implements { get; } = [];
 
+    /// <summary>
+    /// A component's type parameters from @typeparam, as written: "TItem", or
+    /// "TItem As {IComparable, New}" with Visual Basic's constraints.
+    /// </summary>
+    public List<string> TypeParameters { get; } = [];
+
     /// <summary>Attributes to put on the generated class, from @Attribute.</summary>
     public List<string> Attributes { get; } = [];
 
@@ -398,6 +404,9 @@ public sealed class VbHtmlDiagnostic
     /// <summary>The id of "@rendermode in a view", which components do not report.</summary>
     public const string RenderModeInViewId = "VBH011";
 
+    /// <summary>The id of "@typeparam in a view", which components do not report either.</summary>
+    public const string TypeParameterInViewId = "VBH012";
+
     /// <summary>
     /// Whether the finding holds for a template of this kind. The parser does
     /// not know whether it reads a view or a component; a directive valid in
@@ -405,7 +414,7 @@ public sealed class VbHtmlDiagnostic
     /// so the editor and the build say the same thing.
     /// </summary>
     public bool AppliesTo(string? filePath) =>
-        Id != RenderModeInViewId ||
+        (Id != RenderModeInViewId && Id != TypeParameterInViewId) ||
         filePath is null ||
         !filePath.EndsWith(".vbrazor", System.StringComparison.OrdinalIgnoreCase);
 }

@@ -137,6 +137,13 @@ public sealed class VbComponentWriter
         new VbComponentWriter(catalog).Generate(document, className, namespaceName, filePath, route, checksum, optionStrict);
 
     /// <summary>
+    /// A generic component's type parameters from @typeparam, as Visual
+    /// Basic writes them: (Of TItem, TKey As {IComparable, New}).
+    /// </summary>
+    private static string TypeParameterList(VbHtmlDocument document) =>
+        document.TypeParameters.Count == 0 ? "" : $"(Of {string.Join(", ", document.TypeParameters)})";
+
+    /// <summary>
     /// The component's class as declarations only — base type, interfaces,
     /// injected services and the members its @Functions and @Code blocks
     /// declare — with no render tree.
@@ -171,7 +178,7 @@ public sealed class VbComponentWriter
             ? ComponentBaseTypeName
             : VbHtmlCodeWriter.Qualify(document.Inherits!);
 
-        builder.AppendLine($"    Partial Public Class {ViewNaming.Escape(className)}");
+        builder.AppendLine($"    Partial Public Class {ViewNaming.Escape(className)}{TypeParameterList(document)}");
         builder.AppendLine($"        Inherits {baseType}");
 
         foreach (var contract in document.Implements)
@@ -284,7 +291,7 @@ public sealed class VbComponentWriter
 
         // Partial, so a code-behind Counter.vbrazor.vb declaring Partial Class
         // Counter adds to the same class, the way Counter.razor.cs does.
-        builder.AppendLine($"    Partial Public Class {ViewNaming.Escape(className)}");
+        builder.AppendLine($"    Partial Public Class {ViewNaming.Escape(className)}{TypeParameterList(document)}");
         builder.AppendLine($"        Inherits {baseType}");
 
         foreach (var contract in document.Implements)

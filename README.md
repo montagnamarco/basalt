@@ -493,9 +493,35 @@ arrives into the target's type. A checkbox binds `checked`; `@bind:event`,
 as in C#. On a component `@bind-Value` also sets `ValueExpression`, which
 `InputText` and the other form inputs need.
 
-A generic component names its type argument in the tag. The C# compiler infers
-it from the parameter values; that needs the type system, which a template
-compiler does not have.
+### Parameters, fragments and generics
+
+The generator reads every component's parameters from the compilation before
+it writes any of them, as the C# compiler does, so a tag is written knowing
+what it names — whether the component is a `.vbrazor`, a Visual Basic class or
+comes from a library:
+
+```vbrazor
+<Card>
+    <Header><b>Orders</b></Header>
+    <Body>@orders.Count open</Body>
+</Card>
+
+<Grid(Of Order) Items="@orders" PageSize="20" OnSelect="Sub(order) picked = order">
+    <Row Context="order"><td>@order.Number</td></Row>
+</Grid>
+```
+
+A tag named after a `RenderFragment` parameter is that parameter's content; a
+`RenderFragment(Of T)` hands its value to the content as `context`, or under
+the name `Context="…"` gives it. A literal is Visual Basic for any parameter
+that is not a `String` or `Object` (`PageSize="20"` is the number), and a
+handler for an `EventCallback` parameter is wrapped in one, typed by its
+argument. `@typeparam TItem` (with Visual Basic constraints,
+`@typeparam TItem As {IComparable}`) makes a component generic.
+
+A generic component still names its type argument in the tag,
+`<Grid(Of Order) …>`; inferring it from the parameter values, as C# does, is
+the next step.
 
 ### Where components live
 
@@ -804,12 +830,13 @@ shows something else.
 - **`.vbpage` pages** are under active development — the newest part of the
   repository, and the one whose shape is most likely to still change.
 - **Blazor components** cover routing, parameters, event handlers, child
-  components, `ChildContent`, `@bind`, cascading values and generics. A
-  generic component names its type argument in the tag —
-  `<List(Of String) …>` — because inferring it from the parameter values needs
-  the type system the C# compiler has here and this does not. A
+  components, `ChildContent` and named fragments, `@bind`, cascading values
+  and generics. A generic component names its type argument in the tag —
+  `<List(Of String) …>` — until inference from the parameter values lands. A
   `CascadingValue` carries a `String`; another type needs the component
-  written by hand.
+  written by hand. The IDE's editor does not know other components'
+  parameters yet, so it may flag a named fragment or `context` the build
+  accepts.
 - **The designer** is missing distance guides while dragging, a grid row/column
   overlay, and a colour picker in the property grid.
 

@@ -96,8 +96,9 @@ public sealed class UnsupportedDirectiveTests
     public void SaysBlazorDirectivesBelongToBlazor()
     {
         // A template copied from a component will contain them.
-        // @rendermode is read now, for components; @typeparam is not yet.
-        var problem = Problem("@typeparam TItem\n<p>a</p>");
+        // @rendermode and @typeparam are read now, for components;
+        // @preservewhitespace is not yet.
+        var problem = Problem("@preservewhitespace true\n<p>a</p>");
 
         Assert.NotNull(problem);
         Assert.Contains("Blazor", problem.Message, StringComparison.Ordinal);
@@ -113,6 +114,18 @@ public sealed class UnsupportedDirectiveTests
         Assert.Equal(VbHtmlDiagnostic.RenderModeInViewId, problem.Id);
         Assert.True(problem.AppliesTo(Path.Combine("Views", "Index.vbhtml")));
         Assert.False(problem.AppliesTo(Path.Combine("Components", "Counter.vbrazor")));
+    }
+
+    [Fact]
+    public void TypeParamIsReportedForAViewAndNotForAComponent()
+    {
+        var parsed = VbHtmlParser.Parse("@typeparam TItem\n<p>a</p>");
+        var problem = Assert.Single(parsed.Diagnostics);
+
+        Assert.Equal(["TItem"], parsed.TypeParameters);
+        Assert.Equal(VbHtmlDiagnostic.TypeParameterInViewId, problem.Id);
+        Assert.True(problem.AppliesTo(Path.Combine("Views", "Index.vbhtml")));
+        Assert.False(problem.AppliesTo(Path.Combine("Components", "Grid.vbrazor")));
     }
 
     [Fact]
