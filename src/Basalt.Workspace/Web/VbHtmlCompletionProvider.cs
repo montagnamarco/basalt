@@ -35,6 +35,14 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     /// </remarks>
     public ViewHost Host { get; init; } = ViewHost.Standalone;
 
+    /// <summary>
+    /// A way to learn a .vbrazor's component catalog before writing it, so
+    /// tags are written the way the build writes them rather than the way
+    /// the writer alone can guess.
+    /// </summary>
+    public Func<string, string, CancellationToken, Task<IComponentCatalog?>>? AskCatalog
+    { get; init; }
+
     private readonly HtmlCompletionProvider _html = new();
     private readonly Func<string, int, CancellationToken, Task<IReadOnlyList<CompletionItem>>>? _ask;
 
@@ -80,7 +88,8 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
 
         var parsed = VbHtmlParser.Parse(document.Text);
 
-        var generated = TemplateGeneration.For(parsed, document.FilePath, Host);
+        var generated = await TemplateGeneration.ForAsync(
+            parsed, document.FilePath, Host, document.Text, AskCatalog, ct).ConfigureAwait(false);
 
         if (CaretInGenerated(document.Text, generated, position) is not { } at)
             return [];
@@ -101,7 +110,9 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         // Nothing in the markup half takes arguments.
         if (_askSignature is null || !IsInCode(document.Text, position)) return null;
 
-        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
+        var generated = await TemplateGeneration.ForAsync(
+            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            .ConfigureAwait(false);
 
         if (CaretInGenerated(document.Text, generated, position) is not { } at)
             return null;

@@ -23,8 +23,16 @@ internal static class TemplateGeneration
     /// <summary>
     /// The generated code and its mappings, whichever kind of template it is.
     /// </summary>
+    /// <remarks>
+    /// With no catalog: a named RenderFragment parameter is opened as a
+    /// component that does not exist, @context inside a RenderFragment(Of T)
+    /// is undeclared, and a generic component's type arguments are never
+    /// inferred. <see cref="ForAsync"/> asks for one first; this overload
+    /// stays for callers that have none to offer, or none worth the asking —
+    /// a .vbhtml view, whose writer has no catalog to take in the first place.
+    /// </remarks>
     public static Generated For(
-        VbHtmlDocument document, string? filePath, ViewHost host)
+        VbHtmlDocument document, string? filePath, ViewHost host, IComponentCatalog? catalog = null)
     {
         if (IsComponent(filePath))
         {
@@ -32,7 +40,7 @@ internal static class TemplateGeneration
             ApplySharedFiles(document, filePath, "_Imports.vbrazor");
 
             var component = VbComponentWriter.WriteWithMap(
-                document, "GeneratedComponent", "Basalt.Generated", filePath);
+                document, "GeneratedComponent", "Basalt.Generated", filePath, catalog: catalog);
 
             return new Generated(component.Code, component.Map);
         }
@@ -48,6 +56,37 @@ internal static class TemplateGeneration
         return new Generated(view.Code, view.Map);
     }
 
+    /// <summary>
+    /// The generated code and its mappings, asking for a component's catalog
+    /// first when a way to ask is offered.
+    /// </summary>
+    /// <remarks>
+    /// Only a .vbrazor has anything to ask about: a view's writer takes no
+    /// catalog, so a .vbhtml goes through <see cref="For"/> unchanged. The
+    /// asking is a callback rather than a plain catalog because building one
+    /// means reaching a compilation, which the caller — not this class —
+    /// knows how to reach, and doing it lazily is what keeps a document
+    /// opened outside a solution working exactly as before: no callback,
+    /// no asking, no catalog, the writer behaves as it always did.
+    /// </remarks>
+    public static async Task<Generated> ForAsync(
+        VbHtmlDocument document,
+        string? filePath,
+        ViewHost host,
+        string currentText,
+        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog,
+        CancellationToken ct = default)
+    {
+        IComponentCatalog? catalog = null;
+
+        if (askCatalog is not null && filePath is not null && IsComponent(filePath))
+        {
+            catalog = await askCatalog(filePath, currentText, ct).ConfigureAwait(false);
+        }
+
+        return For(document, filePath, host, catalog);
+    }
+
     /// <summary>Generated code, with the map back to the template.</summary>
     public sealed record Generated(string Code, SourceMap Map);
 
@@ -60,7 +99,14 @@ internal static class TemplateGeneration
     /// the shared files are other files. The walk stops at the folder holding
     /// the project file, which is where the build stops too.
     /// </remarks>
-    private static void ApplySharedFiles(VbHtmlDocument document, string? filePath, string sharedName)
+    /// <summary>
+    /// Internal rather than private: <see cref="Basalt.Workspace.RoslynLanguageService"/>
+    /// applies the same _Imports.vbrazor to every other component in the
+    /// project while building its catalog, and a second copy of this walk
+    /// would be a second chance for the two to disagree about which
+    /// directives a component sees.
+    /// </summary>
+    internal static void ApplySharedFiles(VbHtmlDocument document, string? filePath, string sharedName)
     {
         if (filePath is null || !Path.IsPathRooted(filePath)) return;
 

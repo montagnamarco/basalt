@@ -33,6 +33,14 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
     public ViewHost Host { get; init; } = ViewHost.Standalone;
 
     /// <summary>
+    /// A way to learn a .vbrazor's component catalog before writing it, so a
+    /// position inside &lt;Header&gt; or a typed RenderFragment's @context
+    /// maps into code that actually declares them.
+    /// </summary>
+    public Func<string, string, CancellationToken, Task<IComponentCatalog?>>? AskCatalog
+    { get; init; }
+
+    /// <summary>
     /// What the provider can ask a language service about the generated code.
     ///
     /// A record rather than a constructor per combination: each question is
@@ -98,7 +106,9 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
             !VbHtmlCompletionProvider.IsInCode(document.Text, position))
             return null;
 
-        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
+        var generated = await TemplateGeneration.ForAsync(
+            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            .ConfigureAwait(false);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
                   ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
@@ -130,7 +140,9 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
             !VbHtmlCompletionProvider.IsInCode(document.Text, position))
             return [];
 
-        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
+        var generated = await TemplateGeneration.ForAsync(
+            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            .ConfigureAwait(false);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
                   ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
@@ -208,7 +220,9 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
         if (_questions.QuickInfo is null || !VbHtmlCompletionProvider.IsInCode(document.Text, position))
             return null;
 
-        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
+        var generated = await TemplateGeneration.ForAsync(
+            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            .ConfigureAwait(false);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
                   ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);

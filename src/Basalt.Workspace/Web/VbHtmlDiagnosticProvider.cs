@@ -32,6 +32,13 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
     /// </remarks>
     public ViewHost Host { get; init; } = ViewHost.Standalone;
 
+    /// <summary>
+    /// A way to learn a .vbrazor's component catalog before writing it, so
+    /// the code compiled for diagnostics is the code the build would compile.
+    /// </summary>
+    public Func<string, string, CancellationToken, Task<IComponentCatalog?>>? AskCatalog
+    { get; init; }
+
     private readonly HtmlDiagnosticProvider _markup = new();
 
     private readonly Func<string, CancellationToken,
@@ -106,7 +113,9 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
     private async Task<IReadOnlyList<Diagnostic>> SemanticDiagnosticsAsync(
         LanguageDocument document, CancellationToken ct)
     {
-        var generated = TemplateGeneration.For(VbHtmlParser.Parse(document.Text), document.FilePath, Host);
+        var generated = await TemplateGeneration.ForAsync(
+            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            .ConfigureAwait(false);
 
         var found = await _ask!(generated.Code, ct).ConfigureAwait(false);
 

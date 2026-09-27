@@ -83,7 +83,14 @@ public static class LanguageCatalog
                 // What the call under the caret expects. It used to be a
                 // table of three runtime helpers, which said nothing about
                 // the model's own methods.
-                roslyn.GetSignatureHelpAsync(GeneratedViewPath, at, generated, ct));
+                roslyn.GetSignatureHelpAsync(GeneratedViewPath, at, generated, ct),
+            askCatalog: (templatePath, currentText, ct) =>
+                // A .vbrazor's own component catalog, learned the way the
+                // build learns it: without this a named RenderFragment
+                // parameter was opened as a component that does not exist,
+                // and @context inside a typed RenderFragment was undeclared —
+                // both false errors, on code the build accepted.
+                roslyn.GetComponentCatalogAsync(templatePath, currentText, ct));
 
         // QuickBASIC comes from its own project, which references only the
         // extensibility contracts: it is the proof that a language can be

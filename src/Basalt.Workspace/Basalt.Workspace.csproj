@@ -17,14 +17,25 @@
   </ItemGroup>
 
   <!--
-    MSBuildLocator carica gli assembly MSBuild dall'SDK .NET installato sulla
-    macchina. Le copie provenienti da NuGet non devono finire nell'output,
-    altrimenti a runtime si caricano due versioni in conflitto di MSBuild.
+    MSBuildLocator loads the MSBuild assemblies from the .NET SDK installed on
+    the machine. The copies that come from NuGet must not end up in the
+    output, or two conflicting versions of MSBuild would be loaded at runtime.
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Build" Version="17.11.48" ExcludeAssets="runtime" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Build.Framework" Version="17.11.48" ExcludeAssets="runtime" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.11.48" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!--
+    Linked rather than duplicated: this is the generator's own catalog
+    builder, which declares every .vbrazor's parameters from the compilation
+    before any render tree is written. The editor asks the same question
+    about the same compilation, and a second copy of this logic would be a
+    second chance for the two to disagree about what a tag means.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Basalt.Razor.Vb.Generator\ComponentCatalogBuilder.cs" Link="Web\ComponentCatalogBuilder.cs" />
   </ItemGroup>
 
   <PropertyGroup>

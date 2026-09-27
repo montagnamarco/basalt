@@ -193,7 +193,14 @@ public sealed class ProjectCompilation : IDisposable
                 // is generated as ASP.NET Core would: with the standalone
                 // shape it inherits a base class the project has never heard
                 // of and Roslyn resolves nothing at all.
-                host: ViewHost.AspNetCore);
+                host: ViewHost.AspNetCore,
+
+                // A .vbrazor's own component catalog, learned from the
+                // solution the way the build learns it: without this Visual
+                // Studio, Rider and VS Code all saw a named RenderFragment
+                // parameter opened as a component that does not exist.
+                askCatalog: (templatePath, currentText, token) =>
+                    _roslyn.GetComponentCatalogAsync(templatePath, currentText, token));
 
             IsReady = true;
         }

@@ -313,26 +313,33 @@ public static class WebLanguageProviders
             askReferences = null,
         Func<string, int, CancellationToken, Task<SignatureHelp?>>?
             askSignature = null,
-        ViewHost host = ViewHost.Standalone) =>
+        ViewHost host = ViewHost.Standalone,
+        // Learns a .vbrazor's component catalog before it is written, the
+        // way the build learns it, so a named RenderFragment parameter, a
+        // typed RenderFragment's @context and a generic component's
+        // inferred type arguments read the same in the editor as they
+        // compile in the build. Null leaves every writer exactly as it
+        // behaved before catalogs existed.
+        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog = null) =>
         new WebProvider(
             new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor"],
                 isCaseSensitive: false),
             askSignature is null
-                ? new VbHtmlCompletionProvider(ask) { Host = host }
-                : new VbHtmlCompletionProvider(ask, askSignature) { Host = host },
+                ? new VbHtmlCompletionProvider(ask) { Host = host, AskCatalog = askCatalog }
+                : new VbHtmlCompletionProvider(ask, askSignature) { Host = host, AskCatalog = askCatalog },
             askDiagnostics is null
-                ? new VbHtmlDiagnosticProvider { Host = host }
-                : new VbHtmlDiagnosticProvider(askDiagnostics) { Host = host },
+                ? new VbHtmlDiagnosticProvider { Host = host, AskCatalog = askCatalog }
+                : new VbHtmlDiagnosticProvider(askDiagnostics) { Host = host, AskCatalog = askCatalog },
             new VbHtmlFormattingProvider(),
             askQuickInfo is null && askDefinition is null && askReferences is null
-                ? new VbHtmlNavigationProvider { Host = host }
+                ? new VbHtmlNavigationProvider { Host = host, AskCatalog = askCatalog }
                 : new VbHtmlNavigationProvider(new VbHtmlNavigationProvider.Questions
                 {
                     QuickInfo = askQuickInfo,
                     Definition = askDefinition,
                     References = askReferences,
                 })
-                { Host = host });
+                { Host = host, AskCatalog = askCatalog });
 
     /// <summary>Registers all of them with a registry.</summary>
     public static void RegisterAll(LanguageRegistry registry) =>
@@ -353,7 +360,8 @@ public static class WebLanguageProviders
         Func<string, int, CancellationToken, Task<IReadOnlyList<SourceLocation>>>?
             askReferences = null,
         Func<string, int, CancellationToken, Task<SignatureHelp?>>?
-            askSignature = null)
+            askSignature = null,
+        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog = null)
     {
         registry.Register(Html);
         registry.Register(Css);
@@ -361,7 +369,7 @@ public static class WebLanguageProviders
             ? VbRazor
             : VbRazorAsking(
                 ask, askQuickInfo, askDiagnostics, askDefinition, askReferences,
-                askSignature));
+                askSignature, askCatalog: askCatalog));
     }
 
     private sealed class WebProvider : ILanguageProvider

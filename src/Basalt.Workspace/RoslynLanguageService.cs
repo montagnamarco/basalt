@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -11,6 +12,8 @@ using Microsoft.CodeAnalysis.Text;
 using Basalt.Core.Model;
 using Basalt.Core.Services;
 using Basalt.Extensibility;
+using Basalt.Razor.Vb;
+using Basalt.Razor.Vb.Generator;
 using RoslynDiagnostic = Microsoft.CodeAnalysis.Diagnostic;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using IdeCompletionItem = Basalt.Core.Model.CompletionItem;
@@ -315,6 +318,276 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
             ? signature
             : $"{signature}\n\n{ExtractSummary(docComment)}";
     }
+
+    /// <summary>
+    /// A template's component catalog, learned from the project's own
+    /// compilation the way the build learns it: every .vbrazor is declared —
+    /// its class, base type and the members its @Functions and @Code blocks
+    /// declare, with no render tree — before any of them is written, so a
+    /// page using &lt;Card&gt;&lt;Header&gt; sees Header as Card's
+    /// RenderFragment parameter rather than as an unknown component, and a
+    /// RenderFragment(Of T) declares its own @context.
+    /// </summary>
+    /// <remarks>
+    /// Without a solution, or a project the template does not sit under, this
+    /// answers null and the writer falls back to what it did before catalogs
+    /// existed — not an empty catalog, which would claim a component that
+    /// simply is not there.
+    ///
+    /// Cached per <see cref="Compilation"/> instance: editing one .vbrazor
+    /// never touches the workspace's own Documents, since a .vbrazor is not a
+    /// Visual Basic file the workspace tracks, so the project's compilation
+    /// stays the very same object between keystrokes. Reading every other
+    /// .vbrazor from disk and declaring it is the expensive part, and it is
+    /// done once for that compilation rather than on every key. The one
+    /// component being edited is always re-read from <paramref
+    /// name="currentText"/> — a stale catalog for that one file would answer
+    /// about what used to be on disk rather than what the author is typing.
+    /// </remarks>
+    public async Task<IComponentCatalog?> GetComponentCatalogAsync(
+        string templatePath, string currentText, CancellationToken ct = default)
+    {
+        if (_workspace is null || string.IsNullOrEmpty(templatePath)) return null;
+
+        var project = FindProjectContaining(templatePath);
+        if (project?.FilePath is null) return null;
+
+        Compilation? compilation;
+
+        try
+        {
+            compilation = await project.GetCompilationAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+
+        if (compilation is null || compilation.Language != LanguageNames.VisualBasic) return null;
+
+        var cache = _catalogCaches.GetValue(compilation, _ => new CatalogCache());
+
+        // Read once per compilation: another component changing on disk
+        // while this one is being typed in is not seen until the compilation
+        // itself changes, the same staleness every keystroke-driven cache
+        // accepts.
+        cache.Components ??= DiscoverComponents(project.FilePath, ct);
+
+        var projectDirectory = Path.GetDirectoryName(project.FilePath);
+        var current = PrepareComponent(templatePath, currentText, projectDirectory);
+
+        var declarations = new List<ComponentDeclaration>(cache.Components.Count + 1);
+        var replacedCurrent = false;
+
+        foreach (var component in cache.Components)
+        {
+            if (string.Equals(component.Path, templatePath, PathComparison))
+            {
+                declarations.Add(ToDeclaration(current));
+                replacedCurrent = true;
+            }
+            else
+            {
+                declarations.Add(ToDeclaration(component));
+            }
+        }
+
+        if (!replacedCurrent) declarations.Add(ToDeclaration(current));
+
+        try
+        {
+            var catalogs = ComponentCatalogBuilder.Build(compilation, declarations, inferences: null, ct);
+
+            if (!catalogs.TryGetValue(templatePath, out var catalog)) return null;
+
+            // A generic component written without type arguments needs the
+            // compiler to infer them, exactly as the build does: a dry run
+            // records what is asked and answers none, and the catalog is
+            // then rebuilt with the compiler's answers.
+            var requests = new List<TypeInference>();
+
+            try
+            {
+                VbComponentWriter.WriteWithMap(
+                    current.Document, current.ClassName, current.Namespace, filePath: null,
+                    catalog: new RecordingCatalog(catalog, requests));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Written again for real by the caller, where a failure is
+                // something the editor can show rather than swallow.
+                return catalog;
+            }
+
+            if (requests.Count == 0) return catalog;
+
+            var inferences = new Dictionary<string, List<TypeInference>>(StringComparer.Ordinal)
+            {
+                [templatePath] = requests
+            };
+
+            var withInference = ComponentCatalogBuilder.Build(compilation, declarations, inferences, ct);
+
+            return withInference.TryGetValue(templatePath, out var inferred) ? inferred : catalog;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A catalog that could not be built leaves the writer exactly as
+            // it behaved before catalogs existed, rather than taking every
+            // question about the template down with it.
+            return null;
+        }
+    }
+
+    /// <summary>Every component catalog built for one compilation, kept until it changes.</summary>
+    private sealed class CatalogCache
+    {
+        public IReadOnlyList<PreparedComponent>? Components;
+    }
+
+    /// <summary>A .vbrazor read and ready to be declared: its path, parsed markup, class name and namespace.</summary>
+    private sealed record PreparedComponent(string Path, VbHtmlDocument Document, string ClassName, string Namespace);
+
+    private static ComponentDeclaration ToDeclaration(PreparedComponent component) =>
+        new(component.Path, component.Document, component.ClassName, component.Namespace);
+
+    /// <summary>A catalog that answers lookups and writes down the inferences asked of it.</summary>
+    /// <remarks>
+    /// The generator's own probe, mirrored here rather than reused: it is a
+    /// three-line adapter over <see cref="IComponentCatalog"/>, and the
+    /// generator's copy is a private nested class of a type this project does
+    /// not otherwise reach into.
+    /// </remarks>
+    private sealed class RecordingCatalog(IComponentCatalog inner, List<TypeInference> requests) : IComponentCatalog
+    {
+        public ComponentShape? Find(string tagName, int typeArgumentCount) => inner.Find(tagName, typeArgumentCount);
+
+        public IReadOnlyList<string>? InferTypeArguments(TypeInference request)
+        {
+            requests.Add(request);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The project whose folder is the nearest ancestor of a template's path.
+    /// </summary>
+    /// <remarks>
+    /// The nearest rather than any: a project nested inside another's folder
+    /// must not have its own templates claimed by the outer one.
+    /// </remarks>
+    private Project? FindProjectContaining(string templatePath)
+    {
+        if (_workspace is null) return null;
+
+        string full;
+
+        try
+        {
+            full = Path.GetFullPath(templatePath);
+        }
+        catch (Exception ex) when (ex is ArgumentException or System.Security.SecurityException or NotSupportedException)
+        {
+            return null;
+        }
+
+        return _workspace.CurrentSolution.Projects
+            .Where(p => p.Language == LanguageNames.VisualBasic && p.FilePath is { Length: > 0 })
+            .Select(p => (Project: p, Directory: Path.GetDirectoryName(p.FilePath)))
+            .Where(x => x.Directory is { Length: > 0 } &&
+                        full.StartsWith(x.Directory, PathComparison) &&
+                        (full.Length == x.Directory.Length || full[x.Directory.Length] is '/' or '\\'))
+            .OrderByDescending(x => x.Directory!.Length)
+            .Select(x => x.Project)
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Every .vbrazor under a project's folder, parsed and ready to be
+    /// declared — its _Imports.vbrazor already applied, the way the build
+    /// applies it.
+    /// </summary>
+    private static IReadOnlyList<PreparedComponent> DiscoverComponents(string projectPath, CancellationToken ct)
+    {
+        var projectDirectory = Path.GetDirectoryName(projectPath);
+        if (string.IsNullOrEmpty(projectDirectory)) return [];
+
+        string[] files;
+
+        try
+        {
+            files = Directory.GetFiles(projectDirectory, "*.vbrazor", SearchOption.AllDirectories);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
+
+        var prepared = new List<PreparedComponent>();
+
+        foreach (var file in files)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            // _Imports.vbrazor is not a component itself: it lends its
+            // directives to every component in its folder and below.
+            if (string.Equals(Path.GetFileName(file), "_Imports.vbrazor", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            prepared.Add(PrepareComponent(file, ReadOrEmpty(file), projectDirectory));
+        }
+
+        return prepared;
+    }
+
+    private static string ReadOrEmpty(string path)
+    {
+        try
+        {
+            return File.ReadAllText(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A component that cannot be read contributes nothing to the
+            // catalog; it does not stop every other one from being learned.
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// A .vbrazor's text, parsed and with its _Imports.vbrazor applied, named
+    /// and namespaced the way the build names and namespaces it.
+    /// </summary>
+    private static PreparedComponent PrepareComponent(string path, string text, string? projectDirectory)
+    {
+        var document = VbHtmlParser.Parse(text);
+
+        Web.TemplateGeneration.ApplySharedFiles(document, path, "_Imports.vbrazor");
+
+        return new PreparedComponent(
+            path,
+            document,
+            ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(path)),
+            ComponentNamespaceFor(path, projectDirectory));
+    }
+
+    /// <summary>
+    /// A component's namespace: its folders from the project, exactly as
+    /// <c>VbComponentGenerator.NamespaceFor</c> decides it for the build —
+    /// Components/Layout/MainLayout.vbrazor is in Components.Layout.
+    /// </summary>
+    private static string ComponentNamespaceFor(string path, string? projectDirectory)
+    {
+        if (ViewNaming.ProjectFolderNamespaceFor(path, projectDirectory) is { } folders)
+            return folders;
+
+        var folder = ViewNaming.FolderNamespaceFor(path);
+
+        return string.IsNullOrWhiteSpace(folder) ? "Components" : $"Components.{folder}";
+    }
+
+    /// <summary>Every catalog built so far, one per live compilation.</summary>
+    private readonly ConditionalWeakTable<Compilation, CatalogCache> _catalogCaches = new();
 
     /// <summary>
     /// The overloads callable at a position, and which argument is being typed.
