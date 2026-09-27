@@ -93,5 +93,8 @@ internal static class VisualBasicEnterInput
             }
             finally { document.UndoStack.EndUndoGroup(); }
         });
+
+        var finishedLine = SourceText.From(plan.Text).Lines.GetLineFromPosition(plan.Position).LineNumber;
+        await VisualBasicImplementsInput.HandleAsync(editor, shell, filePath, finishedLine, edit);
     }
 }

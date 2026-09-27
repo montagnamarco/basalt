@@ -1017,6 +1017,24 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// The edits that write the members a finished Implements or Inherits
+    /// line obliges its type to have, none when nothing is missing.
+    /// </summary>
+    public async Task<IReadOnlyList<Microsoft.CodeAnalysis.Text.TextChange>> ImplementMembersAsync(
+        string filePath, string text, int line)
+    {
+        try
+        {
+            return await _languageService.ImplementMembersAsync(filePath, text, line).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            // Half-typed code may not bind; the line then stays as typed.
+            return [];
+        }
+    }
+
+    /// <summary>
     /// Closing line for a block opened on the given line, or null when the line
     /// opens no block or the block is already closed.
     /// </summary>

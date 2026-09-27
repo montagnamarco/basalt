@@ -1161,6 +1161,26 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
             .Select(group => group.First())];
     }
 
+    /// <summary>
+    /// The edits that write the members the Implements or Inherits line
+    /// just finished obliges its type to have, none when nothing is missing:
+    /// Enter after "Implements IDisposable" writes Dispose.
+    /// </summary>
+    public async Task<IReadOnlyList<TextChange>> ImplementMembersAsync(
+        string filePath, string text, int lineIndex, CancellationToken ct = default)
+    {
+        var document = GetDocument(filePath) ?? ScratchDocument(text);
+        if (document is null) return [];
+
+        document = document.WithText(SourceText.From(text));
+
+        // Off the caller's thread: binding the type and running the fix is a
+        // quick action's work, and the caller is the editor after Enter.
+        return await Task.Run(
+            () => VisualBasicImplementsCompleter.ImplementAsync(document, lineIndex, _codeFixProviders.Value, ct),
+            ct).ConfigureAwait(false);
+    }
+
     /// <summary>Applies a quick action, returning the new text of the file.</summary>
     public async Task<string?> ApplyQuickActionAsync(
         string filePath, QuickAction action, CancellationToken ct = default)
