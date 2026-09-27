@@ -26,6 +26,7 @@ public sealed class CodeEditor : UserControl
     private readonly TextEditor _editor;
     private readonly EditorDocumentViewModel _document;
     private readonly MainWindowViewModel _shell;
+    private readonly VisualBasicSnippetInput _snippets;
     private CompletionWindow? _completionWindow;
     private bool _completionSuggestionMode;
     private readonly EditorRequestGate _completionRequests = new();
@@ -78,6 +79,8 @@ public sealed class CodeEditor : UserControl
             Options = { ConvertTabsToSpaces = true, IndentationSize = 4 }
         };
 
+        _snippets = new VisualBasicSnippetInput(_editor, ApplyTypingEdit);
+
         ApplySyntaxHighlighting();
 
         InstallFolding();
@@ -120,6 +123,11 @@ public sealed class CodeEditor : UserControl
         // pass, so a bubbling handler here would fire after the newline was
         // already inserted and could no longer replace it.
         _editor.TextArea.AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
+        // Run before the text area's native snippet handler wraps the last field.
+        AddHandler(KeyDownEvent, (_, e) =>
+        {
+            if (_completionWindow is null && _snippets.HandleFieldKey(e)) e.Handled = true;
+        }, RoutingStrategies.Tunnel);
 
         // Brackets are handled before the character is inserted, so the pair
         // can be written as a single edit the user undoes in one step.
@@ -405,6 +413,7 @@ public sealed class CodeEditor : UserControl
     /// </summary>
     private async void OnCaretPositionChanged(object? sender, EventArgs e)
     {
+        _snippets.CancelPending();
         // Raised even while the editor is rewriting itself: the status bar
         // should follow the caret wherever it has been put.
         CaretMoved?.Invoke(this, EventArgs.Empty);
@@ -425,6 +434,7 @@ public sealed class CodeEditor : UserControl
 
     private async void OnEditorLostFocus(object? sender, RoutedEventArgs e)
     {
+        _snippets.CancelPending();
         if (_lastCaretLine < 0) return;
 
         await FormatLineOnLeavingAsync(_lastCaretLine);
@@ -442,6 +452,7 @@ public sealed class CodeEditor : UserControl
     /// </summary>
     private async Task FormatLineOnLeavingAsync(int lineNumber)
     {
+        if (_snippets.IsActive) return;
         if (!AutoFormatWhileTyping) return;
         if (_document.Language is not SourceLanguage.VisualBasic) return;
         if (lineNumber < 1 || lineNumber > _editor.Document.LineCount) return;
@@ -742,14 +753,16 @@ public sealed class CodeEditor : UserControl
             return;
         }
 
-        await VisualBasicEnterInput.HandleAsync(_editor, _shell, _document.FilePath, action =>
-        {
-            _suppressTextChanged = true;
-            try { action(); }
-            finally { _suppressTextChanged = false; }
-            _lastCaretLine = _editor.Document.GetLineByOffset(_editor.CaretOffset).LineNumber;
-            _document.Text = _editor.Text;
-        });
+        await VisualBasicEnterInput.HandleAsync(_editor, _shell, _document.FilePath, ApplyTypingEdit);
+    }
+
+    private void ApplyTypingEdit(Action action)
+    {
+        _suppressTextChanged = true;
+        try { action(); }
+        finally { _suppressTextChanged = false; }
+        _lastCaretLine = _editor.Document.GetLineByOffset(_editor.CaretOffset).LineNumber;
+        _document.Text = _editor.Text;
     }
 
     /// <summary>Inserts a newline the way the editor would, with no extra work.</summary>
@@ -810,7 +823,16 @@ public sealed class CodeEditor : UserControl
         }
 
         if (_document.Language == SourceLanguage.VisualBasic &&
-            VisualBasicCompletionInput.HandleKey(_editor, _completionWindow, e)) return;
+            VisualBasicCompletionInput.HandleKey(_editor, _completionWindow, e))
+        {
+            // Committing a snippet keyword is already the first Tab in Tab, Tab.
+            if (e.Key == Key.Tab && _snippets.HandleKey(e) is { } armSnippet)
+                Guarded.Run(() => armSnippet, _shell.WriteOutput, "editor");
+            return;
+        }
+
+        // The native snippet session owns navigation and finishing its fields.
+        if (_snippets.IsActive && e.Key is Key.Tab or Key.Enter or Key.Escape) return;
 
         // A suggestion answers to Tab before anything else does. Only when one
         // is showing: Tab is indentation the rest of the time, and taking it
@@ -837,6 +859,13 @@ public sealed class CodeEditor : UserControl
             && e.KeyModifiers.HasFlag(KeyModifiers.Alt))
         {
             e.Handled = AcceptSuggestion(wordOnly: true);
+            return;
+        }
+
+        if (_document.Language == SourceLanguage.VisualBasic && _snippets.HandleKey(e) is { } snippetTask)
+        {
+            e.Handled = true;
+            Guarded.Run(() => snippetTask, _shell.WriteOutput, "editor");
             return;
         }
 

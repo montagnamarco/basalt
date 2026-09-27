@@ -420,7 +420,29 @@ public sealed class CompletionKeyboardTests : IAsyncLifetime
         }
     }
 
-    private async Task<(Window Window, CodeEditor Code, TextEditor Editor)> OpenAsync(string word)
+    [AvaloniaFact]
+    public async Task TabCommitsTheKeywordAndTheNextTabExpandsItsSnippet()
+    {
+        var (window, code, editor) = await OpenAsync("if", "If");
+        try
+        {
+            window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            window.KeyRelease(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            Assert.Equal(Source("If"), editor.Text);
+            Assert.False(code.CompletionOpenForTests);
+
+            window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            window.KeyRelease(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (editor.SelectedText != "condition" && DateTime.UtcNow < deadline) await Task.Delay(10);
+
+            Assert.Equal(Source("If condition Then\n            \n        End If"), editor.Text);
+            Assert.Equal("condition", editor.SelectedText);
+        }
+        finally { window.Close(); }
+    }
+
+    private async Task<(Window Window, CodeEditor Code, TextEditor Editor)> OpenAsync(string word, string expected = "CompleteTarget")
     {
         var text = Source(word);
         var code = new CodeEditor(new EditorDocumentViewModel(Path.Combine(_root, "Typing.vb"), text), _shell)
@@ -434,7 +456,7 @@ public sealed class CompletionKeyboardTests : IAsyncLifetime
         editor.CaretOffset = text.IndexOf("        " + word, StringComparison.Ordinal) + 8 + word.Length;
         editor.TextArea.Focus();
         await code.ShowCompletionForTestsAsync();
-        Assert.Equal("CompleteTarget", code.SelectedCompletionForTests);
+        Assert.Equal(expected, code.SelectedCompletionForTests);
         return (window, code, editor);
     }
 
