@@ -47,6 +47,8 @@ public class LanguageServerHandlerTests
         return names;
     }
 
+    // The handlers are registered in ServerSetup, which Program and the
+    // protocol tests share.
     private static string ProgramSource()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -55,14 +57,14 @@ public class LanguageServerHandlerTests
         {
             var candidate = Path.Combine(
                 directory.FullName,
-                "src", "Basalt.Razor.Vb.LanguageServer", "Program.cs");
+                "src", "Basalt.Razor.Vb.LanguageServer", "ServerSetup.cs");
 
             if (File.Exists(candidate)) return File.ReadAllText(candidate);
 
             directory = directory.Parent;
         }
 
-        throw new FileNotFoundException("The language server's Program.cs was not found.");
+        throw new FileNotFoundException("The language server's ServerSetup.cs was not found.");
     }
 
     [Fact]
