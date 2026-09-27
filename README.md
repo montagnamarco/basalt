@@ -779,6 +779,8 @@ PowerShell 5.1 on Windows or `pwsh` on other platforms. Use `-Suite Web,Browser`
 to select projects, or `-List` to show the selection without running tests.
 Use `-NoBuild` only after building the intended test binaries, for example when
 the running IDE locks its executable and only its DLL has been rebuilt.
+`-Filter` passes an explicit test filter to the selected projects and records
+that narrower scope in the report.
 It installs nothing: browser tests use installed Edge on Windows or Playwright
 Chromium, and debugger tests need netcoredbg. Exit 1 means failure; exit 2 means
 incomplete coverage because tests were skipped. A passing selected run does

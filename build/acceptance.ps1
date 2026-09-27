@@ -19,6 +19,7 @@ param(
     [ValidateNotNullOrEmpty()]
     [string[]] $Suite = @("Core", "Web", "Browser"),
     [switch] $NoBuild,
+    [string] $Filter,
     [switch] $List
 )
 
@@ -28,6 +29,7 @@ $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $false
 
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "acceptance-results.ps1")
 $checks = @(
     @{ Name = "Core"; Project = "tests/Basalt.Tests" },
     @{ Name = "Web"; Project = "tests/Basalt.Web.Tests" },
@@ -73,6 +75,7 @@ try {
             "Started: $(Get-Date -Format o)",
             "Revision: $revision; tracked changes: $($changes.Count)",
             "Selected suites: $($checks.Name -join ', ')",
+            "Test filter: $(ConvertTo-ReportText $Filter)",
             "Build disabled: $NoBuild. When disabled, results describe existing test binaries, which must be built from the intended source first.",
             "Source evidence: [status](source-status.txt), [tracked patch](source.patch); untracked source hashes are saved when present.",
             "Platform: $([Environment]::OSVersion); SDK: $sdk; PowerShell: $($PSVersionTable.PSVersion)",
@@ -96,6 +99,7 @@ try {
                 "--logger", "trx;LogFileName=$name.trx"
             )
             if ($NoBuild) { $arguments += "--no-build" }
+            if (-not [string]::IsNullOrWhiteSpace($Filter)) { $arguments += @("--filter", $Filter) }
             $arguments | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $outputDirectory "$name-arguments.json") -Encoding UTF8
             Write-Host "Running $name; log: $logPath"
             $timer = [Diagnostics.Stopwatch]::StartNew()
@@ -141,19 +145,12 @@ try {
             if (Test-Path -LiteralPath $trxPath) {
                 try {
                     [xml] $trx = Get-Content -LiteralPath $trxPath -Raw
-                    $counters = $trx.TestRun.ResultSummary.Counters
-                    if ($null -eq $counters) { throw "TRX has no result counters." }
-                    $total = [int] $counters.total
-                    $passed = [int] $counters.passed
-                    $failed = [int] $counters.failed
-                    $skipped = [int] $counters.notExecuted
-                    if ($exitCode -eq 0 -and $total -gt 0 -and $passed -eq $total) {
-                        $outcome = "Passed"
-                    }
-                    elseif ($exitCode -eq 0 -and $failed -eq 0 -and $skipped -gt 0 -and
-                        ($passed + $skipped) -eq $total) {
-                        $outcome = "Incomplete"
-                    }
+                    $summary = Get-AcceptanceResult $trx $exitCode
+                    $total = $summary.Total
+                    $passed = $summary.Passed
+                    $failed = $summary.Failed
+                    $skipped = $summary.Skipped
+                    $outcome = $summary.Outcome
                     foreach ($test in $trx.TestRun.Results.UnitTestResult) {
                         if ($test.outcome -eq "Passed") { continue }
                         $reason = [string] $test.Output.ErrorInfo.Message
