@@ -378,7 +378,7 @@ Visual Basic counterpart: same Razor syntax, compiled into a real
 
 <h1>@Title</h1>
 <p role="status">Current count: @currentCount</p>
-<button onclick="@AddressOf IncrementCount">Click me</button>
+<button @onclick="AddressOf IncrementCount">Click me</button>
 
 @Code
     <Global.Microsoft.AspNetCore.Components.Parameter>
@@ -418,9 +418,28 @@ as text would compile and render nothing, which is why this is a separate
 writer rather than a flag on the view one.
 
 `@Page` supplies the route. `@Functions` becomes the component's own members,
-so `<Parameter>` properties and event handlers live there. An `@AddressOf` in
-an attribute is wrapped in an `EventCallback` the way the C# compiler wraps
-`@onclick`.
+so `<Parameter>` properties and event handlers live there.
+
+### Events and directive attributes
+
+```vbrazor
+<button @onclick="Sub() count += 1">+1</button>
+<button @onclick="AddressOf SaveAsync" @onclick:preventDefault>Save</button>
+<input @onkeydown="Sub(e As KeyboardEventArgs) last = e.Key" />
+<div class="card @kind" @key="item.Id" @attributes="extra"></div>
+<input @ref="box" />
+<Chart @rendermode="InteractiveServer" />
+```
+
+An event handler is Visual Basic: a lambda, `AddressOf` a method taking the
+event's arguments or none, or a method returning a `Task`. It is wrapped in an
+`EventCallback` typed by the event's arguments (`MouseEventArgs` for
+`@onclick`, `ChangeEventArgs` for `@oninput`...), as the C# compiler types it,
+and mapped back to the template, so completion and breakpoints work inside it.
+`:preventDefault` and `:stopPropagation`, `@key`, `@ref`, `@attributes`,
+`@formname` and `@rendermode` on a component are written as the frames Blazor
+expects. A value mixing text and expressions, `class="card @kind"`, is one
+attribute. `onclick="@AddressOf Go"` without the marker still works.
 
 A top-level `@Code` block that declares members — `Private count As Integer`,
 `Sub Increment()`, a `<Parameter>` property — becomes members too, as `@code`
@@ -463,7 +482,10 @@ decides where to put it.
 
 `@bind` becomes the pair of attributes it really is: the value out through
 `BindConverter`, and the change back through `CreateBinder`, which parses what
-arrives into the target's type.
+arrives into the target's type. A checkbox binds `checked`; `@bind:event`,
+`@bind:format`, `@bind:culture`, `@bind:after` and `@bind:get`/`@bind:set` work
+as in C#. On a component `@bind-Value` also sets `ValueExpression`, which
+`InputText` and the other form inputs need.
 
 A generic component names its type argument in the tag. The C# compiler infers
 it from the parameter values; that needs the type system, which a template

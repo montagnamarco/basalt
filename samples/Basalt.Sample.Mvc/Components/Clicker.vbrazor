@@ -3,12 +3,14 @@
 
 <p>Clicks: @count</p>
 
-<button onclick="@AddressOf Click">Click</button>
+<button @onclick="Sub() count += 1">Click</button>
+
+<input @bind="name" @bind:event="oninput" />
+
+<p id="greeting">Hello @name</p>
 
 @Code
     Private count As Integer
 
-    Private Sub Click()
-        count += 1
-    End Sub
+    Private name As String = ""
 End Code

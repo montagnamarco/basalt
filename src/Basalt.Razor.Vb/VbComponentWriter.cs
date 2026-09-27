@@ -43,12 +43,6 @@ public sealed class VbComponentWriter
     private readonly Stack<bool> fragments_ = new();
 
     /// <summary>
-    /// Whether a component opened on this path still needs its child-content
-    /// lambda, once its attributes have been written.
-    /// </summary>
-    private bool pendingFragment_;
-
-    /// <summary>
     /// The builder the calls being written go to.
     /// </summary>
     /// <remarks>
@@ -244,6 +238,8 @@ public sealed class VbComponentWriter
                 });
         }
 
+        WriteBindExpressionHelper(builder);
+
         WriteRenderMode(builder, mappings, filePath, document);
 
         builder.AppendLine("    End Class");
@@ -256,202 +252,134 @@ public sealed class VbComponentWriter
     /// Writes a run of nodes, joining the ones that belong together.
     /// </summary>
     /// <remarks>
-    /// An attribute whose value is an expression arrives as three nodes — the
-    /// markup ending in name=", the expression, the markup starting with " —
-    /// because the parser splits on the @ before the tag is ever whole. Writing
-    /// them one at a time emitted the tag as text with the expression stranded
-    /// in the middle, so onclick="@AddressOf Handler" became an unterminated
-    /// string and the component did not compile.
+    /// A tag whose attributes hold expressions arrives in pieces — the markup
+    /// up to name=", the expression, the markup from the closing quote on —
+    /// because the parser splits on the @ before the tag is ever whole. The
+    /// pieces are put back together into one tag before anything is written,
+    /// so each attribute is read with the others around it: a binding with its
+    /// modifiers, a value mixing text and expressions, the end of the tag
+    /// wherever it falls. Written a piece at a time, the tag came out as text
+    /// with the expression stranded in the middle, or with its child content
+    /// opened before its last attribute.
     /// </remarks>
     private void WriteNodes(
         StringBuilder builder, IReadOnlyList<VbHtmlNode> nodes, ref int sequence, int indent,
         List<SourceMapping> mappings, string? filePath)
     {
         var pad = new string(' ', indent);
-        var pending = new List<(string Name, string Value)>();
-
-        // Whether the last expression attribute left its tag open, with
-        // another expression attribute to come.
-        var insideTag = false;
-
-        // The tag that path opened, so its end knows whether it was void.
-        var openedTag = "";
 
         // Runs of markup are joined first. The parser ends a node wherever it
         // saw an "@", so "<input @bind=" arrives as two markup nodes and the
-        // tag cannot be read as a whole — the element was never opened and the
-        // marker was written into the page as text.
+        // tag cannot be read as a whole.
         nodes = JoinMarkup(nodes);
 
         for (var i = 0; i < nodes.Count; i++)
         {
-            if (nodes[i] is HtmlNode html
-                && i + 2 < nodes.Count
-                && nodes[i + 1] is ExpressionNode expression
-                && nodes[i + 2] is HtmlNode after
-                && AttributeNameAt(html.Text) is { } name)
+            if (nodes[i] is HtmlNode html &&
+                i + 1 < nodes.Count &&
+                nodes[i + 1] is ExpressionNode or HtmlNode &&
+                OpenTagAt(html.Text) is { } tagStart &&
+                AssembleTag(nodes, i, tagStart) is { } assembled)
             {
-                // The markup before the attribute ends inside the tag it
-                // belongs to — "<button " — so it cannot be written as literal
-                // markup: Blazor refuses an attribute that does not follow an
-                // element frame, and the page failed at render with
-                // "Attributes may only be added immediately after frames of
-                // type Element or Component". The element is opened properly
-                // and only what precedes the tag is written as markup.
-                var before = html.Text.Substring(
-                    0, html.Text.Length - name.Length - 2);
+                WriteMarkup(builder, html.Text.Substring(0, tagStart), html.Position, html.Line,
+                    ref sequence, pad, mappings, filePath);
 
-                var tagAt = before.LastIndexOf('<');
+                WriteTag(builder, assembled.Tag, ref sequence, pad, mappings, filePath);
 
-                if (insideTag)
-                {
-                    // A later attribute of a tag already opened: what precedes
-                    // it is more attributes, not markup. Written as markup it
-                    // put " " into the component's child content and opened
-                    // that content before the tag had ended.
-                    WriteAttributes(builder, before, ref sequence, pad);
-                }
-                else if (tagAt >= 0 && before.IndexOf('>', tagAt) < 0)
-
-                {
-                    WriteMarkup(builder, before.Substring(0, tagAt), ref sequence, pad, pending);
-
-                    var element = Name(before.Substring(tagAt + 1).TrimStart());
-
-                    openedTag = element;
-
-                    // A capitalised tag is a component here too. Opening it as
-                    // an element sent an invented tag to the browser and lost
-                    // every parameter, the same way it did on the plain path.
-                    if (IsComponentName(element))
-                    {
-                        builder.AppendLine(
-                            $"{pad}{Builder}.OpenComponent(Of {ComponentType(element)})({sequence++})");
-
-                        open_.Push(true);
-
-                        // Opened for child content once the tag's attributes
-                        // are written, further down: a component reached
-                        // through this path — because one of its attributes is
-                        // an expression — was opened and its children were
-                        // emitted as the parent's frames, so nothing inside it
-                        // rendered at all.
-                        pendingFragment_ = true;
-                    }
-                    else
-                    {
-                        builder.AppendLine(
-                            $"{pad}{Builder}.OpenElement({sequence++}, \"{element}\")");
-
-                        open_.Push(false);
-                    }
-
-                    // Any attributes already written inside the tag before this
-                    // one, which would otherwise be lost with the literal.
-                    var written = before.Substring(tagAt + 1 + element.Length);
-
-                    WriteAttributes(builder, written, ref sequence, pad);
-                }
-                else
-                {
-                    WriteMarkup(builder, before, ref sequence, pad, pending);
-
-                    openedTag = "";
-                }
-
-                // A binding is two attributes here as well: this is the path
-                // an attribute takes when its value is an expression, which is
-                // exactly what @bind="@x" is.
-                if (IsBind(name))
-                    WriteBinding(builder, name, expression.Expression, ref sequence, pad);
-                else
-                    builder.AppendLine(
-                        $"{pad}{Builder}.AddAttribute({sequence++}, \"{name}\", " +
-                        $"{Expression(expression.Expression)})");
-
-                // The closing quote of the value is skipped; what follows is
-                // either more of the same tag or its end.
-                var rest = after.Text.Substring(1);
-                var skipped = 1;
-                var tagEnd = TagEnd(rest);
-
-                if (tagEnd < 0)
-                {
-                    // Another attribute whose value is an expression follows,
-                    // in this same tag: the next pass writes it.
-                    insideTag = true;
-
-                    nodes = Replace(nodes, i + 2, new HtmlNode(rest, after.Position + skipped, after.Line));
-
-                    i++;
-                    continue;
-                }
-
-                insideTag = false;
-
-                // Only when the tag has content. A self-closing component
-                // opened a child-content lambda that nothing ever closed, so
-                // the generated file ended mid-statement — "End Sub expected",
-                // pointing at generated code rather than at the template.
-                var selfCloses = tagEnd > 0 && rest[tagEnd - 1] == '/';
-
-                // Literal attributes after this one, before the tag ends.
-                WriteAttributes(builder, rest.Substring(0, selfCloses ? tagEnd - 1 : tagEnd), ref sequence, pad);
-
-                // A void element ends with its tag: <input value="@name"> has
-                // no closing tag, and left open it took every later sibling
-                // inside it until Blazor refused the render.
-                var isVoid = !IsComponentName(openedTag) && IsVoid(openedTag);
-
-                if (selfCloses || isVoid)
-                {
-                    pendingFragment_ = false;
-
-                    // What closes the tag belongs to the calls already
-                    // written, not to the page: a self-closing tag left " />"
-                    // behind as text and never closed what it opened.
-                    var wasComponent = open_.Count > 0 && open_.Pop();
-
-                    builder.AppendLine(wasComponent
-                        ? $"{pad}{Builder}.CloseComponent()"
-                        : $"{pad}{Builder}.CloseElement()");
-                }
-                else if (pendingFragment_)
-                {
-                    pendingFragment_ = false;
-
-                    builder.AppendLine(
-                        $"{pad}{Builder}.AddAttribute({sequence++}, \"ChildContent\", " +
-                        "CType(Sub(__child As Global.Microsoft.AspNetCore.Components." +
-                        "Rendering.RenderTreeBuilder)");
-
-                    fragments_.Push(true);
-                }
-
-                // The ">" closing the tag was turned into calls already:
-                // leaving it in put a stray ">" in the page.
-                skipped += tagEnd + 1;
-                rest = rest.Substring(tagEnd + 1);
-
-                nodes = Replace(nodes, i + 2, new HtmlNode(
-                    rest, after.Position + skipped, after.Line));
-
-                i++;
+                // What follows the tag in its last piece is ordinary markup,
+                // written on the next pass.
+                nodes = Replace(nodes, assembled.LastIndex, assembled.Rest);
+                i = assembled.LastIndex - 1;
                 continue;
             }
-
-            insideTag = false;
 
             WriteNode(builder, nodes[i], ref sequence, indent, mappings, filePath);
         }
     }
 
     /// <summary>
-    /// Where the tag being read ends: the first ">" outside a quoted value,
-    /// or -1 when the text stops inside the tag — at the opening quote of
-    /// another attribute whose value is an expression.
+    /// Where a run of markup opens a tag it does not finish, if it does.
     /// </summary>
-    private int TagEnd(string text)
+    private static int? OpenTagAt(string markup)
+    {
+        for (var at = markup.LastIndexOf('<'); at >= 0; at = at == 0 ? -1 : markup.LastIndexOf('<', at - 1))
+        {
+            if (at + 1 >= markup.Length || !char.IsLetter(markup[at + 1])) continue;
+
+            return TagEnd(markup.Substring(at)) < 0 ? at : null;
+        }
+
+        return null;
+    }
+
+    /// <summary>A tag put back together, and the markup its last piece goes on with.</summary>
+    private sealed record AssembledTag(Tag Tag, int LastIndex, HtmlNode Rest);
+
+    /// <summary>
+    /// Joins the pieces of a tag, from the markup that opens it to the markup
+    /// that ends it, with the expressions between.
+    /// </summary>
+    /// <returns>
+    /// Nothing when a node other than markup or an expression comes first: a
+    /// tag cut by a code block is written as it always was.
+    /// </returns>
+    private static AssembledTag? AssembleTag(IReadOnlyList<VbHtmlNode> nodes, int first, int tagStart)
+    {
+        var opening = (HtmlNode)nodes[first];
+        var tag = new Tag();
+
+        tag.AddLiteral(opening.Text.Substring(tagStart), opening.Position + tagStart, LineAt(opening, tagStart));
+
+        for (var index = first + 1; index < nodes.Count; index++)
+        {
+            if (nodes[index] is ExpressionNode expression)
+            {
+                tag.AddExpression(expression);
+                continue;
+            }
+
+            if (nodes[index] is not HtmlNode piece) return null;
+
+            var before = tag.Length;
+
+            tag.AddLiteral(piece.Text, piece.Position, piece.Line);
+
+            var end = TagEnd(tag.Text);
+
+            if (end < 0) continue;
+
+            var used = end + 1 - before;
+
+            tag.Truncate(end + 1);
+
+            var rest = new HtmlNode(piece.Text.Substring(used), piece.Position + used, LineAt(piece, used));
+
+            return new AssembledTag(tag, index, rest);
+        }
+
+        return null;
+    }
+
+    /// <summary>The line an offset into a markup node falls on.</summary>
+    private static int LineAt(HtmlNode node, int offset) => LineAt(node.Text, node.Line, offset);
+
+    private static int LineAt(string text, int firstLine, int offset)
+    {
+        var line = firstLine;
+
+        for (var index = 0; index < offset && index < text.Length; index++)
+        {
+            if (text[index] == '\n') line++;
+        }
+
+        return line;
+    }
+
+    /// <summary>
+    /// Where the tag being read ends: the first ">" outside a quoted value,
+    /// or -1 when the text stops inside the tag.
+    /// </summary>
+    private static int TagEnd(string text)
     {
         char? quote = null;
 
@@ -472,6 +400,775 @@ public sealed class VbComponentWriter
         return -1;
     }
 
+    /// <summary>
+    /// One tag's text, its expressions held as placeholders, and where each
+    /// literal character came from in the template.
+    /// </summary>
+    private sealed class Tag
+    {
+        private readonly StringBuilder _text = new();
+
+        private readonly List<(int Start, int Length, int Position, int Line, string Text)> _literals = [];
+
+        public List<ExpressionNode> Expressions { get; } = [];
+
+        public string Text => _text.ToString();
+
+        public int Length => _text.Length;
+
+        public void AddLiteral(string text, int position, int line)
+        {
+            _literals.Add((_text.Length, text.Length, position, line, text));
+            _text.Append(text);
+        }
+
+        public void AddExpression(ExpressionNode expression)
+        {
+            _text.Append(Placeholder(Expressions.Count));
+            Expressions.Add(expression);
+        }
+
+        public void Truncate(int length) => _text.Length = length;
+
+        /// <summary>Stands for the expression at an index; no markup contains it.</summary>
+        public static string Placeholder(int index) => "\u0001" + index + "\u0002";
+
+        /// <summary>Where a literal character of the tag sits in the template.</summary>
+        public (int Position, int Line)? Origin(int index)
+        {
+            foreach (var literal in _literals)
+            {
+                if (index < literal.Start || index >= literal.Start + literal.Length) continue;
+
+                var offset = index - literal.Start;
+
+                return (literal.Position + offset, LineAt(literal.Text, literal.Line, offset));
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>One attribute as written, its value still with placeholders.</summary>
+    /// <param name="Value">Null for a bare attribute: disabled, @onclick:preventDefault.</param>
+    /// <param name="ValueStart">Where the value starts in the tag's text.</param>
+    private sealed record TagAttribute(string Name, string? Value, int ValueStart);
+
+    /// <summary>
+    /// An attribute's value, ready to be written: Visual Basic, with where it
+    /// came from when it is the template's own code.
+    /// </summary>
+    /// <param name="Lead">Written before the mapped code and not mapped: "Await ".</param>
+    private sealed record AttributeValue(string Written, bool IsCode, bool IsMapped, int Position, int Line, string Lead = "")
+    {
+        public static AttributeValue Literal(string written) => new(written, false, false, 0, 0);
+
+        public static AttributeValue Code(string code) => new(code, true, false, 0, 0);
+    }
+
+    /// <summary>
+    /// Opens the element or component a tag names and writes its attributes.
+    /// </summary>
+    private void WriteTag(
+        StringBuilder builder, Tag tag, ref int sequence, string pad,
+        List<SourceMapping> mappings, string? filePath)
+    {
+        var text = tag.Text;
+        var inner = text.Substring(1, text.Length - 2);
+        var trimmed = inner.TrimEnd();
+        var selfClosing = trimmed.EndsWith("/", StringComparison.Ordinal);
+        var name = Name(inner);
+        var attributesEnd = 1 + (selfClosing ? trimmed.Length - 1 : inner.Length);
+        var attributes = ParseAttributes(text, 1 + name.Length, attributesEnd);
+
+        // A capitalised tag is another component, the way it is in Razor:
+        // <Greeting Name="x" /> written out as an element sent the browser an
+        // invented tag and dropped the parameter on the floor.
+        var isComponent = IsComponentName(name);
+
+        // A component is named unqualified, so Visual Basic resolves it the way
+        // it resolves any name in the file's own namespace, RootNamespace
+        // included — which the generator deliberately does not write.
+        builder.AppendLine(isComponent
+            ? $"{pad}{Builder}.OpenComponent(Of {ComponentType(name)})({sequence++})"
+            : $"{pad}{Builder}.OpenElement({sequence++}, \"{name}\")");
+
+        var deferred = WriteTagAttributes(builder, tag, attributes, name, isComponent, ref sequence, pad, mappings, filePath);
+
+        if (!isComponent)
+        {
+            // An element's reference and key come before its children, which
+            // are frames of their own rather than an attribute.
+            WriteDeferred(builder, deferred, ref sequence, pad, mappings, filePath);
+
+            // A void element has no closing tag to wait for: left open, every
+            // later sibling nested inside the <input>.
+            if (selfClosing || IsVoid(name))
+                builder.AppendLine($"{pad}{Builder}.CloseElement()");
+            else
+                open_.Push(false);
+
+            return;
+        }
+
+        if (selfClosing)
+        {
+            WriteDeferred(builder, deferred, ref sequence, pad, mappings, filePath);
+            builder.AppendLine($"{pad}{Builder}.CloseComponent()");
+            return;
+        }
+
+        // What sits between the tags becomes ChildContent, a RenderFragment
+        // the component decides where to put. Written straight into the tree
+        // instead, it was emitted as the component's own frames and vanished.
+        builder.AppendLine(
+            $"{pad}{Builder}.AddAttribute({sequence++}, \"ChildContent\", " +
+            "CType(Sub(__child As Global.Microsoft.AspNetCore.Components." +
+            "Rendering.RenderTreeBuilder)");
+
+        open_.Push(true);
+        fragments_.Push(true);
+
+        // Written once ChildContent is complete, at the closing tag: Blazor
+        // takes an attribute only straight after the component's frame or
+        // another attribute, and <Panel @ref="p">text</Panel> failed to render.
+        deferred_.Push(deferred);
+    }
+
+    /// <summary>The attributes between a tag's name and its end.</summary>
+    /// <remarks>
+    /// Read a name at a time: "disabled class=..." split at the first "="
+    /// was one attribute called "disabled class".
+    /// </remarks>
+    private static List<TagAttribute> ParseAttributes(string text, int from, int to)
+    {
+        var found = new List<TagAttribute>();
+        var at = from;
+
+        while (at < to)
+        {
+            while (at < to && char.IsWhiteSpace(text[at])) at++;
+
+            if (at >= to) break;
+
+            var nameStart = at;
+
+            while (at < to && !char.IsWhiteSpace(text[at]) && text[at] != '=') at++;
+
+            var name = text.Substring(nameStart, at - nameStart);
+            var afterName = at;
+
+            while (at < to && char.IsWhiteSpace(text[at])) at++;
+
+            if (at >= to || text[at] != '=')
+            {
+                found.Add(new TagAttribute(name, null, -1));
+                at = afterName;
+                continue;
+            }
+
+            at++;
+
+            while (at < to && char.IsWhiteSpace(text[at])) at++;
+
+            if (at >= to)
+            {
+                found.Add(new TagAttribute(name, "", at));
+                break;
+            }
+
+            if (text[at] is '"' or '\'')
+            {
+                var quote = text[at];
+                var end = text.IndexOf(quote, at + 1);
+
+                if (end < 0 || end > to) end = to;
+
+                found.Add(new TagAttribute(name, text.Substring(at + 1, end - at - 1), at + 1));
+                at = end + 1;
+            }
+            else
+            {
+                var start = at;
+
+                while (at < to && !char.IsWhiteSpace(text[at])) at++;
+
+                found.Add(new TagAttribute(name, text.Substring(start, at - start), start));
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>
+    /// What an attribute's value is: text, the template's own Visual Basic,
+    /// or text and expressions together.
+    /// </summary>
+    /// <param name="isCode">
+    /// Whether the value is Visual Basic even without an "@": the value of
+    /// @onclick, @bind, @ref and the rest is code, as it is in C#.
+    /// </param>
+    private static AttributeValue ValueOf(Tag tag, TagAttribute attribute, bool isCode)
+    {
+        if (attribute.Value is null) return AttributeValue.Code("True");
+
+        var value = attribute.Value;
+        var leading = value.Length - value.TrimStart().Length;
+        var body = value.Trim();
+
+        // Exactly one expression: the value is that expression, mapped where
+        // the parser found it.
+        if (tag.Expressions.Count > 0 && body == Tag.Placeholder(IndexOfPlaceholder(body)))
+        {
+            var expression = tag.Expressions[IndexOfPlaceholder(body)];
+
+            return new AttributeValue(expression.Expression, true, true, expression.ExpressionPosition, expression.Line,
+                expression.IsAwaited ? "Await " : "");
+        }
+
+        if (body.IndexOf('\u0001') >= 0) return Mixed(tag, value);
+
+        // "@Handler" written into a literal value, or the value of a
+        // directive attribute: the template's own code.
+        var marked = body.StartsWith("@", StringComparison.Ordinal);
+
+        if (!marked && !isCode) return AttributeValue.Literal(Quoted(value));
+
+        var skip = leading + (marked ? 1 : 0);
+        var remainder = value.Substring(skip);
+        var code = remainder.Trim();
+
+        skip += remainder.Length - remainder.TrimStart().Length;
+
+        if (code.Length == 0) return AttributeValue.Literal(Quoted(value));
+
+        return tag.Origin(attribute.ValueStart + skip) is { } origin
+            ? new AttributeValue(code, true, true, origin.Position, origin.Line)
+            : AttributeValue.Code(code);
+    }
+
+    private static int IndexOfPlaceholder(string text)
+    {
+        var start = text.IndexOf('\u0001');
+        var end = text.IndexOf('\u0002');
+
+        return start >= 0 && end > start && int.TryParse(text.Substring(start + 1, end - start - 1), out var index)
+            ? index
+            : -1;
+    }
+
+    /// <summary>
+    /// A value of text and expressions, class="box @kind", as one string.
+    /// </summary>
+    /// <remarks>
+    /// The pieces were written one after another into the tag, so the tag
+    /// came out as text with the expression in the middle of it.
+    /// </remarks>
+    private static AttributeValue Mixed(Tag tag, string value)
+    {
+        var pieces = new List<string>();
+        var at = 0;
+
+        while (at < value.Length)
+        {
+            var start = value.IndexOf('\u0001', at);
+
+            if (start < 0)
+            {
+                pieces.Add(Quoted(value.Substring(at)));
+                break;
+            }
+
+            if (start > at) pieces.Add(Quoted(value.Substring(at, start - at)));
+
+            var end = value.IndexOf('\u0002', start);
+            var index = int.Parse(value.Substring(start + 1, end - start - 1));
+
+            pieces.Add($"Global.System.Convert.ToString({tag.Expressions[index].Expression})");
+            at = end + 1;
+        }
+
+        return AttributeValue.Code(string.Join(" & ", pieces));
+    }
+
+    /// <summary>
+    /// Writes one call whose last argument is an attribute's value, mapped to
+    /// the template when the value is the template's own code.
+    /// </summary>
+    private static void WriteValueCall(
+        StringBuilder builder, string pad, string before, AttributeValue value, string after,
+        List<SourceMapping> mappings, string? filePath)
+    {
+        var line = pad + before + value.Lead + value.Written + after;
+
+        if (!value.IsMapped || filePath is null)
+        {
+            builder.AppendLine(line);
+            return;
+        }
+
+        ExternalSourceWriter.WriteMapped(builder, mappings, filePath,
+            value.Position, value.Written.Length, value.Line,
+            () => builder.AppendLine(line),
+            offset: pad.Length + before.Length + value.Lead.Length);
+    }
+
+    /// <summary>A @bind and the modifiers written beside it.</summary>
+    private sealed class Binding(string name)
+    {
+        public string Name { get; } = name;
+
+        public AttributeValue? Value { get; set; }
+
+        public AttributeValue? Get { get; set; }
+
+        public AttributeValue? Set { get; set; }
+
+        public AttributeValue? After { get; set; }
+
+        public AttributeValue? Culture { get; set; }
+
+        public string? Format { get; set; }
+
+        public string? Event { get; set; }
+    }
+
+    /// <summary>
+    /// Writes a tag's attributes, the directive ones as the frames Blazor
+    /// expects rather than as markup.
+    /// </summary>
+    /// <remarks>
+    /// @key, @ref, @formname and @rendermode are written after the others:
+    /// they are not attributes, and Blazor takes attributes only straight
+    /// after the element or component they belong to.
+    /// </remarks>
+    private DeferredFrames WriteTagAttributes(
+        StringBuilder builder, Tag tag, List<TagAttribute> attributes, string name, bool isComponent,
+        ref int sequence, string pad, List<SourceMapping> mappings, string? filePath)
+    {
+        var bindings = new List<Binding>();
+        AttributeValue? key = null;
+        AttributeValue? reference = null;
+        AttributeValue? formName = null;
+        AttributeValue? renderMode = null;
+
+        var isCheckbox = !isComponent && attributes.Any(attribute =>
+            attribute.Name.Equals("type", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(attribute.Value?.Trim(), "checkbox", StringComparison.OrdinalIgnoreCase));
+
+        foreach (var attribute in attributes)
+        {
+            if (!attribute.Name.StartsWith("@", StringComparison.Ordinal))
+            {
+                WritePlainAttribute(builder, tag, attribute, isComponent, ref sequence, pad, mappings, filePath);
+                continue;
+            }
+
+            var directive = attribute.Name.Substring(1);
+            var colon = directive.IndexOf(':');
+            var baseName = colon < 0 ? directive : directive.Substring(0, colon);
+            var modifier = colon < 0 ? null : directive.Substring(colon + 1);
+
+            if (baseName.Equals("bind", StringComparison.OrdinalIgnoreCase) ||
+                baseName.StartsWith("bind-", StringComparison.OrdinalIgnoreCase))
+            {
+                var binding = bindings.FirstOrDefault(b => b.Name.Equals(baseName, StringComparison.OrdinalIgnoreCase));
+
+                if (binding is null)
+                {
+                    binding = new Binding(baseName);
+                    bindings.Add(binding);
+                }
+
+                ReadBindingPart(binding, modifier, tag, attribute);
+                continue;
+            }
+
+            if (baseName.StartsWith("on", StringComparison.Ordinal))
+            {
+                WriteEvent(builder, tag, attribute, baseName, modifier, ref sequence, pad, mappings, filePath);
+                continue;
+            }
+
+            switch (baseName)
+            {
+                case "key":
+                    key = ValueOf(tag, attribute, isCode: true);
+                    break;
+
+                case "ref":
+                    reference = ValueOf(tag, attribute, isCode: true);
+                    break;
+
+                case "formname":
+                    formName = ValueOf(tag, attribute, isCode: false);
+                    break;
+
+                case "rendermode":
+                    renderMode = ValueOf(tag, attribute, isCode: true);
+                    break;
+
+                case "attributes":
+                    // Splatting: every pair in a dictionary becomes an attribute.
+                    WriteValueCall(builder, pad, $"{Builder}.AddMultipleAttributes({sequence++}, ",
+                        ValueOf(tag, attribute, isCode: true), ")", mappings, filePath);
+                    break;
+
+                default:
+                    // A directive attribute this writer does not know: kept
+                    // as an attribute without its marker rather than dropped.
+                    WritePlainAttribute(builder, tag, attribute with { Name = directive }, isComponent,
+                        ref sequence, pad, mappings, filePath);
+                    break;
+            }
+        }
+
+        foreach (var binding in bindings)
+            WriteBinding(builder, binding, isComponent, isCheckbox, ref sequence, pad, mappings, filePath);
+
+        return new DeferredFrames(key, reference, formName, renderMode, name, isComponent);
+    }
+
+    /// <summary>
+    /// @key, @ref, @formname and @rendermode, which follow every attribute —
+    /// ChildContent included, on a component with content.
+    /// </summary>
+    private sealed record DeferredFrames(
+        AttributeValue? Key, AttributeValue? Reference, AttributeValue? FormName, AttributeValue? RenderMode,
+        string Name, bool IsComponent);
+
+    /// <summary>The components with content whose deferred frames wait for their closing tag.</summary>
+    private readonly Stack<DeferredFrames> deferred_ = new();
+
+    /// <summary>Writes the frames that have to come after a tag's attributes.</summary>
+    private void WriteDeferred(
+        StringBuilder builder, DeferredFrames frames, ref int sequence, string pad,
+        List<SourceMapping> mappings, string? filePath)
+    {
+        var (key, reference, formName, renderMode, name, isComponent) = frames;
+
+        if (key is not null)
+            WriteValueCall(builder, pad, $"{Builder}.SetKey(", key, ")", mappings, filePath);
+
+        if (reference is not null)
+        {
+            // Assigned when the element or component exists, as C# does: an
+            // ElementReference for an element, the instance for a component.
+            var capture = isComponent
+                ? $"{Builder}.AddComponentReferenceCapture({sequence++}, Sub(__value) "
+                : $"{Builder}.AddElementReferenceCapture({sequence++}, Sub(__value) ";
+
+            var assigned = isComponent ? $" = CType(__value, {ComponentType(name)}))" : " = __value)";
+
+            WriteValueCall(builder, pad, capture, reference, assigned, mappings, filePath);
+        }
+
+        // The name a form posts under, which enhanced navigation and
+        // [SupplyParameterFromForm] find it by.
+        if (formName is not null)
+            builder.AppendLine($"{pad}{Builder}.AddNamedEvent(\"onsubmit\", {formName.Written})");
+
+        if (renderMode is not null && isComponent)
+            WriteValueCall(builder, pad, $"{Builder}.AddComponentRenderMode(", renderMode, ")", mappings, filePath);
+    }
+
+    /// <summary>An attribute written as the template has it.</summary>
+    private void WritePlainAttribute(
+        StringBuilder builder, Tag tag, TagAttribute attribute, bool isComponent,
+        ref int sequence, string pad, List<SourceMapping> mappings, string? filePath)
+    {
+        // AddComponentParameter on a component: a parameter is set on the
+        // component object, not written into the markup.
+        var call = isComponent ? "AddComponentParameter" : "AddAttribute";
+
+        if (IsMixed(attribute))
+        {
+            WriteMixedAttribute(builder, tag, attribute, call, ref sequence, pad, mappings, filePath);
+            return;
+        }
+
+        var before = $"{Builder}.{call}({sequence++}, \"{attribute.Name}\", ";
+        var value = ValueOf(tag, attribute, isCode: false);
+
+        // onclick="@AddressOf Go": a method reference is wrapped in an
+        // EventCallback, since AddAttribute has no overload taking a bare
+        // delegate and the call did not resolve.
+        if (value.IsCode && value.Written.StartsWith("AddressOf", StringComparison.Ordinal))
+        {
+            before += "Global.Microsoft.AspNetCore.Components.EventCallback.Factory.Create(Me, ";
+            WriteValueCall(builder, pad, before, value, "))", mappings, filePath);
+            return;
+        }
+
+        WriteValueCall(builder, pad, before, value, ")", mappings, filePath);
+    }
+
+    /// <summary>Whether a value holds text and expressions together.</summary>
+    private static bool IsMixed(TagAttribute attribute)
+    {
+        var body = attribute.Value?.Trim() ?? "";
+
+        return body.IndexOf('') >= 0 && body != Tag.Placeholder(IndexOfPlaceholder(body));
+    }
+
+    /// <summary>
+    /// class="box @kind wide": each expression into a local of its own, mapped
+    /// as an expression in the content is, then the attribute as one string.
+    /// </summary>
+    /// <remarks>
+    /// Mapped this way because #ExternalSource covers a whole line, and one
+    /// line holding two expressions can map only one of them.
+    /// </remarks>
+    private void WriteMixedAttribute(
+        StringBuilder builder, Tag tag, TagAttribute attribute, string call,
+        ref int sequence, string pad, List<SourceMapping> mappings, string? filePath)
+    {
+        var value = attribute.Value!;
+        var pieces = new List<string>();
+        var at = 0;
+
+        while (at < value.Length)
+        {
+            var start = value.IndexOf('', at);
+
+            if (start < 0)
+            {
+                pieces.Add(Quoted(value.Substring(at)));
+                break;
+            }
+
+            if (start > at) pieces.Add(Quoted(value.Substring(at, start - at)));
+
+            var end = value.IndexOf('', start);
+            var expression = tag.Expressions[int.Parse(value.Substring(start + 1, end - start - 1))];
+            var local = $"__a{locals_++}";
+            var awaited = expression.IsAwaited ? "Await " : "";
+
+            VbHtmlCodeWriter.WriteExpressionMapped(builder, mappings, filePath, expression,
+                $"{pad}Dim {local} = ", $"{pad}Dim {local} = {awaited}{expression.Expression}");
+
+            pieces.Add($"Global.System.Convert.ToString({local})");
+            at = end + 1;
+        }
+
+        builder.AppendLine($"{pad}{Builder}.{call}({sequence++}, \"{attribute.Name}\", {string.Join(" & ", pieces)})");
+    }
+
+    /// <summary>Counts the locals mixed attribute values are written into.</summary>
+    private int locals_;
+
+    /// <summary>
+    /// @onclick and every other event: the handler, or one of its flags.
+    /// </summary>
+    /// <remarks>
+    /// The handler is wrapped in an EventCallback typed by the event's
+    /// arguments, as the C# compiler types it from the event's registration:
+    /// a lambda taking one argument is then a MouseEventArgs handler for
+    /// @onclick without saying so, and one taking none, or a Task-returning
+    /// method, picks its own overload.
+    /// </remarks>
+    private void WriteEvent(
+        StringBuilder builder, Tag tag, TagAttribute attribute, string eventName, string? modifier,
+        ref int sequence, string pad, List<SourceMapping> mappings, string? filePath)
+    {
+        if (modifier is null)
+        {
+            var before = $"{Builder}.AddAttribute({sequence++}, \"{eventName}\", " +
+                $"Global.Microsoft.AspNetCore.Components.EventCallback.Factory.Create(Of {EventArgsFor(eventName)})(Me, ";
+
+            WriteValueCall(builder, pad, before, ValueOf(tag, attribute, isCode: true), "))", mappings, filePath);
+            return;
+        }
+
+        var flag = modifier switch
+        {
+            "preventDefault" => "AddEventPreventDefaultAttribute",
+            "stopPropagation" => "AddEventStopPropagationAttribute",
+            _ => null
+        };
+
+        if (flag is null) return;
+
+        WriteValueCall(builder, pad, $"{Builder}.{flag}({sequence++}, \"{eventName}\", ",
+            ValueOf(tag, attribute, isCode: true), ")", mappings, filePath);
+    }
+
+    /// <summary>The argument type Blazor passes an event's handler.</summary>
+    private static string EventArgsFor(string eventName)
+    {
+        const string Web = "Global.Microsoft.AspNetCore.Components.Web.";
+
+        var name = eventName.ToLowerInvariant();
+
+        if (name is "onwheel" or "onmousewheel") return Web + "WheelEventArgs";
+        if (name is "onclick" or "ondblclick" or "oncontextmenu" || name.StartsWith("onmouse", StringComparison.Ordinal)) return Web + "MouseEventArgs";
+        if (name.StartsWith("onkey", StringComparison.Ordinal)) return Web + "KeyboardEventArgs";
+        if (name is "onfocus" or "onblur" or "onfocusin" or "onfocusout") return Web + "FocusEventArgs";
+        if (name is "onchange" or "oninput") return "Global.Microsoft.AspNetCore.Components.ChangeEventArgs";
+        if (name.StartsWith("onpointer", StringComparison.Ordinal) || name is "ongotpointercapture" or "onlostpointercapture") return Web + "PointerEventArgs";
+        if (name.StartsWith("ondrag", StringComparison.Ordinal) || name == "ondrop") return Web + "DragEventArgs";
+        if (name.StartsWith("ontouch", StringComparison.Ordinal)) return Web + "TouchEventArgs";
+        if (name is "oncopy" or "oncut" or "onpaste") return Web + "ClipboardEventArgs";
+        if (name is "onloadstart" or "onprogress" or "onload" or "onloadend" or "onabort" or "ontimeout") return Web + "ProgressEventArgs";
+        if (name == "onerror") return Web + "ErrorEventArgs";
+
+        return "Global.System.EventArgs";
+    }
+
+    /// <summary>Reads @bind, @bind:event and the other parts of one binding.</summary>
+    private static void ReadBindingPart(Binding binding, string? modifier, Tag tag, TagAttribute attribute)
+    {
+        switch (modifier)
+        {
+            case null:
+                binding.Value = ValueOf(tag, attribute, isCode: true);
+                break;
+
+            case "get":
+                binding.Get = ValueOf(tag, attribute, isCode: true);
+                break;
+
+            case "set":
+                binding.Set = ValueOf(tag, attribute, isCode: true);
+                break;
+
+            case "after":
+                binding.After = ValueOf(tag, attribute, isCode: true);
+                break;
+
+            case "culture":
+                binding.Culture = ValueOf(tag, attribute, isCode: true);
+                break;
+
+            case "format":
+                binding.Format = attribute.Value;
+                break;
+
+            case "event":
+                binding.Event = attribute.Value?.Trim();
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Writes a two-way binding as the pair of attributes it really is.
+    /// </summary>
+    /// <remarks>
+    /// The value is formatted by BindConverter, which knows how each type is
+    /// written into an attribute, and read back by CreateBinder, which parses
+    /// it into the target's type: done by hand it would be a parse per type
+    /// here, disagreeing with the framework's own as soon as either changed.
+    ///
+    /// On a component, @bind-Value sets Value, ValueChanged and
+    /// ValueExpression; InputText and the other form inputs throw without the
+    /// last, which names the field a validation message belongs to.
+    /// </remarks>
+    private void WriteBinding(
+        StringBuilder builder, Binding binding, bool isComponent, bool isCheckbox,
+        ref int sequence, string pad, List<SourceMapping> mappings, string? filePath)
+    {
+        var target = binding.Get ?? binding.Value;
+
+        if (target is null) return;
+
+        var named = binding.Name.StartsWith("bind-", StringComparison.OrdinalIgnoreCase)
+            ? binding.Name.Substring("bind-".Length)
+            : null;
+
+        var extra = "";
+
+        if (binding.Format is not null) extra += $", format:={Quoted(binding.Format)}";
+        if (binding.Culture is not null) extra += $", culture:={binding.Culture.Written}";
+
+        var setter = Setter(binding, target, pad);
+
+        if (isComponent)
+        {
+            var parameter = named ?? "Value";
+
+            WriteValueCall(builder, pad, $"{Builder}.AddComponentParameter({sequence++}, \"{parameter}\", ",
+                target, ")", mappings, filePath);
+
+            builder.AppendLine(
+                $"{pad}{Builder}.AddComponentParameter({sequence++}, \"{binding.Event ?? parameter + "Changed"}\", " +
+                "Global.Microsoft.AspNetCore.Components.CompilerServices.RuntimeHelpers.CreateInferredEventCallback(" +
+                $"Me, {setter}, {target.Written}))");
+
+            builder.AppendLine(
+                $"{pad}{Builder}.AddComponentParameter({sequence++}, \"{parameter}Expression\", " +
+                $"{BindExpressionHelper}({target.Written}, Function() {target.Written}))");
+
+            usesBindExpression_ = true;
+            return;
+        }
+
+        var attribute = named ?? (isCheckbox ? "checked" : "value");
+        var changed = binding.Event ?? "onchange";
+
+        WriteValueCall(builder, pad,
+            $"{Builder}.AddAttribute({sequence++}, \"{attribute}\", Global.Microsoft.AspNetCore.Components.BindConverter.FormatValue(",
+            target, $"{extra}))", mappings, filePath);
+
+        builder.AppendLine(
+            $"{pad}{Builder}.AddAttribute({sequence++}, \"{changed}\", " +
+            // Called as the shared method it really is. CreateBinder is an
+            // extension, and Visual Basic does not apply extensions to a
+            // fully qualified chain: written as
+            // Global.….EventCallback.Factory.CreateBinder(…) it failed to
+            // resolve even with the namespace imported.
+            "Global.Microsoft.AspNetCore.Components." +
+            "EventCallbackFactoryBinderExtensions.CreateBinder(" +
+            "Global.Microsoft.AspNetCore.Components.EventCallback.Factory, " +
+            $"Me, {setter}, {target.Written}{extra}))");
+
+        // Tells Blazor which attribute the binding updates, so it keeps the
+        // element's live value in step as C# does.
+        builder.AppendLine($"{pad}{Builder}.SetUpdatesAttributeName(\"{attribute}\")");
+    }
+
+    /// <summary>
+    /// What a binding does with a value coming back: @bind:set, or an
+    /// assignment followed by @bind:after.
+    /// </summary>
+    private static string Setter(Binding binding, AttributeValue target, string pad)
+    {
+        if (binding.Set is not null) return binding.Set.Written;
+
+        if (binding.After is null) return $"Sub(__value) {target.Written} = __value";
+
+        // Multi-line: a single-line lambda holds one statement. @bind:after is
+        // started rather than awaited; the EventCallback re-renders when it
+        // completes either way.
+        return "Sub(__value)\n" +
+            $"{pad}    {target.Written} = __value\n" +
+            $"{pad}    Global.Microsoft.AspNetCore.Components.EventCallback.Factory.Create(Me, {binding.After.Written}).InvokeAsync()\n" +
+            $"{pad}End Sub";
+    }
+
+    /// <summary>The generated helper that turns a bound value into its expression.</summary>
+    private const string BindExpressionHelper = "__BindExpression";
+
+    /// <summary>Whether a component binding needs <see cref="BindExpressionHelper"/>.</summary>
+    private bool usesBindExpression_;
+
+    /// <summary>
+    /// A helper on the class that returns a lambda as an expression tree of
+    /// the bound value's type. ValueExpression is typed Expression(Of
+    /// Func(Of T)), and AddComponentParameter takes Object, so the lambda has
+    /// nothing to be converted to without it; the value supplies T.
+    /// </summary>
+    private void WriteBindExpressionHelper(StringBuilder builder)
+    {
+        if (!usesBindExpression_) return;
+
+        const string Expression = "Global.System.Linq.Expressions.Expression(Of Global.System.Func(Of T))";
+
+        builder.AppendLine();
+        builder.AppendLine(
+            $"        Private Shared Function {BindExpressionHelper}(Of T)(value As T, expression As {Expression}) As {Expression}");
+        builder.AppendLine("            Return expression");
+        builder.AppendLine("        End Function");
+    }
 
     /// <summary>
     /// Markup nodes that sit next to each other, as one node.
@@ -482,9 +1179,14 @@ public sealed class VbComponentWriter
 
         foreach (var node in nodes)
         {
+            // Only markup that sits side by side in the template: positions in
+            // the joined text are read back as template positions, and "@@",
+            // a comment or a member @Code block between two runs would shift
+            // every mapping after it.
             if (node is HtmlNode html
                 && joined.Count > 0
-                && joined[joined.Count - 1] is HtmlNode previous)
+                && joined[joined.Count - 1] is HtmlNode previous
+                && previous.Position + previous.Text.Length == html.Position)
             {
                 joined[joined.Count - 1] = new HtmlNode(
                     previous.Text + html.Text, previous.Position, previous.Line);
@@ -496,19 +1198,6 @@ public sealed class VbComponentWriter
         }
 
         return joined;
-    }
-
-    /// <summary>The attribute name a run of markup ends by opening.</summary>
-    private string? AttributeNameAt(string markup)
-    {
-        if (!markup.EndsWith("=\"", StringComparison.Ordinal)) return null;
-
-        var end = markup.Length - 2;
-        var start = end;
-
-        while (start > 0 && !char.IsWhiteSpace(markup[start - 1])) start--;
-
-        return end > start ? markup.Substring(start, end - start) : null;
     }
 
     private IReadOnlyList<VbHtmlNode> Replace(
@@ -529,7 +1218,7 @@ public sealed class VbComponentWriter
         switch (node)
         {
             case HtmlNode html:
-                WriteMarkup(builder, html.Text, ref sequence, pad, null);
+                WriteMarkup(builder, html.Text, html.Position, html.Line, ref sequence, pad, mappings, filePath);
                 break;
 
             case ExpressionNode expression:
@@ -597,16 +1286,17 @@ public sealed class VbComponentWriter
                     block.Position + 1, block.Opening.Length, block.Line,
                     () => builder.AppendLine($"{pad}{block.Opening}"));
 
-                foreach (var child in VbHtmlCodeWriter.BodyOf(block))
-                    WriteNode(builder, child, ref sequence, indent + 4, mappings, filePath);
+                // Through WriteNodes, as at the top: a tag with directive
+                // attributes inside an @If or a loop was written as text, and
+                // its closing tag closed an element never opened.
+                WriteNodes(builder, VbHtmlCodeWriter.BodyOf(block).ToList(), ref sequence, indent + 4, mappings, filePath);
 
                 foreach (var clause in block.Clauses)
                 {
                     VbHtmlCodeWriter.WriteClosingOrClause(builder, mappings, filePath, pad,
                         clause.Keyword, clause.Position, clause.Line);
 
-                    foreach (var child in clause.Body)
-                        WriteNode(builder, child, ref sequence, indent + 4, mappings, filePath);
+                    WriteNodes(builder, clause.Body.ToList(), ref sequence, indent + 4, mappings, filePath);
                 }
 
                 VbHtmlCodeWriter.WriteClosingOrClause(builder, mappings, filePath, pad,
@@ -765,10 +1455,14 @@ public sealed class VbComponentWriter
     /// Element by element rather than as one blob of markup: Blazor can only
     /// diff what it can see the shape of, and a whole page handed over as text
     /// is replaced wholesale on every change rather than patched.
+    ///
+    /// <paramref name="position"/> and <paramref name="line"/> say where the
+    /// markup starts in the template, so a directive attribute's code in it —
+    /// @onclick="Sub() count += 1" — is mapped back to where it was written.
     /// </remarks>
     private void WriteMarkup(
-        StringBuilder builder, string markup, ref int sequence, string pad,
-        List<(string Name, string Value)>? pending)
+        StringBuilder builder, string markup, int position, int line, ref int sequence, string pad,
+        List<SourceMapping> mappings, string? filePath)
     {
         var at = 0;
 
@@ -819,9 +1513,11 @@ public sealed class VbComponentWriter
                 continue;
             }
 
-            var close = markup.IndexOf('>', open);
+            // Outside quoted values: "Sub() If x > 0 Then ..." in an attribute
+            // does not end the tag.
+            var length = TagEnd(markup.Substring(open));
 
-            if (close < 0)
+            if (length < 0)
             {
                 // An unterminated tag is text, not a broken element: a
                 // template being typed into is unparseable most of the time.
@@ -829,9 +1525,10 @@ public sealed class VbComponentWriter
                 break;
             }
 
-            var tag = markup.Substring(open + 1, close - open - 1).Trim();
+            var close = open + length;
+            var tagText = markup.Substring(open, close - open + 1);
 
-            if (tag.StartsWith("/", StringComparison.Ordinal))
+            if (tagText.Length > 1 && tagText[1] == '/')
             {
                 // Which kind of thing is being closed has to be remembered:
                 // a component is closed with CloseComponent and an element
@@ -844,6 +1541,9 @@ public sealed class VbComponentWriter
                     // The lambda opened for ChildContent, then the component.
                     builder.AppendLine(
                         $"{pad}End Sub, Global.Microsoft.AspNetCore.Components.RenderFragment))");
+
+                    if (deferred_.Count > 0)
+                        WriteDeferred(builder, deferred_.Pop(), ref sequence, pad, mappings, filePath);
                 }
 
                 builder.AppendLine(wasComponent
@@ -852,59 +1552,11 @@ public sealed class VbComponentWriter
             }
             else
             {
-                var selfClosing = tag.EndsWith("/", StringComparison.Ordinal);
-                var name = Name(tag);
-                var attributes = tag.Substring(name.Length).TrimEnd('/').Trim();
+                var tag = new Tag();
 
-                // A capitalised tag is another component, the way it is in
-                // Razor: <Saluto Nome="x" /> was written out as an element
-                // called "Saluto", so the browser received an invented tag
-                // and the parameter was dropped on the floor.
-                if (IsComponentName(name))
-                {
-                    // Unqualified, so Visual Basic resolves it the way it
-                    // resolves any name in the file's own namespace. Rooting
-                    // it at Global and naming the namespace we wrote produced
-                    // Global.Components.Saluto, which misses the RootNamespace
-                    // the compiler prepends — the class is really
-                    // App.Components.Saluto, and the generator cannot know
-                    // what App is because it deliberately does not write it.
-                    builder.AppendLine(
-                        $"{pad}{Builder}.OpenComponent(Of {ComponentType(name)})({sequence++})");
+                tag.AddLiteral(tagText, position + open, LineAt(markup, line, open));
 
-                    WriteComponentParameters(builder, attributes, ref sequence, pad);
-
-                    if (selfClosing)
-                    {
-                        builder.AppendLine($"{pad}{Builder}.CloseComponent()");
-                    }
-                    else
-                    {
-                        // What sits between the tags becomes ChildContent, a
-                        // RenderFragment the component decides where to put.
-                        // Written straight into the tree instead, it was
-                        // emitted as the component's own frames and vanished:
-                        // the box rendered and everything inside it was gone.
-                        builder.AppendLine(
-                            $"{pad}{Builder}.AddAttribute({sequence++}, \"ChildContent\", " +
-                            "CType(Sub(__child As Global.Microsoft.AspNetCore.Components." +
-                            "Rendering.RenderTreeBuilder)");
-
-                        open_.Push(true);
-                        fragments_.Push(true);
-                    }
-                }
-                else
-                {
-                    builder.AppendLine($"{pad}{Builder}.OpenElement({sequence++}, \"{name}\")");
-
-                    WriteAttributes(builder, attributes, ref sequence, pad);
-
-                    if (selfClosing || IsVoid(name))
-                        builder.AppendLine($"{pad}{Builder}.CloseElement()");
-                    else
-                        open_.Push(false);
-                }
+                WriteTag(builder, tag, ref sequence, pad, mappings, filePath);
             }
 
             at = close + 1;
@@ -922,176 +1574,6 @@ public sealed class VbComponentWriter
         builder.AppendLine($"{pad}{Builder}.AddMarkupContent({sequence++}, {Quoted(text)})");
     }
 
-    private void WriteAttributes(
-        StringBuilder builder, string attributes, ref int sequence, string pad)
-    {
-        foreach (var (name, value) in Attributes(attributes))
-        {
-            // @bind is two attributes, not one: the value going out and the
-            // handler bringing the change back. Written as a single attribute
-            // called "bind" the browser received a meaningless one and nothing
-            // was ever read back — a form that looked right and lost every
-            // keystroke.
-            if (IsBind(name))
-            {
-                WriteBinding(builder, name, value, ref sequence, pad);
-                continue;
-            }
-
-            // An @ in the value is Visual Basic, not text: onclick="@Handler"
-            // has to reach AddAttribute as an expression or the handler is
-            // registered as the literal string.
-            var written = value.StartsWith("@", StringComparison.Ordinal)
-                ? Expression(value.Substring(1))
-                : Quoted(value);
-
-            builder.AppendLine($"{pad}{Builder}.AddAttribute({sequence++}, \"{name}\", {written})");
-        }
-    }
-
-    /// <summary>Whether an attribute asks for two-way binding.</summary>
-    /// <remarks>
-    /// Both spellings: Razor writes @bind on an element and @bind-Value on a
-    /// component's parameter, and the second is the one every input component
-    /// in the framework expects.
-    /// </remarks>
-    private bool IsBind(string name)
-    {
-        // With or without the marker: the parser keeps "@" as a node of its
-        // own, so by the time an attribute name is read here the "@" may
-        // already have been consumed as separate markup.
-        var bare = name.StartsWith("@", StringComparison.Ordinal)
-            ? name.Substring(1)
-            : name;
-
-        return bare.Equals("bind", StringComparison.OrdinalIgnoreCase)
-            || bare.StartsWith("bind-", StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Writes a two-way binding as the pair of attributes it really is.
-    /// </summary>
-    /// <remarks>
-    /// The value is formatted by BindConverter, which knows how each type is
-    /// written into an attribute — a date is not written the way a number is,
-    /// and doing it with ToString gives a value the browser sends back
-    /// unparseable.
-    ///
-    /// The handler comes from CreateBinder, which parses what arrives back
-    /// into the target's type and assigns it. Written by hand it would be a
-    /// parse per type here, disagreeing with the framework's own as soon as
-    /// either changed.
-    /// </remarks>
-    private void WriteBinding(
-        StringBuilder builder, string name, string value, ref int sequence, string pad)
-    {
-        var target = value.StartsWith("@", StringComparison.Ordinal)
-            ? value.Substring(1).Trim()
-            : value.Trim();
-
-        // @bind-Value on a component sets Value and ValueChanged; a plain
-        // @bind on an element sets value and listens for onchange.
-        var bare = name.StartsWith("@", StringComparison.Ordinal)
-            ? name.Substring(1)
-            : name;
-
-        var component = bare.StartsWith("bind-", StringComparison.OrdinalIgnoreCase);
-
-        var attribute = component ? bare.Substring("bind-".Length) : "value";
-        var changed = component ? attribute + "Changed" : "onchange";
-
-        builder.AppendLine(
-            $"{pad}{Builder}.AddAttribute({sequence++}, \"{attribute}\", " +
-            $"Global.Microsoft.AspNetCore.Components.BindConverter.FormatValue({target}))");
-
-        builder.AppendLine(
-            $"{pad}{Builder}.AddAttribute({sequence++}, \"{changed}\", " +
-            // Called as the shared method it really is. CreateBinder is an
-            // extension, and Visual Basic does not apply extensions to a
-            // fully qualified chain: written as
-            // Global.….EventCallback.Factory.CreateBinder(…) it failed to
-            // resolve even with the namespace imported — measured in a
-            // hand-written file, so it is the language rather than the
-            // generator.
-            "Global.Microsoft.AspNetCore.Components." +
-            "EventCallbackFactoryBinderExtensions.CreateBinder(" +
-            "Global.Microsoft.AspNetCore.Components.EventCallback.Factory, " +
-            $"Me, Sub(__value) {target} = __value, {target}))");
-    }
-
-    /// <summary>
-    /// An attribute value that is Visual Basic rather than text.
-    /// </summary>
-    /// <remarks>
-    /// A method reference is wrapped in an EventCallback. AddAttribute has no
-    /// overload taking a bare delegate, so onclick="@AddressOf Go" compiled to
-    /// a call that did not resolve — "no accessible AddAttribute can be called
-    /// with these arguments", pointing at generated code rather than at the
-    /// template. The C# compiler does the same wrapping for @onclick.
-    /// </remarks>
-    private string Expression(string code)
-    {
-        var trimmed = code.Trim();
-
-        return trimmed.StartsWith("AddressOf", StringComparison.Ordinal)
-            ? "Global.Microsoft.AspNetCore.Components.EventCallback.Factory.Create(Me, " +
-              trimmed + ")"
-            : trimmed;
-    }
-
-    /// <summary>The attributes in a tag, as name and value.</summary>
-    private IEnumerable<(string Name, string Value)> Attributes(string text)
-    {
-        var at = 0;
-
-        while (at < text.Length)
-        {
-            while (at < text.Length && char.IsWhiteSpace(text[at])) at++;
-
-            if (at >= text.Length) break;
-
-            var equals = text.IndexOf('=', at);
-
-            if (equals < 0)
-            {
-                // A bare attribute is true, the way "disabled" is in HTML.
-                var bare = text.Substring(at).Trim();
-
-                if (bare.Length > 0) yield return (bare, "@True");
-
-                break;
-            }
-
-            var name = text.Substring(at, equals - at).Trim();
-            var from = equals + 1;
-
-            while (from < text.Length && char.IsWhiteSpace(text[from])) from++;
-
-            if (from >= text.Length) break;
-
-            var quote = text[from];
-
-            if (quote is '"' or '\'')
-            {
-                var end = text.IndexOf(quote, from + 1);
-
-                if (end < 0) break;
-
-                yield return (name, text.Substring(from + 1, end - from - 1));
-                at = end + 1;
-            }
-            else
-            {
-                var end = from;
-
-                while (end < text.Length && !char.IsWhiteSpace(text[end])) end++;
-
-                yield return (name, text.Substring(from, end - from));
-                at = end;
-            }
-        }
-    }
-
     /// <summary>
     /// Whether a tag names another component rather than an HTML element.
     /// </summary>
@@ -1101,7 +1583,7 @@ public sealed class VbComponentWriter
     /// the whole distinction. A lower-case component name is unreachable this
     /// way, which is the same limitation C# has.
     /// </remarks>
-    private bool IsComponentName(string name) =>
+    private static bool IsComponentName(string name) =>
         name.Length > 0 && char.IsUpper(name[0]);
 
     /// <summary>
@@ -1121,7 +1603,7 @@ public sealed class VbComponentWriter
     /// carries in practice. A cascade of another type needs the component
     /// written by hand for now.
     /// </remarks>
-    private string ComponentType(string name)
+    private static string ComponentType(string name)
     {
         // A type argument written into the tag: <Elenco(Of String) … />. The
         // C# compiler infers this from the parameter values, which needs the
@@ -1135,7 +1617,7 @@ public sealed class VbComponentWriter
         return Known(name);
     }
 
-    private string Known(string name) => name switch
+    private static string Known(string name) => name switch
     {
         "CascadingValue" =>
             "Global.Microsoft.AspNetCore.Components.CascadingValue(Of String)",
@@ -1144,30 +1626,8 @@ public sealed class VbComponentWriter
         _ => name
     };
 
-    /// <summary>
-    /// The parameters passed to a child component.
-    /// </summary>
-    /// <remarks>
-    /// AddComponentParameter rather than AddAttribute: a parameter is set on
-    /// the component object, not written into the markup, and the two are
-    /// different frames in the render tree.
-    /// </remarks>
-    private void WriteComponentParameters(
-        StringBuilder builder, string attributes, ref int sequence, string pad)
-    {
-        foreach (var (name, value) in Attributes(attributes))
-        {
-            var written = value.StartsWith("@", StringComparison.Ordinal)
-                ? Expression(value.Substring(1))
-                : Quoted(value);
-
-            builder.AppendLine(
-                $"{pad}{Builder}.AddComponentParameter({sequence++}, \"{name}\", {written})");
-        }
-    }
-
     /// <summary>The element name at the start of a tag.</summary>
-    private string Name(string tag)
+    private static string Name(string tag)
     {
         // A type argument belongs to the name: <Elenco(Of String) …> read a
         // character at a time stops at the bracket and leaves "(Of String)" to
@@ -1197,7 +1657,7 @@ public sealed class VbComponentWriter
     /// is left with an element open and everything after it nests inside a
     /// &lt;br&gt; — the tree stays unbalanced to the end of the component.
     /// </remarks>
-    private bool IsVoid(string name) => name.ToLowerInvariant() is
+    private static bool IsVoid(string name) => name.ToLowerInvariant() is
         "area" or "base" or "br" or "col" or "embed" or "hr" or "img" or
         "input" or "link" or "meta" or "source" or "track" or "wbr";
 
@@ -1210,7 +1670,7 @@ public sealed class VbComponentWriter
     /// is all markup — produced a literal broken across lines and a file that
     /// did not compile.
     /// </remarks>
-    private string Quoted(string text)
+    private static string Quoted(string text)
     {
         var parts = text.Replace("\r\n", "\n").Split('\n');
         var pieces = new List<string>();

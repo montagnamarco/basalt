@@ -94,8 +94,14 @@ public sealed class VbHtmlParser
                 // "@@" is how a template writes a literal at sign.
                 if (_index + 1 < _text.Length && _text[_index + 1] == '@')
                 {
+                    // Flushed with the first "@" and resumed after the second, so
+                    // every later offset in the node is still the template's: kept
+                    // in one run, each was a character early.
                     literal.Append('@');
+                    FlushLiteral();
                     Advance(2);
+                    literalStart = _index;
+                    literalLine = _line;
                     continue;
                 }
 
@@ -515,7 +521,7 @@ public sealed class VbHtmlParser
         //
         // Left in the markup as written, so the tag arrives whole and the
         // writer turns it into the pair of attributes a binding really is.
-        if (LooksLikeKeywordAt(_index, "bind"))
+        if (LooksLikeKeywordAt(_index, "bind") || LooksLikeDirectiveAttribute())
         {
             into.Add(new HtmlNode("@", start, line));
             return;
@@ -602,8 +608,14 @@ public sealed class VbHtmlParser
             {
                 if (_index + 1 < _text.Length && _text[_index + 1] == '@')
                 {
+                    // Flushed with the first "@" and resumed after the second, so
+                    // every later offset in the node is still the template's: kept
+                    // in one run, each was a character early.
                     literal.Append('@');
+                    FlushLiteral();
                     Advance(2);
+                    literalStart = _index;
+                    literalLine = _line;
                     continue;
                 }
 
@@ -676,8 +688,14 @@ public sealed class VbHtmlParser
             {
                 if (_index + 1 < _text.Length && _text[_index + 1] == '@')
                 {
+                    // Flushed with the first "@" and resumed after the second, so
+                    // every later offset in the node is still the template's: kept
+                    // in one run, each was a character early.
                     literal.Append('@');
+                    FlushLiteral();
                     Advance(2);
+                    literalStart = _index;
+                    literalLine = _line;
                     continue;
                 }
 
@@ -1173,8 +1191,14 @@ public sealed class VbHtmlParser
             {
                 if (_index + 1 < _text.Length && _text[_index + 1] == '@')
                 {
+                    // Flushed with the first "@" and resumed after the second, so
+                    // every later offset in the node is still the template's: kept
+                    // in one run, each was a character early.
                     literal.Append('@');
+                    FlushLiteral();
                     Advance(2);
+                    literalStart = _index;
+                    literalLine = _line;
                     continue;
                 }
 
@@ -1414,6 +1438,46 @@ public sealed class VbHtmlParser
 
         _ => $"@{name} is not supported by Basalt."
     };
+
+    /// <summary>
+    /// Whether the "@" just read opens one of Blazor's directive attributes —
+    /// @onclick, @onclick:preventDefault, @ref, @key, @attributes, @formname,
+    /// @rendermode — rather than an expression.
+    /// </summary>
+    /// <remarks>
+    /// Only in an attribute's place: after white space, and followed by "="
+    /// or ":". "@online" in prose is still an expression. Read as one, the
+    /// attribute was split before the writer saw the tag: @onclick became
+    /// the value of a variable called onclick.
+    /// </remarks>
+    private bool LooksLikeDirectiveAttribute()
+    {
+        var at = _index - 1;
+
+        if (at <= 0 || _text[at] != '@' || !char.IsWhiteSpace(_text[at - 1])) return false;
+
+        var end = _index;
+
+        while (end < _text.Length && (char.IsLetterOrDigit(_text[end]) || _text[end] == '-')) end++;
+
+        if (end >= _text.Length) return false;
+
+        var name = _text.Substring(_index, end - _index);
+        var isEvent = name.Length > 2 && name.StartsWith("on", StringComparison.Ordinal) && char.IsLower(name[2]);
+
+        // A colon only for an event's own flags: "@online: 5" in prose is
+        // still the variable followed by a colon.
+        if (_text[end] == ':')
+        {
+            return isEvent &&
+                (string.CompareOrdinal(_text, end + 1, "preventDefault", 0, "preventDefault".Length) == 0 ||
+                 string.CompareOrdinal(_text, end + 1, "stopPropagation", 0, "stopPropagation".Length) == 0);
+        }
+
+        if (_text[end] != '=') return false;
+
+        return isEvent || name is "ref" or "key" or "attributes" or "formname" or "rendermode";
+    }
 
     /// <summary>
     /// Whether "Layout" here opens the directive: the word, spaces, then a quote.
