@@ -107,6 +107,10 @@ public sealed class ProjectCompilation : IDisposable
             .ConfigureAwait(false);
     }
 
+    /// <summary>Declarations across the solution whose name contains the query; none until it has loaded.</summary>
+    internal Task<IReadOnlyList<RoslynLanguageService.FoundSymbol>> SearchSymbolsAsync(string query, CancellationToken ct) =>
+        IsReady ? _roslyn.SearchSymbolDetailsAsync(query, ct) : Task.FromResult<IReadOnlyList<RoslynLanguageService.FoundSymbol>>([]);
+
     private sealed class DiagnosticsCapture
     {
         internal IReadOnlyList<string>? Ids { get; set; }

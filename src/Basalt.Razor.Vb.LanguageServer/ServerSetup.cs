@@ -42,6 +42,7 @@ public static class ServerSetup
             .WithHandler<VbHtmlReferencesHandler>()
             .WithHandler<VbHtmlRenameHandler>()
             .WithHandler<VbHtmlPrepareRenameHandler>()
+            .WithHandler<VbHtmlWorkspaceSymbolHandler>()
 
             // Structure and folding: answerable from the parse tree alone, so
             // they work even before the solution has finished loading.

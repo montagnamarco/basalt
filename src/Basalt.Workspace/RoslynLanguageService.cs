@@ -1657,6 +1657,54 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
             .ToList();
     }
 
+    /// <summary>A declaration found by name: what it is called, what it is, what holds it, where it is.</summary>
+    public sealed record FoundSymbol(
+        string Name, Extensibility.SymbolKind Kind, string? Container, Extensibility.SourceLocation Location);
+
+    /// <summary>
+    /// Declarations across the solution whose name contains the query, with
+    /// what each is, for an editor's "go to symbol in workspace".
+    /// </summary>
+    public async Task<IReadOnlyList<FoundSymbol>> SearchSymbolDetailsAsync(
+        string query, CancellationToken ct = default)
+    {
+        if (_workspace is null || string.IsNullOrWhiteSpace(query)) return [];
+
+        var found = await SymbolFinder
+            .FindSourceDeclarationsAsync(
+                _workspace.CurrentSolution,
+                name => name.Contains(query, StringComparison.OrdinalIgnoreCase),
+                ct)
+            .ConfigureAwait(false);
+
+        return found
+            .Where(symbol => !symbol.IsImplicitlyDeclared)
+            .SelectMany(symbol => symbol.Locations
+                .Where(location => location.IsInSource)
+                .Select(location => new FoundSymbol(
+                    symbol.Name,
+                    KindOf(symbol),
+                    symbol.ContainingType?.Name ?? symbol.ContainingNamespace?.ToDisplayString(),
+                    ToLocation(location))))
+            .Take(200)
+            .ToList();
+    }
+
+    private static Extensibility.SymbolKind KindOf(ISymbol symbol) => symbol switch
+    {
+        INamedTypeSymbol { TypeKind: TypeKind.Interface } => Extensibility.SymbolKind.Interface,
+        INamedTypeSymbol { TypeKind: TypeKind.Struct } => Extensibility.SymbolKind.Structure,
+        INamedTypeSymbol { TypeKind: TypeKind.Enum } => Extensibility.SymbolKind.Enum,
+        INamedTypeSymbol { TypeKind: TypeKind.Module } => Extensibility.SymbolKind.Module,
+        INamedTypeSymbol => Extensibility.SymbolKind.Class,
+        IMethodSymbol => Extensibility.SymbolKind.Method,
+        IPropertySymbol => Extensibility.SymbolKind.Property,
+        IFieldSymbol => Extensibility.SymbolKind.Field,
+        IEventSymbol => Extensibility.SymbolKind.Event,
+        INamespaceSymbol => Extensibility.SymbolKind.Namespace,
+        _ => Extensibility.SymbolKind.Unknown
+    };
+
     /// <summary>Symbols across the solution whose name contains the query.</summary>
     public async Task<IReadOnlyList<Extensibility.SourceLocation>> SearchSymbolsAsync(
         string query, CancellationToken ct = default)

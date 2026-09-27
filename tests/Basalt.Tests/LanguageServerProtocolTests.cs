@@ -63,7 +63,8 @@ public sealed class LanguageServerProtocolTests : IDisposable
         foreach (var expected in new[]
         {
             "completionProvider", "hoverProvider", "semanticTokensProvider",
-            "definitionProvider", "referencesProvider", "documentFormattingProvider"
+            "definitionProvider", "referencesProvider", "documentFormattingProvider",
+            "workspaceSymbolProvider"
         })
         {
             Assert.True(
