@@ -50,13 +50,13 @@ public sealed record OpenDocument(string Uri, string Text, int Version)
 
                 case Basalt.Razor.Vb.Classic.VbPageParser.Expression expression:
                     document.Nodes.Add(new ExpressionNode(
-                        expression.Text, expression.Raw, expression.Position, expression.Line));
+                        expression.Text, expression.Raw, expression.Position, expression.BodyLine));
                     break;
 
                 case Basalt.Razor.Vb.Classic.VbPageParser.Code code:
                     document.Nodes.Add(new StatementNode(
                         code.Text, code.Position, code.Line,
-                        bodyLine: code.Line, bodyPosition: code.Position));
+                        bodyLine: code.BodyLine, bodyPosition: code.Position));
                     break;
             }
         }

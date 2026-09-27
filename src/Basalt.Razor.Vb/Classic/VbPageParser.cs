@@ -29,6 +29,12 @@ public static class VbPageParser
 
         /// <summary>Namespaces imported with <c>&lt;%@ Import %&gt;</c>.</summary>
         public IReadOnlyList<string> Imports { get; init; } = [];
+
+        /// <summary>Member bodies with their original source locations.</summary>
+        public IReadOnlyList<Code> MemberBlocks { get; init; } = [];
+
+        /// <summary>Imported names with their original source locations.</summary>
+        public IReadOnlyList<ImportDirective> ImportDirectives { get; init; } = [];
     }
 
     /// <summary>
@@ -39,7 +45,13 @@ public static class VbPageParser
     /// Where it starts in the source. Needed by anything that has to point at
     /// the text itself rather than describe it — colouring, above all.
     /// </param>
-    public abstract record PagePart(int Line, int Position = 0);
+    public abstract record PagePart(int Line, int Position = 0)
+    {
+        /// <summary>The trimmed body's first line, which may follow the opening delimiter.</summary>
+        public int BodyLine { get; init; } = Line;
+    }
+
+    public sealed record ImportDirective(string Name, int Line, int Position);
 
     /// <summary>Markup, written out as it stands.</summary>
     public sealed record Markup(string Text, int Line, int Position = 0)
@@ -54,12 +66,21 @@ public static class VbPageParser
         : PagePart(Line, Position);
 
     /// <summary>Reads a page.</summary>
-    public static Page Parse(string text)
+    public static Page Parse(string text) => Parse(text, forEditing: false);
+
+    /// <summary>
+    /// Reads with optional editor recovery: code whitespace and an unfinished
+    /// final block remain available to compiler-backed questions. Runtime
+    /// callers retain trimmed bodies and reject the unfinished block.
+    /// </summary>
+    public static Page Parse(string text, bool forEditing)
     {
         var parts = new List<PagePart>();
         var diagnostics = new List<VbHtmlDiagnostic>();
         var members = new List<string>();
         var imports = new List<string>();
+        var memberBlocks = new List<Code>();
+        var importDirectives = new List<ImportDirective>();
 
         var literal = new StringBuilder();
         var index = 0;
@@ -100,41 +121,45 @@ public static class VbPageParser
 
                 // Everything after an unclosed block is code, and reading it
                 // as markup would put the source on the page.
-                break;
+                if (!forEditing) break;
+                close = text.Length;
             }
 
             var raw = text.Substring(bodyStart, close - bodyStart);
-            var body = raw.Trim();
+            var keepWhitespace = forEditing && kind != BlockKind.Directive;
+            var body = keepWhitespace ? raw : raw.Trim();
 
             // Where the trimmed text really begins, so a colour lands on the
             // code and not on the spaces the delimiter left in front of it.
-            var bodyAt = bodyStart + (raw.Length - raw.TrimStart().Length);
+            var bodyAt = keepWhitespace ? bodyStart : bodyStart + (raw.Length - raw.TrimStart().Length);
+            var bodyLine = openedAt + CountLines(text, index, bodyAt);
 
             switch (kind)
             {
                 case BlockKind.Expression:
-                    parts.Add(new Expression(body, openedAt, Raw: false, Position: bodyAt));
+                    parts.Add(new Expression(body, openedAt, Raw: false, Position: bodyAt) { BodyLine = bodyLine });
                     break;
 
                 case BlockKind.RawExpression:
-                    parts.Add(new Expression(body, openedAt, Raw: true, Position: bodyAt));
+                    parts.Add(new Expression(body, openedAt, Raw: true, Position: bodyAt) { BodyLine = bodyLine });
                     break;
 
                 case BlockKind.Members:
                     members.Add(body);
+                    memberBlocks.Add(new Code(body, openedAt, bodyAt) { BodyLine = bodyLine });
                     break;
 
                 case BlockKind.Directive:
-                    ReadDirective(body, imports, diagnostics, openedAt);
+                    ReadDirective(body, imports, diagnostics, openedAt, bodyAt, bodyLine, importDirectives);
                     break;
 
                 default:
-                    parts.Add(new Code(body, openedAt, bodyAt));
+                    parts.Add(new Code(body, openedAt, bodyAt) { BodyLine = bodyLine });
                     break;
             }
 
-            line += CountLines(text, index, close + 2);
-            index = close + 2;
+            line += CountLines(text, index, Math.Min(close + 2, text.Length));
+            index = Math.Min(close + 2, text.Length);
             literalLine = line;
             literalStart = index;
         }
@@ -146,6 +171,8 @@ public static class VbPageParser
             Diagnostics = diagnostics,
             Members = members,
             Imports = imports,
+            MemberBlocks = memberBlocks,
+            ImportDirectives = importDirectives,
         };
     }
 
@@ -196,7 +223,8 @@ public static class VbPageParser
     /// Reads a directive: <c>&lt;%@ Import Namespace="System.Linq" %&gt;</c>.
     /// </summary>
     private static void ReadDirective(
-        string body, List<string> imports, List<VbHtmlDiagnostic> diagnostics, int line)
+        string body, List<string> imports, List<VbHtmlDiagnostic> diagnostics, int line,
+        int bodyPosition, int bodyLine, List<ImportDirective> importDirectives)
     {
         var space = body.IndexOf(' ');
         var name = space < 0 ? body : body.Substring(0, space);
@@ -230,6 +258,9 @@ public static class VbPageParser
         }
 
         imports.Add(value);
+        var nameOffset = body.LastIndexOf(value, StringComparison.Ordinal);
+        importDirectives.Add(new ImportDirective(value,
+            bodyLine + CountLines(body, 0, nameOffset), bodyPosition + nameOffset));
     }
 
     private static int CountLines(string text, int from, int to)

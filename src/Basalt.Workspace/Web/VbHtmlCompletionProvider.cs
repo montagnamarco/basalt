@@ -81,17 +81,15 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         LanguageDocument document, int position, CancellationToken ct = default)
     {
         // Which half the caret is in decides who answers.
-        if (!IsInCode(document.Text, position))
+        if (!TemplateGeneration.IsInCode(document.FilePath, document.Text, position))
             return await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
 
         if (_ask is null) return [];
 
-        var parsed = VbHtmlParser.Parse(document.Text);
-
         var generated = await TemplateGeneration.ForAsync(
-            parsed, document.FilePath, Host, document.Text, AskCatalog, ct).ConfigureAwait(false);
+            document.FilePath, Host, document.Text, AskCatalog, ct).ConfigureAwait(false);
 
-        if (CaretInGenerated(document.Text, generated, position) is not { } at)
+        if (CaretInGenerated(document.FilePath, document.Text, generated, position) is not { } at)
             return [];
 
         return await _ask(generated.Code, at, ct).ConfigureAwait(false);
@@ -108,13 +106,14 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         LanguageDocument document, int position, CancellationToken ct = default)
     {
         // Nothing in the markup half takes arguments.
-        if (_askSignature is null || !IsInCode(document.Text, position)) return null;
+        if (_askSignature is null ||
+            !TemplateGeneration.IsInCode(document.FilePath, document.Text, position)) return null;
 
         var generated = await TemplateGeneration.ForAsync(
-            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
-        if (CaretInGenerated(document.Text, generated, position) is not { } at)
+        if (CaretInGenerated(document.FilePath, document.Text, generated, position) is not { } at)
             return null;
 
         return await _askSignature(generated.Code, at, ct).ConfigureAwait(false);
@@ -140,10 +139,10 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     /// b)</c> it answered about Write(a).
     /// </remarks>
     private static int? CaretInGenerated(
-        string template, TemplateGeneration.Generated generated, int position) =>
+        string path, string template, TemplateGeneration.Generated generated, int position) =>
         generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Strict)
-        ?? VbHtmlCodeRegions.CaretInGenerated(
-            template, generated.Code, generated.Map, position)
+        ?? (TemplateGeneration.IsPage(path) ? null : VbHtmlCodeRegions.CaretInGenerated(
+            template, generated.Code, generated.Map, position))
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inclusive)
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inferred)
         ?? NearestBefore(generated.Map, position);

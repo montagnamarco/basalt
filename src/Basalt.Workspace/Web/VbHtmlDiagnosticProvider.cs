@@ -65,9 +65,9 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
 
         try
         {
-            var parsed = VbHtmlParser.Parse(document.Text);
+            var parsed = TemplateGeneration.ParseDiagnostics(document.FilePath, document.Text);
 
-            diagnostics.AddRange(parsed.Diagnostics.Where(d => d.AppliesTo(document.FilePath)).Select(d => new Diagnostic(
+            diagnostics.AddRange(parsed.Where(d => d.AppliesTo(document.FilePath)).Select(d => new Diagnostic(
                 d.Id,
                 d.Message,
                 DiagnosticSeverity.Error,
@@ -114,7 +114,7 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
         LanguageDocument document, CancellationToken ct)
     {
         var generated = await TemplateGeneration.ForAsync(
-            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
         var found = await _ask!(generated.Code, ct).ConfigureAwait(false);

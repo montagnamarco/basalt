@@ -1,5 +1,6 @@
 using Basalt.Extensibility;
 using Basalt.Razor.Vb;
+using Basalt.Razor.Vb.Classic;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Basalt.Workspace.Web;
@@ -74,6 +75,21 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
     public Task<IReadOnlyList<DocumentSymbol>> GetDocumentSymbolsAsync(
         LanguageDocument document, CancellationToken ct = default)
     {
+        if (TemplateGeneration.IsPage(document.FilePath))
+        {
+            var page = VbPageParser.Parse(document.Text);
+            var text = SourceText.From(document.Text);
+            var pageSymbols = page.Parts.OfType<VbPageParser.Code>()
+                .Select(code => (Name: "<% code %>", Code: code))
+                .Concat(page.MemberBlocks.Select(code => (Name: "<%! members %>", Code: code)))
+                .Select(part =>
+                {
+                    var at = text.Lines.GetLinePosition(part.Code.Position);
+                    return new DocumentSymbol(part.Name, SymbolKind.Method,
+                        SourceRange.At(new SourcePosition(at.Line + 1, at.Character + 1)));
+                }).ToArray();
+            return Task.FromResult<IReadOnlyList<DocumentSymbol>>(pageSymbols);
+        }
         var parsed = VbHtmlParser.Parse(document.Text);
         var symbols = new List<DocumentSymbol>();
 
@@ -103,11 +119,11 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
         LanguageDocument document, int position, CancellationToken ct = default)
     {
         if (_questions.Definition is null ||
-            !VbHtmlCompletionProvider.IsInCode(document.Text, position))
+            !TemplateGeneration.IsInCode(document.FilePath, document.Text, position))
             return null;
 
         var generated = await TemplateGeneration.ForAsync(
-            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
@@ -137,11 +153,11 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
         LanguageDocument document, int position, CancellationToken ct = default)
     {
         if (_questions.References is null ||
-            !VbHtmlCompletionProvider.IsInCode(document.Text, position))
+            !TemplateGeneration.IsInCode(document.FilePath, document.Text, position))
             return [];
 
         var generated = await TemplateGeneration.ForAsync(
-            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
@@ -217,11 +233,11 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
     {
         // Only the code half has anything to say: hovering a paragraph tag
         // is not a question for the Visual Basic compiler.
-        if (_questions.QuickInfo is null || !VbHtmlCompletionProvider.IsInCode(document.Text, position))
+        if (_questions.QuickInfo is null || !TemplateGeneration.IsInCode(document.FilePath, document.Text, position))
             return null;
 
         var generated = await TemplateGeneration.ForAsync(
-            VbHtmlParser.Parse(document.Text), document.FilePath, Host, document.Text, AskCatalog, ct)
+            document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
         var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)

@@ -1,4 +1,5 @@
 using Basalt.Razor.Vb;
+using Basalt.Razor.Vb.Classic;
 
 namespace Basalt.Workspace.Web;
 
@@ -15,6 +16,41 @@ namespace Basalt.Workspace.Web;
 /// </remarks>
 internal static class TemplateGeneration
 {
+    public static bool IsPage(string? path) =>
+        path is not null && path.EndsWith(".vbpage", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool IsInCode(string path, string text, int position)
+    {
+        if (!IsPage(path)) return VbHtmlCodeRegions.IsInCode(text, position);
+        var page = VbPageParser.Parse(text, forEditing: true);
+        return page.Parts.Concat(page.MemberBlocks).Any(part => part switch
+        {
+            VbPageParser.Code code => position >= code.Position && position <= code.Position + code.Text.Length,
+            VbPageParser.Expression expression => position >= expression.Position && position <= expression.Position + expression.Text.Length,
+            _ => false
+        }) || page.ImportDirectives.Any(import =>
+            position >= import.Position && position <= import.Position + import.Name.Length);
+    }
+
+    internal static IReadOnlyList<VbHtmlDiagnostic> ParseDiagnostics(string path, string text) =>
+        IsPage(path) ? VbPageParser.Parse(text).Diagnostics : VbHtmlParser.Parse(text).Diagnostics;
+
+    internal static async Task<Generated> ForAsync(
+        string filePath, ViewHost host, string currentText,
+        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog,
+        CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        if (IsPage(filePath))
+        {
+            var page = VbPageWriter.WriteWithMap(VbPageParser.Parse(currentText, forEditing: true),
+                "GeneratedPage", "Basalt.Generated", filePath);
+            return new Generated(page.Code, page.Map);
+        }
+        return await ForAsync(VbHtmlParser.Parse(currentText), filePath, host,
+            currentText, askCatalog, ct).ConfigureAwait(false);
+    }
+
     /// <summary>Whether this path is a Blazor component.</summary>
     public static bool IsComponent(string? path) =>
         path is not null

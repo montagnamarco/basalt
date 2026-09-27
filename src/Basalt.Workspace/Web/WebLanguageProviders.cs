@@ -289,7 +289,7 @@ public static class WebLanguageProviders
         // view and asks the same questions of the editor. Listing only the
         // view left a component with no provider at all, so it coloured — that
         // comes from the parser — and answered nothing else.
-        new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor"], isCaseSensitive: false),
+        new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor", ".vbpage"], isCaseSensitive: false),
         new VbHtmlCompletionProvider(),
         new VbHtmlDiagnosticProvider(),
         new VbHtmlFormattingProvider(),
@@ -322,7 +322,7 @@ public static class WebLanguageProviders
         // behaved before catalogs existed.
         Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog = null) =>
         new WebProvider(
-            new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor"],
+            new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor", ".vbpage"],
                 isCaseSensitive: false),
             askSignature is null
                 ? new VbHtmlCompletionProvider(ask) { Host = host, AskCatalog = askCatalog }
