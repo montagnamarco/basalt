@@ -457,6 +457,40 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
     private sealed class CatalogCache
     {
         public IReadOnlyList<PreparedComponent>? Components;
+        public TagHelperCatalog? TagHelpers;
+    }
+
+    /// <summary>
+    /// Every tag helper the project containing a view can use, found the way
+    /// the build finds them; null when the view belongs to no project.
+    /// </summary>
+    /// <remarks>
+    /// Read once per compilation, as the component catalog is. Which of them
+    /// a view has in scope is its @addTagHelper lines' business.
+    /// </remarks>
+    public async Task<TagHelperCatalog?> GetTagHelperCatalogAsync(string templatePath, CancellationToken ct = default)
+    {
+        if (_workspace is null || string.IsNullOrEmpty(templatePath)) return null;
+
+        var project = FindProjectContaining(templatePath);
+        if (project is null) return null;
+
+        Compilation? compilation;
+
+        try
+        {
+            compilation = await project.GetCompilationAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+
+        if (compilation is null || compilation.Language != LanguageNames.VisualBasic) return null;
+
+        var cache = _catalogCaches.GetValue(compilation, _ => new CatalogCache());
+
+        return cache.TagHelpers ??= TagHelperDiscovery.Discover(compilation, ct).Catalog;
     }
 
     /// <summary>A .vbrazor read and ready to be declared: its path, parsed markup, class name and namespace.</summary>

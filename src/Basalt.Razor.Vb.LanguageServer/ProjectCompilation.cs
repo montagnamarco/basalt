@@ -368,7 +368,11 @@ public sealed class ProjectCompilation : IDisposable
                 // Studio, Rider and VS Code all saw a named RenderFragment
                 // parameter opened as a component that does not exist.
                 askCatalog: (templatePath, currentText, token) =>
-                    _roslyn.GetComponentCatalogAsync(templatePath, currentText, token));
+                    _roslyn.GetComponentCatalogAsync(templatePath, currentText, token),
+
+                // The tag helpers the view's project offers, for asp-*.
+                askTagHelpers: (templatePath, token) =>
+                    _roslyn.GetTagHelperCatalogAsync(templatePath, token));
 
             IsReady = true;
         }

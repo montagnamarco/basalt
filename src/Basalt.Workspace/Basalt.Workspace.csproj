@@ -36,6 +36,8 @@
   -->
   <ItemGroup>
     <Compile Include="..\Basalt.Razor.Vb.Generator\ComponentCatalogBuilder.cs" Link="Web\ComponentCatalogBuilder.cs" />
+    <!-- Tag helpers found the way the build finds them, for a view's asp-* completion. -->
+    <Compile Include="..\Basalt.Razor.Vb.Generator\TagHelperDiscovery.cs" Link="Web\TagHelperDiscovery.cs" />
   </ItemGroup>
 
   <PropertyGroup>

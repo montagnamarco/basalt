@@ -118,8 +118,11 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
             var markup = await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
             var parameters = await ComponentParametersAsync(document, position, ct).ConfigureAwait(false);
             var directives = DirectiveAttributes(document, position);
+            var tagHelpers = await TagHelperAttributesAsync(document, position, ct).ConfigureAwait(false);
 
-            return parameters.Count == 0 && directives.Count == 0 ? markup : [.. parameters, .. directives, .. markup];
+            return parameters.Count == 0 && directives.Count == 0 && tagHelpers.Count == 0
+                ? markup
+                : [.. parameters, .. directives, .. tagHelpers, .. markup];
         }
 
         if (_ask is null) return [];
@@ -197,6 +200,65 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         }
 
         return items;
+    }
+
+    /// <summary>
+    /// The tag helpers a view's project offers, for its asp-* attributes; the
+    /// view's @addTagHelper lines decide which are in scope.
+    /// </summary>
+    public Func<string, CancellationToken, Task<TagHelperCatalog?>>? AskTagHelpers { get; init; }
+
+    /// <summary>
+    /// The attributes of the tag helpers that can take an element, where an
+    /// attribute is being written in a view: "&lt;a " offers asp-action,
+    /// asp-controller and asp-route-.
+    /// </summary>
+    /// <remarks>
+    /// Scoped as the build scopes them, by the view's @addTagHelper lines and
+    /// every _ViewImports above it. A tag helper is offered by the element
+    /// its rules name, whatever attributes they also require: those are the
+    /// very attributes being chosen.
+    /// </remarks>
+    private async Task<IReadOnlyList<CompletionItem>> TagHelperAttributesAsync(
+        LanguageDocument document, int position, CancellationToken ct)
+    {
+        if (AskTagHelpers is null || TemplateGeneration.IsComponent(document.FilePath) ||
+            TemplateGeneration.IsPage(document.FilePath))
+            return [];
+
+        var context = HtmlContextReader.At(document.Text, position);
+
+        if (context.Kind != HtmlContextKind.AttributeName || context.Element is not { Length: > 0 } element) return [];
+
+        if (await AskTagHelpers(document.FilePath, ct).ConfigureAwait(false) is not { } all) return [];
+
+        var view = VbHtmlParser.Parse(document.Text);
+        TemplateGeneration.ApplySharedFiles(view, document.FilePath, "_ViewImports.vbhtml");
+
+        var scoped = all.Scoped(view.TagHelperDirectives);
+        var items = new Dictionary<string, CompletionItem>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var descriptor in scoped.Descriptors)
+        {
+            if (!descriptor.Rules.Any(rule =>
+                    rule.TagName == "*" || string.Equals(scoped.Prefix + rule.TagName, element, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            foreach (var property in descriptor.Properties)
+            {
+                var name = property.DictionaryPrefix is { Length: > 0 } prefix ? prefix : property.AttributeName;
+
+                if (string.IsNullOrEmpty(name) || items.ContainsKey(name)) continue;
+
+                items[name] = new CompletionItem(name, name, SymbolKind.Property)
+                {
+                    Detail = property.TypeName.Replace("Global.", ""),
+                    Description = $"Tag helper {descriptor.TypeName.Replace("Global.", "")}."
+                };
+            }
+        }
+
+        return [.. items.Values.OrderBy(item => item.DisplayText, StringComparer.OrdinalIgnoreCase)];
     }
 
     /// <summary>

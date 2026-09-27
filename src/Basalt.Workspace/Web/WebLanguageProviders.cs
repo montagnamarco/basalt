@@ -320,13 +320,15 @@ public static class WebLanguageProviders
         // inferred type arguments read the same in the editor as they
         // compile in the build. Null leaves every writer exactly as it
         // behaved before catalogs existed.
-        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog = null) =>
+        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog = null,
+        // The tag helpers a view's project offers, for its asp-* attributes.
+        Func<string, CancellationToken, Task<TagHelperCatalog?>>? askTagHelpers = null) =>
         new WebProvider(
             new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor", ".vbpage"],
                 isCaseSensitive: false),
             askSignature is null
-                ? new VbHtmlCompletionProvider(ask) { Host = host, AskCatalog = askCatalog }
-                : new VbHtmlCompletionProvider(ask, askSignature) { Host = host, AskCatalog = askCatalog },
+                ? new VbHtmlCompletionProvider(ask) { Host = host, AskCatalog = askCatalog, AskTagHelpers = askTagHelpers }
+                : new VbHtmlCompletionProvider(ask, askSignature) { Host = host, AskCatalog = askCatalog, AskTagHelpers = askTagHelpers },
             askDiagnostics is null
                 ? new VbHtmlDiagnosticProvider { Host = host, AskCatalog = askCatalog }
                 : new VbHtmlDiagnosticProvider(askDiagnostics) { Host = host, AskCatalog = askCatalog },
@@ -361,7 +363,8 @@ public static class WebLanguageProviders
             askReferences = null,
         Func<string, int, CancellationToken, Task<SignatureHelp?>>?
             askSignature = null,
-        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog = null)
+        Func<string, string, CancellationToken, Task<IComponentCatalog?>>? askCatalog = null,
+        Func<string, CancellationToken, Task<TagHelperCatalog?>>? askTagHelpers = null)
     {
         registry.Register(Html);
         registry.Register(Css);
@@ -369,7 +372,7 @@ public static class WebLanguageProviders
             ? VbRazor
             : VbRazorAsking(
                 ask, askQuickInfo, askDiagnostics, askDefinition, askReferences,
-                askSignature, askCatalog: askCatalog));
+                askSignature, askCatalog: askCatalog, askTagHelpers: askTagHelpers));
     }
 
     private sealed class WebProvider : ILanguageProvider
