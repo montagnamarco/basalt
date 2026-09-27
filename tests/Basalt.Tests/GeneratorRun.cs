@@ -49,7 +49,11 @@ internal static class GeneratorRun
         IReadOnlyList<Diagnostic> Diagnostics,
         IReadOnlyDictionary<string, string> Sources,
         Exception? Exception,
-        IReadOnlyList<Diagnostic> CompilationErrors);
+        IReadOnlyList<Diagnostic> CompilationErrors)
+    {
+        /// <summary>The compilation with the generated code in it, for a test that runs it.</summary>
+        public Compilation? Compilation { get; init; }
+    }
 
     /// <summary>
     /// Runs one generator, by type name, over templates given as path and text.
@@ -121,7 +125,10 @@ internal static class GeneratorRun
             result.Diagnostics,
             result.GeneratedSources.ToDictionary(s => s.HintName, s => s.SourceText.ToString()),
             result.Exception,
-            errors);
+            errors)
+        {
+            Compilation = updated,
+        };
     }
 
     /// <summary>The build properties the generator reads, as MSBuild hands them over.</summary>
