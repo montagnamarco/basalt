@@ -1,5 +1,6 @@
 using Basalt.Extensibility;
 using Basalt.Workspace.Web;
+using Microsoft.CodeAnalysis.Text;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -105,21 +106,39 @@ public sealed class VbHtmlOnTypeFormattingHandler : DocumentOnTypeFormattingHand
 {
     private readonly DocumentStore _documents;
     private readonly VbHtmlFormattingProvider _formatter = new();
+    private readonly Func<LanguageDocument, int, CancellationToken, Task<FormattingResult>> _formatLine;
 
-    public VbHtmlOnTypeFormattingHandler(DocumentStore documents) => _documents = documents;
+    public VbHtmlOnTypeFormattingHandler(DocumentStore documents)
+    {
+        _documents = documents;
+        _formatLine = _formatter.FormatLineAsync;
+    }
+
+    internal VbHtmlOnTypeFormattingHandler(DocumentStore documents,
+        Func<LanguageDocument, int, CancellationToken, Task<FormattingResult>> formatLine) : this(documents) =>
+        _formatLine = formatLine;
 
     public override async Task<TextEditContainer?> Handle(
         DocumentOnTypeFormattingParams request, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         var document = _documents.Get(request.TextDocument.Uri.ToString());
 
         if (document is null) return null;
 
-        var caret = Offsets.ToOffset(document.Text, request.Position);
+        var enter = request.Character == "\n";
+        var snapshot = SourceText.From(document.Text);
+        var finishedLine = enter ? request.Position.Line - 1 : request.Position.Line;
+        if (finishedLine < 0 || finishedLine >= snapshot.Lines.Count) return null;
+
+        // LSP reports the position after the trigger was inserted. The shared
+        // formatter takes the line the author finished, before its delimiter.
+        var caret = enter
+            ? snapshot.Lines[finishedLine].End
+            : Offsets.ToOffset(document.Text, request.Position);
         var languageDocument = new LanguageDocument(document.Uri, document.Text);
 
-        var result = await _formatter
-            .FormatLineAsync(languageDocument, caret, ct)
+        var result = await _formatLine(languageDocument, caret, ct)
             .ConfigureAwait(false);
 
         // Then the block, if this line opened one. Enter after "If x Then"
@@ -130,14 +149,16 @@ public sealed class VbHtmlOnTypeFormattingHandler : DocumentOnTypeFormattingHand
         //
         // Only on Enter. The trigger list also carries a space, and closing a
         // block halfway through typing its condition would be maddening.
-        var text = request.Character == "\n"
-            ? await ClosedAsync(languageDocument with { Text = result.Text }, request.Position, ct)
+        var text = enter
+            ? await ClosedAsync(languageDocument with { Text = result.Text }, finishedLine, ct)
                 .ConfigureAwait(false)
             : result.Text;
 
         // Nothing to say rather than an edit that changes nothing: an editor
         // that receives an identical replacement still moves the caret and
         // still marks the file dirty.
+        ct.ThrowIfCancellationRequested();
+        if (!ReferenceEquals(_documents.Get(document.Uri), document)) return null;
         return text == document.Text
             ? null
             : Edits.ReplacingWholeDocument(document.Text, text);
@@ -147,30 +168,35 @@ public sealed class VbHtmlOnTypeFormattingHandler : DocumentOnTypeFormattingHand
     /// The document with the block this line opened closed below it.
     /// </summary>
     private async Task<string> ClosedAsync(
-        LanguageDocument document, Position position, CancellationToken ct)
+        LanguageDocument document, int finishedLine, CancellationToken ct)
     {
         var closing = await _formatter
-            .GetBlockClosingAsync(document, position.Line, ct)
+            .GetBlockClosingAsync(document, finishedLine, ct)
             .ConfigureAwait(false);
 
         if (string.IsNullOrEmpty(closing)) return document.Text;
 
         var text = document.Text;
-        var lineStart = Offsets.ToOffset(text, new Position(position.Line, 0));
-        var lineEnd = text.IndexOf('\n', lineStart);
-
-        if (lineEnd < 0) lineEnd = text.Length;
-
-        var line = text[lineStart..lineEnd];
+        var lines = SourceText.From(text).Lines;
+        if (finishedLine + 1 >= lines.Count) return text;
+        var header = lines[finishedLine];
+        var current = lines[finishedLine + 1];
+        var line = text[header.Start..header.End];
         var indent = line[..(line.Length - line.TrimStart().Length)];
 
         // The closing keyword lines up with what it opened, and the body sits
         // one level in from both — the shape a reader expects, and the same
         // one the document formatter produces.
         var body = indent + new string(' ', 4);
-        var inserted = $"\n{body}\n{indent}{closing}";
-
-        return text[..lineEnd] + inserted + text[lineEnd..];
+        var newline = text[header.End..header.EndIncludingLineBreak];
+        if (newline.Length == 0) return text;
+        var inserted = body + newline + indent + closing;
+        var currentText = text[current.Start..current.End];
+        // Reuse the blank line Enter already inserted. If Enter split in
+        // front of existing code, leave that code and its delimiter intact.
+        return string.IsNullOrWhiteSpace(currentText)
+            ? text[..current.Start] + inserted + text[current.End..]
+            : text[..current.Start] + inserted + newline + text[current.Start..];
     }
 
     protected override DocumentOnTypeFormattingRegistrationOptions CreateRegistrationOptions(

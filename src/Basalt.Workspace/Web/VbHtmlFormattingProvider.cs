@@ -426,6 +426,7 @@ public sealed class VbHtmlFormattingProvider : IFormattingProvider
         var lineEnd = text.IndexOf('\n', lineStart);
 
         if (lineEnd < 0) lineEnd = text.Length;
+        if (lineEnd > lineStart && text[lineEnd - 1] == '\r') lineEnd--;
 
         var line = text[lineStart..lineEnd];
 

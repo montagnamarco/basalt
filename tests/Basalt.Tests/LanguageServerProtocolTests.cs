@@ -367,6 +367,13 @@ public sealed class LanguageServerProtocolTests : IDisposable
 
         public Task ExitAsync() => NotifyAsync("exit", null);
 
+        public Task DidChangeAsync(string uri, string text, int version = 2) => NotifyAsync(
+            "textDocument/didChange", new
+            {
+                textDocument = new { uri, version },
+                contentChanges = new[] { new { text } }
+            });
+
         public async Task<JsonElement> RequestAsync(string method, object? @params)
         {
             var id = Interlocked.Increment(ref _nextId);
