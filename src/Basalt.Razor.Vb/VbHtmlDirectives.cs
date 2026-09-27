@@ -82,6 +82,33 @@ public static class VbHtmlDirectives
             DirectiveTarget.Both, "@Select Case 1\n    Case 1\n        <p>x</p>\nEnd Select"),
     ];
 
+    /// <summary>
+    /// The directive attributes a component's elements take, name and what it
+    /// does: the events Blazor raises and the ones that shape rendering.
+    /// </summary>
+    /// <remarks>
+    /// Checked like the directives: each is written into a tag in the tests,
+    /// and the parser must keep it in the tag rather than read an expression.
+    /// </remarks>
+    public static IReadOnlyList<(string Name, string Description)> Attributes { get; } =
+    [
+        ("@onclick", "Runs a handler when the element is clicked."),
+        ("@ondblclick", "Runs a handler on a double click."),
+        ("@onchange", "Runs a handler when the value is committed."),
+        ("@oninput", "Runs a handler on every change of the value."),
+        ("@onsubmit", "Runs a handler when the form is submitted."),
+        ("@onkeydown", "Runs a handler when a key goes down."),
+        ("@onkeyup", "Runs a handler when a key comes up."),
+        ("@onfocus", "Runs a handler when the element takes the focus."),
+        ("@onblur", "Runs a handler when the element loses the focus."),
+        ("@onmouseover", "Runs a handler when the pointer comes over the element."),
+        ("@onmouseout", "Runs a handler when the pointer leaves the element."),
+        ("@bind", "Binds the element's value to a field, both ways."),
+        ("@ref", "Keeps a reference to the element or component in a field."),
+        ("@key", "Identifies the element across renders, so a list keeps its state."),
+        ("@attributes", "Spreads a dictionary of attributes onto the element."),
+    ];
+
     /// <summary>The directives that belong in a file, by its extension.</summary>
     public static IEnumerable<DirectiveInfo> For(string? filePath)
     {

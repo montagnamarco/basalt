@@ -37,6 +37,29 @@ public sealed class DirectiveTableTests
         Assert.Equal(name, read, ignoreCase: true);
     }
 
+    public static TheoryData<string> AttributeNames() => [.. VbHtmlDirectives.Attributes.Select(attribute => attribute.Name)];
+
+    [Theory]
+    [MemberData(nameof(AttributeNames))]
+    public void EachDirectiveAttributeOfferedStaysInItsTag(string name)
+    {
+        // Read as an expression instead, "@onclick" became a variable called
+        // onclick written into the page.
+        var parsed = VbHtmlParser.Parse($"<button {name}=\"handler\">x</button>\n");
+
+        Assert.Empty(parsed.Diagnostics);
+        Assert.DoesNotContain(parsed.Nodes, node => node is ExpressionNode);
+    }
+
+    [Fact]
+    public void AnAttributeTheParserDoesNotKnowIsReadAsAnExpression()
+    {
+        // The probe above can fail: an unknown name is not kept in the tag.
+        var parsed = VbHtmlParser.Parse("<button @bogus=\"handler\">x</button>\n");
+
+        Assert.Contains(parsed.Nodes, node => node is ExpressionNode);
+    }
+
     [Theory]
     [InlineData("@Mo", 3, true)]
     [InlineData("    @", 5, true)]
@@ -63,6 +86,21 @@ public sealed class DirectiveTableTests
         Assert.Contains(items, item => item.DisplayText == offered);
         Assert.DoesNotContain(items, item => item.DisplayText == notOffered);
         Assert.Contains(items, item => item.DisplayText == "Functions");
+    }
+
+    [Theory]
+    [InlineData("Counter.vbrazor", "<button ", "@onclick", true)]
+    [InlineData("Counter.vbrazor", "<Child ", "@key", true)]
+    [InlineData("Counter.vbrazor", "<Child ", "@onclick", false)]
+    [InlineData("Index.vbhtml", "<button ", "@onclick", false)]
+    public async Task DirectiveAttributesAreOfferedInAComponentsTags(string file, string text, string attribute, bool offered)
+    {
+        var provider = new Basalt.Workspace.Web.VbHtmlCompletionProvider();
+
+        var items = await provider.GetCompletionsAsync(
+            new Basalt.Extensibility.LanguageDocument(Path.Combine(Path.GetTempPath(), file), text), text.Length);
+
+        Assert.Equal(offered, items.Any(item => item.DisplayText == attribute));
     }
 
     [Fact]

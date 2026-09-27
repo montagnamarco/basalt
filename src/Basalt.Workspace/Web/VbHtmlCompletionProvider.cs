@@ -117,8 +117,9 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         {
             var markup = await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
             var parameters = await ComponentParametersAsync(document, position, ct).ConfigureAwait(false);
+            var directives = DirectiveAttributes(document, position);
 
-            return parameters.Count == 0 ? markup : [.. parameters, .. markup];
+            return parameters.Count == 0 && directives.Count == 0 ? markup : [.. parameters, .. directives, .. markup];
         }
 
         if (_ask is null) return [];
@@ -196,6 +197,34 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         }
 
         return items;
+    }
+
+    /// <summary>
+    /// Blazor's directive attributes, where an attribute is being written in
+    /// a component's markup: "@onclick", "@bind" and the rest on an element,
+    /// "@ref", "@key" and "@attributes" on a component, whose events are its
+    /// own parameters.
+    /// </summary>
+    private static IReadOnlyList<CompletionItem> DirectiveAttributes(LanguageDocument document, int position)
+    {
+        if (!TemplateGeneration.IsComponent(document.FilePath)) return [];
+
+        var context = HtmlContextReader.At(document.Text, position);
+
+        if (context.Kind != HtmlContextKind.AttributeName || context.Element is not { Length: > 0 } element) return [];
+
+        var onComponent = char.IsUpper(element[0]);
+
+        return
+        [
+            .. VbHtmlDirectives.Attributes
+                .Where(attribute => !onComponent || attribute.Name is "@ref" or "@key" or "@attributes")
+                .Select(attribute => new CompletionItem(attribute.Name, attribute.Name, SymbolKind.Keyword)
+                {
+                    Description = attribute.Description,
+                    FilterText = attribute.Name[1..]
+                })
+        ];
     }
 
     /// <summary>
