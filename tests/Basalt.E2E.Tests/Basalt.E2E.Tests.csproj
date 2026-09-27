@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!--
+      A browser driving the sample site on a real Kestrel server. Separate from
+      Basalt.Web.Tests: an interactive Blazor component needs the browser's
+      WebSocket circuit, which the in-memory test server cannot carry, and a
+      page that renders is not yet a page that answers a click.
+    -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Basalt.E2E.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.63.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\samples\Basalt.Sample.Mvc\Basalt.Sample.Mvc.vbproj" />
+  </ItemGroup>
+
+</Project>

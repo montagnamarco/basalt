@@ -22,5 +22,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/Basalt.Tests/Basalt.Tests.csproj" />
     <Project Path="tests/Basalt.Web.Tests/Basalt.Web.Tests.csproj" />
+    <Project Path="tests/Basalt.E2E.Tests/Basalt.E2E.Tests.csproj" />
   </Folder>
 </Solution>
