@@ -82,7 +82,16 @@ public sealed class FileWithoutASolutionTests : IDisposable
 
         host.Window.KeyTextInput(".");
 
-        await Task.Delay(1200);
+        // Until the list has been offered, or ten seconds: a fixed 1.2 s
+        // passed alone and failed under the load of the whole suite, where
+        // the first Roslyn completion of a file can take longer.
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+
+        while (editor.LastCompletionOffered <= 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50);
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        }
 
         Assert.True(editor.CompletionRequestsForTests > 0, "nothing was asked");
         Assert.InRange(editor.LastCompletionOffered, 1, 500);

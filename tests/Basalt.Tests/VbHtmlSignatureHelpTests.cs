@@ -105,6 +105,28 @@ public sealed class VbHtmlSignatureHelpTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AnotherExpressionEarlierOnTheLineDoesNotCaptureTheCaret()
+    {
+        // The line heuristic counted from the last "@" and took the first
+        // mapping on the line: here it answered about the first expression.
+        const string view = """
+            @Code
+                Dim p As New Person()
+                Dim a = 1
+            End Code
+            <p>@a @p.Greet("hi", 2)</p>
+            """;
+
+        var caret = view.IndexOf("Greet(", StringComparison.Ordinal) + "Greet(".Length;
+
+        var help = await Provider().GetSignatureHelpAsync(
+            new LanguageDocument("/Views/Index.vbhtml", view), caret);
+
+        Assert.NotNull(help);
+        Assert.Contains("Greet", help.Signatures[0].Signature, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task SaysNothingWithoutALanguageService()
     {
         const string view = """

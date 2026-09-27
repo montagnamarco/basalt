@@ -15,6 +15,72 @@ public sealed class ExternalSourceTests
         VbHtmlCodeWriter.WriteWithMap(
             VbHtmlParser.Parse(template), "Page", "App.Views", path);
 
+    [Theory]
+    [InlineData("<p>@i</p>\n", "i")]
+    [InlineData("<p>@e</p>\n", "e")]
+    [InlineData("<p>@Html.Raw(a)</p>\n", "a")]
+    [InlineData("<p>@(  t  )</p>\n", "t")]
+    public void AOneLetterExpressionMapsToItselfNotToTheCallAroundIt(string template, string name)
+    {
+        // The offset was found by searching the generated line, and "i" is
+        // also in "Write": hover on @i described Write.
+        foreach (var code in new[]
+        {
+            VbHtmlCodeWriter.WriteWithMap(VbHtmlParser.Parse(template), "Page", "App.Views", "Views/Page.vbhtml"),
+            new VbHtmlCodeWriter.Generated(
+                VbComponentWriter.WriteWithMap(VbHtmlParser.Parse(template), "C", "App", "C.vbrazor").Code,
+                VbComponentWriter.WriteWithMap(VbHtmlParser.Parse(template), "C", "App", "C.vbrazor").Map),
+        })
+        {
+            // The name itself, not the same letter in "Html.Raw".
+            var caret = template.LastIndexOf(name, StringComparison.Ordinal);
+            var at = code.Map.ToGenerated(caret);
+
+            Assert.NotNull(at);
+            Assert.Equal(name[0], code.Code[at.Value]);
+            Assert.False(char.IsLetterOrDigit(code.Code[at.Value + 1]), code.Code[(at.Value - 8)..(at.Value + 8)]);
+        }
+    }
+
+    [Theory]
+    [InlineData("<p>@Await  Foo()</p>\n", "Foo")]
+    [InlineData("<button onclick=\"@AddressOf  Go\">x</button>\n", "Go")]
+    [InlineData("<input disabled=\"@Model.Locked\" />\n", "Locked")]
+    public void ExtraSpacesAndConditionalAttributesStillMapCharacterForCharacter(string template, string name)
+    {
+        // Two spaces after Await or AddressOf made the template side longer
+        // than the generated one; a conditional attribute was anchored at its
+        // "@" and at the start of the line.
+        var generated = Generate(template);
+        var caret = template.IndexOf(name, StringComparison.Ordinal);
+        var at = generated.Map.ToGenerated(caret);
+
+        Assert.NotNull(at);
+        Assert.StartsWith(name, generated.Code[at.Value..], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnAwaitedConditionalAttributeIsAwaited()
+    {
+        // It wrote the Task itself.
+        var generated = Generate("<input disabled=\"@Await IsLockedAsync()\" />\n");
+
+        Assert.Contains("WriteAttribute(\"disabled\", Await IsLockedAsync())", generated.Code);
+    }
+
+    [Fact]
+    public void AnErrorOnAwaitStillLandsOnTheTemplate()
+    {
+        // The mapping began after "Await ", so an error on the keyword itself
+        // (Await in a Sub that is not Async) mapped nowhere and was dropped.
+        const string template = "<p>@Await Html.PartialAsync(\"_X\")</p>\n";
+
+        var generated = Generate(template);
+        var awaitInCode = generated.Code.IndexOf("Await Html", StringComparison.Ordinal);
+
+        Assert.Equal(template.IndexOf("Await", StringComparison.Ordinal), generated.Map.ToOriginal(awaitInCode));
+    }
+
     [Fact]
     public void WrapsAnExpressionInAPragmaNamingTheTemplate()
     {
@@ -66,14 +132,21 @@ public sealed class ExternalSourceTests
 
         var mapping = Assert.Single(generated.Map.Mappings);
 
-        // The mapping starts at the "@", not at the expression after it: the
-        // transition is where the construct begins, and an error belongs to
-        // the whole of it rather than to the part after the sign.
-        Assert.Equal(template.IndexOf('@'), mapping.Original.Start);
+        // The mapping starts at the expression's own text on both sides. It
+        // used to start at the "@" on one side and at the start of the
+        // generated line on the other, so every position inside drifted: a
+        // caret on "Name" was asked about "Model", and go to definition
+        // opened the wrong symbol.
+        Assert.Equal(template.IndexOf("Model", StringComparison.Ordinal), mapping.Original.Start);
+        Assert.StartsWith("Model.Name", generated.Code[mapping.Generated.Start..], StringComparison.Ordinal);
 
         var back = generated.Map.ToOriginal(mapping.Generated.Start);
 
         Assert.Equal(mapping.Original.Start, back);
+
+        var caret = template.IndexOf("Name", StringComparison.Ordinal);
+
+        Assert.StartsWith("Name", generated.Code[generated.Map.ToGenerated(caret)!.Value..], StringComparison.Ordinal);
     }
 
     [Fact]

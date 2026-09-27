@@ -1,3 +1,4 @@
+using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -14,20 +15,58 @@ namespace Basalt.Razor.Vb.LanguageServer;
 public sealed class VbHtmlSignatureHelpHandler : SignatureHelpHandlerBase
 {
     private readonly DocumentStore _documents;
+    private readonly ProjectCompilation? _compilation;
 
-    public VbHtmlSignatureHelpHandler(DocumentStore documents) => _documents = documents;
+    public VbHtmlSignatureHelpHandler(DocumentStore documents, ProjectCompilation? compilation = null)
+    {
+        _documents = documents;
+        _compilation = compilation;
+    }
 
-    public override Task<SignatureHelp?> Handle(
+    public override async Task<SignatureHelp?> Handle(
         SignatureHelpParams request, CancellationToken ct)
     {
         var document = _documents.Get(request.TextDocument.Uri.ToString());
 
-        if (document is null) return Task.FromResult<SignatureHelp?>(null);
+        if (document is null) return null;
 
         var offset = VbHtmlCompletionHandler.OffsetOf(document.Text, request.Position);
 
-        return Task.FromResult(Describe(document.Text, offset));
+        // Roslyn once the solution is loaded: every overload of every method
+        // the view can call, the model's included. The table below answered
+        // for three names only, and is what is left before then.
+        if (_compilation is { IsReady: true, Provider.Completion: { } completion })
+        {
+            var help = await completion
+                .GetSignatureHelpAsync(
+                    new Basalt.Extensibility.LanguageDocument(
+                        request.TextDocument.Uri.GetFileSystemPath(), document.Text),
+                    offset, ct)
+                .ConfigureAwait(false);
+
+            if (help is { Signatures.Count: > 0 }) return Translate(help);
+        }
+
+        return Describe(document.Text, offset);
     }
+
+    /// <summary>Roslyn's overloads in the protocol's shape.</summary>
+    internal static SignatureHelp Translate(Basalt.Extensibility.SignatureHelp help) =>
+        new()
+        {
+            Signatures = new Container<SignatureInformation>(help.Signatures.Select(signature =>
+                new SignatureInformation
+                {
+                    Label = signature.Signature,
+                    Documentation = signature.Documentation is { Length: > 0 } documentation
+                        ? new StringOrMarkupContent(documentation)
+                        : null,
+                    Parameters = new Container<ParameterInformation>(signature.Parameters.Select(parameter =>
+                        new ParameterInformation { Label = new ParameterInformationLabel(parameter) })),
+                })),
+            ActiveSignature = help.ActiveSignature,
+            ActiveParameter = help.ActiveParameter,
+        };
 
     /// <summary>The call the caret is inside, if it is one this knows.</summary>
     internal static SignatureHelp? Describe(string text, int offset)

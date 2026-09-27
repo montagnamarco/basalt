@@ -172,6 +172,23 @@ public sealed class ProjectCompilation : IDisposable
                 askSignature: (text, position, token) =>
                     _roslyn.GetSignatureHelpAsync(generatedPath, position, text, token),
 
+                // Out of the view, into the model class or any .vb in the
+                // solution: without these the server answered only for names
+                // declared in the view itself, and references always came
+                // back empty.
+                askDefinition: async (text, position, token) =>
+                {
+                    var found = await _roslyn
+                        .GoToDefinitionAsync(generatedPath, position, text, token)
+                        .ConfigureAwait(false);
+
+                    return found is { } at
+                        ? new SourceLocation(at.FilePath, SourceRange.At(new SourcePosition(at.Line, at.Column)))
+                        : null;
+                },
+                askReferences: (text, position, token) =>
+                    _roslyn.FindReferencesAsync(generatedPath, position, text, token),
+
                 // The solution that was just opened is a web one, so the view
                 // is generated as ASP.NET Core would: with the standalone
                 // shape it inherits a base class the project has never heard

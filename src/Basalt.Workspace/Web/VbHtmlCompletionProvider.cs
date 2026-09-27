@@ -122,9 +122,16 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     /// cannot place — past the end of everything mapped, typically, where
     /// Inclusive and then Inferred still find something useful.
     /// </summary>
+    /// <remarks>
+    /// The mapping itself first, now that it starts at each expression's own
+    /// text on both sides: the line heuristic counts from the last "@" on the
+    /// line and takes the first mapping there, so in <c>@a @String.Join(",",
+    /// b)</c> it answered about Write(a).
+    /// </remarks>
     private static int? CaretInGenerated(
         string template, TemplateGeneration.Generated generated, int position) =>
-        VbHtmlCodeRegions.CaretInGenerated(
+        generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Strict)
+        ?? VbHtmlCodeRegions.CaretInGenerated(
             template, generated.Code, generated.Map, position)
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inclusive)
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inferred)

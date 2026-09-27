@@ -34,6 +34,11 @@ internal static class TemplateGeneration
             return new Generated(component.Code, component.Map);
         }
 
+        // The folder's _ViewImports, as the build applies them: without them
+        // the editor underlined a service injected there, and a model type
+        // imported there, as undeclared in every view that used them.
+        ApplySharedFiles(document, filePath);
+
         var view = VbHtmlCodeWriter.WriteWithMap(
             document, "GeneratedView", "Basalt.Generated", filePath, host);
 
@@ -42,4 +47,93 @@ internal static class TemplateGeneration
 
     /// <summary>Generated code, with the map back to the template.</summary>
     public sealed record Generated(string Code, SourceMap Map);
+
+    /// <summary>
+    /// Applies every _ViewImports.vbhtml from the project folder down to the
+    /// view's own, outermost first, as the source generator does.
+    /// </summary>
+    /// <remarks>
+    /// Read from disk: the editor is asked about one document at a time and
+    /// the shared files are other files. The walk stops at the folder holding
+    /// the project file, which is where the build stops too.
+    /// </remarks>
+    private static void ApplySharedFiles(VbHtmlDocument document, string? filePath)
+    {
+        if (filePath is null || !Path.IsPathRooted(filePath)) return;
+
+        var folders = new List<string>();
+
+        for (var folder = Path.GetDirectoryName(filePath); !string.IsNullOrEmpty(folder); folder = Path.GetDirectoryName(folder))
+        {
+            folders.Add(folder);
+
+            if (IsProjectFolder(folder)) break;
+        }
+
+        folders.Reverse();
+
+        var viewFolder = Path.GetDirectoryName(filePath)!;
+
+        foreach (var folder in folders)
+        {
+            var shared = Path.Combine(folder, ViewImports.FileName);
+
+            // The view being edited may itself be a _ViewImports file.
+            if (string.Equals(shared, filePath, StringComparison.OrdinalIgnoreCase)) continue;
+
+            if (Parsed(shared) is not { } sharedDocument) continue;
+
+            var below = viewFolder.Length > folder.Length
+                ? string.Join(".", viewFolder[folder.Length..]
+                    .Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries)
+                    .Select(ViewNaming.MakeClassName))
+                : "";
+
+            ViewImports.ApplyTo(document, sharedDocument, below);
+        }
+    }
+
+    private static bool IsProjectFolder(string folder)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(folder, "*.vbproj").Any();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>A shared file parsed, cached until it changes on disk.</summary>
+    private static VbHtmlDocument? Parsed(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return null;
+
+            var written = File.GetLastWriteTimeUtc(path);
+
+            if (SharedFiles.TryGetValue(path, out var cached) && cached.Written == written)
+                return cached.Document;
+
+            var document = VbHtmlParser.Parse(File.ReadAllText(path));
+
+            SharedFiles[path] = (written, document);
+
+            return document;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Parsed shared files by path. They are read on every question about
+    /// every view below them, and reading them each time would be a disk read
+    /// per keystroke.
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime Written, VbHtmlDocument Document)>
+        SharedFiles = new(StringComparer.OrdinalIgnoreCase);
 }

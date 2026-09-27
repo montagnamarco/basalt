@@ -36,15 +36,25 @@ public sealed class HtmlNode : VbHtmlNode
 public sealed class ExpressionNode : VbHtmlNode
 {
     public ExpressionNode(
-        string expression, bool isRaw, int position, int line, bool isAwaited = false)
+        string expression, bool isRaw, int position, int line, bool isAwaited = false,
+        int? expressionPosition = null)
         : base(position, line)
     {
         Expression = expression;
         IsRaw = isRaw;
         IsAwaited = isAwaited;
+        ExpressionPosition = expressionPosition ?? position + 1;
     }
 
     public string Expression { get; }
+
+    /// <summary>
+    /// Where <see cref="Expression"/> itself starts in the template: past the
+    /// "@", an opening parenthesis, "Html.Raw(" or "Await ", where Position is
+    /// the "@". A mapping anchored at the "@" is a character or more early,
+    /// and a caret on "Name" in @Model.Name reached "Model".
+    /// </summary>
+    public int ExpressionPosition { get; }
 
     /// <summary>
     /// Whether the value is written as-is rather than HTML-encoded, which is

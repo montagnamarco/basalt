@@ -1569,9 +1569,14 @@ public sealed class VbHtmlParser
 
         if (LooksLikeKeywordAt(_index, "AddressOf"))
         {
+            var keyword = _index;
+
             Advance("AddressOf".Length);
             SkipSpacesAndTabs();
-            prefix = "AddressOf ";
+
+            // As written, spaces included, so the expression's text is the
+            // template's text and a caret maps character for character.
+            prefix = _text.Substring(keyword, _index - keyword);
         }
 
         // @Html.Raw(...) writes its argument without encoding.
@@ -1583,20 +1588,33 @@ public sealed class VbHtmlParser
 
         string expression;
 
+        // Where the text of the expression starts, for the mapping: here, or
+        // one past an opening parenthesis, past any spaces inside it.
+        var expressionStart = _index;
+
         if (!AtEnd && Current == '(')
         {
             expression = ReadBalancedParentheses();
 
             // Strip the outer parentheses the template wrote.
             if (expression.Length >= 2)
+            {
                 expression = expression.Substring(1, expression.Length - 2);
+                expressionStart++;
+            }
         }
         else
         {
             expression = ReadMemberChain();
         }
 
-        into.Add(new ExpressionNode(prefix + expression.Trim(), raw, start, line, awaited));
+        expressionStart += expression.Length - expression.TrimStart().Length;
+
+        // "AddressOf " stays part of the expression and starts at the "@".
+        if (prefix.Length > 0) expressionStart = start + 1;
+
+        into.Add(new ExpressionNode(
+            prefix + expression.Trim(), raw, start, line, awaited, expressionStart));
     }
 
     /// <summary>

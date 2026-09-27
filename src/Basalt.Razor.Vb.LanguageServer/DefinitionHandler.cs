@@ -17,22 +17,45 @@ public sealed class VbHtmlDefinitionHandler : DefinitionHandlerBase
 {
     private readonly DocumentStore _documents;
 
-    public VbHtmlDefinitionHandler(DocumentStore documents) => _documents = documents;
+    private readonly ProjectCompilation? _compilation;
 
-    public override Task<LocationOrLocationLinks?> Handle(
+    public VbHtmlDefinitionHandler(DocumentStore documents, ProjectCompilation? compilation = null)
+    {
+        _documents = documents;
+        _compilation = compilation;
+    }
+
+    public override async Task<LocationOrLocationLinks?> Handle(
         DefinitionParams request, CancellationToken ct)
     {
         var document = _documents.Get(request.TextDocument.Uri.ToString());
 
-        if (document is null) return Task.FromResult<LocationOrLocationLinks?>(null);
+        if (document is null) return null;
 
         var offset = VbHtmlCompletionHandler.OffsetOf(document.Text, request.Position);
+
+        // A name the view declares itself first: found exactly in the
+        // template, where Roslyn's answer would have to travel back through
+        // the generated code's indentation and land a few characters off.
         var name = WordAt(document.Text, offset);
 
-        if (name.Length == 0) return Task.FromResult<LocationOrLocationLinks?>(null);
+        var declared = name.Length > 0 ? FindDeclaration(document, name) : null;
 
-        if (FindDeclaration(document, name) is not { } position)
-            return Task.FromResult<LocationOrLocationLinks?>(null);
+        // Then Roslyn, once the solution is loaded: the model class, a helper
+        // module, anything in the solution.
+        if (declared is null && _compilation?.Provider.Navigation is { } navigation)
+        {
+            var found = await navigation
+                .GoToDefinitionAsync(
+                    new Basalt.Extensibility.LanguageDocument(
+                        request.TextDocument.Uri.GetFileSystemPath(), document.Text),
+                    offset, ct)
+                .ConfigureAwait(false);
+
+            if (found is not null) return new LocationOrLocationLinks(VbHtmlReferencesHandler.Translate(found));
+        }
+
+        if (declared is not { } position) return null;
 
         var (line, character) = VbHtmlSemanticTokensHandler.LineAndCharacterOf(
             document.Text, position);
@@ -45,8 +68,7 @@ public sealed class VbHtmlDefinitionHandler : DefinitionHandlerBase
                 new Position(line, character + name.Length))
         };
 
-        return Task.FromResult<LocationOrLocationLinks?>(
-            new LocationOrLocationLinks(location));
+        return new LocationOrLocationLinks(location);
     }
 
     /// <summary>

@@ -49,7 +49,7 @@ public sealed class VbHtmlReferencesHandler : ReferencesHandlerBase
         return new LocationContainer(found.Select(Translate));
     }
 
-    private static Location Translate(Basalt.Extensibility.SourceLocation location) =>
+    internal static Location Translate(Basalt.Extensibility.SourceLocation location) =>
         new()
         {
             Uri = DocumentUri.FromFileSystemPath(location.FilePath),

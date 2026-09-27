@@ -393,6 +393,96 @@ public sealed class LanguageServerCompilationTests : IDisposable
         Assert.DoesNotContain("ToString", info.Signature, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task GoToDefinitionAndReferencesLeaveTheView()
+    {
+        // The server only answered for names declared in the view itself,
+        // and references always came back empty: the questions were never
+        // handed to Roslyn. From @Model.Name it now reaches Customer.vb.
+        var root = WriteProject();
+
+        using var compilation = new ProjectCompilation { WorkingDirectory = () => root };
+        compilation.StartLoading(rootPath: null);
+        await compilation.Loaded;
+
+        Assert.True(compilation.IsReady, compilation.Problem);
+
+        const string view = "@ModelType Customer\n<p>@Model.Name</p>\n";
+        var viewPath = Path.Combine(root, "Views", "Home", "Index.vbhtml");
+        var document = new Basalt.Extensibility.LanguageDocument(viewPath, view);
+        var caret = view.IndexOf("Name", StringComparison.Ordinal) + 1;
+
+        var navigation = compilation.Provider.Navigation!;
+
+        var definition = await navigation.GoToDefinitionAsync(document, caret, TestContext.Current.CancellationToken);
+
+
+        Assert.NotNull(definition);
+        Assert.EndsWith("Customer.vb", definition.FilePath, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(2, definition.Range.Start.Line);
+
+        var references = await navigation.FindReferencesAsync(document, caret, TestContext.Current.CancellationToken);
+
+        Assert.Contains(references, r => r.FilePath.EndsWith("Customer.vb", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task TheEditorAppliesViewImportsAsTheBuildDoes()
+    {
+        // @Inject in _ViewImports compiled in the build and was underlined as
+        // undeclared in the editor, which generated the view without it.
+        var root = WriteProject();
+
+        File.WriteAllText(Path.Combine(root, "Views", "_ViewImports.vbhtml"),
+            "@Inject Microsoft.Extensions.Logging.ILoggerFactory Loggers\n");
+
+        using var compilation = new ProjectCompilation { WorkingDirectory = () => root };
+        compilation.StartLoading(rootPath: null);
+        await compilation.Loaded;
+
+        Assert.True(compilation.IsReady, compilation.Problem);
+
+        var document = new Basalt.Extensibility.LanguageDocument(
+            Path.Combine(root, "Views", "Home", "Index.vbhtml"),
+            "<p>@(Loggers IsNot Nothing)</p>\n");
+
+        var diagnostics = await compilation.Provider.Diagnostics!.GetDiagnosticsAsync(
+            document, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(diagnostics, d => d.Message.Contains("Loggers", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task SignatureHelpComesFromTheCompilerOnceItIsLoaded()
+    {
+        // The server knew three signatures, from a table. With the solution
+        // loaded it knows every overload: here String.Join's.
+        var root = WriteProject();
+
+        using var compilation = new ProjectCompilation { WorkingDirectory = () => root };
+        compilation.StartLoading(rootPath: null);
+        await compilation.Loaded;
+
+        Assert.True(compilation.IsReady, compilation.Problem);
+
+        const string view = "@Code\n    Dim items = New String() {}\nEnd Code\n<p>@String.Join(\", \", items)</p>\n";
+        var document = new Basalt.Extensibility.LanguageDocument(
+            Path.Combine(root, "Views", "Home", "Index.vbhtml"), view);
+        var caret = view.IndexOf("items)", StringComparison.Ordinal);
+
+        var help = await compilation.Provider.Completion!.GetSignatureHelpAsync(
+            document, caret, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(help);
+        // The old table knew Html.Raw, Html.Encode and String.Format only.
+        Assert.Contains(help.Signatures, s => s.Signature.Contains("Join", StringComparison.Ordinal));
+        Assert.Equal(1, help.ActiveParameter);
+
+        var translated = VbHtmlSignatureHelpHandler.Translate(help);
+
+        Assert.Equal(help.Signatures.Count, translated.Signatures.Count());
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);

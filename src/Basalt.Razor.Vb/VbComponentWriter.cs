@@ -443,9 +443,11 @@ public static class VbComponentWriter
                 // Raw output goes through MarkupString, the way @Html.Raw does
                 // in a view: AddContent encodes anything else, which is what an
                 // implicit expression means.
-                if (expression.IsRaw)
-                    value = $"New Global.Microsoft.AspNetCore.Components.MarkupString(" +
-                            $"Global.System.Convert.ToString({value}))";
+                var wrapper = expression.IsRaw
+                    ? "New Global.Microsoft.AspNetCore.Components.MarkupString(Global.System.Convert.ToString("
+                    : "";
+
+                if (expression.IsRaw) value = $"{wrapper}{value}))";
 
                 var seq = sequence++;
 
@@ -461,10 +463,13 @@ public static class VbComponentWriter
                 // inside the expression.
                 var local = $"__v{seq}";
 
-                WriteMapped(builder, mappings, filePath,
-                    expression.Position + 1, expression.Expression.Length, expression.Line,
-                    () => builder.AppendLine($"{pad}Dim {local} = {value}"),
-                    offset: $"{pad}Dim {local} = ".Length);
+                // The mapping starts at the template's own text in the line,
+                // past "Dim __v0 = " and any MarkupString around it; counted,
+                // not searched for, since a one-letter name is also in "Dim".
+                var before = $"{pad}Dim {local} = {wrapper}";
+                var line = $"{pad}Dim {local} = {value}";
+
+                VbHtmlCodeWriter.WriteExpressionMapped(builder, mappings, filePath, expression, before, line);
 
                 builder.AppendLine($"{pad}{Builder}.AddContent({seq}, {local})");
                 break;

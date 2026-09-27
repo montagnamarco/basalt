@@ -138,9 +138,9 @@ internal static class TagHelperWriter
                 ? $"{descriptor.FieldName}.{property.PropertyName}({Quote(attribute.Name.Substring(property.DictionaryPrefix!.Length))})"
                 : $"{descriptor.FieldName}.{property.PropertyName}";
 
-            var (value, code) = PropertyValue(property, attribute);
+            var (value, code, authoredAt, trimmed) = PropertyValue(property, attribute);
 
-            WriteLine(builder, attribute, $"{pad}{target} = ", value, "", code, mappings, filePath);
+            WriteLine(builder, attribute, $"{pad}{target} = ", value, "", code, authoredAt, mappings, filePath, trimmed);
 
             first ??= target;
         }
@@ -175,14 +175,49 @@ internal static class TagHelperWriter
         {
             WriteLine(builder, attribute,
                 $"{pad}{Values}.AddConditional(__tagHelperExecutionContext, {Quote(attribute.Name)}, ",
-                Part(only), $", {style})", code: true, mappings, filePath);
+                Part(only), $", {style})", code: true, authoredAt: PartOffset(only), mappings, filePath);
             return;
         }
 
+        var html = $"{Values}.Html(";
+
         WriteLine(builder, attribute,
             $"{pad}__tagHelperExecutionContext.AddHtmlAttribute({Quote(attribute.Name)}, ",
-            $"{Values}.Html({string.Join(", ", attribute.Value.Select(HtmlPart))})", $", {style})",
-            code: true, mappings, filePath);
+            $"{html}{string.Join(", ", attribute.Value.Select(HtmlPart))})", $", {style})",
+            code: true, authoredAt: html.Length + FirstPartOffset(attribute, HtmlPart), mappings, filePath);
+    }
+
+    /// <summary>
+    /// How far into the text written for an attribute's first piece the
+    /// template's own text starts: past the quote of a literal, the
+    /// HtmlString around one, or the parenthesis around an expression.
+    /// </summary>
+    private static int FirstPartOffset(TagHelperAttributeSyntax attribute, Func<VbHtmlNode, string> written)
+    {
+        var first = attribute.Value[0];
+        var text = written(first);
+
+        return first switch
+        {
+            HtmlNode html => text.IndexOf('"') + 1,
+            ExpressionNode expression => 1 + PartOffset(expression),
+            _ => 0,
+        };
+    }
+
+    /// <summary>Where an expression's text starts in what <see cref="Part"/> writes for it.</summary>
+    private static int PartOffset(ExpressionNode expression)
+    {
+        var offset = 0;
+
+        if (expression.IsRaw)
+            offset += "New Global.Microsoft.AspNetCore.Html.HtmlString(Global.System.Convert.ToString(".Length;
+
+        // "(Await x)": the mapping covers the Await, as a view's does.
+        // "(Await x)": the expression starts past the keyword, as a view's does.
+        if (expression.IsAwaited) offset += "(Await ".Length;
+
+        return offset;
     }
 
     /// <summary>
@@ -197,6 +232,15 @@ internal static class TagHelperWriter
     /// in asp-for="Customer" finds Customer and not the tag helper's field.
     /// Plain text needs no mapping: nothing in it can fail to compile.
     /// </remarks>
+    /// <param name="authoredAt">
+    /// Where the template's own text starts inside <paramref name="value"/>,
+    /// counted from what this class writes around it — never searched for,
+    /// since a one-letter name is also inside "ModelExpressionProvider".
+    /// </param>
+    /// <param name="trimmed">
+    /// Whether the value was written without the leading spaces of its first
+    /// piece, so the template side must skip them too.
+    /// </param>
     private static void WriteLine(
         StringBuilder builder,
         TagHelperAttributeSyntax attribute,
@@ -204,8 +248,10 @@ internal static class TagHelperWriter
         string value,
         string after,
         bool code,
+        int authoredAt,
         List<SourceMapping> mappings,
-        string? filePath)
+        string? filePath,
+        bool trimmed = false)
     {
         var line = before + value + after;
 
@@ -215,40 +261,42 @@ internal static class TagHelperWriter
             return;
         }
 
-        var first = attribute.Value[0];
-        var length = attribute.Value.Sum(part => part switch
-        {
-            HtmlNode html => html.Text.Length,
-            ExpressionNode expression => expression.Expression.Length + 1,
-            _ => 0,
-        });
+        // A value written without its leading spaces starts at its first
+        // piece that is not only spaces: in " @Model.List" that is the
+        // expression, not the space in front of it.
+        var first = trimmed
+            ? attribute.Value.FirstOrDefault(part => part is not HtmlNode { Text: var text } || text.Trim().Length > 0)
+              ?? attribute.Value[0]
+            : attribute.Value[0];
 
-        // Where the author's own text begins in the line: the value itself,
-        // or inside it where the value wraps it ("__model." + path).
-        var authored = first switch
+        var position = first switch
         {
-            HtmlNode html => html.Text.Trim(),
-            ExpressionNode expression => expression.Expression,
-            _ => "",
+            ExpressionNode expression => expression.ExpressionPosition,
+            HtmlNode html when trimmed => html.Position + html.Text.Length - html.Text.TrimStart().Length,
+            _ => first.Position,
         };
 
-        var inValue = authored.Length > 0 ? value.IndexOf(authored, StringComparison.Ordinal) : -1;
-        var offset = before.Length + Math.Max(0, inValue);
-
-        // An expression's position is its "@"; the text starts after it.
-        var position = first is ExpressionNode ? first.Position + 1 : first.Position;
+        var end = attribute.Value[attribute.Value.Count - 1] switch
+        {
+            ExpressionNode expression => expression.ExpressionPosition + expression.Expression.Length,
+            HtmlNode html => html.Position + html.Text.Length,
+            _ => position,
+        };
 
         ExternalSourceWriter.WriteMapped(
-            builder, mappings, filePath, position, length, first.Line,
-            () => builder.AppendLine(line), offset);
+            builder, mappings, filePath, position, Math.Max(0, end - position), first.Line,
+            () => builder.AppendLine(line), before.Length + authoredAt);
     }
 
     /// <summary>
     /// The value an attribute gives a property, as Visual Basic, and whether
     /// it holds the author's code rather than only text.
     /// </summary>
-    private static (string Value, bool Code) PropertyValue(TagHelperProperty property, TagHelperAttributeSyntax attribute)
+    private static (string Value, bool Code, int AuthoredAt, bool Trimmed) PropertyValue(
+        TagHelperProperty property, TagHelperAttributeSyntax attribute)
     {
+        const string Lambda = "ModelExpressionProvider.CreateModelExpression(ViewData, Function(__model) ";
+
         switch (property.Kind)
         {
             case TagHelperPropertyKind.ModelExpression:
@@ -256,31 +304,37 @@ internal static class TagHelperWriter
                 // An expression is the lambda's body as written, as in C#:
                 // asp-for="@item.Name" is item.Name, not a member of the model.
                 if (SingleExpression(attribute) is { } only)
-                    return ($"ModelExpressionProvider.CreateModelExpression(ViewData, Function(__model) {only.Expression})", true);
+                    return ($"{Lambda}{only.Expression})", true, Lambda.Length, false);
 
                 // Text is a path on the model. C# indexes with brackets,
                 // Visual Basic with parentheses.
                 var path = attribute.Text.Trim().Replace('[', '(').Replace(']', ')');
-                var body = path.Length == 0 ? "__model" : $"__model.{path}";
 
-                return ($"ModelExpressionProvider.CreateModelExpression(ViewData, Function(__model) {body})", true);
+                return path.Length == 0
+                    ? ($"{Lambda}__model)", true, Lambda.Length, true)
+                    : ($"{Lambda}__model.{path})", true, Lambda.Length + "__model.".Length, true);
             }
 
             case TagHelperPropertyKind.Enum:
                 return attribute.IsLiteral
-                    ? ($"{property.TypeName}.{attribute.Text.Trim()}", true)
-                    : (CodeText(attribute), true);
+                    ? ($"{property.TypeName}.{attribute.Text.Trim()}", true, property.TypeName.Length + 1, true)
+                    : (CodeText(attribute), true, 0, true);
 
             case TagHelperPropertyKind.Code:
             case TagHelperPropertyKind.CodeDictionary:
                 return attribute.Style == TagHelperQuoteStyle.Minimized
-                    ? ("True", false)
-                    : (CodeText(attribute), true);
+                    ? ("True", false, 0, false)
+                    : (CodeText(attribute), true, 0, true);
 
             default:
-                return attribute.IsLiteral
-                    ? (Quote(attribute.Text), false)
-                    : ($"{Values}.Text({string.Join(", ", attribute.Value.Select(TextPart))})", true);
+            {
+                if (attribute.IsLiteral) return (Quote(attribute.Text), false, 0, false);
+
+                var text = $"{Values}.Text(";
+
+                return ($"{text}{string.Join(", ", attribute.Value.Select(TextPart))})", true,
+                    text.Length + FirstPartOffset(attribute, TextPart), false);
+            }
         }
     }
 

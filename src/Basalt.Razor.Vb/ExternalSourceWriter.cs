@@ -51,7 +51,8 @@ internal static class ExternalSourceWriter
         int originalLength,
         int originalLine,
         Action write,
-        int offset = 0)
+        int offset = 0,
+        (int OriginalStart, int GeneratedOffset, int Length)? keyword = null)
     {
         if (filePath is null)
         {
@@ -82,6 +83,18 @@ internal static class ExternalSourceWriter
             new SourceSpan(generatedStart + offset, Math.Max(0, generatedLength - offset)),
             originalLine,
             generatedLine));
+
+        // A keyword written in front of the mapped text — "Await" — mapped
+        // onto its own place in the template, so an error about it lands
+        // there and not nowhere.
+        if (keyword is { } extra)
+        {
+            mappings.Add(new SourceMapping(
+                new SourceSpan(extra.OriginalStart, extra.Length),
+                new SourceSpan(generatedStart + extra.GeneratedOffset, extra.Length),
+                originalLine,
+                generatedLine));
+        }
 
         // A multi-line region needs one entry per line. Without them a caret
         // anywhere below the first line of a Code block mapped to nothing,

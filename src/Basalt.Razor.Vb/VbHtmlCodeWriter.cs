@@ -528,9 +528,12 @@ public static class VbHtmlCodeWriter
         if (prefix.Length > 0)
             WriteMarkup(builder, prefix, pad, host);
 
-        WriteMapped(builder, mappings, filePath, value.Position,
-            value.Expression.Length, value.Line, () =>
-                builder.AppendLine($"{pad}WriteAttribute({Quote(name)}, {value.Expression})"));
+        // Awaited as written — @Await x wrote the Task itself — and mapped
+        // from the expression's own text, past "WriteAttribute(name, ".
+        var opening = $"{pad}WriteAttribute({Quote(name)}, ";
+        var written = value.IsAwaited ? $"Await {value.Expression}" : value.Expression;
+
+        WriteExpressionMapped(builder, mappings, filePath, value, opening, $"{opening}{written})");
 
         return true;
     }
@@ -592,11 +595,10 @@ public static class VbHtmlCodeWriter
                     ? $"Await {expression.Expression}"
                     : expression.Expression;
 
-                WriteMapped(builder, mappings, filePath, expression.Position,
-                    expression.Expression.Length, expression.Line, () =>
-                        builder.AppendLine(expression.IsRaw
-                            ? $"{pad}WriteRaw({written})"
-                            : $"{pad}Write({written})"));
+                var opening = expression.IsRaw ? $"{pad}WriteRaw(" : $"{pad}Write(";
+                var line = $"{opening}{written})";
+
+                WriteExpressionMapped(builder, mappings, filePath, expression, opening, line);
                 return;
 
             case StatementNode statement:
@@ -676,6 +678,38 @@ public static class VbHtmlCodeWriter
                     block.Closing, block.ClosingPosition, block.ClosingLine);
                 return;
         }
+    }
+
+    /// <summary>
+    /// Writes the line carrying an expression, mapped from the expression's
+    /// own text on both sides.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="opening"/> is everything this writer puts in front of
+    /// the expression — "Write(", "WriteAttribute(name, ", "Dim __v0 = " —
+    /// so the offset is counted, not searched for: a one-letter name is also
+    /// in "Write". Anchored at the "@" and the start of the line instead, a
+    /// caret on "Name" in @Model.Name was asked about Model.
+    ///
+    /// An awaited expression is written "Await " + expression, and the
+    /// keyword gets a mapping of its own onto the template's "Await": an
+    /// error about the Await itself — in a Sub that is not Async — must land
+    /// on the template, and however many spaces the author put after it, the
+    /// expression still maps character for character.
+    /// </remarks>
+    internal static void WriteExpressionMapped(
+        StringBuilder builder, List<SourceMapping> mappings, string? filePath,
+        ExpressionNode expression, string opening, string line)
+    {
+        var awaitWritten = expression.IsAwaited ? "Await ".Length : 0;
+
+        (int, int, int)? keyword = expression.IsAwaited
+            ? (expression.Position + 1, opening.Length, "Await".Length)
+            : null;
+
+        ExternalSourceWriter.WriteMapped(builder, mappings, filePath,
+            expression.ExpressionPosition, expression.Expression.Length, expression.Line,
+            () => builder.AppendLine(line), opening.Length + awaitWritten, keyword);
     }
 
     /// <summary>
