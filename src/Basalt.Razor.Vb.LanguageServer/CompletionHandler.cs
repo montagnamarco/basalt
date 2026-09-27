@@ -202,7 +202,7 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
         var line = before[lineStart..];
 
         if (line.TrimStart().StartsWith('@') && !line.Contains(' '))
-            return Directives();
+            return Directives(document);
 
         return Markup(document.Text, offset);
     }
@@ -246,21 +246,14 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
         return [.. items];
     }
 
-    private static IReadOnlyList<CompletionItem> Directives() =>
+    /// <summary>
+    /// The directives a file of this kind takes, from the table kept beside
+    /// the parser: the server offered seven from a list of its own.
+    /// </summary>
+    private static IReadOnlyList<CompletionItem> Directives(OpenDocument document) =>
     [
-        Item("ModelType", CompletionItemKind.Keyword,
-             "Declares the type of the view's model.", "ModelType "),
-        Item("Imports", CompletionItemKind.Keyword,
-             "Imports a namespace into the view.", "Imports "),
-        Item("Code", CompletionItemKind.Keyword,
-             "A block of Visual Basic that produces no output.", "Code\n    \nEnd Code"),
-        Item("If", CompletionItemKind.Keyword, "Conditional markup.", "If  Then\n\nEnd If"),
-        Item("For Each", CompletionItemKind.Keyword,
-             "Repeats markup for each item.", "For Each item In \n\nNext"),
-        Item("While", CompletionItemKind.Keyword, "Repeats while a condition holds.",
-             "While \n\nEnd While"),
-        Item("Select Case", CompletionItemKind.Keyword, "Chooses between cases.",
-             "Select Case \n    Case \nEnd Select")
+        .. VbHtmlDirectives.For(document.Uri).Select(directive =>
+            Item(directive.Name, CompletionItemKind.Keyword, directive.Description, directive.Insertion))
     ];
 
     /// <summary>

@@ -80,6 +80,29 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     public async Task<IReadOnlyList<CompletionItem>> GetCompletionsAsync(
         LanguageDocument document, int position, CancellationToken ct = default)
     {
+        var answered = await AnswerAsync(document, position, ct).ConfigureAwait(false);
+
+        // "@Mo" at the start of a line may become "@ModelType" or "@Model.":
+        // the directives the parser reads come first, then whatever the code
+        // there could be. Neither editor offered most of them: the language
+        // server had seven in a list of its own, the IDE none.
+        if (TemplateGeneration.IsPage(document.FilePath) ||
+            !VbHtmlDirectives.IsDirectivePosition(document.Text, position))
+            return answered;
+
+        var directives = VbHtmlDirectives.For(document.FilePath)
+            .Select(directive => new CompletionItem(directive.Name, directive.Insertion, SymbolKind.Keyword)
+            {
+                Description = directive.Description,
+                FilterText = directive.Name
+            });
+
+        return [.. directives, .. answered];
+    }
+
+    private async Task<IReadOnlyList<CompletionItem>> AnswerAsync(
+        LanguageDocument document, int position, CancellationToken ct)
+    {
         var spaces = SpacesBeforeCaret(document.Text, position);
 
         // Which half the caret is in decides who answers. A statement block's
