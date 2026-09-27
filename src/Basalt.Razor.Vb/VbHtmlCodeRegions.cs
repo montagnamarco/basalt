@@ -51,13 +51,12 @@ public static class VbHtmlCodeRegions
                     var bodyAt = text.IndexOf(statement.Code, statement.Position, StringComparison.Ordinal);
                     if (bodyAt < 0) break;
 
-                    var bodyEnd = bodyAt + statement.Code.Length;
-                    var whitespaceEnd = bodyEnd;
+                    if (InWhitespaceAfter(text, bodyAt + statement.Code.Length, position)) return true;
+                    break;
 
-                    while (whitespaceEnd < text.Length && text[whitespaceEnd] is ' ' or '\t' or '\r' or '\n')
-                        whitespaceEnd++;
-
-                    if (position > bodyEnd && position <= whitespaceEnd) return true;
+                case FunctionsNode functions:
+                    if (InWhitespaceAfter(text, functions.BodyPosition + functions.Code.Length, position))
+                        return true;
                     break;
 
                 case BlockNode block:
@@ -75,6 +74,17 @@ public static class VbHtmlCodeRegions
         }
 
         return false;
+    }
+
+    /// <summary>Whether a position is in the whitespace that follows an offset.</summary>
+    private static bool InWhitespaceAfter(string text, int bodyEnd, int position)
+    {
+        var whitespaceEnd = bodyEnd;
+
+        while (whitespaceEnd < text.Length && text[whitespaceEnd] is ' ' or '\t' or '\r' or '\n')
+            whitespaceEnd++;
+
+        return position > bodyEnd && position <= whitespaceEnd;
     }
 
     /// <summary>
@@ -141,6 +151,14 @@ public static class VbHtmlCodeRegions
 
                 case SectionNode section:
                     if (Covers(section.Body, position, text)) return true;
+                    break;
+
+                case FunctionsNode functions:
+                    // Members declared for the page: Visual Basic as much as a
+                    // code block's body, and the list asked of HTML there.
+                    if (position > functions.BodyPosition
+                        && position <= functions.BodyPosition + functions.Code.Length)
+                        return true;
                     break;
             }
         }

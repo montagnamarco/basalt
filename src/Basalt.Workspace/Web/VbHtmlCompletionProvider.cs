@@ -187,80 +187,13 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     /// </remarks>
     private static int? CaretInGenerated(
         string path, string template, TemplateGeneration.Generated generated, int position) =>
-        StatementLineCaret(path, template, generated, position)
+        TemplateGeneration.StatementLineCaret(path, template, generated, position)
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Strict)
         ?? (TemplateGeneration.IsPage(path) ? null : VbHtmlCodeRegions.CaretInGenerated(
             template, generated.Code, generated.Map, position))
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inclusive)
         ?? generated.Map.ToGenerated(position, template, generated.Code, MappingBehavior.Inferred)
         ?? NearestBefore(generated.Map, position);
-
-    /// <summary>
-    /// The caret carried by line, on a line the writer copied as it stands:
-    /// a line of a statement block's body.
-    /// </summary>
-    /// <remarks>
-    /// There the line mapping is exact and the span arithmetic is not: the
-    /// writer re-indents a body running over several lines, so an offset
-    /// measured from the body's start drifts by the indentation of every
-    /// line before, and the caret after "= New" on the body's second line
-    /// landed on the next one.
-    ///
-    /// Checked rather than assumed: the generated line must carry the
-    /// template's text up to the caret, after its own indentation, or the
-    /// answer is left to the span mapping. A line the writer rewrote, an
-    /// expression put inside Write(...) say, never matches.
-    /// </remarks>
-    private static int? StatementLineCaret(
-        string path, string template, TemplateGeneration.Generated generated, int position)
-    {
-        if (TemplateGeneration.IsPage(path)) return null;
-
-        var templateLineStart = template.LastIndexOf('\n', Math.Max(0, position - 1)) + 1;
-        if (position < templateLineStart) templateLineStart = 0;
-
-        var templateLine = 1 + template.Take(templateLineStart).Count(character => character == '\n');
-
-        if (generated.Map.ToGeneratedLine(templateLine) is not { } generatedLine) return null;
-
-        var code = generated.Code;
-        var generatedLineStart = StartOfLine(code, generatedLine);
-        if (generatedLineStart < 0) return null;
-
-        var generatedLineEnd = code.IndexOf('\n', generatedLineStart);
-        if (generatedLineEnd < 0) generatedLineEnd = code.Length;
-        if (generatedLineEnd > generatedLineStart && code[generatedLineEnd - 1] == '\r') generatedLineEnd--;
-
-        var typed = template[templateLineStart..position].TrimStart(' ', '\t');
-        var content = code[generatedLineStart..generatedLineEnd].TrimStart(' ', '\t');
-        var contentStart = generatedLineEnd - content.Length;
-
-        if (content.StartsWith(typed, StringComparison.Ordinal))
-            return contentStart + typed.Length;
-
-        // The writer drops a statement's trailing spaces: the caret after
-        // them goes to the end of the line, where they are put back.
-        var word = typed.TrimEnd(' ', '\t');
-
-        if (word.Length > 0 && content == word)
-            return contentStart + word.Length;
-
-        return null;
-    }
-
-    /// <summary>Where a 1-based line begins, or -1 when there is no such line.</summary>
-    private static int StartOfLine(string text, int line)
-    {
-        var at = 0;
-
-        for (var current = 1; current < line; current++)
-        {
-            at = text.IndexOf('\n', at) + 1;
-            if (at == 0) return -1;
-        }
-
-        return at;
-    }
 
     /// <summary>
     /// The end of the last mapping that starts before a position.

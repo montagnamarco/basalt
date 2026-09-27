@@ -126,8 +126,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
             document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
-        var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
-                  ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
+        var mapped = MapCaret(document, generated, position);
 
         if (mapped is not { } at) return null;
 
@@ -141,6 +140,21 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
 
         return BackToTemplate(document, generated, found);
     }
+
+    /// <summary>
+    /// Where a template caret lands in the generated code, for the questions
+    /// about the symbol under it.
+    /// </summary>
+    /// <remarks>
+    /// The line mapping first, where the writer copied the line as it stands:
+    /// on a multi-line code block the span arithmetic drifts by each line's
+    /// re-indentation, and hovering Math.Max on the body's third line
+    /// described the variable on its first.
+    /// </remarks>
+    private static int? MapCaret(LanguageDocument document, TemplateGeneration.Generated generated, int position) =>
+        TemplateGeneration.StatementLineCaret(document.FilePath, document.Text, generated, position)
+        ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
+        ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
 
     /// <summary>
     /// Every use of the symbol under the caret.
@@ -160,8 +174,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
             document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
-        var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
-                  ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
+        var mapped = MapCaret(document, generated, position);
 
         if (mapped is not { } at) return [];
 
@@ -208,7 +221,8 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
         var offset = generatedText.Lines[line].Start +
                      Math.Max(0, found.Range.Start.Column - 1);
 
-        if (generated.Map.ToOriginal(offset) is not { } original) return null;
+        if ((TemplateGeneration.StatementLineOriginal(document.FilePath, document.Text, generated, offset)
+             ?? generated.Map.ToOriginal(offset)) is not { } original) return null;
 
         var templateText = SourceText.From(document.Text);
 
@@ -240,8 +254,7 @@ public sealed class VbHtmlNavigationProvider : INavigationProvider
             document.FilePath, Host, document.Text, AskCatalog, ct)
             .ConfigureAwait(false);
 
-        var mapped = generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inclusive)
-                  ?? generated.Map.ToGenerated(position, document.Text, generated.Code, MappingBehavior.Inferred);
+        var mapped = MapCaret(document, generated, position);
 
         if (mapped is not { } at) return null;
 

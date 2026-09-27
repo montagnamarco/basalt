@@ -116,6 +116,84 @@ public sealed class LanguageServerCompletionTriggerTests : IDisposable
         Assert.Contains(items, item => item.Label == "AddDays");
     }
 
+    [Theory]
+    [InlineData("        Return x.", ".", "CompareTo")]
+    [InlineData("        Dim options As System.Text.Json.JsonSerializerOptions = New ", " ", "JsonSerializerOptions")]
+    public async Task MembersDeclaredInFunctionsAreVisualBasicToo(string statement, string typed, string expected)
+    {
+        // The members of a view's @Functions block were never counted as
+        // code: every list there was asked of HTML and came back empty.
+        using var compilation = new ProjectCompilation();
+        compilation.StartLoading(_root);
+        await compilation.Loaded;
+        Assert.True(compilation.IsReady, compilation.Problem);
+
+        var documents = new DocumentStore();
+        var documentUri = DocumentUri.FromFileSystemPath(Path.Combine(_root, "Functions.vbhtml"));
+        var text = "<p>@Twice(2)</p>\n@Functions\n    Function Twice(x As Integer) As Integer\n" +
+                   statement + "\n    End Function\nEnd Functions\n";
+        documents.Update(documentUri.ToString(), text, 1);
+
+        var items = await new VbHtmlCompletionHandler(documents, compilation).Handle(new CompletionParams
+        {
+            TextDocument = new TextDocumentIdentifier(documentUri),
+            Position = new Position(3, statement.Length),
+            Context = new CompletionContext
+            {
+                TriggerKind = CompletionTriggerKind.TriggerCharacter,
+                TriggerCharacter = typed
+            }
+        }, default);
+
+        Assert.Contains(items, item => item.Label.EndsWith(expected, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AFieldInitialiserLastInFunctionsIsAskedOfVisualBasic()
+    {
+        // The block's last line, so the caret after the space sits past the
+        // trimmed body, as on a code block's last line.
+        using var compilation = new ProjectCompilation();
+        compilation.StartLoading(_root);
+        await compilation.Loaded;
+        Assert.True(compilation.IsReady, compilation.Problem);
+
+        var documents = new DocumentStore();
+        var documentUri = DocumentUri.FromFileSystemPath(Path.Combine(_root, "Field.vbhtml"));
+        const string statement = "    Private ReadOnly _options As System.Text.Json.JsonSerializerOptions = New ";
+        documents.Update(documentUri.ToString(), "<p>Hi</p>\n@Functions\n" + statement + "\nEnd Functions\n", 1);
+
+        var items = await new VbHtmlCompletionHandler(documents, compilation).Handle(new CompletionParams
+        {
+            TextDocument = new TextDocumentIdentifier(documentUri),
+            Position = new Position(2, statement.Length),
+            Context = new CompletionContext
+            {
+                TriggerKind = CompletionTriggerKind.TriggerCharacter,
+                TriggerCharacter = " "
+            }
+        }, default);
+
+        var preselected = Assert.Single(items, item => item.Preselect);
+        Assert.Equal("Json.JsonSerializerOptions", preselected.InsertText);
+    }
+
+    [Fact]
+    public void AFunctionsBodyIsCodeFromItsFirstCharacterToItsLast()
+    {
+        const string text = "<p>Hi</p>\n@Functions\n    Function One() As Integer\n        Return 1\n    End Function\nEnd Functions\n<p>Bye</p>";
+        var first = text.IndexOf("Function One", StringComparison.Ordinal);
+        var last = text.IndexOf("End Function\n", StringComparison.Ordinal) + "End Function".Length;
+
+        Assert.False(VbHtmlCodeRegions.IsInCode(text, first));
+        Assert.True(VbHtmlCodeRegions.IsInCode(text, first + 1));
+        Assert.True(VbHtmlCodeRegions.IsInCode(text, last));
+        Assert.False(VbHtmlCodeRegions.IsInCode(text, last + 1));
+        Assert.True(VbHtmlCodeRegions.IsAfterStatementBody(text, last + 1));
+        Assert.False(VbHtmlCodeRegions.IsInCode(text, text.IndexOf("Bye", StringComparison.Ordinal)));
+        Assert.False(VbHtmlCodeRegions.IsAfterStatementBody(text, text.IndexOf("Bye", StringComparison.Ordinal)));
+    }
+
     [Fact]
     public async Task ASpaceInCodeIsNotTakenForMarkupWhileTheProjectLoads()
     {

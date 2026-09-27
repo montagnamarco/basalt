@@ -32,6 +32,132 @@ internal static class TemplateGeneration
             position >= import.Position && position <= import.Position + import.Name.Length);
     }
 
+    /// <summary>
+    /// The caret carried by line, on a line the writer copied as it stands:
+    /// a line of a statement block's body.
+    /// </summary>
+    /// <remarks>
+    /// There the line mapping is exact and the span arithmetic is not: the
+    /// writer re-indents a body running over several lines, so an offset
+    /// measured from the body's start drifts by the indentation of every
+    /// line before, and the caret after "= New" on the body's second line
+    /// landed on the next one.
+    ///
+    /// Checked rather than assumed: the generated line must carry the
+    /// template's text up to the caret, after its own indentation, or the
+    /// answer is left to the span mapping. A line the writer rewrote, an
+    /// expression put inside Write(...) say, never matches.
+    /// </remarks>
+    internal static int? StatementLineCaret(
+        string path, string template, Generated generated, int position)
+    {
+        if (IsPage(path)) return null;
+
+        var templateLineStart = template.LastIndexOf('\n', Math.Max(0, position - 1)) + 1;
+        if (position < templateLineStart) templateLineStart = 0;
+
+        var templateLine = 1 + template.Take(templateLineStart).Count(character => character == '\n');
+
+        if (generated.Map.ToGeneratedLine(templateLine) is not { } generatedLine) return null;
+
+        var code = generated.Code;
+        var generatedLineStart = StartOfLine(code, generatedLine);
+        if (generatedLineStart < 0) return null;
+
+        var generatedLineEnd = code.IndexOf('\n', generatedLineStart);
+        if (generatedLineEnd < 0) generatedLineEnd = code.Length;
+        if (generatedLineEnd > generatedLineStart && code[generatedLineEnd - 1] == '\r') generatedLineEnd--;
+
+        var typed = template[templateLineStart..position].TrimStart(' ', '\t');
+
+        // In the indentation there is no text to match, and answering with
+        // the line's first token made hovering blank space describe "Dim".
+        if (typed.Length == 0) return null;
+        var content = code[generatedLineStart..generatedLineEnd].TrimStart(' ', '\t');
+        var contentStart = generatedLineEnd - content.Length;
+
+        if (content.StartsWith(typed, StringComparison.Ordinal))
+            return contentStart + typed.Length;
+
+        // The writer drops a statement's trailing spaces: the caret after
+        // them goes to the end of the line, where they are put back.
+        var word = typed.TrimEnd(' ', '\t');
+
+        if (word.Length > 0 && content == word)
+            return contentStart + word.Length;
+
+        return null;
+    }
+
+    /// <summary>
+    /// The template position a generated position came from, carried by line
+    /// on a line the writer copied as it stands; null where it did not.
+    /// </summary>
+    /// <remarks>
+    /// The way back from <see cref="StatementLineCaret"/>, and for the same
+    /// reason: the span arithmetic ignores the writer's indentation of every
+    /// body line, so a definition inside a multi-line block came back a
+    /// line's indentation early per line. Checked the same way: the template
+    /// line must carry the same text as the generated one.
+    /// </remarks>
+    internal static int? StatementLineOriginal(string path, string template, Generated generated, int generatedPosition)
+    {
+        if (IsPage(path)) return null;
+
+        var code = generated.Code;
+        if (generatedPosition < 0 || generatedPosition > code.Length) return null;
+
+        var generatedLineStart = code.LastIndexOf('\n', Math.Max(0, generatedPosition - 1)) + 1;
+        if (generatedPosition < generatedLineStart) generatedLineStart = 0;
+
+        var generatedLine = 1 + code.Take(generatedLineStart).Count(character => character == '\n');
+
+        if (generated.Map.OriginalLineOf(generatedLine) is not { } templateLine) return null;
+
+        var indentEnd = generatedLineStart;
+        while (indentEnd < code.Length && code[indentEnd] is ' ' or '\t') indentEnd++;
+
+        // Inside the indentation nothing was written; at its end, the line's
+        // first token, the position is as exact as anywhere else.
+        if (generatedPosition < indentEnd) return null;
+
+        var generatedLineEnd = code.IndexOf('\n', generatedLineStart);
+        if (generatedLineEnd < 0) generatedLineEnd = code.Length;
+
+        var templateLineStart = StartOfLine(template, templateLine);
+        if (templateLineStart < 0) return null;
+
+        var templateLineEnd = template.IndexOf('\n', templateLineStart);
+        if (templateLineEnd < 0) templateLineEnd = template.Length;
+
+        var content = template[templateLineStart..templateLineEnd].TrimStart(' ', '\t');
+        var contentStart = templateLineEnd - content.Length;
+
+        // The whole line copied as it stands, not only the part before the
+        // position: at a line's first token nothing precedes it, and an empty
+        // prefix matches any line at all.
+        var writtenLine = code[indentEnd..generatedLineEnd].TrimEnd(' ', '\t', '\r');
+
+        if (!string.Equals(content.TrimEnd(' ', '\t', '\r'), writtenLine, StringComparison.Ordinal))
+            return null;
+
+        return contentStart + (generatedPosition - indentEnd);
+    }
+
+    /// <summary>Where a 1-based line begins, or -1 when there is no such line.</summary>
+    private static int StartOfLine(string text, int line)
+    {
+        var at = 0;
+
+        for (var current = 1; current < line; current++)
+        {
+            at = text.IndexOf('\n', at) + 1;
+            if (at == 0) return -1;
+        }
+
+        return at;
+    }
+
     internal static IReadOnlyList<VbHtmlDiagnostic> ParseDiagnostics(string path, string text) =>
         IsPage(path) ? VbPageParser.Parse(text).Diagnostics : VbHtmlParser.Parse(text).Diagnostics;
 
