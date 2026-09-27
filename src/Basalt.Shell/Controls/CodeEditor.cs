@@ -594,6 +594,9 @@ public sealed class CodeEditor : UserControl
     {
         if (typed.Length == 0) return;
 
+        if (typed == "'" && AutoFormatWhileTyping && _document.Language == SourceLanguage.VisualBasic &&
+            await VisualBasicDocumentationInput.TryGenerateAsync(_editor)) return;
+
         // The dot is the natural trigger in both languages, and it is worth
         // answering at once: the member list is what the dot was typed for.
         if (typed == ".")
