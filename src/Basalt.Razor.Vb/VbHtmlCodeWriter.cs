@@ -773,7 +773,7 @@ public static class VbHtmlCodeWriter
     /// qualifies C# model types for the same reason; the template author
     /// should not have to write Global. to be understood.
     /// </remarks>
-    private static string Qualify(string modelType)
+    internal static string Qualify(string modelType)
     {
         var trimmed = modelType.Trim();
 

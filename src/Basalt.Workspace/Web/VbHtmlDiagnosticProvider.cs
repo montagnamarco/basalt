@@ -60,7 +60,7 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
         {
             var parsed = VbHtmlParser.Parse(document.Text);
 
-            diagnostics.AddRange(parsed.Diagnostics.Select(d => new Diagnostic(
+            diagnostics.AddRange(parsed.Diagnostics.Where(d => d.AppliesTo(document.FilePath)).Select(d => new Diagnostic(
                 d.Id,
                 d.Message,
                 DiagnosticSeverity.Error,

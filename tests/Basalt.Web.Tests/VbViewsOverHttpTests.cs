@@ -527,4 +527,18 @@ public sealed class VbViewsOverHttpTests
         Assert.Contains("""<label for="Name">""", html);
         Assert.DoesNotContain("asp-for", html);
     }
+
+    [Fact]
+    public async Task AComponentAskingForInteractiveServerIsRenderedForTheCircuit()
+    {
+        // @rendermode InteractiveServer in Clicker.vbrazor. The prerendered
+        // markup carries the marker blazor.web.js starts a circuit from;
+        // without the attribute Blazor reads, the page is static and the
+        // button does nothing.
+        var html = await GetAsync("/clicker");
+
+        Assert.Contains("Clicks: 0", html);
+        Assert.Matches(@"<!--Blazor:\{[^}]*""type"":""server""", html);
+        Assert.Contains("_framework/blazor.web.js", html);
+    }
 }

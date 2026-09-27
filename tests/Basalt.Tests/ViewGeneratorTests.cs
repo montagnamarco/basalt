@@ -168,6 +168,35 @@ public class ViewGeneratorTests
     }
 
     [Fact]
+    public void RenderModeInAViewIsReported()
+    {
+        // The parser accepts @rendermode now that components use it; a view
+        // copied from a component must still hear that it has none.
+        var outcome = Run((InProject("Views", "Home", "Index.vbhtml"), "@rendermode InteractiveServer\n<p>hi</p>\n"));
+
+        var problem = Assert.Single(outcome.Diagnostics, d => d.GetMessage().Contains("@rendermode"));
+
+        Assert.Equal(0, problem.Location.GetLineSpan().StartLinePosition.Line);
+    }
+
+    [Fact]
+    public void TheNearestViewImportsDecidesTheModel()
+    {
+        // As Razor: the file beside the view beats the one above it. Applied
+        // outermost first with ??=, the outermost used to win.
+        var outcome = Run(
+            (InProject("Views", "_ViewImports.vbhtml"), "@ModelType String\n"),
+            (InProject("Views", "Admin", "_ViewImports.vbhtml"), "@ModelType Integer\n"),
+            (InProject("Views", "Admin", "Index.vbhtml"), "<p>@Model</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+
+        var view = Assert.Single(outcome.Sources, s => s.Key.EndsWith("Index.vbhtml.g.vb", StringComparison.Ordinal)).Value;
+
+        Assert.Contains("(Of Integer)", view);
+    }
+
+    [Fact]
     public void AnAreaViewAndARootViewOfTheSameNameAreTwoClasses()
     {
         var outcome = Run(

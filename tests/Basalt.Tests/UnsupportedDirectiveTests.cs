@@ -96,10 +96,23 @@ public sealed class UnsupportedDirectiveTests
     public void SaysBlazorDirectivesBelongToBlazor()
     {
         // A template copied from a component will contain them.
-        var problem = Problem("@rendermode InteractiveServer\n<p>a</p>");
+        // @rendermode is read now, for components; @typeparam is not yet.
+        var problem = Problem("@typeparam TItem\n<p>a</p>");
 
         Assert.NotNull(problem);
         Assert.Contains("Blazor", problem.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RenderModeIsReportedForAViewAndNotForAComponent()
+    {
+        // The parser reports it for both; each caller keeps what applies,
+        // so the editor and the build agree.
+        var problem = Assert.Single(VbHtmlParser.Parse("@rendermode InteractiveServer\n<p>a</p>").Diagnostics);
+
+        Assert.Equal(VbHtmlDiagnostic.RenderModeInViewId, problem.Id);
+        Assert.True(problem.AppliesTo(Path.Combine("Views", "Index.vbhtml")));
+        Assert.False(problem.AppliesTo(Path.Combine("Components", "Counter.vbrazor")));
     }
 
     [Fact]

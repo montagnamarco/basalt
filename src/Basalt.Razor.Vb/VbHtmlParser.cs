@@ -417,6 +417,36 @@ public sealed class VbHtmlParser
             return;
         }
 
+        // Only as a directive: a name, then its value on the same line.
+        // "@RenderMode" alone may be a property someone named so.
+        if (LooksLikeKeywordAt(_index, "rendermode") &&
+            _index + "rendermode".Length < _text.Length &&
+            _text[_index + "rendermode".Length] is ' ' or '\t')
+        {
+            Advance("rendermode".Length);
+            SkipHorizontalWhitespace();
+
+            // Where the expression starts, so the generated code can map it
+            // back: IntelliSense on "InteractiveServer" describes that word.
+            var valuePosition = _index;
+            var value = ReadToEndOfLine().TrimEnd();
+
+            document.RenderMode = value;
+            document.RenderModePosition = valuePosition;
+            document.RenderModeLine = line;
+            into.Add(new DirectiveNode("rendermode", value, start, line));
+
+            // Said for every template; a component's callers drop it (see
+            // VbHtmlDiagnostic.AppliesTo). A view has no render mode.
+            document.Diagnostics.Add(new VbHtmlDiagnostic(
+                VbHtmlDiagnostic.RenderModeInViewId,
+                "@rendermode belongs to Blazor components (.vbrazor); a view has none. " +
+                "Render an interactive component from a view with <component type=\"...\" render-mode=\"...\" />.",
+                line,
+                1));
+            return;
+        }
+
         // "@Model Customer" is how Razor C# spells it; "@ModelType" is the
         // Visual Basic spelling. Both are read, since a template written by
         // someone arriving from C# should not fail over a keyword.
@@ -1367,7 +1397,7 @@ public sealed class VbHtmlParser
     private static readonly string[] NotSupported =
     [
         // The tag helper directives are read before this list is consulted.
-        "typeparam", "rendermode", "preservewhitespace", "helper", "layout"
+        "typeparam", "preservewhitespace", "helper", "layout"
     ];
 
     /// <summary>What to say about a directive that is not supported.</summary>
@@ -1379,8 +1409,8 @@ public sealed class VbHtmlParser
         "helper" => "@helper is a WebPages feature that ASP.NET Core never carried "
                   + "forward. Use @Functions instead.",
 
-        "typeparam" or "rendermode" or "preservewhitespace" =>
-            $"@{name} belongs to Blazor components, which Basalt does not render.",
+        "typeparam" or "preservewhitespace" =>
+            $"@{name} belongs to Blazor components and is not supported in .vbrazor yet.",
 
         _ => $"@{name} is not supported by Basalt."
     };

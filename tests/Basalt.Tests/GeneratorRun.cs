@@ -73,6 +73,19 @@ internal static class GeneratorRun
         string? projectDirectory,
         bool optionStrict,
         IReadOnlyDictionary<string, string>? properties,
+        params (string Path, string Text)[] templates) =>
+        Run(generatorTypeName, projectDirectory, optionStrict, properties, code: [], templates);
+
+    /// <summary>
+    /// Runs one generator in a project that also holds Visual Basic files of
+    /// its own — a code-behind, a model.
+    /// </summary>
+    public static Outcome Run(
+        string generatorTypeName,
+        string? projectDirectory,
+        bool optionStrict,
+        IReadOnlyDictionary<string, string>? properties,
+        string[] code,
         params (string Path, string Text)[] templates)
     {
         var type = Generators.Value.GetType($"Basalt.Razor.Vb.Generator.{generatorTypeName}", throwOnError: true)!;
@@ -80,7 +93,10 @@ internal static class GeneratorRun
 
         var compilation = VisualBasicCompilation.Create(
             "Generated",
-            [VisualBasicSyntaxTree.ParseText("Module Program\nEnd Module")],
+            [
+                VisualBasicSyntaxTree.ParseText("Module Program\nEnd Module"),
+                .. code.Select(source => VisualBasicSyntaxTree.ParseText(source)),
+            ],
             References,
             new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                 .WithGlobalImports(GlobalImport.Parse("Microsoft.VisualBasic", "System"))

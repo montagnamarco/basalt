@@ -414,6 +414,15 @@ so `<Parameter>` properties and event handlers live there. An `@AddressOf` in
 an attribute is wrapped in an `EventCallback` the way the C# compiler wraps
 `@onclick`.
 
+A top-level `@Code` block that declares members — `Private count As Integer`,
+`Sub Increment()`, a `<Parameter>` property — becomes members too, as `@code`
+does in a `.razor`; one that runs statements (`Dim`, a loop around markup)
+stays in the render tree. The class is `Partial`, so `Counter.vbrazor.vb` can
+hold its code-behind. `_Imports.vbrazor` lends `@Imports`, `@Inject`,
+`@Layout`, `@Inherits`, `@Attribute` and `@Implements` to every component in
+its folder and below, the nearest file winning; `@Namespace`, `@Attribute` and
+`@Implements` work in a component as they do in C#.
+
 ### Components inside components
 
 A capitalised tag is another component, the way it is in Razor — the first

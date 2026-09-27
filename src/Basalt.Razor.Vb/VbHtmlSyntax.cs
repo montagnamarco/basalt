@@ -321,6 +321,19 @@ public sealed class VbHtmlDocument
     public List<string> Attributes { get; } = [];
 
     /// <summary>
+    /// Where a component runs, from @rendermode: InteractiveServer,
+    /// InteractiveWebAssembly, InteractiveAuto or any expression giving an
+    /// IComponentRenderMode. Only components have one.
+    /// </summary>
+    public string? RenderMode { get; set; }
+
+    /// <summary>Offset of the @rendermode expression in the template.</summary>
+    public int RenderModePosition { get; set; }
+
+    /// <summary>One-based line of the @rendermode expression.</summary>
+    public int RenderModeLine { get; set; }
+
+    /// <summary>
     /// @addTagHelper, @removeTagHelper and @tagHelperPrefix, in the order
     /// written, shared files first: the order decides what is in scope.
     /// </summary>
@@ -333,6 +346,12 @@ public sealed class VbHtmlDocument
     /// Services the view asks for with <c>@Inject</c>, name and type.
     /// </summary>
     public List<InjectedService> Injected { get; } = [];
+
+    /// <summary>
+    /// The directives a shared file set rather than the template itself:
+    /// a nearer shared file replaces them, the template's own it never does.
+    /// </summary>
+    internal HashSet<string> InheritedDirectives { get; } = new(StringComparer.Ordinal);
 
     /// <summary>
     /// The route the page answers on, from <c>@Page</c>, when it has one.
@@ -354,7 +373,11 @@ public sealed class VbHtmlDocument
 }
 
 /// <summary>A service a view asked for with <c>@Inject</c>.</summary>
-public sealed record InjectedService(string Type, string Name);
+public sealed record InjectedService(string Type, string Name)
+{
+    /// <summary>Whether a shared file lent it, so a nearer one may replace it.</summary>
+    public bool IsInherited { get; init; }
+}
 
 /// <summary>A problem found while parsing, reported against the source file.</summary>
 public sealed class VbHtmlDiagnostic
@@ -371,7 +394,22 @@ public sealed class VbHtmlDiagnostic
     public string Message { get; }
     public int Line { get; }
     public int Column { get; }
+
+    /// <summary>The id of "@rendermode in a view", which components do not report.</summary>
+    public const string RenderModeInViewId = "VBH011";
+
+    /// <summary>
+    /// Whether the finding holds for a template of this kind. The parser does
+    /// not know whether it reads a view or a component; a directive valid in
+    /// one and not the other is reported and left to each caller to keep,
+    /// so the editor and the build say the same thing.
+    /// </summary>
+    public bool AppliesTo(string? filePath) =>
+        Id != RenderModeInViewId ||
+        filePath is null ||
+        !filePath.EndsWith(".vbrazor", System.StringComparison.OrdinalIgnoreCase);
 }
+
 
 /// <summary>One of the directives that decide which tag helpers apply.</summary>
 /// <param name="Kind">"addTagHelper", "removeTagHelper" or "tagHelperPrefix".</param>

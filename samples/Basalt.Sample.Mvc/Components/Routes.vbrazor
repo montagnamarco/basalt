@@ -1,0 +1,16 @@
+@* Every routed .vbrazor in the assembly, found by the router. *@
+@Imports Microsoft.AspNetCore.Components
+@Imports Microsoft.AspNetCore.Components.Routing
+
+<Router AppAssembly="@GetType(Routes).Assembly" Found="@FoundPage" />
+
+@Functions
+    ' The router's Found template, written as a property until .vbrazor
+    ' components take RenderFragment(Of T) with a Context.
+    Private ReadOnly Property FoundPage As RenderFragment(Of RouteData) =
+        Function(routeData) Sub(builder)
+                                builder.OpenComponent(Of RouteView)(0)
+                                builder.AddComponentParameter(1, "RouteData", routeData)
+                                builder.CloseComponent()
+                            End Sub
+@End Functions

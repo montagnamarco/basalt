@@ -154,7 +154,7 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
         // The parser's own findings first: they need no compilation and
         // arrive on the keystroke, which is when an unclosed block is worth
         // saying.
-        Publish(uri, version, Describe(document.Parsed));
+        Publish(uri, version, Describe(document.Parsed, uri.ToString()));
 
         // Then the compiler's, once it has an answer. Not awaited: asking
         // Roslyn about a whole project takes long enough to be felt, and an
@@ -191,7 +191,7 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
 
             if (current is null || current.Version != document.Version) return;
 
-            Publish(uri, version, [.. Describe(document.Parsed), .. found.Select(Translate)]);
+            Publish(uri, version, [.. Describe(document.Parsed, uri.ToString()), .. found.Select(Translate)]);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -238,8 +238,8 @@ public sealed class VbHtmlTextDocumentHandler : TextDocumentSyncHandlerBase
         };
 
     /// <summary>Turns the parser's findings into what the editor understands.</summary>
-    internal static IEnumerable<Diagnostic> Describe(VbHtmlDocument parsed) =>
-        parsed.Diagnostics.Select(d => new Diagnostic
+    internal static IEnumerable<Diagnostic> Describe(VbHtmlDocument parsed, string? path = null) =>
+        parsed.Diagnostics.Where(d => d.AppliesTo(path)).Select(d => new Diagnostic
         {
             Code = d.Id,
             Message = d.Message,

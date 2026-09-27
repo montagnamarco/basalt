@@ -95,8 +95,17 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         {
             var (((all, compilationLanguage), blazor), strict) = data;
 
+            // _Imports.vbrazor is not a component: it lends its directives
+            // to every component in its folder and below, as _Imports.razor
+            // does. Generated as one, it was a class called _Imports.
+            var shared = all.Where(t => IsImports(t.Path)).ToList();
+
             foreach (var template in all)
-                Emit(production, template, compilationLanguage, blazor, strict);
+            {
+                if (IsImports(template.Path)) continue;
+
+                Emit(production, template, compilationLanguage, blazor, strict, shared);
+            }
         });
     }
 
@@ -105,7 +114,8 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         Component template,
         string language,
         bool hasBlazor,
-        bool optionStrict)
+        bool optionStrict,
+        IReadOnlyList<Component> shared)
     {
         // A .vbrazor in a C# project is reported rather than silently ignored:
         // a template that produces nothing is hard to diagnose from outside.
@@ -125,6 +135,18 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         try
         {
             document = VbHtmlParser.Parse(template.Text);
+
+            // Outermost first, so the nearest file wins; the component's own
+            // directives beat them all.
+            foreach (var file in shared
+                .Where(s => IsAbove(s.Path, template.Path))
+                .OrderBy(s => s.Path.Length))
+            {
+                var imports = VbHtmlParser.Parse(file.Text);
+
+                ViewImports.ApplyTo(document, imports, VbHtmlGenerator.FoldersBetween(file.Path, template.Path));
+                ViewImports.ApplyLayoutTo(document, imports);
+            }
         }
         catch (Exception ex)
         {
@@ -137,7 +159,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         // dropped: an unclosed @If produced a component that failed later
         // with a compiler error about generated code, or silently rendered
         // half the markup.
-        foreach (var diagnostic in document.Diagnostics)
+        foreach (var diagnostic in document.Diagnostics.Where(d => d.AppliesTo(template.Path)))
         {
             var at = new LinePosition(
                 Math.Max(0, diagnostic.Line - 1), Math.Max(0, diagnostic.Column - 1));
@@ -182,6 +204,22 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         production.AddSource(
             $"{template.ClassName}.Component.g.vb",
             SourceText.From(source, System.Text.Encoding.UTF8));
+    }
+
+    /// <summary>The name of the file whose directives every component below it shares.</summary>
+    internal const string ImportsFileName = "_Imports.vbrazor";
+
+    private static bool IsImports(string path) =>
+        string.Equals(Path.GetFileName(path), ImportsFileName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Whether a shared file sits in a component's folder or one above it.</summary>
+    private static bool IsAbove(string sharedPath, string componentPath)
+    {
+        var folder = (Path.GetDirectoryName(sharedPath) ?? "").TrimEnd('/', '\\');
+        var componentFolder = Path.GetDirectoryName(componentPath) ?? "";
+
+        return componentFolder.StartsWith(folder, StringComparison.OrdinalIgnoreCase) &&
+               (componentFolder.Length == folder.Length || componentFolder[folder.Length] is '/' or '\\');
     }
 
     private static Component Read(AdditionalText file, CancellationToken ct)

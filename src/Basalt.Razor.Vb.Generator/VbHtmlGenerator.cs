@@ -201,7 +201,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     /// The folders from a shared file down to a template, as a namespace suffix:
     /// "Admin.Reports" for Pages/Admin/Reports/Index beside Pages/_ViewImports.
     /// </summary>
-    private static string FoldersBetween(string sharedPath, string templatePath)
+    internal static string FoldersBetween(string sharedPath, string templatePath)
     {
         var sharedFolder = (Path.GetDirectoryName(sharedPath) ?? "").TrimEnd('/', '\\');
         var templateFolder = Path.GetDirectoryName(templatePath) ?? "";
@@ -339,6 +339,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
                 LocationFor(template, diagnostic),
                 diagnostic.Message));
         }
+
 
         // Pages and Views each root their own namespace, as the C# generator
         // does: a page under Pages must not be named as though it were a view.

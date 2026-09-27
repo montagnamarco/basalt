@@ -62,8 +62,11 @@ public static class ViewImports
             if (!view.Imports.Contains(import))
                 view.Imports.Insert(0, import);
 
-        view.ModelType ??= shared.ModelType;
-        view.Inherits ??= shared.Inherits;
+        // The files arrive outermost first. A value an outer file lent is
+        // replaced by a nearer one; the view's own is never replaced. With
+        // ??= alone the outermost file won, the opposite of Razor.
+        view.ModelType = Inherit(view, nameof(view.ModelType), view.ModelType, shared.ModelType);
+        view.Inherits = Inherit(view, nameof(view.Inherits), view.Inherits, shared.Inherits);
 
         // Before the view's own, in the order the shared files come: a
         // @removeTagHelper in the view has to act on what they added.
@@ -72,9 +75,24 @@ public static class ViewImports
 
         foreach (var service in shared.Injected)
         {
-            if (!view.Injected.Any(s => string.Equals(s.Name, service.Name, StringComparison.OrdinalIgnoreCase)))
-                view.Injected.Add(service);
+            var existing = view.Injected.FindIndex(s => string.Equals(s.Name, service.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (existing < 0)
+                view.Injected.Add(service with { IsInherited = true });
+            else if (view.Injected[existing].IsInherited)
+                view.Injected[existing] = service with { IsInherited = true };
         }
+
+        // Folder-wide @Attribute <Authorize> and @Implements, as _Imports.razor
+        // and _ViewImports.cshtml carry them. They used to be dropped, and a
+        // folder meant to be protected was not.
+        foreach (var attribute in shared.Attributes)
+            if (!view.Attributes.Contains(attribute))
+                view.Attributes.Add(attribute);
+
+        foreach (var contract in shared.Implements)
+            if (!view.Implements.Contains(contract))
+                view.Implements.Add(contract);
 
         if (!string.IsNullOrWhiteSpace(shared.Namespace) && !view.DeclaresNamespace)
         {
@@ -82,6 +100,30 @@ public static class ViewImports
                 ? shared.Namespace
                 : $"{shared.Namespace}.{folderBelowShared}";
         }
+    }
+
+    /// <summary>
+    /// Applies a shared _Imports.vbrazor's @Layout to a component, nearest
+    /// file winning as for the other directives. Views take theirs from
+    /// _ViewStart instead, which MVC runs.
+    /// </summary>
+    public static void ApplyLayoutTo(VbHtmlDocument component, VbHtmlDocument shared) =>
+        component.Layout = Inherit(component, nameof(component.Layout), component.Layout, shared.Layout);
+
+    /// <summary>
+    /// The value a directive ends up with: the shared one, unless the
+    /// document declared its own.
+    /// </summary>
+    private static string? Inherit(VbHtmlDocument document, string directive, string? current, string? shared)
+    {
+        if (string.IsNullOrWhiteSpace(shared)) return current;
+
+        var declaredByDocument = current is not null && !document.InheritedDirectives.Contains(directive);
+
+        if (declaredByDocument) return current;
+
+        document.InheritedDirectives.Add(directive);
+        return shared;
     }
 
     /// <summary>

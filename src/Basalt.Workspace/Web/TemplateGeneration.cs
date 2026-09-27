@@ -28,6 +28,9 @@ internal static class TemplateGeneration
     {
         if (IsComponent(filePath))
         {
+            // _Imports.vbrazor, as the build applies it to a component.
+            ApplySharedFiles(document, filePath, "_Imports.vbrazor");
+
             var component = VbComponentWriter.WriteWithMap(
                 document, "GeneratedComponent", "Basalt.Generated", filePath);
 
@@ -37,7 +40,7 @@ internal static class TemplateGeneration
         // The folder's _ViewImports, as the build applies them: without them
         // the editor underlined a service injected there, and a model type
         // imported there, as undeclared in every view that used them.
-        ApplySharedFiles(document, filePath);
+        ApplySharedFiles(document, filePath, ViewImports.FileName);
 
         var view = VbHtmlCodeWriter.WriteWithMap(
             document, "GeneratedView", "Basalt.Generated", filePath, host);
@@ -57,7 +60,7 @@ internal static class TemplateGeneration
     /// the shared files are other files. The walk stops at the folder holding
     /// the project file, which is where the build stops too.
     /// </remarks>
-    private static void ApplySharedFiles(VbHtmlDocument document, string? filePath)
+    private static void ApplySharedFiles(VbHtmlDocument document, string? filePath, string sharedName)
     {
         if (filePath is null || !Path.IsPathRooted(filePath)) return;
 
@@ -76,7 +79,7 @@ internal static class TemplateGeneration
 
         foreach (var folder in folders)
         {
-            var shared = Path.Combine(folder, ViewImports.FileName);
+            var shared = Path.Combine(folder, sharedName);
 
             // The view being edited may itself be a _ViewImports file.
             if (string.Equals(shared, filePath, StringComparison.OrdinalIgnoreCase)) continue;
@@ -90,6 +93,10 @@ internal static class TemplateGeneration
                 : "";
 
             ViewImports.ApplyTo(document, sharedDocument, below);
+
+            // A component takes its layout from _Imports as well; a view's comes
+            // from _ViewStart, which MVC runs.
+            if (sharedName != ViewImports.FileName) ViewImports.ApplyLayoutTo(document, sharedDocument);
         }
     }
 

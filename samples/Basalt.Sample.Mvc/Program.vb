@@ -21,6 +21,8 @@ Public Module Program
         ' The single call that makes .vbhtml views work.
         builder.Services.AddVbViews()
         builder.Services.AddSingleton(Of IGreeter, Greeter)()
+        ' Blazor beside MVC: /clicker is an interactive .vbrazor component.
+        builder.Services.AddRazorComponents().AddInteractiveServerComponents()
 
         Dim app = builder.Build()
 
@@ -29,6 +31,11 @@ Public Module Program
         app.MapControllerRoute("areas", "{area:exists}/{controller=Home}/{action=Index}/{id?}")
         app.MapDefaultControllerRoute()
         app.MapRazorPages()
+
+        ' Blazor needs antiforgery for its endpoints, and the render mode
+        ' its interactive components declare mapped.
+        app.UseAntiforgery()
+        app.MapRazorComponents(Of Global.Basalt.Sample.Mvc.Components.App)().AddInteractiveServerRenderMode()
 
         app.Run()
     End Sub
