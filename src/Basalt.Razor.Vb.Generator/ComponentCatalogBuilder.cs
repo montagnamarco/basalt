@@ -31,8 +31,15 @@ internal sealed record ComponentDeclaration(string Path, VbHtmlDocument Document
 /// </remarks>
 internal static class ComponentCatalogBuilder
 {
+    /// <param name="inferences">
+    /// Generic components written without type arguments, by the path of the
+    /// component using them: each is answered by a probe the compiler infers.
+    /// </param>
     public static IReadOnlyDictionary<string, IComponentCatalog> Build(
-        Compilation compilation, IReadOnlyList<ComponentDeclaration> components, CancellationToken cancellation)
+        Compilation compilation,
+        IReadOnlyList<ComponentDeclaration> components,
+        IReadOnlyDictionary<string, List<TypeInference>>? inferences,
+        CancellationToken cancellation)
     {
         var catalogs = new Dictionary<string, IComponentCatalog>(StringComparer.Ordinal);
 
@@ -43,7 +50,7 @@ internal static class ComponentCatalogBuilder
 
         if (seed is null || component is null) return catalogs;
 
-        var declared = new List<(ComponentDeclaration Component, SyntaxTree Tree, int LookupAt)>();
+        var declared = new List<(ComponentDeclaration Component, SyntaxTree Tree, int LookupAt, List<Probe> Probes)>();
 
         foreach (var declaration in components)
         {
@@ -52,11 +59,16 @@ internal static class ComponentCatalogBuilder
             var text = VbComponentWriter.DeclarationStub(
                 declaration.Document, declaration.ClassName, declaration.Namespace, out var lookupAt);
 
+            var probes = new List<Probe>();
+
+            if (inferences is not null && inferences.TryGetValue(declaration.Path, out var requests))
+                text = WithProbes(text, requests, probes);
+
             var tree = seed
                 .WithChangedText(SourceText.From(text))
                 .WithFilePath(declaration.Path + ".declarations.vb");
 
-            declared.Add((declaration, tree, lookupAt));
+            declared.Add((declaration, tree, lookupAt, probes));
         }
 
         var withDeclarations = compilation.AddSyntaxTrees(declared.Select(d => d.Tree));
@@ -64,19 +76,125 @@ internal static class ComponentCatalogBuilder
         // Found again in the new compilation: symbols are per compilation.
         component = withDeclarations.GetTypeByMetadataName("Microsoft.AspNetCore.Components.IComponent")!;
 
-        foreach (var (declaration, tree, lookupAt) in declared)
+        foreach (var (declaration, tree, lookupAt, probes) in declared)
         {
             var model = withDeclarations.GetSemanticModel(tree);
+            var inferred = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
 
-            catalogs[declaration.Path] = new SemanticCatalog(model, lookupAt, component);
+            foreach (var probe in probes)
+            {
+                if (Answer(model, tree, probe) is { } arguments) inferred[probe.Key] = arguments;
+            }
+
+            catalogs[declaration.Path] = new SemanticCatalog(model, lookupAt, component, inferred);
         }
 
         return catalogs;
     }
 
-    /// <summary>Answers from one component's class, as its code would see names.</summary>
-    private sealed class SemanticCatalog(SemanticModel model, int position, INamedTypeSymbol component) : IComponentCatalog
+    /// <summary>A probe written into a declaration: where its call is, and what it answers.</summary>
+    private sealed record Probe(string Key, int CallAt, string Call);
+
+    /// <summary>
+    /// The declaration with a probe for each inference: a generic function
+    /// taking the parameters' types, called with the tag's values.
+    /// </summary>
+    /// <remarks>
+    /// The Visual Basic compiler infers the function's type arguments from
+    /// the values exactly as it would a component's, and the call's type,
+    /// a Tuple of them, says what they are. The component's own type
+    /// parameters are renamed __T0, __T1..., so they cannot clash with the
+    /// type parameters of a generic component using it.
+    /// </remarks>
+    private static string WithProbes(string declaration, List<TypeInference> requests, List<Probe> probes)
     {
+        var classEnd = declaration.LastIndexOf("    End Class", StringComparison.Ordinal);
+
+        if (classEnd < 0) return declaration;
+
+        var written = new System.Text.StringBuilder(declaration.Substring(0, classEnd));
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var request in requests)
+        {
+            var typeParameters = request.Shape.TypeParameters;
+
+            if (request.Arguments.Count == 0 || typeParameters.Count > 7 || !seen.Add(request.Key)) continue;
+
+            var index = probes.Count;
+            var renamed = typeParameters.Select((_, at) => $"__T{at}").ToList();
+            var parameters = request.Arguments
+                .Select((argument, at) => $"__a{at} As {Rename(argument.Parameter.TypeName, typeParameters, renamed)}");
+            var tuple = $"Global.System.Tuple(Of {string.Join(", ", renamed)})";
+
+            written.AppendLine();
+            written.AppendLine($"        Private Shared Function __Infer{index}(Of {string.Join(", ", renamed)})({string.Join(", ", parameters)}) As {tuple}");
+            written.AppendLine("            Return Nothing");
+            written.AppendLine("        End Function");
+            written.AppendLine();
+            written.AppendLine($"        Private Sub __Probe{index}()");
+
+            var call = $"__Infer{index}(";
+
+            written.Append($"            Dim __inferred{index} = ");
+
+            var callAt = written.Length;
+
+            written.AppendLine($"{call}{string.Join(", ", request.Arguments.Select(argument => argument.Code))})");
+            written.AppendLine("        End Sub");
+
+            probes.Add(new Probe(request.Key, callAt, call));
+        }
+
+        written.Append(declaration.Substring(classEnd));
+
+        return written.ToString();
+    }
+
+    /// <summary>A type with the component's type parameters renamed, all at once.</summary>
+    private static string Rename(string type, IReadOnlyList<string> from, IReadOnlyList<string> to)
+    {
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        for (var index = 0; index < from.Count; index++) names[from[index]] = to[index];
+
+        return System.Text.RegularExpressions.Regex.Replace(type, @"\b\w+\b",
+            match => names.TryGetValue(match.Value, out var renamed) ? renamed : match.Value);
+    }
+
+    /// <summary>The type arguments the compiler inferred for a probe, or null.</summary>
+    private static IReadOnlyList<string>? Answer(SemanticModel model, SyntaxTree tree, Probe probe)
+    {
+        var token = tree.GetRoot().FindToken(probe.CallAt);
+
+        // The whole call: the widest node starting at the probe that is still
+        // the call, not the declaration around it.
+        SyntaxNode? call = null;
+
+        for (var node = token.Parent; node is not null && node.SpanStart == probe.CallAt; node = node.Parent)
+        {
+            if (node.ToString().StartsWith(probe.Call, StringComparison.Ordinal)) call = node;
+        }
+
+        if (call is null) return null;
+
+        if (model.GetTypeInfo(call).Type is not INamedTypeSymbol { TypeKind: not TypeKind.Error } tuple) return null;
+
+        if (tuple.TypeArguments.Any(argument => argument.TypeKind == TypeKind.Error)) return null;
+
+        return tuple.TypeArguments
+            .Select(argument => argument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            .ToList();
+    }
+
+    /// <summary>Answers from one component's class, as its code would see names.</summary>
+    private sealed class SemanticCatalog(
+        SemanticModel model, int position, INamedTypeSymbol component, IReadOnlyDictionary<string, IReadOnlyList<string>> inferred)
+        : IComponentCatalog
+    {
+        public IReadOnlyList<string>? InferTypeArguments(TypeInference request) =>
+            inferred.TryGetValue(request.Key, out var arguments) ? arguments : null;
+
         private readonly Dictionary<(string, int), ComponentShape?> _found = new();
 
         public ComponentShape? Find(string tagName, int typeArgumentCount)
@@ -133,10 +251,14 @@ internal static class ComponentCatalogBuilder
             return null;
         }
 
+        /// <summary>The component among the symbols a name found, of the arity asked for, or any when -1.</summary>
         private INamedTypeSymbol? Components(IEnumerable<ISymbol> symbols, int arity) =>
             symbols
                 .OfType<INamedTypeSymbol>()
-                .FirstOrDefault(type => type.Arity == arity && type.AllInterfaces.Contains(component, SymbolEqualityComparer.Default));
+                .Where(type => (arity < 0 || type.Arity == arity) &&
+                               type.AllInterfaces.Contains(component, SymbolEqualityComparer.Default))
+                .OrderBy(type => type.Arity)
+                .FirstOrDefault();
 
         private static ComponentShape ShapeOf(INamedTypeSymbol type)
         {

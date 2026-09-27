@@ -130,7 +130,15 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
                     prepared.Add(ready);
             }
 
-            var catalogs = Catalogs(production, compilation, prepared);
+            var catalogs = Catalogs(production, compilation, prepared, inferences: null);
+
+            // Generic components written without type arguments: a first,
+            // discarded writing collects what has to be inferred, and the
+            // catalogs are built again with the compiler's answers.
+            var inferences = InferencesNeeded(prepared, catalogs);
+
+            if (inferences.Count > 0)
+                catalogs = Catalogs(production, compilation, prepared, inferences);
 
             foreach (var ready in prepared)
             {
@@ -148,13 +156,17 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
     /// took every component of the project with it.
     /// </summary>
     private static IReadOnlyDictionary<string, IComponentCatalog> Catalogs(
-        SourceProductionContext production, Compilation compilation, IReadOnlyList<Prepared> prepared)
+        SourceProductionContext production,
+        Compilation compilation,
+        IReadOnlyList<Prepared> prepared,
+        IReadOnlyDictionary<string, List<TypeInference>>? inferences)
     {
         try
         {
             return ComponentCatalogBuilder.Build(
                 compilation,
                 prepared.Select(p => new ComponentDeclaration(p.Template.Path, p.Document, p.Template.ClassName, p.Namespace)).ToList(),
+                inferences,
                 production.CancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -162,6 +174,51 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
             production.ReportDiagnostic(Diagnostic.Create(CatalogFailed, Location.None, ex.Message));
 
             return new Dictionary<string, IComponentCatalog>();
+        }
+    }
+
+    /// <summary>
+    /// The type inferences each component's tags need, found by writing it
+    /// once with a catalog that records them and answers none.
+    /// </summary>
+    private static Dictionary<string, List<TypeInference>> InferencesNeeded(
+        IReadOnlyList<Prepared> prepared, IReadOnlyDictionary<string, IComponentCatalog> catalogs)
+    {
+        var needed = new Dictionary<string, List<TypeInference>>(StringComparer.Ordinal);
+
+        foreach (var ready in prepared)
+        {
+            if (!catalogs.TryGetValue(ready.Template.Path, out var catalog)) continue;
+
+            var requests = new List<TypeInference>();
+
+            try
+            {
+                VbComponentWriter.WriteWithMap(
+                    ready.Document, ready.Template.ClassName, ready.Namespace, filePath: null,
+                    catalog: new RecordingCatalog(catalog, requests));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Written again for real below, where a failure is reported.
+                continue;
+            }
+
+            if (requests.Count > 0) needed[ready.Template.Path] = requests;
+        }
+
+        return needed;
+    }
+
+    /// <summary>A catalog that answers lookups and writes down the inferences asked of it.</summary>
+    private sealed class RecordingCatalog(IComponentCatalog inner, List<TypeInference> requests) : IComponentCatalog
+    {
+        public ComponentShape? Find(string tagName, int typeArgumentCount) => inner.Find(tagName, typeArgumentCount);
+
+        public IReadOnlyList<string>? InferTypeArguments(TypeInference request)
+        {
+            requests.Add(request);
+            return null;
         }
     }
 

@@ -519,9 +519,17 @@ handler for an `EventCallback` parameter is wrapped in one, typed by its
 argument. `@typeparam TItem` (with Visual Basic constraints,
 `@typeparam TItem As {IComparable}`) makes a component generic.
 
-A generic component still names its type argument in the tag,
-`<Grid(Of Order) …>`; inferring it from the parameter values, as C# does, is
-the next step.
+A generic component's type arguments are inferred from the values its tag
+gives, as C# infers them — `<Grid Items="@orders">` is a `Grid(Of Order)`,
+`<InputSelect @bind-Value="level">` an `InputSelect(Of Integer)`,
+`<CascadingValue Value="@theme">` cascades a `Theme` — by asking the Visual
+Basic compiler to infer them for a generic function with the same parameters.
+A value naming a local of the render tree, such as a loop variable, cannot be
+inferred this way yet; write the type argument in the tag there,
+`<Grid(Of Order) …>`.
+
+Every component imports what a `.razor` file does: `Microsoft.AspNetCore.Components`,
+`System.Collections.Generic`, `System.Linq` and `System.Threading.Tasks`.
 
 ### Where components live
 
@@ -831,10 +839,9 @@ shows something else.
   repository, and the one whose shape is most likely to still change.
 - **Blazor components** cover routing, parameters, event handlers, child
   components, `ChildContent` and named fragments, `@bind`, cascading values
-  and generics. A generic component names its type argument in the tag —
-  `<List(Of String) …>` — until inference from the parameter values lands. A
-  `CascadingValue` carries a `String`; another type needs the component
-  written by hand. The IDE's editor does not know other components'
+  and generics. A generic component's type arguments are inferred, except from
+  a value naming a render-tree local such as a loop variable, where the tag
+  has to write them. The IDE's editor does not know other components'
   parameters yet, so it may flag a named fragment or `context` the build
   accepts.
 - **The designer** is missing distance guides while dragging, a grid row/column

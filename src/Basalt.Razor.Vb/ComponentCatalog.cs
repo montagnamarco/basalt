@@ -24,8 +24,44 @@ public interface IComponentCatalog
     /// where the template's class is, or null when the name is not one.
     /// </summary>
     /// <param name="tagName">The tag as written, without any (Of ...).</param>
-    /// <param name="typeArgumentCount">How many type arguments the tag wrote.</param>
+    /// <param name="typeArgumentCount">
+    /// How many type arguments the tag wrote, or -1 for a component of any
+    /// arity: a generic one written without them, whose arguments are then
+    /// inferred.
+    /// </param>
     ComponentShape? Find(string tagName, int typeArgumentCount);
+
+    /// <summary>
+    /// A generic component's type arguments, inferred from the values its tag
+    /// gives parameters typed by them, as the C# compiler infers them — or
+    /// null when they cannot be.
+    /// </summary>
+    IReadOnlyList<string>? InferTypeArguments(TypeInference request);
+}
+
+/// <summary>
+/// A generic component written without type arguments, and the values its
+/// tag gives the parameters whose types name its type parameters.
+/// </summary>
+public sealed class TypeInference(ComponentShape shape, IReadOnlyList<(ComponentParameter Parameter, string Code)> arguments)
+{
+    public ComponentShape Shape { get; } = shape;
+
+    public IReadOnlyList<(ComponentParameter Parameter, string Code)> Arguments { get; } = arguments;
+
+    /// <summary>The same for the same component and the same values: requests are matched by it.</summary>
+    public string Key
+    {
+        get
+        {
+            var key = new System.Text.StringBuilder(Shape.TypeName);
+
+            foreach (var (parameter, code) in Arguments)
+                key.Append('\u0001').Append(parameter.Name).Append('=').Append(code);
+
+            return key.ToString();
+        }
+    }
 }
 
 /// <summary>A component's parameters, as the writer needs them.</summary>

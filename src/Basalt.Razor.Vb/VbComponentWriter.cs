@@ -137,6 +137,22 @@ public sealed class VbComponentWriter
         new VbComponentWriter(catalog).Generate(document, className, namespaceName, filePath, route, checksum, optionStrict);
 
     /// <summary>
+    /// The namespaces every component sees, as every .razor file sees them:
+    /// RenderFragment, CascadingValue and EventCallback by their short names,
+    /// and the collections and tasks a handler uses. Before, a component
+    /// saw only Components.Web, and CascadingValue in a template without its
+    /// own import named nothing.
+    /// </summary>
+    private static readonly string[] DefaultImports =
+    [
+        "System.Collections.Generic",
+        "System.Linq",
+        "System.Threading.Tasks",
+        "Microsoft.AspNetCore.Components",
+        "Microsoft.AspNetCore.Components.Web",
+    ];
+
+    /// <summary>
     /// A generic component's type parameters from @typeparam, as Visual
     /// Basic writes them: (Of TItem, TKey As {IComparable, New}).
     /// </summary>
@@ -164,7 +180,7 @@ public sealed class VbComponentWriter
 
         var imported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        VbHtmlCodeWriter.WriteImport(builder, imported, "Microsoft.AspNetCore.Components.Web");
+        foreach (var import in DefaultImports) VbHtmlCodeWriter.WriteImport(builder, imported, import);
         VbHtmlCodeWriter.WriteImport(builder, imported, "Microsoft.AspNetCore.Components.Web.RenderMode");
 
         foreach (var import in document.Imports)
@@ -234,8 +250,9 @@ public sealed class VbComponentWriter
         // C# template's does, repeated the one written here (BC31051).
         var imported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // The web namespace, for the event argument types a handler names.
-        VbHtmlCodeWriter.WriteImport(builder, imported, "Microsoft.AspNetCore.Components.Web");
+        // What the C# compiler imports into every component, and the web
+        // namespace, for the event argument types a handler names.
+        foreach (var import in DefaultImports) VbHtmlCodeWriter.WriteImport(builder, imported, import);
 
         // The render modes by their bare names, as the Blazor template's
         // "@using static ...RenderMode" gives them to C#: @rendermode
@@ -615,13 +632,22 @@ public sealed class VbComponentWriter
         // invented tag and dropped the parameter on the floor.
         var isComponent = IsComponentName(name);
         var (baseName, typeArguments) = SplitTypeArguments(name);
-        var shape = isComponent ? catalog_?.Find(baseName, typeArguments.Count) : null;
 
-        // A component is named unqualified, so Visual Basic resolves it the way
-        // it resolves any name in the file's own namespace, RootNamespace
-        // included — which the generator deliberately does not write.
+        // Written without type arguments, a generic component is found by
+        // name alone and its arguments inferred, as C# infers them.
+        var shape = isComponent
+            ? catalog_?.Find(baseName, typeArguments.Count) ??
+              (typeArguments.Count == 0 ? catalog_?.Find(baseName, -1) : null)
+            : null;
+
+        if (shape is { TypeParameters.Count: > 0 } && typeArguments.Count == 0 &&
+            catalog_?.InferTypeArguments(InferenceFor(tag, attributes, shape)) is { } inferred)
+        {
+            typeArguments = inferred;
+        }
+
         builder.AppendLine(isComponent
-            ? $"{pad}{Builder}.OpenComponent(Of {ComponentType(name)})({sequence++})"
+            ? $"{pad}{Builder}.OpenComponent(Of {ComponentTypeName(name, shape, typeArguments)})({sequence++})"
             : $"{pad}{Builder}.OpenElement({sequence++}, \"{name}\")");
 
         var deferred = WriteTagAttributes(builder, tag, attributes, name, isComponent, shape, typeArguments,
@@ -776,6 +802,58 @@ public sealed class VbComponentWriter
 
     private static bool IsIdentifier(string text) =>
         text.Length > 0 && (char.IsLetter(text[0]) || text[0] == '_') && text.All(c => char.IsLetterOrDigit(c) || c == '_');
+
+    /// <summary>
+    /// The type OpenComponent is given: the full name the build found, with
+    /// the type arguments written or inferred; without a catalog, or for a
+    /// generic component whose arguments could not be inferred, the name as
+    /// written, which Visual Basic resolves in the file's own namespace.
+    /// </summary>
+    private static string ComponentTypeName(string name, ComponentShape? shape, IReadOnlyList<string> typeArguments)
+    {
+        if (shape is null) return ComponentType(name);
+
+        if (shape.TypeParameters.Count == 0) return shape.TypeName;
+
+        return typeArguments.Count == shape.TypeParameters.Count
+            ? $"{shape.TypeName}(Of {string.Join(", ", typeArguments)})"
+            : ComponentType(name);
+    }
+
+    /// <summary>
+    /// What a generic component's type arguments are inferred from: the
+    /// values given to parameters whose types name its type parameters,
+    /// @bind-Value included. Handlers and fragments are left out; a lambda
+    /// says nothing about its own parameter types.
+    /// </summary>
+    private static TypeInference InferenceFor(Tag tag, List<TagAttribute> attributes, ComponentShape shape)
+    {
+        var arguments = new List<(ComponentParameter Parameter, string Code)>();
+
+        foreach (var attribute in attributes)
+        {
+            var bound = attribute.Name.StartsWith("@bind-", StringComparison.OrdinalIgnoreCase) &&
+                        attribute.Name.IndexOf(':') < 0;
+
+            var parameterName = bound ? attribute.Name.Substring("@bind-".Length) : attribute.Name;
+
+            if (!bound && attribute.Name.StartsWith("@", StringComparison.Ordinal)) continue;
+
+            if (shape.Parameter(parameterName) is not { Kind: ParameterKind.Value or ParameterKind.Text } parameter) continue;
+
+            if (!shape.TypeParameters.Any(typeParameter =>
+                    System.Text.RegularExpressions.Regex.IsMatch(parameter.TypeName, $@"\b{typeParameter}\b")))
+                continue;
+
+            var value = ValueOf(tag, attribute, isCode: bound || parameter.Kind == ParameterKind.Value);
+
+            if (IsMixed(attribute)) continue;
+
+            arguments.Add((parameter, value.Written));
+        }
+
+        return new TypeInference(shape, arguments);
+    }
 
     /// <summary>A tag's name and the type arguments it wrote: Grid(Of Person, Integer).</summary>
     private static (string Name, IReadOnlyList<string> TypeArguments) SplitTypeArguments(string name)
@@ -1210,7 +1288,7 @@ public sealed class VbComponentWriter
     {
         var body = attribute.Value?.Trim() ?? "";
 
-        return body.IndexOf('') >= 0 && body != Tag.Placeholder(IndexOfPlaceholder(body));
+        return body.IndexOf('\u0001') >= 0 && body != Tag.Placeholder(IndexOfPlaceholder(body));
     }
 
     /// <summary>
@@ -1231,7 +1309,7 @@ public sealed class VbComponentWriter
 
         while (at < value.Length)
         {
-            var start = value.IndexOf('', at);
+            var start = value.IndexOf('\u0001', at);
 
             if (start < 0)
             {
@@ -1241,7 +1319,7 @@ public sealed class VbComponentWriter
 
             if (start > at) pieces.Add(Quoted(value.Substring(at, start - at)));
 
-            var end = value.IndexOf('', start);
+            var end = value.IndexOf('\u0002', start);
             var expression = tag.Expressions[int.Parse(value.Substring(start + 1, end - start - 1))];
             var local = $"__a{locals_++}";
             var awaited = expression.IsAwaited ? "Await " : "";

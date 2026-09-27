@@ -308,6 +308,8 @@ public class TypedComponentTests
     {
         public Basalt.Razor.Vb.ComponentShape? Find(string tagName, int typeArgumentCount) =>
             tagName == "Stepper" ? shape : null;
+
+        public IReadOnlyList<string>? InferTypeArguments(Basalt.Razor.Vb.TypeInference request) => null;
     }
 
     [Fact]
@@ -400,6 +402,112 @@ public class TypedComponentTests
 
         Assert.Contains("Create(Of TKey)(Me, Sub(key) lastKey = key)", outer);
         Assert.Contains("Function(context As TValue)", outer);
+    }
+
+    private static readonly (string, string) GenericGrid = Component("Grid", $"""
+        @typeparam TItem
+        <ul>
+        @For Each item In Items
+            @<li>@Row(item)</li>
+        Next
+        </ul>
+        @Code
+            {Parameter} Public Property Items As IEnumerable(Of TItem)
+            {Parameter} Public Property Row As RenderFragment(Of TItem)
+        End Code
+        """);
+
+    [Fact]
+    public void AGenericComponentsTypeArgumentIsInferredFromItsParameters()
+    {
+        // <Grid Items="@names"> without (Of String): the tag named a type
+        // with too few type arguments, and the build failed.
+        var page = SourceOf(Compile([], GenericGrid,
+            Component("Page", """
+                <Grid Items="@names">
+                    <Row>@context.Length</Row>
+                </Grid>
+                @Code
+                    Private names As String() = {"a", "bb"}
+                End Code
+                """)), "Page");
+
+        Assert.Contains("OpenComponent(Of Global.Components.Grid(Of String))", page);
+        Assert.Contains("Function(context As String)", page);
+    }
+
+    [Fact]
+    public void SeveralTypeArgumentsAreInferredEachFromItsOwnParameter()
+    {
+        var page = SourceOf(Compile([],
+            Component("Entry", $"""
+                @typeparam TKey
+                @typeparam TValue
+                <p>@Key: @Value</p>
+                @Code
+                    {Parameter} Public Property Key As TKey
+                    {Parameter} Public Property Value As TValue
+                End Code
+                """),
+            Component("Page", """
+                <Entry Key="3" Value="@("three")" />
+                """)), "Page");
+
+        Assert.Contains("Entry(Of Integer, String)", page);
+    }
+
+    [Fact]
+    public void ABoundValueInfersTheTypeToo()
+    {
+        // As InputSelect(Of TValue) is used: @bind-Value says what TValue is.
+        var page = SourceOf(Compile([],
+            Component("Picker", $"""
+                @typeparam TValue
+                <p>@Value</p>
+                @Code
+                    {Parameter} Public Property Value As TValue
+                    {Parameter} Public Property ValueChanged As EventCallback(Of TValue)
+                End Code
+                """),
+            Component("Page", """
+                <Picker @bind-Value="level" />
+                @Code
+                    Private level As Integer = 2
+                End Code
+                """)), "Page");
+
+        Assert.Contains("Picker(Of Integer)", page);
+    }
+
+    [Fact]
+    public void ACascadingValueCarriesItsValuesType()
+    {
+        // It was always CascadingValue(Of String): a theme object cascaded as
+        // a String, matched no parameter and arrived empty.
+        var page = SourceOf(Compile(
+            [
+                """
+                Namespace Components
+                    Public Class Theme
+                        Public Property Dark As Boolean
+                    End Class
+                End Namespace
+                """,
+            ],
+            Component("Child", $"""
+                <p>@(If(Current?.Dark, False))</p>
+                @Code
+                    <CascadingParameter> Public Property Current As Theme
+                End Code
+                """),
+            Component("Page", """
+                <CascadingValue Value="@theme"><Child /></CascadingValue>
+                @Code
+                    Private theme As New Theme()
+                End Code
+                """)), "Page");
+
+        Assert.Contains("CascadingValue(Of Global.Components.Theme)", page);
     }
 
     [Fact]
