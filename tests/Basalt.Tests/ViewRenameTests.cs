@@ -144,6 +144,126 @@ public sealed class ViewRenameTests : IAsyncLifetime
         Assert.Contains("title=\"Name\">Name</label>", view.NewText, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task LeavesTheWordInMarkupAndAnotherSymbolOnTheSameLineAlone()
+    {
+        // The use was found by line, and every "Name" on the line renamed:
+        // the label's text and the Name of a different class with it.
+        await File.WriteAllTextAsync(Path.Combine(_root, "Pet.vb"), """
+            Public Class Pet
+                Public Property Name As String
+            End Class
+            """);
+        await _service.OpenSolutionAsync(Path.Combine(_root, "Probe.vbproj"));
+
+        await File.WriteAllTextAsync(ViewPath, """
+            @Code
+                Dim p As New Person()
+                Dim pet As New Pet()
+            End Code
+            <label>Name</label> <p>@p.Name owns @pet.Name</p>
+            """);
+
+        var preview = await _service.PreviewRenameAsync(
+            ModelPath, await CaretOnNameAsync(), "FullName");
+
+        var view = Assert.Single(preview.Changes, c => c.FilePath == ViewPath);
+
+        Assert.Contains("<label>Name</label> <p>@p.FullName owns @pet.Name</p>", view.NewText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RenamesAUseWrittenInAnotherCase()
+    {
+        // Visual Basic reads p.name as p.Name; left as it was, it would name
+        // a property that no longer exists.
+        await File.WriteAllTextAsync(ViewPath, """
+            @Code
+                Dim p As New Person()
+                Dim shown = p.name
+            End Code
+            <p>@shown</p>
+            """);
+
+        var preview = await _service.PreviewRenameAsync(
+            ModelPath, await CaretOnNameAsync(), "FullName");
+
+        var view = Assert.Single(preview.Changes, c => c.FilePath == ViewPath);
+
+        Assert.Contains("Dim shown = p.FullName", view.NewText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RenamesOnlyTheRightNameInABlocksOpening()
+    {
+        // "@If" is written as "If" at the writer's indent, and the mapping
+        // for it drifts by that indent: it landed exactly on pet.Name, a
+        // dozen characters on, and renamed the wrong property. The string
+        // and the case of "p.name" are Visual Basic's own business.
+        await File.WriteAllTextAsync(Path.Combine(_root, "Pet.vb"), """
+            Public Class Pet
+                Public Property Name As String
+            End Class
+            """);
+        await _service.OpenSolutionAsync(Path.Combine(_root, "Probe.vbproj"));
+
+        await File.WriteAllTextAsync(ViewPath, """
+            @Code
+                Dim p As New Person()
+                Dim pet As New Pet()
+            End Code
+            @If p.name <> pet.Name AndAlso p.Name <> "Name" Then
+                <p>different</p>
+            End If
+            """);
+
+        var preview = await _service.PreviewRenameAsync(
+            ModelPath, await CaretOnNameAsync(), "FullName");
+
+        var view = Assert.Single(preview.Changes, c => c.FilePath == ViewPath);
+
+        Assert.Contains("@If p.FullName <> pet.Name AndAlso p.FullName <> \"Name\" Then", view.NewText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RenamesAUseInAnElseIf()
+    {
+        await File.WriteAllTextAsync(ViewPath, """
+            @Code
+                Dim p As New Person()
+            End Code
+            @If p.UserName = "" Then
+                <p>none</p>
+            @ElseIf p.Name <> "" Then
+                <p>named</p>
+            @End If
+            """);
+
+        var preview = await _service.PreviewRenameAsync(
+            ModelPath, await CaretOnNameAsync(), "FullName");
+
+        var view = Assert.Single(preview.Changes, c => c.FilePath == ViewPath);
+
+        Assert.Contains("@ElseIf p.FullName <> \"\" Then", view.NewText, StringComparison.Ordinal);
+        Assert.Contains("@If p.UserName = \"\" Then", view.NewText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASpanMappingThatDriftsIsRefusedRatherThanTrusted()
+    {
+        // The block's mapping starts at the writer's indent on one side and
+        // after the "@" on the other: its offsets land a dozen characters on.
+        const string template = "@If p.Name <> pet.Name Then\n    <p>x</p>\nEnd If\n";
+        var generated = Basalt.Razor.Vb.VbHtmlCodeWriter.WriteWithMap(
+            Basalt.Razor.Vb.VbHtmlParser.Parse(template), "Drift", "Site", "Drift.vbhtml");
+
+        var use = generated.Code.IndexOf("If p.Name", StringComparison.Ordinal) + "If p.".Length;
+        var both = new Basalt.Workspace.Web.TemplateGeneration.Generated(generated.Code, generated.Map);
+
+        Assert.NotEqual(template.IndexOf("p.Name", StringComparison.Ordinal) + 2, generated.Map.ToOriginal(use));
+        Assert.Null(Basalt.Workspace.Web.TemplateGeneration.VerifiedSpanOriginal(template, both, use));
+    }
+
     public ValueTask DisposeAsync()
     {
         _service.Dispose();

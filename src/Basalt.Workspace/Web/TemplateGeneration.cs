@@ -137,11 +137,50 @@ internal static class TemplateGeneration
         // position: at a line's first token nothing precedes it, and an empty
         // prefix matches any line at all.
         var writtenLine = code[indentEnd..generatedLineEnd].TrimEnd(' ', '\t', '\r');
+        var templateLineText = content.TrimEnd(' ', '\t', '\r');
 
-        if (!string.Equals(content.TrimEnd(' ', '\t', '\r'), writtenLine, StringComparison.Ordinal))
+        // A block's opening and closing are written without their "@": the
+        // line "@If p.Name <> pet.Name Then" becomes "If p.Name <> pet.Name
+        // Then". The span mapping for it counts from the writer's indent and
+        // lands a dozen characters late, on pet.Name.
+        if (templateLineText.StartsWith('@') &&
+            string.Equals(templateLineText[1..], writtenLine, StringComparison.Ordinal))
+            return contentStart + 1 + (generatedPosition - indentEnd);
+
+        if (!string.Equals(templateLineText, writtenLine, StringComparison.Ordinal))
             return null;
 
         return contentStart + (generatedPosition - indentEnd);
+    }
+
+    /// <summary>
+    /// The template position a generated position came from, by the mapping
+    /// that covers it, only where the text from the mapping's start up to the
+    /// position is the same on both sides.
+    /// </summary>
+    /// <remarks>
+    /// An expression's mapping starts at its own text on both sides, and the
+    /// check passes. A mapping the writer starts at its indent instead drifts
+    /// by that indent, and the check refuses it rather than land exactly on
+    /// the wrong token.
+    /// </remarks>
+    internal static int? VerifiedSpanOriginal(string template, Generated generated, int generatedPosition)
+    {
+        foreach (var mapping in generated.Map.Mappings)
+        {
+            var start = mapping.Generated.Start;
+
+            if (generatedPosition < start || generatedPosition > start + mapping.Generated.Length) continue;
+
+            var offset = generatedPosition - start;
+
+            if (offset > mapping.Original.Length || mapping.Original.Start + offset > template.Length) continue;
+
+            if (string.CompareOrdinal(generated.Code, start, template, mapping.Original.Start, offset) == 0)
+                return mapping.Original.Start + offset;
+        }
+
+        return null;
     }
 
     /// <summary>Where a 1-based line begins, or -1 when there is no such line.</summary>

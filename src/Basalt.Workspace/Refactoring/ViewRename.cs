@@ -74,7 +74,7 @@ public sealed class ViewRename
         // The template has to name the symbol somewhere for any of this to be
         // worth doing: generating and compiling every view to discover
         // otherwise would be slow for no gain.
-        if (!text.Contains(symbol.Name, StringComparison.Ordinal)) return null;
+        if (!text.Contains(symbol.Name, StringComparison.OrdinalIgnoreCase)) return null;
 
         var generated = VbHtmlCodeWriter.WriteWithMap(
             VbHtmlParser.Parse(text), "GeneratedView", "Basalt.Generated", path);
@@ -90,12 +90,9 @@ public sealed class ViewRename
             .FindReferencesAsync(symbol, document.Project.Solution, ct)
             .ConfigureAwait(false);
 
-        var generatedText = await document.GetTextAsync(ct).ConfigureAwait(false);
-
         // Where in the template each use sits. Collected first, applied
         // afterwards from the end, so earlier edits do not shift later spans.
         var spans = new List<TextSpan>();
-        var templateText = SourceText.From(text);
 
         foreach (var reference in found)
         {
@@ -105,11 +102,12 @@ public sealed class ViewRename
 
                 var inGenerated = use.Location.SourceSpan;
 
-                var line = LineOf(generated, generatedText, inGenerated.Start);
-
-                if (line is not { } templateLine) continue;
-
-                spans.AddRange(NamesOn(templateText, templateLine, symbol.Name));
+                // Exactly where the use stands, or not at all. Renaming every
+                // "Name" on the use's line renamed a label's text, a string
+                // and another class's Name with it; a use that cannot be
+                // placed is left for the build to point at.
+                if (ExactlyAt(path, text, generated, inGenerated.Start, symbol.Name) is { } exact)
+                    spans.Add(exact);
             }
         }
 
@@ -128,48 +126,23 @@ public sealed class ViewRename
     }
 
     /// <summary>
-    /// The template line a generated offset came from.
-    ///
-    /// The line, not the offset: <c>#ExternalSource</c> carries a line number
-    /// and nothing finer, so a mapped region and the template text behind it
-    /// are different lengths — <c>Write(p.Name)</c> against
-    /// <c>&lt;p&gt;@p.Name&lt;/p&gt;</c>. Arithmetic inside a region drifts,
-    /// and lands a few characters past the name.
+    /// The template span of a use, when its place can be told exactly and
+    /// the name really stands there, in any case, as Visual Basic reads it.
     /// </summary>
-    private static int? LineOf(
-        VbHtmlCodeWriter.Generated generated, SourceText generatedText, int offset)
+    private static TextSpan? ExactlyAt(
+        string path, string text, VbHtmlCodeWriter.Generated generated, int generatedStart, string name)
     {
-        if (offset < 0 || offset > generatedText.Length) return null;
+        var both = new Web.TemplateGeneration.Generated(generated.Code, generated.Map);
 
-        var generatedLine = generatedText.Lines.GetLinePosition(offset).Line + 1;
+        var start = Web.TemplateGeneration.StatementLineOriginal(path, text, both, generatedStart)
+                    ?? Web.TemplateGeneration.VerifiedSpanOriginal(text, both, generatedStart);
 
-        return generated.Map.OriginalLineOf(generatedLine);
-    }
+        if (start is not { } at || at + name.Length > text.Length) return null;
 
-    /// <summary>
-    /// Every whole-word occurrence of the name on one template line.
-    ///
-    /// Whole-word because the line is all the map can give: renaming the
-    /// "Name" inside "UserName" would corrupt the template silently.
-    /// </summary>
-    private static IEnumerable<TextSpan> NamesOn(SourceText text, int line, string name)
-    {
-        var index = line - 1;
+        if (!string.Equals(text.Substring(at, name.Length), name, StringComparison.OrdinalIgnoreCase)) return null;
+        if (!IsWholeWord(text, at, name.Length)) return null;
 
-        if (index < 0 || index >= text.Lines.Count) yield break;
-
-        var textLine = text.Lines[index];
-        var content = text.ToString(textLine.Span);
-
-        var at = content.IndexOf(name, StringComparison.Ordinal);
-
-        while (at >= 0)
-        {
-            if (IsWholeWord(content, at, name.Length))
-                yield return new TextSpan(textLine.Start + at, name.Length);
-
-            at = content.IndexOf(name, at + 1, StringComparison.Ordinal);
-        }
+        return new TextSpan(at, name.Length);
     }
 
     /// <summary>Whether a match is a name of its own, not part of a longer one.</summary>
