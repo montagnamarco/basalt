@@ -40,6 +40,8 @@
     <AdditionalFiles Include="**/*.vbrazor"
                      Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
     <CompilerVisibleProperty Include="BasaltProjectDir" />
+    <!-- On or Off for the templates alone; unset, they follow OptionStrict. -->
+    <CompilerVisibleProperty Include="VbRazorOptionStrict" />
   </ItemGroup>
 
 </Project>

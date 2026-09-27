@@ -86,14 +86,17 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         // RootNamespace is deliberately not read: Visual Basic prepends it to
         // every Namespace statement itself, so a generator that also writes it
         // produces Sito.Sito.Home.
-        var everything = templates.Collect().Combine(language).Combine(hasBlazor);
+        var optionStrict = context.CompilationProvider.Combine(context.AnalyzerConfigOptionsProvider)
+            .Select((pair, _) => ProjectOptionStrict.IsOn(pair.Left, pair.Right));
+
+        var everything = templates.Collect().Combine(language).Combine(hasBlazor).Combine(optionStrict);
 
         context.RegisterSourceOutput(everything, (production, data) =>
         {
-            var ((all, compilationLanguage), blazor) = data;
+            var (((all, compilationLanguage), blazor), strict) = data;
 
             foreach (var template in all)
-                Emit(production, template, compilationLanguage, blazor);
+                Emit(production, template, compilationLanguage, blazor, strict);
         });
     }
 
@@ -101,7 +104,8 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         SourceProductionContext production,
         Component template,
         string language,
-        bool hasBlazor)
+        bool hasBlazor,
+        bool optionStrict)
     {
         // A .vbrazor in a C# project is reported rather than silently ignored:
         // a template that produces nothing is hard to diagnose from outside.
@@ -172,7 +176,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         var source = VbComponentWriter
             .WriteWithMap(
                 document, template.ClassName, namespaceName, template.Path,
-                checksum: template.Checksum)
+                checksum: template.Checksum, optionStrict: optionStrict)
             .Code;
 
         production.AddSource(

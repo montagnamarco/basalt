@@ -61,12 +61,15 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         // edit that adds none does not regenerate every view.
         var tagHelpers = context.CompilationProvider.Select(TagHelperDiscovery.Discover);
 
+        var optionStrict = context.CompilationProvider.Combine(context.AnalyzerConfigOptionsProvider)
+            .Select((pair, _) => ProjectOptionStrict.IsOn(pair.Left, pair.Right));
+
         var everything = templates.Collect().Combine(rootNamespace).Combine(language)
-            .Combine(host).Combine(projectDir).Combine(tagHelpers);
+            .Combine(host).Combine(projectDir).Combine(tagHelpers).Combine(optionStrict);
 
         context.RegisterSourceOutput(everything, (production, data) =>
         {
-            var (((((all, root), compilationLanguage), viewHost), projectDirectory), tagHelperIndex) = data;
+            var ((((((all, root), compilationLanguage), viewHost), projectDirectory), tagHelperIndex), strict) = data;
 
             var shared = all.Where(t => ViewImports.IsShared(t.Path)).ToList();
 
@@ -82,7 +85,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
                     continue;
 
                 Emit(production, template, root, compilationLanguage, shared, viewHost,
-                    projectDirectory, tagHelperIndex.Catalog);
+                    projectDirectory, tagHelperIndex.Catalog, strict);
             }
         });
     }
@@ -277,7 +280,8 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         IReadOnlyList<Template> shared,
         ViewHost host,
         string? projectDirectory,
-        TagHelperCatalog tagHelpers)
+        TagHelperCatalog tagHelpers,
+        bool optionStrict)
     {
         // Only Visual Basic projects get Visual Basic views. In a C# project a
         // .vbhtml file is reported rather than silently ignored, because a
@@ -398,7 +402,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         var code = VbHtmlCodeWriter
             .WriteWithMap(
                 document, template.ClassName, namespaceName, template.Path, templateHost,
-                template.Checksum, tagHelpers)
+                template.Checksum, tagHelpers, optionStrict)
             .Code;
 
 

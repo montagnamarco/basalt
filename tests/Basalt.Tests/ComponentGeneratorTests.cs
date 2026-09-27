@@ -41,6 +41,28 @@ public class ComponentGeneratorTests
     }
 
     [Fact]
+    public void AComponentCompilesUnderTheProjectsOptionStrictOn()
+    {
+        var outcome = GeneratorRun.Run("VbComponentGenerator", null, optionStrict: true, properties: null,
+            (Path, """
+                @Page "/count"
+                <p>Count: @count</p>
+                <button onclick="@AddressOf Increment">+1</button>
+                <input value="@name" />
+                @Functions
+                    Private count As Integer
+                    Private name As String = ""
+                    Private Sub Increment()
+                        count += 1
+                    End Sub
+                @End Functions
+                """));
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.Contains("Option Strict On", Assert.Single(outcome.Sources).Value);
+    }
+
+    [Fact]
     public void TiesTheGeneratedCodeToTheTemplate()
     {
         var outcome = GeneratorRun.Run("VbComponentGenerator",

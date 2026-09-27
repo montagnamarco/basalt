@@ -38,6 +38,58 @@ public class ViewGeneratorTests
         Assert.Contains(outcome.Sources.Values, code => code.Contains("GetType(Global.Custom.Place.Index)"));
     }
 
+    /// <summary>A view using the constructs a real one does, tag helpers included.</summary>
+    private static readonly (string Path, string Text)[] OrdinaryViews =
+    [
+        (InProject("Views", "_ViewImports.vbhtml"), "@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers\n"),
+        (InProject("Views", "Home", "Index.vbhtml"), """
+            @ModelType Global.System.Collections.Generic.List(Of String)
+            @Code
+                Dim count As Integer = Model.Count
+            End Code
+            <p>@count items</p>
+            <a asp-action="Index" asp-route-id="@count">again</a>
+            <input disabled="@(count = 0)" />
+            @For Each item As String In Model
+                @<li>@item</li>
+            Next
+            @Section Scripts
+                <script></script>
+            End Section
+            """),
+    ];
+
+    [Fact]
+    public void WithOptionStrictOnTheGeneratedCodeItselfCompiles()
+    {
+        // The project's Option Strict now reaches the views, so the code the
+        // generator writes around the author's must hold to it too.
+        var outcome = GeneratorRun.Run("VbHtmlGenerator", Project, optionStrict: true, properties: null, OrdinaryViews);
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.Contains(outcome.Sources.Values, code => code.Contains("Option Strict On"));
+    }
+
+    [Fact]
+    public void AViewIsHeldToTheProjectsOptionStrict()
+    {
+        // Fixed Off, a project with Option Strict On had late binding
+        // accepted in every view.
+        (string, string)[] lateBound =
+        [
+            (InProject("Views", "Late.vbhtml"), "@Code\n    Dim o As Object = \"x\"\n    Dim n = o.Length\nEnd Code\n<p>@n</p>\n"),
+        ];
+
+        var strict = GeneratorRun.Run("VbHtmlGenerator", Project, optionStrict: true, properties: null, lateBound);
+        var loose = GeneratorRun.Run("VbHtmlGenerator", Project, optionStrict: false, properties: null, lateBound);
+        var overridden = GeneratorRun.Run("VbHtmlGenerator", Project, optionStrict: true,
+            properties: new Dictionary<string, string> { ["VbRazorOptionStrict"] = "Off" }, lateBound);
+
+        Assert.Contains(strict.CompilationErrors, e => e.Id == "BC30574");
+        Assert.Empty(loose.CompilationErrors);
+        Assert.Empty(overridden.CompilationErrors);
+    }
+
     [Fact]
     public void ViewStartIsAClassMvcRunsItself()
     {

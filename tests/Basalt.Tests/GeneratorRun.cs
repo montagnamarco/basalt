@@ -61,7 +61,19 @@ internal static class GeneratorRun
     /// Runs one generator with BasaltProjectDir set, as the package props set it.
     /// </summary>
     public static Outcome Run(
-        string generatorTypeName, string? projectDirectory, params (string Path, string Text)[] templates)
+        string generatorTypeName, string? projectDirectory, params (string Path, string Text)[] templates) =>
+        Run(generatorTypeName, projectDirectory, optionStrict: false, properties: null, templates);
+
+    /// <summary>
+    /// Runs one generator in a project with Option Strict as given and extra
+    /// build properties, as MSBuild would pass them.
+    /// </summary>
+    public static Outcome Run(
+        string generatorTypeName,
+        string? projectDirectory,
+        bool optionStrict,
+        IReadOnlyDictionary<string, string>? properties,
+        params (string Path, string Text)[] templates)
     {
         var type = Generators.Value.GetType($"Basalt.Razor.Vb.Generator.{generatorTypeName}", throwOnError: true)!;
         var generator = ((IIncrementalGenerator)Activator.CreateInstance(type)!).AsSourceGenerator();
@@ -71,7 +83,8 @@ internal static class GeneratorRun
             [VisualBasicSyntaxTree.ParseText("Module Program\nEnd Module")],
             References,
             new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                .WithGlobalImports(GlobalImport.Parse("Microsoft.VisualBasic", "System")));
+                .WithGlobalImports(GlobalImport.Parse("Microsoft.VisualBasic", "System"))
+                .WithOptionStrict(optionStrict ? OptionStrict.On : OptionStrict.Off));
 
         var additional = templates
             .Select(t => (AdditionalText)new Template(t.Path, t.Text))
@@ -79,7 +92,7 @@ internal static class GeneratorRun
 
         var driver = VisualBasicGeneratorDriver.Create(
             [generator], additional, parseOptions: VisualBasicParseOptions.Default,
-            analyzerConfigOptionsProvider: new Options(projectDirectory));
+            analyzerConfigOptionsProvider: new Options(projectDirectory, properties));
 
         var ran = driver.RunGeneratorsAndUpdateCompilation(compilation, out var updated, out _);
         var result = ran.GetRunResult().Results.Single();
@@ -96,25 +109,40 @@ internal static class GeneratorRun
     }
 
     /// <summary>The build properties the generator reads, as MSBuild hands them over.</summary>
-    private sealed class Options(string? projectDirectory) : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptionsProvider
+    private sealed class Options(string? projectDirectory, IReadOnlyDictionary<string, string>? properties)
+        : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptionsProvider
     {
         public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GlobalOptions { get; } =
-            new Values(projectDirectory);
+            new Values(projectDirectory, properties);
 
         public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GetOptions(SyntaxTree tree) =>
-            new Values(null);
+            new Values(null, null);
 
         public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GetOptions(AdditionalText textFile) =>
-            new Values(null);
+            new Values(null, null);
     }
 
-    private sealed class Values(string? projectDirectory) : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions
+    private sealed class Values(string? projectDirectory, IReadOnlyDictionary<string, string>? properties)
+        : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions
     {
         public override bool TryGetValue(string key, out string value)
         {
-            value = projectDirectory ?? "";
+            value = "";
 
-            return key == "build_property.BasaltProjectDir" && projectDirectory is not null;
+            if (key == "build_property.BasaltProjectDir" && projectDirectory is not null)
+            {
+                value = projectDirectory;
+                return true;
+            }
+
+            if (properties is not null && key.StartsWith("build_property.", StringComparison.Ordinal) &&
+                properties.TryGetValue(key["build_property.".Length..], out var found))
+            {
+                value = found;
+                return true;
+            }
+
+            return false;
         }
     }
 

@@ -70,7 +70,7 @@ public static class VbHtmlCodeWriter
     public static Generated WriteWithMap(
         VbHtmlDocument document, string className, string namespaceName, string? filePath,
         ViewHost host = ViewHost.Standalone, string? checksum = null,
-        TagHelperCatalog? tagHelpers = null)
+        TagHelperCatalog? tagHelpers = null, bool optionStrict = false)
     {
         var builder = new StringBuilder();
         var mappings = new List<SourceMapping>();
@@ -89,7 +89,10 @@ public static class VbHtmlCodeWriter
         builder.AppendLine("'     Generated from a .vbhtml template. Changes will be lost.");
         builder.AppendLine("' </auto-generated>");
         builder.AppendLine();
-        builder.AppendLine("Option Strict Off");
+        // The project's own setting, so a view is held to the rules the rest
+        // of the project is: fixed Off, a project with Option Strict On had
+        // late binding and narrowing conversions accepted in every view.
+        builder.AppendLine(optionStrict ? "Option Strict On" : "Option Strict Off");
         builder.AppendLine("Option Explicit On");
         builder.AppendLine();
         builder.AppendLine("Imports System");
