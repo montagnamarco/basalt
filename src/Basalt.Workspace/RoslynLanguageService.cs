@@ -1240,11 +1240,21 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
     /// every candidate would mean reading the documentation of a whole
     /// namespace to show a dozen rows.
     /// </summary>
+    public Task<string?> GetCompletionDescriptionAsync(
+        string filePath, int position, string displayText, CancellationToken ct = default) =>
+        GetCompletionDescriptionAsync(filePath, position, displayText, currentText: null, ct);
+
+    /// <summary>Describes a completion in an unsaved or generated document.</summary>
     public async Task<string?> GetCompletionDescriptionAsync(
-        string filePath, int position, string displayText, CancellationToken ct = default)
+        string filePath, int position, string displayText, string? currentText,
+        CancellationToken ct = default)
     {
-        var document = GetDocument(filePath);
+        var document = GetDocument(filePath)
+                    ?? (currentText is null ? null : ScratchDocument(currentText));
         if (document is null) return null;
+
+        if (currentText is not null)
+            document = document.WithText(SourceText.From(currentText));
 
         var service = CompletionService.GetService(document);
         if (service is null) return null;

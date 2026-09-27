@@ -230,7 +230,7 @@ public sealed class LanguageServerProtocolTests : IDisposable
     /// protocol needs, written by hand: a Content-Length header, a JSON body,
     /// and a way to match a response back to the request that asked for it.
     /// </remarks>
-    private sealed class LspHarness : IAsyncDisposable
+    internal sealed class LspHarness : IAsyncDisposable
     {
         private readonly Pipe _clientToServer = new();
         private readonly Pipe _serverToClient = new();

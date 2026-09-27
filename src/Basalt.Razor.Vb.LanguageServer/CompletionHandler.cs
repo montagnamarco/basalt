@@ -9,6 +9,7 @@ using Basalt.Razor.Vb.Web;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Newtonsoft.Json.Linq;
 
 namespace Basalt.Razor.Vb.LanguageServer;
 
@@ -23,6 +24,15 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
 {
     private readonly DocumentStore _documents;
     private readonly ProjectCompilation _compilation;
+    private readonly object _resolveLock = new();
+    private readonly Dictionary<string, CompletionBatch> _resolveBatches = new();
+    private const int MaximumBatches = 8;
+    private const int MaximumItems = 2048;
+    private static readonly TimeSpan ResolveLifetime = TimeSpan.FromMinutes(2);
+
+    private sealed record CompletionBatch(
+        OpenDocument Document, long Revision, DateTime Created,
+        ProjectCompilation.CompletionCapture Capture, IReadOnlyList<IdeCompletionItem> Items);
 
     public VbHtmlCompletionHandler(DocumentStore documents, ProjectCompilation compilation)
     {
@@ -30,8 +40,56 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
         _compilation = compilation;
     }
 
-    public override Task<CompletionItem> Handle(
-        CompletionItem request, CancellationToken ct) => Task.FromResult(request);
+    public override async Task<CompletionItem> Handle(
+        CompletionItem request, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // Only tokens issued by this server can select a stored snapshot. Never
+        // trust file paths, positions or generated text supplied by the client.
+        if (request.Data is not JObject data ||
+            data["batch"]?.Type != JTokenType.String ||
+            data["index"]?.Type != JTokenType.Integer)
+            return request;
+
+        if (!long.TryParse(data["index"]!.ToString(), out var indexValue) ||
+            indexValue < 0 || indexValue >= MaximumItems) return request;
+        var index = (int)indexValue;
+        CompletionBatch? batch;
+        lock (_resolveLock)
+        {
+            PruneBatches();
+            _resolveBatches.TryGetValue(data["batch"]!.Value<string>()!, out batch);
+        }
+        if (batch is null || index >= batch.Items.Count || !IsCurrent(batch)) return request;
+        var item = batch.Items[index];
+        if (request.Label != item.DisplayText || request.InsertText != item.InsertionText)
+            return request;
+
+        var description = await _compilation
+            .GetCompletionDescriptionAsync(batch.Capture, item.DisplayText, ct)
+            .ConfigureAwait(false);
+        ct.ThrowIfCancellationRequested();
+        if (!IsCurrent(batch) || string.IsNullOrEmpty(description)) return request;
+
+        // Roslyn supplies the signature first, followed by documentation. The
+        // rest of the client's item (edits, sort/filter text, data) survives.
+        return request with
+        {
+            Detail = description.Split('\n', 2)[0].TrimEnd('\r'),
+            Documentation = description
+        };
+    }
+
+    private bool IsCurrent(CompletionBatch batch) =>
+        _compilation.IsReady && _compilation.Revision == batch.Revision &&
+        ReferenceEquals(_documents.Get(batch.Document.Uri), batch.Document) &&
+        DateTime.UtcNow - batch.Created < ResolveLifetime;
+
+    private void PruneBatches()
+    {
+        foreach (var pair in _resolveBatches.ToArray())
+            if (!IsCurrent(pair.Value)) _resolveBatches.Remove(pair.Key);
+    }
 
     public override async Task<CompletionList> Handle(
         CompletionParams request, CancellationToken ct)
@@ -45,16 +103,41 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
         // With a compilation the code half is answered properly: the view is
         // generated to Visual Basic and Roslyn is asked about the generated
         // position, which is how Basalt answers the same question.
-        if (_compilation.IsReady && _compilation.Provider.Completion is { } completion)
+        if (_compilation.IsReady && _compilation.Provider.Completion is not null)
         {
-            var answered = await completion
+            var revision = _compilation.Revision;
+            var (answered, capture) = await _compilation
                 .GetCompletionsAsync(
                     new LanguageDocument(
                         request.TextDocument.Uri.GetFileSystemPath(), document.Text),
                     offset, ct)
                 .ConfigureAwait(false);
 
-            if (answered.Count > 0) return new CompletionList(answered.Select(Translate));
+            if (answered.Count > 0)
+            {
+                var translated = answered.Select(Translate).ToArray();
+                if (capture.GeneratedText is not null &&
+                    revision == _compilation.Revision &&
+                    ReferenceEquals(_documents.Get(document.Uri), document))
+                {
+                    var id = Guid.NewGuid().ToString("N");
+                    var retained = answered.Take(MaximumItems).ToArray();
+                    lock (_resolveLock)
+                    {
+                        PruneBatches();
+                        while (_resolveBatches.Count >= MaximumBatches)
+                            _resolveBatches.Remove(_resolveBatches.MinBy(pair => pair.Value.Created).Key);
+                        _resolveBatches[id] = new CompletionBatch(
+                            document, revision, DateTime.UtcNow, capture, retained);
+                    }
+                    for (var index = 0; index < retained.Length; index++)
+                        translated[index] = translated[index] with
+                        {
+                            Data = new JObject { ["batch"] = id, ["index"] = index }
+                        };
+                }
+                return new CompletionList(translated);
+            }
         }
 
         return new CompletionList(Suggest(document, offset));
@@ -67,6 +150,7 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
             Label = item.DisplayText,
             InsertText = item.InsertionText,
             Detail = item.Detail,
+            FilterText = item.FilterText,
             Documentation = item.Description,
             Kind = KindOf(item.Kind),
         };
@@ -229,6 +313,7 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
         new()
         {
             DocumentSelector = Selector.ForVbHtml,
+            ResolveProvider = true,
 
             // "@" opens the directives, "." the members, "<" the tags.
             TriggerCharacters = new Container<string>("@", ".", "<")

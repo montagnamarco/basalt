@@ -27,6 +27,39 @@ public sealed class ProjectCompilation : IDisposable
     private readonly RoslynFormattingService _formatting = new();
     private Task? _loading;
     private string? _target;
+    private readonly AsyncLocal<CompletionCapture?> _completionCapture = new();
+    private long _revision;
+
+    internal long Revision => Interlocked.Read(ref _revision);
+
+    internal sealed class CompletionCapture
+    {
+        internal string? GeneratedText { get; set; }
+        internal int Position { get; set; }
+    }
+
+    internal async Task<(IReadOnlyList<CompletionItem> Items, CompletionCapture Capture)>
+        GetCompletionsAsync(LanguageDocument document, int position, CancellationToken ct)
+    {
+        var capture = new CompletionCapture();
+        var previous = _completionCapture.Value;
+        _completionCapture.Value = capture;
+        try
+        {
+            var items = await Provider.Completion!.GetCompletionsAsync(document, position, ct)
+                .ConfigureAwait(false);
+            return (items, capture);
+        }
+        finally
+        {
+            _completionCapture.Value = previous;
+        }
+    }
+
+    internal Task<string?> GetCompletionDescriptionAsync(
+        CompletionCapture capture, string label, CancellationToken ct) =>
+        _roslyn.GetCompletionDescriptionAsync(
+            "__vbhtml_generated.vb", capture.Position, label, capture.GeneratedText, ct);
 
     /// <summary>Whether the solution has finished loading.</summary>
     public bool IsReady { get; private set; }
@@ -101,6 +134,7 @@ public sealed class ProjectCompilation : IDisposable
     public async Task FileChangedAsync(string path, CancellationToken ct = default)
     {
         if (!IsReady) return;
+        Interlocked.Increment(ref _revision);
 
         // A project file changing means references or files came and went, so
         // the whole solution is opened again; a source file only needs its own
@@ -129,10 +163,17 @@ public sealed class ProjectCompilation : IDisposable
             // Being written as we read it. The next change brings us the
             // finished text, so there is nothing useful to report.
         }
+        finally
+        {
+            // Also invalidate requests started while the source refresh was
+            // awaiting Roslyn: their generated text may describe the old model.
+            Interlocked.Increment(ref _revision);
+        }
     }
 
     private async Task LoadAsync(string target, CancellationToken ct)
     {
+        Interlocked.Increment(ref _revision);
         try
         {
             await _roslyn.OpenSolutionAsync(target, ct).ConfigureAwait(false);
@@ -153,6 +194,11 @@ public sealed class ProjectCompilation : IDisposable
             Provider = WebLanguageProviders.VbRazorAsking(
                 ask: async (text, position, token) =>
                 {
+                    if (_completionCapture.Value is { } capture)
+                    {
+                        capture.GeneratedText = text;
+                        capture.Position = position;
+                    }
                     var items = await _roslyn
                         .GetCompletionsAsync(generatedPath, position, text, token)
                         .ConfigureAwait(false);
