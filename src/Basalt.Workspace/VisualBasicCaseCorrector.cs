@@ -70,11 +70,12 @@ public static class VisualBasicCaseCorrector
 
         var changes = new List<TextChange>();
 
-        foreach (var name in root.DescendantNodes().OfType<IdentifierNameSyntax>())
+        foreach (var name in root.DescendantNodes().OfType<SimpleNameSyntax>())
         {
-            if (limitTo is { } span && !span.IntersectsWith(name.Span)) continue;
+            var identifier = name.Identifier;
+            if (limitTo is { } span && !span.IntersectsWith(identifier.Span)) continue;
 
-            var written = name.Identifier.Text;
+            var written = identifier.ValueText;
             var symbol = model.GetSymbolInfo(name, ct).Symbol;
             if (symbol is null) continue;
 
@@ -83,7 +84,16 @@ public static class VisualBasicCaseCorrector
             if (string.Equals(symbol.Name, written, StringComparison.Ordinal)) continue;
             if (!string.Equals(symbol.Name, written, StringComparison.OrdinalIgnoreCase)) continue;
 
-            changes.Add(new TextChange(name.Identifier.Span, symbol.Name));
+            // ValueText omits VB's identifier brackets. Preserve the user's
+            // escaping and replace only the name token, including for generic
+            // names whose full node span also contains the type arguments.
+            var canonical = identifier.Text.StartsWith("[", StringComparison.Ordinal)
+                ? "[" + symbol.Name + "]" : symbol.Name;
+            if (canonical.Length != identifier.Span.Length
+                || !string.Equals(identifier.Text, canonical, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            changes.Add(new TextChange(identifier.Span, canonical));
         }
 
         return changes;
