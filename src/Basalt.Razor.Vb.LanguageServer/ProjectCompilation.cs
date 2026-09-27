@@ -269,17 +269,50 @@ public sealed class ProjectCompilation : IDisposable
     /// A solution first, because a view's model commonly lives in a project
     /// other than the web one, and only the solution ties them together.
     /// </remarks>
-    private static string? FindSolutionOrProject(string root)
+    internal static string? FindSolutionOrProject(string root)
     {
-        foreach (var pattern in new[] { "*.slnx", "*.sln" })
+        static int Preference(string path) => Path.GetExtension(path).ToLowerInvariant() switch
         {
-            var found = Directory.GetFiles(root, pattern, SearchOption.TopDirectoryOnly);
-            if (found.Length > 0) return found[0];
+            ".slnx" => 0,
+            ".sln" => 1,
+            ".vbproj" => 2,
+            _ => 3
+        };
+
+        if (File.Exists(root))
+            return Preference(root) < 3 ? Path.GetFullPath(root) : null;
+        if (!Directory.Exists(root)) return null;
+
+        var ignoredDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "bin", "obj", ".git", ".hg", ".svn", ".vs", ".codex", ".agents", ".claude", "node_modules"
+        };
+        var options = new EnumerationOptions
+        {
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+            RecurseSubdirectories = false
+        };
+        var directories = new Stack<string>();
+        directories.Push(Path.GetFullPath(root));
+        var candidates = new List<string>();
+
+        while (directories.TryPop(out var directory))
+        {
+            candidates.AddRange(Directory.EnumerateFiles(directory, "*", options)
+                .Where(path => Preference(path) < 3));
+
+            foreach (var child in Directory.EnumerateDirectories(directory, "*", options))
+                if (!ignoredDirectories.Contains(Path.GetFileName(child))) directories.Push(child);
         }
 
-        var projects = Directory.GetFiles(root, "*.vbproj", SearchOption.AllDirectories);
-
-        return projects.Length > 0 ? projects[0] : null;
+        // A nested solution still owns the references between its projects.
+        // Enumeration order differs by filesystem, so ties use a stable path
+        // order until the client can choose among multiple solutions.
+        return candidates.OrderBy(Preference)
+            .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(path => path, StringComparer.Ordinal)
+            .FirstOrDefault();
     }
 
     public void Dispose() => _roslyn.Dispose();
