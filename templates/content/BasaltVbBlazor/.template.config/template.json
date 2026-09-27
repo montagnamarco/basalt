@@ -17,6 +17,25 @@
   "preferNameDirectory": true,
   "groupIdentity": "Microsoft.Web.Blazor",
   "precedence": "10000",
+  "sources": [
+    {
+      "source": "./BasaltVbBlazor/",
+      "target": "./",
+      "condition": "(!UseWebAssembly)"
+    },
+    {
+      "source": "./BasaltVbBlazor.Client/Pages/",
+      "target": "./Components/Pages/",
+      "include": [ "Counter.vbrazor" ],
+      "condition": "(interactivity == \"Server\")"
+    },
+    {
+      "source": "./",
+      "target": "./",
+      "exclude": [ ".template.config/**" ],
+      "condition": "(UseWebAssembly)"
+    }
+  ],
   "symbols": {
     "Framework": {
       "type": "parameter",
@@ -34,14 +53,91 @@
       ],
       "replaces": "net10.0",
       "defaultValue": "net10.0"
+    },
+    "interactivity": {
+      "type": "parameter",
+      "description": "Where interactive components run.",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "None",
+          "description": "Static server rendering only."
+        },
+        {
+          "choice": "Server",
+          "description": "On the server, over a SignalR circuit."
+        },
+        {
+          "choice": "WebAssembly",
+          "description": "In the browser, on WebAssembly, from a .Client project."
+        },
+        {
+          "choice": "Auto",
+          "description": "On the server first, then in the browser once WebAssembly has downloaded."
+        }
+      ],
+      "defaultValue": "Server"
+    },
+    "UseServer": {
+      "type": "computed",
+      "value": "(interactivity == \"Server\" || interactivity == \"Auto\")"
+    },
+    "UseWebAssembly": {
+      "type": "computed",
+      "value": "(interactivity == \"WebAssembly\" || interactivity == \"Auto\")"
+    },
+    "InteractivityIsAuto": {
+      "type": "computed",
+      "value": "(interactivity == \"Auto\")"
+    },
+    "UseInteractivity": {
+      "type": "computed",
+      "value": "(interactivity != \"None\")"
+    }
+  },
+  "SpecialCustomOperations": {
+    "**/*.vb": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": [ "'#if" ],
+            "else": [ "'#else" ],
+            "elseif": [ "'#elseif" ],
+            "endif": [ "'#endif" ],
+            "trim": true,
+            "wholeLine": true,
+            "evaluator": "C++"
+          }
+        }
+      ]
+    },
+    "**/*.vbrazor": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "style": "block",
+            "startToken": "@*",
+            "endToken": "*@",
+            "pseudoEndToken": "* @",
+            "evaluator": "C++"
+          }
+        }
+      ]
     }
   },
   "primaryOutputs": [
     {
+      "condition": "(!UseWebAssembly)",
       "path": "BasaltVbBlazor.vbproj"
     },
     {
-      "condition": "(HostIdentifier != \"dotnetcli\" && HostIdentifier != \"dotnetcli-preview\")",
+      "condition": "(UseWebAssembly)",
+      "path": "BasaltVbBlazor.slnx"
+    },
+    {
+      "condition": "(!UseWebAssembly && HostIdentifier != \"dotnetcli\" && HostIdentifier != \"dotnetcli-preview\")",
       "path": "Components/Pages/Home.vbrazor"
     }
   ],

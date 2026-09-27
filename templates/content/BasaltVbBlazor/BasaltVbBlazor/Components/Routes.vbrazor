@@ -1,8 +1,19 @@
 @* The router: every component with an @Page directive in this assembly. *@
 
+@*#if (UseWebAssembly)
+<Router AppAssembly="@GetType(Routes).Assembly" AdditionalAssemblies="@ClientAssemblies" Found="@FoundPage" />
+#else
 <Router AppAssembly="@GetType(Routes).Assembly" Found="@FoundPage" />
+#endif*@
 
 @Functions
+@*#if (UseWebAssembly)
+    ' The .Client project's pages route as well: they are compiled for the
+    ' browser, and prerendered here first.
+    Private ReadOnly Property ClientAssemblies As Global.System.Reflection.Assembly() =
+        {GetType(Global.BasaltVbBlazor.Client.Pages.Counter).Assembly}
+
+#endif*@
     ' What the router shows for a route it knows: the page, inside the
     ' default layout. A property rather than a <Found Context="routeData">
     ' template, which .vbrazor components do not take yet.

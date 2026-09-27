@@ -16,7 +16,7 @@ Along the way it grew a few things that stand on their own:
   work in the repository and most of what follows is about it.
 - **Blazor components in Visual Basic.** A `.vbrazor` file compiles into a
   real `ComponentBase`, with parameters, event handlers and routing.
-  Interactive Server is verified end to end; WebAssembly and Auto are not yet.
+  Server, WebAssembly and Auto interactivity are all verified in a browser.
 - **`.vbpage` pages** — Classic ASP's philosophy, brought up to date: a page is a
   file, a URL is a path, save and refresh. **Under active development.**
 - **QuickBASIC**, which is here for the fun of it. See
@@ -393,16 +393,22 @@ End Code
 ```
 
 ```bash
-dotnet new blazor -lang VB -o MyApp
-cd MyApp && dotnet run
+dotnet new blazor -lang VB -o MyApp                         # Server
+dotnet new blazor -lang VB --interactivity Auto -o MyApp    # None, Server, WebAssembly, Auto
 ```
 
-The template is a Blazor Web App: `App.vbrazor` with `<HeadOutlet />` and
-`blazor.web.js`, `Routes.vbrazor`, a `MainLayout` and `NavMenu`, and a
-`Counter` page with `@rendermode InteractiveServer`. **Interactive Server is
-verified end to end** — the counter was clicked in a headless browser and
-counted. WebAssembly and Auto need a Visual Basic `.Client` project and have
-not been tested yet; `--interactivity` is not offered until they are.
+The template is a Blazor Web App, as the C# one is: `App.vbrazor` with
+`<HeadOutlet />` and `blazor.web.js`, `Routes.vbrazor`, a `MainLayout` and
+`NavMenu`, and a `Counter` page. `--interactivity` chooses where it runs:
+`Server` (the default) keeps one project; `WebAssembly` and `Auto` add a
+Visual Basic `MyApp.Client` project, compiled for the browser, which holds the
+`Counter`; `None` is static rendering without it. **All four were generated,
+built and run**: in a headless browser the counter counted under Server,
+WebAssembly and Auto.
+
+The `.Client` project's `Program.vb` has a `Sub Main` that starts the host
+without awaiting it: Visual Basic has no `Async Main`, and in the browser the
+runtime stays alive after `Main` returns.
 
 A Visual Basic project has to set `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>`
 (the template does): the SDK switches it on by itself only for projects with

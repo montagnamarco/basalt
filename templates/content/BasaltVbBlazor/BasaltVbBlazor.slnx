@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BasaltVbBlazor/BasaltVbBlazor.vbproj" />
+  <Project Path="BasaltVbBlazor.Client/BasaltVbBlazor.Client.vbproj" />
+</Solution>
