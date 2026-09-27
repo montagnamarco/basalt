@@ -89,7 +89,7 @@ internal static class TemplateGeneration
             var below = viewFolder.Length > folder.Length
                 ? string.Join(".", viewFolder[folder.Length..]
                     .Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries)
-                    .Select(ViewNaming.MakeClassName))
+                    .Select(folder => ViewNaming.Escape(ViewNaming.MakeClassName(folder))))
                 : "";
 
             ViewImports.ApplyTo(document, sharedDocument, below);

@@ -211,7 +211,10 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         var below = templateFolder.Substring(sharedFolder.Length)
             .Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
 
-        return string.Join(".", below.Select(ViewNaming.MakeClassName));
+        // Escaped as the folder namespace is: a folder called Shared under an
+        // inherited @Namespace wrote "Namespace Components.Shared", which
+        // does not compile.
+        return string.Join(".", below.Select(folder => ViewNaming.Escape(ViewNaming.MakeClassName(folder))));
     }
 
     /// <summary>

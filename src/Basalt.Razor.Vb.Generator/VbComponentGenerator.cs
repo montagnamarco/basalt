@@ -89,11 +89,24 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         var optionStrict = context.CompilationProvider.Combine(context.AnalyzerConfigOptionsProvider)
             .Select((pair, _) => ProjectOptionStrict.IsOn(pair.Left, pair.Right));
 
-        var everything = templates.Collect().Combine(language).Combine(hasBlazor).Combine(optionStrict);
+        // Where the project is, so a component is namespaced by its folders
+        // as a .razor file is; and whether the project asked for the older
+        // scheme with VbRazorComponentNamespaces=Legacy.
+        var naming = context.AnalyzerConfigOptionsProvider.Select((options, _) =>
+        {
+            options.GlobalOptions.TryGetValue("build_property.BasaltProjectDir", out var projectDirectory);
+            options.GlobalOptions.TryGetValue("build_property.VbRazorComponentNamespaces", out var scheme);
+
+            var legacy = string.Equals(scheme?.Trim(), "Legacy", StringComparison.OrdinalIgnoreCase);
+
+            return new Naming(legacy ? null : projectDirectory is { Length: > 0 } ? projectDirectory : null);
+        });
+
+        var everything = templates.Collect().Combine(language).Combine(hasBlazor).Combine(optionStrict).Combine(naming);
 
         context.RegisterSourceOutput(everything, (production, data) =>
         {
-            var (((all, compilationLanguage), blazor), strict) = data;
+            var ((((all, compilationLanguage), blazor), strict), names) = data;
 
             // _Imports.vbrazor is not a component: it lends its directives
             // to every component in its folder and below, as _Imports.razor
@@ -104,7 +117,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
             {
                 if (IsImports(template.Path)) continue;
 
-                Emit(production, template, compilationLanguage, blazor, strict, shared);
+                Emit(production, template, compilationLanguage, blazor, strict, shared, names);
             }
         });
     }
@@ -115,7 +128,8 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         string language,
         bool hasBlazor,
         bool optionStrict,
-        IReadOnlyList<Component> shared)
+        IReadOnlyList<Component> shared,
+        Naming naming)
     {
         // A .vbrazor in a C# project is reported rather than silently ignored:
         // a template that produces nothing is hard to diagnose from outside.
@@ -185,11 +199,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         // Sito.Sito.Home — a class that compiles and that nothing naming the
         // type can find. Measured: MapRazorComponents(Of Global.Sito.Home)
         // failed to resolve while the generated file was sitting right there.
-        var folder = ViewNaming.FolderNamespaceFor(template.Path);
-
-        var namespaceName = string.IsNullOrWhiteSpace(folder)
-            ? "Components"
-            : $"Components.{folder}";
+        var namespaceName = NamespaceFor(template.Path, naming);
 
         // With the template's path, so the generated code carries
         // #ExternalSource: without it a component compiled into the build had
@@ -201,10 +211,40 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
                 checksum: template.Checksum, optionStrict: optionStrict)
             .Code;
 
+        // With the namespace, so Admin/Index and Shop/Index are two files.
+        var qualifier = namespaceName.Replace("[", "").Replace("]", "");
+
         production.AddSource(
-            $"{template.ClassName}.Component.g.vb",
+            qualifier.Length == 0
+                ? $"{template.ClassName}.Component.g.vb"
+                : $"{template.ClassName}.{qualifier}.Component.g.vb",
             SourceText.From(source, System.Text.Encoding.UTF8));
     }
+
+    /// <summary>
+    /// A component's namespace: its folders from the project, as the Razor
+    /// compiler gives a .razor file — Components/Layout/MainLayout is in
+    /// Components.Layout, Components/Pages/Home in Components.Pages.
+    /// </summary>
+    /// <remarks>
+    /// The older scheme, kept for VbRazorComponentNamespaces=Legacy and for a
+    /// build without BasaltProjectDir, put every component in Components plus
+    /// the folders below a Views or Pages folder: Admin/Index and Shop/Index
+    /// were the same class, and a layout in Components/Layout was not in
+    /// Components.Layout, where anyone coming from C# looks for it.
+    /// </remarks>
+    private static string NamespaceFor(string path, Naming naming)
+    {
+        if (ViewNaming.ProjectFolderNamespaceFor(path, naming.ProjectDirectory) is { } folders)
+            return folders;
+
+        var folder = ViewNaming.FolderNamespaceFor(path);
+
+        return string.IsNullOrWhiteSpace(folder) ? "Components" : $"Components.{folder}";
+    }
+
+    /// <summary>How components are namespaced: by project folder, or the older way when null.</summary>
+    private sealed record Naming(string? ProjectDirectory);
 
     /// <summary>The name of the file whose directives every component below it shares.</summary>
     internal const string ImportsFileName = "_Imports.vbrazor";

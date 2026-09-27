@@ -493,9 +493,16 @@ compiler does not have.
 
 ### Where components live
 
-`Components/Pages/Home.vbrazor` compiles into `YourApp.Components.Home`. A
-folder called `Pages` is where the namespace starts from rather than part of
-it — the same rule views follow.
+A component is namespaced by its folders from the project, as a `.razor` file
+is: `Components/Pages/Home.vbrazor` compiles into `YourApp.Components.Pages.Home`,
+`Components/Layout/MainLayout.vbrazor` into `YourApp.Components.Layout.MainLayout`,
+and a component beside the project file into the root namespace. A component
+named from another folder is imported the C# way, with `@Imports` in
+`_Imports.vbrazor`.
+
+Until September 2026 every component went into `Components`, plus the folders
+below a `Pages` folder. A project written against that can keep it with
+`<VbRazorComponentNamespaces>Legacy</VbRazorComponentNamespaces>`.
 
 ---
 

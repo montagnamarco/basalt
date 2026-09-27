@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Basalt.Razor.Vb;
@@ -89,6 +91,40 @@ public static class ViewNaming
         return "Views";
     }
 
+    /// <summary>
+    /// A component's namespace from the folders between the project and the
+    /// file, as the Razor compiler gives a .razor file:
+    /// Components/Layout/MainLayout.vbrazor is in Components.Layout.
+    /// </summary>
+    /// <returns>
+    /// Empty for a file beside the project file, which is then in the root
+    /// namespace alone; null without a project folder, or for a file outside it.
+    /// </returns>
+    /// <remarks>
+    /// Visual Basic prepends RootNamespace to every Namespace statement, so
+    /// only the folders are returned.
+    /// </remarks>
+    public static string? ProjectFolderNamespaceFor(string path, string? projectDirectory)
+    {
+        if (projectDirectory is not { Length: > 0 }) return null;
+
+        var folder = projectDirectory.TrimEnd('/', '\\');
+
+        // Followed by a separator: C:\Site is not the folder of C:\Site.Shared\X.vbrazor.
+        if (!path.StartsWith(folder, StringComparison.OrdinalIgnoreCase)) return null;
+        if (path.Length <= folder.Length || path[folder.Length] is not ('/' or '\\')) return null;
+
+        var segments = path.Substring(folder.Length + 1).Split('/', '\\');
+        var folders = new List<string>();
+
+        for (var index = 0; index < segments.Length - 1; index++)
+        {
+            if (segments[index].Length > 0) folders.Add(Escape(MakeClassName(segments[index])));
+        }
+
+        return string.Join(".", folders);
+    }
+
     public static string MakeClassName(string fileName)
     {
         var builder = new StringBuilder();
@@ -116,25 +152,34 @@ public static class ViewNaming
     public static string Escape(string className) =>
         IsKeyword(className) ? $"[{className}]" : className;
 
+    /// <summary>Whether a name is a Visual Basic keyword.</summary>
+    private static bool IsKeyword(string name) => Keywords.Contains(name);
+
     /// <summary>
-    /// Whether a name is a Visual Basic keyword.
+    /// Visual Basic's reserved words, all of them: now that components are
+    /// namespaced by folder, a folder called Protected or Shared becomes part
+    /// of a Namespace statement, and a partial list let it through unescaped.
+    /// Escaping a word that did not need it is harmless; missing one is not.
     /// </summary>
-    /// <remarks>
-    /// Only the ones a view file is plausibly named after. A full keyword list
-    /// would be longer and no more correct: a template called Shadows is not
-    /// a case worth carrying a table for.
-    /// </remarks>
-    private static bool IsKeyword(string name) => name.ToLowerInvariant() switch
+    private static readonly HashSet<string> Keywords = new(StringComparer.OrdinalIgnoreCase)
     {
-        "error" or "new" or "class" or "module" or "structure" or "interface" or
-        "enum" or "delegate" or "event" or "property" or "sub" or "function" or
-        "shared" or "default" or "option" or "select" or "stop" or "step" or
-        "end" or "next" or "loop" or "then" or "else" or "each" or "in" or
-        "is" or "not" or "and" or "or" or "xor" or "true" or "false" or
-        "nothing" or "me" or "my" or "global" or "single" or "double" or
-        "date" or "string" or "object" or "boolean" or "byte" or "char" or
-        "decimal" or "integer" or "long" or "short" or "handles" or "imports"
-            => true,
-        _ => false,
+        "AddHandler", "AddressOf", "Alias", "And", "AndAlso", "As", "Boolean", "ByRef", "Byte",
+        "ByVal", "Call", "Case", "Catch", "CBool", "CByte", "CChar", "CDate", "CDbl", "CDec",
+        "Char", "CInt", "Class", "CLng", "CObj", "Const", "Continue", "CSByte", "CShort",
+        "CSng", "CStr", "CType", "CUInt", "CULng", "CUShort", "Date", "Decimal", "Declare",
+        "Default", "Delegate", "Dim", "DirectCast", "Do", "Double", "Each", "Else", "ElseIf",
+        "End", "EndIf", "Enum", "Erase", "Error", "Event", "Exit", "False", "Finally", "For",
+        "Friend", "Function", "Get", "GetType", "GetXMLNamespace", "Global", "GoSub", "GoTo",
+        "Handles", "If", "Implements", "Imports", "In", "Inherits", "Integer", "Interface",
+        "Is", "IsNot", "Let", "Lib", "Like", "Long", "Loop", "Me", "Mod", "Module",
+        "MustInherit", "MustOverride", "My", "MyBase", "MyClass", "Namespace", "Narrowing",
+        "New", "Next", "Not", "Nothing", "NotInheritable", "NotOverridable", "Object", "Of",
+        "On", "Operator", "Option", "Optional", "Or", "OrElse", "Overloads", "Overridable",
+        "Overrides", "ParamArray", "Partial", "Private", "Property", "Protected", "Public",
+        "RaiseEvent", "ReadOnly", "ReDim", "REM", "RemoveHandler", "Resume", "Return", "SByte",
+        "Select", "Set", "Shadows", "Shared", "Short", "Single", "Static", "Step", "Stop",
+        "String", "Structure", "Sub", "SyncLock", "Then", "Throw", "To", "True", "Try",
+        "TryCast", "TypeOf", "UInteger", "ULong", "UShort", "Using", "Variant", "Wend", "When",
+        "While", "Widening", "With", "WithEvents", "WriteOnly", "Xor",
     };
 }

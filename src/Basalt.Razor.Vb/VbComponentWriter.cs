@@ -140,9 +140,15 @@ public sealed class VbComponentWriter
         // SHA-256 of the template as read from disk, when the caller has it.
         ExternalSourceWriter.WriteChecksum(builder, filePath, checksum);
 
+        // None for a component beside the project file: it belongs to the
+        // root namespace, which Visual Basic supplies itself.
+        var hasNamespace = !string.IsNullOrWhiteSpace(namespaceName);
 
-        builder.AppendLine($"Namespace {namespaceName}");
-        builder.AppendLine();
+        if (hasNamespace)
+        {
+            builder.AppendLine($"Namespace {namespaceName}");
+            builder.AppendLine();
+        }
 
         // The route the template declared with @Page, unless the caller named
         // one. A component without either is only reachable by being placed
@@ -243,7 +249,8 @@ public sealed class VbComponentWriter
         WriteRenderMode(builder, mappings, filePath, document);
 
         builder.AppendLine("    End Class");
-        builder.AppendLine("End Namespace");
+
+        if (hasNamespace) builder.AppendLine("End Namespace");
 
         return new Generated(builder.ToString(), new SourceMap(mappings));
     }

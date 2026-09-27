@@ -36,6 +36,8 @@
     <CompilerVisibleProperty Include="BasaltProjectDir" />
     <!-- On or Off for the templates alone; unset, they follow OptionStrict. -->
     <CompilerVisibleProperty Include="VbRazorOptionStrict" />
+    <!-- Legacy for the namespaces components had before they followed their folders. -->
+    <CompilerVisibleProperty Include="VbRazorComponentNamespaces" />
   </ItemGroup>
 
 </Project>

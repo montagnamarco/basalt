@@ -808,9 +808,15 @@ public static class SolutionTemplates
           -->
           <PropertyGroup>
             <RazorVbPath>{RazorVbRoot()}</RazorVbPath>
+            <!--
+              What the package's props would set: the project folder, from which
+              views are registered by path and components namespaced by folder.
+            -->
+            <BasaltProjectDir>$(MSBuildProjectDirectory)</BasaltProjectDir>
           </PropertyGroup>
 
           <ItemGroup>
+            <CompilerVisibleProperty Include="BasaltProjectDir" />
             <ProjectReference Include="$(RazorVbPath)/Basalt.Razor.Vb/Basalt.Razor.Vb.csproj" />
             <ProjectReference Include="$(RazorVbPath)/Basalt.Razor.Vb.Generator/Basalt.Razor.Vb.Generator.csproj"
                               OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

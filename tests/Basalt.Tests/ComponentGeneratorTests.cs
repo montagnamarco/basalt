@@ -369,6 +369,111 @@ public class ComponentGeneratorTests
         Assert.Equal(written, generated.Map.ToGenerated(original));
     }
 
+    private static GeneratorRun.Outcome RunInProject(
+        IReadOnlyDictionary<string, string>? properties, params (string Path, string Text)[] templates) =>
+        GeneratorRun.Run("VbComponentGenerator", Site, optionStrict: false, properties, code: [], templates);
+
+    private static string SourceOf(GeneratorRun.Outcome outcome, string className) =>
+        Assert.Single(outcome.Sources, s => s.Key.StartsWith(className + ".", StringComparison.Ordinal)).Value;
+
+    [Fact]
+    public void AComponentIsNamespacedByItsFoldersAsInCSharp()
+    {
+        // Components/Layout/MainLayout is in Components.Layout, as a .razor
+        // file is. It used to be in Components, with Pages dropped as well.
+        var outcome = RunInProject(null,
+            (InSite("Components", "Layout", "MainLayout.vbrazor"), "@Inherits Microsoft.AspNetCore.Components.LayoutComponentBase\n@Body\n"),
+            (InSite("Components", "Pages", "Home.vbrazor"), "@Page \"/\"\n<p>home</p>\n"),
+            (InSite("Components", "Error", "Oops.vbrazor"), "<p>oops</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.Contains("Namespace Components.Layout", SourceOf(outcome, "MainLayout"));
+        Assert.Contains("Namespace Components.Pages", SourceOf(outcome, "Home"));
+
+        // A folder named after a keyword is escaped rather than breaking the build.
+        Assert.Contains("Namespace Components.[Error]", SourceOf(outcome, "Oops"));
+    }
+
+    [Fact]
+    public void TwoComponentsOfTheSameNameInDifferentFoldersAreTwoClasses()
+    {
+        // Both were Components.Index under the older scheme: one hint name,
+        // and the generator threw before writing any component at all.
+        var outcome = RunInProject(null,
+            (InSite("Admin", "Index.vbrazor"), "<p>admin</p>\n"),
+            (InSite("Shop", "Index.vbrazor"), "<p>shop</p>\n"));
+
+        Assert.Null(outcome.Exception);
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.Equal(2, outcome.Sources.Count);
+    }
+
+    [Fact]
+    public void AComponentBesideTheProjectFileIsInTheRootNamespace()
+    {
+        var outcome = RunInProject(null, (InSite("Counter.vbrazor"), "<p>hi</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.DoesNotContain("Namespace ", Assert.Single(outcome.Sources).Value);
+    }
+
+    [Fact]
+    public void AFolderNamedAfterAnyKeywordIsEscaped()
+    {
+        // The keyword table named a few words a view is called after; with
+        // every folder in the namespace, Protected and Shared broke the build.
+        var outcome = RunInProject(null,
+            (InSite("Protected", "Admin.vbrazor"), "<p>admin</p>\n"),
+            (InSite("Components", "_Imports.vbrazor"), "@Namespace Components\n"),
+            (InSite("Components", "Shared", "Nav.vbrazor"), "<p>nav</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.Contains("Namespace [Protected]", SourceOf(outcome, "Admin"));
+        Assert.Contains("Namespace Components.[Shared]", SourceOf(outcome, "Nav"));
+    }
+
+    [Fact]
+    public void AComponentInTheRootNamespaceKeepsItsRenderModeCodeBehindAndMapping()
+    {
+        const string Template = "@rendermode InteractiveServer\n<p>@Label</p>\n";
+
+        var outcome = GeneratorRun.Run("VbComponentGenerator", Site, optionStrict: false, properties: null,
+            code:
+            [
+                """
+                Partial Public Class Counter
+                    Private ReadOnly Property Label As String = "from the code-behind"
+                End Class
+                """,
+            ],
+            (InSite("Counter.vbrazor"), Template));
+
+        Assert.Empty(outcome.CompilationErrors);
+
+        var generated = Basalt.Razor.Vb.VbComponentWriter.WriteWithMap(
+            Basalt.Razor.Vb.VbHtmlParser.Parse(Template), "Counter", "", InSite("Counter.vbrazor"));
+
+        var original = Template.IndexOf("Label", StringComparison.Ordinal);
+        var written = generated.Code.IndexOf("= Label", StringComparison.Ordinal) + 2;
+
+        Assert.DoesNotContain("Namespace ", generated.Code);
+        Assert.Equal(written, generated.Map.ToGenerated(original));
+    }
+
+    [Fact]
+    public void AProjectCanKeepTheOlderNamespaces()
+    {
+        var outcome = RunInProject(
+            new Dictionary<string, string> { ["VbRazorComponentNamespaces"] = "Legacy" },
+            (InSite("Components", "Layout", "MainLayout.vbrazor"), "<p>layout</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+
+        var code = Assert.Single(outcome.Sources).Value;
+
+        Assert.Contains("Namespace Components\r\n", code.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+    }
+
     [Fact]
     public void TiesTheGeneratedCodeToTheTemplate()
     {
