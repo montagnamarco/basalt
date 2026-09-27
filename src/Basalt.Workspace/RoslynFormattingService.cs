@@ -173,22 +173,39 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
         language == SourceLanguage.VisualBasic &&
         (char.IsWhiteSpace(character) || character is '(' or ')' or ',' or '.' or '=' or ':');
 
-    public async Task<TypingFormattingResult> CompleteLineAsync(
+    public Task<TypingFormattingResult> CompleteLineAsync(
         string text, SourceLanguage language, int caret, CancellationToken ct = default)
     {
         if (language != SourceLanguage.VisualBasic)
-            return new TypingFormattingResult(text, caret, Changed: false);
+            return Task.FromResult(new TypingFormattingResult(text, caret, Changed: false));
 
-        var source = SourceText.From(text);
-        var position = Math.Clamp(caret, 0, text.Length);
-        var line = source.Lines.GetLineFromPosition(position);
-        IReadOnlyList<TextChange> changes = line.Span.IsEmpty
-            ? []
-            : VisualBasicThenCompleter.GetChanges(source, line, position, ct);
-        var completed = changes.Count == 0 ? source : source.WithChanges(changes);
-        var result = await ApplyTypingConventionsAsync(
-            completed.ToString(), language, ShiftCaret(caret, changes), ct).ConfigureAwait(false);
-        return result with { Changed = result.Changed || changes.Count > 0 };
+        // Leaving a line calls this from the dispatcher. Even cached Roslyn
+        // work can parse or bind synchronously before its first incomplete await.
+        return Task.Run(async () =>
+        {
+            var source = SourceText.From(text);
+            var position = Math.Clamp(caret, 0, text.Length);
+            var line = source.Lines.GetLineFromPosition(position);
+            IReadOnlyList<TextChange> changes = line.Span.IsEmpty
+                ? []
+                : VisualBasicThenCompleter.GetChanges(source, line, position, ct);
+            var completed = changes.Count == 0 ? source : source.WithChanges(changes);
+            var completedCaret = ShiftCaret(caret, changes);
+            var completedLine = completed.Lines.GetLineFromPosition(Math.Clamp(completedCaret, 0, completed.Length));
+            IReadOnlyList<TextChange> invocations = completedLine.Span.IsEmpty
+                ? []
+                : await VisualBasicInvocationCompleter.GetChangesAsync(
+                    CreateScratchDocument(completed.ToString(), language), completedLine, completedCaret, ct)
+                    .ConfigureAwait(false);
+            if (invocations.Count > 0)
+            {
+                completed = completed.WithChanges(invocations);
+                completedCaret = ShiftCaret(completedCaret, invocations);
+            }
+            var result = await ApplyTypingConventionsAsync(
+                completed.ToString(), language, completedCaret, ct).ConfigureAwait(false);
+            return result with { Changed = result.Changed || changes.Count > 0 || invocations.Count > 0 };
+        }, ct);
     }
 
     public async Task<TypingFormattingResult> ApplyTypingConventionsAsync(
