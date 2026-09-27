@@ -982,6 +982,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         string text, SourceLanguage language, int caret) =>
         _formattingService.ApplyTypingConventionsAsync(text, language, caret);
 
+    /// <summary>Completes conventions for a line the author has finished.</summary>
+    public Task<TypingFormattingResult> CompleteLineAsync(
+        string text, SourceLanguage language, int caret) =>
+        _formattingService.CompleteLineAsync(text, language, caret);
+
     /// <summary>
     /// Corrects identifier casing on a line against the symbols in the project,
     /// turning "console.readline" into "Console.ReadLine".

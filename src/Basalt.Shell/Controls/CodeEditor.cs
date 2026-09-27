@@ -454,7 +454,7 @@ public sealed class CodeEditor : UserControl
 
         var result = _document.Language == SourceLanguage.VisualBasic
             ? await _shell
-                .ApplyTypingConventionsAsync(snapshot, _document.Language, line.EndOffset)
+                .CompleteLineAsync(snapshot, _document.Language, line.EndOffset)
                 .ConfigureAwait(true)
             : await _shell
                 .FormatLineAsync(snapshot, _document.Language, line.EndOffset)

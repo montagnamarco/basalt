@@ -58,6 +58,15 @@ public interface IFormattingService
         string text, SourceLanguage language, int caret, CancellationToken ct = default);
 
     /// <summary>
+    /// Completes a line the author has finished, including omitted conditional
+    /// keywords. Ordinary on-type formatting must use ApplyTypingConventionsAsync
+    /// so a condition that is still being written is not completed prematurely.
+    /// </summary>
+    Task<TypingFormattingResult> CompleteLineAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct = default) =>
+        ApplyTypingConventionsAsync(text, language, caret, ct);
+
+    /// <summary>
     /// Indentation, in spaces, that a new line at this position should start
     /// with. Used after Enter, where the line is still empty and so carries no
     /// token to anchor formatting to.

@@ -77,7 +77,8 @@ public sealed class VisualBasicEnterRaceTests : IAsyncLifetime
             var pending = code.HandleEnterForTestsAsync();
             var afterEnter = editor.Text;
             var line = editor.Document.GetLineByOffset(editor.CaretOffset).LineNumber;
-            window.KeyTextInput("x = 12");
+            // Route the input before pumping queued formatter continuations.
+            editor.TextArea.RaiseEvent(new TextInputEventArgs { RoutedEvent = InputElement.TextInputEvent, Text = "x = 12" });
             var typed = editor.Text;
             await pending;
 
@@ -118,7 +119,8 @@ public sealed class VisualBasicEnterRaceTests : IAsyncLifetime
             var first = code.HandleEnterForTestsAsync();
             var second = code.HandleEnterForTestsAsync();
             var third = code.HandleEnterForTestsAsync();
-            window.KeyTextInput("' next line");
+            // Keep all three requests pending until this input changes the document.
+            editor.TextArea.RaiseEvent(new TextInputEventArgs { RoutedEvent = InputElement.TextInputEvent, Text = "' next line" });
             var snapshot = editor.Text;
             await Task.WhenAll(first, second, third);
 
@@ -195,6 +197,60 @@ public sealed class VisualBasicEnterRaceTests : IAsyncLifetime
 
             Assert.Equal(Source, editor.Text);
             Assert.False(editor.Document.UndoStack.CanUndo);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
+    public async Task LeavingAnOmittedThenWithDownPreservesTheFollowingStatementAndCaret()
+    {
+        var (window, code, editor) = Open();
+        try
+        {
+            code.AutoFormatWhileTyping = false;
+            var source = Source.Replace("if x=0 then", "if x=0", StringComparison.Ordinal);
+            editor.Text = source;
+            editor.CaretOffset = editor.Document.GetLineByNumber(7).EndOffset;
+            editor.Document.UndoStack.ClearAll();
+            code.AutoFormatWhileTyping = true;
+
+            window.KeyPress(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, null);
+            window.KeyRelease(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, null);
+            var column = editor.TextArea.Caret.Column;
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (!editor.Text.Contains("If x = 0 Then", StringComparison.Ordinal) && DateTime.UtcNow < deadline)
+                await Task.Delay(20);
+
+            Assert.Equal(source.Replace("if x=0", "If x = 0 Then", StringComparison.Ordinal), editor.Text);
+            Assert.Equal(8, editor.TextArea.Caret.Line);
+            Assert.Equal(column, editor.TextArea.Caret.Column);
+            code.AutoFormatWhileTyping = false;
+            editor.Document.UndoStack.Undo();
+            Assert.Equal(source, editor.Text);
+            Assert.False(editor.Document.UndoStack.CanUndo);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
+    public async Task EnterCompletesAnOmittedThenAndClosesTheIfBeforeReturn()
+    {
+        var (window, code, editor) = Open();
+        try
+        {
+            code.AutoFormatWhileTyping = false;
+            editor.Text = Source.Replace("if x=0 then", "if x=0", StringComparison.Ordinal);
+            editor.CaretOffset = editor.Document.GetLineByNumber(7).EndOffset;
+            code.AutoFormatWhileTyping = true;
+
+            window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+            window.KeyRelease(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (!editor.Text.Contains("End If", StringComparison.Ordinal) && DateTime.UtcNow < deadline)
+                await Task.Delay(20);
+
+            Assert.Equal(Source.Replace("if x=0 then", "If x = 0 Then\n            \n        End If", StringComparison.Ordinal), editor.Text);
+            Assert.Equal(editor.Document.GetLineByNumber(8).EndOffset, editor.CaretOffset);
         }
         finally { window.Close(); }
     }

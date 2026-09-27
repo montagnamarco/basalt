@@ -111,8 +111,7 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
         // span lets the formatter see the enclosing block, but re-indenting the
         // lines above would undo formatting the author chose deliberately.
         var changes = (await formatted.GetTextChangesAsync(document, ct).ConfigureAwait(false))
-            .Where(change => change.Span.Start >= line.Start
-                          && change.Span.End <= line.EndIncludingLineBreak)
+            .Where(change => StaysOnLine(change, line))
             .ToList();
 
         if (changes.Count == 0) return new TypingFormattingResult(text, caret, Changed: false);
@@ -156,6 +155,13 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
         return Math.Max(0, caret + delta);
     }
 
+    // Explicit continuations can make Roslyn normalize LF to CRLF. Typing
+    // corrections must preserve the document's delimiters as well as its lines.
+    private static bool StaysOnLine(TextChange change, TextLine line) =>
+        change.Span.Start >= line.Start && change.Span.End <= line.End
+        && !(change.NewText?.Contains('\r') ?? false)
+        && !(change.NewText?.Contains('\n') ?? false);
+
     /// <summary>
     /// Characters that finish a word.
     ///
@@ -166,6 +172,24 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
     public bool CompletesWord(char character, SourceLanguage language) =>
         language == SourceLanguage.VisualBasic &&
         (char.IsWhiteSpace(character) || character is '(' or ')' or ',' or '.' or '=' or ':');
+
+    public async Task<TypingFormattingResult> CompleteLineAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct = default)
+    {
+        if (language != SourceLanguage.VisualBasic)
+            return new TypingFormattingResult(text, caret, Changed: false);
+
+        var source = SourceText.From(text);
+        var position = Math.Clamp(caret, 0, text.Length);
+        var line = source.Lines.GetLineFromPosition(position);
+        IReadOnlyList<TextChange> changes = line.Span.IsEmpty
+            ? []
+            : VisualBasicThenCompleter.GetChanges(source, line, position, ct);
+        var completed = changes.Count == 0 ? source : source.WithChanges(changes);
+        var result = await ApplyTypingConventionsAsync(
+            completed.ToString(), language, ShiftCaret(caret, changes), ct).ConfigureAwait(false);
+        return result with { Changed = result.Changed || changes.Count > 0 };
+    }
 
     public async Task<TypingFormattingResult> ApplyTypingConventionsAsync(
         string text, SourceLanguage language, int caret, CancellationToken ct = default)
@@ -211,8 +235,7 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
 
         var currentLine = cased.Lines.GetLineFromPosition(position);
         var layout = (await formatted.GetTextChangesAsync(document, ct).ConfigureAwait(false))
-            .Where(change => change.Span.Start >= currentLine.Start
-                          && change.Span.End <= currentLine.EndIncludingLineBreak)
+            .Where(change => StaysOnLine(change, currentLine))
             // Trailing whitespace at the caret is where the user is about to
             // type the next word. The formatter sees it as redundant and strips
             // it, which would run that word into the previous one.

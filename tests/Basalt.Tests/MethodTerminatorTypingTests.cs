@@ -104,6 +104,7 @@ public sealed class MethodTerminatorTypingTests
     [AvaloniaTheory]
     [InlineData("user edit", "Class C\nEnd Class")]
     [InlineData("Class C\nEnd Class", "Class C\n\nEnd Class")]
+    [InlineData("Class C\nEnd Class", "Class C\r\nEnd Class")]
     public void RefusesStaleSnapshotsOrChangedLineStructure(string current, string updated)
     {
         const string snapshot = "Class C\nEnd Class";

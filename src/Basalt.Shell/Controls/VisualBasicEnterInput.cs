@@ -1,5 +1,4 @@
 using AvaloniaEdit;
-using AvaloniaEdit.Document;
 using Basalt.Core.Model;
 using Basalt.Shell.ViewModels;
 using Microsoft.CodeAnalysis.Text;
@@ -53,7 +52,7 @@ internal static class VisualBasicEnterInput
         await Task.Yield();
         var plan = await Task.Run(async () =>
         {
-            var formatted = await shell.ApplyTypingConventionsAsync(source, SourceLanguage.VisualBasic, position)
+            var formatted = await shell.CompleteLineAsync(source, SourceLanguage.VisualBasic, position)
                 .ConfigureAwait(false);
             var originalLine = SourceText.From(source).Lines.GetLineFromPosition(position).LineNumber;
             var corrected = await shell.CorrectIdentifierCasingAsync(filePath, formatted.Text, originalLine)
@@ -77,7 +76,7 @@ internal static class VisualBasicEnterInput
         if (!ReferenceEquals(editor.Document, document) || document.Version != version ||
             editor.CaretOffset != caret || editor.SelectionLength != 0 ||
             !ReferenceEquals(document.UndoStack.LastGroupDescriptor, undoGroup)) return;
-        if (new TextDocument(source).LineCount != new TextDocument(plan.Text).LineCount) return;
+        if (!EditorTypingChanges.HasSameLineStructure(source, plan.Text)) return;
 
         edit(() =>
         {
