@@ -1,0 +1,4 @@
+<ul class="nav">
+    <li><NavLink href="" Match="@NavLinkMatch.All">Home</NavLink></li>
+    <li><NavLink href="counter">Counter</NavLink></li>
+</ul>

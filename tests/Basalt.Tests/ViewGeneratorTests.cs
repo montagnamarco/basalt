@@ -168,6 +168,14 @@ public class ViewGeneratorTests
     }
 
     [Fact]
+    public void AnImportTheGeneratorAlreadyWritesIsNotRepeated()
+    {
+        var outcome = Run((InProject("Views", "Home", "Index.vbhtml"), "@Imports System.Text\n<p>hi</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+    }
+
+    [Fact]
     public void RenderModeInAViewIsReported()
     {
         // The parser accepts @rendermode now that components use it; a view

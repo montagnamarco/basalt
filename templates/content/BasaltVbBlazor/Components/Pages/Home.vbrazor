@@ -1,18 +1,7 @@
 @Page "/"
 
-<h1>@Titolo</h1>
+<PageTitle>Home</PageTitle>
 
-<p>Conteggio: @count</p>
+<h1>Hello, world!</h1>
 
-<button onclick="@AddressOf Incrementa">Aggiungi uno</button>
-
-@Functions
-    <Global.Microsoft.AspNetCore.Components.Parameter>
-    Public Property Titolo As String = "Blazor in Visual Basic"
-
-    Private count As Integer
-
-    Private Sub Incrementa()
-        count += 1
-    End Sub
-@End Functions
+<p>Welcome to your new Blazor app, written in Visual Basic.</p>

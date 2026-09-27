@@ -1,0 +1,18 @@
+@Page "/counter"
+@rendermode InteractiveServer
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn" onclick="@AddressOf IncrementCount">Click me</button>
+
+@Code
+    Private currentCount As Integer
+
+    Private Sub IncrementCount()
+        currentCount += 1
+    End Sub
+End Code

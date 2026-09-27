@@ -15,8 +15,8 @@ Along the way it grew a few things that stand on their own:
   Visual Studio and VS Code as well as here. This is the largest piece of
   work in the repository and most of what follows is about it.
 - **Blazor components in Visual Basic.** A `.vbrazor` file compiles into a
-  real `ComponentBase`, with parameters, event handlers and routing. Server,
-  WebAssembly and Auto all work from the same compiled class.
+  real `ComponentBase`, with parameters, event handlers and routing.
+  Interactive Server is verified end to end; WebAssembly and Auto are not yet.
 - **`.vbpage` pages** — Classic ASP's philosophy, brought up to date: a page is a
   file, a URL is a path, save and refresh. **Under active development.**
 - **QuickBASIC**, which is here for the fun of it. See
@@ -373,22 +373,23 @@ Visual Basic counterpart: same Razor syntax, compiled into a real
 `ComponentBase` rather than into a class that writes markup.
 
 ```vbrazor
-@Page "/"
+@Page "/counter"
+@rendermode InteractiveServer
 
-<h1>@Titolo</h1>
-<p>Conteggio: @count</p>
-<button onclick="@AddressOf Incrementa">Aggiungi uno</button>
+<h1>@Title</h1>
+<p role="status">Current count: @currentCount</p>
+<button onclick="@AddressOf IncrementCount">Click me</button>
 
-@Functions
+@Code
     <Global.Microsoft.AspNetCore.Components.Parameter>
-    Public Property Titolo As String = "Ciao"
+    Public Property Title As String = "Counter"
 
-    Private count As Integer
+    Private currentCount As Integer
 
-    Private Sub Incrementa()
-        count += 1
+    Private Sub IncrementCount()
+        currentCount += 1
     End Sub
-@End Functions
+End Code
 ```
 
 ```bash
@@ -396,10 +397,17 @@ dotnet new blazor -lang VB -o MyApp
 cd MyApp && dotnet run
 ```
 
-**Only static server rendering is verified today.** The template is not
-interactive yet — its counter button does nothing — and `@rendermode`,
-interactive Server, WebAssembly and Auto have not been tested with `.vbrazor`
-components. They are planned, not promised.
+The template is a Blazor Web App: `App.vbrazor` with `<HeadOutlet />` and
+`blazor.web.js`, `Routes.vbrazor`, a `MainLayout` and `NavMenu`, and a
+`Counter` page with `@rendermode InteractiveServer`. **Interactive Server is
+verified end to end** — the counter was clicked in a headless browser and
+counted. WebAssembly and Auto need a Visual Basic `.Client` project and have
+not been tested yet; `--interactivity` is not offered until they are.
+
+A Visual Basic project has to set `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>`
+(the template does): the SDK switches it on by itself only for projects with
+`.razor` files, and without it `_framework/blazor.web.js` is a 404 and no
+component is ever interactive.
 
 ### What the compiler does differently
 

@@ -136,18 +136,22 @@ public static class VbComponentWriter
         builder.AppendLine("Option Explicit On");
         builder.AppendLine();
 
+        // Each namespace once: _Imports.vbrazor naming Components.Web, as the
+        // C# template's does, repeated the one written here (BC31051).
+        var imported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         // The web namespace, for the event argument types a handler names.
-        builder.AppendLine("Imports Microsoft.AspNetCore.Components.Web");
+        VbHtmlCodeWriter.WriteImport(builder, imported, "Microsoft.AspNetCore.Components.Web");
 
         // The render modes by their bare names, as the Blazor template's
         // "@using static ...RenderMode" gives them to C#: @rendermode
         // InteractiveServer, and @rendermode="InteractiveAuto" on an element.
-        builder.AppendLine("Imports Microsoft.AspNetCore.Components.Web.RenderMode");
+        VbHtmlCodeWriter.WriteImport(builder, imported, "Microsoft.AspNetCore.Components.Web.RenderMode");
 
         builder.AppendLine();
 
         foreach (var import in document.Imports)
-            builder.AppendLine($"Imports {import}");
+            VbHtmlCodeWriter.WriteImport(builder, imported, import);
 
         if (document.Imports.Count > 0) builder.AppendLine();
 

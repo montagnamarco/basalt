@@ -1,29 +1,38 @@
 Imports Microsoft.AspNetCore.Builder
 Imports Microsoft.Extensions.DependencyInjection
+Imports Microsoft.Extensions.Hosting
 
 ''' <summary>
-''' A Blazor application written entirely in Visual Basic.
+''' A Blazor Web App written entirely in Visual Basic.
 ''' </summary>
 Public Module Program
 
     Public Sub Main(args As String())
         Dim builder = WebApplication.CreateBuilder(args)
 
-        builder.Services.AddRazorComponents()
+        ' Server interactivity: a component that asks for it with
+        ' @rendermode InteractiveServer runs over a SignalR circuit.
+        builder.Services.AddRazorComponents().AddInteractiveServerComponents()
 
         Dim app = builder.Build()
+
+        If Not app.Environment.IsDevelopment() Then
+            app.UseExceptionHandler("/Error", createScopeForErrors:=True)
+            app.UseHsts()
+        End If
+
+        app.UseHttpsRedirection()
 
         ' Blazor refuses to route without this: an endpoint carries antiforgery
         ' metadata and the middleware has to be there to honour it.
         app.UseAntiforgery()
 
-        ' The root component. Every .vbrazor with an @Page directive routes on
-        ' its own path from here.
-        '
-        ' Components rather than Components.Pages: a folder called Pages is
-        ' where a Razor Page's namespace starts from, so it is the root of the
-        ' name rather than part of it — the same rule views follow.
-        app.MapRazorComponents(Of Global.BasaltVbBlazor.Components.Home)()
+        app.MapStaticAssets()
+
+        ' App is the root: the page shell and the router, which finds every
+        ' .vbrazor with an @Page directive in this assembly.
+        app.MapRazorComponents(Of Global.BasaltVbBlazor.Components.App)() _
+            .AddInteractiveServerRenderMode()
 
         app.Run()
     End Sub

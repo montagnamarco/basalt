@@ -35,6 +35,7 @@ Public Module Program
         ' Blazor needs antiforgery for its endpoints, and the render mode
         ' its interactive components declare mapped.
         app.UseAntiforgery()
+        app.MapStaticAssets()
         app.MapRazorComponents(Of Global.Basalt.Sample.Mvc.Components.App)().AddInteractiveServerRenderMode()
 
         app.Run()

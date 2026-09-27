@@ -4,6 +4,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>BasaltVbBlazor</RootNamespace>
     <Nullable>enable</Nullable>
+    <!--
+      Serves _framework/blazor.web.js. The SDK turns this on by itself only
+      for a project with .razor files; without it the script is a 404 and no
+      component is ever interactive.
+    -->
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
   </PropertyGroup>
 
   <ItemGroup>

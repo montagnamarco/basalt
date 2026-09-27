@@ -21,11 +21,14 @@
           Condition="'$(BasaltRazorVbWarnOnEmpty)' != 'false'">
     <ItemGroup>
       <_VbHtmlViews Include="@(AdditionalFiles)" />
-      <_VbHtmlViews Remove="@(_VbHtmlViews)" Condition="'%(Extension)' != '.vbhtml'" />
+      <!-- Views, pages and components alike: a Blazor app has only .vbrazor
+           files, and was told it had no views. -->
+      <_VbHtmlViews Remove="@(_VbHtmlViews)"
+                    Condition="'%(Extension)' != '.vbhtml' and '%(Extension)' != '.vbrazor' and '%(Extension)' != '.vbpage'" />
     </ItemGroup>
 
     <Warning Code="VBRZ001"
-             Text="Basalt.Razor.Vb is referenced but no .vbhtml views were found. Set BasaltRazorVbWarnOnEmpty to false to silence this."
+             Text="Basalt.Razor.Vb is referenced but no .vbhtml, .vbrazor or .vbpage templates were found. Set BasaltRazorVbWarnOnEmpty to false to silence this."
              Condition="'@(_VbHtmlViews)' == ''" />
   </Target>
 

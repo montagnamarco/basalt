@@ -1,0 +1,16 @@
+@* The router: every component with an @Page directive in this assembly. *@
+
+<Router AppAssembly="@GetType(Routes).Assembly" Found="@FoundPage" />
+
+@Functions
+    ' What the router shows for a route it knows: the page, inside the
+    ' default layout. A property rather than a <Found Context="routeData">
+    ' template, which .vbrazor components do not take yet.
+    Private ReadOnly Property FoundPage As RenderFragment(Of RouteData) =
+        Function(routeData) Sub(builder)
+                                builder.OpenComponent(Of RouteView)(0)
+                                builder.AddComponentParameter(1, "RouteData", routeData)
+                                builder.AddComponentParameter(2, "DefaultLayout", GetType(MainLayout))
+                                builder.CloseComponent()
+                            End Sub
+@End Functions

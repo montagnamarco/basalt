@@ -6,6 +6,9 @@
     <!-- The sample is built and exercised by the tests, never shipped. -->
     <IsPackable>false</IsPackable>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <!-- Serves _framework/blazor.web.js for the interactive component: the
+         SDK turns it on by itself only for projects with .razor files. -->
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
   </PropertyGroup>
 
   <ItemGroup>

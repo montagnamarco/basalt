@@ -95,8 +95,13 @@ public static class VbHtmlCodeWriter
         builder.AppendLine(optionStrict ? "Option Strict On" : "Option Strict Off");
         builder.AppendLine("Option Explicit On");
         builder.AppendLine();
-        builder.AppendLine("Imports System");
-        builder.AppendLine("Imports System.Text");
+
+        // Each namespace once: @Imports System.Text in a view repeated one
+        // written here, and Visual Basic refuses a duplicate import (BC31051).
+        var imported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        WriteImport(builder, imported, "System");
+        WriteImport(builder, imported, "System.Text");
 
         if (IsWeb(host))
         {
@@ -104,18 +109,18 @@ public static class VbHtmlCodeWriter
             // are extension methods; without their namespaces in scope the
             // compiler reports a missing argument, which points at the call
             // rather than at the missing import.
-            builder.AppendLine("Imports Microsoft.AspNetCore.Mvc");
-            builder.AppendLine("Imports Microsoft.AspNetCore.Mvc.Rendering");
-            builder.AppendLine("Imports Microsoft.AspNetCore.Mvc.ViewFeatures");
-            builder.AppendLine("Imports Microsoft.AspNetCore.Html");
+            WriteImport(builder, imported, "Microsoft.AspNetCore.Mvc");
+            WriteImport(builder, imported, "Microsoft.AspNetCore.Mvc.Rendering");
+            WriteImport(builder, imported, "Microsoft.AspNetCore.Mvc.ViewFeatures");
+            WriteImport(builder, imported, "Microsoft.AspNetCore.Html");
             // WriteAttribute for pages served by ASP.NET Core, which the base
             // class does not provide: it is an extension in the integration
             // package.
-            builder.AppendLine("Imports Basalt.Razor.Vb.AspNetCore");
+            WriteImport(builder, imported, "Basalt.Razor.Vb.AspNetCore");
         }
 
         foreach (var import in document.Imports)
-            builder.AppendLine($"Imports {import}");
+            WriteImport(builder, imported, import);
 
         builder.AppendLine();
 
@@ -764,6 +769,16 @@ public static class VbHtmlCodeWriter
     /// and a newline has to be concatenated from Environment.NewLine. Splitting
     /// on newlines keeps the generated source readable and the literals valid.
     /// </summary>
+    /// <summary>
+    /// Writes an Imports line unless the same namespace is already imported.
+    /// </summary>
+    internal static void WriteImport(StringBuilder builder, HashSet<string> imported, string name)
+    {
+        var trimmed = name.Trim();
+
+        if (imported.Add(trimmed)) builder.AppendLine($"Imports {trimmed}");
+    }
+
     /// <summary>
     /// Roots a model type at the global namespace.
     /// </summary>

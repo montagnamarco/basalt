@@ -237,6 +237,18 @@ public class ComponentGeneratorTests
     }
 
     [Fact]
+    public void AnImportTheGeneratorAlreadyWritesIsNotRepeated()
+    {
+        // _Imports.vbrazor naming Components.Web, as every Blazor app's does:
+        // written twice, Visual Basic refused the duplicate (BC31051).
+        var outcome = Run([],
+            (InSite("Components", "_Imports.vbrazor"), "@Imports Microsoft.AspNetCore.Components.Web\n"),
+            (CounterPath, "@Imports Microsoft.AspNetCore.Components.Web\n<p>hi</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+    }
+
+    [Fact]
     public void ADoctypeIsMarkupAndACommentIsDropped()
     {
         // An App component begins with <!DOCTYPE html>; read as a tag it
