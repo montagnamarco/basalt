@@ -202,4 +202,37 @@ public class ComponentRenderingTests
         Assert.Contains("<span class=\"badge\">3 new</span>", html);
         Assert.Contains("<div class=\"tile\">42</div>", html);
     }
+
+    [Fact]
+    public async Task SectionContentFillsItsOutlet()
+    {
+        // As a layout's <SectionOutlet SectionName="top" /> is filled by a
+        // page's <SectionContent SectionName="top">.
+        var html = await RenderAsync("Page", [],
+            Component("Page", """
+                @Imports Microsoft.AspNetCore.Components.Sections
+                <header><SectionOutlet SectionName="top" /></header>
+                <SectionContent SectionName="top"><b>from the page</b></SectionContent>
+                """));
+
+        Assert.Contains("<header><b>from the page</b></header>", html);
+    }
+
+    [Fact]
+    public async Task ANamedCascadeReachesOnlyTheParameterOfThatName()
+    {
+        var html = await RenderAsync("Page", [],
+            Component("Child", $"""
+                <p>@(If(Accent, "?")) @(If(Other, "?"))</p>
+                @Code
+                    <CascadingParameter(Name:="Accent")> Public Property Accent As String
+                    <CascadingParameter(Name:="Other")> Public Property Other As String
+                End Code
+                """),
+            Component("Page", """
+                <CascadingValue Name="Accent" Value="@("teal")"><Child /></CascadingValue>
+                """));
+
+        Assert.Contains("<p>teal ?</p>", html);
+    }
 }

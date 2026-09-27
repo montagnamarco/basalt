@@ -1,0 +1,33 @@
+@Page "/subscribe"
+@Imports Microsoft.AspNetCore.Components.Forms
+
+@* No render mode: rendered on the server and posted like a plain HTML form,
+   the model filled from the post by [SupplyParameterFromForm]. *@
+
+<EditForm Model="@Model" FormName="subscribe" OnValidSubmit="AddressOf Subscribed">
+    <DataAnnotationsValidator />
+
+    <InputText id="email" @bind-Value="Model.Email" />
+    <ValidationMessage For="@(Function() Model.Email)" />
+
+    <button type="submit">Subscribe</button>
+</EditForm>
+
+@If done Then
+    @<p id="subscribed">Subscribed @Model.Email</p>
+End If
+
+@Code
+    <SupplyParameterFromForm>
+    Private Property Model As Global.Basalt.Sample.Mvc.Subscription
+
+    Private done As Boolean
+
+    Protected Overrides Sub OnInitialized()
+        Model = If(Model, New Global.Basalt.Sample.Mvc.Subscription())
+    End Sub
+
+    Private Sub Subscribed()
+        done = True
+    End Sub
+End Code
