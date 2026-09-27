@@ -107,6 +107,15 @@ Razor compiler writes, so each one runs exactly as in a `.cshtml`. A view
 without the directive keeps the older compile-time rewriting of `asp-action`,
 `asp-controller`, `asp-page` and `asp-for`.
 
+### Localised views
+
+`@Inject IViewLocalizer L` and `@L("Key")` work as in C#, with one Visual Basic
+difference: VB names an embedded `.resx` after the root namespace and the file
+name only, whatever folder it is in. Keep `Views.Home.Index.resx` anywhere in the
+project and call `AddLocalization()` **without** `ResourcesPath` — with
+`ResourcesPath = "Resources"` the localizer looks for
+`RootNamespace.Resources.Views.Home.Index`, which a VB project never produces.
+
 ## Requirements
 
 .NET 10 or later.

@@ -188,6 +188,16 @@ public sealed class VbViewsOverHttpTests
     }
 
     [Fact]
+    public async Task AViewReadsItsOwnResourcesThroughIViewLocalizer()
+    {
+        // Views.Home.Localized.resx under Resources, found by the view's path
+        // as for a .cshtml.
+        var html = await GetAsync("/Home/Localized");
+
+        Assert.Contains("<h1>Hello from a resource</h1>", html);
+    }
+
+    [Fact]
     public async Task ALayoutDirectiveChoosesTheLayout()
     {
         // @Layout "_AdminLayout" used to be refused with VBH008, and the only

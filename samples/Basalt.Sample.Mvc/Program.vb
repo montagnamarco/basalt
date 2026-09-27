@@ -11,7 +11,12 @@ Public Module Program
     Public Sub Main(args As String())
         Dim builder = WebApplication.CreateBuilder(args)
 
-        builder.Services.AddControllersWithViews()
+        ' No ResourcesPath: Visual Basic names an embedded .resx after the root
+        ' namespace and the file name only, whatever folder it sits in, so
+        ' Resources/Views.Home.Localized.resx is RootNamespace.Views.Home.Localized
+        ' - which is where the localizer looks when no path is set.
+        builder.Services.AddLocalization()
+        builder.Services.AddControllersWithViews().AddViewLocalization()
         builder.Services.AddRazorPages()
         ' The single call that makes .vbhtml views work.
         builder.Services.AddVbViews()
