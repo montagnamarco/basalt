@@ -4,6 +4,8 @@
 <head>
     <meta charset="utf-8" />
     <base href="/" />
+    <!-- The components' scoped styles, bundled by the build (CSS isolation). -->
+    <link rel="stylesheet" href="Basalt.Sample.Mvc.styles.css" />
     <HeadOutlet />
 </head>
 <body>

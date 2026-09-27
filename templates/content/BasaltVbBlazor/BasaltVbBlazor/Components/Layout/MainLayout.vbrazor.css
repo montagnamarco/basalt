@@ -1,0 +1,15 @@
+/* Scoped to MainLayout.vbrazor (CSS isolation), bundled into BasaltVbBlazor.styles.css. */
+.page {
+    display: flex;
+    min-height: 100vh;
+}
+
+nav {
+    background: #1b2a3a;
+    padding: 1rem;
+    min-width: 12rem;
+}
+
+main {
+    padding: 1rem 2rem;
+}

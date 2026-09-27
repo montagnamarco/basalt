@@ -38,4 +38,10 @@
     <AdditionalFiles Include="Components\**\*.vbrazor" />
   </ItemGroup>
 
+  <!--
+    The package targets, as a project using the package gets them: CSS
+    isolation for .vbrazor.css among them.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)../../src/Basalt.Razor.Vb.Generator/build/Basalt.Razor.Vb.targets" />
+
 </Project>

@@ -1,0 +1,18 @@
+/* Scoped to NavMenu.vbrazor. The links are rendered by NavLink, another
+   component, so they are reached with ::deep, as in C#. */
+.nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    line-height: 2;
+}
+
+.nav ::deep a {
+    color: #d7e3f0;
+    text-decoration: none;
+}
+
+.nav ::deep a.active {
+    color: #ffffff;
+    font-weight: bold;
+}

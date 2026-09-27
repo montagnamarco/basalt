@@ -14,6 +14,52 @@
   </ItemGroup>
 
   <!--
+    CSS isolation for components: Counter.vbrazor.css is scoped to
+    Counter.vbrazor, as Counter.razor.css is to Counter.razor.
+
+    The SDK's pipeline discovers only .razor.css and .cshtml.css, and its
+    ApplyCssScopes step rejects a scoped stylesheet with no C# component
+    beside it. So the .vbrazor.css files are given their scopes here, after
+    that check, by the SDK's own ComputeCssScope task, and added to _ScopedCss:
+    from there the SDK rewrites them and bundles them into
+    $(PackageId).styles.css like any other. The scope reaches the component
+    generator as the CssScope metadata of the .vbrazor, which it writes on
+    every element of the component, as the Razor compiler does. It has to be
+    set before the analyzer configuration file is written, or the generator
+    reads it empty.
+  -->
+  <ItemGroup>
+    <!-- Processed into the bundle, not published as they stand. -->
+    <Content Update="**/*.vbrazor.css" CopyToPublishDirectory="Never" Pack="false" />
+  </ItemGroup>
+
+  <Target Name="_BasaltComputeVbRazorCssScopes"
+          BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun;CoreCompile;ResolveScopedCssOutputs"
+          DependsOnTargets="ResolveCssScopes"
+          Condition="'$(ScopedCssEnabled)' == 'true'">
+    <ItemGroup>
+      <_BasaltVbRazorCssInput Include="@(Content);@(None)" Condition="$([System.String]::Copy('%(Identity)').EndsWith('.vbrazor.css', System.StringComparison.OrdinalIgnoreCase))" />
+    </ItemGroup>
+
+    <ComputeCssScope ScopedCssInput="@(_BasaltVbRazorCssInput)" Targetname="$(TargetName)" Condition="'@(_BasaltVbRazorCssInput)' != ''">
+      <Output TaskParameter="ScopedCss" ItemName="_BasaltVbRazorScopedCss" />
+    </ComputeCssScope>
+
+    <ItemGroup>
+      <_ScopedCss Include="@(_BasaltVbRazorScopedCss)" />
+
+      <!-- Counter.vbrazor.css scopes Counter.vbrazor: its file name less .css. -->
+      <_BasaltVbRazorWithScope Include="@(_BasaltVbRazorScopedCss->'%(RelativeDir)%(Filename)')" CssScope="%(_BasaltVbRazorScopedCss.CssScope)" />
+      <AdditionalFiles Remove="@(_BasaltVbRazorWithScope)" />
+      <AdditionalFiles Include="@(_BasaltVbRazorWithScope)" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="CssScope" />
+  </ItemGroup>
+
+  <!--
     A project that references this package but has no views has almost
     certainly misplaced them, and would otherwise get a silent empty build.
   -->

@@ -539,6 +539,18 @@ end-to-end tests.
 Every component imports what a `.razor` file does: `Microsoft.AspNetCore.Components`,
 `System.Collections.Generic`, `System.Linq` and `System.Threading.Tasks`.
 
+### CSS isolation
+
+`Counter.vbrazor.css` beside `Counter.vbrazor` styles that component alone, as
+`Counter.razor.css` does in C#: the package hands the stylesheet to the SDK's
+own scoped-CSS pipeline, which rewrites its selectors with the component's
+scope (`p[b-vrp9ab9f78]`) and bundles every component's styles into
+`YourApp.styles.css`, and the generator writes the same scope on each of the
+component's elements. `::deep` reaches into child components, as in C#. The
+Blazor template's layout and menu are styled this way; in the MVC sample a
+browser test reads the colour `Clicker.vbrazor.css` gives Clicker's
+paragraphs, and not another page's.
+
 ### Where components live
 
 A component is namespaced by its folders from the project, as a `.razor` file

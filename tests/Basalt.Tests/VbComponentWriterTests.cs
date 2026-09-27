@@ -322,4 +322,18 @@ public class VbComponentWriterTests
             written.Split("Sub(__child").Length,
             written.Split("End Sub,").Length);
     }
+
+    [Fact]
+    public void WritesTheCssScopeOnItsOwnElementsOnly()
+    {
+        // As the Razor compiler writes it: every element of the component
+        // carries the scope of its .vbrazor.css, the components it places do
+        // not, or their own elements would match its selectors.
+        var written = VbComponentWriter.WriteWithMap(
+            VbHtmlParser.Parse("<div><p>a</p><Saluto /><br /></div>"), "Box", "Components", null,
+            cssScope: "b-abc123").Code;
+
+        Assert.Equal(3, written.Split("\"b-abc123\")").Length - 1);
+        Assert.DoesNotContain("OpenComponent(Of Saluto)(3)", written.Replace("AddAttribute", ""));
+    }
 }

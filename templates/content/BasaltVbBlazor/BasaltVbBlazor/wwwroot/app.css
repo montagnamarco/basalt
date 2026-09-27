@@ -3,38 +3,6 @@ body {
     margin: 0;
 }
 
-.page {
-    display: flex;
-    min-height: 100vh;
-}
-
-nav {
-    background: #1b2a3a;
-    padding: 1rem;
-    min-width: 12rem;
-}
-
-nav a {
-    color: #d7e3f0;
-    text-decoration: none;
-}
-
-nav a.active {
-    color: #ffffff;
-    font-weight: bold;
-}
-
-.nav {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    line-height: 2;
-}
-
-main {
-    padding: 1rem 2rem;
-}
-
 .btn {
     padding: 0.4rem 1rem;
 }

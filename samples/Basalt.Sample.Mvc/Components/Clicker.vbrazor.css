@@ -1,0 +1,4 @@
+/* Scoped to Clicker.vbrazor: paragraphs elsewhere keep their colour. */
+p {
+    color: rgb(0, 128, 0);
+}

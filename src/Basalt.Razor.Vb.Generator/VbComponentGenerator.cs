@@ -70,9 +70,12 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        // With each file's CssScope, which the package's targets set from a
+        // Counter.vbrazor.css beside Counter.vbrazor (CSS isolation).
         var templates = context.AdditionalTextsProvider
             .Where(file => file.Path.EndsWith(Extension, StringComparison.OrdinalIgnoreCase))
-            .Select((file, ct) => Read(file, ct));
+            .Combine(context.AnalyzerConfigOptionsProvider)
+            .Select((pair, ct) => Read(pair.Left, pair.Right.GetOptions(pair.Left), ct));
 
         var language = context.CompilationProvider.Select((c, _) => c.Language);
 
@@ -324,7 +327,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         var source = VbComponentWriter
             .WriteWithMap(
                 document, template.ClassName, namespaceName, template.Path,
-                checksum: template.Checksum, optionStrict: optionStrict, catalog: catalog)
+                checksum: template.Checksum, optionStrict: optionStrict, catalog: catalog, cssScope: template.CssScope)
             .Code;
 
         // With the namespace, so Admin/Index and Shop/Index are two files.
@@ -378,16 +381,20 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
                (componentFolder.Length == folder.Length || componentFolder[folder.Length] is '/' or '\\');
     }
 
-    private static Component Read(AdditionalText file, CancellationToken ct)
+    private static Component Read(
+        AdditionalText file, Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions options, CancellationToken ct)
     {
         var source = file.GetText(ct);
+
+        options.TryGetValue("build_metadata.AdditionalFiles.CssScope", out var scope);
 
         return new(
             Path: file.Path,
             Text: source?.ToString() ?? string.Empty,
             ClassName: ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(file.Path)),
-            Checksum: TemplateChecksum.Of(source));
+            Checksum: TemplateChecksum.Of(source),
+            CssScope: string.IsNullOrWhiteSpace(scope) ? null : scope!.Trim());
     }
 
-    private sealed record Component(string Path, string Text, string ClassName, string? Checksum);
+    private sealed record Component(string Path, string Text, string ClassName, string? Checksum, string? CssScope);
 }

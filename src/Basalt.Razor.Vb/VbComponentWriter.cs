@@ -29,10 +29,17 @@ public sealed class VbComponentWriter
     // One writer per template: the state below belongs to one run. It used
     // to be [ThreadStatic] static state, reset by hand at the start of every
     // run, which each new piece of state had to remember to join.
-    private VbComponentWriter(IComponentCatalog? catalog)
+    private VbComponentWriter(IComponentCatalog? catalog, string? cssScope)
     {
         catalog_ = catalog;
+        cssScope_ = cssScope;
     }
+
+    /// <summary>
+    /// The scope of the component's own .vbrazor.css, b-xxxxxxxxxx, written
+    /// on each of its elements so the rewritten selectors match them only.
+    /// </summary>
+    private readonly string? cssScope_;
 
     /// <summary>What the build knows about the components this one uses, when it knows.</summary>
     private readonly IComponentCatalog? catalog_;
@@ -133,8 +140,9 @@ public sealed class VbComponentWriter
         string? route = null,
         string? checksum = null,
         bool optionStrict = false,
-        IComponentCatalog? catalog = null) =>
-        new VbComponentWriter(catalog).Generate(document, className, namespaceName, filePath, route, checksum, optionStrict);
+        IComponentCatalog? catalog = null,
+        string? cssScope = null) =>
+        new VbComponentWriter(catalog, cssScope).Generate(document, className, namespaceName, filePath, route, checksum, optionStrict);
 
     /// <summary>
     /// The namespaces every component sees, as every .razor file sees them:
@@ -655,6 +663,11 @@ public sealed class VbComponentWriter
 
         if (!isComponent)
         {
+            // CSS isolation: the scope attribute on the component's own
+            // elements, not on the components it places, as C# writes it.
+            if (cssScope_ is not null)
+                builder.AppendLine($"{pad}{Builder}.AddAttribute({sequence++}, \"{cssScope_}\")");
+
             // An element's reference and key come before its children, which
             // are frames of their own rather than an attribute.
             WriteDeferred(builder, deferred, ref sequence, pad, mappings, filePath);
