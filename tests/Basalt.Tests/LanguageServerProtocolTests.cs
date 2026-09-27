@@ -242,6 +242,20 @@ public sealed class LanguageServerProtocolTests : IDisposable
         private readonly Task<OmniSharp.Extensions.LanguageServer.Server.LanguageServer> _serverStarted;
         private readonly Task _readLoop;
         private long _nextId;
+        private readonly System.Collections.Concurrent.ConcurrentQueue<JsonElement> _serverMessages = new();
+
+        public Func<JsonElement, Task<object?>>? ServerRequestHandler { get; init; }
+
+        public IReadOnlyList<JsonElement> ServerMessages => _serverMessages.ToArray();
+
+        public async Task<ProjectCompilation> CompilationAsync()
+        {
+#pragma warning disable VSTHRD003
+            var server = await _serverStarted.ConfigureAwait(false);
+#pragma warning restore VSTHRD003
+            return Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions
+                .GetRequiredService<ProjectCompilation>(server.Services);
+        }
 
         public LspHarness()
         {
@@ -280,7 +294,7 @@ public sealed class LanguageServerProtocolTests : IDisposable
             return completed == waitForExit;
         }
 
-        public async Task<JsonElement> InitializeAsync(string rootPath)
+        public async Task<JsonElement> InitializeAsync(string rootPath, bool workDoneProgress = false)
         {
             var rootUri = new Uri(rootPath).AbsoluteUri;
 
@@ -300,6 +314,7 @@ public sealed class LanguageServerProtocolTests : IDisposable
                     rootUri,
                     capabilities = new
                     {
+                        window = new { workDoneProgress },
                         textDocument = new
                         {
                             synchronization = new { dynamicRegistration = false },
@@ -408,7 +423,7 @@ public sealed class LanguageServerProtocolTests : IDisposable
 
                     if (message is null) return;
 
-                    Dispatch(message.Value);
+                    await DispatchAsync(message.Value).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -488,15 +503,35 @@ public sealed class LanguageServerProtocolTests : IDisposable
             }
         }
 
-        /// <summary>Delivers a response to whoever is waiting for its id; drops the rest.</summary>
+        /// <summary>Matches responses and records server messages, with optional request replies.</summary>
         /// <remarks>
-        /// "The rest" is a notification — a published diagnostic, a log line —
-        /// or a request the server sends the client, neither of which any test
-        /// here needs to answer.
+        /// Existing tests need only responses. Startup tests also inspect
+        /// notifications and answer server-initiated solution/progress requests.
         /// </remarks>
-        private void Dispatch(JsonElement message)
+        private async Task DispatchAsync(JsonElement message)
         {
-            if (message.TryGetProperty("method", out _)) return;
+            if (message.TryGetProperty("method", out _))
+            {
+                _serverMessages.Enqueue(message);
+                if (ServerRequestHandler is null || !message.TryGetProperty("id", out var requestId)) return;
+                try
+                {
+                    var result = await ServerRequestHandler(message).ConfigureAwait(false);
+                    await WriteMessageAsync(new Dictionary<string, object?>
+                    {
+                        ["jsonrpc"] = "2.0", ["id"] = requestId, ["result"] = result
+                    }).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    await WriteMessageAsync(new Dictionary<string, object?>
+                    {
+                        ["jsonrpc"] = "2.0", ["id"] = requestId,
+                        ["error"] = new { code = -32601, message = ex.Message }
+                    }).ConfigureAwait(false);
+                }
+                return;
+            }
             if (!message.TryGetProperty("id", out var idProperty)) return;
 
             var id = idProperty.GetInt64();

@@ -115,8 +115,23 @@ public sealed class ProjectCompilation : IDisposable
             return;
         }
 
+        StartLoadingTarget(target, ct);
+    }
+
+    internal string? Target => _target;
+
+    internal void StartLoadingTarget(string target, CancellationToken ct)
+    {
+        Problem = null;
+        IsReady = false;
         _target = target;
         _loading = LoadAsync(target, ct);
+    }
+
+    internal void DeclineLoading(string problem)
+    {
+        IsReady = false;
+        Problem = problem;
     }
 
     /// <summary>Waits for the solution, for tests and for shutdown.</summary>
@@ -269,7 +284,9 @@ public sealed class ProjectCompilation : IDisposable
     /// A solution first, because a view's model commonly lives in a project
     /// other than the web one, and only the solution ties them together.
     /// </remarks>
-    internal static string? FindSolutionOrProject(string root)
+    internal static string? FindSolutionOrProject(string root) => DiscoverTargets(root).FirstOrDefault();
+
+    internal static IReadOnlyList<string> DiscoverTargets(string root)
     {
         static int Preference(string path) => Path.GetExtension(path).ToLowerInvariant() switch
         {
@@ -280,8 +297,8 @@ public sealed class ProjectCompilation : IDisposable
         };
 
         if (File.Exists(root))
-            return Preference(root) < 3 ? Path.GetFullPath(root) : null;
-        if (!Directory.Exists(root)) return null;
+            return Preference(root) < 3 ? [Path.GetFullPath(root)] : [];
+        if (!Directory.Exists(root)) return [];
 
         var ignoredDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -312,7 +329,7 @@ public sealed class ProjectCompilation : IDisposable
         return candidates.OrderBy(Preference)
             .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
             .ThenBy(path => path, StringComparer.Ordinal)
-            .FirstOrDefault();
+            .ToArray();
     }
 
     public void Dispose() => _roslyn.Dispose();
