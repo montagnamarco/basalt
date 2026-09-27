@@ -29,21 +29,24 @@ internal sealed class RoslynSymbolDescriptionProvider : ISymbolDescriptionProvid
         return Describe(symbol, ct);
     }
 
-    public async Task<SymbolDescriptionSet?> DescribeCallAsync(
-        LanguageDocument document, int position, CancellationToken ct = default)
-    {
-        var call = await _service
-            .FindCallAsync(document.FilePath, position, document.Text, ct)
-            .ConfigureAwait(false);
+    public Task<SymbolDescriptionSet?> DescribeCallAsync(
+        LanguageDocument document, int position, CancellationToken ct = default) =>
+        // Cached Roslyn awaits can complete synchronously. Keep the whole
+        // request, including symbol display and documentation, off the caller.
+        Task.Run<SymbolDescriptionSet?>(async () =>
+        {
+            var call = await _service
+                .FindCallAsync(document.FilePath, position, document.Text, ct)
+                .ConfigureAwait(false);
 
-        if (call is not { } found || found.Methods.Count == 0) return null;
+            if (call is not { } found || found.Methods.Count == 0) return null;
 
-        var overloads = found.Methods
-            .Select(m => Describe(m, ct) with { ActiveParameter = found.ActiveParameter })
-            .ToList();
+            var overloads = found.Methods
+                .Select(m => Describe(m, ct) with { ActiveParameter = found.ActiveParameter })
+                .ToList();
 
-        return new SymbolDescriptionSet(overloads) { Active = 0 };
-    }
+            return new SymbolDescriptionSet(overloads) { Active = 0 };
+        }, ct);
 
     /// <summary>
     /// A symbol as parts, taking Roslyn's own classification of each run.
