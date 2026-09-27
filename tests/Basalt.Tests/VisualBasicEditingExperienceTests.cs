@@ -1,3 +1,4 @@
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
@@ -182,6 +183,55 @@ public sealed class VisualBasicEditingExperienceTests : IDisposable
 
         var occurrences = editor.Text.Split("End If").Length - 1;
         Assert.Equal(1, occurrences);
+    }
+
+    [AvaloniaTheory]
+    [InlineData("Dim action = Sub()", "End Sub", 21)]
+    [InlineData("Dim factory = Function()", "End Function", 22)]
+    [InlineData("Dim factory = Async Function()", "End Function", 22)]
+    public async Task EnterClosesALambdaAndPlacesTheCaretInItsBody(
+        string opening, string closing, int lambdaColumn)
+    {
+        var text = "Module Program\n    Sub Main()\n        " + opening;
+        var (host, _, editor) = await OpenAsync(text);
+        using var window = host;
+
+        editor.CaretOffset = editor.Document.TextLength;
+        editor.TextArea.Focus();
+        host.Window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+        host.Window.KeyRelease(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (!editor.Text.Contains(closing, StringComparison.Ordinal) && DateTime.UtcNow < deadline)
+            await Task.Delay(20);
+
+        var lines = editor.Text.ReplaceLineEndings("\n").Split('\n');
+        Assert.Equal(5, lines.Length);
+        Assert.Equal("        " + opening, lines[2]);
+        // Roslyn aligns the terminator with the lambda expression, and its
+        // body one indentation level further in (including Async lambdas).
+        Assert.Equal(new string(' ', lambdaColumn + 4), lines[3]);
+        Assert.Equal(new string(' ', lambdaColumn) + closing, lines[4]);
+        Assert.Equal(editor.Document.GetLineByNumber(4).EndOffset, editor.CaretOffset);
+    }
+
+    [AvaloniaFact]
+    public async Task EnterClosesARegionAndKeepsTheCaretBetweenItsDirectives()
+    {
+        var (host, _, editor) = await OpenAsync("#Region \"Helpers\"");
+        using var window = host;
+
+        editor.CaretOffset = editor.Document.TextLength;
+        editor.TextArea.Focus();
+        host.Window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+        host.Window.KeyRelease(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (!editor.Text.Contains("#End Region", StringComparison.Ordinal) && DateTime.UtcNow < deadline)
+            await Task.Delay(20);
+
+        Assert.Equal("#Region \"Helpers\"\n\n#End Region", editor.Text.ReplaceLineEndings("\n"));
+        Assert.Equal(editor.Document.GetLineByNumber(2).Offset, editor.CaretOffset);
     }
 
     [AvaloniaFact]

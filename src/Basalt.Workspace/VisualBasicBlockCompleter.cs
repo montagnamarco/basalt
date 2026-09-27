@@ -26,8 +26,30 @@ public static class VisualBasicBlockCompleter
         var content = line.ToString().Trim();
         if (content.Length == 0) return null;
 
-        var tree = VisualBasicSyntaxTree.ParseText(text, cancellationToken: ct);
+        // Enter has not been inserted yet. At EOF Roslyn still treats a bare
+        // lambda header as an incomplete single-line expression; the newline
+        // lets the parser decide whether it opens a multiline block.
+        var parseText = line.End == text.Length ? text + "\n" : text;
+        var tree = VisualBasicSyntaxTree.ParseText(parseText, cancellationToken: ct);
         var root = await tree.GetRootAsync(ct).ConfigureAwait(false);
+
+        // Directives live in structured trivia, not in the statement tree.
+        var region = root.DescendantTrivia(line.Span, descendIntoTrivia: true)
+            .Select(trivia => trivia.GetStructure())
+            .OfType<RegionDirectiveTriviaSyntax>()
+            .FirstOrDefault();
+        if (region is not null)
+            return HasMatchingRegionEnd(root, region) ? null : "#End Region";
+
+        // A lambda header belongs to an expression inside a declaration or
+        // argument. Starting at the line's first statement misses that block.
+        var lambda = root.DescendantNodes(line.Span)
+            .OfType<MultiLineLambdaExpressionSyntax>()
+            .LastOrDefault(candidate =>
+                candidate.SubOrFunctionHeader.Span.End > line.Start &&
+                candidate.SubOrFunctionHeader.Span.End <= line.End);
+        if (lambda is not null)
+            return HasRealClosingToken(lambda) ? null : ClosingFor(lambda);
 
         // The statement that begins on this line: its parent block, if any, is
         // what needs closing.
@@ -58,8 +80,8 @@ public static class VisualBasicBlockCompleter
         SyntaxKind.MultiLineIfBlock => "End If",
         SyntaxKind.WhileBlock => "End While",
         SyntaxKind.ForBlock or SyntaxKind.ForEachBlock => "Next",
-        SyntaxKind.SubBlock => "End Sub",
-        SyntaxKind.FunctionBlock => "End Function",
+        SyntaxKind.SubBlock or SyntaxKind.MultiLineSubLambdaExpression => "End Sub",
+        SyntaxKind.FunctionBlock or SyntaxKind.MultiLineFunctionLambdaExpression => "End Function",
         SyntaxKind.TryBlock => "End Try",
         SyntaxKind.SelectBlock => "End Select",
         SyntaxKind.SimpleDoLoopBlock or SyntaxKind.DoWhileLoopBlock
@@ -78,6 +100,30 @@ public static class VisualBasicBlockCompleter
         SyntaxKind.SetAccessorBlock => "End Set",
         _ => null
     };
+
+    private static bool HasMatchingRegionEnd(SyntaxNode root, RegionDirectiveTriviaSyntax region)
+    {
+        var depth = 0;
+
+        // Count parsed directives only: text in strings and comments must not
+        // supply a closing directive for the editor.
+        foreach (var trivia in root.DescendantTrivia(descendIntoTrivia: true))
+        {
+            if (trivia.SpanStart < region.SpanStart) continue;
+
+            if (trivia.IsKind(SyntaxKind.RegionDirectiveTrivia))
+            {
+                depth++;
+            }
+            else if (trivia.IsKind(SyntaxKind.EndRegionDirectiveTrivia))
+            {
+                depth--;
+                if (depth == 0) return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Whether the block already carries its closing statement.
