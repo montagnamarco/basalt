@@ -21,18 +21,25 @@
     {
       "source": "./BasaltVbBlazor/",
       "target": "./",
-      "condition": "(!UseWebAssembly)"
+      "condition": "(!UseWebAssembly)",
+      "exclude": [
+        "Components/Routes.vbrazor.vb"
+      ]
     },
     {
       "source": "./BasaltVbBlazor.Client/Pages/",
       "target": "./Components/Pages/",
-      "include": [ "Counter.vbrazor" ],
+      "include": [
+        "Counter.vbrazor"
+      ],
       "condition": "(interactivity == \"Server\")"
     },
     {
       "source": "./",
       "target": "./",
-      "exclude": [ ".template.config/**" ],
+      "exclude": [
+        ".template.config/**"
+      ],
       "condition": "(UseWebAssembly)"
     }
   ],
@@ -101,10 +108,18 @@
         {
           "type": "conditional",
           "configuration": {
-            "if": [ "'#if" ],
-            "else": [ "'#else" ],
-            "elseif": [ "'#elseif" ],
-            "endif": [ "'#endif" ],
+            "if": [
+              "'#if"
+            ],
+            "else": [
+              "'#else"
+            ],
+            "elseif": [
+              "'#elseif"
+            ],
+            "endif": [
+              "'#endif"
+            ],
             "trim": true,
             "wholeLine": true,
             "evaluator": "C++"

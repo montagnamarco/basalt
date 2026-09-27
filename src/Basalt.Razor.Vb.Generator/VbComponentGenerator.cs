@@ -102,32 +102,85 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
             return new Naming(legacy ? null : projectDirectory is { Length: > 0 } ? projectDirectory : null);
         });
 
-        var everything = templates.Collect().Combine(language).Combine(hasBlazor).Combine(optionStrict).Combine(naming);
+        // The compilation itself as well: every component's parameters are
+        // learned from it before any render tree is written (see
+        // ComponentCatalogBuilder), which is what the C# compiler does too.
+        var everything = templates.Collect().Combine(language).Combine(hasBlazor).Combine(optionStrict)
+            .Combine(naming).Combine(context.CompilationProvider);
 
         context.RegisterSourceOutput(everything, (production, data) =>
         {
-            var ((((all, compilationLanguage), blazor), strict), names) = data;
+            var (((((all, compilationLanguage), blazor), strict), names), compilation) = data;
 
             // _Imports.vbrazor is not a component: it lends its directives
             // to every component in its folder and below, as _Imports.razor
             // does. Generated as one, it was a class called _Imports.
             var shared = all.Where(t => IsImports(t.Path)).ToList();
 
+            // Two passes: every component is read and declared first, so a
+            // component's tags can be written knowing the parameters of the
+            // components they name — including ones declared later in the build.
+            var prepared = new List<Prepared>();
+
             foreach (var template in all)
             {
                 if (IsImports(template.Path)) continue;
 
-                Emit(production, template, compilationLanguage, blazor, strict, shared, names);
+                if (Prepare(production, template, compilationLanguage, blazor, shared, names) is { } ready)
+                    prepared.Add(ready);
+            }
+
+            var catalogs = Catalogs(production, compilation, prepared);
+
+            foreach (var ready in prepared)
+            {
+                catalogs.TryGetValue(ready.Template.Path, out var catalog);
+
+                Write(production, ready, strict, catalog);
             }
         });
     }
 
-    private static void Emit(
+    /// <summary>
+    /// Every component's catalog, or none when building them fails: the
+    /// components are then written as they were before catalogs existed,
+    /// untyped, rather than the whole generator failing — an exception here
+    /// took every component of the project with it.
+    /// </summary>
+    private static IReadOnlyDictionary<string, IComponentCatalog> Catalogs(
+        SourceProductionContext production, Compilation compilation, IReadOnlyList<Prepared> prepared)
+    {
+        try
+        {
+            return ComponentCatalogBuilder.Build(
+                compilation,
+                prepared.Select(p => new ComponentDeclaration(p.Template.Path, p.Document, p.Template.ClassName, p.Namespace)).ToList(),
+                production.CancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            production.ReportDiagnostic(Diagnostic.Create(CatalogFailed, Location.None, ex.Message));
+
+            return new Dictionary<string, IComponentCatalog>();
+        }
+    }
+
+    private static readonly DiagnosticDescriptor CatalogFailed = new(
+        "VBRZ015",
+        "Component parameters could not be read",
+        "The parameters of the project's components could not be read, so components are written without them: {0}",
+        "Basalt.Razor.Vb",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    /// <summary>A component read, its shared files applied, its namespace decided.</summary>
+    private sealed record Prepared(Component Template, VbHtmlDocument Document, string Namespace);
+
+    private static Prepared? Prepare(
         SourceProductionContext production,
         Component template,
         string language,
         bool hasBlazor,
-        bool optionStrict,
         IReadOnlyList<Component> shared,
         Naming naming)
     {
@@ -137,7 +190,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         {
             production.ReportDiagnostic(Diagnostic.Create(
                 WrongLanguage, Location.None, Path.GetFileName(template.Path)));
-            return;
+            return null;
         }
 
         if (!hasBlazor)
@@ -166,7 +219,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         {
             production.ReportDiagnostic(Diagnostic.Create(
                 ParseFailed, Location.None, Path.GetFileName(template.Path), ex.Message));
-            return;
+            return null;
         }
 
         // What the parser found wrong, where it found it. They used to be
@@ -199,7 +252,13 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         // Sito.Sito.Home — a class that compiles and that nothing naming the
         // type can find. Measured: MapRazorComponents(Of Global.Sito.Home)
         // failed to resolve while the generated file was sitting right there.
-        var namespaceName = NamespaceFor(template.Path, naming);
+        return new Prepared(template, document, NamespaceFor(template.Path, naming));
+    }
+
+    private static void Write(
+        SourceProductionContext production, Prepared prepared, bool optionStrict, IComponentCatalog? catalog)
+    {
+        var (template, document, namespaceName) = prepared;
 
         // With the template's path, so the generated code carries
         // #ExternalSource: without it a component compiled into the build had
@@ -208,7 +267,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         var source = VbComponentWriter
             .WriteWithMap(
                 document, template.ClassName, namespaceName, template.Path,
-                checksum: template.Checksum, optionStrict: optionStrict)
+                checksum: template.Checksum, optionStrict: optionStrict, catalog: catalog)
             .Code;
 
         // With the namespace, so Admin/Index and Shop/Index are two files.

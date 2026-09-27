@@ -134,6 +134,7 @@
     <Compile Include="../Basalt.Razor.Vb/TagHelperCatalog.cs" Link="Parser/TagHelperCatalog.cs" />
     <Compile Include="../Basalt.Razor.Vb/TagHelperBinding.cs" Link="Parser/TagHelperBinding.cs" />
     <Compile Include="../Basalt.Razor.Vb/TagHelperWriter.cs" Link="Parser/TagHelperWriter.cs" />
+    <Compile Include="../Basalt.Razor.Vb/ComponentCatalog.cs" Link="Parser/ComponentCatalog.cs" />
   </ItemGroup>
 
 </Project>

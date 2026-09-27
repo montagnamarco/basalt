@@ -29,18 +29,50 @@ public sealed class VbComponentWriter
     // One writer per template: the state below belongs to one run. It used
     // to be [ThreadStatic] static state, reset by hand at the start of every
     // run, which each new piece of state had to remember to join.
-    private VbComponentWriter()
+    private VbComponentWriter(IComponentCatalog? catalog)
     {
+        catalog_ = catalog;
     }
 
-    /// <summary>
-    /// Which tags are open, and whether each is a component, so the closing
-    /// tag knows which call to make.
-    /// </summary>
-    private readonly Stack<bool> open_ = new();
+    /// <summary>What the build knows about the components this one uses, when it knows.</summary>
+    private readonly IComponentCatalog? catalog_;
 
-    /// <summary>Which open components have child content being written.</summary>
-    private readonly Stack<bool> fragments_ = new();
+    /// <summary>What an open tag is, so its closing tag knows which call to make.</summary>
+    private enum FrameKind
+    {
+        Element,
+        Component,
+
+        /// <summary>A RenderFragment parameter written as an element: &lt;Header&gt; in &lt;Card&gt;.</summary>
+        Fragment,
+    }
+
+    /// <summary>An open tag.</summary>
+    private sealed class Frame(FrameKind kind)
+    {
+        public FrameKind Kind { get; } = kind;
+
+        /// <summary>A component's parameters, when the build knows them.</summary>
+        public ComponentShape? Shape { get; init; }
+
+        /// <summary>Type arguments the tag wrote: (Of Person).</summary>
+        public IReadOnlyList<string> TypeArguments { get; init; } = [];
+
+        /// <summary>The name its content's context value takes: Context="item".</summary>
+        public string? Context { get; init; }
+
+        /// <summary>A component's frames that follow its content.</summary>
+        public DeferredFrames? Deferred { get; init; }
+
+        /// <summary>What closes the lambda open for its content, while one is.</summary>
+        public string? ContentClose { get; set; }
+    }
+
+    /// <summary>The tags open where the writer is.</summary>
+    private readonly Stack<Frame> open_ = new();
+
+    /// <summary>How many content lambdas the calls being written are inside.</summary>
+    private int lambdas_;
 
     /// <summary>
     /// The builder the calls being written go to.
@@ -51,11 +83,7 @@ public sealed class VbComponentWriter
     /// parent's tree, where the component never looked for them — the box
     /// rendered empty and the content simply disappeared.
     /// </remarks>
-    private string Builder =>
-        fragments_.Count > 0 && fragments_.Peek() ? ChildBuilder(FragmentDepth) : "__builder";
-
-    /// <summary>How many child-content lambdas the calls being written are inside.</summary>
-    private int FragmentDepth => fragments_.Count(open => open);
+    private string Builder => lambdas_ > 0 ? ChildBuilder(lambdas_) : "__builder";
 
     /// <summary>
     /// The builder parameter of the child-content lambda at a depth: one name
@@ -104,8 +132,74 @@ public sealed class VbComponentWriter
         string? filePath,
         string? route = null,
         string? checksum = null,
-        bool optionStrict = false) =>
-        new VbComponentWriter().Generate(document, className, namespaceName, filePath, route, checksum, optionStrict);
+        bool optionStrict = false,
+        IComponentCatalog? catalog = null) =>
+        new VbComponentWriter(catalog).Generate(document, className, namespaceName, filePath, route, checksum, optionStrict);
+
+    /// <summary>
+    /// The component's class as declarations only — base type, interfaces,
+    /// injected services and the members its @Functions and @Code blocks
+    /// declare — with no render tree.
+    /// </summary>
+    /// <remarks>
+    /// What the generator compiles first to learn every component's
+    /// parameters before any render tree is written, the way the C# compiler
+    /// declares components before it binds their bodies. <paramref name="lookupAt"/>
+    /// is an offset inside the class, from which a tag's name is looked up
+    /// with the template's imports and namespace in scope.
+    /// </remarks>
+    public static string DeclarationStub(
+        VbHtmlDocument document, string className, string namespaceName, out int lookupAt)
+    {
+        var builder = new StringBuilder();
+
+        if (!string.IsNullOrWhiteSpace(document.Namespace)) namespaceName = document.Namespace!.Trim();
+
+        var imported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        VbHtmlCodeWriter.WriteImport(builder, imported, "Microsoft.AspNetCore.Components.Web");
+        VbHtmlCodeWriter.WriteImport(builder, imported, "Microsoft.AspNetCore.Components.Web.RenderMode");
+
+        foreach (var import in document.Imports)
+            VbHtmlCodeWriter.WriteImport(builder, imported, import);
+
+        var hasNamespace = !string.IsNullOrWhiteSpace(namespaceName);
+
+        if (hasNamespace) builder.AppendLine($"Namespace {namespaceName}");
+
+        var baseType = string.IsNullOrWhiteSpace(document.Inherits)
+            ? ComponentBaseTypeName
+            : VbHtmlCodeWriter.Qualify(document.Inherits!);
+
+        builder.AppendLine($"    Partial Public Class {ViewNaming.Escape(className)}");
+        builder.AppendLine($"        Inherits {baseType}");
+
+        foreach (var contract in document.Implements)
+            builder.AppendLine($"        Implements {contract}");
+
+        lookupAt = builder.Length;
+        builder.AppendLine();
+
+        foreach (var injected in document.Injected)
+        {
+            builder.AppendLine("        <Global.Microsoft.AspNetCore.Components.Inject>");
+            builder.AppendLine($"        Protected Property {injected.Name} As {VbHtmlCodeWriter.Qualify(injected.Type)}");
+        }
+
+        foreach (var functions in VbHtmlCodeWriter.FunctionsIn(document.Nodes))
+            builder.AppendLine(functions.Code);
+
+        var members = MemberBlocks(document.Nodes);
+
+        foreach (var block in document.Nodes.OfType<StatementNode>().Where(members.Contains))
+            builder.AppendLine(block.Code);
+
+        builder.AppendLine("    End Class");
+
+        if (hasNamespace) builder.AppendLine("End Namespace");
+
+        return builder.ToString();
+    }
 
     private Generated Generate(
         VbHtmlDocument document,
@@ -499,10 +593,22 @@ public sealed class VbComponentWriter
         var attributesEnd = 1 + (selfClosing ? trimmed.Length - 1 : inner.Length);
         var attributes = ParseAttributes(text, 1 + name.Length, attributesEnd);
 
+        // <Header> inside <Card>, when Card has a RenderFragment parameter
+        // called Header: that parameter's content, not a component.
+        if (FragmentParameter(name) is { } fragment)
+        {
+            OpenFragment(builder, fragment, attributes, selfClosing, ref sequence, pad);
+            return;
+        }
+
+        BeforeContent(builder, pad, ref sequence, whitespaceOnly: false);
+
         // A capitalised tag is another component, the way it is in Razor:
         // <Greeting Name="x" /> written out as an element sent the browser an
         // invented tag and dropped the parameter on the floor.
         var isComponent = IsComponentName(name);
+        var (baseName, typeArguments) = SplitTypeArguments(name);
+        var shape = isComponent ? catalog_?.Find(baseName, typeArguments.Count) : null;
 
         // A component is named unqualified, so Visual Basic resolves it the way
         // it resolves any name in the file's own namespace, RootNamespace
@@ -511,7 +617,8 @@ public sealed class VbComponentWriter
             ? $"{pad}{Builder}.OpenComponent(Of {ComponentType(name)})({sequence++})"
             : $"{pad}{Builder}.OpenElement({sequence++}, \"{name}\")");
 
-        var deferred = WriteTagAttributes(builder, tag, attributes, name, isComponent, ref sequence, pad, mappings, filePath);
+        var deferred = WriteTagAttributes(builder, tag, attributes, name, isComponent, shape, typeArguments,
+            ref sequence, pad, mappings, filePath);
 
         if (!isComponent)
         {
@@ -524,7 +631,7 @@ public sealed class VbComponentWriter
             if (selfClosing || IsVoid(name))
                 builder.AppendLine($"{pad}{Builder}.CloseElement()");
             else
-                open_.Push(false);
+                open_.Push(new Frame(FrameKind.Element));
 
             return;
         }
@@ -536,22 +643,160 @@ public sealed class VbComponentWriter
             return;
         }
 
-        // What sits between the tags becomes ChildContent, a RenderFragment
-        // the component decides where to put. Written straight into the tree
-        // instead, it was emitted as the component's own frames and vanished.
-        builder.AppendLine(
-            $"{pad}{Builder}.AddAttribute({sequence++}, \"ChildContent\", " +
-            $"CType(Sub({ChildBuilder(FragmentDepth + 1)} As Global.Microsoft.AspNetCore.Components." +
-            "Rendering.RenderTreeBuilder)");
-
-        open_.Push(true);
-        fragments_.Push(true);
-
-        // Written once ChildContent is complete, at the closing tag: Blazor
-        // takes an attribute only straight after the component's frame or
-        // another attribute, and <Panel @ref="p">text</Panel> failed to render.
-        deferred_.Push(deferred);
+        // What sits between the tags becomes ChildContent, or the named
+        // RenderFragment parameters it holds; which one is known only once the
+        // content starts (see BeforeContent). The deferred frames wait for the
+        // closing tag: Blazor takes an attribute only straight after the
+        // component's frame or another attribute, and <Panel @ref="p">text</Panel>
+        // failed to render with them before ChildContent.
+        open_.Push(new Frame(FrameKind.Component)
+        {
+            Shape = shape,
+            TypeArguments = typeArguments,
+            Context = attributes.FirstOrDefault(a => a.Name == "Context")?.Value,
+            Deferred = deferred,
+        });
     }
+
+    /// <summary>
+    /// Called before anything is written into the content of a component: the
+    /// first real content opens its ChildContent lambda. White space before
+    /// it, or between named fragment parameters, is dropped.
+    /// </summary>
+    /// <returns>Whether to go on writing what was about to be written.</returns>
+    private bool BeforeContent(StringBuilder builder, string pad, ref int sequence, bool whitespaceOnly)
+    {
+        if (open_.Count == 0 || open_.Peek() is not { Kind: FrameKind.Component, ContentClose: null } component)
+            return true;
+
+        if (whitespaceOnly) return false;
+
+        var parameter = component.Shape?.Parameter("ChildContent");
+        var (open, close) = FragmentLambda(parameter, component, component.Context);
+
+        builder.AppendLine($"{pad}{Builder}.AddAttribute({sequence++}, \"ChildContent\", {open}");
+
+        component.ContentClose = close;
+        lambdas_++;
+
+        return true;
+    }
+
+    /// <summary>
+    /// The RenderFragment parameter a tag directly inside a component names,
+    /// when the build knows that component's parameters.
+    /// </summary>
+    private ComponentParameter? FragmentParameter(string tagName)
+    {
+        if (open_.Count == 0 || open_.Peek() is not { Kind: FrameKind.Component, ContentClose: null } component)
+            return null;
+
+        // Named exactly, case and all, as C# matches it: <header> inside a
+        // component with a Header parameter is still an HTML element, and
+        // read as the parameter it lost its attributes.
+        return component.Shape?.Parameter(tagName) is { Kind: ParameterKind.RenderFragment or ParameterKind.RenderFragmentOf } parameter &&
+               string.Equals(parameter.Name, tagName, StringComparison.Ordinal)
+            ? parameter
+            : null;
+    }
+
+    /// <summary>Opens a named RenderFragment parameter for the content that follows.</summary>
+    private void OpenFragment(
+        StringBuilder builder, ComponentParameter parameter, List<TagAttribute> attributes, bool selfClosing,
+        ref int sequence, string pad)
+    {
+        var component = open_.Peek();
+        var context = attributes.FirstOrDefault(a => a.Name == "Context")?.Value ?? component.Context;
+        var (open, close) = FragmentLambda(parameter, component, context);
+
+        builder.AppendLine($"{pad}{Builder}.AddAttribute({sequence++}, \"{parameter.Name}\", {open}");
+
+        if (selfClosing)
+        {
+            builder.AppendLine($"{pad}{close}");
+            return;
+        }
+
+        open_.Push(new Frame(FrameKind.Fragment) { ContentClose = close });
+        lambdas_++;
+    }
+
+    /// <summary>
+    /// The opening and closing text of a content lambda: a RenderFragment, or
+    /// a RenderFragment(Of T) whose value the content calls context, or what
+    /// Context="item" names it.
+    /// </summary>
+    private (string Open, string Close) FragmentLambda(ComponentParameter? parameter, Frame component, string? context)
+    {
+        const string Fragment = "Global.Microsoft.AspNetCore.Components.RenderFragment";
+        const string TreeBuilder = "Global.Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder";
+
+        var child = ChildBuilder(lambdas_ + 1);
+
+        if (parameter is { Kind: ParameterKind.RenderFragmentOf, ArgumentType: { } argument })
+        {
+            var type = Substitute(argument, component);
+            // A name, or context: Context="@x" held an expression, which a
+            // lambda parameter cannot be.
+            var name = context is { } written && IsIdentifier(written.Trim()) ? written.Trim() : "context";
+
+            return ($"CType(Function({name} As {type}) Sub({child} As {TreeBuilder})",
+                $"End Sub, {Fragment}(Of {type})))");
+        }
+
+        return ($"CType(Sub({child} As {TreeBuilder})", $"End Sub, {Fragment}))");
+    }
+
+    /// <summary>
+    /// A parameter type with the component's type parameters replaced by the
+    /// arguments the tag wrote: RenderFragment(Of TItem) in &lt;Grid(Of Person)&gt;
+    /// takes a Person.
+    /// </summary>
+    private static string Substitute(string type, Frame component)
+    {
+        if (component.Shape is not { } shape || shape.TypeParameters.Count == 0) return type;
+
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        for (var index = 0; index < shape.TypeParameters.Count && index < component.TypeArguments.Count; index++)
+            arguments[shape.TypeParameters[index]] = component.TypeArguments[index];
+
+        // All at once: one after another, <Grid(Of TValue, TKey)> in a generic
+        // parent turned TKey into TValue and then both into TKey.
+        return System.Text.RegularExpressions.Regex.Replace(type, @"\b\w+\b",
+            match => arguments.TryGetValue(match.Value, out var argument) ? argument : match.Value);
+    }
+
+    private static bool IsIdentifier(string text) =>
+        text.Length > 0 && (char.IsLetter(text[0]) || text[0] == '_') && text.All(c => char.IsLetterOrDigit(c) || c == '_');
+
+    /// <summary>A tag's name and the type arguments it wrote: Grid(Of Person, Integer).</summary>
+    private static (string Name, IReadOnlyList<string> TypeArguments) SplitTypeArguments(string name)
+    {
+        var open = name.IndexOf("(Of ", StringComparison.OrdinalIgnoreCase);
+
+        if (open < 0 || !name.EndsWith(")", StringComparison.Ordinal)) return (name, []);
+
+        var arguments = new List<string>();
+        var depth = 0;
+        var start = open + 4;
+
+        for (var index = start; index < name.Length - 1; index++)
+        {
+            if (name[index] == '(') depth++;
+            else if (name[index] == ')') depth--;
+            else if (name[index] == ',' && depth == 0)
+            {
+                arguments.Add(name.Substring(start, index - start).Trim());
+                start = index + 1;
+            }
+        }
+
+        arguments.Add(name.Substring(start, name.Length - 1 - start).Trim());
+
+        return (name.Substring(0, open), arguments);
+    }
+
 
     /// <summary>The attributes between a tag's name and its end.</summary>
     /// <remarks>
@@ -762,6 +1007,7 @@ public sealed class VbComponentWriter
     /// </remarks>
     private DeferredFrames WriteTagAttributes(
         StringBuilder builder, Tag tag, List<TagAttribute> attributes, string name, bool isComponent,
+        ComponentShape? shape, IReadOnlyList<string> typeArguments,
         ref int sequence, string pad, List<SourceMapping> mappings, string? filePath)
     {
         var bindings = new List<Binding>();
@@ -778,7 +1024,14 @@ public sealed class VbComponentWriter
         {
             if (!attribute.Name.StartsWith("@", StringComparison.Ordinal))
             {
-                WritePlainAttribute(builder, tag, attribute, isComponent, ref sequence, pad, mappings, filePath);
+                // Context="item" names the value of the component's content,
+                // it is not a parameter: C# reads it the same way.
+                if (isComponent && attribute.Name == "Context" && shape?.Parameter("Context") is null) continue;
+
+                var parameter = isComponent ? shape?.Parameter(attribute.Name) : null;
+
+                WritePlainAttribute(builder, tag, attribute, isComponent, parameter, shape, typeArguments,
+                    ref sequence, pad, mappings, filePath);
                 continue;
             }
 
@@ -835,7 +1088,7 @@ public sealed class VbComponentWriter
                 default:
                     // A directive attribute this writer does not know: kept
                     // as an attribute without its marker rather than dropped.
-                    WritePlainAttribute(builder, tag, attribute with { Name = directive }, isComponent,
+                    WritePlainAttribute(builder, tag, attribute with { Name = directive }, isComponent, null, shape, typeArguments,
                         ref sequence, pad, mappings, filePath);
                     break;
             }
@@ -855,8 +1108,6 @@ public sealed class VbComponentWriter
         AttributeValue? Key, AttributeValue? Reference, AttributeValue? FormName, AttributeValue? RenderMode,
         string Name, bool IsComponent);
 
-    /// <summary>The components with content whose deferred frames wait for their closing tag.</summary>
-    private readonly Stack<DeferredFrames> deferred_ = new();
 
     /// <summary>Writes the frames that have to come after a tag's attributes.</summary>
     private void WriteDeferred(
@@ -893,6 +1144,7 @@ public sealed class VbComponentWriter
     /// <summary>An attribute written as the template has it.</summary>
     private void WritePlainAttribute(
         StringBuilder builder, Tag tag, TagAttribute attribute, bool isComponent,
+        ComponentParameter? parameter, ComponentShape? shape, IReadOnlyList<string> typeArguments,
         ref int sequence, string pad, List<SourceMapping> mappings, string? filePath)
     {
         // AddComponentParameter on a component: a parameter is set on the
@@ -905,8 +1157,29 @@ public sealed class VbComponentWriter
             return;
         }
 
-        var before = $"{Builder}.{call}({sequence++}, \"{attribute.Name}\", ";
-        var value = ValueOf(tag, attribute, isCode: false);
+        // The parameter's own name, as declared: Blazor matches it without
+        // regard to case, but the frame carries it as written here.
+        var name = parameter?.Name ?? attribute.Name;
+        var before = $"{Builder}.{call}({sequence++}, \"{name}\", ";
+
+        // Typed by the parameter, as C# types it: a literal is text only for a
+        // String or Object parameter. Count="5" for an Integer was the text
+        // "5", and failed at render with an invalid cast.
+        var value = ValueOf(tag, attribute, isCode: parameter is { Kind: not ParameterKind.Text });
+
+        // OnSave="Sub() saved = True" for an EventCallback parameter: wrapped
+        // in one, typed by the callback's argument, as C# wraps it. A value
+        // that is already an EventCallback goes through the same overloads.
+        if (parameter is { Kind: ParameterKind.EventCallback or ParameterKind.EventCallbackOf } && value.IsCode)
+        {
+            var argument = parameter.ArgumentType is { } type
+                ? $"(Of {SubstituteTypeParameters(type, shape, typeArguments)})"
+                : "";
+
+            before += $"Global.Microsoft.AspNetCore.Components.EventCallback.Factory.Create{argument}(Me, ";
+            WriteValueCall(builder, pad, before, value, "))", mappings, filePath);
+            return;
+        }
 
         // onclick="@AddressOf Go": a method reference is wrapped in an
         // EventCallback, since AddAttribute has no overload taking a bare
@@ -920,6 +1193,10 @@ public sealed class VbComponentWriter
 
         WriteValueCall(builder, pad, before, value, ")", mappings, filePath);
     }
+
+    /// <summary>A type with a component's type parameters replaced by the tag's arguments.</summary>
+    private static string SubstituteTypeParameters(string type, ComponentShape? shape, IReadOnlyList<string> typeArguments) =>
+        Substitute(type, new Frame(FrameKind.Component) { Shape = shape, TypeArguments = typeArguments });
 
     /// <summary>Whether a value holds text and expressions together.</summary>
     private static bool IsMixed(TagAttribute attribute)
@@ -1240,6 +1517,8 @@ public sealed class VbComponentWriter
                 break;
 
             case ExpressionNode expression:
+                BeforeContent(builder, pad, ref sequence, whitespaceOnly: false);
+
                 // AddContent encodes what it is given, which is what an
                 // implicit expression means. Raw output goes through
                 // MarkupString, the way it does in C#.
@@ -1282,6 +1561,8 @@ public sealed class VbComponentWriter
                 break;
 
             case StatementNode statement:
+                BeforeContent(builder, pad, ref sequence, whitespaceOnly: false);
+
                 // From the body, line for line, as a view does: the whole block
                 // written as one line put its second line at the left margin
                 // and anchored the pragma at "@Code" rather than at the first
@@ -1296,6 +1577,8 @@ public sealed class VbComponentWriter
                 break;
 
             case BlockNode block:
+                BeforeContent(builder, pad, ref sequence, whitespaceOnly: false);
+
                 // The opening clause carries the interesting expression — the
                 // condition of an If, the source of a For Each — so a caret
                 // there must reach Roslyn. Mapping only the body left every
@@ -1344,7 +1627,7 @@ public sealed class VbComponentWriter
     /// left to the statements, since that is what it means in every view. A
     /// block the parser split around markup is statements by construction.
     /// </remarks>
-    private HashSet<StatementNode> MemberBlocks(IReadOnlyList<VbHtmlNode> nodes)
+    private static HashSet<StatementNode> MemberBlocks(IReadOnlyList<VbHtmlNode> nodes)
     {
         var blocks = new HashSet<StatementNode>();
 
@@ -1372,7 +1655,7 @@ public sealed class VbComponentWriter
         "Operator", "Widening", "Narrowing", "MustInherit", "NotInheritable", "Declare",
     ];
 
-    private bool StartsWithDeclaration(string code)
+    private static bool StartsWithDeclaration(string code)
     {
         var text = FirstLineOfCode(code);
 
@@ -1393,7 +1676,7 @@ public sealed class VbComponentWriter
     /// say nothing about whether a block declares or runs. A member block
     /// opening with "' state" stayed in BuildRenderTree and did not compile.
     /// </summary>
-    private string FirstLineOfCode(string code)
+    private static string FirstLineOfCode(string code)
     {
         foreach (var line in code.Split('\n'))
         {
@@ -1552,21 +1835,29 @@ public sealed class VbComponentWriter
                 // a component is closed with CloseComponent and an element
                 // with CloseElement, and calling the wrong one leaves the
                 // render tree unbalanced for the rest of the component.
-                var wasComponent = open_.Count > 0 && open_.Pop();
+                var frame = open_.Count > 0 ? open_.Pop() : new Frame(FrameKind.Element);
 
-                if (wasComponent && fragments_.Count > 0 && fragments_.Pop())
+                // The content lambda first — ChildContent or a named
+                // fragment — then the component's deferred frames and the
+                // component itself.
+                if (frame.ContentClose is { } contentClose)
                 {
-                    // The lambda opened for ChildContent, then the component.
-                    builder.AppendLine(
-                        $"{pad}End Sub, Global.Microsoft.AspNetCore.Components.RenderFragment))");
-
-                    if (deferred_.Count > 0)
-                        WriteDeferred(builder, deferred_.Pop(), ref sequence, pad, mappings, filePath);
+                    builder.AppendLine($"{pad}{contentClose}");
+                    lambdas_--;
                 }
 
-                builder.AppendLine(wasComponent
-                    ? $"{pad}{Builder}.CloseComponent()"
-                    : $"{pad}{Builder}.CloseElement()");
+                if (frame.Kind == FrameKind.Component)
+                {
+                    if (frame.Deferred is { } deferred)
+                        WriteDeferred(builder, deferred, ref sequence, pad, mappings, filePath);
+
+                    builder.AppendLine($"{pad}{Builder}.CloseComponent()");
+                }
+                else if (frame.Kind == FrameKind.Element)
+                {
+                    builder.AppendLine($"{pad}{Builder}.CloseElement()");
+                }
+
             }
             else
             {
@@ -1585,6 +1876,8 @@ public sealed class VbComponentWriter
         StringBuilder builder, string text, ref int sequence, string pad)
     {
         if (text.Length == 0) return;
+
+        if (!BeforeContent(builder, pad, ref sequence, string.IsNullOrWhiteSpace(text))) return;
 
         // AddMarkupContent, not AddContent: literal markup from the template
         // is already markup, and AddContent encodes it — the line breaks

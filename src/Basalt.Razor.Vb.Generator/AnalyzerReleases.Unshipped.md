@@ -14,4 +14,5 @@ VBRZ012 | Basalt.Razor.Vb | Warning | A .vbrazor component in a project that doe
 VBP100 | Basalt.Pages | Error | A .vbpage page could not be generated.
 VBRZ013 | Basalt.Razor.Vb | Error | A .vbrazor component has a template problem the parser reported.
 VBRZ014 | Basalt.Razor.Vb | Warning | A .vbrazor component uses a directive that is not supported yet and is ignored.
+VBRZ015 | Basalt.Razor.Vb | Warning | The parameters of the project's components could not be read; components are written untyped.
 VBH103 | Basalt.Razor.Vb | Warning | A .vbhtml view whose path from the project folder cannot be worked out.
