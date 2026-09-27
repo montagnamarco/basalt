@@ -70,6 +70,15 @@ public sealed class LanguageServerProtocolTests : IDisposable
                 capabilities.TryGetProperty(expected, out _),
                 $"The initialize response did not advertise \"{expected}\".");
         }
+
+        // Rename with its preparation: without prepareProvider an editor
+        // opens the rename box on a framework name and fails only after the
+        // user has typed the new one.
+        Assert.True(capabilities.TryGetProperty("renameProvider", out var rename),
+            "The initialize response did not advertise \"renameProvider\".");
+        Assert.True(rename.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    rename.GetProperty("prepareProvider").GetBoolean(),
+            $"Rename is advertised without preparation: {rename}");
     }
 
     [Fact]

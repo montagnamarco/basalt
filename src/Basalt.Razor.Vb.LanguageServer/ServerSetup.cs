@@ -40,6 +40,8 @@ public static class ServerSetup
             .WithHandler<VbHtmlRangeFormattingHandler>()
             .WithHandler<VbHtmlOnTypeFormattingHandler>()
             .WithHandler<VbHtmlReferencesHandler>()
+            .WithHandler<VbHtmlRenameHandler>()
+            .WithHandler<VbHtmlPrepareRenameHandler>()
 
             // Structure and folding: answerable from the parse tree alone, so
             // they work even before the solution has finished loading.

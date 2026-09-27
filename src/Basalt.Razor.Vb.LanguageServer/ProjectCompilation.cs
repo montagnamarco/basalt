@@ -91,6 +91,42 @@ public sealed class ProjectCompilation : IDisposable
         return entry with { InsertionText = commit.Text };
     }
 
+    private sealed class DiagnosticsCapture
+    {
+        internal IReadOnlyList<string>? Ids { get; set; }
+    }
+
+    private readonly AsyncLocal<DiagnosticsCapture?> _diagnosticsCapture = new();
+
+    /// <summary>
+    /// Every compiler diagnostic the generated view has, warnings included,
+    /// by id; null when the view could not be compiled to ask.
+    /// </summary>
+    /// <remarks>
+    /// The editor is shown the errors only. A rename needs the warnings as
+    /// well: a method renamed to "Write" shadows the view's own Write with
+    /// nothing worse than BC40004, and every Write(...) the generated view
+    /// makes then calls it.
+    /// </remarks>
+    internal async Task<IReadOnlyList<string>?> GetCompilerDiagnosticIdsAsync(LanguageDocument document, CancellationToken ct)
+    {
+        if (Provider.Diagnostics is not { } diagnostics) return null;
+
+        var capture = new DiagnosticsCapture();
+        var previous = _diagnosticsCapture.Value;
+        _diagnosticsCapture.Value = capture;
+
+        try
+        {
+            await diagnostics.GetDiagnosticsAsync(document, ct).ConfigureAwait(false);
+            return capture.Ids;
+        }
+        finally
+        {
+            _diagnosticsCapture.Value = previous;
+        }
+    }
+
     internal Task<string?> GetCompletionDescriptionAsync(
         CompletionCapture capture, string label, CancellationToken ct) =>
         _roslyn.GetCompletionDescriptionAsync(
@@ -277,8 +313,14 @@ public sealed class ProjectCompilation : IDisposable
 
                     return info is null ? null : new QuickInfo(info);
                 },
-                askDiagnostics: (text, token) =>
-                    _roslyn.GetDiagnosticsAsync(generatedPath, text, token),
+                askDiagnostics: async (text, token) =>
+                {
+                    var found = await _roslyn.GetDiagnosticsAsync(generatedPath, text, token).ConfigureAwait(false);
+
+                    if (_diagnosticsCapture.Value is { } capture) capture.Ids = [.. found.Select(d => d.Id)];
+
+                    return found;
+                },
                 askSignature: (text, position, token) =>
                     _roslyn.GetSignatureHelpAsync(generatedPath, position, text, token),
 
