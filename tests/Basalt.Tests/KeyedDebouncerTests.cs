@@ -12,7 +12,12 @@ public sealed class KeyedDebouncerTests
     public async Task ABurstOfRequestsRunsTheWorkOnceWithTheLastOne()
     {
         // Ten keystrokes used to be ten compilations of the whole view.
-        using var debouncer = new KeyedDebouncer(TimeSpan.FromMilliseconds(100));
+        //
+        // A window of a second, not the 250 ms the server uses: what is
+        // tested is that a burst runs once, and on a loaded machine the loop
+        // scheduling the burst was once paused past 100 ms, so the ninth ran
+        // before the tenth arrived.
+        using var debouncer = new KeyedDebouncer(TimeSpan.FromSeconds(1));
 
         var runs = new List<int>();
         var tasks = new List<Task>();
