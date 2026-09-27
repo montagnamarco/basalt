@@ -11,7 +11,17 @@ internal sealed class EditorCompletionData : ICompletionData
 {
     private readonly CompletionItem _item;
 
-    public EditorCompletionData(CompletionItem item) => _item = item;
+    private readonly Action<EditorCompletionData, int, string>? _committed;
+
+    /// <param name="committed">
+    /// Told where the entry was written and what, so the editor can replace it
+    /// with what the language service says committing it really writes.
+    /// </param>
+    public EditorCompletionData(CompletionItem item, Action<EditorCompletionData, int, string>? committed = null)
+    {
+        _item = item;
+        _committed = committed;
+    }
 
     /// <summary>The entry as the language service gave it.</summary>
     public CompletionItem Item => _item;
@@ -22,6 +32,12 @@ internal sealed class EditorCompletionData : ICompletionData
     public object Description => _item.Description ?? _item.Kind.ToString();
     public double Priority => 0;
 
-    public void Complete(TextArea textArea, ISegment completionSegment, EventArgs insertionRequestEventArgs) =>
+    public void Complete(TextArea textArea, ISegment completionSegment, EventArgs insertionRequestEventArgs)
+    {
+        var start = completionSegment.Offset;
+
         textArea.Document.Replace(completionSegment, Text);
+
+        _committed?.Invoke(this, start, Text);
+    }
 }

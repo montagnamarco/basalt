@@ -89,6 +89,37 @@ public sealed class CompletionOnSpaceTests : IAsyncLifetime
         }
     }
 
+    [AvaloniaTheory]
+    [InlineData("Dim builder As System.Text.StringBuilder = New", "= New Text.StringBuilder")]
+    [InlineData("Dim numbers As System.Collections.Generic.List(Of Integer) = New", "= New List(Of Integer)")]
+    public async Task TabWritesWhatRoslynCommitsNotWhatTheListFilteredOn(string statement, string expected)
+    {
+        // The list filters on StringBuilder; the file, which does not import
+        // System.Text, needs Text.StringBuilder. Written as the filter text it
+        // did not compile.
+        var (window, code, editor) = Open(statement);
+        try
+        {
+            window.KeyTextInput(" ");
+            await WaitForListAsync(code);
+
+            window.KeyPress(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+            window.KeyRelease(Key.Tab, RawInputModifiers.None, PhysicalKey.Tab, null);
+
+            var deadline = DateTime.UtcNow.AddSeconds(15);
+
+            while (!editor.Text.Contains(expected, StringComparison.Ordinal) && DateTime.UtcNow < deadline)
+                await Task.Delay(20);
+
+            Assert.True(editor.Text.Contains(expected, StringComparison.Ordinal),
+                editor.Document.GetText(editor.Document.GetLineByNumber(3)));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public async Task AsOffersTypesWithoutCommittingOneOnTheNextKey()
     {

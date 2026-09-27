@@ -193,7 +193,12 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
                     .GetCompletionsAsync(document, caret, trigger, cancellationToken: ct)
                     .ConfigureAwait(false);
 
-                return completions.ItemsList.Select(ToCompletionItem).ToList();
+                return completions.ItemsList
+                    .Select(item => ToCompletionItem(item) with
+                    {
+                        ResolveCommit = token => CommitAsync(service, document, item, token),
+                    })
+                    .ToList();
             },
             ct).ConfigureAwait(false);
     }
@@ -1767,6 +1772,20 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
             IsPreselected = item.Rules.MatchPriority == MatchPriority.Preselect,
         };
     }
+
+    /// <summary>
+    /// The edit committing an entry makes, as Roslyn computes it for Visual
+    /// Studio: the change, not the text the list filtered on.
+    /// </summary>
+    private static Task<CompletionCommit?> CommitAsync(
+        CompletionService service, Document document, RoslynCompletionItem item, CancellationToken ct) =>
+        Task.Run(async () =>
+        {
+            var change = await service.GetChangeAsync(document, item, commitCharacter: null, ct).ConfigureAwait(false);
+            var edit = change.TextChange;
+
+            return (CompletionCommit?)new CompletionCommit(edit.Span.Start, edit.Span.Length, edit.NewText ?? "", change.NewPosition);
+        }, ct);
 
     /// <summary>
     /// Whether typing a character here should open the completion list, as

@@ -31,4 +31,18 @@ public sealed record CompletionItem(
     /// service says which, as it does for Visual Studio.
     /// </summary>
     public bool IsPreselected { get; init; }
+
+    /// <summary>
+    /// What committing the entry really writes, as the language service works
+    /// it out — Text.StringBuilder where the list filtered on StringBuilder, a
+    /// generic's type argument list, a qualifier the file does not import.
+    /// Asked only for the entry committed, since it costs a compilation.
+    /// </summary>
+    public Func<CancellationToken, Task<CompletionCommit?>>? ResolveCommit { get; init; }
 }
+
+/// <summary>
+/// The edit a completion makes, in the text the list was asked about: replace
+/// Length characters at Start with Text, and leave the caret at Caret.
+/// </summary>
+public sealed record CompletionCommit(int Start, int Length, string Text, int? Caret);

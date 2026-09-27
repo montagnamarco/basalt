@@ -1556,6 +1556,53 @@ public sealed class CodeEditor : UserControl
         return data.FirstOrDefault();
     }
 
+    /// <summary>
+    /// Replaces what a committed entry wrote with what Roslyn says committing
+    /// it writes (GetChangeAsync), as Visual Studio commits: the list filters
+    /// on StringBuilder and the file needs Text.StringBuilder.
+    /// </summary>
+    /// <remarks>
+    /// The filter text is written at once, so committing never waits, and the
+    /// answer replaces it only while that text is still there, where it was
+    /// written: a commit character typed after it, "." or "(", is kept. The
+    /// edit is applied only when Roslyn's change starts where the entry was
+    /// written; one reaching elsewhere (an override writing a whole member)
+    /// is left to that provider's own commit, not guessed at here.
+    /// </remarks>
+    private void OnCompletionCommitted(EditorCompletionData entry, int start, string written)
+    {
+        if (entry.Item.ResolveCommit is not { } resolve) return;
+
+        var document = _editor.Document;
+
+        Guarded.Run(async () =>
+        {
+            var commit = await resolve(CancellationToken.None).ConfigureAwait(true);
+
+            if (commit is null || commit.Start != start || commit.Text == written) return;
+
+            if (_editor.Document != document || start + written.Length > document.TextLength ||
+                document.GetText(start, written.Length) != written)
+                return;
+
+            var caretAfter = _editor.CaretOffset == start + written.Length;
+
+            document.Replace(start, written.Length, commit.Text);
+
+            // Where Roslyn puts the caret, inside what it wrote (between the
+            // parentheses of a call, say), when the caret had not moved on.
+            if (caretAfter)
+            {
+                var within = commit.Caret is { } caret ? caret - commit.Start : commit.Text.Length;
+
+                _editor.CaretOffset = start + Math.Clamp(within, 0, commit.Text.Length);
+            }
+
+            _document.Text = _editor.Text;
+        },
+        _shell.WriteOutput, "editor");
+    }
+
     /// <summary>Drops a completion list that is queued or on its way.</summary>
     private void CancelPendingCompletion()
     {
@@ -1669,7 +1716,7 @@ public sealed class CodeEditor : UserControl
             ranked = [.. ranked.Where(match => match.Item.IsPreselected), .. ranked.Where(match => !match.Item.IsPreselected)];
 
         foreach (var match in ranked.Take(200))
-            _completionWindow.CompletionList.CompletionData.Add(new EditorCompletionData(match.Item));
+            _completionWindow.CompletionList.CompletionData.Add(new EditorCompletionData(match.Item, OnCompletionCommitted));
 
         _completionWindow.CompletionList.SelectedItem = InitialSelection(
             _completionWindow.CompletionList.CompletionData, typed, trigger);
