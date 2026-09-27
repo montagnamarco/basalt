@@ -609,6 +609,20 @@ public sealed class CodeEditor : UserControl
             return;
         }
 
+        // A space after As, New, Of, Implements and the like opens the list, as
+        // it does in Visual Studio: Roslyn decides where, and the providers
+        // decide whether there is anything to offer (inside a string there
+        // is not, and nothing opens).
+        if (typed == " "
+            && _completionWindow is null
+            && _suggestAutomatically
+            && _document.Language == SourceLanguage.VisualBasic
+            && await _shell.ShouldTriggerCompletionAsync(_document.FilePath, _editor.CaretOffset, _editor.Text, ' '))
+        {
+            await ShowCompletionAsync(trigger: ' ');
+            return;
+        }
+
         // A letter opens the list as well, the way Visual Studio does: waiting
         // for a dot means the list never appears for a bare name, which is
         // most of what anyone types. Only on the first letters of a word — in
@@ -1520,6 +1534,28 @@ public sealed class CodeEditor : UserControl
     /// </remarks>
     private const int CompletionPauseMilliseconds = 40;
 
+    /// <summary>
+    /// The entry selected when the list opens. With nothing typed yet, the one
+    /// the language service preselects — the declared type after "= New " —
+    /// and, when it names none after a space, none at all: the list is only a
+    /// suggestion then, and a space or a parenthesis typed next must not
+    /// commit whatever sorted first. Otherwise the best match of what was
+    /// typed, which the matcher put first.
+    /// </summary>
+    private static ICompletionData? InitialSelection(
+        IList<ICompletionData> data, string typed, char? trigger)
+    {
+        if (typed.Length == 0)
+        {
+            var preselected = data.OfType<EditorCompletionData>().FirstOrDefault(entry => entry.Item.IsPreselected);
+
+            if (preselected is not null) return preselected;
+            if (trigger == ' ') return null;
+        }
+
+        return data.FirstOrDefault();
+    }
+
     /// <summary>Drops a completion list that is queued or on its way.</summary>
     private void CancelPendingCompletion()
     {
@@ -1566,7 +1602,7 @@ public sealed class CodeEditor : UserControl
 
     internal Task ShowSignatureHelpForTestsAsync() => ShowSignatureHelpAsync();
 
-    private async Task ShowCompletionAsync(CancellationToken ct = default)
+    private async Task ShowCompletionAsync(CancellationToken ct = default, char? trigger = null)
     {
         CompletionRequestsForTests++;
         var request = _completionRequests.Begin(_editor);
@@ -1576,7 +1612,7 @@ public sealed class CodeEditor : UserControl
 
         // The editor's text is newer than the workspace's copy while typing.
         var completions = await _shell
-            .GetCompletionsAsync(_document.FilePath, request.Position, request.Text)
+            .GetCompletionsAsync(_document.FilePath, request.Position, request.Text, trigger)
             .ConfigureAwait(true);
 
         Trace($"asked at {request.Position}, got {completions.Count}");
@@ -1626,11 +1662,17 @@ public sealed class CodeEditor : UserControl
         // A cap keeps a list of thousands from being built for a window that
         // shows a dozen rows; the ordering means the cut falls on the least
         // relevant entries.
+        // The preselected entry first when nothing is typed yet: the list is
+        // cut at 200 below, and in alphabetical order the declared type after
+        // "= New " fell past the cut among thousands of types.
+        if (typed.Length == 0)
+            ranked = [.. ranked.Where(match => match.Item.IsPreselected), .. ranked.Where(match => !match.Item.IsPreselected)];
+
         foreach (var match in ranked.Take(200))
             _completionWindow.CompletionList.CompletionData.Add(new EditorCompletionData(match.Item));
 
-        _completionWindow.CompletionList.SelectedItem =
-            _completionWindow.CompletionList.CompletionData.FirstOrDefault();
+        _completionWindow.CompletionList.SelectedItem = InitialSelection(
+            _completionWindow.CompletionList.CompletionData, typed, trigger);
 
         window.Closed += (_, _) =>
         {

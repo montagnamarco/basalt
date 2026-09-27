@@ -13,6 +13,9 @@ internal sealed class EditorCompletionData : ICompletionData
 
     public EditorCompletionData(CompletionItem item) => _item = item;
 
+    /// <summary>The entry as the language service gave it.</summary>
+    public CompletionItem Item => _item;
+
     public IImage? Image => CompletionIcons.For(_item.Kind);
     public string Text => _item.InsertionText;
     public object Content => _item.DisplayText;

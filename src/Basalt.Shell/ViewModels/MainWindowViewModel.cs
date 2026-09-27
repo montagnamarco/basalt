@@ -1072,8 +1072,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     /// <summary>Completions for the editor, delegated to Roslyn.</summary>
     public Task<IReadOnlyList<CompletionItem>> GetCompletionsAsync(
-        string filePath, int offset, string? currentText = null) =>
-        _languageService.GetCompletionsAsync(filePath, offset, currentText);
+        string filePath, int offset, string? currentText = null, char? typed = null) =>
+        _languageService.GetCompletionsAsync(filePath, offset, currentText, typed: typed);
+
+    /// <summary>Whether typing a character opens the list there, as Roslyn decides.</summary>
+    public Task<bool> ShouldTriggerCompletionAsync(string filePath, int offset, string currentText, char typed) =>
+        _languageService.ShouldTriggerCompletionAsync(filePath, offset, currentText, typed);
 
     public Task<string?> GetQuickInfoAsync(string filePath, int offset) =>
         _languageService.GetQuickInfoAsync(filePath, offset);

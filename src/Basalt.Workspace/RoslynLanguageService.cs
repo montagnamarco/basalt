@@ -149,8 +149,13 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
     /// a position that only exists in the newer text throws, so the caller's
     /// text is applied first and the position clamped to it.
     /// </summary>
+    /// <param name="typed">
+    /// The character whose typing opened the list, when one did: Roslyn's
+    /// providers answer an insertion differently from an explicit request,
+    /// and it is how "New " gets the declared type preselected.
+    /// </param>
     public async Task<IReadOnlyList<IdeCompletionItem>> GetCompletionsAsync(
-        string filePath, int position, string? currentText, CancellationToken ct = default)
+        string filePath, int position, string? currentText, CancellationToken ct = default, char? typed = null)
     {
         // A file the workspace does not know — generated Razor, most of all —
         // still deserves an answer, so it is put in a throwaway project with
@@ -180,8 +185,12 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
 
                 if (service is null) return (IReadOnlyList<IdeCompletionItem>)[];
 
+                var trigger = typed is { } character
+                    ? CompletionTrigger.CreateInsertionTrigger(character)
+                    : CompletionTrigger.Invoke;
+
                 var completions = await service
-                    .GetCompletionsAsync(document, caret, cancellationToken: ct)
+                    .GetCompletionsAsync(document, caret, trigger, cancellationToken: ct)
                     .ConfigureAwait(false);
 
                 return completions.ItemsList.Select(ToCompletionItem).ToList();
@@ -1753,7 +1762,40 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
         return new IdeCompletionItem(
             item.DisplayText,
             string.IsNullOrEmpty(item.FilterText) ? item.DisplayText : item.FilterText,
-            kind);
+            kind)
+        {
+            IsPreselected = item.Rules.MatchPriority == MatchPriority.Preselect,
+        };
+    }
+
+    /// <summary>
+    /// Whether typing a character here should open the completion list, as
+    /// Roslyn decides it for Visual Studio: a space after As, New, Of,
+    /// Implements, Inherits, Imports and the rest opens it; a space in the
+    /// middle of a statement does not. Asked rather than listed here, so
+    /// the editor holds no second opinion about Visual Basic.
+    /// </summary>
+    public async Task<bool> ShouldTriggerCompletionAsync(
+        string filePath, int position, string? currentText, char typed, CancellationToken ct = default)
+    {
+        var document = GetDocument(filePath)
+                    ?? (currentText is null ? null : ScratchDocument(currentText));
+
+        if (document is null) return false;
+
+        if (currentText is not null)
+            document = document.WithText(SourceText.From(currentText));
+
+        return await Task.Run(
+            async () =>
+            {
+                var text = await document.GetTextAsync(ct).ConfigureAwait(false);
+                var service = CompletionService.GetService(document);
+
+                return service is not null && service.ShouldTriggerCompletion(
+                    text, Math.Clamp(position, 0, text.Length), CompletionTrigger.CreateInsertionTrigger(typed));
+            },
+            ct).ConfigureAwait(false);
     }
 
     /// <summary>Extracts the text of the summary tag from the XML documentation comment.</summary>
