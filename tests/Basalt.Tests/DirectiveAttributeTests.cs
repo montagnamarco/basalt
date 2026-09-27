@@ -368,6 +368,21 @@ public class DirectiveAttributeTests
     }
 
     [Fact]
+    public void AComponentWithContentInsideAnotherCompiles()
+    {
+        // Each ChildContent lambda took a parameter called __child, and Visual
+        // Basic refuses a lambda parameter that hides an outer one.
+        var code = Compile("""
+            <Panel><p>outer</p><Panel><p>inner</p><Panel>deepest</Panel></Panel></Panel>
+            @Code
+                <Microsoft.AspNetCore.Components.Parameter> Public Property ChildContent As Microsoft.AspNetCore.Components.RenderFragment
+            End Code
+            """);
+
+        Assert.Contains("__child3", code);
+    }
+
+    [Fact]
     public void AnAtSignInProseIsNotADirective()
     {
         // Only "@on..." in a tag, before "=" or ":", is an attribute.

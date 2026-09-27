@@ -52,7 +52,18 @@ public sealed class VbComponentWriter
     /// rendered empty and the content simply disappeared.
     /// </remarks>
     private string Builder =>
-        fragments_.Count > 0 && fragments_.Peek() ? "__child" : "__builder";
+        fragments_.Count > 0 && fragments_.Peek() ? ChildBuilder(FragmentDepth) : "__builder";
+
+    /// <summary>How many child-content lambdas the calls being written are inside.</summary>
+    private int FragmentDepth => fragments_.Count(open => open);
+
+    /// <summary>
+    /// The builder parameter of the child-content lambda at a depth: one name
+    /// per depth, since Visual Basic refuses a lambda parameter that hides an
+    /// outer one (BC36641), and a component with content inside another did
+    /// not compile.
+    /// </summary>
+    private static string ChildBuilder(int depth) => $"__child{depth}";
 
 
     /// <summary>The class every component inherits.</summary>
@@ -530,7 +541,7 @@ public sealed class VbComponentWriter
         // instead, it was emitted as the component's own frames and vanished.
         builder.AppendLine(
             $"{pad}{Builder}.AddAttribute({sequence++}, \"ChildContent\", " +
-            "CType(Sub(__child As Global.Microsoft.AspNetCore.Components." +
+            $"CType(Sub({ChildBuilder(FragmentDepth + 1)} As Global.Microsoft.AspNetCore.Components." +
             "Rendering.RenderTreeBuilder)");
 
         open_.Push(true);

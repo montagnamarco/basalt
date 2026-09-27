@@ -245,7 +245,7 @@ public class VbComponentWriterTests
         Assert.Contains("RenderFragment", written);
 
         // And the children go to the lambda's builder, not the outer one.
-        Assert.Contains("__child.OpenElement", written);
+        Assert.Contains("__child1.OpenElement", written);
     }
 
     [Fact]
