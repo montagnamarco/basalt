@@ -4,6 +4,7 @@
     <Project Path="src/Basalt.Data/Basalt.Data.csproj" />
     <Project Path="samples/Basalt.Sample.Plugin/Basalt.Sample.Plugin.vbproj" />
     <Project Path="src/Basalt.Designer/Basalt.Designer.csproj" />
+    <Project Path="src/Basalt.Drawing/Basalt.Drawing.csproj" />
   <Project Path="src/Basalt.Vb6/Basalt.Vb6.csproj" />
   <Project Path="src/Basalt.Vb6.Generator/Basalt.Vb6.Generator.csproj" />
     <Project Path="src/Basalt.Extensibility/Basalt.Extensibility.csproj" />
@@ -21,6 +22,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Basalt.Tests/Basalt.Tests.csproj" />
+    <Project Path="tests/Basalt.Drawing.Tests/Basalt.Drawing.Tests.csproj" />
     <Project Path="tests/Basalt.Web.Tests/Basalt.Web.Tests.csproj" />
     <Project Path="tests/Basalt.E2E.Tests/Basalt.E2E.Tests.csproj" />
   </Folder>

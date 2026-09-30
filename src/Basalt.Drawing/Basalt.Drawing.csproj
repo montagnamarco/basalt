@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Basalt.Drawing</PackageId>
+    <Description>System.Drawing on macOS, Linux and Windows, drawn with SkiaSharp. The assembly has the name and the public surface of Microsoft's System.Drawing.Common, so code and binaries written against it run unchanged.</Description>
+    <PackageTags>system-drawing;gdi-plus;skiasharp;cross-platform;winforms</PackageTags>
+
+    <!--
+      The name and namespace of Microsoft's assembly, on purpose. The runtime
+      binds a reference to "System.Drawing.Common" by simple name and ignores
+      the public key, and the framework's own System.Drawing.dll forwards
+      Bitmap, Image and the rest to an assembly of this name: that is what
+      makes a compiled WinForms library, and a .resx holding an image, work
+      without being rebuilt. Measured in docs/planning on 2026-09-30.
+
+      The version must not be lower than the one a binary asks for, or the
+      runtime refuses the load; a net10.0 application asks for 10.0.0.0.
+    -->
+    <AssemblyName>System.Drawing.Common</AssemblyName>
+    <RootNamespace>System.Drawing</RootNamespace>
+    <AssemblyVersion>10.0.0.0</AssemblyVersion>
+
+    <!--
+      Its own line of versions, not the one the Razor packages share: those are
+      released together because a generator and a runtime must agree, and this
+      package agrees with nothing but itself. Below 1.0 while most of
+      Microsoft's surface is still in the pending list.
+    -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="$(SkiaSharpVersion)" />
+    <!-- SkiaSharp brings the macOS and Windows native libraries itself, not the Linux one. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="$(SkiaSharpVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Basalt.Drawing.Tests" />
+  </ItemGroup>
+
+</Project>

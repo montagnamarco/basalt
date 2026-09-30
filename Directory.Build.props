@@ -7,6 +7,13 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <AvaloniaVersion>12.1.1</AvaloniaVersion>
     <RoslynVersion>5.9.0</RoslynVersion>
+    <!--
+      The SkiaSharp that Avalonia.Skia $(AvaloniaVersion) itself depends on. Basalt.Drawing
+      names it because it must work without Avalonia; an application that uses
+      both gets one native library, and two versions of it do not load side by
+      side. SkiaVersionTests fails when the two drift apart.
+    -->
+    <SkiaSharpVersion>3.119.4</SkiaSharpVersion>
   </PropertyGroup>
 
   <!--
