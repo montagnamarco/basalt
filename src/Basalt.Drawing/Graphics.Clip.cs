@@ -46,6 +46,13 @@ public sealed partial class Graphics
         }
     }
 
+    /// <summary>A copy of the clip in the caller's coordinates; setting it replaces the clip.</summary>
+    public Region Clip
+    {
+        get => Region.Adopt(WorldPath(_clip));
+        set => SetClip(value, CombineMode.Replace);
+    }
+
     public void ResetClip() => ReplaceClip(null);
 
     public void SetClip(Rectangle rect) => SetClip(rect, CombineMode.Replace);
@@ -64,6 +71,28 @@ public sealed partial class Graphics
 
         CombineClip(Copy(g._clip), combineMode);
     }
+
+    public void SetClip(GraphicsPath path) => SetClip(path, CombineMode.Replace);
+
+    public void SetClip(GraphicsPath path, CombineMode combineMode)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+
+        var shape = path.ToSkia();
+        shape.Transform(WorldToDevice().ToSkia());
+        CombineClip(shape, combineMode);
+    }
+
+    public void SetClip(Region region, CombineMode combineMode)
+    {
+        ArgumentNullException.ThrowIfNull(region);
+
+        CombineClip(DevicePath(region), combineMode);
+    }
+
+    public void IntersectClip(Region region) => SetClip(region, CombineMode.Intersect);
+
+    public void ExcludeClip(Region region) => SetClip(region, CombineMode.Exclude);
 
     public void IntersectClip(Rectangle rect) => SetClip(rect, CombineMode.Intersect);
 
@@ -215,6 +244,29 @@ public sealed partial class Graphics
             path.AddRect(new SKRect(rect.Left, rect.Top, rect.Right, rect.Bottom));
             path.Transform(WorldToDevice().ToSkia());
         }
+
+        return path;
+    }
+
+    /// <summary>A region, which is in the caller's coordinates, as it lies on the surface; null stays infinite.</summary>
+    private SKPath? DevicePath(Region region)
+    {
+        if (region.Area is null) return null;
+
+        var path = new SKPath(region.Area);
+        path.Transform(WorldToDevice().ToSkia());
+
+        return path;
+    }
+
+    /// <summary>A device path in the caller's coordinates; null stays infinite.</summary>
+    private SKPath? WorldPath(SKPath? device)
+    {
+        if (device is null) return null;
+        if (!Matrix3x2.Invert(WorldToDevice(), out var toWorld)) return null;
+
+        var path = new SKPath(device);
+        path.Transform(toWorld.ToSkia());
 
         return path;
     }

@@ -121,6 +121,10 @@ public sealed partial class Graphics : MarshalByRefObject, IDeviceContext, IDisp
         DiscardStatesFrom(0);
 
         _target?.MarkFree();
+
+        // The finalizer exists because Microsoft's Graphics has one; after a
+        // Dispose there is nothing left for it to do.
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>

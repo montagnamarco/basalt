@@ -18,9 +18,6 @@ I System.Drawing.BufferedGraphicsContext : System.IDisposable
 I System.Drawing.CharacterRange : System.IEquatable`1<System.Drawing.CharacterRange>
 I System.Drawing.Drawing2D.CustomLineCap : System.ICloneable
 I System.Drawing.Drawing2D.CustomLineCap : System.IDisposable
-I System.Drawing.Drawing2D.GraphicsPath : System.ICloneable
-I System.Drawing.Drawing2D.GraphicsPath : System.IDisposable
-I System.Drawing.Drawing2D.GraphicsPathIterator : System.IDisposable
 I System.Drawing.Font : System.ICloneable
 I System.Drawing.Font : System.IDisposable
 I System.Drawing.Font : System.Runtime.Serialization.ISerializable
@@ -44,18 +41,14 @@ I System.Drawing.Printing.PrinterSettings+PrinterResolutionCollection : System.C
 I System.Drawing.Printing.PrinterSettings+StringCollection : System.Collections.Generic.IEnumerable`1<System.String>
 I System.Drawing.Printing.PrinterSettings+StringCollection : System.Collections.ICollection
 I System.Drawing.Printing.PrinterSettings+StringCollection : System.Collections.IEnumerable
-I System.Drawing.Region : System.IDisposable
 I System.Drawing.StringFormat : System.ICloneable
 I System.Drawing.StringFormat : System.IDisposable
 I System.Drawing.Text.FontCollection : System.IDisposable
 M protected System.Drawing.BufferedGraphicsContext::Finalize() -> System.Void virtual
 M protected System.Drawing.Drawing2D.CustomLineCap::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Drawing.Drawing2D.CustomLineCap::Finalize() -> System.Void virtual
-M protected System.Drawing.Drawing2D.GraphicsPath::Finalize() -> System.Void virtual
-M protected System.Drawing.Drawing2D.GraphicsPathIterator::Finalize() -> System.Void virtual
 M protected System.Drawing.Font::Finalize() -> System.Void virtual
 M protected System.Drawing.FontFamily::Finalize() -> System.Void virtual
-M protected System.Drawing.Graphics::Finalize() -> System.Void virtual
 M protected System.Drawing.Icon::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.CachedBitmap::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.ImageAttributes::Finalize() -> System.Void virtual
@@ -65,7 +58,6 @@ M protected System.Drawing.Printing.PrintDocument::OnBeginPrint(System.Drawing.P
 M protected System.Drawing.Printing.PrintDocument::OnEndPrint(System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
 M protected System.Drawing.Printing.PrintDocument::OnPrintPage(System.Drawing.Printing.PrintPageEventArgs) -> System.Void virtual
 M protected System.Drawing.Printing.PrintDocument::OnQueryPageSettings(System.Drawing.Printing.QueryPageSettingsEventArgs) -> System.Void virtual
-M protected System.Drawing.Region::Finalize() -> System.Void virtual
 M protected System.Drawing.StringFormat::Finalize() -> System.Void virtual
 M protected System.Drawing.Text.FontCollection::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Drawing.Text.FontCollection::Finalize() -> System.Void virtual
@@ -139,140 +131,10 @@ M public System.Drawing.Drawing2D.CustomLineCap::set_BaseCap(System.Drawing.Draw
 M public System.Drawing.Drawing2D.CustomLineCap::set_BaseInset(System.Single) -> System.Void
 M public System.Drawing.Drawing2D.CustomLineCap::set_StrokeJoin(System.Drawing.Drawing2D.LineJoin) -> System.Void
 M public System.Drawing.Drawing2D.CustomLineCap::set_WidthScale(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor()
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor(System.Drawing.Drawing2D.FillMode)
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor(System.Drawing.PointF[], System.Byte[])
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor(System.Drawing.PointF[], System.Byte[], System.Drawing.Drawing2D.FillMode)
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor(System.Drawing.Point[], System.Byte[])
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor(System.Drawing.Point[], System.Byte[], System.Drawing.Drawing2D.FillMode)
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor(System.ReadOnlySpan`1<System.Drawing.Point>, System.ReadOnlySpan`1<System.Byte>, System.Drawing.Drawing2D.FillMode)
-M public System.Drawing.Drawing2D.GraphicsPath::.ctor(System.ReadOnlySpan`1<System.Drawing.PointF>, System.ReadOnlySpan`1<System.Byte>, System.Drawing.Drawing2D.FillMode)
-M public System.Drawing.Drawing2D.GraphicsPath::AddArc(System.Drawing.Rectangle, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddArc(System.Drawing.RectangleF, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddArc(System.Int32, System.Int32, System.Int32, System.Int32, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddArc(System.Single, System.Single, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBezier(System.Drawing.Point, System.Drawing.Point, System.Drawing.Point, System.Drawing.Point) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBezier(System.Drawing.PointF, System.Drawing.PointF, System.Drawing.PointF, System.Drawing.PointF) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBezier(System.Int32, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBezier(System.Single, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBeziers(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBeziers(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBeziers(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddBeziers(System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.Drawing.PointF[], System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.Drawing.Point[], System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.ReadOnlySpan`1<System.Drawing.Point>, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddClosedCurve(System.ReadOnlySpan`1<System.Drawing.PointF>, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.Drawing.PointF[], System.Int32, System.Int32, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.Drawing.PointF[], System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.Drawing.Point[], System.Int32, System.Int32, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.Drawing.Point[], System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.ReadOnlySpan`1<System.Drawing.Point>, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddCurve(System.ReadOnlySpan`1<System.Drawing.PointF>, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddEllipse(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddEllipse(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddEllipse(System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddEllipse(System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLine(System.Drawing.Point, System.Drawing.Point) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLine(System.Drawing.PointF, System.Drawing.PointF) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLine(System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLine(System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLines(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLines(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLines(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddLines(System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPath(System.Drawing.Drawing2D.GraphicsPath, System.Boolean) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPie(System.Drawing.Rectangle, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPie(System.Int32, System.Int32, System.Int32, System.Int32, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPie(System.Single, System.Single, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPolygon(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPolygon(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPolygon(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddPolygon(System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRectangle(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRectangle(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRectangles(System.Drawing.RectangleF[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRectangles(System.Drawing.Rectangle[]) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRectangles(System.ReadOnlySpan`1<System.Drawing.Rectangle>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRectangles(System.ReadOnlySpan`1<System.Drawing.RectangleF>) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRoundedRectangle(System.Drawing.Rectangle, System.Drawing.Size) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::AddRoundedRectangle(System.Drawing.RectangleF, System.Drawing.SizeF) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.Point, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.PointF, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.Rectangle, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::ClearMarkers() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Clone() -> System.Object
-M public System.Drawing.Drawing2D.GraphicsPath::CloseAllFigures() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::CloseFigure() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Dispose() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Flatten() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Flatten(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Flatten(System.Drawing.Drawing2D.Matrix, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::GetBounds() -> System.Drawing.RectangleF
-M public System.Drawing.Drawing2D.GraphicsPath::GetBounds(System.Drawing.Drawing2D.Matrix) -> System.Drawing.RectangleF
-M public System.Drawing.Drawing2D.GraphicsPath::GetBounds(System.Drawing.Drawing2D.Matrix, System.Drawing.Pen) -> System.Drawing.RectangleF
-M public System.Drawing.Drawing2D.GraphicsPath::GetLastPoint() -> System.Drawing.PointF
-M public System.Drawing.Drawing2D.GraphicsPath::GetPathPoints(System.Span`1<System.Drawing.PointF>) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPath::GetPathTypes(System.Span`1<System.Byte>) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Drawing.Point, System.Drawing.Pen) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Drawing.Point, System.Drawing.Pen, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Drawing.PointF, System.Drawing.Pen) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Drawing.PointF, System.Drawing.Pen, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Int32, System.Int32, System.Drawing.Pen) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Int32, System.Int32, System.Drawing.Pen, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Single, System.Single, System.Drawing.Pen) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsOutlineVisible(System.Single, System.Single, System.Drawing.Pen, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Drawing.Point) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Drawing.Point, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Drawing.PointF) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Drawing.PointF, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Int32, System.Int32) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Int32, System.Int32, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Single, System.Single) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::IsVisible(System.Single, System.Single, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPath::Reset() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Reverse() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::SetMarkers() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::StartFigure() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Warp(System.Drawing.PointF[], System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Warp(System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Warp(System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.Drawing2D.Matrix, System.Drawing.Drawing2D.WarpMode) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Warp(System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.Drawing2D.Matrix, System.Drawing.Drawing2D.WarpMode, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Warp(System.ReadOnlySpan`1<System.Drawing.PointF>, System.Drawing.RectangleF, System.Drawing.Drawing2D.Matrix, System.Drawing.Drawing2D.WarpMode, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Widen(System.Drawing.Pen) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Widen(System.Drawing.Pen, System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::Widen(System.Drawing.Pen, System.Drawing.Drawing2D.Matrix, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPath::get_FillMode() -> System.Drawing.Drawing2D.FillMode
-M public System.Drawing.Drawing2D.GraphicsPath::get_PathData() -> System.Drawing.Drawing2D.PathData
-M public System.Drawing.Drawing2D.GraphicsPath::get_PathPoints() -> System.Drawing.PointF[]
-M public System.Drawing.Drawing2D.GraphicsPath::get_PathTypes() -> System.Byte[]
-M public System.Drawing.Drawing2D.GraphicsPath::get_PointCount() -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPath::set_FillMode(System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPathIterator::.ctor(System.Drawing.Drawing2D.GraphicsPath)
-M public System.Drawing.Drawing2D.GraphicsPathIterator::CopyData(System.Span`1<System.Drawing.PointF>, System.Span`1<System.Byte>, System.Int32, System.Int32) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::CopyData(ref System.Drawing.PointF[], ref System.Byte[], System.Int32, System.Int32) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::Dispose() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPathIterator::Enumerate(System.Span`1<System.Drawing.PointF>, System.Span`1<System.Byte>) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::Enumerate(ref System.Drawing.PointF[], ref System.Byte[]) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::HasCurve() -> System.Boolean
-M public System.Drawing.Drawing2D.GraphicsPathIterator::NextMarker(System.Drawing.Drawing2D.GraphicsPath) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::NextMarker(out System.Int32, out System.Int32) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::NextPathType(out System.Byte, out System.Int32, out System.Int32) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::NextSubpath(System.Drawing.Drawing2D.GraphicsPath, out System.Boolean) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::NextSubpath(out System.Int32, out System.Int32, out System.Boolean) -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::Rewind() -> System.Void
-M public System.Drawing.Drawing2D.GraphicsPathIterator::get_Count() -> System.Int32
-M public System.Drawing.Drawing2D.GraphicsPathIterator::get_SubpathCount() -> System.Int32
 M public System.Drawing.Drawing2D.HatchBrush::.ctor(System.Drawing.Drawing2D.HatchStyle, System.Drawing.Color)
 M public System.Drawing.Drawing2D.HatchBrush::.ctor(System.Drawing.Drawing2D.HatchStyle, System.Drawing.Color, System.Drawing.Color)
 M public System.Drawing.Drawing2D.HatchBrush::Clone() -> System.Object virtual
@@ -314,11 +176,6 @@ M public System.Drawing.Drawing2D.LinearGradientBrush::set_InterpolationColors(S
 M public System.Drawing.Drawing2D.LinearGradientBrush::set_LinearColors(System.Drawing.Color[]) -> System.Void
 M public System.Drawing.Drawing2D.LinearGradientBrush::set_Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
 M public System.Drawing.Drawing2D.LinearGradientBrush::set_WrapMode(System.Drawing.Drawing2D.WrapMode) -> System.Void
-M public System.Drawing.Drawing2D.PathData::.ctor()
-M public System.Drawing.Drawing2D.PathData::get_Points() -> System.Drawing.PointF[]
-M public System.Drawing.Drawing2D.PathData::get_Types() -> System.Byte[]
-M public System.Drawing.Drawing2D.PathData::set_Points(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.PathData::set_Types(System.Byte[]) -> System.Void
 M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Drawing2D.GraphicsPath)
 M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Drawing2D.WrapMode, System.ReadOnlySpan`1<System.Drawing.Point>)
 M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Drawing2D.WrapMode, System.ReadOnlySpan`1<System.Drawing.PointF>)
@@ -359,8 +216,6 @@ M public System.Drawing.Drawing2D.PathGradientBrush::set_InterpolationColors(Sys
 M public System.Drawing.Drawing2D.PathGradientBrush::set_SurroundColors(System.Drawing.Color[]) -> System.Void
 M public System.Drawing.Drawing2D.PathGradientBrush::set_Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
 M public System.Drawing.Drawing2D.PathGradientBrush::set_WrapMode(System.Drawing.Drawing2D.WrapMode) -> System.Void
-M public System.Drawing.Drawing2D.RegionData::get_Data() -> System.Byte[]
-M public System.Drawing.Drawing2D.RegionData::set_Data(System.Byte[]) -> System.Void
 M public System.Drawing.Font::.ctor(System.Drawing.Font, System.Drawing.FontStyle)
 M public System.Drawing.Font::.ctor(System.Drawing.FontFamily, System.Single)
 M public System.Drawing.Font::.ctor(System.Drawing.FontFamily, System.Single, System.Drawing.FontStyle)
@@ -499,9 +354,6 @@ M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System
 M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Int32, System.Int32) -> System.Void
 M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
 M public System.Drawing.Graphics::DrawImageUnscaledAndClipped(System.Drawing.Image, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::DrawPath(System.Drawing.Pen, System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Graphics::DrawRoundedRectangle(System.Drawing.Pen, System.Drawing.Rectangle, System.Drawing.Size) -> System.Void
-M public System.Drawing.Graphics::DrawRoundedRectangle(System.Drawing.Pen, System.Drawing.RectangleF, System.Drawing.SizeF) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.PointF) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.PointF, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.RectangleF) -> System.Void
@@ -550,22 +402,11 @@ M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metaf
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::ExcludeClip(System.Drawing.Region) -> System.Void
-M public System.Drawing.Graphics::FillPath(System.Drawing.Brush, System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Graphics::FillRegion(System.Drawing.Brush, System.Drawing.Region) -> System.Void
-M public System.Drawing.Graphics::FillRoundedRectangle(System.Drawing.Brush, System.Drawing.Rectangle, System.Drawing.Size) -> System.Void
-M public System.Drawing.Graphics::FillRoundedRectangle(System.Drawing.Brush, System.Drawing.RectangleF, System.Drawing.SizeF) -> System.Void
 M public System.Drawing.Graphics::FromHdc(System.IntPtr) -> System.Drawing.Graphics static
 M public System.Drawing.Graphics::FromHdc(System.IntPtr, System.IntPtr) -> System.Drawing.Graphics static
 M public System.Drawing.Graphics::FromHdcInternal(System.IntPtr) -> System.Drawing.Graphics static
 M public System.Drawing.Graphics::FromHwnd(System.IntPtr) -> System.Drawing.Graphics static
 M public System.Drawing.Graphics::FromHwndInternal(System.IntPtr) -> System.Drawing.Graphics static
-M public System.Drawing.Graphics::GetContextInfo() -> System.Object
-M public System.Drawing.Graphics::GetContextInfo(out System.Drawing.PointF) -> System.Void
-M public System.Drawing.Graphics::GetContextInfo(out System.Drawing.PointF, out System.Drawing.Region) -> System.Void
-M public System.Drawing.Graphics::GetHalftonePalette() -> System.IntPtr static
-M public System.Drawing.Graphics::GetNearestColor(System.Drawing.Color) -> System.Drawing.Color
-M public System.Drawing.Graphics::IntersectClip(System.Drawing.Region) -> System.Void
 M public System.Drawing.Graphics::MeasureCharacterRanges(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Drawing.Region[]
 M public System.Drawing.Graphics::MeasureCharacterRanges(System.String, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Drawing.Region[]
 M public System.Drawing.Graphics::MeasureString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font) -> System.Drawing.SizeF
@@ -583,13 +424,6 @@ M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Fo
 M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Font, System.Int32) -> System.Drawing.SizeF
 M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Font, System.Int32, System.Drawing.StringFormat) -> System.Drawing.SizeF
 M public System.Drawing.Graphics::MeasureStringInternal(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat, out System.Int32, out System.Int32) -> System.Drawing.SizeF
-M public System.Drawing.Graphics::ReleaseHdc(System.IntPtr) -> System.Void
-M public System.Drawing.Graphics::ReleaseHdcInternal(System.IntPtr) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.Drawing2D.GraphicsPath, System.Drawing.Drawing2D.CombineMode) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.Region, System.Drawing.Drawing2D.CombineMode) -> System.Void
-M public System.Drawing.Graphics::get_Clip() -> System.Drawing.Region
-M public System.Drawing.Graphics::set_Clip(System.Drawing.Region) -> System.Void
 M public System.Drawing.Icon::.ctor(System.Drawing.Icon, System.Drawing.Size)
 M public System.Drawing.Icon::.ctor(System.Drawing.Icon, System.Int32, System.Int32)
 M public System.Drawing.Icon::.ctor(System.IO.Stream)
@@ -1162,62 +996,6 @@ M public System.Drawing.Printing.StandardPrintController::OnEndPage(System.Drawi
 M public System.Drawing.Printing.StandardPrintController::OnEndPrint(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
 M public System.Drawing.Printing.StandardPrintController::OnStartPage(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintPageEventArgs) -> System.Drawing.Graphics virtual
 M public System.Drawing.Printing.StandardPrintController::OnStartPrint(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
-M public System.Drawing.Region::.ctor()
-M public System.Drawing.Region::.ctor(System.Drawing.Drawing2D.GraphicsPath)
-M public System.Drawing.Region::.ctor(System.Drawing.Drawing2D.RegionData)
-M public System.Drawing.Region::.ctor(System.Drawing.Rectangle)
-M public System.Drawing.Region::.ctor(System.Drawing.RectangleF)
-M public System.Drawing.Region::Clone() -> System.Drawing.Region
-M public System.Drawing.Region::Complement(System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Region::Complement(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Region::Complement(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Region::Complement(System.Drawing.Region) -> System.Void
-M public System.Drawing.Region::Dispose() -> System.Void
-M public System.Drawing.Region::Equals(System.Drawing.Region, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::Exclude(System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Region::Exclude(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Region::Exclude(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Region::Exclude(System.Drawing.Region) -> System.Void
-M public System.Drawing.Region::FromHrgn(System.IntPtr) -> System.Drawing.Region static
-M public System.Drawing.Region::GetBounds(System.Drawing.Graphics) -> System.Drawing.RectangleF
-M public System.Drawing.Region::GetHrgn(System.Drawing.Graphics) -> System.IntPtr
-M public System.Drawing.Region::GetRegionData() -> System.Drawing.Drawing2D.RegionData
-M public System.Drawing.Region::GetRegionScans(System.Drawing.Drawing2D.Matrix) -> System.Drawing.RectangleF[]
-M public System.Drawing.Region::Intersect(System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Region::Intersect(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Region::Intersect(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Region::Intersect(System.Drawing.Region) -> System.Void
-M public System.Drawing.Region::IsEmpty(System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsInfinite(System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.Point) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.Point, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.PointF) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.PointF, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.Rectangle) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.Rectangle, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.RectangleF) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Drawing.RectangleF, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Int32, System.Int32, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Int32, System.Int32, System.Int32, System.Int32) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Single, System.Single) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Single, System.Single, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Single, System.Single, System.Single, System.Single) -> System.Boolean
-M public System.Drawing.Region::IsVisible(System.Single, System.Single, System.Single, System.Single, System.Drawing.Graphics) -> System.Boolean
-M public System.Drawing.Region::MakeEmpty() -> System.Void
-M public System.Drawing.Region::MakeInfinite() -> System.Void
-M public System.Drawing.Region::ReleaseHrgn(System.IntPtr) -> System.Void
-M public System.Drawing.Region::Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Region::Translate(System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Region::Translate(System.Single, System.Single) -> System.Void
-M public System.Drawing.Region::Union(System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Region::Union(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Region::Union(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Region::Union(System.Drawing.Region) -> System.Void
-M public System.Drawing.Region::Xor(System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Region::Xor(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Region::Xor(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Region::Xor(System.Drawing.Region) -> System.Void
 M public System.Drawing.StringFormat::.ctor()
 M public System.Drawing.StringFormat::.ctor(System.Drawing.StringFormat)
 M public System.Drawing.StringFormat::.ctor(System.Drawing.StringFormatFlags)
@@ -1362,13 +1140,9 @@ T sealed class System.Drawing.Design.CategoryNameCollection : System.Collections
 T sealed class System.Drawing.Drawing2D.AdjustableArrowCap : System.Drawing.Drawing2D.CustomLineCap
 T sealed class System.Drawing.Drawing2D.Blend
 T sealed class System.Drawing.Drawing2D.ColorBlend
-T sealed class System.Drawing.Drawing2D.GraphicsPath : System.MarshalByRefObject
-T sealed class System.Drawing.Drawing2D.GraphicsPathIterator : System.MarshalByRefObject
 T sealed class System.Drawing.Drawing2D.HatchBrush : System.Drawing.Brush
 T sealed class System.Drawing.Drawing2D.LinearGradientBrush : System.Drawing.Brush
-T sealed class System.Drawing.Drawing2D.PathData
 T sealed class System.Drawing.Drawing2D.PathGradientBrush : System.Drawing.Brush
-T sealed class System.Drawing.Drawing2D.RegionData
 T sealed class System.Drawing.Font : System.MarshalByRefObject
 T sealed class System.Drawing.FontConverter+FontNameConverter : System.ComponentModel.TypeConverter
 T sealed class System.Drawing.FontFamily : System.MarshalByRefObject
@@ -1388,7 +1162,6 @@ T sealed class System.Drawing.Imaging.MetafileHeader
 T sealed class System.Drawing.Imaging.WmfPlaceableFileHeader
 T sealed class System.Drawing.Printing.PreviewPageInfo
 T sealed class System.Drawing.Printing.PrinterUnitConvert
-T sealed class System.Drawing.Region : System.MarshalByRefObject
 T sealed class System.Drawing.StringFormat : System.MarshalByRefObject
 T sealed class System.Drawing.Text.InstalledFontCollection : System.Drawing.Text.FontCollection
 T sealed class System.Drawing.Text.PrivateFontCollection : System.Drawing.Text.FontCollection
