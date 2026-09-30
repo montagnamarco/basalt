@@ -1,16 +1,3 @@
-F public System.Drawing.Imaging.Encoder::ChrominanceTable : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::ColorDepth : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::ColorSpace : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::Compression : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::ImageItems : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::LuminanceTable : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::Quality : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::RenderMethod : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::SaveAsCmyk : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::SaveFlag : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::ScanMethod : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::Transformation : System.Drawing.Imaging.Encoder static readonly
-F public System.Drawing.Imaging.Encoder::Version : System.Drawing.Imaging.Encoder static readonly
 F public System.Drawing.Interop.LOGFONT+<_lfFaceName>e__FixedBuffer::FixedElementField : System.Char
 F public System.Drawing.Interop.LOGFONT::lfCharSet : System.Byte
 F public System.Drawing.Interop.LOGFONT::lfClipPrecision : System.Byte
@@ -34,7 +21,6 @@ I System.Drawing.Drawing2D.CustomLineCap : System.IDisposable
 I System.Drawing.Drawing2D.GraphicsPath : System.ICloneable
 I System.Drawing.Drawing2D.GraphicsPath : System.IDisposable
 I System.Drawing.Drawing2D.GraphicsPathIterator : System.IDisposable
-I System.Drawing.Drawing2D.Matrix : System.IDisposable
 I System.Drawing.Font : System.ICloneable
 I System.Drawing.Font : System.IDisposable
 I System.Drawing.Font : System.Runtime.Serialization.ISerializable
@@ -44,9 +30,6 @@ I System.Drawing.Icon : System.ICloneable
 I System.Drawing.Icon : System.IDisposable
 I System.Drawing.Icon : System.Runtime.Serialization.ISerializable
 I System.Drawing.Imaging.CachedBitmap : System.IDisposable
-I System.Drawing.Imaging.Effects.Effect : System.IDisposable
-I System.Drawing.Imaging.EncoderParameter : System.IDisposable
-I System.Drawing.Imaging.EncoderParameters : System.IDisposable
 I System.Drawing.Imaging.ImageAttributes : System.ICloneable
 I System.Drawing.Imaging.ImageAttributes : System.IDisposable
 I System.Drawing.Printing.Margins : System.ICloneable
@@ -70,15 +53,11 @@ M protected System.Drawing.Drawing2D.CustomLineCap::Dispose(System.Boolean) -> S
 M protected System.Drawing.Drawing2D.CustomLineCap::Finalize() -> System.Void virtual
 M protected System.Drawing.Drawing2D.GraphicsPath::Finalize() -> System.Void virtual
 M protected System.Drawing.Drawing2D.GraphicsPathIterator::Finalize() -> System.Void virtual
-M protected System.Drawing.Drawing2D.Matrix::Finalize() -> System.Void virtual
 M protected System.Drawing.Font::Finalize() -> System.Void virtual
 M protected System.Drawing.FontFamily::Finalize() -> System.Void virtual
 M protected System.Drawing.Graphics::Finalize() -> System.Void virtual
 M protected System.Drawing.Icon::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.CachedBitmap::Finalize() -> System.Void virtual
-M protected System.Drawing.Imaging.Effects.Effect::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Drawing.Imaging.Effects.Effect::Finalize() -> System.Void virtual
-M protected System.Drawing.Imaging.EncoderParameter::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.ImageAttributes::Finalize() -> System.Void virtual
 M protected System.Drawing.Printing.InvalidPrinterException::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
 M protected System.Drawing.Printing.PrintController::.ctor()
@@ -92,173 +71,8 @@ M protected System.Drawing.Text.FontCollection::Dispose(System.Boolean) -> Syste
 M protected System.Drawing.Text.FontCollection::Finalize() -> System.Void virtual
 M protected System.Drawing.Text.InstalledFontCollection::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Drawing.Text.PrivateFontCollection::Dispose(System.Boolean) -> System.Void virtual
-M public System.Drawing.Bitmap::.ctor(System.Drawing.Image)
-M public System.Drawing.Bitmap::.ctor(System.Drawing.Image, System.Drawing.Size)
-M public System.Drawing.Bitmap::.ctor(System.Drawing.Image, System.Int32, System.Int32)
-M public System.Drawing.Bitmap::.ctor(System.IO.Stream, System.Boolean)
-M public System.Drawing.Bitmap::.ctor(System.Int32, System.Int32, System.Drawing.Graphics)
-M public System.Drawing.Bitmap::.ctor(System.Int32, System.Int32, System.Int32, System.Drawing.Imaging.PixelFormat, System.IntPtr)
-M public System.Drawing.Bitmap::.ctor(System.String, System.Boolean)
-M public System.Drawing.Bitmap::.ctor(System.Type, System.String)
-M public System.Drawing.Bitmap::ApplyEffect(System.Drawing.Imaging.Effects.Effect, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Bitmap::Clone(System.Drawing.Rectangle, System.Drawing.Imaging.PixelFormat) -> System.Drawing.Bitmap
-M public System.Drawing.Bitmap::Clone(System.Drawing.RectangleF, System.Drawing.Imaging.PixelFormat) -> System.Drawing.Bitmap
-M public System.Drawing.Bitmap::ConvertFormat(System.Drawing.Imaging.PixelFormat) -> System.Void
-M public System.Drawing.Bitmap::ConvertFormat(System.Drawing.Imaging.PixelFormat, System.Drawing.Imaging.DitherType, System.Drawing.Imaging.PaletteType, System.Drawing.Imaging.ColorPalette, System.Single) -> System.Void
-M public System.Drawing.Bitmap::FromHicon(System.IntPtr) -> System.Drawing.Bitmap static
-M public System.Drawing.Bitmap::FromResource(System.IntPtr, System.String) -> System.Drawing.Bitmap static
-M public System.Drawing.Bitmap::GetHbitmap() -> System.IntPtr
-M public System.Drawing.Bitmap::GetHbitmap(System.Drawing.Color) -> System.IntPtr
-M public System.Drawing.Bitmap::GetHicon() -> System.IntPtr
-M public System.Drawing.Bitmap::LockBits(System.Drawing.Rectangle, System.Drawing.Imaging.ImageLockMode, System.Drawing.Imaging.PixelFormat) -> System.Drawing.Imaging.BitmapData
-M public System.Drawing.Bitmap::LockBits(System.Drawing.Rectangle, System.Drawing.Imaging.ImageLockMode, System.Drawing.Imaging.PixelFormat, System.Drawing.Imaging.BitmapData) -> System.Drawing.Imaging.BitmapData
-M public System.Drawing.Bitmap::MakeTransparent() -> System.Void
-M public System.Drawing.Bitmap::MakeTransparent(System.Drawing.Color) -> System.Void
-M public System.Drawing.Bitmap::SetResolution(System.Single, System.Single) -> System.Void
-M public System.Drawing.Bitmap::UnlockBits(System.Drawing.Imaging.BitmapData) -> System.Void
 M public System.Drawing.BitmapSuffixInSameAssemblyAttribute::.ctor()
 M public System.Drawing.BitmapSuffixInSatelliteAssemblyAttribute::.ctor()
-M public System.Drawing.Brushes::get_AliceBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_AntiqueWhite() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Aqua() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Aquamarine() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Azure() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Beige() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Bisque() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Black() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_BlanchedAlmond() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Blue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_BlueViolet() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Brown() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_BurlyWood() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_CadetBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Chartreuse() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Chocolate() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Coral() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_CornflowerBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Cornsilk() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Crimson() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Cyan() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkCyan() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkGoldenrod() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkGray() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkKhaki() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkMagenta() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkOliveGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkOrange() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkOrchid() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkRed() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkSalmon() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkSeaGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkSlateBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkSlateGray() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkTurquoise() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DarkViolet() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DeepPink() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DeepSkyBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DimGray() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_DodgerBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Firebrick() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_FloralWhite() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_ForestGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Fuchsia() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Gainsboro() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_GhostWhite() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Gold() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Goldenrod() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Gray() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Green() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_GreenYellow() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Honeydew() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_HotPink() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_IndianRed() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Indigo() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Ivory() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Khaki() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Lavender() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LavenderBlush() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LawnGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LemonChiffon() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightCoral() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightCyan() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightGoldenrodYellow() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightGray() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightPink() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightSalmon() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightSeaGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightSkyBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightSlateGray() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightSteelBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LightYellow() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Lime() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_LimeGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Linen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Magenta() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Maroon() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumAquamarine() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumOrchid() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumPurple() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumSeaGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumSlateBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumSpringGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumTurquoise() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MediumVioletRed() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MidnightBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MintCream() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_MistyRose() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Moccasin() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_NavajoWhite() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Navy() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_OldLace() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Olive() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_OliveDrab() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Orange() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_OrangeRed() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Orchid() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_PaleGoldenrod() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_PaleGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_PaleTurquoise() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_PaleVioletRed() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_PapayaWhip() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_PeachPuff() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Peru() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Pink() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Plum() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_PowderBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Purple() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Red() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_RosyBrown() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_RoyalBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SaddleBrown() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Salmon() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SandyBrown() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SeaGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SeaShell() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Sienna() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Silver() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SkyBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SlateBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SlateGray() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Snow() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SpringGreen() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_SteelBlue() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Tan() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Teal() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Thistle() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Tomato() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Transparent() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Turquoise() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Violet() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Wheat() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_White() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_WhiteSmoke() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_Yellow() -> System.Drawing.Brush static
-M public System.Drawing.Brushes::get_YellowGreen() -> System.Drawing.Brush static
 M public System.Drawing.BufferedGraphics::Dispose() -> System.Void
 M public System.Drawing.BufferedGraphics::Render() -> System.Void
 M public System.Drawing.BufferedGraphics::Render(System.Drawing.Graphics) -> System.Void
@@ -500,46 +314,6 @@ M public System.Drawing.Drawing2D.LinearGradientBrush::set_InterpolationColors(S
 M public System.Drawing.Drawing2D.LinearGradientBrush::set_LinearColors(System.Drawing.Color[]) -> System.Void
 M public System.Drawing.Drawing2D.LinearGradientBrush::set_Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
 M public System.Drawing.Drawing2D.LinearGradientBrush::set_WrapMode(System.Drawing.Drawing2D.WrapMode) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::.ctor()
-M public System.Drawing.Drawing2D.Matrix::.ctor(System.Drawing.Rectangle, System.Drawing.Point[])
-M public System.Drawing.Drawing2D.Matrix::.ctor(System.Drawing.RectangleF, System.Drawing.PointF[])
-M public System.Drawing.Drawing2D.Matrix::.ctor(System.Numerics.Matrix3x2)
-M public System.Drawing.Drawing2D.Matrix::.ctor(System.Single, System.Single, System.Single, System.Single, System.Single, System.Single)
-M public System.Drawing.Drawing2D.Matrix::Clone() -> System.Drawing.Drawing2D.Matrix
-M public System.Drawing.Drawing2D.Matrix::Dispose() -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Equals(System.Object) -> System.Boolean virtual
-M public System.Drawing.Drawing2D.Matrix::GetHashCode() -> System.Int32 virtual
-M public System.Drawing.Drawing2D.Matrix::Invert() -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Multiply(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Multiply(System.Drawing.Drawing2D.Matrix, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Reset() -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Rotate(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Rotate(System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::RotateAt(System.Single, System.Drawing.PointF) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::RotateAt(System.Single, System.Drawing.PointF, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Scale(System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Scale(System.Single, System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Shear(System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Shear(System.Single, System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformPoints(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformPoints(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformPoints(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformPoints(System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformVectors(System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformVectors(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformVectors(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::TransformVectors(System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Translate(System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::Translate(System.Single, System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::VectorTransformPoints(System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::VectorTransformPoints(System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Drawing2D.Matrix::get_Elements() -> System.Single[]
-M public System.Drawing.Drawing2D.Matrix::get_IsIdentity() -> System.Boolean
-M public System.Drawing.Drawing2D.Matrix::get_IsInvertible() -> System.Boolean
-M public System.Drawing.Drawing2D.Matrix::get_MatrixElements() -> System.Numerics.Matrix3x2
-M public System.Drawing.Drawing2D.Matrix::get_OffsetX() -> System.Single
-M public System.Drawing.Drawing2D.Matrix::get_OffsetY() -> System.Single
-M public System.Drawing.Drawing2D.Matrix::set_MatrixElements(System.Numerics.Matrix3x2) -> System.Void
 M public System.Drawing.Drawing2D.PathData::.ctor()
 M public System.Drawing.Drawing2D.PathData::get_Points() -> System.Drawing.PointF[]
 M public System.Drawing.Drawing2D.PathData::get_Types() -> System.Byte[]
@@ -680,51 +454,11 @@ M public System.Drawing.Graphics+EnumerateMetafileProc::BeginInvoke(System.Drawi
 M public System.Drawing.Graphics+EnumerateMetafileProc::EndInvoke(System.IAsyncResult) -> System.Boolean virtual
 M public System.Drawing.Graphics+EnumerateMetafileProc::Invoke(System.Drawing.Imaging.EmfPlusRecordType, System.Int32, System.Int32, System.IntPtr, System.Drawing.Imaging.PlayRecordCallback) -> System.Boolean virtual
 M public System.Drawing.Graphics::AddMetafileComment(System.Byte[]) -> System.Void
-M public System.Drawing.Graphics::BeginContainer() -> System.Drawing.Drawing2D.GraphicsContainer
-M public System.Drawing.Graphics::BeginContainer(System.Drawing.Rectangle, System.Drawing.Rectangle, System.Drawing.GraphicsUnit) -> System.Drawing.Drawing2D.GraphicsContainer
-M public System.Drawing.Graphics::BeginContainer(System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit) -> System.Drawing.Drawing2D.GraphicsContainer
 M public System.Drawing.Graphics::CopyFromScreen(System.Drawing.Point, System.Drawing.Point, System.Drawing.Size) -> System.Void
 M public System.Drawing.Graphics::CopyFromScreen(System.Drawing.Point, System.Drawing.Point, System.Drawing.Size, System.Drawing.CopyPixelOperation) -> System.Void
 M public System.Drawing.Graphics::CopyFromScreen(System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.Size) -> System.Void
 M public System.Drawing.Graphics::CopyFromScreen(System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.Size, System.Drawing.CopyPixelOperation) -> System.Void
-M public System.Drawing.Graphics::DrawArc(System.Drawing.Pen, System.Drawing.Rectangle, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawArc(System.Drawing.Pen, System.Drawing.RectangleF, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawArc(System.Drawing.Pen, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawArc(System.Drawing.Pen, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawBezier(System.Drawing.Pen, System.Drawing.Point, System.Drawing.Point, System.Drawing.Point, System.Drawing.Point) -> System.Void
-M public System.Drawing.Graphics::DrawBezier(System.Drawing.Pen, System.Drawing.PointF, System.Drawing.PointF, System.Drawing.PointF, System.Drawing.PointF) -> System.Void
-M public System.Drawing.Graphics::DrawBezier(System.Drawing.Pen, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawBeziers(System.Drawing.Pen, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::DrawBeziers(System.Drawing.Pen, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::DrawBeziers(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::DrawBeziers(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
 M public System.Drawing.Graphics::DrawCachedBitmap(System.Drawing.Imaging.CachedBitmap, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.Drawing.PointF[], System.Single, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.Drawing.Point[], System.Single, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>, System.Single, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Graphics::DrawClosedCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>, System.Single, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.Drawing.PointF[], System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.Drawing.PointF[], System.Int32, System.Int32, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.Drawing.PointF[], System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.Drawing.Point[], System.Int32, System.Int32, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.Drawing.Point[], System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>, System.Int32, System.Int32, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>, System.Int32, System.Int32, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawCurve(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawEllipse(System.Drawing.Pen, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::DrawEllipse(System.Drawing.Pen, System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Graphics::DrawEllipse(System.Drawing.Pen, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawEllipse(System.Drawing.Pen, System.Single, System.Single, System.Single, System.Single) -> System.Void
 M public System.Drawing.Graphics::DrawIcon(System.Drawing.Icon, System.Drawing.Rectangle) -> System.Void
 M public System.Drawing.Graphics::DrawIcon(System.Drawing.Icon, System.Int32, System.Int32) -> System.Void
 M public System.Drawing.Graphics::DrawIconUnstretched(System.Drawing.Icon, System.Drawing.Rectangle) -> System.Void
@@ -765,23 +499,7 @@ M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System
 M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Int32, System.Int32) -> System.Void
 M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
 M public System.Drawing.Graphics::DrawImageUnscaledAndClipped(System.Drawing.Image, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::DrawLines(System.Drawing.Pen, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::DrawLines(System.Drawing.Pen, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::DrawLines(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::DrawLines(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
 M public System.Drawing.Graphics::DrawPath(System.Drawing.Pen, System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Graphics::DrawPie(System.Drawing.Pen, System.Drawing.Rectangle, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawPie(System.Drawing.Pen, System.Drawing.RectangleF, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawPie(System.Drawing.Pen, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawPie(System.Drawing.Pen, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawPolygon(System.Drawing.Pen, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::DrawPolygon(System.Drawing.Pen, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::DrawPolygon(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::DrawPolygon(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Graphics::DrawRectangles(System.Drawing.Pen, System.Drawing.RectangleF[]) -> System.Void
-M public System.Drawing.Graphics::DrawRectangles(System.Drawing.Pen, System.Drawing.Rectangle[]) -> System.Void
-M public System.Drawing.Graphics::DrawRectangles(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.Rectangle>) -> System.Void
-M public System.Drawing.Graphics::DrawRectangles(System.Drawing.Pen, System.ReadOnlySpan`1<System.Drawing.RectangleF>) -> System.Void
 M public System.Drawing.Graphics::DrawRoundedRectangle(System.Drawing.Pen, System.Drawing.Rectangle, System.Drawing.Size) -> System.Void
 M public System.Drawing.Graphics::DrawRoundedRectangle(System.Drawing.Pen, System.Drawing.RectangleF, System.Drawing.SizeF) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.PointF) -> System.Void
@@ -796,7 +514,6 @@ M public System.Drawing.Graphics::DrawString(System.String, System.Drawing.Font,
 M public System.Drawing.Graphics::DrawString(System.String, System.Drawing.Font, System.Drawing.Brush, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.String, System.Drawing.Font, System.Drawing.Brush, System.Single, System.Single) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.String, System.Drawing.Font, System.Drawing.Brush, System.Single, System.Single, System.Drawing.StringFormat) -> System.Void
-M public System.Drawing.Graphics::EndContainer(System.Drawing.Drawing2D.GraphicsContainer) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.Point, System.Drawing.Graphics+EnumerateMetafileProc) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.Point, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.Point, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr, System.Drawing.Imaging.ImageAttributes) -> System.Void
@@ -833,46 +550,11 @@ M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metaf
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::ExcludeClip(System.Drawing.Rectangle) -> System.Void
 M public System.Drawing.Graphics::ExcludeClip(System.Drawing.Region) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.Drawing.PointF[], System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.Drawing.PointF[], System.Drawing.Drawing2D.FillMode, System.Single) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.Drawing.Point[], System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.Drawing.Point[], System.Drawing.Drawing2D.FillMode, System.Single) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.Point>, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.Point>, System.Drawing.Drawing2D.FillMode, System.Single) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.PointF>, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillClosedCurve(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.PointF>, System.Drawing.Drawing2D.FillMode, System.Single) -> System.Void
-M public System.Drawing.Graphics::FillEllipse(System.Drawing.Brush, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::FillEllipse(System.Drawing.Brush, System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Graphics::FillEllipse(System.Drawing.Brush, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::FillEllipse(System.Drawing.Brush, System.Single, System.Single, System.Single, System.Single) -> System.Void
 M public System.Drawing.Graphics::FillPath(System.Drawing.Brush, System.Drawing.Drawing2D.GraphicsPath) -> System.Void
-M public System.Drawing.Graphics::FillPie(System.Drawing.Brush, System.Drawing.Rectangle, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::FillPie(System.Drawing.Brush, System.Drawing.RectangleF, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::FillPie(System.Drawing.Brush, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::FillPie(System.Drawing.Brush, System.Single, System.Single, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.Drawing.PointF[], System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.Drawing.Point[], System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.Point>, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Graphics::FillPolygon(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.PointF>, System.Drawing.Drawing2D.FillMode) -> System.Void
-M public System.Drawing.Graphics::FillRectangles(System.Drawing.Brush, System.Drawing.RectangleF[]) -> System.Void
-M public System.Drawing.Graphics::FillRectangles(System.Drawing.Brush, System.Drawing.Rectangle[]) -> System.Void
-M public System.Drawing.Graphics::FillRectangles(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.Rectangle>) -> System.Void
-M public System.Drawing.Graphics::FillRectangles(System.Drawing.Brush, System.ReadOnlySpan`1<System.Drawing.RectangleF>) -> System.Void
 M public System.Drawing.Graphics::FillRegion(System.Drawing.Brush, System.Drawing.Region) -> System.Void
 M public System.Drawing.Graphics::FillRoundedRectangle(System.Drawing.Brush, System.Drawing.Rectangle, System.Drawing.Size) -> System.Void
 M public System.Drawing.Graphics::FillRoundedRectangle(System.Drawing.Brush, System.Drawing.RectangleF, System.Drawing.SizeF) -> System.Void
-M public System.Drawing.Graphics::Flush() -> System.Void
-M public System.Drawing.Graphics::Flush(System.Drawing.Drawing2D.FlushIntention) -> System.Void
 M public System.Drawing.Graphics::FromHdc(System.IntPtr) -> System.Drawing.Graphics static
 M public System.Drawing.Graphics::FromHdc(System.IntPtr, System.IntPtr) -> System.Drawing.Graphics static
 M public System.Drawing.Graphics::FromHdcInternal(System.IntPtr) -> System.Drawing.Graphics static
@@ -883,17 +565,7 @@ M public System.Drawing.Graphics::GetContextInfo(out System.Drawing.PointF) -> S
 M public System.Drawing.Graphics::GetContextInfo(out System.Drawing.PointF, out System.Drawing.Region) -> System.Void
 M public System.Drawing.Graphics::GetHalftonePalette() -> System.IntPtr static
 M public System.Drawing.Graphics::GetNearestColor(System.Drawing.Color) -> System.Drawing.Color
-M public System.Drawing.Graphics::IntersectClip(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::IntersectClip(System.Drawing.RectangleF) -> System.Void
 M public System.Drawing.Graphics::IntersectClip(System.Drawing.Region) -> System.Void
-M public System.Drawing.Graphics::IsVisible(System.Drawing.Point) -> System.Boolean
-M public System.Drawing.Graphics::IsVisible(System.Drawing.PointF) -> System.Boolean
-M public System.Drawing.Graphics::IsVisible(System.Drawing.Rectangle) -> System.Boolean
-M public System.Drawing.Graphics::IsVisible(System.Drawing.RectangleF) -> System.Boolean
-M public System.Drawing.Graphics::IsVisible(System.Int32, System.Int32) -> System.Boolean
-M public System.Drawing.Graphics::IsVisible(System.Int32, System.Int32, System.Int32, System.Int32) -> System.Boolean
-M public System.Drawing.Graphics::IsVisible(System.Single, System.Single) -> System.Boolean
-M public System.Drawing.Graphics::IsVisible(System.Single, System.Single, System.Single, System.Single) -> System.Boolean
 M public System.Drawing.Graphics::MeasureCharacterRanges(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Drawing.Region[]
 M public System.Drawing.Graphics::MeasureCharacterRanges(System.String, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Drawing.Region[]
 M public System.Drawing.Graphics::MeasureString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font) -> System.Drawing.SizeF
@@ -911,63 +583,13 @@ M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Fo
 M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Font, System.Int32) -> System.Drawing.SizeF
 M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Font, System.Int32, System.Drawing.StringFormat) -> System.Drawing.SizeF
 M public System.Drawing.Graphics::MeasureStringInternal(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat, out System.Int32, out System.Int32) -> System.Drawing.SizeF
-M public System.Drawing.Graphics::MultiplyTransform(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Graphics::MultiplyTransform(System.Drawing.Drawing2D.Matrix, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
 M public System.Drawing.Graphics::ReleaseHdc(System.IntPtr) -> System.Void
 M public System.Drawing.Graphics::ReleaseHdcInternal(System.IntPtr) -> System.Void
-M public System.Drawing.Graphics::ResetClip() -> System.Void
-M public System.Drawing.Graphics::ResetTransform() -> System.Void
-M public System.Drawing.Graphics::Restore(System.Drawing.Drawing2D.GraphicsState) -> System.Void
-M public System.Drawing.Graphics::RotateTransform(System.Single) -> System.Void
-M public System.Drawing.Graphics::RotateTransform(System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Graphics::Save() -> System.Drawing.Drawing2D.GraphicsState
-M public System.Drawing.Graphics::ScaleTransform(System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::ScaleTransform(System.Single, System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
 M public System.Drawing.Graphics::SetClip(System.Drawing.Drawing2D.GraphicsPath) -> System.Void
 M public System.Drawing.Graphics::SetClip(System.Drawing.Drawing2D.GraphicsPath, System.Drawing.Drawing2D.CombineMode) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.Graphics) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.Graphics, System.Drawing.Drawing2D.CombineMode) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.Rectangle, System.Drawing.Drawing2D.CombineMode) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Graphics::SetClip(System.Drawing.RectangleF, System.Drawing.Drawing2D.CombineMode) -> System.Void
 M public System.Drawing.Graphics::SetClip(System.Drawing.Region, System.Drawing.Drawing2D.CombineMode) -> System.Void
-M public System.Drawing.Graphics::TransformPoints(System.Drawing.Drawing2D.CoordinateSpace, System.Drawing.Drawing2D.CoordinateSpace, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::TransformPoints(System.Drawing.Drawing2D.CoordinateSpace, System.Drawing.Drawing2D.CoordinateSpace, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::TransformPoints(System.Drawing.Drawing2D.CoordinateSpace, System.Drawing.Drawing2D.CoordinateSpace, System.ReadOnlySpan`1<System.Drawing.Point>) -> System.Void
-M public System.Drawing.Graphics::TransformPoints(System.Drawing.Drawing2D.CoordinateSpace, System.Drawing.Drawing2D.CoordinateSpace, System.ReadOnlySpan`1<System.Drawing.PointF>) -> System.Void
-M public System.Drawing.Graphics::TranslateClip(System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::TranslateClip(System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::TranslateTransform(System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::TranslateTransform(System.Single, System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
 M public System.Drawing.Graphics::get_Clip() -> System.Drawing.Region
-M public System.Drawing.Graphics::get_ClipBounds() -> System.Drawing.RectangleF
-M public System.Drawing.Graphics::get_CompositingMode() -> System.Drawing.Drawing2D.CompositingMode
-M public System.Drawing.Graphics::get_CompositingQuality() -> System.Drawing.Drawing2D.CompositingQuality
-M public System.Drawing.Graphics::get_DpiX() -> System.Single
-M public System.Drawing.Graphics::get_DpiY() -> System.Single
-M public System.Drawing.Graphics::get_InterpolationMode() -> System.Drawing.Drawing2D.InterpolationMode
-M public System.Drawing.Graphics::get_IsClipEmpty() -> System.Boolean
-M public System.Drawing.Graphics::get_IsVisibleClipEmpty() -> System.Boolean
-M public System.Drawing.Graphics::get_PageScale() -> System.Single
-M public System.Drawing.Graphics::get_PageUnit() -> System.Drawing.GraphicsUnit
-M public System.Drawing.Graphics::get_RenderingOrigin() -> System.Drawing.Point
-M public System.Drawing.Graphics::get_TextContrast() -> System.Int32
-M public System.Drawing.Graphics::get_TextRenderingHint() -> System.Drawing.Text.TextRenderingHint
-M public System.Drawing.Graphics::get_Transform() -> System.Drawing.Drawing2D.Matrix
-M public System.Drawing.Graphics::get_TransformElements() -> System.Numerics.Matrix3x2
-M public System.Drawing.Graphics::get_VisibleClipBounds() -> System.Drawing.RectangleF
 M public System.Drawing.Graphics::set_Clip(System.Drawing.Region) -> System.Void
-M public System.Drawing.Graphics::set_CompositingMode(System.Drawing.Drawing2D.CompositingMode) -> System.Void
-M public System.Drawing.Graphics::set_CompositingQuality(System.Drawing.Drawing2D.CompositingQuality) -> System.Void
-M public System.Drawing.Graphics::set_InterpolationMode(System.Drawing.Drawing2D.InterpolationMode) -> System.Void
-M public System.Drawing.Graphics::set_PageScale(System.Single) -> System.Void
-M public System.Drawing.Graphics::set_PageUnit(System.Drawing.GraphicsUnit) -> System.Void
-M public System.Drawing.Graphics::set_RenderingOrigin(System.Drawing.Point) -> System.Void
-M public System.Drawing.Graphics::set_TextContrast(System.Int32) -> System.Void
-M public System.Drawing.Graphics::set_TextRenderingHint(System.Drawing.Text.TextRenderingHint) -> System.Void
-M public System.Drawing.Graphics::set_Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Graphics::set_TransformElements(System.Numerics.Matrix3x2) -> System.Void
 M public System.Drawing.Icon::.ctor(System.Drawing.Icon, System.Drawing.Size)
 M public System.Drawing.Icon::.ctor(System.Drawing.Icon, System.Int32, System.Int32)
 M public System.Drawing.Icon::.ctor(System.IO.Stream)
@@ -995,41 +617,6 @@ M public System.Drawing.IconConverter::CanConvertFrom(System.ComponentModel.ITyp
 M public System.Drawing.IconConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Drawing.IconConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
 M public System.Drawing.IconConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Drawing.Image+GetThumbnailImageAbort::.ctor(System.Object, System.IntPtr)
-M public System.Drawing.Image+GetThumbnailImageAbort::BeginInvoke(System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Drawing.Image+GetThumbnailImageAbort::EndInvoke(System.IAsyncResult) -> System.Boolean virtual
-M public System.Drawing.Image+GetThumbnailImageAbort::Invoke() -> System.Boolean virtual
-M public System.Drawing.Image::FromFile(System.String, System.Boolean) -> System.Drawing.Image static
-M public System.Drawing.Image::FromHbitmap(System.IntPtr) -> System.Drawing.Bitmap static
-M public System.Drawing.Image::FromHbitmap(System.IntPtr, System.IntPtr) -> System.Drawing.Bitmap static
-M public System.Drawing.Image::FromStream(System.IO.Stream, System.Boolean) -> System.Drawing.Image static
-M public System.Drawing.Image::FromStream(System.IO.Stream, System.Boolean, System.Boolean) -> System.Drawing.Image static
-M public System.Drawing.Image::GetBounds(ref System.Drawing.GraphicsUnit) -> System.Drawing.RectangleF
-M public System.Drawing.Image::GetEncoderParameterList(System.Guid) -> System.Drawing.Imaging.EncoderParameters
-M public System.Drawing.Image::GetFrameCount(System.Drawing.Imaging.FrameDimension) -> System.Int32
-M public System.Drawing.Image::GetPixelFormatSize(System.Drawing.Imaging.PixelFormat) -> System.Int32 static
-M public System.Drawing.Image::GetPropertyItem(System.Int32) -> System.Drawing.Imaging.PropertyItem
-M public System.Drawing.Image::GetThumbnailImage(System.Int32, System.Int32, System.Drawing.Image+GetThumbnailImageAbort, System.IntPtr) -> System.Drawing.Image
-M public System.Drawing.Image::IsAlphaPixelFormat(System.Drawing.Imaging.PixelFormat) -> System.Boolean static
-M public System.Drawing.Image::IsCanonicalPixelFormat(System.Drawing.Imaging.PixelFormat) -> System.Boolean static
-M public System.Drawing.Image::IsExtendedPixelFormat(System.Drawing.Imaging.PixelFormat) -> System.Boolean static
-M public System.Drawing.Image::RemovePropertyItem(System.Int32) -> System.Void
-M public System.Drawing.Image::RotateFlip(System.Drawing.RotateFlipType) -> System.Void
-M public System.Drawing.Image::Save(System.IO.Stream, System.Drawing.Imaging.ImageCodecInfo, System.Drawing.Imaging.EncoderParameters) -> System.Void
-M public System.Drawing.Image::Save(System.String, System.Drawing.Imaging.ImageCodecInfo, System.Drawing.Imaging.EncoderParameters) -> System.Void
-M public System.Drawing.Image::SaveAdd(System.Drawing.Image, System.Drawing.Imaging.EncoderParameters) -> System.Void
-M public System.Drawing.Image::SaveAdd(System.Drawing.Imaging.EncoderParameters) -> System.Void
-M public System.Drawing.Image::SelectActiveFrame(System.Drawing.Imaging.FrameDimension, System.Int32) -> System.Int32
-M public System.Drawing.Image::SetPropertyItem(System.Drawing.Imaging.PropertyItem) -> System.Void
-M public System.Drawing.Image::get_Flags() -> System.Int32
-M public System.Drawing.Image::get_FrameDimensionsList() -> System.Guid[]
-M public System.Drawing.Image::get_HorizontalResolution() -> System.Single
-M public System.Drawing.Image::get_Palette() -> System.Drawing.Imaging.ColorPalette
-M public System.Drawing.Image::get_PhysicalDimension() -> System.Drawing.SizeF
-M public System.Drawing.Image::get_PropertyIdList() -> System.Int32[]
-M public System.Drawing.Image::get_PropertyItems() -> System.Drawing.Imaging.PropertyItem[]
-M public System.Drawing.Image::get_VerticalResolution() -> System.Single
-M public System.Drawing.Image::set_Palette(System.Drawing.Imaging.ColorPalette) -> System.Void
 M public System.Drawing.ImageAnimator::Animate(System.Drawing.Image, System.EventHandler) -> System.Void static
 M public System.Drawing.ImageAnimator::CanAnimate(System.Drawing.Image) -> System.Boolean static
 M public System.Drawing.ImageAnimator::StopAnimate(System.Drawing.Image, System.EventHandler) -> System.Void static
@@ -1049,19 +636,6 @@ M public System.Drawing.ImageFormatConverter::ConvertFrom(System.ComponentModel.
 M public System.Drawing.ImageFormatConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
 M public System.Drawing.ImageFormatConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
 M public System.Drawing.ImageFormatConverter::GetStandardValuesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Drawing.Imaging.BitmapData::.ctor()
-M public System.Drawing.Imaging.BitmapData::get_Height() -> System.Int32
-M public System.Drawing.Imaging.BitmapData::get_PixelFormat() -> System.Drawing.Imaging.PixelFormat
-M public System.Drawing.Imaging.BitmapData::get_Reserved() -> System.Int32
-M public System.Drawing.Imaging.BitmapData::get_Scan0() -> System.IntPtr
-M public System.Drawing.Imaging.BitmapData::get_Stride() -> System.Int32
-M public System.Drawing.Imaging.BitmapData::get_Width() -> System.Int32
-M public System.Drawing.Imaging.BitmapData::set_Height(System.Int32) -> System.Void
-M public System.Drawing.Imaging.BitmapData::set_PixelFormat(System.Drawing.Imaging.PixelFormat) -> System.Void
-M public System.Drawing.Imaging.BitmapData::set_Reserved(System.Int32) -> System.Void
-M public System.Drawing.Imaging.BitmapData::set_Scan0(System.IntPtr) -> System.Void
-M public System.Drawing.Imaging.BitmapData::set_Stride(System.Int32) -> System.Void
-M public System.Drawing.Imaging.BitmapData::set_Width(System.Int32) -> System.Void
 M public System.Drawing.Imaging.CachedBitmap::.ctor(System.Drawing.Bitmap, System.Drawing.Graphics)
 M public System.Drawing.Imaging.CachedBitmap::Dispose() -> System.Void
 M public System.Drawing.Imaging.ColorMap::.ctor()
@@ -1124,11 +698,6 @@ M public System.Drawing.Imaging.ColorMatrix::set_Matrix41(System.Single) -> Syst
 M public System.Drawing.Imaging.ColorMatrix::set_Matrix42(System.Single) -> System.Void
 M public System.Drawing.Imaging.ColorMatrix::set_Matrix43(System.Single) -> System.Void
 M public System.Drawing.Imaging.ColorMatrix::set_Matrix44(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorPalette::.ctor(System.Drawing.Color[])
-M public System.Drawing.Imaging.ColorPalette::.ctor(System.Drawing.Imaging.PaletteType)
-M public System.Drawing.Imaging.ColorPalette::CreateOptimalPalette(System.Int32, System.Boolean, System.Drawing.Bitmap) -> System.Drawing.Imaging.ColorPalette static
-M public System.Drawing.Imaging.ColorPalette::get_Entries() -> System.Drawing.Color[]
-M public System.Drawing.Imaging.ColorPalette::get_Flags() -> System.Int32
 M public System.Drawing.Imaging.Effects.BlackSaturationCurveEffect::.ctor(System.Drawing.Imaging.Effects.CurveChannel, System.Int32)
 M public System.Drawing.Imaging.Effects.BlackSaturationCurveEffect::get_BlackSaturation() -> System.Int32
 M public System.Drawing.Imaging.Effects.BlurEffect::.ctor(System.Single, System.Boolean)
@@ -1154,7 +723,6 @@ M public System.Drawing.Imaging.Effects.ContrastCurveEffect::.ctor(System.Drawin
 M public System.Drawing.Imaging.Effects.ContrastCurveEffect::get_Contrast() -> System.Int32
 M public System.Drawing.Imaging.Effects.DensityCurveEffect::.ctor(System.Drawing.Imaging.Effects.CurveChannel, System.Int32)
 M public System.Drawing.Imaging.Effects.DensityCurveEffect::get_Density() -> System.Int32
-M public System.Drawing.Imaging.Effects.Effect::Dispose() -> System.Void
 M public System.Drawing.Imaging.Effects.ExposureCurveEffect::.ctor(System.Drawing.Imaging.Effects.CurveChannel, System.Int32)
 M public System.Drawing.Imaging.Effects.ExposureCurveEffect::get_Exposure() -> System.Int32
 M public System.Drawing.Imaging.Effects.GrayScaleEffect::.ctor()
@@ -1180,44 +748,6 @@ M public System.Drawing.Imaging.Effects.TintEffect::get_Hue() -> System.Int32
 M public System.Drawing.Imaging.Effects.VividEffect::.ctor()
 M public System.Drawing.Imaging.Effects.WhiteSaturationCurveEffect::.ctor(System.Drawing.Imaging.Effects.CurveChannel, System.Int32)
 M public System.Drawing.Imaging.Effects.WhiteSaturationCurveEffect::get_WhiteSaturation() -> System.Int32
-M public System.Drawing.Imaging.Encoder::.ctor(System.Guid)
-M public System.Drawing.Imaging.Encoder::get_Guid() -> System.Guid
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Byte)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Byte, System.Boolean)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Byte[])
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Byte[], System.Boolean)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int16)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int16[])
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int32, System.Drawing.Imaging.EncoderParameterValueType, System.IntPtr)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int32, System.Int32)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int32, System.Int32, System.Int32)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int32, System.Int32, System.Int32, System.Int32)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int32[], System.Int32[])
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int32[], System.Int32[], System.Int32[], System.Int32[])
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int64)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int64, System.Int64)
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int64[])
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.Int64[], System.Int64[])
-M public System.Drawing.Imaging.EncoderParameter::.ctor(System.Drawing.Imaging.Encoder, System.String)
-M public System.Drawing.Imaging.EncoderParameter::Dispose() -> System.Void
-M public System.Drawing.Imaging.EncoderParameter::get_Encoder() -> System.Drawing.Imaging.Encoder
-M public System.Drawing.Imaging.EncoderParameter::get_NumberOfValues() -> System.Int32
-M public System.Drawing.Imaging.EncoderParameter::get_Type() -> System.Drawing.Imaging.EncoderParameterValueType
-M public System.Drawing.Imaging.EncoderParameter::get_ValueType() -> System.Drawing.Imaging.EncoderParameterValueType
-M public System.Drawing.Imaging.EncoderParameter::set_Encoder(System.Drawing.Imaging.Encoder) -> System.Void
-M public System.Drawing.Imaging.EncoderParameters::.ctor()
-M public System.Drawing.Imaging.EncoderParameters::.ctor(System.Int32)
-M public System.Drawing.Imaging.EncoderParameters::Dispose() -> System.Void
-M public System.Drawing.Imaging.EncoderParameters::get_Param() -> System.Drawing.Imaging.EncoderParameter[]
-M public System.Drawing.Imaging.EncoderParameters::set_Param(System.Drawing.Imaging.EncoderParameter[]) -> System.Void
-M public System.Drawing.Imaging.FrameDimension::.ctor(System.Guid)
-M public System.Drawing.Imaging.FrameDimension::Equals(System.Object) -> System.Boolean virtual
-M public System.Drawing.Imaging.FrameDimension::GetHashCode() -> System.Int32 virtual
-M public System.Drawing.Imaging.FrameDimension::ToString() -> System.String virtual
-M public System.Drawing.Imaging.FrameDimension::get_Guid() -> System.Guid
-M public System.Drawing.Imaging.FrameDimension::get_Page() -> System.Drawing.Imaging.FrameDimension static
-M public System.Drawing.Imaging.FrameDimension::get_Resolution() -> System.Drawing.Imaging.FrameDimension static
-M public System.Drawing.Imaging.FrameDimension::get_Time() -> System.Drawing.Imaging.FrameDimension static
 M public System.Drawing.Imaging.ImageAttributes::.ctor()
 M public System.Drawing.Imaging.ImageAttributes::ClearBrushRemapTable() -> System.Void
 M public System.Drawing.Imaging.ImageAttributes::ClearColorKey() -> System.Void
@@ -1269,30 +799,6 @@ M public System.Drawing.Imaging.ImageAttributes::SetThreshold(System.Single, Sys
 M public System.Drawing.Imaging.ImageAttributes::SetWrapMode(System.Drawing.Drawing2D.WrapMode) -> System.Void
 M public System.Drawing.Imaging.ImageAttributes::SetWrapMode(System.Drawing.Drawing2D.WrapMode, System.Drawing.Color) -> System.Void
 M public System.Drawing.Imaging.ImageAttributes::SetWrapMode(System.Drawing.Drawing2D.WrapMode, System.Drawing.Color, System.Boolean) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::GetImageDecoders() -> System.Drawing.Imaging.ImageCodecInfo[] static
-M public System.Drawing.Imaging.ImageCodecInfo::GetImageEncoders() -> System.Drawing.Imaging.ImageCodecInfo[] static
-M public System.Drawing.Imaging.ImageCodecInfo::get_Clsid() -> System.Guid
-M public System.Drawing.Imaging.ImageCodecInfo::get_CodecName() -> System.String
-M public System.Drawing.Imaging.ImageCodecInfo::get_DllName() -> System.String
-M public System.Drawing.Imaging.ImageCodecInfo::get_FilenameExtension() -> System.String
-M public System.Drawing.Imaging.ImageCodecInfo::get_Flags() -> System.Drawing.Imaging.ImageCodecFlags
-M public System.Drawing.Imaging.ImageCodecInfo::get_FormatDescription() -> System.String
-M public System.Drawing.Imaging.ImageCodecInfo::get_FormatID() -> System.Guid
-M public System.Drawing.Imaging.ImageCodecInfo::get_MimeType() -> System.String
-M public System.Drawing.Imaging.ImageCodecInfo::get_SignatureMasks() -> System.Byte[][]
-M public System.Drawing.Imaging.ImageCodecInfo::get_SignaturePatterns() -> System.Byte[][]
-M public System.Drawing.Imaging.ImageCodecInfo::get_Version() -> System.Int32
-M public System.Drawing.Imaging.ImageCodecInfo::set_Clsid(System.Guid) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_CodecName(System.String) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_DllName(System.String) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_FilenameExtension(System.String) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_Flags(System.Drawing.Imaging.ImageCodecFlags) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_FormatDescription(System.String) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_FormatID(System.Guid) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_MimeType(System.String) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_SignatureMasks(System.Byte[][]) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_SignaturePatterns(System.Byte[][]) -> System.Void
-M public System.Drawing.Imaging.ImageCodecInfo::set_Version(System.Int32) -> System.Void
 M public System.Drawing.Imaging.MetaHeader::.ctor()
 M public System.Drawing.Imaging.MetaHeader::get_HeaderSize() -> System.Int16
 M public System.Drawing.Imaging.MetaHeader::get_MaxRecord() -> System.Int32
@@ -1376,14 +882,6 @@ M public System.Drawing.Imaging.PlayRecordCallback::.ctor(System.Object, System.
 M public System.Drawing.Imaging.PlayRecordCallback::BeginInvoke(System.Drawing.Imaging.EmfPlusRecordType, System.Int32, System.Int32, System.IntPtr, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Drawing.Imaging.PlayRecordCallback::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Drawing.Imaging.PlayRecordCallback::Invoke(System.Drawing.Imaging.EmfPlusRecordType, System.Int32, System.Int32, System.IntPtr) -> System.Void virtual
-M public System.Drawing.Imaging.PropertyItem::get_Id() -> System.Int32
-M public System.Drawing.Imaging.PropertyItem::get_Len() -> System.Int32
-M public System.Drawing.Imaging.PropertyItem::get_Type() -> System.Int16
-M public System.Drawing.Imaging.PropertyItem::get_Value() -> System.Byte[]
-M public System.Drawing.Imaging.PropertyItem::set_Id(System.Int32) -> System.Void
-M public System.Drawing.Imaging.PropertyItem::set_Len(System.Int32) -> System.Void
-M public System.Drawing.Imaging.PropertyItem::set_Type(System.Int16) -> System.Void
-M public System.Drawing.Imaging.PropertyItem::set_Value(System.Byte[]) -> System.Void
 M public System.Drawing.Imaging.WmfPlaceableFileHeader::.ctor()
 M public System.Drawing.Imaging.WmfPlaceableFileHeader::get_BboxBottom() -> System.Int16
 M public System.Drawing.Imaging.WmfPlaceableFileHeader::get_BboxLeft() -> System.Int16
@@ -1441,147 +939,6 @@ M public System.Drawing.Pen::set_LineJoin(System.Drawing.Drawing2D.LineJoin) -> 
 M public System.Drawing.Pen::set_MiterLimit(System.Single) -> System.Void
 M public System.Drawing.Pen::set_StartCap(System.Drawing.Drawing2D.LineCap) -> System.Void
 M public System.Drawing.Pen::set_Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Pens::get_AliceBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_AntiqueWhite() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Aqua() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Aquamarine() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Azure() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Beige() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Bisque() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Black() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_BlanchedAlmond() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Blue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_BlueViolet() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Brown() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_BurlyWood() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_CadetBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Chartreuse() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Chocolate() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Coral() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_CornflowerBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Cornsilk() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Crimson() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Cyan() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkCyan() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkGoldenrod() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkGray() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkKhaki() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkMagenta() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkOliveGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkOrange() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkOrchid() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkRed() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkSalmon() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkSeaGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkSlateBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkSlateGray() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkTurquoise() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DarkViolet() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DeepPink() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DeepSkyBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DimGray() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_DodgerBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Firebrick() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_FloralWhite() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_ForestGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Fuchsia() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Gainsboro() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_GhostWhite() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Gold() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Goldenrod() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Gray() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Green() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_GreenYellow() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Honeydew() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_HotPink() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_IndianRed() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Indigo() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Ivory() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Khaki() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Lavender() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LavenderBlush() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LawnGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LemonChiffon() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightCoral() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightCyan() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightGoldenrodYellow() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightGray() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightPink() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightSalmon() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightSeaGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightSkyBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightSlateGray() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightSteelBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LightYellow() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Lime() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_LimeGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Linen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Magenta() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Maroon() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumAquamarine() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumOrchid() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumPurple() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumSeaGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumSlateBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumSpringGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumTurquoise() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MediumVioletRed() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MidnightBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MintCream() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_MistyRose() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Moccasin() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_NavajoWhite() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Navy() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_OldLace() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Olive() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_OliveDrab() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Orange() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_OrangeRed() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Orchid() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_PaleGoldenrod() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_PaleGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_PaleTurquoise() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_PaleVioletRed() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_PapayaWhip() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_PeachPuff() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Peru() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Pink() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Plum() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_PowderBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Purple() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Red() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_RosyBrown() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_RoyalBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SaddleBrown() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Salmon() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SandyBrown() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SeaGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SeaShell() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Sienna() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Silver() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SkyBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SlateBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SlateGray() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Snow() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SpringGreen() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_SteelBlue() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Tan() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Teal() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Thistle() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Tomato() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Transparent() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Turquoise() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Violet() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Wheat() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_White() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_WhiteSmoke() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_Yellow() -> System.Drawing.Pen static
-M public System.Drawing.Pens::get_YellowGreen() -> System.Drawing.Pen static
 M public System.Drawing.Printing.InvalidPrinterException::.ctor(System.Drawing.Printing.PrinterSettings)
 M public System.Drawing.Printing.InvalidPrinterException::GetObjectData(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext) -> System.Void virtual
 M public System.Drawing.Printing.Margins::.ctor()
@@ -1886,40 +1243,6 @@ M public System.Drawing.StringFormat::set_FormatFlags(System.Drawing.StringForma
 M public System.Drawing.StringFormat::set_HotkeyPrefix(System.Drawing.Text.HotkeyPrefix) -> System.Void
 M public System.Drawing.StringFormat::set_LineAlignment(System.Drawing.StringAlignment) -> System.Void
 M public System.Drawing.StringFormat::set_Trimming(System.Drawing.StringTrimming) -> System.Void
-M public System.Drawing.SystemBrushes::FromSystemColor(System.Drawing.Color) -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ActiveBorder() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ActiveCaption() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ActiveCaptionText() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_AppWorkspace() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ButtonFace() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ButtonHighlight() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ButtonShadow() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_Control() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ControlDark() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ControlDarkDark() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ControlLight() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ControlLightLight() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ControlText() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_Desktop() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_GradientActiveCaption() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_GradientInactiveCaption() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_GrayText() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_Highlight() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_HighlightText() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_HotTrack() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_InactiveBorder() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_InactiveCaption() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_InactiveCaptionText() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_Info() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_InfoText() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_Menu() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_MenuBar() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_MenuHighlight() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_MenuText() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_ScrollBar() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_Window() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_WindowFrame() -> System.Drawing.Brush static
-M public System.Drawing.SystemBrushes::get_WindowText() -> System.Drawing.Brush static
 M public System.Drawing.SystemFonts::GetFontByName(System.String) -> System.Drawing.Font static
 M public System.Drawing.SystemFonts::get_CaptionFont() -> System.Drawing.Font static
 M public System.Drawing.SystemFonts::get_DefaultFont() -> System.Drawing.Font static
@@ -1941,40 +1264,6 @@ M public System.Drawing.SystemIcons::get_Question() -> System.Drawing.Icon stati
 M public System.Drawing.SystemIcons::get_Shield() -> System.Drawing.Icon static
 M public System.Drawing.SystemIcons::get_Warning() -> System.Drawing.Icon static
 M public System.Drawing.SystemIcons::get_WinLogo() -> System.Drawing.Icon static
-M public System.Drawing.SystemPens::FromSystemColor(System.Drawing.Color) -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ActiveBorder() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ActiveCaption() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ActiveCaptionText() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_AppWorkspace() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ButtonFace() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ButtonHighlight() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ButtonShadow() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_Control() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ControlDark() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ControlDarkDark() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ControlLight() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ControlLightLight() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ControlText() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_Desktop() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_GradientActiveCaption() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_GradientInactiveCaption() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_GrayText() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_Highlight() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_HighlightText() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_HotTrack() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_InactiveBorder() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_InactiveCaption() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_InactiveCaptionText() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_Info() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_InfoText() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_Menu() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_MenuBar() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_MenuHighlight() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_MenuText() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_ScrollBar() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_Window() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_WindowFrame() -> System.Drawing.Pen static
-M public System.Drawing.SystemPens::get_WindowText() -> System.Drawing.Pen static
 M public System.Drawing.Text.FontCollection::Dispose() -> System.Void
 M public System.Drawing.Text.FontCollection::get_Families() -> System.Drawing.FontFamily[]
 M public System.Drawing.Text.InstalledFontCollection::.ctor()
@@ -2016,7 +1305,6 @@ M public System.Drawing.ToolboxBitmapAttribute::GetImage(System.Type, System.Boo
 M public System.Drawing.ToolboxBitmapAttribute::GetImage(System.Type, System.String, System.Boolean) -> System.Drawing.Image
 M public System.Drawing.ToolboxBitmapAttribute::GetImageFromResource(System.Type, System.String, System.Boolean) -> System.Drawing.Image static
 T abstract class System.Drawing.Imaging.Effects.ColorCurveEffect : System.Drawing.Imaging.Effects.Effect
-T abstract class System.Drawing.Imaging.Effects.Effect
 T abstract class System.Drawing.Printing.PrintController
 T abstract class System.Drawing.Text.FontCollection
 T class System.Drawing.BitmapSuffixInSameAssemblyAttribute : System.Attribute
@@ -2064,7 +1352,6 @@ T class System.Drawing.Printing.StandardPrintController : System.Drawing.Printin
 T class System.Drawing.ToolboxBitmapAttribute : System.Attribute
 T delegate System.Drawing.Graphics+DrawImageAbort
 T delegate System.Drawing.Graphics+EnumerateMetafileProc
-T delegate System.Drawing.Image+GetThumbnailImageAbort
 T delegate System.Drawing.Imaging.PlayRecordCallback
 T delegate System.Drawing.Printing.PrintEventHandler
 T delegate System.Drawing.Printing.PrintPageEventHandler
@@ -2075,13 +1362,10 @@ T sealed class System.Drawing.Design.CategoryNameCollection : System.Collections
 T sealed class System.Drawing.Drawing2D.AdjustableArrowCap : System.Drawing.Drawing2D.CustomLineCap
 T sealed class System.Drawing.Drawing2D.Blend
 T sealed class System.Drawing.Drawing2D.ColorBlend
-T sealed class System.Drawing.Drawing2D.GraphicsContainer : System.MarshalByRefObject
 T sealed class System.Drawing.Drawing2D.GraphicsPath : System.MarshalByRefObject
 T sealed class System.Drawing.Drawing2D.GraphicsPathIterator : System.MarshalByRefObject
-T sealed class System.Drawing.Drawing2D.GraphicsState : System.MarshalByRefObject
 T sealed class System.Drawing.Drawing2D.HatchBrush : System.Drawing.Brush
 T sealed class System.Drawing.Drawing2D.LinearGradientBrush : System.Drawing.Brush
-T sealed class System.Drawing.Drawing2D.Matrix : System.MarshalByRefObject
 T sealed class System.Drawing.Drawing2D.PathData
 T sealed class System.Drawing.Drawing2D.PathGradientBrush : System.Drawing.Brush
 T sealed class System.Drawing.Drawing2D.RegionData
@@ -2090,25 +1374,17 @@ T sealed class System.Drawing.FontConverter+FontNameConverter : System.Component
 T sealed class System.Drawing.FontFamily : System.MarshalByRefObject
 T sealed class System.Drawing.Icon : System.MarshalByRefObject
 T sealed class System.Drawing.ImageAnimator
-T sealed class System.Drawing.Imaging.BitmapData
 T sealed class System.Drawing.Imaging.CachedBitmap
 T sealed class System.Drawing.Imaging.ColorMap
 T sealed class System.Drawing.Imaging.ColorMatrix
-T sealed class System.Drawing.Imaging.ColorPalette
 T sealed class System.Drawing.Imaging.Effects.GrayScaleEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
 T sealed class System.Drawing.Imaging.Effects.InvertEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
 T sealed class System.Drawing.Imaging.Effects.SepiaEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
 T sealed class System.Drawing.Imaging.Effects.VividEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
-T sealed class System.Drawing.Imaging.Encoder
-T sealed class System.Drawing.Imaging.EncoderParameter
-T sealed class System.Drawing.Imaging.EncoderParameters
-T sealed class System.Drawing.Imaging.FrameDimension
 T sealed class System.Drawing.Imaging.ImageAttributes
-T sealed class System.Drawing.Imaging.ImageCodecInfo
 T sealed class System.Drawing.Imaging.MetaHeader
 T sealed class System.Drawing.Imaging.Metafile : System.Drawing.Image
 T sealed class System.Drawing.Imaging.MetafileHeader
-T sealed class System.Drawing.Imaging.PropertyItem
 T sealed class System.Drawing.Imaging.WmfPlaceableFileHeader
 T sealed class System.Drawing.Printing.PreviewPageInfo
 T sealed class System.Drawing.Printing.PrinterUnitConvert
@@ -2117,13 +1393,9 @@ T sealed class System.Drawing.StringFormat : System.MarshalByRefObject
 T sealed class System.Drawing.Text.InstalledFontCollection : System.Drawing.Text.FontCollection
 T sealed class System.Drawing.Text.PrivateFontCollection : System.Drawing.Text.FontCollection
 T sealed class System.Drawing.TextureBrush : System.Drawing.Brush
-T static class System.Drawing.Brushes
 T static class System.Drawing.BufferedGraphicsManager
-T static class System.Drawing.Pens
-T static class System.Drawing.SystemBrushes
 T static class System.Drawing.SystemFonts
 T static class System.Drawing.SystemIcons
-T static class System.Drawing.SystemPens
 T struct System.Drawing.CharacterRange
 T struct System.Drawing.Interop.LOGFONT
 T struct System.Drawing.Interop.LOGFONT+<_lfFaceName>e__FixedBuffer

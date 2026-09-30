@@ -3,7 +3,11 @@ namespace System.Drawing;
 /// <summary>What the outline of a shape is drawn with.</summary>
 public sealed class Pen : MarshalByRefObject, ICloneable, IDisposable
 {
+    // True for the pens of Pens and SystemPens, which many callers share.
+    private readonly bool _isShared;
     private Brush? _brush;
+    private Color _color;
+    private float _width;
 
     public Pen(Color color)
         : this(color, 1f)
@@ -12,8 +16,14 @@ public sealed class Pen : MarshalByRefObject, ICloneable, IDisposable
 
     public Pen(Color color, float width)
     {
-        Color = color;
-        Width = width;
+        _color = color;
+        _width = width;
+    }
+
+    internal Pen(Color color, float width, bool isShared)
+        : this(color, width)
+    {
+        _isShared = isShared;
     }
 
     public Pen(Brush brush)
@@ -26,25 +36,47 @@ public sealed class Pen : MarshalByRefObject, ICloneable, IDisposable
         ArgumentNullException.ThrowIfNull(brush);
 
         _brush = brush;
-        Color = brush is SolidBrush solid ? solid.Color : Color.Black;
-        Width = width;
+        _color = brush is SolidBrush solid ? solid.Color : Color.Black;
+        _width = width;
     }
 
     ~Pen() => Dispose(false);
 
-    public Color Color { get; set; }
+    public Color Color
+    {
+        get => _color;
+        set
+        {
+            CheckNotShared();
 
-    public float Width { get; set; }
+            _color = value;
+
+            // The colour is the pen's own from now on, not the brush it was made from.
+            _brush = null;
+        }
+    }
+
+    public float Width
+    {
+        get => _width;
+        set
+        {
+            CheckNotShared();
+
+            _width = value;
+        }
+    }
 
     public Brush Brush
     {
-        get => _brush ?? new SolidBrush(Color);
+        get => _brush ?? new SolidBrush(_color);
         set
         {
             ArgumentNullException.ThrowIfNull(value);
+            CheckNotShared();
 
             _brush = value;
-            if (value is SolidBrush solid) Color = solid.Color;
+            if (value is SolidBrush solid) _color = solid.Color;
         }
     }
 
@@ -58,5 +90,10 @@ public sealed class Pen : MarshalByRefObject, ICloneable, IDisposable
 
     private void Dispose(bool disposing)
     {
+    }
+
+    private void CheckNotShared()
+    {
+        if (_isShared) throw new ArgumentException(Unsupported.SharedObject("Pen"));
     }
 }

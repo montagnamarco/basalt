@@ -1,0 +1,159 @@
+namespace System.Drawing;
+
+/// <summary>A pen one pixel wide for each of the named colours.</summary>
+/// <remarks>
+/// Shared and read-only, as in GDI+: code holds on to <c>Pens.Black</c> from
+/// many places, so changing one would change it for all of them, and doing so
+/// throws.
+/// </remarks>
+public static class Pens
+{
+    private static readonly Pen?[] Cache = new Pen?[(int)KnownColor.RebeccaPurple + 1];
+
+    public static Pen AliceBlue => Shared(KnownColor.AliceBlue);
+    public static Pen AntiqueWhite => Shared(KnownColor.AntiqueWhite);
+    public static Pen Aqua => Shared(KnownColor.Aqua);
+    public static Pen Aquamarine => Shared(KnownColor.Aquamarine);
+    public static Pen Azure => Shared(KnownColor.Azure);
+    public static Pen Beige => Shared(KnownColor.Beige);
+    public static Pen Bisque => Shared(KnownColor.Bisque);
+    public static Pen Black => Shared(KnownColor.Black);
+    public static Pen BlanchedAlmond => Shared(KnownColor.BlanchedAlmond);
+    public static Pen Blue => Shared(KnownColor.Blue);
+    public static Pen BlueViolet => Shared(KnownColor.BlueViolet);
+    public static Pen Brown => Shared(KnownColor.Brown);
+    public static Pen BurlyWood => Shared(KnownColor.BurlyWood);
+    public static Pen CadetBlue => Shared(KnownColor.CadetBlue);
+    public static Pen Chartreuse => Shared(KnownColor.Chartreuse);
+    public static Pen Chocolate => Shared(KnownColor.Chocolate);
+    public static Pen Coral => Shared(KnownColor.Coral);
+    public static Pen CornflowerBlue => Shared(KnownColor.CornflowerBlue);
+    public static Pen Cornsilk => Shared(KnownColor.Cornsilk);
+    public static Pen Crimson => Shared(KnownColor.Crimson);
+    public static Pen Cyan => Shared(KnownColor.Cyan);
+    public static Pen DarkBlue => Shared(KnownColor.DarkBlue);
+    public static Pen DarkCyan => Shared(KnownColor.DarkCyan);
+    public static Pen DarkGoldenrod => Shared(KnownColor.DarkGoldenrod);
+    public static Pen DarkGray => Shared(KnownColor.DarkGray);
+    public static Pen DarkGreen => Shared(KnownColor.DarkGreen);
+    public static Pen DarkKhaki => Shared(KnownColor.DarkKhaki);
+    public static Pen DarkMagenta => Shared(KnownColor.DarkMagenta);
+    public static Pen DarkOliveGreen => Shared(KnownColor.DarkOliveGreen);
+    public static Pen DarkOrange => Shared(KnownColor.DarkOrange);
+    public static Pen DarkOrchid => Shared(KnownColor.DarkOrchid);
+    public static Pen DarkRed => Shared(KnownColor.DarkRed);
+    public static Pen DarkSalmon => Shared(KnownColor.DarkSalmon);
+    public static Pen DarkSeaGreen => Shared(KnownColor.DarkSeaGreen);
+    public static Pen DarkSlateBlue => Shared(KnownColor.DarkSlateBlue);
+    public static Pen DarkSlateGray => Shared(KnownColor.DarkSlateGray);
+    public static Pen DarkTurquoise => Shared(KnownColor.DarkTurquoise);
+    public static Pen DarkViolet => Shared(KnownColor.DarkViolet);
+    public static Pen DeepPink => Shared(KnownColor.DeepPink);
+    public static Pen DeepSkyBlue => Shared(KnownColor.DeepSkyBlue);
+    public static Pen DimGray => Shared(KnownColor.DimGray);
+    public static Pen DodgerBlue => Shared(KnownColor.DodgerBlue);
+    public static Pen Firebrick => Shared(KnownColor.Firebrick);
+    public static Pen FloralWhite => Shared(KnownColor.FloralWhite);
+    public static Pen ForestGreen => Shared(KnownColor.ForestGreen);
+    public static Pen Fuchsia => Shared(KnownColor.Fuchsia);
+    public static Pen Gainsboro => Shared(KnownColor.Gainsboro);
+    public static Pen GhostWhite => Shared(KnownColor.GhostWhite);
+    public static Pen Gold => Shared(KnownColor.Gold);
+    public static Pen Goldenrod => Shared(KnownColor.Goldenrod);
+    public static Pen Gray => Shared(KnownColor.Gray);
+    public static Pen Green => Shared(KnownColor.Green);
+    public static Pen GreenYellow => Shared(KnownColor.GreenYellow);
+    public static Pen Honeydew => Shared(KnownColor.Honeydew);
+    public static Pen HotPink => Shared(KnownColor.HotPink);
+    public static Pen IndianRed => Shared(KnownColor.IndianRed);
+    public static Pen Indigo => Shared(KnownColor.Indigo);
+    public static Pen Ivory => Shared(KnownColor.Ivory);
+    public static Pen Khaki => Shared(KnownColor.Khaki);
+    public static Pen Lavender => Shared(KnownColor.Lavender);
+    public static Pen LavenderBlush => Shared(KnownColor.LavenderBlush);
+    public static Pen LawnGreen => Shared(KnownColor.LawnGreen);
+    public static Pen LemonChiffon => Shared(KnownColor.LemonChiffon);
+    public static Pen LightBlue => Shared(KnownColor.LightBlue);
+    public static Pen LightCoral => Shared(KnownColor.LightCoral);
+    public static Pen LightCyan => Shared(KnownColor.LightCyan);
+    public static Pen LightGoldenrodYellow => Shared(KnownColor.LightGoldenrodYellow);
+    public static Pen LightGray => Shared(KnownColor.LightGray);
+    public static Pen LightGreen => Shared(KnownColor.LightGreen);
+    public static Pen LightPink => Shared(KnownColor.LightPink);
+    public static Pen LightSalmon => Shared(KnownColor.LightSalmon);
+    public static Pen LightSeaGreen => Shared(KnownColor.LightSeaGreen);
+    public static Pen LightSkyBlue => Shared(KnownColor.LightSkyBlue);
+    public static Pen LightSlateGray => Shared(KnownColor.LightSlateGray);
+    public static Pen LightSteelBlue => Shared(KnownColor.LightSteelBlue);
+    public static Pen LightYellow => Shared(KnownColor.LightYellow);
+    public static Pen Lime => Shared(KnownColor.Lime);
+    public static Pen LimeGreen => Shared(KnownColor.LimeGreen);
+    public static Pen Linen => Shared(KnownColor.Linen);
+    public static Pen Magenta => Shared(KnownColor.Magenta);
+    public static Pen Maroon => Shared(KnownColor.Maroon);
+    public static Pen MediumAquamarine => Shared(KnownColor.MediumAquamarine);
+    public static Pen MediumBlue => Shared(KnownColor.MediumBlue);
+    public static Pen MediumOrchid => Shared(KnownColor.MediumOrchid);
+    public static Pen MediumPurple => Shared(KnownColor.MediumPurple);
+    public static Pen MediumSeaGreen => Shared(KnownColor.MediumSeaGreen);
+    public static Pen MediumSlateBlue => Shared(KnownColor.MediumSlateBlue);
+    public static Pen MediumSpringGreen => Shared(KnownColor.MediumSpringGreen);
+    public static Pen MediumTurquoise => Shared(KnownColor.MediumTurquoise);
+    public static Pen MediumVioletRed => Shared(KnownColor.MediumVioletRed);
+    public static Pen MidnightBlue => Shared(KnownColor.MidnightBlue);
+    public static Pen MintCream => Shared(KnownColor.MintCream);
+    public static Pen MistyRose => Shared(KnownColor.MistyRose);
+    public static Pen Moccasin => Shared(KnownColor.Moccasin);
+    public static Pen NavajoWhite => Shared(KnownColor.NavajoWhite);
+    public static Pen Navy => Shared(KnownColor.Navy);
+    public static Pen OldLace => Shared(KnownColor.OldLace);
+    public static Pen Olive => Shared(KnownColor.Olive);
+    public static Pen OliveDrab => Shared(KnownColor.OliveDrab);
+    public static Pen Orange => Shared(KnownColor.Orange);
+    public static Pen OrangeRed => Shared(KnownColor.OrangeRed);
+    public static Pen Orchid => Shared(KnownColor.Orchid);
+    public static Pen PaleGoldenrod => Shared(KnownColor.PaleGoldenrod);
+    public static Pen PaleGreen => Shared(KnownColor.PaleGreen);
+    public static Pen PaleTurquoise => Shared(KnownColor.PaleTurquoise);
+    public static Pen PaleVioletRed => Shared(KnownColor.PaleVioletRed);
+    public static Pen PapayaWhip => Shared(KnownColor.PapayaWhip);
+    public static Pen PeachPuff => Shared(KnownColor.PeachPuff);
+    public static Pen Peru => Shared(KnownColor.Peru);
+    public static Pen Pink => Shared(KnownColor.Pink);
+    public static Pen Plum => Shared(KnownColor.Plum);
+    public static Pen PowderBlue => Shared(KnownColor.PowderBlue);
+    public static Pen Purple => Shared(KnownColor.Purple);
+    public static Pen Red => Shared(KnownColor.Red);
+    public static Pen RosyBrown => Shared(KnownColor.RosyBrown);
+    public static Pen RoyalBlue => Shared(KnownColor.RoyalBlue);
+    public static Pen SaddleBrown => Shared(KnownColor.SaddleBrown);
+    public static Pen Salmon => Shared(KnownColor.Salmon);
+    public static Pen SandyBrown => Shared(KnownColor.SandyBrown);
+    public static Pen SeaGreen => Shared(KnownColor.SeaGreen);
+    public static Pen SeaShell => Shared(KnownColor.SeaShell);
+    public static Pen Sienna => Shared(KnownColor.Sienna);
+    public static Pen Silver => Shared(KnownColor.Silver);
+    public static Pen SkyBlue => Shared(KnownColor.SkyBlue);
+    public static Pen SlateBlue => Shared(KnownColor.SlateBlue);
+    public static Pen SlateGray => Shared(KnownColor.SlateGray);
+    public static Pen Snow => Shared(KnownColor.Snow);
+    public static Pen SpringGreen => Shared(KnownColor.SpringGreen);
+    public static Pen SteelBlue => Shared(KnownColor.SteelBlue);
+    public static Pen Tan => Shared(KnownColor.Tan);
+    public static Pen Teal => Shared(KnownColor.Teal);
+    public static Pen Thistle => Shared(KnownColor.Thistle);
+    public static Pen Tomato => Shared(KnownColor.Tomato);
+    public static Pen Transparent => Shared(KnownColor.Transparent);
+    public static Pen Turquoise => Shared(KnownColor.Turquoise);
+    public static Pen Violet => Shared(KnownColor.Violet);
+    public static Pen Wheat => Shared(KnownColor.Wheat);
+    public static Pen White => Shared(KnownColor.White);
+    public static Pen WhiteSmoke => Shared(KnownColor.WhiteSmoke);
+    public static Pen Yellow => Shared(KnownColor.Yellow);
+    public static Pen YellowGreen => Shared(KnownColor.YellowGreen);
+
+    // Two threads asking at once may each build one; both are equal and read-only,
+    // so whichever is stored last wins and nothing is lost.
+    private static Pen Shared(KnownColor color) =>
+        Cache[(int)color] ??= new Pen(Color.FromKnownColor(color), 1f, isShared: true);
+}

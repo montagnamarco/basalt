@@ -10,6 +10,10 @@ internal static class Unsupported
 {
     public const string NativeHandles =
         "Basalt.Drawing draws with SkiaSharp: there are no GDI or GDI+ handles (HDC, HBITMAP, HICON, native brush) to give or take.";
+
+    /// <summary>The message GDI+ gives when a pen or brush of Pens, Brushes and the like is modified.</summary>
+    public static string SharedObject(string kind) =>
+        $"Changes cannot be made to {kind} because permissions are not valid.";
 }
 
 internal static class ColorExtensions

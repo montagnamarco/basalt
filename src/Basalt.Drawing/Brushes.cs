@@ -1,0 +1,159 @@
+namespace System.Drawing;
+
+/// <summary>A brush for each of the named colours.</summary>
+/// <remarks>
+/// Shared and read-only, as in GDI+: code holds on to <c>Brushes.Black</c> from
+/// many places, so changing one would change it for all of them, and doing so
+/// throws.
+/// </remarks>
+public static class Brushes
+{
+    private static readonly Brush?[] Cache = new Brush?[(int)KnownColor.RebeccaPurple + 1];
+
+    public static Brush AliceBlue => Shared(KnownColor.AliceBlue);
+    public static Brush AntiqueWhite => Shared(KnownColor.AntiqueWhite);
+    public static Brush Aqua => Shared(KnownColor.Aqua);
+    public static Brush Aquamarine => Shared(KnownColor.Aquamarine);
+    public static Brush Azure => Shared(KnownColor.Azure);
+    public static Brush Beige => Shared(KnownColor.Beige);
+    public static Brush Bisque => Shared(KnownColor.Bisque);
+    public static Brush Black => Shared(KnownColor.Black);
+    public static Brush BlanchedAlmond => Shared(KnownColor.BlanchedAlmond);
+    public static Brush Blue => Shared(KnownColor.Blue);
+    public static Brush BlueViolet => Shared(KnownColor.BlueViolet);
+    public static Brush Brown => Shared(KnownColor.Brown);
+    public static Brush BurlyWood => Shared(KnownColor.BurlyWood);
+    public static Brush CadetBlue => Shared(KnownColor.CadetBlue);
+    public static Brush Chartreuse => Shared(KnownColor.Chartreuse);
+    public static Brush Chocolate => Shared(KnownColor.Chocolate);
+    public static Brush Coral => Shared(KnownColor.Coral);
+    public static Brush CornflowerBlue => Shared(KnownColor.CornflowerBlue);
+    public static Brush Cornsilk => Shared(KnownColor.Cornsilk);
+    public static Brush Crimson => Shared(KnownColor.Crimson);
+    public static Brush Cyan => Shared(KnownColor.Cyan);
+    public static Brush DarkBlue => Shared(KnownColor.DarkBlue);
+    public static Brush DarkCyan => Shared(KnownColor.DarkCyan);
+    public static Brush DarkGoldenrod => Shared(KnownColor.DarkGoldenrod);
+    public static Brush DarkGray => Shared(KnownColor.DarkGray);
+    public static Brush DarkGreen => Shared(KnownColor.DarkGreen);
+    public static Brush DarkKhaki => Shared(KnownColor.DarkKhaki);
+    public static Brush DarkMagenta => Shared(KnownColor.DarkMagenta);
+    public static Brush DarkOliveGreen => Shared(KnownColor.DarkOliveGreen);
+    public static Brush DarkOrange => Shared(KnownColor.DarkOrange);
+    public static Brush DarkOrchid => Shared(KnownColor.DarkOrchid);
+    public static Brush DarkRed => Shared(KnownColor.DarkRed);
+    public static Brush DarkSalmon => Shared(KnownColor.DarkSalmon);
+    public static Brush DarkSeaGreen => Shared(KnownColor.DarkSeaGreen);
+    public static Brush DarkSlateBlue => Shared(KnownColor.DarkSlateBlue);
+    public static Brush DarkSlateGray => Shared(KnownColor.DarkSlateGray);
+    public static Brush DarkTurquoise => Shared(KnownColor.DarkTurquoise);
+    public static Brush DarkViolet => Shared(KnownColor.DarkViolet);
+    public static Brush DeepPink => Shared(KnownColor.DeepPink);
+    public static Brush DeepSkyBlue => Shared(KnownColor.DeepSkyBlue);
+    public static Brush DimGray => Shared(KnownColor.DimGray);
+    public static Brush DodgerBlue => Shared(KnownColor.DodgerBlue);
+    public static Brush Firebrick => Shared(KnownColor.Firebrick);
+    public static Brush FloralWhite => Shared(KnownColor.FloralWhite);
+    public static Brush ForestGreen => Shared(KnownColor.ForestGreen);
+    public static Brush Fuchsia => Shared(KnownColor.Fuchsia);
+    public static Brush Gainsboro => Shared(KnownColor.Gainsboro);
+    public static Brush GhostWhite => Shared(KnownColor.GhostWhite);
+    public static Brush Gold => Shared(KnownColor.Gold);
+    public static Brush Goldenrod => Shared(KnownColor.Goldenrod);
+    public static Brush Gray => Shared(KnownColor.Gray);
+    public static Brush Green => Shared(KnownColor.Green);
+    public static Brush GreenYellow => Shared(KnownColor.GreenYellow);
+    public static Brush Honeydew => Shared(KnownColor.Honeydew);
+    public static Brush HotPink => Shared(KnownColor.HotPink);
+    public static Brush IndianRed => Shared(KnownColor.IndianRed);
+    public static Brush Indigo => Shared(KnownColor.Indigo);
+    public static Brush Ivory => Shared(KnownColor.Ivory);
+    public static Brush Khaki => Shared(KnownColor.Khaki);
+    public static Brush Lavender => Shared(KnownColor.Lavender);
+    public static Brush LavenderBlush => Shared(KnownColor.LavenderBlush);
+    public static Brush LawnGreen => Shared(KnownColor.LawnGreen);
+    public static Brush LemonChiffon => Shared(KnownColor.LemonChiffon);
+    public static Brush LightBlue => Shared(KnownColor.LightBlue);
+    public static Brush LightCoral => Shared(KnownColor.LightCoral);
+    public static Brush LightCyan => Shared(KnownColor.LightCyan);
+    public static Brush LightGoldenrodYellow => Shared(KnownColor.LightGoldenrodYellow);
+    public static Brush LightGray => Shared(KnownColor.LightGray);
+    public static Brush LightGreen => Shared(KnownColor.LightGreen);
+    public static Brush LightPink => Shared(KnownColor.LightPink);
+    public static Brush LightSalmon => Shared(KnownColor.LightSalmon);
+    public static Brush LightSeaGreen => Shared(KnownColor.LightSeaGreen);
+    public static Brush LightSkyBlue => Shared(KnownColor.LightSkyBlue);
+    public static Brush LightSlateGray => Shared(KnownColor.LightSlateGray);
+    public static Brush LightSteelBlue => Shared(KnownColor.LightSteelBlue);
+    public static Brush LightYellow => Shared(KnownColor.LightYellow);
+    public static Brush Lime => Shared(KnownColor.Lime);
+    public static Brush LimeGreen => Shared(KnownColor.LimeGreen);
+    public static Brush Linen => Shared(KnownColor.Linen);
+    public static Brush Magenta => Shared(KnownColor.Magenta);
+    public static Brush Maroon => Shared(KnownColor.Maroon);
+    public static Brush MediumAquamarine => Shared(KnownColor.MediumAquamarine);
+    public static Brush MediumBlue => Shared(KnownColor.MediumBlue);
+    public static Brush MediumOrchid => Shared(KnownColor.MediumOrchid);
+    public static Brush MediumPurple => Shared(KnownColor.MediumPurple);
+    public static Brush MediumSeaGreen => Shared(KnownColor.MediumSeaGreen);
+    public static Brush MediumSlateBlue => Shared(KnownColor.MediumSlateBlue);
+    public static Brush MediumSpringGreen => Shared(KnownColor.MediumSpringGreen);
+    public static Brush MediumTurquoise => Shared(KnownColor.MediumTurquoise);
+    public static Brush MediumVioletRed => Shared(KnownColor.MediumVioletRed);
+    public static Brush MidnightBlue => Shared(KnownColor.MidnightBlue);
+    public static Brush MintCream => Shared(KnownColor.MintCream);
+    public static Brush MistyRose => Shared(KnownColor.MistyRose);
+    public static Brush Moccasin => Shared(KnownColor.Moccasin);
+    public static Brush NavajoWhite => Shared(KnownColor.NavajoWhite);
+    public static Brush Navy => Shared(KnownColor.Navy);
+    public static Brush OldLace => Shared(KnownColor.OldLace);
+    public static Brush Olive => Shared(KnownColor.Olive);
+    public static Brush OliveDrab => Shared(KnownColor.OliveDrab);
+    public static Brush Orange => Shared(KnownColor.Orange);
+    public static Brush OrangeRed => Shared(KnownColor.OrangeRed);
+    public static Brush Orchid => Shared(KnownColor.Orchid);
+    public static Brush PaleGoldenrod => Shared(KnownColor.PaleGoldenrod);
+    public static Brush PaleGreen => Shared(KnownColor.PaleGreen);
+    public static Brush PaleTurquoise => Shared(KnownColor.PaleTurquoise);
+    public static Brush PaleVioletRed => Shared(KnownColor.PaleVioletRed);
+    public static Brush PapayaWhip => Shared(KnownColor.PapayaWhip);
+    public static Brush PeachPuff => Shared(KnownColor.PeachPuff);
+    public static Brush Peru => Shared(KnownColor.Peru);
+    public static Brush Pink => Shared(KnownColor.Pink);
+    public static Brush Plum => Shared(KnownColor.Plum);
+    public static Brush PowderBlue => Shared(KnownColor.PowderBlue);
+    public static Brush Purple => Shared(KnownColor.Purple);
+    public static Brush Red => Shared(KnownColor.Red);
+    public static Brush RosyBrown => Shared(KnownColor.RosyBrown);
+    public static Brush RoyalBlue => Shared(KnownColor.RoyalBlue);
+    public static Brush SaddleBrown => Shared(KnownColor.SaddleBrown);
+    public static Brush Salmon => Shared(KnownColor.Salmon);
+    public static Brush SandyBrown => Shared(KnownColor.SandyBrown);
+    public static Brush SeaGreen => Shared(KnownColor.SeaGreen);
+    public static Brush SeaShell => Shared(KnownColor.SeaShell);
+    public static Brush Sienna => Shared(KnownColor.Sienna);
+    public static Brush Silver => Shared(KnownColor.Silver);
+    public static Brush SkyBlue => Shared(KnownColor.SkyBlue);
+    public static Brush SlateBlue => Shared(KnownColor.SlateBlue);
+    public static Brush SlateGray => Shared(KnownColor.SlateGray);
+    public static Brush Snow => Shared(KnownColor.Snow);
+    public static Brush SpringGreen => Shared(KnownColor.SpringGreen);
+    public static Brush SteelBlue => Shared(KnownColor.SteelBlue);
+    public static Brush Tan => Shared(KnownColor.Tan);
+    public static Brush Teal => Shared(KnownColor.Teal);
+    public static Brush Thistle => Shared(KnownColor.Thistle);
+    public static Brush Tomato => Shared(KnownColor.Tomato);
+    public static Brush Transparent => Shared(KnownColor.Transparent);
+    public static Brush Turquoise => Shared(KnownColor.Turquoise);
+    public static Brush Violet => Shared(KnownColor.Violet);
+    public static Brush Wheat => Shared(KnownColor.Wheat);
+    public static Brush White => Shared(KnownColor.White);
+    public static Brush WhiteSmoke => Shared(KnownColor.WhiteSmoke);
+    public static Brush Yellow => Shared(KnownColor.Yellow);
+    public static Brush YellowGreen => Shared(KnownColor.YellowGreen);
+
+    // Two threads asking at once may each build one; both are equal and read-only,
+    // so whichever is stored last wins and nothing is lost.
+    private static Brush Shared(KnownColor color) =>
+        Cache[(int)color] ??= new SolidBrush(Color.FromKnownColor(color), isShared: true);
+}
