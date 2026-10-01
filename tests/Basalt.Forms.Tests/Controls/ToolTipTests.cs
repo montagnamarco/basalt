@@ -48,9 +48,13 @@ public class ToolTipTests
         tip.Popup += (_, _) => popups++;
 
         form.Host!.MouseMove(new Avalonia.Point(20, 20));
-        using (var wait = new CancellationTokenSource(TimeSpan.FromMilliseconds(300)))
+        // Run the loop until the tip appears (a cold, freshly jitted run can take far longer than the
+        // 10 ms delay), with a generous limit so a tip that never shows still fails instead of hanging.
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (popups == 0 && DateTime.UtcNow < deadline)
         {
-            Dispatcher.UIThread.MainLoop(wait.Token);
+            using var slice = new CancellationTokenSource(TimeSpan.FromMilliseconds(20));
+            Dispatcher.UIThread.MainLoop(slice.Token);
         }
 
         Assert.Equal(1, popups);

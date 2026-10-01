@@ -224,7 +224,8 @@ public class ErrorProviderTests
         Assert.Equal(ErrorBlinkStyle.NeverBlink, provider.BlinkStyle);
     }
 
-    [Fact]
+    // On the UI thread: SetError creates the icon's tooltip and blink timer, which start Avalonia.
+    [AvaloniaFact]
     public void The_icon_follows_its_control_to_a_new_parent()
     {
         var first = new Panel();
