@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A Windows Forms application in VB that runs on macOS and Linux: an
+    ordinary net10.0 project (no -windows target, no UseWindowsForms) that
+    references Basalt.Forms, whose assembly is named System.Windows.Forms.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Basalt.Sample.WinForms</RootNamespace>
+    <StartupObject>Basalt.Sample.WinForms.Program</StartupObject>
+    <MyType>Empty</MyType>
+    <OptionStrict>On</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Import Include="System.Drawing" />
+    <Import Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Basalt.Forms\Basalt.Forms.csproj" />
+  </ItemGroup>
+
+</Project>

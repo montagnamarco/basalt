@@ -1,0 +1,178 @@
+F public System.Windows.Forms.Automation.AutomationLiveSetting::Assertive : System.Windows.Forms.Automation.AutomationLiveSetting const = 2
+F public System.Windows.Forms.Automation.AutomationLiveSetting::Off : System.Windows.Forms.Automation.AutomationLiveSetting const = 0
+F public System.Windows.Forms.Automation.AutomationLiveSetting::Polite : System.Windows.Forms.Automation.AutomationLiveSetting const = 1
+F public System.Windows.Forms.Automation.AutomationLiveSetting::value__ : System.Int32
+F public System.Windows.Forms.Automation.AutomationNotificationKind::ActionAborted : System.Windows.Forms.Automation.AutomationNotificationKind const = 3
+F public System.Windows.Forms.Automation.AutomationNotificationKind::ActionCompleted : System.Windows.Forms.Automation.AutomationNotificationKind const = 2
+F public System.Windows.Forms.Automation.AutomationNotificationKind::ItemAdded : System.Windows.Forms.Automation.AutomationNotificationKind const = 0
+F public System.Windows.Forms.Automation.AutomationNotificationKind::ItemRemoved : System.Windows.Forms.Automation.AutomationNotificationKind const = 1
+F public System.Windows.Forms.Automation.AutomationNotificationKind::Other : System.Windows.Forms.Automation.AutomationNotificationKind const = 4
+F public System.Windows.Forms.Automation.AutomationNotificationKind::value__ : System.Int32
+F public System.Windows.Forms.Automation.AutomationNotificationProcessing::All : System.Windows.Forms.Automation.AutomationNotificationProcessing const = 2
+F public System.Windows.Forms.Automation.AutomationNotificationProcessing::CurrentThenMostRecent : System.Windows.Forms.Automation.AutomationNotificationProcessing const = 4
+F public System.Windows.Forms.Automation.AutomationNotificationProcessing::ImportantAll : System.Windows.Forms.Automation.AutomationNotificationProcessing const = 0
+F public System.Windows.Forms.Automation.AutomationNotificationProcessing::ImportantMostRecent : System.Windows.Forms.Automation.AutomationNotificationProcessing const = 1
+F public System.Windows.Forms.Automation.AutomationNotificationProcessing::MostRecent : System.Windows.Forms.Automation.AutomationNotificationProcessing const = 3
+F public System.Windows.Forms.Automation.AutomationNotificationProcessing::value__ : System.Int32
+F public System.Windows.Forms.HighDpiMode::DpiUnaware : System.Windows.Forms.HighDpiMode const = 0
+F public System.Windows.Forms.HighDpiMode::DpiUnawareGdiScaled : System.Windows.Forms.HighDpiMode const = 4
+F public System.Windows.Forms.HighDpiMode::PerMonitor : System.Windows.Forms.HighDpiMode const = 2
+F public System.Windows.Forms.HighDpiMode::PerMonitorV2 : System.Windows.Forms.HighDpiMode const = 3
+F public System.Windows.Forms.HighDpiMode::SystemAware : System.Windows.Forms.HighDpiMode const = 1
+F public System.Windows.Forms.HighDpiMode::value__ : System.Int32
+F public System.Windows.Forms.Padding::Empty : System.Windows.Forms.Padding static readonly
+F public System.Windows.Forms.ScreenOrientation::Angle0 : System.Windows.Forms.ScreenOrientation const = 0
+F public System.Windows.Forms.ScreenOrientation::Angle180 : System.Windows.Forms.ScreenOrientation const = 2
+F public System.Windows.Forms.ScreenOrientation::Angle270 : System.Windows.Forms.ScreenOrientation const = 3
+F public System.Windows.Forms.ScreenOrientation::Angle90 : System.Windows.Forms.ScreenOrientation const = 1
+F public System.Windows.Forms.ScreenOrientation::value__ : System.Int32
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Ansi : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 0
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Arabic : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 178
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Baltic : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 186
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::ChineseBig5 : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 136
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Default : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 1
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::EastEurope : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 238
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Gb2312 : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 134
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Greek : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 161
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Hangul : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 129
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Hebrew : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 177
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Johab : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 130
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Mac : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 77
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Oem : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 255
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Russian : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 204
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::ShiftJis : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 128
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Symbol : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 2
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Thai : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 222
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Turkish : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 162
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::Vietnamese : System.Windows.Forms.VisualStyles.TextMetricsCharacterSet const = 163
+F public System.Windows.Forms.VisualStyles.TextMetricsCharacterSet::value__ : System.Int32
+F public System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues::Device : System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues const = 8
+F public System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues::FixedPitch : System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues const = 1
+F public System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues::TrueType : System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues const = 4
+F public System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues::Vector : System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues const = 2
+F public System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues::value__ : System.Int32
+F public System.Windows.Forms.VisualStyles.ThemeSizeType::Draw : System.Windows.Forms.VisualStyles.ThemeSizeType const = 2
+F public System.Windows.Forms.VisualStyles.ThemeSizeType::Minimum : System.Windows.Forms.VisualStyles.ThemeSizeType const = 0
+F public System.Windows.Forms.VisualStyles.ThemeSizeType::True : System.Windows.Forms.VisualStyles.ThemeSizeType const = 1
+F public System.Windows.Forms.VisualStyles.ThemeSizeType::value__ : System.Int32
+I System.Windows.Forms.Message : System.IEquatable`1<System.Windows.Forms.Message>
+I System.Windows.Forms.Padding : System.IEquatable`1<System.Windows.Forms.Padding>
+M public System.Windows.Forms.Automation.IAutomationLiveRegion::get_LiveSetting() -> System.Windows.Forms.Automation.AutomationLiveSetting abstract
+M public System.Windows.Forms.Automation.IAutomationLiveRegion::set_LiveSetting(System.Windows.Forms.Automation.AutomationLiveSetting) -> System.Void abstract
+M public System.Windows.Forms.FileDialogCustomPlace::.ctor(System.Guid)
+M public System.Windows.Forms.FileDialogCustomPlace::.ctor(System.String)
+M public System.Windows.Forms.FileDialogCustomPlace::ToString() -> System.String virtual
+M public System.Windows.Forms.FileDialogCustomPlace::get_KnownFolderGuid() -> System.Guid
+M public System.Windows.Forms.FileDialogCustomPlace::get_Path() -> System.String
+M public System.Windows.Forms.FileDialogCustomPlace::set_KnownFolderGuid(System.Guid) -> System.Void
+M public System.Windows.Forms.FileDialogCustomPlace::set_Path(System.String) -> System.Void
+M public System.Windows.Forms.FileDialogCustomPlacesCollection::.ctor()
+M public System.Windows.Forms.FileDialogCustomPlacesCollection::Add(System.Guid) -> System.Void
+M public System.Windows.Forms.FileDialogCustomPlacesCollection::Add(System.String) -> System.Void
+M public System.Windows.Forms.Message::Create(System.IntPtr, System.Int32, System.IntPtr, System.IntPtr) -> System.Windows.Forms.Message static
+M public System.Windows.Forms.Message::Equals(System.Object) -> System.Boolean virtual
+M public System.Windows.Forms.Message::Equals(System.Windows.Forms.Message) -> System.Boolean
+M public System.Windows.Forms.Message::GetHashCode() -> System.Int32 virtual
+M public System.Windows.Forms.Message::GetLParam(System.Type) -> System.Object
+M public System.Windows.Forms.Message::ToString() -> System.String virtual
+M public System.Windows.Forms.Message::get_HWnd() -> System.IntPtr
+M public System.Windows.Forms.Message::get_LParam() -> System.IntPtr
+M public System.Windows.Forms.Message::get_Msg() -> System.Int32
+M public System.Windows.Forms.Message::get_Result() -> System.IntPtr
+M public System.Windows.Forms.Message::get_WParam() -> System.IntPtr
+M public System.Windows.Forms.Message::op_Equality(System.Windows.Forms.Message, System.Windows.Forms.Message) -> System.Boolean static
+M public System.Windows.Forms.Message::op_Inequality(System.Windows.Forms.Message, System.Windows.Forms.Message) -> System.Boolean static
+M public System.Windows.Forms.Message::set_HWnd(System.IntPtr) -> System.Void
+M public System.Windows.Forms.Message::set_LParam(System.IntPtr) -> System.Void
+M public System.Windows.Forms.Message::set_Msg(System.Int32) -> System.Void
+M public System.Windows.Forms.Message::set_Result(System.IntPtr) -> System.Void
+M public System.Windows.Forms.Message::set_WParam(System.IntPtr) -> System.Void
+M public System.Windows.Forms.Padding::.ctor(System.Int32)
+M public System.Windows.Forms.Padding::.ctor(System.Int32, System.Int32, System.Int32, System.Int32)
+M public System.Windows.Forms.Padding::Add(System.Windows.Forms.Padding, System.Windows.Forms.Padding) -> System.Windows.Forms.Padding static
+M public System.Windows.Forms.Padding::Equals(System.Object) -> System.Boolean virtual
+M public System.Windows.Forms.Padding::Equals(System.Windows.Forms.Padding) -> System.Boolean
+M public System.Windows.Forms.Padding::GetHashCode() -> System.Int32 virtual
+M public System.Windows.Forms.Padding::Subtract(System.Windows.Forms.Padding, System.Windows.Forms.Padding) -> System.Windows.Forms.Padding static
+M public System.Windows.Forms.Padding::ToString() -> System.String virtual
+M public System.Windows.Forms.Padding::get_All() -> System.Int32
+M public System.Windows.Forms.Padding::get_Bottom() -> System.Int32
+M public System.Windows.Forms.Padding::get_Horizontal() -> System.Int32
+M public System.Windows.Forms.Padding::get_Left() -> System.Int32
+M public System.Windows.Forms.Padding::get_Right() -> System.Int32
+M public System.Windows.Forms.Padding::get_Size() -> System.Drawing.Size
+M public System.Windows.Forms.Padding::get_Top() -> System.Int32
+M public System.Windows.Forms.Padding::get_Vertical() -> System.Int32
+M public System.Windows.Forms.Padding::op_Addition(System.Windows.Forms.Padding, System.Windows.Forms.Padding) -> System.Windows.Forms.Padding static
+M public System.Windows.Forms.Padding::op_Equality(System.Windows.Forms.Padding, System.Windows.Forms.Padding) -> System.Boolean static
+M public System.Windows.Forms.Padding::op_Inequality(System.Windows.Forms.Padding, System.Windows.Forms.Padding) -> System.Boolean static
+M public System.Windows.Forms.Padding::op_Subtraction(System.Windows.Forms.Padding, System.Windows.Forms.Padding) -> System.Windows.Forms.Padding static
+M public System.Windows.Forms.Padding::set_All(System.Int32) -> System.Void
+M public System.Windows.Forms.Padding::set_Bottom(System.Int32) -> System.Void
+M public System.Windows.Forms.Padding::set_Left(System.Int32) -> System.Void
+M public System.Windows.Forms.Padding::set_Right(System.Int32) -> System.Void
+M public System.Windows.Forms.Padding::set_Top(System.Int32) -> System.Void
+M public System.Windows.Forms.PaddingConverter::.ctor()
+M public System.Windows.Forms.PaddingConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
+M public System.Windows.Forms.PaddingConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
+M public System.Windows.Forms.PaddingConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
+M public System.Windows.Forms.PaddingConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
+M public System.Windows.Forms.PaddingConverter::CreateInstance(System.ComponentModel.ITypeDescriptorContext, System.Collections.IDictionary) -> System.Object virtual
+M public System.Windows.Forms.PaddingConverter::GetCreateInstanceSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
+M public System.Windows.Forms.PaddingConverter::GetProperties(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
+M public System.Windows.Forms.PaddingConverter::GetPropertiesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_Ascent() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_AverageCharWidth() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_BreakChar() -> System.Char
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_CharSet() -> System.Windows.Forms.VisualStyles.TextMetricsCharacterSet
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_DefaultChar() -> System.Char
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_Descent() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_DigitizedAspectX() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_DigitizedAspectY() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_ExternalLeading() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_FirstChar() -> System.Char
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_Height() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_InternalLeading() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_Italic() -> System.Boolean
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_LastChar() -> System.Char
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_MaxCharWidth() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_Overhang() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_PitchAndFamily() -> System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_StruckOut() -> System.Boolean
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_Underlined() -> System.Boolean
+M public System.Windows.Forms.VisualStyles.TextMetrics::get_Weight() -> System.Int32
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_Ascent(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_AverageCharWidth(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_BreakChar(System.Char) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_CharSet(System.Windows.Forms.VisualStyles.TextMetricsCharacterSet) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_DefaultChar(System.Char) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_Descent(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_DigitizedAspectX(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_DigitizedAspectY(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_ExternalLeading(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_FirstChar(System.Char) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_Height(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_InternalLeading(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_Italic(System.Boolean) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_LastChar(System.Char) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_MaxCharWidth(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_Overhang(System.Int32) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_PitchAndFamily(System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_StruckOut(System.Boolean) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_Underlined(System.Boolean) -> System.Void
+M public System.Windows.Forms.VisualStyles.TextMetrics::set_Weight(System.Int32) -> System.Void
+T class System.Windows.Forms.FileDialogCustomPlace
+T class System.Windows.Forms.FileDialogCustomPlacesCollection : System.Collections.ObjectModel.Collection`1<System.Windows.Forms.FileDialogCustomPlace>
+T class System.Windows.Forms.PaddingConverter : System.ComponentModel.TypeConverter
+T enum System.Windows.Forms.Automation.AutomationLiveSetting : System.Int32
+T enum System.Windows.Forms.Automation.AutomationNotificationKind : System.Int32
+T enum System.Windows.Forms.Automation.AutomationNotificationProcessing : System.Int32
+T enum System.Windows.Forms.HighDpiMode : System.Int32
+T enum System.Windows.Forms.ScreenOrientation : System.Int32
+T enum System.Windows.Forms.VisualStyles.TextMetricsCharacterSet : System.Int32
+T enum System.Windows.Forms.VisualStyles.TextMetricsPitchAndFamilyValues : System.Int32
+T enum System.Windows.Forms.VisualStyles.ThemeSizeType : System.Int32
+T interface System.Windows.Forms.Automation.IAutomationLiveRegion
+T struct System.Windows.Forms.Message
+T struct System.Windows.Forms.Padding
+T struct System.Windows.Forms.VisualStyles.TextMetrics

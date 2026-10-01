@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Runs the scenarios of Scenarios.cs against Microsoft's own System.Windows.Forms
+    on Windows and writes, for each scenario, the list of lines it produced:
+    the events it raised, in order, and the final state it read. The tests of
+    Basalt.Forms compare the same scenarios, run against our own
+    System.Windows.Forms, with this recording. Runs only on Windows; on other
+    systems it compiles, for the solution's build, and does nothing.
+
+    System.Windows.Forms comes from the Windows desktop framework that
+    UseWindowsForms brings, not from a NuGet package.
+
+    To make the executable for a Windows machine or virtual machine, publish
+    this project for win-x64, self-contained and as a single file, into
+    artifacts/forms-goldens (the exact command is in
+    tests/Basalt.Forms.Goldens/README.md), and run Basalt.Forms.Goldens.exe
+    there. It writes next to itself, into a folder named goldens.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

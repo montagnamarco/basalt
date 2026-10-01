@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+
+    <!-- Packable once the spine holds: the package will carry this assembly and System.Windows.Forms.Primitives. -->
+    <IsPackable>false</IsPackable>
+
+    <!--
+      Microsoft's name, for the reason Basalt.Drawing carries
+      System.Drawing.Common's: a compiled WinForms library or application binds
+      by simple name and ignores the public key. A net10.0 binary asks for
+      10.0.0.0 and the runtime refuses a lower version.
+    -->
+    <AssemblyName>System.Windows.Forms</AssemblyName>
+    <RootNamespace>System.Windows.Forms</RootNamespace>
+    <AssemblyVersion>10.0.0.0</AssemblyVersion>
+    <VersionPrefix>0.1.0</VersionPrefix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Basalt.Drawing\Basalt.Drawing.csproj" />
+    <ProjectReference Include="..\Basalt.Forms.Primitives\Basalt.Forms.Primitives.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The platform layer only: windows, input, clipboard, screens. Every control is drawn by us. -->
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Basalt.Forms.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -33,6 +33,13 @@ public sealed partial class Graphics : MarshalByRefObject, IDeviceContext, IDisp
 
     public PixelOffsetMode PixelOffsetMode { get; set; } = PixelOffsetMode.Default;
 
+    /// <summary>
+    /// A graphics over a canvas someone else owns, such as the recording of a
+    /// control's paint: whatever clip and translation the canvas carries are
+    /// the device's, so VisibleClipBounds reports the area being painted.
+    /// </summary>
+    internal static Graphics FromCanvas(SKCanvas canvas) => new(canvas, ownsCanvas: false);
+
     public static Graphics FromImage(Image image)
     {
         ArgumentNullException.ThrowIfNull(image);

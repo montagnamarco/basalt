@@ -46,6 +46,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Basalt.Drawing.Tests" />
+    <!-- Basalt.Forms paints controls onto canvases it records, not onto images. -->
+    <InternalsVisibleTo Include="System.Windows.Forms" />
   </ItemGroup>
 
 </Project>
