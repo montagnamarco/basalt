@@ -23,9 +23,6 @@ I System.Drawing.Font : System.IDisposable
 I System.Drawing.Font : System.Runtime.Serialization.ISerializable
 I System.Drawing.FontConverter+FontNameConverter : System.IDisposable
 I System.Drawing.FontFamily : System.IDisposable
-I System.Drawing.Icon : System.ICloneable
-I System.Drawing.Icon : System.IDisposable
-I System.Drawing.Icon : System.Runtime.Serialization.ISerializable
 I System.Drawing.Imaging.CachedBitmap : System.IDisposable
 I System.Drawing.Imaging.ImageAttributes : System.ICloneable
 I System.Drawing.Imaging.ImageAttributes : System.IDisposable
@@ -49,7 +46,6 @@ M protected System.Drawing.Drawing2D.CustomLineCap::Dispose(System.Boolean) -> S
 M protected System.Drawing.Drawing2D.CustomLineCap::Finalize() -> System.Void virtual
 M protected System.Drawing.Font::Finalize() -> System.Void virtual
 M protected System.Drawing.FontFamily::Finalize() -> System.Void virtual
-M protected System.Drawing.Icon::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.CachedBitmap::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.ImageAttributes::Finalize() -> System.Void virtual
 M protected System.Drawing.Printing.InvalidPrinterException::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
@@ -247,60 +243,25 @@ M public System.Drawing.FontFamily::get_GenericMonospace() -> System.Drawing.Fon
 M public System.Drawing.FontFamily::get_GenericSansSerif() -> System.Drawing.FontFamily static
 M public System.Drawing.FontFamily::get_GenericSerif() -> System.Drawing.FontFamily static
 M public System.Drawing.FontFamily::get_Name() -> System.String
-M public System.Drawing.Graphics+DrawImageAbort::.ctor(System.Object, System.IntPtr)
-M public System.Drawing.Graphics+DrawImageAbort::BeginInvoke(System.IntPtr, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Drawing.Graphics+DrawImageAbort::EndInvoke(System.IAsyncResult) -> System.Boolean virtual
-M public System.Drawing.Graphics+DrawImageAbort::Invoke(System.IntPtr) -> System.Boolean virtual
 M public System.Drawing.Graphics+EnumerateMetafileProc::.ctor(System.Object, System.IntPtr)
 M public System.Drawing.Graphics+EnumerateMetafileProc::BeginInvoke(System.Drawing.Imaging.EmfPlusRecordType, System.Int32, System.Int32, System.IntPtr, System.Drawing.Imaging.PlayRecordCallback, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Drawing.Graphics+EnumerateMetafileProc::EndInvoke(System.IAsyncResult) -> System.Boolean virtual
 M public System.Drawing.Graphics+EnumerateMetafileProc::Invoke(System.Drawing.Imaging.EmfPlusRecordType, System.Int32, System.Int32, System.IntPtr, System.Drawing.Imaging.PlayRecordCallback) -> System.Boolean virtual
 M public System.Drawing.Graphics::AddMetafileComment(System.Byte[]) -> System.Void
-M public System.Drawing.Graphics::CopyFromScreen(System.Drawing.Point, System.Drawing.Point, System.Drawing.Size) -> System.Void
-M public System.Drawing.Graphics::CopyFromScreen(System.Drawing.Point, System.Drawing.Point, System.Drawing.Size, System.Drawing.CopyPixelOperation) -> System.Void
-M public System.Drawing.Graphics::CopyFromScreen(System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.Size) -> System.Void
-M public System.Drawing.Graphics::CopyFromScreen(System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.Size, System.Drawing.CopyPixelOperation) -> System.Void
 M public System.Drawing.Graphics::DrawCachedBitmap(System.Drawing.Imaging.CachedBitmap, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawIcon(System.Drawing.Icon, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::DrawIcon(System.Drawing.Icon, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawIconUnstretched(System.Drawing.Icon, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Imaging.Effects.Effect) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Imaging.Effects.Effect, System.Drawing.RectangleF, System.Drawing.Drawing2D.Matrix, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[]) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.GraphicsUnit) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[]) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[], System.Drawing.Rectangle, System.Drawing.GraphicsUnit) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[], System.Drawing.Rectangle, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[], System.Drawing.Rectangle, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[], System.Drawing.Rectangle, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Drawing.GraphicsUnit) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.GraphicsUnit) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.IntPtr) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Single, System.Single, System.Single, System.Single, System.Drawing.GraphicsUnit) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Single, System.Single, System.Single, System.Single, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Single, System.Single, System.Single, System.Single, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
 M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Single, System.Single, System.Single, System.Single, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.IntPtr) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.RectangleF) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Int32, System.Int32, System.Drawing.Rectangle, System.Drawing.GraphicsUnit) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Single, System.Single, System.Drawing.RectangleF, System.Drawing.GraphicsUnit) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Single, System.Single, System.Single, System.Single) -> System.Void
-M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Drawing.Point) -> System.Void
-M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImageUnscaled(System.Drawing.Image, System.Int32, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImageUnscaledAndClipped(System.Drawing.Image, System.Drawing.Rectangle) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.PointF) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.PointF, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.RectangleF) -> System.Void
@@ -349,11 +310,6 @@ M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metaf
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr) -> System.Void
 M public System.Drawing.Graphics::EnumerateMetafile(System.Drawing.Imaging.Metafile, System.Drawing.RectangleF, System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Graphics+EnumerateMetafileProc, System.IntPtr, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::FromHdc(System.IntPtr) -> System.Drawing.Graphics static
-M public System.Drawing.Graphics::FromHdc(System.IntPtr, System.IntPtr) -> System.Drawing.Graphics static
-M public System.Drawing.Graphics::FromHdcInternal(System.IntPtr) -> System.Drawing.Graphics static
-M public System.Drawing.Graphics::FromHwnd(System.IntPtr) -> System.Drawing.Graphics static
-M public System.Drawing.Graphics::FromHwndInternal(System.IntPtr) -> System.Drawing.Graphics static
 M public System.Drawing.Graphics::MeasureCharacterRanges(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Drawing.Region[]
 M public System.Drawing.Graphics::MeasureCharacterRanges(System.String, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Drawing.Region[]
 M public System.Drawing.Graphics::MeasureString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font) -> System.Drawing.SizeF
@@ -371,28 +327,6 @@ M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Fo
 M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Font, System.Int32) -> System.Drawing.SizeF
 M public System.Drawing.Graphics::MeasureString(System.String, System.Drawing.Font, System.Int32, System.Drawing.StringFormat) -> System.Drawing.SizeF
 M public System.Drawing.Graphics::MeasureStringInternal(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.RectangleF, System.Drawing.StringFormat, out System.Int32, out System.Int32) -> System.Drawing.SizeF
-M public System.Drawing.Icon::.ctor(System.Drawing.Icon, System.Drawing.Size)
-M public System.Drawing.Icon::.ctor(System.Drawing.Icon, System.Int32, System.Int32)
-M public System.Drawing.Icon::.ctor(System.IO.Stream)
-M public System.Drawing.Icon::.ctor(System.IO.Stream, System.Drawing.Size)
-M public System.Drawing.Icon::.ctor(System.IO.Stream, System.Int32, System.Int32)
-M public System.Drawing.Icon::.ctor(System.String)
-M public System.Drawing.Icon::.ctor(System.String, System.Drawing.Size)
-M public System.Drawing.Icon::.ctor(System.String, System.Int32, System.Int32)
-M public System.Drawing.Icon::.ctor(System.Type, System.String)
-M public System.Drawing.Icon::Clone() -> System.Object
-M public System.Drawing.Icon::Dispose() -> System.Void
-M public System.Drawing.Icon::ExtractAssociatedIcon(System.String) -> System.Drawing.Icon static
-M public System.Drawing.Icon::ExtractIcon(System.String, System.Int32, System.Boolean) -> System.Drawing.Icon static
-M public System.Drawing.Icon::ExtractIcon(System.String, System.Int32, System.Int32) -> System.Drawing.Icon static
-M public System.Drawing.Icon::FromHandle(System.IntPtr) -> System.Drawing.Icon static
-M public System.Drawing.Icon::Save(System.IO.Stream) -> System.Void
-M public System.Drawing.Icon::ToBitmap() -> System.Drawing.Bitmap
-M public System.Drawing.Icon::ToString() -> System.String virtual
-M public System.Drawing.Icon::get_Handle() -> System.IntPtr
-M public System.Drawing.Icon::get_Height() -> System.Int32
-M public System.Drawing.Icon::get_Size() -> System.Drawing.Size
-M public System.Drawing.Icon::get_Width() -> System.Int32
 M public System.Drawing.IconConverter::.ctor()
 M public System.Drawing.IconConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Drawing.IconConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
@@ -944,18 +878,6 @@ M public System.Drawing.SystemFonts::get_MenuFont() -> System.Drawing.Font stati
 M public System.Drawing.SystemFonts::get_MessageBoxFont() -> System.Drawing.Font static
 M public System.Drawing.SystemFonts::get_SmallCaptionFont() -> System.Drawing.Font static
 M public System.Drawing.SystemFonts::get_StatusFont() -> System.Drawing.Font static
-M public System.Drawing.SystemIcons::GetStockIcon(System.Drawing.StockIconId, System.Drawing.StockIconOptions) -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::GetStockIcon(System.Drawing.StockIconId, System.Int32) -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Application() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Asterisk() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Error() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Exclamation() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Hand() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Information() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Question() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Shield() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_Warning() -> System.Drawing.Icon static
-M public System.Drawing.SystemIcons::get_WinLogo() -> System.Drawing.Icon static
 M public System.Drawing.Text.FontCollection::Dispose() -> System.Void
 M public System.Drawing.Text.FontCollection::get_Families() -> System.Drawing.FontFamily[]
 M public System.Drawing.Text.InstalledFontCollection::.ctor()
@@ -1021,7 +943,6 @@ T class System.Drawing.Printing.PrinterSettings+StringCollection
 T class System.Drawing.Printing.QueryPageSettingsEventArgs : System.Drawing.Printing.PrintEventArgs
 T class System.Drawing.Printing.StandardPrintController : System.Drawing.Printing.PrintController
 T class System.Drawing.ToolboxBitmapAttribute : System.Attribute
-T delegate System.Drawing.Graphics+DrawImageAbort
 T delegate System.Drawing.Graphics+EnumerateMetafileProc
 T delegate System.Drawing.Imaging.PlayRecordCallback
 T delegate System.Drawing.Printing.PrintEventHandler
@@ -1035,7 +956,6 @@ T sealed class System.Drawing.Drawing2D.PathGradientBrush : System.Drawing.Brush
 T sealed class System.Drawing.Font : System.MarshalByRefObject
 T sealed class System.Drawing.FontConverter+FontNameConverter : System.ComponentModel.TypeConverter
 T sealed class System.Drawing.FontFamily : System.MarshalByRefObject
-T sealed class System.Drawing.Icon : System.MarshalByRefObject
 T sealed class System.Drawing.ImageAnimator
 T sealed class System.Drawing.Imaging.CachedBitmap
 T sealed class System.Drawing.Imaging.ColorMap
@@ -1056,7 +976,6 @@ T sealed class System.Drawing.Text.InstalledFontCollection : System.Drawing.Text
 T sealed class System.Drawing.Text.PrivateFontCollection : System.Drawing.Text.FontCollection
 T static class System.Drawing.BufferedGraphicsManager
 T static class System.Drawing.SystemFonts
-T static class System.Drawing.SystemIcons
 T struct System.Drawing.CharacterRange
 T struct System.Drawing.Interop.LOGFONT
 T struct System.Drawing.Interop.LOGFONT+<_lfFaceName>e__FixedBuffer
