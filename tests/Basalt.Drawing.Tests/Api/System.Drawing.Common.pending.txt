@@ -16,8 +16,6 @@ F public System.Drawing.ToolboxBitmapAttribute::Default : System.Drawing.Toolbox
 I System.Drawing.BufferedGraphics : System.IDisposable
 I System.Drawing.BufferedGraphicsContext : System.IDisposable
 I System.Drawing.CharacterRange : System.IEquatable`1<System.Drawing.CharacterRange>
-I System.Drawing.Drawing2D.CustomLineCap : System.ICloneable
-I System.Drawing.Drawing2D.CustomLineCap : System.IDisposable
 I System.Drawing.Font : System.ICloneable
 I System.Drawing.Font : System.IDisposable
 I System.Drawing.Font : System.Runtime.Serialization.ISerializable
@@ -40,8 +38,6 @@ I System.Drawing.StringFormat : System.ICloneable
 I System.Drawing.StringFormat : System.IDisposable
 I System.Drawing.Text.FontCollection : System.IDisposable
 M protected System.Drawing.BufferedGraphicsContext::Finalize() -> System.Void virtual
-M protected System.Drawing.Drawing2D.CustomLineCap::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Drawing.Drawing2D.CustomLineCap::Finalize() -> System.Void virtual
 M protected System.Drawing.Font::Finalize() -> System.Void virtual
 M protected System.Drawing.FontFamily::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.CachedBitmap::Finalize() -> System.Void virtual
@@ -87,75 +83,10 @@ M public System.Drawing.Design.CategoryNameCollection::Contains(System.String) -
 M public System.Drawing.Design.CategoryNameCollection::CopyTo(System.String[], System.Int32) -> System.Void
 M public System.Drawing.Design.CategoryNameCollection::IndexOf(System.String) -> System.Int32
 M public System.Drawing.Design.CategoryNameCollection::get_Item(System.Int32) -> System.String
-M public System.Drawing.Drawing2D.AdjustableArrowCap::.ctor(System.Single, System.Single)
-M public System.Drawing.Drawing2D.AdjustableArrowCap::.ctor(System.Single, System.Single, System.Boolean)
-M public System.Drawing.Drawing2D.AdjustableArrowCap::get_Filled() -> System.Boolean
-M public System.Drawing.Drawing2D.AdjustableArrowCap::get_Height() -> System.Single
-M public System.Drawing.Drawing2D.AdjustableArrowCap::get_MiddleInset() -> System.Single
-M public System.Drawing.Drawing2D.AdjustableArrowCap::get_Width() -> System.Single
-M public System.Drawing.Drawing2D.AdjustableArrowCap::set_Filled(System.Boolean) -> System.Void
-M public System.Drawing.Drawing2D.AdjustableArrowCap::set_Height(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.AdjustableArrowCap::set_MiddleInset(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.AdjustableArrowCap::set_Width(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.CustomLineCap::.ctor(System.Drawing.Drawing2D.GraphicsPath, System.Drawing.Drawing2D.GraphicsPath)
-M public System.Drawing.Drawing2D.CustomLineCap::.ctor(System.Drawing.Drawing2D.GraphicsPath, System.Drawing.Drawing2D.GraphicsPath, System.Drawing.Drawing2D.LineCap)
-M public System.Drawing.Drawing2D.CustomLineCap::.ctor(System.Drawing.Drawing2D.GraphicsPath, System.Drawing.Drawing2D.GraphicsPath, System.Drawing.Drawing2D.LineCap, System.Single)
-M public System.Drawing.Drawing2D.CustomLineCap::Clone() -> System.Object
-M public System.Drawing.Drawing2D.CustomLineCap::Dispose() -> System.Void
-M public System.Drawing.Drawing2D.CustomLineCap::GetStrokeCaps(out System.Drawing.Drawing2D.LineCap, out System.Drawing.Drawing2D.LineCap) -> System.Void
-M public System.Drawing.Drawing2D.CustomLineCap::SetStrokeCaps(System.Drawing.Drawing2D.LineCap, System.Drawing.Drawing2D.LineCap) -> System.Void
-M public System.Drawing.Drawing2D.CustomLineCap::get_BaseCap() -> System.Drawing.Drawing2D.LineCap
-M public System.Drawing.Drawing2D.CustomLineCap::get_BaseInset() -> System.Single
-M public System.Drawing.Drawing2D.CustomLineCap::get_StrokeJoin() -> System.Drawing.Drawing2D.LineJoin
-M public System.Drawing.Drawing2D.CustomLineCap::get_WidthScale() -> System.Single
-M public System.Drawing.Drawing2D.CustomLineCap::set_BaseCap(System.Drawing.Drawing2D.LineCap) -> System.Void
-M public System.Drawing.Drawing2D.CustomLineCap::set_BaseInset(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.CustomLineCap::set_StrokeJoin(System.Drawing.Drawing2D.LineJoin) -> System.Void
-M public System.Drawing.Drawing2D.CustomLineCap::set_WidthScale(System.Single) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.Point, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.PointF, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.Rectangle, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Drawing2D.GraphicsPath::AddString(System.String, System.Drawing.FontFamily, System.Int32, System.Single, System.Drawing.RectangleF, System.Drawing.StringFormat) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Drawing2D.GraphicsPath)
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Drawing2D.WrapMode, System.ReadOnlySpan`1<System.Drawing.Point>)
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Drawing2D.WrapMode, System.ReadOnlySpan`1<System.Drawing.PointF>)
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.PointF[])
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.PointF[], System.Drawing.Drawing2D.WrapMode)
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Point[])
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.Drawing.Point[], System.Drawing.Drawing2D.WrapMode)
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.ReadOnlySpan`1<System.Drawing.Point>)
-M public System.Drawing.Drawing2D.PathGradientBrush::.ctor(System.ReadOnlySpan`1<System.Drawing.PointF>)
-M public System.Drawing.Drawing2D.PathGradientBrush::Clone() -> System.Object virtual
-M public System.Drawing.Drawing2D.PathGradientBrush::MultiplyTransform(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::MultiplyTransform(System.Drawing.Drawing2D.Matrix, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::ResetTransform() -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::RotateTransform(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::RotateTransform(System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::ScaleTransform(System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::ScaleTransform(System.Single, System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::SetBlendTriangularShape(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::SetBlendTriangularShape(System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::SetSigmaBellShape(System.Single) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::SetSigmaBellShape(System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::TranslateTransform(System.Single, System.Single) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::TranslateTransform(System.Single, System.Single, System.Drawing.Drawing2D.MatrixOrder) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::get_Blend() -> System.Drawing.Drawing2D.Blend
-M public System.Drawing.Drawing2D.PathGradientBrush::get_CenterColor() -> System.Drawing.Color
-M public System.Drawing.Drawing2D.PathGradientBrush::get_CenterPoint() -> System.Drawing.PointF
-M public System.Drawing.Drawing2D.PathGradientBrush::get_FocusScales() -> System.Drawing.PointF
-M public System.Drawing.Drawing2D.PathGradientBrush::get_InterpolationColors() -> System.Drawing.Drawing2D.ColorBlend
-M public System.Drawing.Drawing2D.PathGradientBrush::get_Rectangle() -> System.Drawing.RectangleF
-M public System.Drawing.Drawing2D.PathGradientBrush::get_SurroundColors() -> System.Drawing.Color[]
-M public System.Drawing.Drawing2D.PathGradientBrush::get_Transform() -> System.Drawing.Drawing2D.Matrix
-M public System.Drawing.Drawing2D.PathGradientBrush::get_WrapMode() -> System.Drawing.Drawing2D.WrapMode
-M public System.Drawing.Drawing2D.PathGradientBrush::set_Blend(System.Drawing.Drawing2D.Blend) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::set_CenterColor(System.Drawing.Color) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::set_CenterPoint(System.Drawing.PointF) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::set_FocusScales(System.Drawing.PointF) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::set_InterpolationColors(System.Drawing.Drawing2D.ColorBlend) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::set_SurroundColors(System.Drawing.Color[]) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::set_Transform(System.Drawing.Drawing2D.Matrix) -> System.Void
-M public System.Drawing.Drawing2D.PathGradientBrush::set_WrapMode(System.Drawing.Drawing2D.WrapMode) -> System.Void
 M public System.Drawing.Font::.ctor(System.Drawing.Font, System.Drawing.FontStyle)
 M public System.Drawing.Font::.ctor(System.Drawing.FontFamily, System.Single)
 M public System.Drawing.Font::.ctor(System.Drawing.FontFamily, System.Single, System.Drawing.FontStyle)
@@ -490,10 +421,6 @@ M public System.Drawing.Imaging.WmfPlaceableFileHeader::set_Inch(System.Int16) -
 M public System.Drawing.Imaging.WmfPlaceableFileHeader::set_Key(System.Int32) -> System.Void
 M public System.Drawing.Imaging.WmfPlaceableFileHeader::set_Reserved(System.Int32) -> System.Void
 M public System.Drawing.Interop.LOGFONT::get_lfFaceName() -> System.Span`1<System.Char>
-M public System.Drawing.Pen::get_CustomEndCap() -> System.Drawing.Drawing2D.CustomLineCap
-M public System.Drawing.Pen::get_CustomStartCap() -> System.Drawing.Drawing2D.CustomLineCap
-M public System.Drawing.Pen::set_CustomEndCap(System.Drawing.Drawing2D.CustomLineCap) -> System.Void
-M public System.Drawing.Pen::set_CustomStartCap(System.Drawing.Drawing2D.CustomLineCap) -> System.Void
 M public System.Drawing.Printing.InvalidPrinterException::.ctor(System.Drawing.Printing.PrinterSettings)
 M public System.Drawing.Printing.InvalidPrinterException::GetObjectData(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext) -> System.Void virtual
 M public System.Drawing.Printing.Margins::.ctor()
@@ -775,7 +702,6 @@ T abstract class System.Drawing.Printing.PrintController
 T abstract class System.Drawing.Text.FontCollection
 T class System.Drawing.BitmapSuffixInSameAssemblyAttribute : System.Attribute
 T class System.Drawing.BitmapSuffixInSatelliteAssemblyAttribute : System.Attribute
-T class System.Drawing.Drawing2D.CustomLineCap : System.MarshalByRefObject
 T class System.Drawing.FontConverter : System.ComponentModel.TypeConverter
 T class System.Drawing.FontConverter+FontUnitConverter : System.ComponentModel.EnumConverter
 T class System.Drawing.IconConverter : System.ComponentModel.ExpandableObjectConverter
@@ -824,8 +750,6 @@ T delegate System.Drawing.Printing.QueryPageSettingsEventHandler
 T sealed class System.Drawing.BufferedGraphics
 T sealed class System.Drawing.BufferedGraphicsContext
 T sealed class System.Drawing.Design.CategoryNameCollection : System.Collections.ReadOnlyCollectionBase
-T sealed class System.Drawing.Drawing2D.AdjustableArrowCap : System.Drawing.Drawing2D.CustomLineCap
-T sealed class System.Drawing.Drawing2D.PathGradientBrush : System.Drawing.Brush
 T sealed class System.Drawing.Font : System.MarshalByRefObject
 T sealed class System.Drawing.FontConverter+FontNameConverter : System.ComponentModel.TypeConverter
 T sealed class System.Drawing.FontFamily : System.MarshalByRefObject

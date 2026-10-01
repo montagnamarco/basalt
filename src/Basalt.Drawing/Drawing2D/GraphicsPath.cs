@@ -750,14 +750,7 @@ public sealed class GraphicsPath : MarshalByRefObject, ICloneable, IDisposable
     }
 
     /// <summary>The area a pen covers along a path, as a path to fill.</summary>
-    private static SKPath Outline(Pen pen, SKPath path)
-    {
-        using var paint = PenGeometry.StrokePaint(pen);
-        var outline = new SKPath();
-
-        paint.GetFillPath(path, outline);
-        return outline;
-    }
+    private static SKPath Outline(Pen pen, SKPath path) => PenGeometry.Outline(path, pen);
 
     private static SKMatrix QuadrilateralMapping(RectangleF source, PointF topLeft, PointF topRight, PointF bottomLeft, PointF bottomRight)
     {

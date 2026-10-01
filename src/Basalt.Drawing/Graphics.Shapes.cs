@@ -26,9 +26,7 @@ public sealed partial class Graphics
         ArgumentNullException.ThrowIfNull(pen);
 
         using var path = OpenPath(points);
-        using var paint = Stroke(pen);
-        using var aligned = AlignToPixels();
-        _canvas.DrawPath(path, paint);
+        StrokeOpen(path, pen);
     }
 
     public void DrawRectangles(Pen pen, RectangleF[] rects) => DrawRectangles(pen, (ReadOnlySpan<RectangleF>)RequirePoints(rects));
@@ -101,9 +99,8 @@ public sealed partial class Graphics
     {
         ArgumentNullException.ThrowIfNull(pen);
 
-        using var paint = Stroke(pen);
-        using var aligned = AlignToPixels();
-        _canvas.DrawArc(new RectangleF(x, y, width, height).ToSkia(), startAngle, sweepAngle, useCenter: false, paint);
+        using var path = ArcPath(x, y, width, height, startAngle, sweepAngle, pie: false);
+        StrokeOpen(path, pen);
     }
 
     public void DrawPie(Pen pen, Rectangle rect, float startAngle, float sweepAngle) => DrawPie(pen, (float)rect.X, rect.Y, rect.Width, rect.Height, startAngle, sweepAngle);
@@ -118,7 +115,8 @@ public sealed partial class Graphics
 
         using var paint = Stroke(pen);
         using var aligned = AlignToPixels();
-        _canvas.DrawArc(new RectangleF(x, y, width, height).ToSkia(), startAngle, sweepAngle, useCenter: true, paint);
+        using var pie = ArcPath(x, y, width, height, startAngle, sweepAngle, pie: true);
+        _canvas.DrawPath(pie, paint);
     }
 
     public void FillPie(Brush brush, Rectangle rect, float startAngle, float sweepAngle) => FillPie(brush, (float)rect.X, rect.Y, rect.Width, rect.Height, startAngle, sweepAngle);
@@ -133,7 +131,8 @@ public sealed partial class Graphics
 
         using var paint = Fill(brush);
         using var aligned = AlignToPixels();
-        _canvas.DrawArc(new RectangleF(x, y, width, height).ToSkia(), startAngle, sweepAngle, useCenter: true, paint);
+        using var pie = ArcPath(x, y, width, height, startAngle, sweepAngle, pie: true);
+        _canvas.DrawPath(pie, paint);
     }
 
     public void DrawPolygon(Pen pen, PointF[] points) => DrawPolygon(pen, (ReadOnlySpan<PointF>)RequirePoints(points));
@@ -190,9 +189,7 @@ public sealed partial class Graphics
         path.MoveTo(x1, y1);
         path.CubicTo(x2, y2, x3, y3, x4, y4);
 
-        using var paint = Stroke(pen);
-        using var aligned = AlignToPixels();
-        _canvas.DrawPath(path, paint);
+        StrokeOpen(path, pen);
     }
 
     public void DrawBeziers(Pen pen, PointF[] points) => DrawBeziers(pen, (ReadOnlySpan<PointF>)RequirePoints(points));
@@ -213,9 +210,7 @@ public sealed partial class Graphics
         path.MoveTo(points[0].ToSkia());
         for (var i = 1; i < points.Length; i += 3) path.CubicTo(points[i].ToSkia(), points[i + 1].ToSkia(), points[i + 2].ToSkia());
 
-        using var paint = Stroke(pen);
-        using var aligned = AlignToPixels();
-        _canvas.DrawPath(path, paint);
+        StrokeOpen(path, pen);
     }
 
     public void DrawCurve(Pen pen, PointF[] points) => DrawCurve(pen, points, 0, RequirePoints(points).Length - 1, DefaultTension);
@@ -254,9 +249,7 @@ public sealed partial class Graphics
         ArgumentNullException.ThrowIfNull(pen);
 
         using var path = OpenCurvePath(points, offset, numberOfSegments, tension);
-        using var paint = Stroke(pen);
-        using var aligned = AlignToPixels();
-        _canvas.DrawPath(path, paint);
+        StrokeOpen(path, pen);
     }
 
     public void DrawClosedCurve(Pen pen, PointF[] points) => DrawClosedCurve(pen, (ReadOnlySpan<PointF>)RequirePoints(points));
@@ -419,5 +412,37 @@ public sealed partial class Graphics
         for (var i = 0; i < rects.Length; i++) result[i] = new RectangleF(rects[i].X, rects[i].Y, rects[i].Width, rects[i].Height);
 
         return result;
+    }
+
+    /// <summary>
+    /// An arc, or a pie closed through the centre, with GDI+'s geometry: the
+    /// angles measured on the ellipse, as GraphicsPath.AddArc does, so that a
+    /// drawn arc and the same arc added to a path coincide.
+    /// </summary>
+    private static SKPath ArcPath(float x, float y, float width, float height, float startAngle, float sweepAngle, bool pie)
+    {
+        var arc = PathGeometry.Arc(x, y, width, height, startAngle, sweepAngle);
+        var path = new SKPath();
+
+        if (arc.Count == 0) return path;
+
+        if (pie)
+        {
+            path.MoveTo(x + width / 2, y + height / 2);
+            path.LineTo(arc[0].ToSkia());
+        }
+        else
+        {
+            path.MoveTo(arc[0].ToSkia());
+        }
+
+        for (var i = 1; i + 2 < arc.Count; i += 3)
+        {
+            path.CubicTo(arc[i].ToSkia(), arc[i + 1].ToSkia(), arc[i + 2].ToSkia());
+        }
+
+        if (pie) path.Close();
+
+        return path;
     }
 }

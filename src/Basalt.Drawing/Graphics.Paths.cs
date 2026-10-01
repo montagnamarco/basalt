@@ -19,9 +19,7 @@ public sealed partial class Graphics
         ArgumentNullException.ThrowIfNull(path);
 
         using var shape = path.ToSkia();
-        using var paint = Stroke(pen);
-        using var aligned = AlignToPixels();
-        _canvas.DrawPath(shape, paint);
+        StrokeOpen(shape, pen);
     }
 
     public void FillPath(Brush brush, GraphicsPath path)

@@ -24,6 +24,8 @@ public sealed class Pen : MarshalByRefObject, ICloneable, IDisposable
     private DashStyle _dashStyle = DashStyle.Solid;
     private LineCap _startCap = LineCap.Flat;
     private LineCap _endCap = LineCap.Flat;
+    private CustomLineCap? _customStartCap;
+    private CustomLineCap? _customEndCap;
     private LineJoin _lineJoin = LineJoin.Miter;
     private float _miterLimit = 10f;
 
@@ -119,6 +121,38 @@ public sealed class Pen : MarshalByRefObject, ICloneable, IDisposable
             _alignment = value;
         }
     }
+
+    /// <summary>A cap drawn from a path; setting one makes StartCap Custom.</summary>
+    public CustomLineCap CustomStartCap
+    {
+        get => (CustomLineCap)(_customStartCap ?? throw new ArgumentException("Parameter is not valid.")).Clone();
+        set
+        {
+            CheckNotShared();
+            ArgumentNullException.ThrowIfNull(value);
+
+            _customStartCap = (CustomLineCap)value.Clone();
+            _startCap = LineCap.Custom;
+        }
+    }
+
+    /// <summary>A cap drawn from a path; setting one makes EndCap Custom.</summary>
+    public CustomLineCap CustomEndCap
+    {
+        get => (CustomLineCap)(_customEndCap ?? throw new ArgumentException("Parameter is not valid.")).Clone();
+        set
+        {
+            CheckNotShared();
+            ArgumentNullException.ThrowIfNull(value);
+
+            _customEndCap = (CustomLineCap)value.Clone();
+            _endCap = LineCap.Custom;
+        }
+    }
+
+    internal CustomLineCap? CustomStartCapOrNull => _customStartCap;
+
+    internal CustomLineCap? CustomEndCapOrNull => _customEndCap;
 
     /// <summary>
     /// The relative widths, each between 0 and 1, of the alternating opaque
@@ -358,6 +392,8 @@ public sealed class Pen : MarshalByRefObject, ICloneable, IDisposable
         clone._dashStyle = _dashStyle;
         clone._startCap = _startCap;
         clone._endCap = _endCap;
+        clone._customStartCap = (CustomLineCap?)_customStartCap?.Clone();
+        clone._customEndCap = (CustomLineCap?)_customEndCap?.Clone();
         clone._lineJoin = _lineJoin;
         clone._miterLimit = _miterLimit;
         clone._transform = _transform;

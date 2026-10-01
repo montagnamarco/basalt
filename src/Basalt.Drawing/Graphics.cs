@@ -68,9 +68,11 @@ public sealed partial class Graphics : MarshalByRefObject, IDeviceContext, IDisp
     {
         ArgumentNullException.ThrowIfNull(pen);
 
-        using var paint = Stroke(pen);
-        using var aligned = AlignToPixels();
-        _canvas.DrawLine(x1, y1, x2, y2, paint);
+        using var line = new SKPath();
+        line.MoveTo(x1, y1);
+        line.LineTo(x2, y2);
+
+        StrokeOpen(line, pen);
     }
 
     public void DrawRectangle(Pen pen, Rectangle rect) => DrawRectangle(pen, (float)rect.X, rect.Y, rect.Width, rect.Height);
@@ -198,6 +200,30 @@ public sealed partial class Graphics : MarshalByRefObject, IDeviceContext, IDisp
     private bool IsSmooth => SmoothingMode is SmoothingMode.AntiAlias or SmoothingMode.HighQuality;
 
     private SKBlendMode BlendMode => CompositingMode == CompositingMode.SourceCopy ? SKBlendMode.Src : SKBlendMode.SrcOver;
+
+    /// <summary>
+    /// Strokes a figure that may be open, giving its ends the caps the pen
+    /// asks for. Skia draws the plain cases itself; any other pen becomes one
+    /// outline filled once, so that a translucent pen is not darker where a
+    /// cap overlaps the line.
+    /// </summary>
+    private void StrokeOpen(SKPath path, Pen pen)
+    {
+        if (!PenGeometry.NeedsCapGeometry(pen))
+        {
+            using var paint = Stroke(pen);
+            using var aligned = AlignToPixels();
+            _canvas.DrawPath(path, paint);
+            return;
+        }
+
+        using var outline = PenGeometry.Outline(path, pen);
+
+        // Not disposed: Pen.Brush hands back the caller's own brush when it has one.
+        using var fill = Fill(pen.Brush);
+        using var alignedOutline = AlignToPixels();
+        _canvas.DrawPath(outline, fill);
+    }
 
     private SKPaint Stroke(Pen pen)
     {
