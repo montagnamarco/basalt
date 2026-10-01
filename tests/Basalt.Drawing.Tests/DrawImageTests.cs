@@ -183,6 +183,103 @@ public class DrawImageTests
         Assert.Throws<ArgumentException>(() => graphics.DrawImage(image, new Rectangle(0, 0, 2, 2), new Rectangle(0, 0, 0, 1), GraphicsUnit.Pixel));
     }
 
+    /// <summary>
+    /// The colour matrix of ImageAttributes reaches the drawing: one that
+    /// swaps red and blue turns the red pixel blue.
+    /// </summary>
+    [Fact]
+    public void Image_attributes_adjust_the_colours_of_the_drawn_image()
+    {
+        using var image = MakeSource();
+        using var target = new Bitmap(3, 2);
+        using var attributes = new System.Drawing.Imaging.ImageAttributes();
+        attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix(
+        [
+            [0, 0, 1, 0, 0],
+            [0, 1, 0, 0, 0],
+            [1, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1],
+        ]));
+
+        using (var graphics = Graphics.FromImage(target))
+        {
+            graphics.DrawImage(image, new Rectangle(0, 0, 3, 2), 0, 0, 3, 2, GraphicsUnit.Pixel, attributes);
+        }
+
+        Assert.Equal(Color.Blue.ToArgb(), target.GetPixel(0, 0).ToArgb());
+        Assert.Equal(Color.Red.ToArgb(), target.GetPixel(2, 0).ToArgb());
+        Assert.Equal(Color.Lime.ToArgb(), target.GetPixel(1, 0).ToArgb());
+    }
+
+    [Fact]
+    public void A_colour_key_makes_its_colour_transparent()
+    {
+        using var image = MakeSource();
+        using var target = new Bitmap(3, 2);
+        using var attributes = new System.Drawing.Imaging.ImageAttributes();
+        attributes.SetColorKey(Color.Lime, Color.Lime);
+
+        using (var graphics = Graphics.FromImage(target))
+        {
+            graphics.DrawImage(image, new Rectangle(0, 0, 3, 2), 0, 0, 3, 2, GraphicsUnit.Pixel, attributes);
+        }
+
+        Assert.Equal(0, target.GetPixel(1, 0).A);
+        Assert.Equal(Color.Red.ToArgb(), target.GetPixel(0, 0).ToArgb());
+    }
+
+    [Fact]
+    public void An_abort_callback_that_answers_true_stops_the_drawing()
+    {
+        using var image = MakeSource();
+        using var target = new Bitmap(3, 2);
+        var asked = 0;
+
+        using (var graphics = Graphics.FromImage(target))
+        {
+            graphics.DrawImage(image, new Rectangle(0, 0, 3, 2), 0, 0, 3, 2, GraphicsUnit.Pixel, null, _ => ++asked > 0);
+        }
+
+        Assert.Equal(1, asked);
+        Assert.Equal(0, target.GetPixel(0, 0).A);
+    }
+
+    [Theory]
+    [InlineData(System.Drawing.Drawing2D.WrapMode.Tile, "Red")]
+    [InlineData(System.Drawing.Drawing2D.WrapMode.TileFlipX, "Blue")]
+    public void A_source_reaching_past_the_image_wraps_as_ImageAttributes_says(System.Drawing.Drawing2D.WrapMode mode, string fourthColumn)
+    {
+        using var image = MakeSource();
+        using var target = new Bitmap(6, 2);
+        using var attributes = new System.Drawing.Imaging.ImageAttributes();
+        attributes.SetWrapMode(mode);
+
+        using (var graphics = Graphics.FromImage(target))
+        {
+            graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+            graphics.DrawImage(image, new Rectangle(0, 0, 6, 2), 0, 0, 6, 2, GraphicsUnit.Pixel, attributes);
+        }
+
+        Assert.Equal(Color.FromName(fourthColumn).ToArgb(), target.GetPixel(3, 0).ToArgb());
+    }
+
+    [Fact]
+    public void Without_a_wrap_mode_nothing_is_drawn_past_the_image()
+    {
+        using var image = MakeSource();
+        using var target = new Bitmap(6, 2);
+
+        using (var graphics = Graphics.FromImage(target))
+        {
+            graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+            graphics.DrawImage(image, new Rectangle(0, 0, 6, 2), 0, 0, 6, 2, GraphicsUnit.Pixel);
+        }
+
+        Assert.Equal(Color.Red.ToArgb(), target.GetPixel(0, 0).ToArgb());
+        Assert.Equal(0, target.GetPixel(4, 0).A);
+    }
+
     private static Bitmap MakeSource()
     {
         var image = new Bitmap(3, 2);

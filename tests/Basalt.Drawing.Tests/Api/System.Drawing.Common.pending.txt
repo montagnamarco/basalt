@@ -24,8 +24,6 @@ I System.Drawing.Font : System.Runtime.Serialization.ISerializable
 I System.Drawing.FontConverter+FontNameConverter : System.IDisposable
 I System.Drawing.FontFamily : System.IDisposable
 I System.Drawing.Imaging.CachedBitmap : System.IDisposable
-I System.Drawing.Imaging.ImageAttributes : System.ICloneable
-I System.Drawing.Imaging.ImageAttributes : System.IDisposable
 I System.Drawing.Printing.Margins : System.ICloneable
 I System.Drawing.Printing.PageSettings : System.ICloneable
 I System.Drawing.Printing.PrinterSettings : System.ICloneable
@@ -47,7 +45,6 @@ M protected System.Drawing.Drawing2D.CustomLineCap::Finalize() -> System.Void vi
 M protected System.Drawing.Font::Finalize() -> System.Void virtual
 M protected System.Drawing.FontFamily::Finalize() -> System.Void virtual
 M protected System.Drawing.Imaging.CachedBitmap::Finalize() -> System.Void virtual
-M protected System.Drawing.Imaging.ImageAttributes::Finalize() -> System.Void virtual
 M protected System.Drawing.Printing.InvalidPrinterException::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
 M protected System.Drawing.Printing.PrintController::.ctor()
 M protected System.Drawing.Printing.PrintDocument::OnBeginPrint(System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
@@ -249,19 +246,6 @@ M public System.Drawing.Graphics+EnumerateMetafileProc::EndInvoke(System.IAsyncR
 M public System.Drawing.Graphics+EnumerateMetafileProc::Invoke(System.Drawing.Imaging.EmfPlusRecordType, System.Int32, System.Int32, System.IntPtr, System.Drawing.Imaging.PlayRecordCallback) -> System.Boolean virtual
 M public System.Drawing.Graphics::AddMetafileComment(System.Byte[]) -> System.Void
 M public System.Drawing.Graphics::DrawCachedBitmap(System.Drawing.Imaging.CachedBitmap, System.Int32, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Imaging.Effects.Effect, System.Drawing.RectangleF, System.Drawing.Drawing2D.Matrix, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.PointF[], System.Drawing.RectangleF, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[], System.Drawing.Rectangle, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[], System.Drawing.Rectangle, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Point[], System.Drawing.Rectangle, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.Int32) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Int32, System.Int32, System.Int32, System.Int32, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.IntPtr) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Single, System.Single, System.Single, System.Single, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Single, System.Single, System.Single, System.Single, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort) -> System.Void
-M public System.Drawing.Graphics::DrawImage(System.Drawing.Image, System.Drawing.Rectangle, System.Single, System.Single, System.Single, System.Single, System.Drawing.GraphicsUnit, System.Drawing.Imaging.ImageAttributes, System.Drawing.Graphics+DrawImageAbort, System.IntPtr) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.PointF) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.PointF, System.Drawing.StringFormat) -> System.Void
 M public System.Drawing.Graphics::DrawString(System.ReadOnlySpan`1<System.Char>, System.Drawing.Font, System.Drawing.Brush, System.Drawing.RectangleF) -> System.Void
@@ -353,66 +337,6 @@ M public System.Drawing.ImageFormatConverter::GetStandardValues(System.Component
 M public System.Drawing.ImageFormatConverter::GetStandardValuesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
 M public System.Drawing.Imaging.CachedBitmap::.ctor(System.Drawing.Bitmap, System.Drawing.Graphics)
 M public System.Drawing.Imaging.CachedBitmap::Dispose() -> System.Void
-M public System.Drawing.Imaging.ColorMap::.ctor()
-M public System.Drawing.Imaging.ColorMap::get_NewColor() -> System.Drawing.Color
-M public System.Drawing.Imaging.ColorMap::get_OldColor() -> System.Drawing.Color
-M public System.Drawing.Imaging.ColorMap::set_NewColor(System.Drawing.Color) -> System.Void
-M public System.Drawing.Imaging.ColorMap::set_OldColor(System.Drawing.Color) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::.ctor()
-M public System.Drawing.Imaging.ColorMatrix::.ctor(System.ReadOnlySpan`1<System.Single>)
-M public System.Drawing.Imaging.ColorMatrix::.ctor(System.Single[][])
-M public System.Drawing.Imaging.ColorMatrix::get_Item(System.Int32, System.Int32) -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix00() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix01() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix02() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix03() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix04() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix10() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix11() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix12() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix13() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix14() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix20() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix21() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix22() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix23() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix24() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix30() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix31() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix32() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix33() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix34() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix40() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix41() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix42() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix43() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::get_Matrix44() -> System.Single
-M public System.Drawing.Imaging.ColorMatrix::set_Item(System.Int32, System.Int32, System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix00(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix01(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix02(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix03(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix04(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix10(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix11(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix12(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix13(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix14(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix20(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix21(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix22(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix23(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix24(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix30(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix31(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix32(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix33(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix34(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix40(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix41(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix42(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix43(System.Single) -> System.Void
-M public System.Drawing.Imaging.ColorMatrix::set_Matrix44(System.Single) -> System.Void
 M public System.Drawing.Imaging.Effects.BlackSaturationCurveEffect::.ctor(System.Drawing.Imaging.Effects.CurveChannel, System.Int32)
 M public System.Drawing.Imaging.Effects.BlackSaturationCurveEffect::get_BlackSaturation() -> System.Int32
 M public System.Drawing.Imaging.Effects.BlurEffect::.ctor(System.Single, System.Boolean)
@@ -463,57 +387,6 @@ M public System.Drawing.Imaging.Effects.TintEffect::get_Hue() -> System.Int32
 M public System.Drawing.Imaging.Effects.VividEffect::.ctor()
 M public System.Drawing.Imaging.Effects.WhiteSaturationCurveEffect::.ctor(System.Drawing.Imaging.Effects.CurveChannel, System.Int32)
 M public System.Drawing.Imaging.Effects.WhiteSaturationCurveEffect::get_WhiteSaturation() -> System.Int32
-M public System.Drawing.Imaging.ImageAttributes::.ctor()
-M public System.Drawing.Imaging.ImageAttributes::ClearBrushRemapTable() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearColorKey() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearColorKey(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearColorMatrix() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearColorMatrix(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearGamma() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearGamma(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearNoOp() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearNoOp(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearOutputChannel() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearOutputChannel(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearOutputChannelColorProfile() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearOutputChannelColorProfile(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearRemapTable() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearRemapTable(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearThreshold() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::ClearThreshold(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::Clone() -> System.Object
-M public System.Drawing.Imaging.ImageAttributes::Dispose() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::GetAdjustedPalette(System.Drawing.Imaging.ColorPalette, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetBrushRemapTable(System.Drawing.Imaging.ColorMap[]) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetBrushRemapTable(System.ReadOnlySpan`1<System.Drawing.Imaging.ColorMap>) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetBrushRemapTable(System.ReadOnlySpan`1<System.ValueTuple`2<System.Drawing.Color, System.Drawing.Color>>) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorKey(System.Drawing.Color, System.Drawing.Color) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorKey(System.Drawing.Color, System.Drawing.Color, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorMatrices(System.Drawing.Imaging.ColorMatrix, System.Drawing.Imaging.ColorMatrix) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorMatrices(System.Drawing.Imaging.ColorMatrix, System.Drawing.Imaging.ColorMatrix, System.Drawing.Imaging.ColorMatrixFlag) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorMatrices(System.Drawing.Imaging.ColorMatrix, System.Drawing.Imaging.ColorMatrix, System.Drawing.Imaging.ColorMatrixFlag, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorMatrix(System.Drawing.Imaging.ColorMatrix) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorMatrix(System.Drawing.Imaging.ColorMatrix, System.Drawing.Imaging.ColorMatrixFlag) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetColorMatrix(System.Drawing.Imaging.ColorMatrix, System.Drawing.Imaging.ColorMatrixFlag, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetGamma(System.Single) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetGamma(System.Single, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetNoOp() -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetNoOp(System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetOutputChannel(System.Drawing.Imaging.ColorChannelFlag) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetOutputChannel(System.Drawing.Imaging.ColorChannelFlag, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetOutputChannelColorProfile(System.String) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetOutputChannelColorProfile(System.String, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetRemapTable(System.Drawing.Imaging.ColorAdjustType, System.ReadOnlySpan`1<System.Drawing.Imaging.ColorMap>) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetRemapTable(System.Drawing.Imaging.ColorAdjustType, System.ReadOnlySpan`1<System.ValueTuple`2<System.Drawing.Color, System.Drawing.Color>>) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetRemapTable(System.Drawing.Imaging.ColorMap[]) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetRemapTable(System.Drawing.Imaging.ColorMap[], System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetRemapTable(System.ReadOnlySpan`1<System.Drawing.Imaging.ColorMap>) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetRemapTable(System.ReadOnlySpan`1<System.ValueTuple`2<System.Drawing.Color, System.Drawing.Color>>) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetThreshold(System.Single) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetThreshold(System.Single, System.Drawing.Imaging.ColorAdjustType) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetWrapMode(System.Drawing.Drawing2D.WrapMode) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetWrapMode(System.Drawing.Drawing2D.WrapMode, System.Drawing.Color) -> System.Void
-M public System.Drawing.Imaging.ImageAttributes::SetWrapMode(System.Drawing.Drawing2D.WrapMode, System.Drawing.Color, System.Boolean) -> System.Void
 M public System.Drawing.Imaging.MetaHeader::.ctor()
 M public System.Drawing.Imaging.MetaHeader::get_HeaderSize() -> System.Int16
 M public System.Drawing.Imaging.MetaHeader::get_MaxRecord() -> System.Int32
@@ -958,13 +831,10 @@ T sealed class System.Drawing.FontConverter+FontNameConverter : System.Component
 T sealed class System.Drawing.FontFamily : System.MarshalByRefObject
 T sealed class System.Drawing.ImageAnimator
 T sealed class System.Drawing.Imaging.CachedBitmap
-T sealed class System.Drawing.Imaging.ColorMap
-T sealed class System.Drawing.Imaging.ColorMatrix
 T sealed class System.Drawing.Imaging.Effects.GrayScaleEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
 T sealed class System.Drawing.Imaging.Effects.InvertEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
 T sealed class System.Drawing.Imaging.Effects.SepiaEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
 T sealed class System.Drawing.Imaging.Effects.VividEffect : System.Drawing.Imaging.Effects.ColorMatrixEffect
-T sealed class System.Drawing.Imaging.ImageAttributes
 T sealed class System.Drawing.Imaging.MetaHeader
 T sealed class System.Drawing.Imaging.Metafile : System.Drawing.Image
 T sealed class System.Drawing.Imaging.MetafileHeader

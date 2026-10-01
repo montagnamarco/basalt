@@ -94,6 +94,58 @@ public sealed partial class Graphics
     public void DrawImage(Image image, Rectangle destRect, float srcX, float srcY, float srcWidth, float srcHeight, GraphicsUnit srcUnit) =>
         DrawImage(image, (RectangleF)destRect, new RectangleF(srcX, srcY, srcWidth, srcHeight), srcUnit);
 
+    public void DrawImage(Image image, Point[] destPoints, Rectangle srcRect, GraphicsUnit srcUnit, ImageAttributes? imageAttr) =>
+        DrawImage(image, ToPointFArray(destPoints), (RectangleF)srcRect, srcUnit, imageAttr, null, 0);
+
+    public void DrawImage(Image image, Point[] destPoints, Rectangle srcRect, GraphicsUnit srcUnit, ImageAttributes? imageAttr, DrawImageAbort? callback) =>
+        DrawImage(image, ToPointFArray(destPoints), (RectangleF)srcRect, srcUnit, imageAttr, callback, 0);
+
+    public void DrawImage(Image image, Point[] destPoints, Rectangle srcRect, GraphicsUnit srcUnit, ImageAttributes? imageAttr, DrawImageAbort? callback, int callbackData) =>
+        DrawImage(image, ToPointFArray(destPoints), (RectangleF)srcRect, srcUnit, imageAttr, callback, callbackData);
+
+    public void DrawImage(Image image, PointF[] destPoints, RectangleF srcRect, GraphicsUnit srcUnit, ImageAttributes? imageAttr) =>
+        DrawImage(image, destPoints, srcRect, srcUnit, imageAttr, null, 0);
+
+    public void DrawImage(Image image, PointF[] destPoints, RectangleF srcRect, GraphicsUnit srcUnit, ImageAttributes? imageAttr, DrawImageAbort? callback) =>
+        DrawImage(image, destPoints, srcRect, srcUnit, imageAttr, callback, 0);
+
+    public void DrawImage(Image image, PointF[] destPoints, RectangleF srcRect, GraphicsUnit srcUnit, ImageAttributes? imageAttr, DrawImageAbort? callback, int callbackData)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        if (Aborted(callback, callbackData)) return;
+
+        DrawWithAttributes(image, Parallelogram(destPoints), SourceInPixels(image, srcRect, srcUnit), imageAttr);
+    }
+
+    public void DrawImage(Image image, Rectangle destRect, int srcX, int srcY, int srcWidth, int srcHeight, GraphicsUnit srcUnit, ImageAttributes? imageAttr) =>
+        DrawImage(image, destRect, (float)srcX, srcY, srcWidth, srcHeight, srcUnit, imageAttr, null, IntPtr.Zero);
+
+    public void DrawImage(Image image, Rectangle destRect, int srcX, int srcY, int srcWidth, int srcHeight, GraphicsUnit srcUnit, ImageAttributes? imageAttr, DrawImageAbort? callback) =>
+        DrawImage(image, destRect, (float)srcX, srcY, srcWidth, srcHeight, srcUnit, imageAttr, callback, IntPtr.Zero);
+
+    public void DrawImage(Image image, Rectangle destRect, int srcX, int srcY, int srcWidth, int srcHeight, GraphicsUnit srcUnit, ImageAttributes? imageAttrs, DrawImageAbort? callback, IntPtr callbackData) =>
+        DrawImage(image, destRect, (float)srcX, srcY, srcWidth, srcHeight, srcUnit, imageAttrs, callback, callbackData);
+
+    public void DrawImage(Image image, Rectangle destRect, float srcX, float srcY, float srcWidth, float srcHeight, GraphicsUnit srcUnit, ImageAttributes? imageAttrs) =>
+        DrawImage(image, destRect, srcX, srcY, srcWidth, srcHeight, srcUnit, imageAttrs, null, IntPtr.Zero);
+
+    public void DrawImage(Image image, Rectangle destRect, float srcX, float srcY, float srcWidth, float srcHeight, GraphicsUnit srcUnit, ImageAttributes? imageAttrs, DrawImageAbort? callback) =>
+        DrawImage(image, destRect, srcX, srcY, srcWidth, srcHeight, srcUnit, imageAttrs, callback, IntPtr.Zero);
+
+    public void DrawImage(Image image, Rectangle destRect, float srcX, float srcY, float srcWidth, float srcHeight, GraphicsUnit srcUnit, ImageAttributes? imageAttrs, DrawImageAbort? callback, IntPtr callbackData)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        if (Aborted(callback, callbackData)) return;
+
+        var source = SourceInPixels(image, new RectangleF(srcX, srcY, srcWidth, srcHeight), srcUnit);
+        DrawWithAttributes(image, Corners(destRect), source, imageAttrs);
+    }
+
+    public void DrawImage(Image image, Effect effect, RectangleF srcRect = default, Matrix? transform = null, GraphicsUnit srcUnit = GraphicsUnit.Pixel, ImageAttributes? imageAttr = null) =>
+        throw new NotImplementedException("Drawing an image through a bitmap Effect is not implemented.");
+
     public void DrawImage(Image image, Effect effect) =>
         throw new NotImplementedException("Drawing an image through a bitmap Effect is not implemented.");
 
@@ -170,6 +222,23 @@ public sealed partial class Graphics
 
     public static Graphics FromHwndInternal(IntPtr hwnd) => throw new PlatformNotSupportedException(Unsupported.NativeHandles);
 
+    /// <summary>
+    /// GDI+ asks the callback while it draws, so that a slow drawing can be
+    /// stopped; drawing here is one call, so it is asked once, before.
+    /// </summary>
+    private static bool Aborted(DrawImageAbort? callback, IntPtr callbackData) => callback is not null && callback(callbackData);
+
+    /// <summary>
+    /// The colour adjustments of ImageAttributes for bitmaps, then the
+    /// drawing. GDI+ applies the Bitmap category to DrawImage.
+    /// </summary>
+    private void DrawWithAttributes(Image image, (PointF, PointF, PointF) destination, RectangleF source, ImageAttributes? attributes)
+    {
+        using var filter = attributes?.ToColorFilter(ColorAdjustType.Bitmap);
+
+        DrawImageCore(image, destination, source, filter, attributes?.Wrap);
+    }
+
     private const string ScreenCapture =
         "Basalt.Drawing does not read the screen: capturing it needs the system's own permission and API on each platform.";
 
@@ -177,14 +246,14 @@ public sealed partial class Graphics
     /// Draws a rectangle of the image, in its pixels, onto three corners of
     /// the destination. The colour filter comes from ImageAttributes.
     /// </summary>
-    private void DrawImageCore(Image image, (PointF UpperLeft, PointF UpperRight, PointF LowerLeft) destination, RectangleF source, SKColorFilter? filter)
+    private void DrawImageCore(Image image, (PointF UpperLeft, PointF UpperRight, PointF LowerLeft) destination, RectangleF source, SKColorFilter? filter, (WrapMode Mode, Color Color)? wrap = null)
     {
         if (image is not Bitmap) throw new NotImplementedException("Drawing a metafile is not implemented: only bitmaps are.");
 
-        DrawPixels(image.Pixels, destination, source, filter);
+        DrawPixels(image.Pixels, destination, source, filter, wrap);
     }
 
-    private void DrawPixels(SKBitmap bitmap, (PointF UpperLeft, PointF UpperRight, PointF LowerLeft) destination, RectangleF source, SKColorFilter? filter)
+    private void DrawPixels(SKBitmap bitmap, (PointF UpperLeft, PointF UpperRight, PointF LowerLeft) destination, RectangleF source, SKColorFilter? filter, (WrapMode Mode, Color Color)? wrap = null)
     {
         // GDI+ answers InvalidParameter for a source with no pixels in it.
         if (source.Width <= 0 || source.Height <= 0) throw new ArgumentException("Parameter is not valid.");
@@ -220,7 +289,38 @@ public sealed partial class Graphics
         _canvas.Concat(mapping.ToSkia());
 
         var rect = new SKRect(source.Left, source.Top, source.Right, source.Bottom);
+
+        if (TileModes(wrap) is { } tiles)
+        {
+            // Outside the image the picture repeats or mirrors, so the source
+            // rectangle may reach past its edges.
+            paint.Shader = picture.ToShader(tiles.X, tiles.Y, sampling);
+            _canvas.DrawRect(rect, paint);
+            return;
+        }
+
         _canvas.DrawImage(picture, rect, rect, sampling, paint);
+    }
+
+    /// <summary>
+    /// The tiling ImageAttributes.SetWrapMode asks for; null for GDI+'s own
+    /// behaviour, Clamp to transparency, where nothing lies outside the image.
+    /// </summary>
+    private static (SKShaderTileMode X, SKShaderTileMode Y)? TileModes((WrapMode Mode, Color Color)? wrap)
+    {
+        if (wrap is not { } settings) return null;
+
+        var (mode, colour) = settings;
+
+        return mode switch
+        {
+            WrapMode.Tile => (SKShaderTileMode.Repeat, SKShaderTileMode.Repeat),
+            WrapMode.TileFlipX => (SKShaderTileMode.Mirror, SKShaderTileMode.Repeat),
+            WrapMode.TileFlipY => (SKShaderTileMode.Repeat, SKShaderTileMode.Mirror),
+            WrapMode.TileFlipXY => (SKShaderTileMode.Mirror, SKShaderTileMode.Mirror),
+            WrapMode.Clamp when colour.A == 0 => null,
+            _ => throw new NotImplementedException("WrapMode.Clamp with a border colour that is not transparent is not implemented."),
+        };
     }
 
     /// <summary>
