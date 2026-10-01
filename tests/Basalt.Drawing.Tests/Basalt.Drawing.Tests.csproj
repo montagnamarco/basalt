@@ -23,6 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The same drawings the Windows generator makes, drawn here with Basalt.Drawing. -->
+    <Compile Include="..\Basalt.Drawing.Goldens\Scenarios.cs" Link="Goldens\Scenarios.cs" />
+    <None Include="Goldens\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- What SkiaVersionTests compares: the versions this build was given and where NuGet keeps packages. -->
     <AssemblyMetadata Include="AvaloniaVersion" Value="$(AvaloniaVersion)" />
     <AssemblyMetadata Include="SkiaSharpVersion" Value="$(SkiaSharpVersion)" />

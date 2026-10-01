@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Draws the scenarios of Scenarios.cs with Microsoft's own System.Drawing on
+    Windows and writes the pixels and the text measurements the tests of
+    Basalt.Drawing compare against. Runs only on Windows; on other systems it
+    compiles, for the solution's build, and does nothing.
+
+    System.Drawing.Common comes from the Windows desktop framework that
+    UseWindowsForms brings, not from a NuGet package.
+
+    To make the executable for a Windows machine or virtual machine, publish
+    this project for win-x64, self-contained and as a single file, into
+    artifacts/goldens (the exact command is in tests/Basalt.Drawing.Goldens/README.md),
+    and run Basalt.Drawing.Goldens.exe there. It writes next
+    to itself, into a folder named goldens.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>
