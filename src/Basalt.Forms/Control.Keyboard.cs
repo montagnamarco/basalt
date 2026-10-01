@@ -181,6 +181,13 @@ public partial class Control
             if (arguments.SuppressKeyPress) FormsInputState.SuppressNextCharacter = true;
 
             if (!arguments.Handled) DefaultKeyDown(arguments);
+
+            // An F1 nothing handled becomes a help request, as Windows turns it into WM_HELP for the focused window.
+            if (!arguments.Handled && keyData == Keys.F1)
+            {
+                RaiseHelpRequested(new HelpEventArgs(MousePosition));
+                arguments.Handled = true;
+            }
         }
         else
         {

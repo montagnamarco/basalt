@@ -128,14 +128,11 @@ I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDat
 I System.Windows.Forms.DataObject : System.Windows.Forms.IDataObject
 I System.Windows.Forms.DataObject : System.Windows.Forms.ITypedDataObject
 I System.Windows.Forms.Design.PropertyTab : System.ComponentModel.IExtenderProvider
-I System.Windows.Forms.ErrorProvider : System.ComponentModel.IExtenderProvider
-I System.Windows.Forms.ErrorProvider : System.ComponentModel.ISupportInitialize
 I System.Windows.Forms.FeatureSupport : System.Windows.Forms.IFeatureSupport
 I System.Windows.Forms.GridColumnStylesCollection : System.Collections.IList
 I System.Windows.Forms.GridItemCollection : System.Collections.ICollection
 I System.Windows.Forms.GridItemCollection : System.Collections.IEnumerable
 I System.Windows.Forms.GridTableStylesCollection : System.Collections.IList
-I System.Windows.Forms.HelpProvider : System.ComponentModel.IExtenderProvider
 I System.Windows.Forms.HtmlElementCollection : System.Collections.ICollection
 I System.Windows.Forms.HtmlElementCollection : System.Collections.IEnumerable
 I System.Windows.Forms.HtmlHistory : System.IDisposable
@@ -948,8 +945,6 @@ M protected System.Windows.Forms.Design.PropertyTab::Finalize() -> System.Void v
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::.ctor()
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetComponentEditorPages() -> System.Type[] virtual
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetInitialComponentEditorPageIndex() -> System.Int32 virtual
-M protected System.Windows.Forms.ErrorProvider::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ErrorProvider::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.FeatureSupport::.ctor()
 M protected System.Windows.Forms.FileDialog::HookProc(System.IntPtr, System.Int32, System.IntPtr, System.IntPtr) -> System.IntPtr virtual
 M protected System.Windows.Forms.FileDialog::get_Instance() -> System.IntPtr virtual
@@ -4357,39 +4352,6 @@ M public System.Windows.Forms.DrawTreeNodeEventHandler::.ctor(System.Object, Sys
 M public System.Windows.Forms.DrawTreeNodeEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawTreeNodeEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.DrawTreeNodeEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.DrawTreeNodeEventHandler::Invoke(System.Object, System.Windows.Forms.DrawTreeNodeEventArgs) -> System.Void virtual
-M public System.Windows.Forms.ErrorProvider::.ctor()
-M public System.Windows.Forms.ErrorProvider::.ctor(System.ComponentModel.IContainer)
-M public System.Windows.Forms.ErrorProvider::.ctor(System.Windows.Forms.ContainerControl)
-M public System.Windows.Forms.ErrorProvider::BindToDataAndErrors(System.Object, System.String) -> System.Void
-M public System.Windows.Forms.ErrorProvider::CanExtend(System.Object) -> System.Boolean
-M public System.Windows.Forms.ErrorProvider::Clear() -> System.Void
-M public System.Windows.Forms.ErrorProvider::GetError(System.Windows.Forms.Control) -> System.String
-M public System.Windows.Forms.ErrorProvider::GetIconAlignment(System.Windows.Forms.Control) -> System.Windows.Forms.ErrorIconAlignment
-M public System.Windows.Forms.ErrorProvider::GetIconPadding(System.Windows.Forms.Control) -> System.Int32
-M public System.Windows.Forms.ErrorProvider::SetError(System.Windows.Forms.Control, System.String) -> System.Void
-M public System.Windows.Forms.ErrorProvider::SetIconAlignment(System.Windows.Forms.Control, System.Windows.Forms.ErrorIconAlignment) -> System.Void
-M public System.Windows.Forms.ErrorProvider::SetIconPadding(System.Windows.Forms.Control, System.Int32) -> System.Void
-M public System.Windows.Forms.ErrorProvider::UpdateBinding() -> System.Void
-M public System.Windows.Forms.ErrorProvider::add_RightToLeftChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ErrorProvider::get_BlinkRate() -> System.Int32
-M public System.Windows.Forms.ErrorProvider::get_BlinkStyle() -> System.Windows.Forms.ErrorBlinkStyle
-M public System.Windows.Forms.ErrorProvider::get_ContainerControl() -> System.Windows.Forms.ContainerControl
-M public System.Windows.Forms.ErrorProvider::get_DataMember() -> System.String
-M public System.Windows.Forms.ErrorProvider::get_DataSource() -> System.Object
-M public System.Windows.Forms.ErrorProvider::get_HasErrors() -> System.Boolean
-M public System.Windows.Forms.ErrorProvider::get_Icon() -> System.Drawing.Icon
-M public System.Windows.Forms.ErrorProvider::get_RightToLeft() -> System.Boolean virtual
-M public System.Windows.Forms.ErrorProvider::get_Tag() -> System.Object
-M public System.Windows.Forms.ErrorProvider::remove_RightToLeftChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ErrorProvider::set_BlinkRate(System.Int32) -> System.Void
-M public System.Windows.Forms.ErrorProvider::set_BlinkStyle(System.Windows.Forms.ErrorBlinkStyle) -> System.Void
-M public System.Windows.Forms.ErrorProvider::set_ContainerControl(System.Windows.Forms.ContainerControl) -> System.Void
-M public System.Windows.Forms.ErrorProvider::set_DataMember(System.String) -> System.Void
-M public System.Windows.Forms.ErrorProvider::set_DataSource(System.Object) -> System.Void
-M public System.Windows.Forms.ErrorProvider::set_Icon(System.Drawing.Icon) -> System.Void
-M public System.Windows.Forms.ErrorProvider::set_RightToLeft(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ErrorProvider::set_Site(System.ComponentModel.ISite) -> System.Void virtual
-M public System.Windows.Forms.ErrorProvider::set_Tag(System.Object) -> System.Void
 M public System.Windows.Forms.FeatureSupport::GetVersionPresent(System.Object) -> System.Version abstract
 M public System.Windows.Forms.FeatureSupport::GetVersionPresent(System.String, System.String) -> System.Version static
 M public System.Windows.Forms.FeatureSupport::IsPresent(System.Object) -> System.Boolean virtual
@@ -4628,28 +4590,6 @@ M public System.Windows.Forms.GroupBox::remove_MouseMove(System.Windows.Forms.Mo
 M public System.Windows.Forms.GroupBox::remove_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.GroupBox::remove_TabStopChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.GroupBox::set_AllowDrop(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.Help::ShowHelp(System.Windows.Forms.Control, System.String) -> System.Void static
-M public System.Windows.Forms.Help::ShowHelp(System.Windows.Forms.Control, System.String, System.String) -> System.Void static
-M public System.Windows.Forms.Help::ShowHelp(System.Windows.Forms.Control, System.String, System.Windows.Forms.HelpNavigator) -> System.Void static
-M public System.Windows.Forms.Help::ShowHelp(System.Windows.Forms.Control, System.String, System.Windows.Forms.HelpNavigator, System.Object) -> System.Void static
-M public System.Windows.Forms.Help::ShowHelpIndex(System.Windows.Forms.Control, System.String) -> System.Void static
-M public System.Windows.Forms.Help::ShowPopup(System.Windows.Forms.Control, System.String, System.Drawing.Point) -> System.Void static
-M public System.Windows.Forms.HelpProvider::.ctor()
-M public System.Windows.Forms.HelpProvider::CanExtend(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.HelpProvider::GetHelpKeyword(System.Windows.Forms.Control) -> System.String virtual
-M public System.Windows.Forms.HelpProvider::GetHelpNavigator(System.Windows.Forms.Control) -> System.Windows.Forms.HelpNavigator virtual
-M public System.Windows.Forms.HelpProvider::GetHelpString(System.Windows.Forms.Control) -> System.String virtual
-M public System.Windows.Forms.HelpProvider::GetShowHelp(System.Windows.Forms.Control) -> System.Boolean virtual
-M public System.Windows.Forms.HelpProvider::ResetShowHelp(System.Windows.Forms.Control) -> System.Void virtual
-M public System.Windows.Forms.HelpProvider::SetHelpKeyword(System.Windows.Forms.Control, System.String) -> System.Void virtual
-M public System.Windows.Forms.HelpProvider::SetHelpNavigator(System.Windows.Forms.Control, System.Windows.Forms.HelpNavigator) -> System.Void virtual
-M public System.Windows.Forms.HelpProvider::SetHelpString(System.Windows.Forms.Control, System.String) -> System.Void virtual
-M public System.Windows.Forms.HelpProvider::SetShowHelp(System.Windows.Forms.Control, System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.HelpProvider::ToString() -> System.String virtual
-M public System.Windows.Forms.HelpProvider::get_HelpNamespace() -> System.String virtual
-M public System.Windows.Forms.HelpProvider::get_Tag() -> System.Object
-M public System.Windows.Forms.HelpProvider::set_HelpNamespace(System.String) -> System.Void virtual
-M public System.Windows.Forms.HelpProvider::set_Tag(System.Object) -> System.Void
 M public System.Windows.Forms.HtmlDocument::AttachEventHandler(System.String, System.EventHandler) -> System.Void
 M public System.Windows.Forms.HtmlDocument::CreateElement(System.String) -> System.Windows.Forms.HtmlElement
 M public System.Windows.Forms.HtmlDocument::DetachEventHandler(System.String, System.EventHandler) -> System.Void
@@ -8380,14 +8320,12 @@ T class System.Windows.Forms.DrawListViewColumnHeaderEventArgs : System.EventArg
 T class System.Windows.Forms.DrawListViewItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewSubItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawTreeNodeEventArgs : System.EventArgs
-T class System.Windows.Forms.ErrorProvider : System.ComponentModel.Component
 T class System.Windows.Forms.FlatButtonAppearance
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.GiveFeedbackEventArgs : System.EventArgs
 T class System.Windows.Forms.GridColumnStylesCollection : System.Windows.Forms.BaseCollection
 T class System.Windows.Forms.GridItemCollection
 T class System.Windows.Forms.GridTableStylesCollection : System.Windows.Forms.BaseCollection
-T class System.Windows.Forms.HelpProvider : System.ComponentModel.Component
 T class System.Windows.Forms.HtmlWindowCollection
 T class System.Windows.Forms.ImageIndexConverter : System.ComponentModel.Int32Converter
 T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringConverter
@@ -8594,7 +8532,6 @@ T sealed class System.Windows.Forms.WindowsFormsSection
 T sealed class System.Windows.Forms.WindowsFormsSynchronizationContext : System.Threading.SynchronizationContext
 T static class System.Windows.Forms.DataFormats
 T static class System.Windows.Forms.DataObjectExtensions
-T static class System.Windows.Forms.Help
 T static class System.Windows.Forms.ImeContext
 T struct System.Windows.Forms.DataGridCell
 T struct System.Windows.Forms.ImeModeConversion
