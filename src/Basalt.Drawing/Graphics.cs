@@ -201,17 +201,9 @@ public sealed partial class Graphics : MarshalByRefObject, IDeviceContext, IDisp
 
     private SKPaint Stroke(Pen pen)
     {
-        var paint = new SKPaint
-        {
-            Style = SKPaintStyle.Stroke,
-            IsAntialias = IsSmooth,
-            BlendMode = BlendMode,
-
-            // A pen thinner than a pixel still draws a line one pixel wide.
-            StrokeWidth = Math.Max(pen.Width, 1f),
-            StrokeCap = SKStrokeCap.Butt,
-            StrokeJoin = SKStrokeJoin.Miter,
-        };
+        var paint = PenGeometry.StrokePaint(pen);
+        paint.IsAntialias = IsSmooth;
+        paint.BlendMode = BlendMode;
 
         pen.Brush.ApplyTo(paint);
         return paint;
