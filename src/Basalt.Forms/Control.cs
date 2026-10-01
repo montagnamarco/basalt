@@ -402,6 +402,14 @@ public partial class Control : Component, IWin32Window, IArrangedElement
 
                 _parent?.Controls.Remove(this);
                 DestroyHandle();
+
+                // A popup's own window goes with it.
+                if (PopupWindow is { } popupWindow)
+                {
+                    Internal.Hosting.Popups.Close(this);
+                    PopupWindow = null;
+                    popupWindow.Close();
+                }
             }
             finally
             {

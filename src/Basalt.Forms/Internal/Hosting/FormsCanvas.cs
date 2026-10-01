@@ -16,16 +16,17 @@ namespace System.Windows.Forms.Internal.Hosting;
 /// </summary>
 internal sealed class FormsCanvas : Avalonia.Controls.Control
 {
-    private readonly Form _form;
+    private readonly Control _form;
 
-    public FormsCanvas(Form form)
+    public FormsCanvas(Control form)
     {
         _form = form;
         Focusable = true;
         ClipToBounds = true;
     }
 
-    public Form Form => _form;
+    /// <summary>The top-level control the canvas shows: a form, or the content of a popup window.</summary>
+    public Control Root => _form;
 
     /// <summary>
     /// Runs on the UI thread: invalid controls are painted (their Paint

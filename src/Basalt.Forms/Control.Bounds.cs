@@ -336,6 +336,17 @@ public partial class Control
     /// <summary>Where the client area's origin is on the screen: the frames and positions of every ancestor added up.</summary>
     internal Point ClientOriginOnScreen()
     {
+        // On screen, the system knows where the window's client area is better than the frame metrics do.
+        if (TopLevelControl is { Canvas: { } canvas } window && window.Visible && Avalonia.Controls.TopLevel.GetTopLevel(canvas) is { } root)
+        {
+            var inWindow = window == this ? Point.Empty : window.PointToClientOrigin(this);
+            var device = Avalonia.VisualExtensions.PointToScreen(canvas, new Avalonia.Point(inWindow.X, inWindow.Y));
+            // The same scale the popups are placed with, so a drop-down lands where its owner is.
+            var scaling = root is Avalonia.Controls.WindowBase windowBase ? windowBase.DesktopScaling : root.RenderScaling;
+
+            return new Point((int)Math.Round(device.X / scaling), (int)Math.Round(device.Y / scaling));
+        }
+
         var frame = NonClient;
         var origin = new Point(_x + frame.Left, _y + frame.Top);
 
@@ -362,6 +373,20 @@ public partial class Control
         if (dx == 0 && dy == 0) return;
 
         UpdateBounds(_x + dx, _y + dy, _width, _height, _clientWidth, _clientHeight);
+    }
+
+    /// <summary>Where a descendant's client area starts, in this control's client coordinates.</summary>
+    private Point PointToClientOrigin(Control descendant)
+    {
+        var origin = Point.Empty;
+
+        for (var control = descendant; control is not null && control != this; control = control._parent)
+        {
+            var frame = control.NonClient;
+            origin.Offset(control._x + frame.Left, control._y + frame.Top);
+        }
+
+        return origin;
     }
 
     public Point PointToScreen(Point p)

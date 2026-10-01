@@ -115,10 +115,8 @@ public partial class Control
         Update();
     }
 
-    /// <summary>The window this control is the top of was told something needs painting; a window overrides it.</summary>
-    internal virtual void RequestPaint()
-    {
-    }
+    /// <summary>The window this control is the top of was told something needs painting.</summary>
+    internal virtual void RequestPaint() => Canvas?.InvalidateVisual();
 
     public event PaintEventHandler? Paint
     {

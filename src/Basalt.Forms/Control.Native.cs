@@ -95,4 +95,22 @@ public partial class Control
     /// filter during a drag (Escape cancels a splitter). True when handled.
     /// </summary>
     internal virtual bool KeyDownWhileCaptured(Keys keyData) => false;
+
+    /// <summary>For a top-level control: the canvas of the native window showing it, a form's or a popup's.</summary>
+    internal virtual Internal.Hosting.FormsCanvas? Canvas => PopupWindow?.Canvas;
+
+    /// <summary>For a top-level control shown as a popup: its borderless window.</summary>
+    internal Internal.Hosting.PopupWindow? PopupWindow { get; set; }
+
+    /// <summary>For a popup: whether a press outside it closes it, as menus and drop-down lists do.</summary>
+    internal virtual bool ClosesOnOutsideClick => true;
+
+    /// <summary>For a popup: closes it because the user pressed elsewhere; the owner decides what closing means.</summary>
+    internal virtual void DismissPopup() => Internal.Hosting.Popups.Close(this);
+
+    /// <summary>For a popup: whether the other popup is one it opened (a submenu), which a press in does not dismiss it.</summary>
+    internal virtual bool IsPopupAncestorOf(Control other) => false;
+
+    /// <summary>For a popup: whether the keys of its owner window come to it while it is open (a menu does; a tool tip does not).</summary>
+    internal virtual bool TakesKeyboardWhileOpen => false;
 }

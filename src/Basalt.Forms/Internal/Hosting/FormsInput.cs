@@ -5,9 +5,9 @@ using AvaloniaKeyEventArgs = Avalonia.Input.KeyEventArgs;
 namespace System.Windows.Forms.Internal.Hosting;
 
 /// <summary>
-/// Routes Avalonia's pointer and key events to the controls of a form, with
+/// Routes Avalonia's pointer and key events to the controls of a window, with
 /// the rules of Windows: the topmost control under the pointer gets the
-/// mouse unless one has captured it, and keys go through the form's
+/// mouse unless one has captured it, and keys go through the window's
 /// pre-processing before the focused control sees them.
 /// </summary>
 internal static class FormsInput
@@ -32,14 +32,14 @@ internal static class FormsInput
     /// <summary>The control the pointer is over, for MouseEnter and MouseLeave.</summary>
     private static Control? s_hovered;
 
-    public static void PointerMoved(Form form, FormsCanvas canvas, PointerEventArgs e)
+    public static void PointerMoved(Control window, FormsCanvas canvas, PointerEventArgs e)
     {
-        Guard(form, () =>
+        Guard(window, () =>
         {
             var point = ToClient(canvas, e);
-            Track(form, point, e.GetCurrentPoint(canvas).Properties, e.KeyModifiers);
+            Track(window, point, e.GetCurrentPoint(canvas).Properties, e.KeyModifiers);
 
-            var (target, location) = Target(form, point);
+            var (target, location) = Target(window, point);
 
             // A press on a scroll bar of the frame follows the pointer by itself.
             if (target.IsTrackingNonClient)
@@ -48,30 +48,33 @@ internal static class FormsInput
                 return;
             }
 
-            UpdateHover(form, point);
+            UpdateHover(window, point);
             target.RaiseMouseMove(Buttons, location);
         });
     }
 
-    public static void PointerPressed(Form form, FormsCanvas canvas, PointerPressedEventArgs e)
+    public static void PointerPressed(Control window, FormsCanvas canvas, PointerPressedEventArgs e)
     {
-        Guard(form, () =>
+        Guard(window, () =>
         {
             var point = ToClient(canvas, e);
             var properties = e.GetCurrentPoint(canvas).Properties;
-            Track(form, point, properties, e.KeyModifiers);
+            Track(window, point, properties, e.KeyModifiers);
 
             var button = ChangedButton(properties.PointerUpdateKind);
             if (button == MouseButtons.None) return;
+
+            // A press outside an open menu or drop-down closes it, and does nothing else.
+            if (Popups.DismissForPressIn(window)) return;
 
             // The canvas keeps Avalonia's capture while a button is down, so a drag leaving the window still reports here.
             e.Pointer.Capture(canvas);
             canvas.Focus();
 
-            var (target, location) = Target(form, point);
+            var (target, location) = Target(window, point);
 
             // On the frame (a scroll bar), not in the client area: the window handles it, no mouse events.
-            if (!target.ClientRectangle.Contains(location) && target != form)
+            if (!target.ClientRectangle.Contains(location) && target != window)
             {
                 if (target.NonClientMouseDown(button, target.ClientToOuter(location))) CapturedControl = target;
 
@@ -82,18 +85,18 @@ internal static class FormsInput
         });
     }
 
-    public static void PointerReleased(Form form, FormsCanvas canvas, PointerReleasedEventArgs e)
+    public static void PointerReleased(Control window, FormsCanvas canvas, PointerReleasedEventArgs e)
     {
-        Guard(form, () =>
+        Guard(window, () =>
         {
             var point = ToClient(canvas, e);
             var properties = e.GetCurrentPoint(canvas).Properties;
             var button = ChangedButton(properties.PointerUpdateKind);
-            Track(form, point, properties, e.KeyModifiers);
+            Track(window, point, properties, e.KeyModifiers);
 
             if (button == MouseButtons.None) return;
 
-            var (target, location) = Target(form, point);
+            var (target, location) = Target(window, point);
 
             if (target.IsTrackingNonClient)
             {
@@ -104,19 +107,19 @@ internal static class FormsInput
                 return;
             }
 
-            var (under, _) = form.HitTest(point);
+            var (under, _) = window.HitTest(point);
             target.RaiseMouseUp(button, 1, location, releasedOverThisControl: under == target);
 
             if (Buttons == MouseButtons.None) e.Pointer.Capture(null);
-            UpdateHover(form, point);
+            UpdateHover(window, point);
         });
     }
 
-    public static void PointerExited(Form form)
+    public static void PointerExited(Control window)
     {
         if (CapturedControl is not null || s_hovered is null) return;
 
-        Guard(form, () =>
+        Guard(window, () =>
         {
             var left = s_hovered;
             s_hovered = null;
@@ -124,18 +127,18 @@ internal static class FormsInput
         });
     }
 
-    public static void PointerWheel(Form form, FormsCanvas canvas, PointerWheelEventArgs e)
+    public static void PointerWheel(Control window, FormsCanvas canvas, PointerWheelEventArgs e)
     {
-        Guard(form, () =>
+        Guard(window, () =>
         {
             var point = ToClient(canvas, e);
-            Track(form, point, e.GetCurrentPoint(canvas).Properties, e.KeyModifiers);
+            Track(window, point, e.GetCurrentPoint(canvas).Properties, e.KeyModifiers);
 
             // 120 per notch, positive away from the user, as WM_MOUSEWHEEL reports it.
             var delta = (int)Math.Round(e.Delta.Y * 120);
             if (delta == 0) return;
 
-            var (target, location) = Target(form, point);
+            var (target, location) = Target(window, point);
 
             // Unhandled, the wheel goes to the parent, as Windows forwards WM_MOUSEWHEEL.
             for (Control? control = target; control is not null; control = control.Parent)
@@ -143,21 +146,21 @@ internal static class FormsInput
                 if (control.RaiseMouseWheel(location, delta)) break;
 
                 location = control.Parent is null ? location : control.Parent.PointToClient(control.PointToScreen(location));
-                if (control == form) break;
+                if (control == window) break;
             }
         });
     }
 
-    public static void CaptureLost(Form form)
+    public static void CaptureLost(Control window)
     {
         if (CapturedControl is { IsTrackingNonClient: true } tracking) tracking.DefaultCaptureLost();
 
-        if (CapturedControl is { } captured && captured.TopLevelControl == form) captured.Capture = false;
+        if (CapturedControl is { } captured && captured.TopLevelControl == window) captured.Capture = false;
 
         Buttons = MouseButtons.None;
     }
 
-    public static bool KeyDown(Form form, AvaloniaKeyEventArgs e)
+    public static bool KeyDown(Control window, AvaloniaKeyEventArgs e)
     {
         Modifiers = KeyMapping.ToModifiers(e.KeyModifiers);
 
@@ -166,13 +169,13 @@ internal static class FormsInput
 
         HeldKeys.Add(keyCode);
 
-        return Guard(form, () =>
+        return Guard(window, () =>
         {
             FormsInputState.SuppressNextCharacter = false;
 
-            if (CapturedControl is { } captured && captured.TopLevelControl == form && captured.KeyDownWhileCaptured(keyCode | Modifiers)) return true;
+            if (CapturedControl is { } captured && captured.TopLevelControl == window && captured.KeyDownWhileCaptured(keyCode | Modifiers)) return true;
 
-            var target = form.WindowFocus ?? form;
+            var target = KeyTarget(window);
             var messageKind = (Modifiers & Keys.Alt) != 0 ? WindowMessages.SystemKeyDown : WindowMessages.KeyDown;
             var message = Message.Create(target.Handle, messageKind, (IntPtr)(int)keyCode, IntPtr.Zero);
             var handled = target.DispatchKeyMessage(ref message);
@@ -180,14 +183,14 @@ internal static class FormsInput
             // Keys that type no text still send a character to the control, as WM_CHAR does on Windows.
             if (!FormsInputState.SuppressNextCharacter && KeyMapping.ControlCharacter(keyCode, Modifiers) is { } character)
             {
-                SendCharacter(form, character);
+                SendCharacter(window, character);
             }
 
             return handled;
         });
     }
 
-    public static bool KeyUp(Form form, AvaloniaKeyEventArgs e)
+    public static bool KeyUp(Control window, AvaloniaKeyEventArgs e)
     {
         Modifiers = KeyMapping.ToModifiers(e.KeyModifiers);
 
@@ -196,9 +199,9 @@ internal static class FormsInput
 
         HeldKeys.Remove(keyCode);
 
-        return Guard(form, () =>
+        return Guard(window, () =>
         {
-            var target = form.WindowFocus ?? form;
+            var target = KeyTarget(window);
             var messageKind = (Modifiers & Keys.Alt) != 0 ? WindowMessages.SystemKeyUp : WindowMessages.KeyUp;
             var message = Message.Create(target.Handle, messageKind, (IntPtr)(int)keyCode, IntPtr.Zero);
 
@@ -206,11 +209,11 @@ internal static class FormsInput
         });
     }
 
-    public static bool TextInput(Form form, TextInputEventArgs e)
+    public static bool TextInput(Control window, TextInputEventArgs e)
     {
         if (string.IsNullOrEmpty(e.Text)) return false;
 
-        return Guard(form, () =>
+        return Guard(window, () =>
         {
             if (FormsInputState.SuppressNextCharacter)
             {
@@ -218,31 +221,39 @@ internal static class FormsInput
                 return true;
             }
 
-            foreach (var character in e.Text) SendCharacter(form, character);
+            foreach (var character in e.Text) SendCharacter(window, character);
 
             return true;
         });
     }
 
-    private static void SendCharacter(Form form, char character)
+    /// <summary>Where keys go: an open popup that takes them (a menu), else the window's focused control.</summary>
+    private static Control KeyTarget(Control window)
     {
-        var target = form.WindowFocus ?? form;
+        if (Popups.KeyboardOwnerFor(window) is { } popup) return popup.WindowFocus ?? popup;
+
+        return window.WindowFocus ?? window;
+    }
+
+    private static void SendCharacter(Control window, char character)
+    {
+        var target = KeyTarget(window);
         var message = Message.Create(target.Handle, WindowMessages.Char, (IntPtr)character, IntPtr.Zero);
         target.DispatchKeyMessage(ref message);
     }
 
     /// <summary>
-    /// Runs input or paint code for a form; an exception goes to
+    /// Runs input or paint code for a window; an exception goes to
     /// Application.ThreadException as it would from a WinForms message loop,
     /// instead of tearing down the window system's own loop.
     /// </summary>
-    public static void Guard(Form form, Action action) => Guard(form, () =>
+    public static void Guard(Control window, Action action) => Guard(window, () =>
     {
         action();
         return true;
     });
 
-    public static T? Guard<T>(Form form, Func<T> action)
+    public static T? Guard<T>(Control window, Func<T> action)
     {
         try
         {
@@ -255,22 +266,22 @@ internal static class FormsInput
         }
     }
 
-    private static (Control Target, Point Location) Target(Form form, Point clientPoint)
+    private static (Control Target, Point Location) Target(Control window, Point clientPoint)
     {
-        if (CapturedControl is { } captured && captured.TopLevelControl == form && !captured.IsDisposed)
+        if (CapturedControl is { } captured && captured.TopLevelControl == window && !captured.IsDisposed)
         {
-            return (captured, captured.PointToClient(form.PointToScreen(clientPoint)));
+            return (captured, captured.PointToClient(window.PointToScreen(clientPoint)));
         }
 
-        return form.HitTest(clientPoint);
+        return window.HitTest(clientPoint);
     }
 
-    private static void UpdateHover(Form form, Point clientPoint)
+    private static void UpdateHover(Control window, Point clientPoint)
     {
         // While a control has the capture, enter and leave wait, as on Windows.
         if (CapturedControl is not null) return;
 
-        var (under, _) = form.HitTest(clientPoint);
+        var (under, _) = window.HitTest(clientPoint);
         if (under == s_hovered) return;
 
         var left = s_hovered;
@@ -293,10 +304,10 @@ internal static class FormsInput
         }
 
         var control = CapturedControl ?? s_hovered;
-        if (control?.TopLevelControl is not Form { Host: { } host }) return;
+        if (control?.TopLevelControl?.Canvas is not { } canvas) return;
 
         var cursor = Cursor.Current ?? control.EffectiveCursor;
-        host.Canvas.Cursor = PlatformCursor(cursor.Standard);
+        canvas.Cursor = PlatformCursor(cursor.Standard);
     }
 
     private static readonly Dictionary<StandardCursorType, Avalonia.Input.Cursor> PlatformCursors = [];
@@ -313,9 +324,9 @@ internal static class FormsInput
         return cursor;
     }
 
-    private static void Track(Form form, Point clientPoint, PointerPointProperties properties, KeyModifiers modifiers)
+    private static void Track(Control window, Point clientPoint, PointerPointProperties properties, KeyModifiers modifiers)
     {
-        ScreenPosition = form.PointToScreen(clientPoint);
+        ScreenPosition = window.PointToScreen(clientPoint);
         Modifiers = KeyMapping.ToModifiers(modifiers);
 
         var buttons = MouseButtons.None;
@@ -337,7 +348,7 @@ internal static class FormsInput
         _ => MouseButtons.None,
     };
 
-    /// <summary>The pointer in the form's client coordinates: one device-independent pixel is one WinForms pixel.</summary>
+    /// <summary>The pointer in the window's client coordinates: one device-independent pixel is one WinForms pixel.</summary>
     private static Point ToClient(FormsCanvas canvas, PointerEventArgs e)
     {
         var position = e.GetPosition(canvas);

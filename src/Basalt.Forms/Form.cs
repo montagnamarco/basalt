@@ -634,6 +634,8 @@ public partial class Form : ContainerControl
     /// <summary>The handle is gone: the native window closes with it.</summary>
     internal override void OnHandleDestroyedInternal()
     {
+        Popups.CloseOwnedBy(this);
+
         if (_host is { } host)
         {
             _host = null;
@@ -662,7 +664,7 @@ public partial class Form : ContainerControl
         base.Dispose(disposing);
     }
 
-    internal override void RequestPaint() => _host?.Canvas.InvalidateVisual();
+    internal override FormsCanvas? Canvas => _host?.Canvas;
 
     /// <summary>The native window, once the handle exists.</summary>
     internal HostWindow? Host => _host;
@@ -698,6 +700,7 @@ public partial class Form : ContainerControl
         {
             if (ActiveForm == this) ActiveForm = null;
             FormsInput.ForgetHeldKeys();
+            Popups.DismissAll(this);
             OnDeactivate(EventArgs.Empty);
         });
     }
