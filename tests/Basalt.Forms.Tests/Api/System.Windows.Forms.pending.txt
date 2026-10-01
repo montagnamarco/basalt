@@ -2436,17 +2436,6 @@ M public System.Windows.Forms.ButtonBase::set_ImeMode(System.Windows.Forms.ImeMo
 M public System.Windows.Forms.ButtonBase::set_TextImageRelation(System.Windows.Forms.TextImageRelation) -> System.Void
 M public System.Windows.Forms.ButtonBase::set_UseCompatibleTextRendering(System.Boolean) -> System.Void
 M public System.Windows.Forms.ButtonBase::set_UseVisualStyleBackColor(System.Boolean) -> System.Void
-M public System.Windows.Forms.ButtonRenderer::DrawButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.PushButtonState) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::DrawButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.PushButtonState) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::DrawButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Boolean, System.Windows.Forms.VisualStyles.PushButtonState) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::DrawButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.PushButtonState) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::DrawButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Boolean, System.Windows.Forms.VisualStyles.PushButtonState) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::DrawButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.PushButtonState) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::DrawButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.PushButtonState) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::DrawParentBackground(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.Control) -> System.Void static
-M public System.Windows.Forms.ButtonRenderer::IsBackgroundPartiallyTransparent(System.Windows.Forms.VisualStyles.PushButtonState) -> System.Boolean static
-M public System.Windows.Forms.ButtonRenderer::get_RenderMatchingApplicationState() -> System.Boolean static
-M public System.Windows.Forms.ButtonRenderer::set_RenderMatchingApplicationState(System.Boolean) -> System.Void static
 M public System.Windows.Forms.CheckBox+CheckBoxAccessibleObject::.ctor(System.Windows.Forms.Control)
 M public System.Windows.Forms.CheckBox+CheckBoxAccessibleObject::DoDefaultAction() -> System.Void virtual
 M public System.Windows.Forms.CheckBox+CheckBoxAccessibleObject::get_DefaultAction() -> System.String virtual
@@ -2456,16 +2445,6 @@ M public System.Windows.Forms.CheckBox::add_DoubleClick(System.EventHandler) -> 
 M public System.Windows.Forms.CheckBox::add_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.CheckBox::remove_DoubleClick(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckBox::remove_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.CheckBoxRenderer::DrawCheckBox(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Boolean, System.Windows.Forms.VisualStyles.CheckBoxState) -> System.Void static
-M public System.Windows.Forms.CheckBoxRenderer::DrawCheckBox(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.CheckBoxState) -> System.Void static
-M public System.Windows.Forms.CheckBoxRenderer::DrawCheckBox(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Boolean, System.Windows.Forms.VisualStyles.CheckBoxState) -> System.Void static
-M public System.Windows.Forms.CheckBoxRenderer::DrawCheckBox(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.CheckBoxState) -> System.Void static
-M public System.Windows.Forms.CheckBoxRenderer::DrawCheckBox(System.Drawing.Graphics, System.Drawing.Point, System.Windows.Forms.VisualStyles.CheckBoxState) -> System.Void static
-M public System.Windows.Forms.CheckBoxRenderer::DrawParentBackground(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.Control) -> System.Void static
-M public System.Windows.Forms.CheckBoxRenderer::GetGlyphSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.CheckBoxState) -> System.Drawing.Size static
-M public System.Windows.Forms.CheckBoxRenderer::IsBackgroundPartiallyTransparent(System.Windows.Forms.VisualStyles.CheckBoxState) -> System.Boolean static
-M public System.Windows.Forms.CheckBoxRenderer::get_RenderMatchingApplicationState() -> System.Boolean static
-M public System.Windows.Forms.CheckBoxRenderer::set_RenderMatchingApplicationState(System.Boolean) -> System.Void static
 M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::Contains(System.Int32) -> System.Boolean
 M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::CopyTo(System.Array, System.Int32) -> System.Void
 M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::GetEnumerator() -> System.Collections.IEnumerator
@@ -2719,13 +2698,6 @@ M public System.Windows.Forms.ComboBox::set_SelectionLength(System.Int32) -> Sys
 M public System.Windows.Forms.ComboBox::set_SelectionStart(System.Int32) -> System.Void
 M public System.Windows.Forms.ComboBox::set_Sorted(System.Boolean) -> System.Void
 M public System.Windows.Forms.ComboBox::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.ComboBoxRenderer::DrawDropDownButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ComboBoxState) -> System.Void static
-M public System.Windows.Forms.ComboBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Rectangle, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.ComboBoxState) -> System.Void static
-M public System.Windows.Forms.ComboBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ComboBoxState) -> System.Void static
-M public System.Windows.Forms.ComboBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.ComboBoxState) -> System.Void static
-M public System.Windows.Forms.ComboBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.VisualStyles.ComboBoxState) -> System.Void static
-M public System.Windows.Forms.ComboBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ComboBoxState) -> System.Void static
-M public System.Windows.Forms.ComboBoxRenderer::get_IsSupported() -> System.Boolean static
 M public System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant::.ctor()
 M public System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService::ShowPropertyPage(System.String, System.Object, System.Int32, System.Guid, System.IntPtr) -> System.Void abstract
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::DropDownDone() -> System.Void abstract
@@ -5167,15 +5139,6 @@ M public System.Windows.Forms.GroupBox::remove_MouseMove(System.Windows.Forms.Mo
 M public System.Windows.Forms.GroupBox::remove_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.GroupBox::remove_TabStopChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.GroupBox::set_AllowDrop(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.GroupBoxRenderer::DrawGroupBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Color, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.GroupBoxState) -> System.Void static
-M public System.Windows.Forms.GroupBoxRenderer::DrawGroupBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Color, System.Windows.Forms.VisualStyles.GroupBoxState) -> System.Void static
-M public System.Windows.Forms.GroupBoxRenderer::DrawGroupBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.GroupBoxState) -> System.Void static
-M public System.Windows.Forms.GroupBoxRenderer::DrawGroupBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.VisualStyles.GroupBoxState) -> System.Void static
-M public System.Windows.Forms.GroupBoxRenderer::DrawGroupBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.GroupBoxState) -> System.Void static
-M public System.Windows.Forms.GroupBoxRenderer::DrawParentBackground(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.Control) -> System.Void static
-M public System.Windows.Forms.GroupBoxRenderer::IsBackgroundPartiallyTransparent(System.Windows.Forms.VisualStyles.GroupBoxState) -> System.Boolean static
-M public System.Windows.Forms.GroupBoxRenderer::get_RenderMatchingApplicationState() -> System.Boolean static
-M public System.Windows.Forms.GroupBoxRenderer::set_RenderMatchingApplicationState(System.Boolean) -> System.Void static
 M public System.Windows.Forms.Help::ShowHelp(System.Windows.Forms.Control, System.String) -> System.Void static
 M public System.Windows.Forms.Help::ShowHelp(System.Windows.Forms.Control, System.String, System.String) -> System.Void static
 M public System.Windows.Forms.Help::ShowHelp(System.Windows.Forms.Control, System.String, System.Windows.Forms.HelpNavigator) -> System.Void static
@@ -6913,13 +6876,6 @@ M public System.Windows.Forms.ProgressBar::set_Padding(System.Windows.Forms.Padd
 M public System.Windows.Forms.ProgressBar::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.ProgressBar::set_TabStop(System.Boolean) -> System.Void
 M public System.Windows.Forms.ProgressBar::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.ProgressBarRenderer::DrawHorizontalBar(System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void static
-M public System.Windows.Forms.ProgressBarRenderer::DrawHorizontalChunks(System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void static
-M public System.Windows.Forms.ProgressBarRenderer::DrawVerticalBar(System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void static
-M public System.Windows.Forms.ProgressBarRenderer::DrawVerticalChunks(System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void static
-M public System.Windows.Forms.ProgressBarRenderer::get_ChunkSpaceThickness() -> System.Int32 static
-M public System.Windows.Forms.ProgressBarRenderer::get_ChunkThickness() -> System.Int32 static
-M public System.Windows.Forms.ProgressBarRenderer::get_IsSupported() -> System.Boolean static
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::AddTabType(System.Type) -> System.Void
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::AddTabType(System.Type, System.ComponentModel.PropertyTabScope) -> System.Void
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::Clear(System.ComponentModel.PropertyTabScope) -> System.Void
@@ -7085,16 +7041,6 @@ M public System.Windows.Forms.RadioButton::add_DoubleClick(System.EventHandler) 
 M public System.Windows.Forms.RadioButton::add_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.RadioButton::remove_DoubleClick(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RadioButton::remove_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.RadioButtonRenderer::DrawParentBackground(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.Control) -> System.Void static
-M public System.Windows.Forms.RadioButtonRenderer::DrawRadioButton(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Boolean, System.Windows.Forms.VisualStyles.RadioButtonState) -> System.Void static
-M public System.Windows.Forms.RadioButtonRenderer::DrawRadioButton(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.RadioButtonState) -> System.Void static
-M public System.Windows.Forms.RadioButtonRenderer::DrawRadioButton(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Boolean, System.Windows.Forms.VisualStyles.RadioButtonState) -> System.Void static
-M public System.Windows.Forms.RadioButtonRenderer::DrawRadioButton(System.Drawing.Graphics, System.Drawing.Point, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.RadioButtonState) -> System.Void static
-M public System.Windows.Forms.RadioButtonRenderer::DrawRadioButton(System.Drawing.Graphics, System.Drawing.Point, System.Windows.Forms.VisualStyles.RadioButtonState) -> System.Void static
-M public System.Windows.Forms.RadioButtonRenderer::GetGlyphSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.RadioButtonState) -> System.Drawing.Size static
-M public System.Windows.Forms.RadioButtonRenderer::IsBackgroundPartiallyTransparent(System.Windows.Forms.VisualStyles.RadioButtonState) -> System.Boolean static
-M public System.Windows.Forms.RadioButtonRenderer::get_RenderMatchingApplicationState() -> System.Boolean static
-M public System.Windows.Forms.RadioButtonRenderer::set_RenderMatchingApplicationState(System.Boolean) -> System.Void static
 M public System.Windows.Forms.RelatedImageListAttribute::.ctor(System.String)
 M public System.Windows.Forms.RelatedImageListAttribute::get_RelatedImageList() -> System.String
 M public System.Windows.Forms.RetrieveVirtualItemEventArgs::.ctor(System.Int32)
@@ -7281,19 +7227,6 @@ M public System.Windows.Forms.ScrollBar::set_ImeMode(System.Windows.Forms.ImeMod
 M public System.Windows.Forms.ScrollBar::set_ScaleScrollBarForDpiChange(System.Boolean) -> System.Void
 M public System.Windows.Forms.ScrollBar::set_TabStop(System.Boolean) -> System.Void
 M public System.Windows.Forms.ScrollBar::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.ScrollBarRenderer::DrawArrowButton(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarArrowButtonState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawHorizontalThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawHorizontalThumbGrip(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawLeftHorizontalTrack(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawLowerVerticalTrack(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawRightHorizontalTrack(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawSizeBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarSizeBoxState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawUpperVerticalTrack(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawVerticalThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::DrawVerticalThumbGrip(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Void static
-M public System.Windows.Forms.ScrollBarRenderer::GetSizeBoxSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Drawing.Size static
-M public System.Windows.Forms.ScrollBarRenderer::GetThumbGripSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.ScrollBarState) -> System.Drawing.Size static
-M public System.Windows.Forms.ScrollBarRenderer::get_IsSupported() -> System.Boolean static
 M public System.Windows.Forms.ScrollableControl+DockPaddingEdges::Equals(System.Object) -> System.Boolean virtual
 M public System.Windows.Forms.ScrollableControl+DockPaddingEdges::GetHashCode() -> System.Int32 virtual
 M public System.Windows.Forms.ScrollableControl+DockPaddingEdges::ToString() -> System.String virtual
@@ -7641,16 +7574,6 @@ M public System.Windows.Forms.TabPage::set_TabIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.TabPage::set_TabStop(System.Boolean) -> System.Void
 M public System.Windows.Forms.TabPage::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.TabPage::set_Visible(System.Boolean) -> System.Void
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
-M public System.Windows.Forms.TabRenderer::DrawTabPage(System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void static
-M public System.Windows.Forms.TabRenderer::get_IsSupported() -> System.Boolean static
 M public System.Windows.Forms.TableLayoutPanel::get_BorderStyle() -> System.Windows.Forms.BorderStyle
 M public System.Windows.Forms.TableLayoutPanel::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
 M public System.Windows.Forms.TaskDialog::Close() -> System.Void
@@ -7837,12 +7760,6 @@ M public System.Windows.Forms.TextBoxBase::set_BackgroundImage(System.Drawing.Im
 M public System.Windows.Forms.TextBoxBase::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
 M public System.Windows.Forms.TextBoxBase::set_ForeColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.TextBoxBase::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Rectangle, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
-M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
-M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
-M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
-M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
-M public System.Windows.Forms.TextBoxRenderer::get_IsSupported() -> System.Boolean static
 M public System.Windows.Forms.ThreadExceptionDialog::.ctor(System.Exception)
 M public System.Windows.Forms.ThreadExceptionDialog::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ThreadExceptionDialog::get_AutoSize() -> System.Boolean virtual
@@ -9321,21 +9238,6 @@ M public System.Windows.Forms.TrackBar::set_ImeMode(System.Windows.Forms.ImeMode
 M public System.Windows.Forms.TrackBar::set_Padding(System.Windows.Forms.Padding) -> System.Void
 M public System.Windows.Forms.TrackBar::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.TrackBar::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TrackBarRenderer::DrawBottomPointingThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawHorizontalThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawHorizontalTicks(System.Drawing.Graphics, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.VisualStyles.EdgeStyle) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawHorizontalTrack(System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawLeftPointingThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawRightPointingThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawTopPointingThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawVerticalThumb(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawVerticalTicks(System.Drawing.Graphics, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.VisualStyles.EdgeStyle) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::DrawVerticalTrack(System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void static
-M public System.Windows.Forms.TrackBarRenderer::GetBottomPointingThumbSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Drawing.Size static
-M public System.Windows.Forms.TrackBarRenderer::GetLeftPointingThumbSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Drawing.Size static
-M public System.Windows.Forms.TrackBarRenderer::GetRightPointingThumbSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Drawing.Size static
-M public System.Windows.Forms.TrackBarRenderer::GetTopPointingThumbSize(System.Drawing.Graphics, System.Windows.Forms.VisualStyles.TrackBarThumbState) -> System.Drawing.Size static
-M public System.Windows.Forms.TrackBarRenderer::get_IsSupported() -> System.Boolean static
 M public System.Windows.Forms.TreeNode::.ctor()
 M public System.Windows.Forms.TreeNode::.ctor(System.String)
 M public System.Windows.Forms.TreeNode::.ctor(System.String, System.Int32, System.Int32)
@@ -9639,461 +9541,6 @@ M public System.Windows.Forms.VScrollBar::add_RightToLeftChanged(System.EventHan
 M public System.Windows.Forms.VScrollBar::get_RightToLeft() -> System.Windows.Forms.RightToLeft virtual
 M public System.Windows.Forms.VScrollBar::remove_RightToLeftChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.VScrollBar::set_RightToLeft(System.Windows.Forms.RightToLeft) -> System.Void virtual
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_CheckedDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_CheckedHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_CheckedNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_CheckedPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_MixedDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_MixedHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_MixedNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_MixedPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_UncheckedDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_UncheckedHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_UncheckedNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox::get_UncheckedPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+GroupBox::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+GroupBox::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+PushButton::get_Default() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+PushButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+PushButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+PushButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+PushButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_CheckedDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_CheckedHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_CheckedNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_CheckedPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_UncheckedDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_UncheckedHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_UncheckedNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton::get_UncheckedPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Button+UserButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ComboBox+DropDownButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ComboBox+DropDownButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ComboBox+DropDownButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ComboBox+DropDownButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderBackground::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderClose::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderClose::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderClose::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderPin::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderPin::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderPin::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderPin::get_SelectedHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderPin::get_SelectedNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderPin::get_SelectedPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+IEBarMenu::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+IEBarMenu::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+IEBarMenu::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupBackground::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupCollapse::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupCollapse::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupCollapse::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupExpand::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupExpand::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupExpand::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupHead::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupBackground::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupCollapse::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupCollapse::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupCollapse::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupExpand::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupExpand::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupExpand::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupHead::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+Item::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+Item::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+Item::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemLeft::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemLeft::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemLeft::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemRight::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemRight::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemRight::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+SortArrow::get_SortedDown() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Header+SortArrow::get_SortedUp() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Detail::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+EmptyText::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Group::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Item::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Item::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Item::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Item::get_Selected() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Item::get_SelectedNotFocus() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+SortedDetail::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+BarDropDown::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+BarItem::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Chevron::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+DropDown::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Item::get_Demoted() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Item::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Item::get_Selected() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Separator::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+NewApplicationButton::get_Checked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+NewApplicationButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+NewApplicationButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+NewApplicationButton::get_HotChecked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+NewApplicationButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+NewApplicationButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+Separator::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Down::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Down::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Down::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Down::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+DownHorizontal::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+DownHorizontal::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+DownHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+DownHorizontal::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Up::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Up::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Up::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Up::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+UpHorizontal::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+UpHorizontal::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+UpHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Page+UpHorizontal::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+Bar::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+BarVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+Chunk::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+ChunkVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Band::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Chevron::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Chevron::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Chevron::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+ChevronVertical::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+ChevronVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+ChevronVertical::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Gripper::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+GripperVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_DownDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_DownHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_DownNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_DownPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_LeftDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_LeftHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_LeftNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_LeftPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_RightDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_RightHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_RightNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_RightPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_UpDisabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_UpHot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_UpNormal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton::get_UpPressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+GripperHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+GripperVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LeftTrackHorizontal::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LeftTrackHorizontal::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LeftTrackHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LeftTrackHorizontal::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LowerTrackVertical::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LowerTrackVertical::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LowerTrackVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LowerTrackVertical::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+RightTrackHorizontal::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+RightTrackHorizontal::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+RightTrackHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+RightTrackHorizontal::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+SizeBox::get_LeftAlign() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+SizeBox::get_RightAlign() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonHorizontal::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonHorizontal::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonHorizontal::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonVertical::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonVertical::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonVertical::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+UpperTrackVertical::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+UpperTrackVertical::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+UpperTrackVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+UpperTrackVertical::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Down::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Down::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Down::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Down::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+DownHorizontal::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+DownHorizontal::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+DownHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+DownHorizontal::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Up::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Up::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Up::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Up::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+UpHorizontal::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+UpHorizontal::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+UpHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+UpHorizontal::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+LogOff::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+LogOffButtons::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+LogOffButtons::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+LogOffButtons::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+MorePrograms::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+MoreProgramsArrow::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+MoreProgramsArrow::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+MoreProgramsArrow::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+PlaceList::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+PlaceListSeparator::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+Preview::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+ProgList::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+ProgListSeparator::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+UserPane::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+UserPicture::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Status+Bar::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Status+Gripper::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Status+GripperPane::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Status+Pane::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+Body::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+Pane::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItem::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItem::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItem::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItem::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemBothEdges::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemLeftEdge::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemLeftEdge::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemLeftEdge::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemLeftEdge::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemRightEdge::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemRightEdge::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemRightEdge::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemRightEdge::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItem::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItem::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItem::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItem::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemBothEdges::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemLeftEdge::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemLeftEdge::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemLeftEdge::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemLeftEdge::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemRightEdge::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemRightEdge::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemRightEdge::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemRightEdge::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TaskBand+FlashButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TaskBand+FlashButtonGroupMenu::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TaskBand+GroupCount::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundBottom::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundLeft::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundRight::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundTop::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarBottom::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarLeft::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarRight::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarTop::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TaskbarClock+Time::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+Caret::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit::get_Assist() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit::get_Focused() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit::get_ReadOnly() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit::get_Selected() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+Button::get_Checked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+Button::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+Button::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+Button::get_HotChecked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+Button::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+Button::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+DropDownButton::get_Checked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+DropDownButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+DropDownButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+DropDownButton::get_HotChecked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+DropDownButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+DropDownButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SeparatorHorizontal::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SeparatorVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButton::get_Checked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButton::get_HotChecked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButtonDropDown::get_Checked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButtonDropDown::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButtonDropDown::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButtonDropDown::get_HotChecked() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButtonDropDown::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButtonDropDown::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Balloon::get_Link() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Balloon::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+BalloonTitle::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Close::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Close::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Close::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Standard::get_Link() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Standard::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+StandardTitle::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Thumb::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Thumb::get_Focused() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Thumb::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Thumb::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Thumb::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbBottom::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbBottom::get_Focused() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbBottom::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbBottom::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbBottom::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbLeft::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbLeft::get_Focused() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbLeft::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbLeft::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbLeft::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbRight::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbRight::get_Focused() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbRight::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbRight::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbRight::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbTop::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbTop::get_Focused() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbTop::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbTop::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbTop::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbVertical::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbVertical::get_Focused() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbVertical::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbVertical::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Ticks::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+TicksVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Track::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+TrackVertical::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrayNotify+AnimateBackground::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TrayNotify+Background::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Branch::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Glyph::get_Closed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Glyph::get_Opened() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Item::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Item::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Item::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Item::get_Selected() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Item::get_SelectedNotFocus() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+Caption::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+Caption::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+Caption::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+CaptionSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+CloseButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+CloseButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+CloseButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+CloseButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+Dialog::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameBottom::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameBottom::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameBottomSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameLeft::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameLeft::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameLeftSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameRight::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameRight::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameRightSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HelpButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HelpButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HelpButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HelpButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalScroll::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalScroll::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalScroll::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalScroll::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalThumb::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalThumb::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalThumb::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalThumb::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxCaption::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxCaption::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxCaption::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiCloseButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiCloseButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiCloseButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiCloseButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiHelpButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiHelpButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiHelpButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiHelpButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiMinButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiMinButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiMinButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiMinButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiRestoreButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiRestoreButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiRestoreButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiRestoreButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiSysButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiSysButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiSysButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiSysButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinCaption::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinCaption::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinCaption::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+RestoreButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+RestoreButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+RestoreButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+RestoreButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCaption::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCaption::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCaption::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCaptionSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCloseButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCloseButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCloseButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCloseButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameBottom::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameBottom::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameBottomSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameLeft::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameLeft::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameLeftSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameRight::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameRight::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameRightSizingTemplate::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMaxCaption::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMaxCaption::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMaxCaption::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMinCaption::get_Active() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMinCaption::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMinCaption::get_Inactive() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SysButton::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SysButton::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SysButton::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SysButton::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalScroll::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalScroll::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalScroll::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalScroll::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalThumb::get_Disabled() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalThumb::get_Hot() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalThumb::get_Normal() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalThumb::get_Pressed() -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement::CreateElement(System.String, System.Int32, System.Int32) -> System.Windows.Forms.VisualStyles.VisualStyleElement static
-M public System.Windows.Forms.VisualStyles.VisualStyleElement::get_ClassName() -> System.String
-M public System.Windows.Forms.VisualStyles.VisualStyleElement::get_Part() -> System.Int32
-M public System.Windows.Forms.VisualStyles.VisualStyleElement::get_State() -> System.Int32
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_Author() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_ColorScheme() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_Company() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_ControlHighlightHot() -> System.Drawing.Color static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_Copyright() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_Description() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_DisplayName() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_IsEnabledByUser() -> System.Boolean static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_IsSupportedByOS() -> System.Boolean static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_MinimumColorDepth() -> System.Int32 static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_Size() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_SupportsFlatMenus() -> System.Boolean static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_TextControlBorder() -> System.Drawing.Color static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_Url() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleInformation::get_Version() -> System.String static
-M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::.ctor(System.String, System.Int32, System.Int32)
-M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::.ctor(System.Windows.Forms.VisualStyles.VisualStyleElement)
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::DrawBackground(System.Drawing.IDeviceContext, System.Drawing.Rectangle) -> System.Void
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::DrawBackground(System.Drawing.IDeviceContext, System.Drawing.Rectangle, System.Drawing.Rectangle) -> System.Void
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::DrawEdge(System.Drawing.IDeviceContext, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.Edges, System.Windows.Forms.VisualStyles.EdgeStyle, System.Windows.Forms.VisualStyles.EdgeEffects) -> System.Drawing.Rectangle
@@ -10124,12 +9571,10 @@ M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::HitTestBackgroun
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::HitTestBackground(System.Drawing.IDeviceContext, System.Drawing.Rectangle, System.Drawing.Point, System.Windows.Forms.VisualStyles.HitTestOptions) -> System.Windows.Forms.VisualStyles.HitTestCode
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::HitTestBackground(System.Drawing.IDeviceContext, System.Drawing.Rectangle, System.IntPtr, System.Drawing.Point, System.Windows.Forms.VisualStyles.HitTestOptions) -> System.Windows.Forms.VisualStyles.HitTestCode
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::IsBackgroundPartiallyTransparent() -> System.Boolean
-M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::IsElementDefined(System.Windows.Forms.VisualStyles.VisualStyleElement) -> System.Boolean static
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::SetParameters(System.String, System.Int32, System.Int32) -> System.Void
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::SetParameters(System.Windows.Forms.VisualStyles.VisualStyleElement) -> System.Void
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_Class() -> System.String
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_Handle() -> System.IntPtr
-M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_IsSupported() -> System.Boolean static
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_LastHResult() -> System.Int32
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_Part() -> System.Int32
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_State() -> System.Int32
@@ -10601,7 +10046,6 @@ T class System.Windows.Forms.TreeViewEventArgs : System.EventArgs
 T class System.Windows.Forms.TreeViewHitTestInfo
 T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.TreeViewImageKeyConverter : System.Windows.Forms.ImageKeyConverter
-T class System.Windows.Forms.VisualStyles.VisualStyleElement
 T class System.Windows.Forms.WebBrowser : System.Windows.Forms.WebBrowserBase
 T class System.Windows.Forms.WebBrowserBase : System.Windows.Forms.Control
 T class System.Windows.Forms.WebBrowserSiteBase
@@ -10733,214 +10177,13 @@ T sealed class System.Windows.Forms.TaskDialogFootnote : System.Windows.Forms.Ta
 T sealed class System.Windows.Forms.TaskDialogProgressBar : System.Windows.Forms.TaskDialogControl
 T sealed class System.Windows.Forms.TaskDialogRadioButton : System.Windows.Forms.TaskDialogControl
 T sealed class System.Windows.Forms.TaskDialogVerificationCheckBox : System.Windows.Forms.TaskDialogControl
-T sealed class System.Windows.Forms.VisualStyles.VisualStyleRenderer
 T sealed class System.Windows.Forms.WindowsFormsSection
 T sealed class System.Windows.Forms.WindowsFormsSynchronizationContext : System.Threading.SynchronizationContext
-T static class System.Windows.Forms.ButtonRenderer
-T static class System.Windows.Forms.CheckBoxRenderer
-T static class System.Windows.Forms.ComboBoxRenderer
 T static class System.Windows.Forms.DataFormats
 T static class System.Windows.Forms.DataObjectExtensions
-T static class System.Windows.Forms.GroupBoxRenderer
 T static class System.Windows.Forms.Help
 T static class System.Windows.Forms.ImeContext
 T static class System.Windows.Forms.ProfessionalColors
-T static class System.Windows.Forms.ProgressBarRenderer
-T static class System.Windows.Forms.RadioButtonRenderer
-T static class System.Windows.Forms.ScrollBarRenderer
-T static class System.Windows.Forms.TabRenderer
-T static class System.Windows.Forms.TextBoxRenderer
 T static class System.Windows.Forms.ToolStripManager
-T static class System.Windows.Forms.TrackBarRenderer
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Button
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Button+CheckBox
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Button+GroupBox
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Button+PushButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Button+RadioButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Button+UserButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ComboBox
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ComboBox+DropDownButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderBackground
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderClose
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+HeaderPin
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+IEBarMenu
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupBackground
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupCollapse
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupExpand
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+NormalGroupHead
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupBackground
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupCollapse
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupExpand
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ExplorerBar+SpecialGroupHead
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Header
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Header+Item
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemLeft
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Header+ItemRight
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Header+SortArrow
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ListView
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Detail
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+EmptyText
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Group
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+Item
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ListView+SortedDetail
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Menu
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+BarDropDown
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+BarItem
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Chevron
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+DropDown
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Item
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Menu+Separator
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+NewApplicationButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+MenuBand+Separator
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Page
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Down
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Page+DownHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Page+Up
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Page+UpHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+Bar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+BarVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+Chunk
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ProgressBar+ChunkVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Band
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Chevron
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+ChevronVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+Gripper
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Rebar+GripperVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ArrowButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+GripperHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+GripperVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LeftTrackHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+LowerTrackVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+RightTrackHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+SizeBox
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+ThumbButtonVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ScrollBar+UpperTrackVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Spin
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Down
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+DownHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+Up
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Spin+UpHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+LogOff
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+LogOffButtons
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+MorePrograms
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+MoreProgramsArrow
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+PlaceList
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+PlaceListSeparator
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+Preview
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+ProgList
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+ProgListSeparator
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+UserPane
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+StartPanel+UserPicture
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Status
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Status+Bar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Status+Gripper
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Status+GripperPane
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Status+Pane
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+Body
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+Pane
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItem
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemBothEdges
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemLeftEdge
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TabItemRightEdge
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItem
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemBothEdges
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemLeftEdge
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Tab+TopTabItemRightEdge
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TaskBand
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TaskBand+FlashButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TaskBand+FlashButtonGroupMenu
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TaskBand+GroupCount
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundBottom
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundLeft
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundRight
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+BackgroundTop
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarBottom
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarLeft
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarRight
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Taskbar+SizingBarTop
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TaskbarClock
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TaskbarClock+Time
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+Caret
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TextBox+TextEdit
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+Button
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+DropDownButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SeparatorHorizontal
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SeparatorVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolBar+SplitButtonDropDown
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Balloon
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+BalloonTitle
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Close
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+Standard
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+ToolTip+StandardTitle
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Thumb
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbBottom
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbLeft
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbRight
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbTop
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+ThumbVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Ticks
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+TicksVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+Track
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrackBar+TrackVertical
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrayNotify
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrayNotify+AnimateBackground
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TrayNotify+Background
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Branch
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Glyph
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+TreeView+Item
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+Caption
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+CaptionSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+CloseButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+Dialog
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameBottom
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameBottomSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameLeft
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameLeftSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameRight
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+FrameRightSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HelpButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalScroll
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+HorizontalThumb
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MaxCaption
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiCloseButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiHelpButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiMinButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiRestoreButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MdiSysButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+MinCaption
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+RestoreButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCaption
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCaptionSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallCloseButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameBottom
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameBottomSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameLeft
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameLeftSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameRight
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallFrameRightSizingTemplate
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMaxCaption
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SmallMinCaption
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+SysButton
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalScroll
-T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+VerticalThumb
-T static class System.Windows.Forms.VisualStyles.VisualStyleInformation
 T struct System.Windows.Forms.DataGridCell
 T struct System.Windows.Forms.ImeModeConversion
