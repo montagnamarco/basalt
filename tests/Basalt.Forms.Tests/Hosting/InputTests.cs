@@ -32,7 +32,7 @@ public class InputTests
         var form = ShowForm(target);
 
         form.Host!.MouseDown(new Avalonia.Point(55, 25), MouseButton.Left);
-        form.Host.MouseUp(new Avalonia.Point(55, 25), MouseButton.Left);
+        form.Host!.MouseUp(new Avalonia.Point(55, 25), MouseButton.Left);
 
         Assert.Equal(["MouseDown {X=5,Y=5}", "Click", "MouseClick", "MouseUp {X=5,Y=5}"], log);
 
@@ -49,8 +49,8 @@ public class InputTests
         var form = ShowForm(target);
 
         form.Host!.MouseDown(new Avalonia.Point(10, 10), MouseButton.Left);
-        form.Host.MouseMove(new Avalonia.Point(150, 80));
-        form.Host.MouseUp(new Avalonia.Point(150, 80), MouseButton.Left);
+        form.Host!.MouseMove(new Avalonia.Point(150, 80));
+        form.Host!.MouseUp(new Avalonia.Point(150, 80), MouseButton.Left);
 
         Assert.Equal(["MouseUp {X=150,Y=80}"], log);
 
@@ -69,7 +69,7 @@ public class InputTests
         var form = ShowForm(first, second);
 
         form.Host!.MouseMove(new Avalonia.Point(10, 10));
-        form.Host.MouseMove(new Avalonia.Point(110, 10));
+        form.Host!.MouseMove(new Avalonia.Point(110, 10));
 
         Assert.Equal(["first enter", "first leave", "second enter"], log);
 
@@ -91,7 +91,7 @@ public class InputTests
         other.Focus();
 
         form.Host!.MouseDown(new Avalonia.Point(10, 10), MouseButton.Left);
-        form.Host.MouseUp(new Avalonia.Point(10, 10), MouseButton.Left);
+        form.Host!.MouseUp(new Avalonia.Point(10, 10), MouseButton.Left);
 
         Assert.False(target.Focused);
         Assert.True(other.Focused);
@@ -110,12 +110,12 @@ public class InputTests
         var form = ShowForm(target);
 
         form.Host!.MouseDown(new Avalonia.Point(10, 10), MouseButton.Left);
-        form.Host.MouseUp(new Avalonia.Point(10, 10), MouseButton.Left);
+        form.Host!.MouseUp(new Avalonia.Point(10, 10), MouseButton.Left);
         Assert.True(target.Focused);
 
-        form.Host.KeyPressQwerty(PhysicalKey.A, RawInputModifiers.None);
-        form.Host.KeyTextInput("a");
-        form.Host.KeyReleaseQwerty(PhysicalKey.A, RawInputModifiers.None);
+        form.Host!.KeyPressQwerty(PhysicalKey.A, RawInputModifiers.None);
+        form.Host!.KeyTextInput("a");
+        form.Host!.KeyReleaseQwerty(PhysicalKey.A, RawInputModifiers.None);
 
         Assert.Equal(["KeyDown A", "KeyPress a", "KeyUp A"], keys);
 
@@ -133,7 +133,7 @@ public class InputTests
         form.Host!.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.None);
         Assert.True(first.Focused);
 
-        form.Host.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.None);
+        form.Host!.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.None);
         Assert.True(second.Focused);
 
         form.Close();
@@ -198,7 +198,7 @@ public class InputTests
         form.CancelButton = cancel;
 
         form.Host!.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
-        form.Host.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        form.Host!.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
 
         Assert.Equal(1, accept.Clicks);
         Assert.Equal(1, cancel.Clicks);

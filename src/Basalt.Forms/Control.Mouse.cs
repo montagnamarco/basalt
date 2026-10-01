@@ -27,6 +27,13 @@ public partial class Control
             var previous = FormsInput.CapturedControl;
             FormsInput.CapturedControl = value ? this : null;
 
+            // Lost while a button was still down: the press is abandoned, not completed.
+            if (previous is not null && previous._mousePressed)
+            {
+                previous._mousePressed = false;
+                previous.DefaultCaptureLost();
+            }
+
             previous?.OnMouseCaptureChanged(EventArgs.Empty);
             if (value) OnMouseCaptureChanged(EventArgs.Empty);
         }

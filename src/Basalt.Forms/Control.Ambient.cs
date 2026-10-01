@@ -187,6 +187,9 @@ public partial class Control
         }
 
         DoLayout(this, PropertyNames.Font);
+
+        // A control that sizes itself to its content has a new preferred size: its parent lays it out again.
+        if (AutoSize) _parent?.DoLayout(this, PropertyNames.Font);
     }
 
     protected virtual void OnRightToLeftChanged(EventArgs e)

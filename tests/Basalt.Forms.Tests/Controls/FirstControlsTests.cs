@@ -118,12 +118,12 @@ public class FirstControlsTests
         var form = ShowWith(button);
 
         form.Host!.MouseDown(new Avalonia.Point(20, 20), MouseButton.Left);
-        form.Host.MouseUp(new Avalonia.Point(20, 20), MouseButton.Left);
+        form.Host!.MouseUp(new Avalonia.Point(20, 20), MouseButton.Left);
         Assert.Equal(1, clicks);
 
-        form.Host.MouseDown(new Avalonia.Point(20, 20), MouseButton.Left);
-        form.Host.MouseMove(new Avalonia.Point(150, 80));
-        form.Host.MouseUp(new Avalonia.Point(150, 80), MouseButton.Left);
+        form.Host!.MouseDown(new Avalonia.Point(20, 20), MouseButton.Left);
+        form.Host!.MouseMove(new Avalonia.Point(150, 80));
+        form.Host!.MouseUp(new Avalonia.Point(150, 80), MouseButton.Left);
         Assert.Equal(1, clicks);
 
         form.Close();
@@ -141,7 +141,7 @@ public class FirstControlsTests
         form.Host!.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.None);
         Assert.Equal(0, clicks);
 
-        form.Host.KeyReleaseQwerty(PhysicalKey.Space, RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(PhysicalKey.Space, RawInputModifiers.None);
         Assert.Equal(1, clicks);
 
         form.Close();
@@ -157,9 +157,9 @@ public class FirstControlsTests
         button.Focus();
 
         form.Host!.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.None);
-        form.Host.MouseDown(new Avalonia.Point(20, 20), MouseButton.Left);
-        form.Host.MouseUp(new Avalonia.Point(20, 20), MouseButton.Left);
-        form.Host.KeyReleaseQwerty(PhysicalKey.Space, RawInputModifiers.None);
+        form.Host!.MouseDown(new Avalonia.Point(20, 20), MouseButton.Left);
+        form.Host!.MouseUp(new Avalonia.Point(20, 20), MouseButton.Left);
+        form.Host!.KeyReleaseQwerty(PhysicalKey.Space, RawInputModifiers.None);
 
         Assert.Equal(1, clicks);
 

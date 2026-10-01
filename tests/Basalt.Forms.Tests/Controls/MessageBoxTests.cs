@@ -21,7 +21,7 @@ public class MessageBoxTests
             box.Host!.KeyPressQwerty(key, RawInputModifiers.None);
 
             // The character a key types arrives separately, as WM_CHAR after WM_KEYDOWN.
-            if (typed is not null) box.Host.KeyTextInput(typed);
+            if (typed is not null) box.Host!.KeyTextInput(typed);
         });
 
         return show();

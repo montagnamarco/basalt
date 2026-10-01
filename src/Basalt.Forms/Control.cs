@@ -386,6 +386,8 @@ public partial class Control : Component, IWin32Window, IArrangedElement
 
             try
             {
+                ReleaseBindings();
+
                 // Children are disposed without the parent raising ControlRemoved for each, as in WinForms.
                 if (_controls is { } children)
                 {

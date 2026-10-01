@@ -17,8 +17,17 @@ public abstract class ButtonBase : Control
     private bool _useMnemonic = true;
     private bool _isDefault;
 
-    /// <summary>The button is held down: by the mouse while over it, or by the Space key.</summary>
-    private protected bool Pushed { get; private set; }
+    private bool _inputPressed;
+
+    /// <summary>Whether the mouse or the Space key currently holds the button down.</summary>
+    private protected bool InputPressed => _inputPressed;
+
+    /// <summary>
+    /// The button is drawn pushed: by the mouse while over it, by the Space
+    /// key, or (a CheckBox/RadioButton drawn as Appearance.Button) because
+    /// it stays down while checked.
+    /// </summary>
+    private protected virtual bool Pushed => _inputPressed;
 
     private bool _mouseDownInside;
     private bool _spaceDown;
@@ -32,6 +41,27 @@ public abstract class ButtonBase : Control
     }
 
     protected override Size DefaultSize => new(75, 23);
+
+    [Browsable(true)]
+    [EditorBrowsable(EditorBrowsableState.Always)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public override bool AutoSize
+    {
+        get => base.AutoSize;
+        set
+        {
+            if (value == base.AutoSize) return;
+
+            base.AutoSize = value;
+            AdjustSize();
+        }
+    }
+
+    /// <summary>The glyph a CheckBox or RadioButton draws beside its text; empty for a plain Button.</summary>
+    private protected virtual Size GlyphSize => Size.Empty;
+
+    /// <summary>The gap between that glyph and the text, used only when there is a glyph.</summary>
+    private protected virtual int GlyphTextGap => 0;
 
     [DefaultValue(ContentAlignment.MiddleCenter)]
     [Localizable(true)]
@@ -91,7 +121,50 @@ public abstract class ButtonBase : Control
     protected override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
+        AdjustSize();
         Invalidate();
+    }
+
+    /// <summary>
+    /// An auto-sized button takes its preferred size at once, as WinForms
+    /// does, so code that reads Width right after Text or Font sees the new one.
+    /// </summary>
+    private void AdjustSize()
+    {
+        if (!AutoSize || Dock != DockStyle.None) return;
+
+        var preferred = PreferredSize;
+        if (preferred != Size) Size = preferred;
+    }
+
+    /// <summary>The glyph, plus a gap when there is one, plus the measured text: how a CheckBox or RadioButton sizes itself; a plain Button has no glyph.</summary>
+    internal override Size GetPreferredSizeCore(Size proposedSize)
+    {
+        var glyph = GlyphSize;
+        var gap = glyph.Width > 0 ? GlyphTextGap : 0;
+        var text = string.IsNullOrEmpty(Text) ? " " : Text;
+        var extraWidth = glyph.Width + gap + Padding.Horizontal;
+
+        var flags = ContentAlignments.ToTextFormat(_textAlign) | TextFormatFlags.WordBreak;
+        if (!_useMnemonic) flags |= TextFormatFlags.NoPrefix;
+
+        var available = new Size(int.MaxValue, int.MaxValue);
+        if (proposedSize.Width > 0 && proposedSize.Width < int.MaxValue)
+        {
+            available.Width = Math.Max(proposedSize.Width - extraWidth, 1);
+        }
+        else
+        {
+            flags &= ~TextFormatFlags.WordBreak;
+        }
+
+        var measured = TextRenderer.MeasureText(text, Font, available, flags);
+        if (string.IsNullOrEmpty(Text)) measured.Width = 0;
+
+        var width = measured.Width + extraWidth;
+        var height = Math.Max(measured.Height, glyph.Height) + Padding.Vertical;
+
+        return new Size(width, height);
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
@@ -173,9 +246,9 @@ public abstract class ButtonBase : Control
 
     private void SetPushed(bool value)
     {
-        if (value == Pushed) return;
+        if (value == _inputPressed) return;
 
-        Pushed = value;
+        _inputPressed = value;
         Invalidate();
     }
 
@@ -257,7 +330,7 @@ public abstract class ButtonBase : Control
     }
 
     /// <summary>The dotted focus rectangle: every other pixel, as Win32 DrawFocusRect.</summary>
-    private static void DrawFocusDots(Graphics graphics, Rectangle bounds)
+    private protected static void DrawFocusDots(Graphics graphics, Rectangle bounds)
     {
         using var brush = new SolidBrush(SystemColors.ControlText);
 
@@ -273,4 +346,48 @@ public abstract class ButtonBase : Control
             graphics.FillRectangle(brush, bounds.Right - 1, y, 1, 1);
         }
     }
+
+    /// <summary>Where a CheckBox or RadioButton's glyph and text sit: the glyph anchored by CheckAlign, the text filling what is left on its side.</summary>
+    private protected readonly record struct GlyphLayout(Rectangle Glyph, Rectangle Text);
+
+    /// <summary>
+    /// Anchors the glyph at one of the nine CheckAlign positions within
+    /// <paramref name="bounds"/>, then gives the text the rest of the area
+    /// on the glyph's side (below it, when the glyph is horizontally centred).
+    /// </summary>
+    private protected static GlyphLayout LayoutGlyph(Rectangle bounds, Size glyphSize, ContentAlignment checkAlign, int gap)
+    {
+        var horizontal = HorizontalAnchor(checkAlign);
+        var vertical = VerticalAnchor(checkAlign);
+
+        var glyphX = horizontal < 0 ? bounds.Left
+            : horizontal > 0 ? bounds.Right - glyphSize.Width
+            : bounds.Left + (bounds.Width - glyphSize.Width) / 2;
+
+        var glyphY = vertical < 0 ? bounds.Top
+            : vertical > 0 ? bounds.Bottom - glyphSize.Height
+            : bounds.Top + (bounds.Height - glyphSize.Height) / 2;
+
+        var glyph = new Rectangle(glyphX, glyphY, glyphSize.Width, glyphSize.Height);
+
+        var text = horizontal < 0 ? Rectangle.FromLTRB(glyph.Right + gap, bounds.Top, bounds.Right, bounds.Bottom)
+            : horizontal > 0 ? Rectangle.FromLTRB(bounds.Left, bounds.Top, glyph.Left - gap, bounds.Bottom)
+            : Rectangle.FromLTRB(bounds.Left, glyph.Bottom + gap, bounds.Right, bounds.Bottom);
+
+        return new GlyphLayout(glyph, text);
+    }
+
+    private static int HorizontalAnchor(ContentAlignment align) => align switch
+    {
+        ContentAlignment.TopLeft or ContentAlignment.MiddleLeft or ContentAlignment.BottomLeft => -1,
+        ContentAlignment.TopRight or ContentAlignment.MiddleRight or ContentAlignment.BottomRight => 1,
+        _ => 0,
+    };
+
+    private static int VerticalAnchor(ContentAlignment align) => align switch
+    {
+        ContentAlignment.TopLeft or ContentAlignment.TopCenter or ContentAlignment.TopRight => -1,
+        ContentAlignment.BottomLeft or ContentAlignment.BottomCenter or ContentAlignment.BottomRight => 1,
+        _ => 0,
+    };
 }

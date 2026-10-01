@@ -33,7 +33,7 @@ public class TextBoxTests
     private static void Press(Form form, PhysicalKey key, RawInputModifiers modifiers = RawInputModifiers.None)
     {
         form.Host!.KeyPressQwerty(key, modifiers);
-        form.Host.KeyReleaseQwerty(key, modifiers);
+        form.Host!.KeyReleaseQwerty(key, modifiers);
     }
 
     [Fact]

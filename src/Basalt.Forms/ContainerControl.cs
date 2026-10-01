@@ -31,6 +31,28 @@ public class ContainerControl : ScrollableControl, IContainerControl
         set => SetActiveControl(value);
     }
 
+    /// <summary>
+    /// The binding context: a container that has none, of its own or from its
+    /// parent, creates one, so controls bound on a form share the form's
+    /// currency managers without the application creating a context.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public override BindingContext? BindingContext
+    {
+        get
+        {
+            var context = base.BindingContext;
+            if (context is not null) return context;
+
+            context = new BindingContext();
+            base.BindingContext = context;
+
+            return context;
+        }
+        set => base.BindingContext = value;
+    }
+
     /// <summary>The form this container is on, or null; for a form, its parent form.</summary>
     [Browsable(false)]
     public Form? ParentForm => FindForm();

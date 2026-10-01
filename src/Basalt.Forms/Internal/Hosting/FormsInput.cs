@@ -242,6 +242,13 @@ internal static class FormsInput
     /// <summary>Shows the cursor of the control under the pointer, or the application's current cursor.</summary>
     public static void RefreshCursor()
     {
+        // A cursor set from another thread (a worker, or code that runs before the window exists) is applied on the UI thread.
+        if (!Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(RefreshCursor);
+            return;
+        }
+
         var control = CapturedControl ?? s_hovered;
         if (control?.TopLevelControl is not Form { Host: { } host }) return;
 

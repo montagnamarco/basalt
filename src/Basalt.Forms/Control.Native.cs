@@ -59,4 +59,13 @@ public partial class Control
     internal virtual void DefaultLostFocus()
     {
     }
+
+    /// <summary>
+    /// The control lost the mouse capture without a button release (another
+    /// window took it, the window was deactivated): a native control abandons
+    /// the press it was tracking, as on WM_CAPTURECHANGED.
+    /// </summary>
+    internal virtual void DefaultCaptureLost()
+    {
+    }
 }
