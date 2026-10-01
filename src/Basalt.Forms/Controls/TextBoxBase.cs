@@ -249,7 +249,7 @@ public abstract partial class TextBoxBase : Control
     }
 
     [Browsable(false)]
-    public bool CanUndo => _editor.CanUndo;
+    public bool CanUndo => CanUndoCore;
 
     [Browsable(false)]
     [AllowNull]
@@ -324,28 +324,47 @@ public abstract partial class TextBoxBase : Control
     {
         if (string.IsNullOrEmpty(text)) return;
 
-        _editor.Select(_editor.Length, 0);
-        ReplaceSelectionWith(text, userAction: false);
-        ScrollToCaret();
+        AppendTextCore(text);
     }
 
     public void Clear() => Text = null;
 
     public void ClearUndo() => _editor.ClearUndo();
 
-    public void Undo()
+    public void Undo() => UndoCore();
+
+    public void Copy() => CopyCore();
+
+    public void Cut() => CutCore();
+
+    public void Paste() => PasteCore();
+
+    // The editing commands are not virtual in WinForms: a masked box answers
+    // the WM_CUT/WM_PASTE/WM_UNDO messages they send. These hooks stand in for
+    // that, so a call from code or a menu goes through the mask like a keystroke.
+
+    internal virtual bool CanUndoCore => _editor.CanUndo;
+
+    internal virtual void AppendTextCore(string text)
+    {
+        _editor.Select(_editor.Length, 0);
+        ReplaceSelectionWith(text, userAction: false);
+        ScrollToCaret();
+    }
+
+    internal virtual void UndoCore()
     {
         if (!_editor.Undo()) return;
 
         TextEdited();
     }
 
-    public void Copy()
+    internal virtual void CopyCore()
     {
         if (SelectionLength > 0 && !IsPassword) PlatformClipboard.SetText(SelectedText);
     }
 
-    public void Cut()
+    internal virtual void CutCore()
     {
         if (SelectionLength == 0 || _readOnly || IsPassword) return;
 
@@ -357,7 +376,7 @@ public abstract partial class TextBoxBase : Control
         ReplaceSelectionWith(string.Empty, userAction: true);
     }
 
-    public void Paste()
+    internal virtual void PasteCore()
     {
         if (_readOnly) return;
 
@@ -767,7 +786,7 @@ public abstract partial class TextBoxBase : Control
 
     private protected virtual char DisplayPasswordChar => '\0';
 
-    private bool IsPassword => DisplayPasswordChar != '\0';
+    private protected bool IsPassword => DisplayPasswordChar != '\0';
 
     /// <summary>The text to show greyed when the box is empty and not focused.</summary>
     private protected virtual string PlaceholderTextInternal => string.Empty;

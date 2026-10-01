@@ -1034,10 +1034,6 @@ M protected System.Windows.Forms.Design.PropertyTab::Finalize() -> System.Void v
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::.ctor()
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetComponentEditorPages() -> System.Type[] virtual
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetInitialComponentEditorPageIndex() -> System.Int32 virtual
-M protected System.Windows.Forms.DomainUpDown::OnChanged(System.Object, System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DomainUpDown::OnSelectedItemChanged(System.Object, System.EventArgs) -> System.Void
-M protected System.Windows.Forms.DomainUpDown::OnTextBoxKeyPress(System.Object, System.Windows.Forms.KeyPressEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DomainUpDown::UpdateEditText() -> System.Void virtual
 M protected System.Windows.Forms.ErrorProvider::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ErrorProvider::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.FeatureSupport::.ctor()
@@ -1206,18 +1202,11 @@ M protected System.Windows.Forms.MaskedTextBox::CreateAccessibilityInstance() ->
 M protected System.Windows.Forms.MaskedTextBox::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.MaskedTextBox::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.MaskedTextBox::OnBackColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MaskedTextBox::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MaskedTextBox::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MaskedTextBox::OnIsOverwriteModeChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MaskedTextBox::OnKeyDown(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MaskedTextBox::OnKeyPress(System.Windows.Forms.KeyPressEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MaskedTextBox::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MaskedTextBox::OnMaskChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MaskedTextBox::OnMouseDown(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MaskedTextBox::OnMultilineChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MaskedTextBox::OnTextAlignChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MaskedTextBox::OnTextChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MaskedTextBox::OnValidating(System.ComponentModel.CancelEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MaskedTextBox::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.MaskedTextBox::ProcessKeyMessage(ref System.Windows.Forms.Message) -> System.Boolean virtual
 M protected System.Windows.Forms.MaskedTextBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
@@ -4717,31 +4706,10 @@ M public System.Windows.Forms.DomainUpDown+DomainUpDownAccessibleObject::.ctor(S
 M public System.Windows.Forms.DomainUpDown+DomainUpDownAccessibleObject::GetChild(System.Int32) -> System.Windows.Forms.AccessibleObject virtual
 M public System.Windows.Forms.DomainUpDown+DomainUpDownAccessibleObject::GetChildCount() -> System.Int32 virtual
 M public System.Windows.Forms.DomainUpDown+DomainUpDownAccessibleObject::get_Role() -> System.Windows.Forms.AccessibleRole virtual
-M public System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection::Add(System.Object) -> System.Int32 virtual
-M public System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection::Insert(System.Int32, System.Object) -> System.Void virtual
-M public System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection::Remove(System.Object) -> System.Void virtual
-M public System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection::RemoveAt(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection::get_Item(System.Int32) -> System.Object virtual
-M public System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection::set_Item(System.Int32, System.Object) -> System.Void virtual
-M public System.Windows.Forms.DomainUpDown::.ctor()
-M public System.Windows.Forms.DomainUpDown::DownButton() -> System.Void virtual
-M public System.Windows.Forms.DomainUpDown::ToString() -> System.String virtual
-M public System.Windows.Forms.DomainUpDown::UpButton() -> System.Void virtual
 M public System.Windows.Forms.DomainUpDown::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DomainUpDown::add_SelectedItemChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DomainUpDown::get_Items() -> System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection
 M public System.Windows.Forms.DomainUpDown::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.DomainUpDown::get_SelectedIndex() -> System.Int32
-M public System.Windows.Forms.DomainUpDown::get_SelectedItem() -> System.Object
-M public System.Windows.Forms.DomainUpDown::get_Sorted() -> System.Boolean
-M public System.Windows.Forms.DomainUpDown::get_Wrap() -> System.Boolean
 M public System.Windows.Forms.DomainUpDown::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DomainUpDown::remove_SelectedItemChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DomainUpDown::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.DomainUpDown::set_SelectedIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.DomainUpDown::set_SelectedItem(System.Object) -> System.Void
-M public System.Windows.Forms.DomainUpDown::set_Sorted(System.Boolean) -> System.Void
-M public System.Windows.Forms.DomainUpDown::set_Wrap(System.Boolean) -> System.Void
 M public System.Windows.Forms.DpiChangedEventArgs::ToString() -> System.String virtual
 M public System.Windows.Forms.DpiChangedEventArgs::get_DeviceDpiNew() -> System.Int32
 M public System.Windows.Forms.DpiChangedEventArgs::get_DeviceDpiOld() -> System.Int32
@@ -6076,10 +6044,6 @@ M public System.Windows.Forms.MainMenu::add_Collapse(System.EventHandler) -> Sys
 M public System.Windows.Forms.MainMenu::get_RightToLeft() -> System.Windows.Forms.RightToLeft virtual
 M public System.Windows.Forms.MainMenu::remove_Collapse(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MainMenu::set_RightToLeft(System.Windows.Forms.RightToLeft) -> System.Void virtual
-M public System.Windows.Forms.MaskedTextBox::.ctor()
-M public System.Windows.Forms.MaskedTextBox::.ctor(System.ComponentModel.MaskedTextProvider)
-M public System.Windows.Forms.MaskedTextBox::.ctor(System.String)
-M public System.Windows.Forms.MaskedTextBox::ClearUndo() -> System.Void
 M public System.Windows.Forms.MaskedTextBox::GetCharFromPosition(System.Drawing.Point) -> System.Char virtual
 M public System.Windows.Forms.MaskedTextBox::GetCharIndexFromPosition(System.Drawing.Point) -> System.Int32 virtual
 M public System.Windows.Forms.MaskedTextBox::GetFirstCharIndexFromLine(System.Int32) -> System.Int32
@@ -6087,82 +6051,22 @@ M public System.Windows.Forms.MaskedTextBox::GetFirstCharIndexOfCurrentLine() ->
 M public System.Windows.Forms.MaskedTextBox::GetLineFromCharIndex(System.Int32) -> System.Int32 virtual
 M public System.Windows.Forms.MaskedTextBox::GetPositionFromCharIndex(System.Int32) -> System.Drawing.Point virtual
 M public System.Windows.Forms.MaskedTextBox::ScrollToCaret() -> System.Void
-M public System.Windows.Forms.MaskedTextBox::ToString() -> System.String virtual
-M public System.Windows.Forms.MaskedTextBox::Undo() -> System.Void
-M public System.Windows.Forms.MaskedTextBox::ValidateText() -> System.Object
 M public System.Windows.Forms.MaskedTextBox::add_AcceptsTabChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::add_IsOverwriteModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::add_MaskChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::add_MaskInputRejected(System.Windows.Forms.MaskInputRejectedEventHandler) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::add_MultilineChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::add_TextAlignChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::add_TypeValidationCompleted(System.Windows.Forms.TypeValidationEventHandler) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::get_AcceptsTab() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_AllowPromptAsInput() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_AsciiOnly() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_BeepOnError() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_CanUndo() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_Culture() -> System.Globalization.CultureInfo
-M public System.Windows.Forms.MaskedTextBox::get_CutCopyMaskFormat() -> System.Windows.Forms.MaskFormat
-M public System.Windows.Forms.MaskedTextBox::get_FormatProvider() -> System.IFormatProvider
-M public System.Windows.Forms.MaskedTextBox::get_HidePromptOnLeave() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_InsertKeyMode() -> System.Windows.Forms.InsertKeyMode
-M public System.Windows.Forms.MaskedTextBox::get_IsOverwriteMode() -> System.Boolean
 M public System.Windows.Forms.MaskedTextBox::get_Lines() -> System.String[]
-M public System.Windows.Forms.MaskedTextBox::get_Mask() -> System.String
-M public System.Windows.Forms.MaskedTextBox::get_MaskCompleted() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_MaskFull() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_MaskedTextProvider() -> System.ComponentModel.MaskedTextProvider
 M public System.Windows.Forms.MaskedTextBox::get_MaxLength() -> System.Int32 virtual
 M public System.Windows.Forms.MaskedTextBox::get_Multiline() -> System.Boolean virtual
-M public System.Windows.Forms.MaskedTextBox::get_PasswordChar() -> System.Char
-M public System.Windows.Forms.MaskedTextBox::get_PromptChar() -> System.Char
 M public System.Windows.Forms.MaskedTextBox::get_ReadOnly() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_RejectInputOnFirstFailure() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_ResetOnPrompt() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_ResetOnSpace() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_SelectedText() -> System.String virtual
-M public System.Windows.Forms.MaskedTextBox::get_SkipLiterals() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_Text() -> System.String virtual
-M public System.Windows.Forms.MaskedTextBox::get_TextAlign() -> System.Windows.Forms.HorizontalAlignment
 M public System.Windows.Forms.MaskedTextBox::get_TextLength() -> System.Int32 virtual
-M public System.Windows.Forms.MaskedTextBox::get_TextMaskFormat() -> System.Windows.Forms.MaskFormat
-M public System.Windows.Forms.MaskedTextBox::get_UseSystemPasswordChar() -> System.Boolean
-M public System.Windows.Forms.MaskedTextBox::get_ValidatingType() -> System.Type
 M public System.Windows.Forms.MaskedTextBox::get_WordWrap() -> System.Boolean
 M public System.Windows.Forms.MaskedTextBox::remove_AcceptsTabChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::remove_IsOverwriteModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::remove_MaskChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::remove_MaskInputRejected(System.Windows.Forms.MaskInputRejectedEventHandler) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::remove_MultilineChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::remove_TextAlignChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::remove_TypeValidationCompleted(System.Windows.Forms.TypeValidationEventHandler) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::set_AcceptsTab(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_AllowPromptAsInput(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_AsciiOnly(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_BeepOnError(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_Culture(System.Globalization.CultureInfo) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_CutCopyMaskFormat(System.Windows.Forms.MaskFormat) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_FormatProvider(System.IFormatProvider) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_HidePromptOnLeave(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_InsertKeyMode(System.Windows.Forms.InsertKeyMode) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::set_Lines(System.String[]) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_Mask(System.String) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::set_MaxLength(System.Int32) -> System.Void virtual
 M public System.Windows.Forms.MaskedTextBox::set_Multiline(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.MaskedTextBox::set_PasswordChar(System.Char) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_PromptChar(System.Char) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::set_ReadOnly(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_RejectInputOnFirstFailure(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_ResetOnPrompt(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_ResetOnSpace(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_SelectedText(System.String) -> System.Void virtual
-M public System.Windows.Forms.MaskedTextBox::set_SkipLiterals(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.MaskedTextBox::set_TextAlign(System.Windows.Forms.HorizontalAlignment) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_TextMaskFormat(System.Windows.Forms.MaskFormat) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_UseSystemPasswordChar(System.Boolean) -> System.Void
-M public System.Windows.Forms.MaskedTextBox::set_ValidatingType(System.Type) -> System.Void
 M public System.Windows.Forms.MaskedTextBox::set_WordWrap(System.Boolean) -> System.Void
 M public System.Windows.Forms.MdiClient+ControlCollection::.ctor(System.Windows.Forms.MdiClient)
 M public System.Windows.Forms.MdiClient+ControlCollection::Add(System.Windows.Forms.Control) -> System.Void virtual
@@ -9900,10 +9804,8 @@ T class System.Windows.Forms.DateTimePicker : System.Windows.Forms.Control
 T class System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.Design.ComponentEditorForm : System.Windows.Forms.Form
 T class System.Windows.Forms.Design.EventsTab : System.Windows.Forms.Design.PropertyTab
-T class System.Windows.Forms.DomainUpDown : System.Windows.Forms.UpDownBase
 T class System.Windows.Forms.DomainUpDown+DomainItemAccessibleObject : System.Windows.Forms.AccessibleObject
 T class System.Windows.Forms.DomainUpDown+DomainUpDownAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
-T class System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection : System.Collections.ArrayList
 T class System.Windows.Forms.DragEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewColumnHeaderEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewItemEventArgs : System.EventArgs
@@ -9947,7 +9849,6 @@ T class System.Windows.Forms.ListViewItemMouseHoverEventArgs : System.EventArgs
 T class System.Windows.Forms.ListViewItemSelectionChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.ListViewItemStateImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.MainMenu : System.Windows.Forms.Menu
-T class System.Windows.Forms.MaskedTextBox : System.Windows.Forms.TextBoxBase
 T class System.Windows.Forms.MdiClient+ControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.Menu+MenuItemCollection
 T class System.Windows.Forms.MenuItem : System.Windows.Forms.Menu
