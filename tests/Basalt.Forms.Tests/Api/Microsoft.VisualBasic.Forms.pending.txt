@@ -1,130 +1,7 @@
-M protected Microsoft.VisualBasic.ApplicationServices.CantStartSingleInstanceException::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
-M protected Microsoft.VisualBasic.ApplicationServices.ConsoleApplicationBase::set_InternalCommandLine(System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>) -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.NoStartupFormException::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
-M protected Microsoft.VisualBasic.ApplicationServices.User::get_InternalPrincipal() -> System.Security.Principal.IPrincipal virtual
-M protected Microsoft.VisualBasic.ApplicationServices.User::set_InternalPrincipal(System.Security.Principal.IPrincipal) -> System.Void virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::HideSplashScreen() -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnCreateMainForm() -> System.Void virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnCreateSplashScreen() -> System.Void virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnInitialize(System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>) -> System.Boolean virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnRun() -> System.Void virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnShutdown() -> System.Void virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnStartup(Microsoft.VisualBasic.ApplicationServices.StartupEventArgs) -> System.Boolean virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnStartupNextInstance(Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs) -> System.Void virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::OnUnhandledException(Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs) -> System.Boolean virtual
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::ShowSplashScreen() -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_ColorMode() -> System.Windows.Forms.SystemColorMode
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_EnableVisualStyles() -> System.Boolean
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_HighDpiMode() -> System.Windows.Forms.HighDpiMode
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_IsSingleInstance() -> System.Boolean
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_MainForm() -> System.Windows.Forms.Form
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_ShutdownStyle() -> Microsoft.VisualBasic.ApplicationServices.ShutdownMode
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_UseCompatibleTextRendering() -> System.Boolean static
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_ColorMode(System.Windows.Forms.SystemColorMode) -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_EnableVisualStyles(System.Boolean) -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_HighDpiMode(System.Windows.Forms.HighDpiMode) -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_IsSingleInstance(System.Boolean) -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_MainForm(System.Windows.Forms.Form) -> System.Void
-M protected Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_ShutdownStyle(Microsoft.VisualBasic.ApplicationServices.ShutdownMode) -> System.Void
 M protected Microsoft.VisualBasic.Logging.FileLogTraceListener::Dispose(System.Boolean) -> System.Void virtual
 M protected Microsoft.VisualBasic.Logging.FileLogTraceListener::GetSupportedAttributes() -> System.String[] virtual
 M protected Microsoft.VisualBasic.Logging.Log::InitializeWithDefaultsSinceNoConfigExists() -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::.ctor()
-M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::ChangeCulture(System.String) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::ChangeUICulture(System.String) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::GetEnvironmentVariable(System.String) -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::get_Culture() -> System.Globalization.CultureInfo
-M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::get_Info() -> Microsoft.VisualBasic.ApplicationServices.AssemblyInfo
 M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::get_Log() -> Microsoft.VisualBasic.Logging.Log
-M public Microsoft.VisualBasic.ApplicationServices.ApplicationBase::get_UICulture() -> System.Globalization.CultureInfo
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::get_ColorMode() -> System.Windows.Forms.SystemColorMode
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::get_Font() -> System.Drawing.Font
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::get_HighDpiMode() -> System.Windows.Forms.HighDpiMode
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::get_MinimumSplashScreenDisplayTime() -> System.Int32
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::set_ColorMode(System.Windows.Forms.SystemColorMode) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::set_Font(System.Drawing.Font) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::set_HighDpiMode(System.Windows.Forms.HighDpiMode) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs::set_MinimumSplashScreenDisplayTime(System.Int32) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler::.ctor(System.Object, System.IntPtr)
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler::BeginInvoke(System.Object, Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler::Invoke(System.Object, Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::.ctor(System.Reflection.Assembly)
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_AssemblyName() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_CompanyName() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_Copyright() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_Description() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_DirectoryPath() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_LoadedAssemblies() -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.Reflection.Assembly>
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_ProductName() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_StackTrace() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_Title() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_Trademark() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_Version() -> System.Version
-M public Microsoft.VisualBasic.ApplicationServices.AssemblyInfo::get_WorkingSet() -> System.Int64
-M public Microsoft.VisualBasic.ApplicationServices.CantStartSingleInstanceException::.ctor()
-M public Microsoft.VisualBasic.ApplicationServices.CantStartSingleInstanceException::.ctor(System.String)
-M public Microsoft.VisualBasic.ApplicationServices.CantStartSingleInstanceException::.ctor(System.String, System.Exception)
-M public Microsoft.VisualBasic.ApplicationServices.ConsoleApplicationBase::.ctor()
-M public Microsoft.VisualBasic.ApplicationServices.ConsoleApplicationBase::get_CommandLineArgs() -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.ApplicationServices.NoStartupFormException::.ctor()
-M public Microsoft.VisualBasic.ApplicationServices.NoStartupFormException::.ctor(System.String)
-M public Microsoft.VisualBasic.ApplicationServices.NoStartupFormException::.ctor(System.String, System.Exception)
-M public Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler::.ctor(System.Object, System.IntPtr)
-M public Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler::BeginInvoke(System.Object, System.EventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler::Invoke(System.Object, System.EventArgs) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.StartupEventArgs::.ctor(System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>)
-M public Microsoft.VisualBasic.ApplicationServices.StartupEventArgs::get_CommandLine() -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.ApplicationServices.StartupEventHandler::.ctor(System.Object, System.IntPtr)
-M public Microsoft.VisualBasic.ApplicationServices.StartupEventHandler::BeginInvoke(System.Object, Microsoft.VisualBasic.ApplicationServices.StartupEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public Microsoft.VisualBasic.ApplicationServices.StartupEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.StartupEventHandler::Invoke(System.Object, Microsoft.VisualBasic.ApplicationServices.StartupEventArgs) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs::.ctor(System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>, System.Boolean)
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs::get_BringToForeground() -> System.Boolean
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs::get_CommandLine() -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs::set_BringToForeground(System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler::.ctor(System.Object, System.IntPtr)
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler::BeginInvoke(System.Object, Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler::Invoke(System.Object, Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs::.ctor(System.Boolean, System.Exception)
-M public Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs::get_ExitApplication() -> System.Boolean
-M public Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs::set_ExitApplication(System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler::.ctor(System.Object, System.IntPtr)
-M public Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler::BeginInvoke(System.Object, Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler::Invoke(System.Object, Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs) -> System.Void virtual
-M public Microsoft.VisualBasic.ApplicationServices.User::.ctor()
-M public Microsoft.VisualBasic.ApplicationServices.User::IsInRole(System.String) -> System.Boolean
-M public Microsoft.VisualBasic.ApplicationServices.User::get_CurrentPrincipal() -> System.Security.Principal.IPrincipal
-M public Microsoft.VisualBasic.ApplicationServices.User::get_IsAuthenticated() -> System.Boolean
-M public Microsoft.VisualBasic.ApplicationServices.User::get_Name() -> System.String
-M public Microsoft.VisualBasic.ApplicationServices.User::set_CurrentPrincipal(System.Security.Principal.IPrincipal) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::.ctor()
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::.ctor(Microsoft.VisualBasic.ApplicationServices.AuthenticationMode)
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::DoEvents() -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::Run(System.String[]) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::add_ApplyApplicationDefaults(Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::add_NetworkAvailabilityChanged(Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::add_Shutdown(Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::add_Startup(Microsoft.VisualBasic.ApplicationServices.StartupEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::add_StartupNextInstance(Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::add_UnhandledException(Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_ApplicationContext() -> System.Windows.Forms.ApplicationContext
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_MinimumSplashScreenDisplayTime() -> System.Int32
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_OpenForms() -> System.Windows.Forms.FormCollection
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_SaveMySettingsOnExit() -> System.Boolean
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::get_SplashScreen() -> System.Windows.Forms.Form
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::remove_ApplyApplicationDefaults(Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::remove_NetworkAvailabilityChanged(Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::remove_Shutdown(Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::remove_Startup(Microsoft.VisualBasic.ApplicationServices.StartupEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::remove_StartupNextInstance(Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::remove_UnhandledException(Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_MinimumSplashScreenDisplayTime(System.Int32) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_SaveMySettingsOnExit(System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase::set_SplashScreen(System.Windows.Forms.Form) -> System.Void
 M public Microsoft.VisualBasic.CompilerServices.HostServices::.ctor()
 M public Microsoft.VisualBasic.CompilerServices.HostServices::get_VBHost() -> Microsoft.VisualBasic.CompilerServices.IVbHost static
 M public Microsoft.VisualBasic.CompilerServices.HostServices::set_VBHost(Microsoft.VisualBasic.CompilerServices.IVbHost) -> System.Void static
@@ -197,23 +74,7 @@ M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetImage(System.Drawin
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetText(System.String, System.Windows.Forms.TextDataFormat) -> System.Void
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::TryGetData`1(System.String, System.Func`2<System.Reflection.Metadata.TypeName, System.Type>, out T) -> System.Boolean
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::TryGetData`1(System.String, out T) -> System.Boolean
-T class Microsoft.VisualBasic.ApplicationServices.ApplicationBase
-T class Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs : System.EventArgs
-T class Microsoft.VisualBasic.ApplicationServices.AssemblyInfo
-T class Microsoft.VisualBasic.ApplicationServices.CantStartSingleInstanceException : System.Exception
-T class Microsoft.VisualBasic.ApplicationServices.ConsoleApplicationBase : Microsoft.VisualBasic.ApplicationServices.ApplicationBase
-T class Microsoft.VisualBasic.ApplicationServices.NoStartupFormException : System.Exception
-T class Microsoft.VisualBasic.ApplicationServices.StartupEventArgs : System.ComponentModel.CancelEventArgs
-T class Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs : System.EventArgs
-T class Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs : System.Threading.ThreadExceptionEventArgs
-T class Microsoft.VisualBasic.ApplicationServices.User
-T class Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase : Microsoft.VisualBasic.ApplicationServices.ConsoleApplicationBase
 T class Microsoft.VisualBasic.Logging.FileLogTraceListener : System.Diagnostics.TraceListener
 T class Microsoft.VisualBasic.Logging.Log
-T delegate Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler
-T delegate Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler
-T delegate Microsoft.VisualBasic.ApplicationServices.StartupEventHandler
-T delegate Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler
-T delegate Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler
 T interface Microsoft.VisualBasic.CompilerServices.IVbHost
 T sealed class Microsoft.VisualBasic.CompilerServices.HostServices
