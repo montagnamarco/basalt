@@ -6,7 +6,7 @@ namespace System.Windows.Forms;
 /// <summary>A position in an IList (plain, IBindingList or the IBindingList a DataView exposes), and the bindings that follow it.</summary>
 public class CurrencyManager : BindingManagerBase
 {
-    private readonly IList _list;
+    private IList _list;
 
     // Not public in Microsoft's CurrencyManager either: BindingContext is the only place
     // that creates one, keyed by data source and path so controls on the same container share it.
@@ -176,6 +176,36 @@ public class CurrencyManager : BindingManagerBase
     private void WireList()
     {
         if (_list is IBindingList bindingList) bindingList.ListChanged += OnListChanged;
+    }
+
+    /// <summary>
+    /// Points this manager at another list (a BindingSource whose DataSource or DataMember changed),
+    /// so every binding already resolved to it follows: the same object stays in BindingContext's cache.
+    /// Position goes to the first item, and the change is reported as a reset.
+    /// </summary>
+    internal void SetDataSource(object dataSource)
+    {
+        // Resolved first, so a data source that cannot become a list leaves this manager untouched.
+        var newList = ToList(dataSource);
+
+        if (_list is IBindingList oldBindingList) oldBindingList.ListChanged -= OnListChanged;
+
+        _list = newList;
+        var oldType = finalType;
+        finalType = InferItemType(_list);
+        WireList();
+
+        var oldPosition = listposition;
+        listposition = _list.Count > 0 ? 0 : -1;
+
+        ListChanged?.Invoke(this, new ListChangedEventArgs(ListChangedType.Reset, -1));
+        if (finalType != oldType) MetaDataChanged?.Invoke(this, EventArgs.Empty);
+        if (listposition != oldPosition) OnPositionChanged(EventArgs.Empty);
+
+        OnItemChanged(new ItemChangedEventArgs(-1));
+        OnCurrentChanged(EventArgs.Empty);
+        OnCurrentItemChanged(EventArgs.Empty);
+        PushData();
     }
 
     private void OnListChanged(object? sender, ListChangedEventArgs e)
