@@ -130,86 +130,7 @@ M public Microsoft.VisualBasic.CompilerServices.HostServices::get_VBHost() -> Mi
 M public Microsoft.VisualBasic.CompilerServices.HostServices::set_VBHost(Microsoft.VisualBasic.CompilerServices.IVbHost) -> System.Void static
 M public Microsoft.VisualBasic.CompilerServices.IVbHost::GetParentWindow() -> System.Windows.Forms.IWin32Window abstract
 M public Microsoft.VisualBasic.CompilerServices.IVbHost::GetWindowTitle() -> System.String abstract
-M public Microsoft.VisualBasic.Devices.Audio::.ctor()
-M public Microsoft.VisualBasic.Devices.Audio::Play(System.Byte[], Microsoft.VisualBasic.AudioPlayMode) -> System.Void
-M public Microsoft.VisualBasic.Devices.Audio::Play(System.IO.Stream, Microsoft.VisualBasic.AudioPlayMode) -> System.Void
-M public Microsoft.VisualBasic.Devices.Audio::Play(System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Audio::Play(System.String, Microsoft.VisualBasic.AudioPlayMode) -> System.Void
 M public Microsoft.VisualBasic.Devices.Audio::PlaySystemSound(System.Media.SystemSound) -> System.Void
-M public Microsoft.VisualBasic.Devices.Audio::Stop() -> System.Void
-M public Microsoft.VisualBasic.Devices.Clock::.ctor()
-M public Microsoft.VisualBasic.Devices.Clock::get_GmtTime() -> System.DateTime
-M public Microsoft.VisualBasic.Devices.Clock::get_LocalTime() -> System.DateTime
-M public Microsoft.VisualBasic.Devices.Clock::get_TickCount() -> System.Int32
-M public Microsoft.VisualBasic.Devices.Computer::.ctor()
-M public Microsoft.VisualBasic.Devices.Computer::get_Audio() -> Microsoft.VisualBasic.Devices.Audio
-M public Microsoft.VisualBasic.Devices.Computer::get_Clipboard() -> Microsoft.VisualBasic.MyServices.ClipboardProxy
-M public Microsoft.VisualBasic.Devices.Computer::get_Keyboard() -> Microsoft.VisualBasic.Devices.Keyboard
-M public Microsoft.VisualBasic.Devices.Computer::get_Mouse() -> Microsoft.VisualBasic.Devices.Mouse
-M public Microsoft.VisualBasic.Devices.Computer::get_Screen() -> System.Windows.Forms.Screen
-M public Microsoft.VisualBasic.Devices.ComputerInfo::.ctor()
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_AvailablePhysicalMemory() -> System.UInt64
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_AvailableVirtualMemory() -> System.UInt64
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_InstalledUICulture() -> System.Globalization.CultureInfo
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_OSFullName() -> System.String
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_OSPlatform() -> System.String
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_OSVersion() -> System.String
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_TotalPhysicalMemory() -> System.UInt64
-M public Microsoft.VisualBasic.Devices.ComputerInfo::get_TotalVirtualMemory() -> System.UInt64
-M public Microsoft.VisualBasic.Devices.Keyboard::.ctor()
-M public Microsoft.VisualBasic.Devices.Keyboard::SendKeys(System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Keyboard::SendKeys(System.String, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.Devices.Keyboard::get_AltKeyDown() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Keyboard::get_CapsLock() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Keyboard::get_CtrlKeyDown() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Keyboard::get_NumLock() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Keyboard::get_ScrollLock() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Keyboard::get_ShiftKeyDown() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Mouse::.ctor()
-M public Microsoft.VisualBasic.Devices.Mouse::get_ButtonsSwapped() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Mouse::get_WheelExists() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Mouse::get_WheelScrollLines() -> System.Int32
-M public Microsoft.VisualBasic.Devices.Network::.ctor()
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.String, System.String, System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.String, System.String, System.String, System.String, System.Boolean, System.Int32, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.String, System.String, System.String, System.String, System.Boolean, System.Int32, System.Boolean, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.Uri, System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.Uri, System.String, System.Net.ICredentials, System.Boolean, System.Int32, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.Uri, System.String, System.Net.ICredentials, System.Boolean, System.Int32, System.Boolean, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.Uri, System.String, System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.Uri, System.String, System.String, System.String, System.Boolean, System.Int32, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::DownloadFile(System.Uri, System.String, System.String, System.String, System.Boolean, System.Int32, System.Boolean, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::Ping(System.String) -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Network::Ping(System.String, System.Int32) -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Network::Ping(System.Uri) -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Network::Ping(System.Uri, System.Int32) -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.String, System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.String, System.String, System.String, System.Boolean, System.Int32) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.String, System.String, System.String, System.Boolean, System.Int32, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.Uri) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.Uri, System.Net.ICredentials, System.Boolean, System.Int32) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.Uri, System.Net.ICredentials, System.Boolean, System.Int32, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.Uri, System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.Uri, System.String, System.String, System.Boolean, System.Int32) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::UploadFile(System.String, System.Uri, System.String, System.String, System.Boolean, System.Int32, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::add_NetworkAvailabilityChanged(Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler) -> System.Void
-M public Microsoft.VisualBasic.Devices.Network::get_IsAvailable() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.Network::remove_NetworkAvailabilityChanged(Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler) -> System.Void
-M public Microsoft.VisualBasic.Devices.NetworkAvailableEventArgs::.ctor(System.Boolean)
-M public Microsoft.VisualBasic.Devices.NetworkAvailableEventArgs::get_IsNetworkAvailable() -> System.Boolean
-M public Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler::.ctor(System.Object, System.IntPtr)
-M public Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler::BeginInvoke(System.Object, Microsoft.VisualBasic.Devices.NetworkAvailableEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler::Invoke(System.Object, Microsoft.VisualBasic.Devices.NetworkAvailableEventArgs) -> System.Void virtual
-M public Microsoft.VisualBasic.Devices.ServerComputer::.ctor()
-M public Microsoft.VisualBasic.Devices.ServerComputer::get_Clock() -> Microsoft.VisualBasic.Devices.Clock
-M public Microsoft.VisualBasic.Devices.ServerComputer::get_FileSystem() -> Microsoft.VisualBasic.MyServices.FileSystemProxy
-M public Microsoft.VisualBasic.Devices.ServerComputer::get_Info() -> Microsoft.VisualBasic.Devices.ComputerInfo
-M public Microsoft.VisualBasic.Devices.ServerComputer::get_Name() -> System.String
-M public Microsoft.VisualBasic.Devices.ServerComputer::get_Network() -> Microsoft.VisualBasic.Devices.Network
-M public Microsoft.VisualBasic.Devices.ServerComputer::get_Registry() -> Microsoft.VisualBasic.MyServices.RegistryProxy
 M public Microsoft.VisualBasic.Logging.FileLogTraceListener::.ctor()
 M public Microsoft.VisualBasic.Logging.FileLogTraceListener::.ctor(System.String)
 M public Microsoft.VisualBasic.Logging.FileLogTraceListener::Close() -> System.Void virtual
@@ -255,19 +176,16 @@ M public Microsoft.VisualBasic.Logging.Log::WriteException(System.Exception, Sys
 M public Microsoft.VisualBasic.Logging.Log::WriteException(System.Exception, System.Diagnostics.TraceEventType, System.String, System.Int32) -> System.Void
 M public Microsoft.VisualBasic.Logging.Log::get_DefaultFileLogWriter() -> Microsoft.VisualBasic.Logging.FileLogTraceListener
 M public Microsoft.VisualBasic.Logging.Log::get_TraceSource() -> System.Diagnostics.TraceSource
-M public Microsoft.VisualBasic.MyServices.ClipboardProxy::Clear() -> System.Void
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::ContainsAudio() -> System.Boolean
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::ContainsData(System.String) -> System.Boolean
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::ContainsFileDropList() -> System.Boolean
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::ContainsImage() -> System.Boolean
-M public Microsoft.VisualBasic.MyServices.ClipboardProxy::ContainsText() -> System.Boolean
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::ContainsText(System.Windows.Forms.TextDataFormat) -> System.Boolean
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::GetAudioStream() -> System.IO.Stream
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::GetData(System.String) -> System.Object
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::GetDataObject() -> System.Windows.Forms.IDataObject
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::GetFileDropList() -> System.Collections.Specialized.StringCollection
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::GetImage() -> System.Drawing.Image
-M public Microsoft.VisualBasic.MyServices.ClipboardProxy::GetText() -> System.String
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::GetText(System.Windows.Forms.TextDataFormat) -> System.String
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetAudio(System.Byte[]) -> System.Void
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetAudio(System.IO.Stream) -> System.Void
@@ -276,88 +194,9 @@ M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetDataAsJson`1(System
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetDataObject(System.Windows.Forms.DataObject) -> System.Void
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetFileDropList(System.Collections.Specialized.StringCollection) -> System.Void
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetImage(System.Drawing.Image) -> System.Void
-M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetText(System.String) -> System.Void
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::SetText(System.String, System.Windows.Forms.TextDataFormat) -> System.Void
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::TryGetData`1(System.String, System.Func`2<System.Reflection.Metadata.TypeName, System.Type>, out T) -> System.Boolean
 M public Microsoft.VisualBasic.MyServices.ClipboardProxy::TryGetData`1(System.String, out T) -> System.Boolean
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CombinePath(System.String, System.String) -> System.String
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyDirectory(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyDirectory(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyDirectory(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyDirectory(System.String, System.String, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyFile(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyFile(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyFile(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CopyFile(System.String, System.String, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::CreateDirectory(System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::DeleteDirectory(System.String, Microsoft.VisualBasic.FileIO.DeleteDirectoryOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::DeleteDirectory(System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.RecycleOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::DeleteDirectory(System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.RecycleOption, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::DeleteFile(System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::DeleteFile(System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.RecycleOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::DeleteFile(System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.RecycleOption, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::DirectoryExists(System.String) -> System.Boolean
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::FileExists(System.String) -> System.Boolean
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::FindInFiles(System.String, System.String, System.Boolean, Microsoft.VisualBasic.FileIO.SearchOption) -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::FindInFiles(System.String, System.String, System.Boolean, Microsoft.VisualBasic.FileIO.SearchOption, System.String[]) -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetDirectories(System.String) -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetDirectories(System.String, Microsoft.VisualBasic.FileIO.SearchOption, System.String[]) -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetDirectoryInfo(System.String) -> System.IO.DirectoryInfo
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetDriveInfo(System.String) -> System.IO.DriveInfo
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetFileInfo(System.String) -> System.IO.FileInfo
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetFiles(System.String) -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetFiles(System.String, Microsoft.VisualBasic.FileIO.SearchOption, System.String[]) -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.String>
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetName(System.String) -> System.String
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetParentPath(System.String) -> System.String
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::GetTempFileName() -> System.String
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveDirectory(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveDirectory(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveDirectory(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveDirectory(System.String, System.String, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveFile(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveFile(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveFile(System.String, System.String, Microsoft.VisualBasic.FileIO.UIOption, Microsoft.VisualBasic.FileIO.UICancelOption) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::MoveFile(System.String, System.String, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::OpenTextFieldParser(System.String) -> Microsoft.VisualBasic.FileIO.TextFieldParser
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::OpenTextFieldParser(System.String, System.Int32[]) -> Microsoft.VisualBasic.FileIO.TextFieldParser
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::OpenTextFieldParser(System.String, System.String[]) -> Microsoft.VisualBasic.FileIO.TextFieldParser
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::OpenTextFileReader(System.String) -> System.IO.StreamReader
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::OpenTextFileReader(System.String, System.Text.Encoding) -> System.IO.StreamReader
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::OpenTextFileWriter(System.String, System.Boolean) -> System.IO.StreamWriter
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::OpenTextFileWriter(System.String, System.Boolean, System.Text.Encoding) -> System.IO.StreamWriter
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::ReadAllBytes(System.String) -> System.Byte[]
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::ReadAllText(System.String) -> System.String
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::ReadAllText(System.String, System.Text.Encoding) -> System.String
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::RenameDirectory(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::RenameFile(System.String, System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::WriteAllBytes(System.String, System.Byte[], System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::WriteAllText(System.String, System.String, System.Boolean) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::WriteAllText(System.String, System.String, System.Boolean, System.Text.Encoding) -> System.Void
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::get_CurrentDirectory() -> System.String
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::get_Drives() -> System.Collections.ObjectModel.ReadOnlyCollection`1<System.IO.DriveInfo>
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::get_SpecialDirectories() -> Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy
-M public Microsoft.VisualBasic.MyServices.FileSystemProxy::set_CurrentDirectory(System.String) -> System.Void
-M public Microsoft.VisualBasic.MyServices.Internal.ContextValue`1::.ctor()
-M public Microsoft.VisualBasic.MyServices.Internal.ContextValue`1::get_Value() -> T
-M public Microsoft.VisualBasic.MyServices.Internal.ContextValue`1::set_Value(T) -> System.Void
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::GetValue(System.String, System.String, System.Object) -> System.Object
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::SetValue(System.String, System.String, System.Object) -> System.Void
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::SetValue(System.String, System.String, System.Object, Microsoft.Win32.RegistryValueKind) -> System.Void
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::get_ClassesRoot() -> Microsoft.Win32.RegistryKey
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::get_CurrentConfig() -> Microsoft.Win32.RegistryKey
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::get_CurrentUser() -> Microsoft.Win32.RegistryKey
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::get_LocalMachine() -> Microsoft.Win32.RegistryKey
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::get_PerformanceData() -> Microsoft.Win32.RegistryKey
-M public Microsoft.VisualBasic.MyServices.RegistryProxy::get_Users() -> Microsoft.Win32.RegistryKey
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_AllUsersApplicationData() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_CurrentUserApplicationData() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_Desktop() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_MyDocuments() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_MyMusic() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_MyPictures() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_ProgramFiles() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_Programs() -> System.String
-M public Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy::get_Temp() -> System.String
 T class Microsoft.VisualBasic.ApplicationServices.ApplicationBase
 T class Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventArgs : System.EventArgs
 T class Microsoft.VisualBasic.ApplicationServices.AssemblyInfo
@@ -369,27 +208,12 @@ T class Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs :
 T class Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventArgs : System.Threading.ThreadExceptionEventArgs
 T class Microsoft.VisualBasic.ApplicationServices.User
 T class Microsoft.VisualBasic.ApplicationServices.WindowsFormsApplicationBase : Microsoft.VisualBasic.ApplicationServices.ConsoleApplicationBase
-T class Microsoft.VisualBasic.Devices.Audio
-T class Microsoft.VisualBasic.Devices.Clock
-T class Microsoft.VisualBasic.Devices.Computer : Microsoft.VisualBasic.Devices.ServerComputer
-T class Microsoft.VisualBasic.Devices.ComputerInfo
-T class Microsoft.VisualBasic.Devices.Keyboard
-T class Microsoft.VisualBasic.Devices.Mouse
-T class Microsoft.VisualBasic.Devices.Network
-T class Microsoft.VisualBasic.Devices.NetworkAvailableEventArgs : System.EventArgs
-T class Microsoft.VisualBasic.Devices.ServerComputer
 T class Microsoft.VisualBasic.Logging.FileLogTraceListener : System.Diagnostics.TraceListener
 T class Microsoft.VisualBasic.Logging.Log
-T class Microsoft.VisualBasic.MyServices.ClipboardProxy
-T class Microsoft.VisualBasic.MyServices.FileSystemProxy
-T class Microsoft.VisualBasic.MyServices.Internal.ContextValue`1
-T class Microsoft.VisualBasic.MyServices.RegistryProxy
-T class Microsoft.VisualBasic.MyServices.SpecialDirectoriesProxy
 T delegate Microsoft.VisualBasic.ApplicationServices.ApplyApplicationDefaultsEventHandler
 T delegate Microsoft.VisualBasic.ApplicationServices.ShutdownEventHandler
 T delegate Microsoft.VisualBasic.ApplicationServices.StartupEventHandler
 T delegate Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventHandler
 T delegate Microsoft.VisualBasic.ApplicationServices.UnhandledExceptionEventHandler
-T delegate Microsoft.VisualBasic.Devices.NetworkAvailableEventHandler
 T interface Microsoft.VisualBasic.CompilerServices.IVbHost
 T sealed class Microsoft.VisualBasic.CompilerServices.HostServices

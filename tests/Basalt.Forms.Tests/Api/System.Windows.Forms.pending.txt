@@ -240,9 +240,6 @@ I System.Windows.Forms.StatusBar+StatusBarPanelCollection : System.Collections.I
 I System.Windows.Forms.StatusBar+StatusBarPanelCollection : System.Collections.IEnumerable
 I System.Windows.Forms.StatusBar+StatusBarPanelCollection : System.Collections.IList
 I System.Windows.Forms.StatusBarPanel : System.ComponentModel.ISupportInitialize
-I System.Windows.Forms.TabControl+TabPageCollection : System.Collections.ICollection
-I System.Windows.Forms.TabControl+TabPageCollection : System.Collections.IEnumerable
-I System.Windows.Forms.TabControl+TabPageCollection : System.Collections.IList
 I System.Windows.Forms.TaskDialog : System.Windows.Forms.IWin32Window
 I System.Windows.Forms.TaskDialogIcon : System.IDisposable
 I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.ICollection
@@ -1501,44 +1498,21 @@ M protected System.Windows.Forms.StatusStrip::get_DefaultPadding() -> System.Win
 M protected System.Windows.Forms.StatusStrip::get_DefaultShowItemToolTips() -> System.Boolean virtual
 M protected System.Windows.Forms.StatusStrip::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.TabControl::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.TabControl::CreateControlsInstance() -> System.Windows.Forms.Control+ControlCollection virtual
 M protected System.Windows.Forms.TabControl::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.TabControl::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::GetItems() -> System.Object[] virtual
-M protected System.Windows.Forms.TabControl::GetItems(System.Type) -> System.Object[] virtual
-M protected System.Windows.Forms.TabControl::GetToolTipText(System.Object) -> System.String
-M protected System.Windows.Forms.TabControl::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.TabControl::OnDeselected(System.Windows.Forms.TabControlEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnDeselecting(System.Windows.Forms.TabControlCancelEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::OnDrawItem(System.Windows.Forms.DrawItemEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnEnter(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnKeyDown(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnLeave(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::OnLostFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnResize(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnSelected(System.Windows.Forms.TabControlEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnSelectedIndexChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::OnSelecting(System.Windows.Forms.TabControlCancelEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::OnStyleChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::ProcessKeyPreview(ref System.Windows.Forms.Message) -> System.Boolean virtual
-M protected System.Windows.Forms.TabControl::RemoveAll() -> System.Void
-M protected System.Windows.Forms.TabControl::ScaleCore(System.Single, System.Single) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::UpdateTabSelection(System.Boolean) -> System.Void
 M protected System.Windows.Forms.TabControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.TabControl::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.TabControl::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.TabControl::get_DoubleBuffered() -> System.Boolean virtual
 M protected System.Windows.Forms.TabControl::set_DoubleBuffered(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.TabPage::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.TabPage::CreateControlsInstance() -> System.Windows.Forms.Control+ControlCollection virtual
-M protected System.Windows.Forms.TabPage::OnEnter(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabPage::OnLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TabPage::OnPaintBackground(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TabPage::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
 M protected System.Windows.Forms.TabPage::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
 M protected System.Windows.Forms.TableLayoutPanel::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
@@ -8022,133 +7996,34 @@ M public System.Windows.Forms.StatusStrip::set_Padding(System.Windows.Forms.Padd
 M public System.Windows.Forms.StatusStrip::set_ShowItemToolTips(System.Boolean) -> System.Void
 M public System.Windows.Forms.StatusStrip::set_SizingGrip(System.Boolean) -> System.Void
 M public System.Windows.Forms.StatusStrip::set_Stretch(System.Boolean) -> System.Void
-M public System.Windows.Forms.TabControl+ControlCollection::.ctor(System.Windows.Forms.TabControl)
-M public System.Windows.Forms.TabControl+ControlCollection::Add(System.Windows.Forms.Control) -> System.Void virtual
-M public System.Windows.Forms.TabControl+ControlCollection::Remove(System.Windows.Forms.Control) -> System.Void virtual
-M public System.Windows.Forms.TabControl+TabPageCollection::.ctor(System.Windows.Forms.TabControl)
-M public System.Windows.Forms.TabControl+TabPageCollection::Add(System.String) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Add(System.String, System.String) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Add(System.String, System.String, System.Int32) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Add(System.String, System.String, System.String) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Add(System.Windows.Forms.TabPage) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::AddRange(System.Windows.Forms.TabPage[]) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Clear() -> System.Void virtual
-M public System.Windows.Forms.TabControl+TabPageCollection::Contains(System.Windows.Forms.TabPage) -> System.Boolean
-M public System.Windows.Forms.TabControl+TabPageCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.TabControl+TabPageCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.TabControl+TabPageCollection::IndexOf(System.Windows.Forms.TabPage) -> System.Int32
-M public System.Windows.Forms.TabControl+TabPageCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.TabControl+TabPageCollection::Insert(System.Int32, System.String) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Insert(System.Int32, System.String, System.String) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Insert(System.Int32, System.String, System.String, System.Int32) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Insert(System.Int32, System.String, System.String, System.String) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Insert(System.Int32, System.Windows.Forms.TabPage) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::Remove(System.Windows.Forms.TabPage) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::RemoveAt(System.Int32) -> System.Void
-M public System.Windows.Forms.TabControl+TabPageCollection::RemoveByKey(System.String) -> System.Void virtual
-M public System.Windows.Forms.TabControl+TabPageCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.TabControl+TabPageCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.TabControl+TabPageCollection::get_Item(System.Int32) -> System.Windows.Forms.TabPage virtual
-M public System.Windows.Forms.TabControl+TabPageCollection::get_Item(System.String) -> System.Windows.Forms.TabPage virtual
-M public System.Windows.Forms.TabControl+TabPageCollection::set_Item(System.Int32, System.Windows.Forms.TabPage) -> System.Void virtual
-M public System.Windows.Forms.TabControl::.ctor()
-M public System.Windows.Forms.TabControl::DeselectTab(System.Int32) -> System.Void
-M public System.Windows.Forms.TabControl::DeselectTab(System.String) -> System.Void
-M public System.Windows.Forms.TabControl::DeselectTab(System.Windows.Forms.TabPage) -> System.Void
-M public System.Windows.Forms.TabControl::GetControl(System.Int32) -> System.Windows.Forms.Control
-M public System.Windows.Forms.TabControl::GetTabRect(System.Int32) -> System.Drawing.Rectangle
-M public System.Windows.Forms.TabControl::SelectTab(System.Int32) -> System.Void
-M public System.Windows.Forms.TabControl::SelectTab(System.String) -> System.Void
-M public System.Windows.Forms.TabControl::SelectTab(System.Windows.Forms.TabPage) -> System.Void
-M public System.Windows.Forms.TabControl::ToString() -> System.String virtual
 M public System.Windows.Forms.TabControl::add_BackColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::add_Deselected(System.Windows.Forms.TabControlEventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::add_Deselecting(System.Windows.Forms.TabControlCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::add_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::add_ForeColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::add_Selected(System.Windows.Forms.TabControlEventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::add_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::add_Selecting(System.Windows.Forms.TabControlCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::get_Alignment() -> System.Windows.Forms.TabAlignment
-M public System.Windows.Forms.TabControl::get_Appearance() -> System.Windows.Forms.TabAppearance
 M public System.Windows.Forms.TabControl::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.TabControl::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.TabControl::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.TabControl::get_DisplayRectangle() -> System.Drawing.Rectangle virtual
-M public System.Windows.Forms.TabControl::get_DrawMode() -> System.Windows.Forms.TabDrawMode
 M public System.Windows.Forms.TabControl::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.TabControl::get_HotTrack() -> System.Boolean
-M public System.Windows.Forms.TabControl::get_ImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.TabControl::get_ItemSize() -> System.Drawing.Size
-M public System.Windows.Forms.TabControl::get_Multiline() -> System.Boolean
-M public System.Windows.Forms.TabControl::get_Padding() -> System.Drawing.Point
 M public System.Windows.Forms.TabControl::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.TabControl::get_RowCount() -> System.Int32
-M public System.Windows.Forms.TabControl::get_SelectedIndex() -> System.Int32
-M public System.Windows.Forms.TabControl::get_SelectedTab() -> System.Windows.Forms.TabPage
-M public System.Windows.Forms.TabControl::get_ShowToolTips() -> System.Boolean
-M public System.Windows.Forms.TabControl::get_SizeMode() -> System.Windows.Forms.TabSizeMode
-M public System.Windows.Forms.TabControl::get_TabCount() -> System.Int32
-M public System.Windows.Forms.TabControl::get_TabPages() -> System.Windows.Forms.TabControl+TabPageCollection
 M public System.Windows.Forms.TabControl::get_Text() -> System.String virtual
 M public System.Windows.Forms.TabControl::remove_BackColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::remove_Deselected(System.Windows.Forms.TabControlEventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::remove_Deselecting(System.Windows.Forms.TabControlCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::remove_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::remove_ForeColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::remove_Selected(System.Windows.Forms.TabControlEventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::remove_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::remove_Selecting(System.Windows.Forms.TabControlCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TabControl::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TabControl::set_Alignment(System.Windows.Forms.TabAlignment) -> System.Void
-M public System.Windows.Forms.TabControl::set_Appearance(System.Windows.Forms.TabAppearance) -> System.Void
 M public System.Windows.Forms.TabControl::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.TabControl::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.TabControl::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.TabControl::set_DrawMode(System.Windows.Forms.TabDrawMode) -> System.Void
 M public System.Windows.Forms.TabControl::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.TabControl::set_HotTrack(System.Boolean) -> System.Void
-M public System.Windows.Forms.TabControl::set_ImageList(System.Windows.Forms.ImageList) -> System.Void
-M public System.Windows.Forms.TabControl::set_ItemSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.TabControl::set_Multiline(System.Boolean) -> System.Void
-M public System.Windows.Forms.TabControl::set_Padding(System.Drawing.Point) -> System.Void
 M public System.Windows.Forms.TabControl::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.TabControl::set_SelectedIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.TabControl::set_SelectedTab(System.Windows.Forms.TabPage) -> System.Void
-M public System.Windows.Forms.TabControl::set_ShowToolTips(System.Boolean) -> System.Void
-M public System.Windows.Forms.TabControl::set_SizeMode(System.Windows.Forms.TabSizeMode) -> System.Void
 M public System.Windows.Forms.TabControl::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TabControlCancelEventArgs::.ctor(System.Windows.Forms.TabPage, System.Int32, System.Boolean, System.Windows.Forms.TabControlAction)
-M public System.Windows.Forms.TabControlCancelEventArgs::get_Action() -> System.Windows.Forms.TabControlAction
-M public System.Windows.Forms.TabControlCancelEventArgs::get_TabPage() -> System.Windows.Forms.TabPage
-M public System.Windows.Forms.TabControlCancelEventArgs::get_TabPageIndex() -> System.Int32
-M public System.Windows.Forms.TabControlCancelEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.TabControlCancelEventHandler::BeginInvoke(System.Object, System.Windows.Forms.TabControlCancelEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.TabControlCancelEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.TabControlCancelEventHandler::Invoke(System.Object, System.Windows.Forms.TabControlCancelEventArgs) -> System.Void virtual
-M public System.Windows.Forms.TabControlEventArgs::.ctor(System.Windows.Forms.TabPage, System.Int32, System.Windows.Forms.TabControlAction)
-M public System.Windows.Forms.TabControlEventArgs::get_Action() -> System.Windows.Forms.TabControlAction
-M public System.Windows.Forms.TabControlEventArgs::get_TabPage() -> System.Windows.Forms.TabPage
-M public System.Windows.Forms.TabControlEventArgs::get_TabPageIndex() -> System.Int32
-M public System.Windows.Forms.TabControlEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.TabControlEventHandler::BeginInvoke(System.Object, System.Windows.Forms.TabControlEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.TabControlEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.TabControlEventHandler::Invoke(System.Object, System.Windows.Forms.TabControlEventArgs) -> System.Void virtual
-M public System.Windows.Forms.TabPage+TabPageControlCollection::.ctor(System.Windows.Forms.TabPage)
-M public System.Windows.Forms.TabPage+TabPageControlCollection::Add(System.Windows.Forms.Control) -> System.Void virtual
-M public System.Windows.Forms.TabPage::.ctor()
-M public System.Windows.Forms.TabPage::.ctor(System.String)
-M public System.Windows.Forms.TabPage::GetTabPageOfComponent(System.Object) -> System.Windows.Forms.TabPage static
-M public System.Windows.Forms.TabPage::ToString() -> System.String virtual
 M public System.Windows.Forms.TabPage::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabPage::add_DockChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabPage::add_EnabledChanged(System.EventHandler) -> System.Void
@@ -8163,8 +8038,6 @@ M public System.Windows.Forms.TabPage::get_AutoSizeMode() -> System.Windows.Form
 M public System.Windows.Forms.TabPage::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.TabPage::get_Dock() -> System.Windows.Forms.DockStyle virtual
 M public System.Windows.Forms.TabPage::get_Enabled() -> System.Boolean
-M public System.Windows.Forms.TabPage::get_ImageIndex() -> System.Int32
-M public System.Windows.Forms.TabPage::get_ImageKey() -> System.String
 M public System.Windows.Forms.TabPage::get_Location() -> System.Drawing.Point
 M public System.Windows.Forms.TabPage::get_MaximumSize() -> System.Drawing.Size virtual
 M public System.Windows.Forms.TabPage::get_MinimumSize() -> System.Drawing.Size virtual
@@ -8172,8 +8045,6 @@ M public System.Windows.Forms.TabPage::get_PreferredSize() -> System.Drawing.Siz
 M public System.Windows.Forms.TabPage::get_TabIndex() -> System.Int32
 M public System.Windows.Forms.TabPage::get_TabStop() -> System.Boolean
 M public System.Windows.Forms.TabPage::get_Text() -> System.String virtual
-M public System.Windows.Forms.TabPage::get_ToolTipText() -> System.String
-M public System.Windows.Forms.TabPage::get_UseVisualStyleBackColor() -> System.Boolean
 M public System.Windows.Forms.TabPage::get_Visible() -> System.Boolean
 M public System.Windows.Forms.TabPage::remove_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TabPage::remove_DockChanged(System.EventHandler) -> System.Void
@@ -8189,16 +8060,12 @@ M public System.Windows.Forms.TabPage::set_AutoSizeMode(System.Windows.Forms.Aut
 M public System.Windows.Forms.TabPage::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.TabPage::set_Dock(System.Windows.Forms.DockStyle) -> System.Void virtual
 M public System.Windows.Forms.TabPage::set_Enabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.TabPage::set_ImageIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.TabPage::set_ImageKey(System.String) -> System.Void
 M public System.Windows.Forms.TabPage::set_Location(System.Drawing.Point) -> System.Void
 M public System.Windows.Forms.TabPage::set_MaximumSize(System.Drawing.Size) -> System.Void virtual
 M public System.Windows.Forms.TabPage::set_MinimumSize(System.Drawing.Size) -> System.Void virtual
 M public System.Windows.Forms.TabPage::set_TabIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.TabPage::set_TabStop(System.Boolean) -> System.Void
 M public System.Windows.Forms.TabPage::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TabPage::set_ToolTipText(System.String) -> System.Void
-M public System.Windows.Forms.TabPage::set_UseVisualStyleBackColor(System.Boolean) -> System.Void
 M public System.Windows.Forms.TabPage::set_Visible(System.Boolean) -> System.Void
 M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
 M public System.Windows.Forms.TabRenderer::DrawTabItem(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Image, System.Drawing.Rectangle, System.Boolean, System.Windows.Forms.VisualStyles.TabItemState) -> System.Void static
@@ -11109,13 +10976,6 @@ T class System.Windows.Forms.StatusBarDrawItemEventArgs : System.Windows.Forms.D
 T class System.Windows.Forms.StatusBarPanel : System.ComponentModel.Component
 T class System.Windows.Forms.StatusBarPanelClickEventArgs : System.Windows.Forms.MouseEventArgs
 T class System.Windows.Forms.StatusStrip : System.Windows.Forms.ToolStrip
-T class System.Windows.Forms.TabControl : System.Windows.Forms.Control
-T class System.Windows.Forms.TabControl+ControlCollection : System.Windows.Forms.Control+ControlCollection
-T class System.Windows.Forms.TabControl+TabPageCollection
-T class System.Windows.Forms.TabControlCancelEventArgs : System.ComponentModel.CancelEventArgs
-T class System.Windows.Forms.TabControlEventArgs : System.EventArgs
-T class System.Windows.Forms.TabPage : System.Windows.Forms.Panel
-T class System.Windows.Forms.TabPage+TabPageControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.TaskDialog
 T class System.Windows.Forms.TaskDialogButton : System.Windows.Forms.TaskDialogControl
 T class System.Windows.Forms.TaskDialogButtonCollection : System.Collections.ObjectModel.Collection`1<System.Windows.Forms.TaskDialogButton>
@@ -11244,8 +11104,6 @@ T delegate System.Windows.Forms.RetrieveVirtualItemEventHandler
 T delegate System.Windows.Forms.SelectedGridItemChangedEventHandler
 T delegate System.Windows.Forms.StatusBarDrawItemEventHandler
 T delegate System.Windows.Forms.StatusBarPanelClickEventHandler
-T delegate System.Windows.Forms.TabControlCancelEventHandler
-T delegate System.Windows.Forms.TabControlEventHandler
 T delegate System.Windows.Forms.ToolBarButtonClickEventHandler
 T delegate System.Windows.Forms.ToolStripArrowRenderEventHandler
 T delegate System.Windows.Forms.ToolStripContentPanelRenderEventHandler

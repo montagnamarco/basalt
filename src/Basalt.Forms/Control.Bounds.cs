@@ -159,7 +159,7 @@ public partial class Control
             if (parent is not null)
             {
                 parent._layout.PreferredSizeCache = null;
-                parent.LayoutEngine.InitLayout(this, specified);
+                parent.LayoutEngineInternal.InitLayout(this, specified);
                 parent.ResumeLayout(true);
             }
         }

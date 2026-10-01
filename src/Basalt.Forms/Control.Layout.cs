@@ -17,6 +17,14 @@ public partial class Control
     [Browsable(false)]
     public virtual LayoutEngine LayoutEngine => DefaultLayout.Instance;
 
+    /// <summary>
+    /// The engine that really arranges the children: the public one, unless a
+    /// native control arranges them itself (a TabControl sizes its pages to the
+    /// page area without touching their Dock), which Microsoft's surface does
+    /// not let it express by overriding LayoutEngine.
+    /// </summary>
+    internal virtual LayoutEngine LayoutEngineInternal => LayoutEngine;
+
     LayoutSettingsStore IArrangedElement.LayoutStore => _layout;
 
     /// <summary>
@@ -83,7 +91,7 @@ public partial class Control
             {
                 foreach (var child in children.Snapshot())
                 {
-                    LayoutEngine.InitLayout(child, BoundsSpecified.All);
+                    LayoutEngineInternal.InitLayout(child, BoundsSpecified.All);
                     child._layout.PreferredSizeCache = null;
                 }
             }
@@ -159,12 +167,12 @@ public partial class Control
     {
         ((LayoutEventHandler?)Events[s_layoutEvent])?.Invoke(this, levent);
 
-        var parentMustLayOut = LayoutEngine.Layout(this, levent);
+        var parentMustLayOut = LayoutEngineInternal.Layout(this, levent);
         if (parentMustLayOut && _parent is { } parent) parent.SetState(States.LayoutIsDirty, true);
     }
 
     /// <summary>Lets the parent's engine measure this control once it is placed in it.</summary>
-    protected virtual void InitLayout() => LayoutEngine.InitLayout(this, BoundsSpecified.All);
+    protected virtual void InitLayout() => LayoutEngineInternal.InitLayout(this, BoundsSpecified.All);
 
     /// <summary>A layout of this control, caused by <paramref name="cause"/>: what WinForms calls a layout transaction.</summary>
     internal void DoLayout(IArrangedElement cause, string property)
@@ -265,7 +273,7 @@ public partial class Control
             if (_parent is not null)
             {
                 // Turned on, the control grows to its content at the next layout of its parent.
-                if (value) _parent.LayoutEngine.InitLayout(this, BoundsSpecified.Size);
+                if (value) _parent.LayoutEngineInternal.InitLayout(this, BoundsSpecified.Size);
 
                 _parent.DoLayout(this, PropertyNames.AutoSize);
             }
