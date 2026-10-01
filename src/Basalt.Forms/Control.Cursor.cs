@@ -55,7 +55,13 @@ public partial class Control
     }
 
     /// <summary>What the pointer looks like over the control now: a wait cursor wins over the control's own.</summary>
-    internal Cursor EffectiveCursor => _useWaitCursor ? Cursors.WaitCursor : Cursor;
+    internal Cursor EffectiveCursor => _useWaitCursor ? Cursors.WaitCursor : CursorOverrideInternal ?? Cursor;
+
+    /// <summary>
+    /// A cursor shown over the control without changing its Cursor property,
+    /// as a native control answers WM_SETCURSOR (LinkLabel's hand over a link).
+    /// </summary>
+    internal virtual Cursor? CursorOverrideInternal => null;
 
     protected virtual void OnCursorChanged(EventArgs e)
     {

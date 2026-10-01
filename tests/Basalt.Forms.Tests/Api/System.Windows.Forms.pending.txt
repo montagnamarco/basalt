@@ -59,24 +59,8 @@ F public System.Windows.Forms.DateTimePicker::MinDateTime : System.DateTime stat
 F public System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute::Default : System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute static readonly
 F public System.Windows.Forms.DockingAttribute::Default : System.Windows.Forms.DockingAttribute static readonly
 F public System.Windows.Forms.GridItemCollection::Empty : System.Windows.Forms.GridItemCollection static
-F public System.Windows.Forms.ListBox::DefaultItemHeight : System.Int32 const
-F public System.Windows.Forms.ListBox::NoMatches : System.Int32 const
 F public System.Windows.Forms.Menu::FindHandle : System.Int32 const
 F public System.Windows.Forms.Menu::FindShortcut : System.Int32 const
-F public System.Windows.Forms.MonthCalendar+HitArea::CalendarBackground : System.Windows.Forms.MonthCalendar+HitArea const = 6
-F public System.Windows.Forms.MonthCalendar+HitArea::Date : System.Windows.Forms.MonthCalendar+HitArea const = 7
-F public System.Windows.Forms.MonthCalendar+HitArea::DayOfWeek : System.Windows.Forms.MonthCalendar+HitArea const = 10
-F public System.Windows.Forms.MonthCalendar+HitArea::NextMonthButton : System.Windows.Forms.MonthCalendar+HitArea const = 4
-F public System.Windows.Forms.MonthCalendar+HitArea::NextMonthDate : System.Windows.Forms.MonthCalendar+HitArea const = 8
-F public System.Windows.Forms.MonthCalendar+HitArea::Nowhere : System.Windows.Forms.MonthCalendar+HitArea const = 0
-F public System.Windows.Forms.MonthCalendar+HitArea::PrevMonthButton : System.Windows.Forms.MonthCalendar+HitArea const = 5
-F public System.Windows.Forms.MonthCalendar+HitArea::PrevMonthDate : System.Windows.Forms.MonthCalendar+HitArea const = 9
-F public System.Windows.Forms.MonthCalendar+HitArea::TitleBackground : System.Windows.Forms.MonthCalendar+HitArea const = 1
-F public System.Windows.Forms.MonthCalendar+HitArea::TitleMonth : System.Windows.Forms.MonthCalendar+HitArea const = 2
-F public System.Windows.Forms.MonthCalendar+HitArea::TitleYear : System.Windows.Forms.MonthCalendar+HitArea const = 3
-F public System.Windows.Forms.MonthCalendar+HitArea::TodayLink : System.Windows.Forms.MonthCalendar+HitArea const = 12
-F public System.Windows.Forms.MonthCalendar+HitArea::WeekNumbers : System.Windows.Forms.MonthCalendar+HitArea const = 11
-F public System.Windows.Forms.MonthCalendar+HitArea::value__ : System.Int32
 F public System.Windows.Forms.OSFeature::LayeredWindows : System.Object static readonly
 F public System.Windows.Forms.OSFeature::Themes : System.Object static readonly
 F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Commands : System.ComponentModel.Design.CommandID static readonly
@@ -164,8 +148,6 @@ I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDat
 I System.Windows.Forms.DataObject : System.Windows.Forms.IDataObject
 I System.Windows.Forms.DataObject : System.Windows.Forms.ITypedDataObject
 I System.Windows.Forms.Design.PropertyTab : System.ComponentModel.IExtenderProvider
-I System.Windows.Forms.DrawItemEventArgs : System.Drawing.IDeviceContext
-I System.Windows.Forms.DrawItemEventArgs : System.IDisposable
 I System.Windows.Forms.ErrorProvider : System.ComponentModel.IExtenderProvider
 I System.Windows.Forms.ErrorProvider : System.ComponentModel.ISupportInitialize
 I System.Windows.Forms.FeatureSupport : System.Windows.Forms.IFeatureSupport
@@ -183,23 +165,6 @@ I System.Windows.Forms.IAsyncDropTarget : System.Windows.Forms.IDropTarget
 I System.Windows.Forms.ITypedDataObject : System.Windows.Forms.IDataObject
 I System.Windows.Forms.KeysConverter : System.Collections.IComparer
 I System.Windows.Forms.Label : System.Windows.Forms.Automation.IAutomationLiveRegion
-I System.Windows.Forms.LinkArea : System.IEquatable`1<System.Windows.Forms.LinkArea>
-I System.Windows.Forms.LinkLabel : System.Windows.Forms.IButtonControl
-I System.Windows.Forms.LinkLabel+LinkCollection : System.Collections.ICollection
-I System.Windows.Forms.LinkLabel+LinkCollection : System.Collections.IEnumerable
-I System.Windows.Forms.LinkLabel+LinkCollection : System.Collections.IList
-I System.Windows.Forms.ListBox+IntegerCollection : System.Collections.ICollection
-I System.Windows.Forms.ListBox+IntegerCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListBox+IntegerCollection : System.Collections.IList
-I System.Windows.Forms.ListBox+ObjectCollection : System.Collections.ICollection
-I System.Windows.Forms.ListBox+ObjectCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListBox+ObjectCollection : System.Collections.IList
-I System.Windows.Forms.ListBox+SelectedIndexCollection : System.Collections.ICollection
-I System.Windows.Forms.ListBox+SelectedIndexCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListBox+SelectedIndexCollection : System.Collections.IList
-I System.Windows.Forms.ListBox+SelectedObjectCollection : System.Collections.ICollection
-I System.Windows.Forms.ListBox+SelectedObjectCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListBox+SelectedObjectCollection : System.Collections.IList
 I System.Windows.Forms.ListView+CheckedIndexCollection : System.Collections.ICollection
 I System.Windows.Forms.ListView+CheckedIndexCollection : System.Collections.IEnumerable
 I System.Windows.Forms.ListView+CheckedIndexCollection : System.Collections.IList
@@ -1073,7 +1038,6 @@ M protected System.Windows.Forms.DomainUpDown::OnChanged(System.Object, System.E
 M protected System.Windows.Forms.DomainUpDown::OnSelectedItemChanged(System.Object, System.EventArgs) -> System.Void
 M protected System.Windows.Forms.DomainUpDown::OnTextBoxKeyPress(System.Object, System.Windows.Forms.KeyPressEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DomainUpDown::UpdateEditText() -> System.Void virtual
-M protected System.Windows.Forms.DrawItemEventArgs::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ErrorProvider::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ErrorProvider::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.FeatureSupport::.ctor()
@@ -1169,58 +1133,25 @@ M protected System.Windows.Forms.LinkLabel::CreateAccessibilityInstance() -> Sys
 M protected System.Windows.Forms.LinkLabel::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.LinkLabel::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.LinkLabel::OnAutoSizeChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnEnabledChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnGotFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnKeyDown(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnLinkClicked(System.Windows.Forms.LinkLabelLinkClickedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnLostFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnMouseDown(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnMouseLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnMouseMove(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnMouseUp(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnPaddingChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnPaint(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.LinkLabel::OnPaintBackground(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.LinkLabel::OnTextAlignChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::OnTextChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::PointInLink(System.Int32, System.Int32) -> System.Windows.Forms.LinkLabel+Link
-M protected System.Windows.Forms.LinkLabel::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.LinkLabel::Select(System.Boolean, System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.LinkLabel::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
 M protected System.Windows.Forms.LinkLabel::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.LinkLabel::get_OverrideCursor() -> System.Windows.Forms.Cursor
-M protected System.Windows.Forms.LinkLabel::set_OverrideCursor(System.Windows.Forms.Cursor) -> System.Void
-M protected System.Windows.Forms.ListBox::AddItemsCore(System.Object[]) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.ListBox::CreateItemCollection() -> System.Windows.Forms.ListBox+ObjectCollection virtual
 M protected System.Windows.Forms.ListBox::GetScaledBounds(System.Drawing.Rectangle, System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.ListBox::OnChangeUICues(System.Windows.Forms.UICuesEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnDataSourceChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnDisplayMemberChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::OnDrawItem(System.Windows.Forms.DrawItemEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::OnMeasureItem(System.Windows.Forms.MeasureItemEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnParentChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::OnSelectedIndexChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::OnSelectedValueChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::RefreshItem(System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::RefreshItems() -> System.Void virtual
 M protected System.Windows.Forms.ListBox::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::SetItemCore(System.Int32, System.Object) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::SetItemsCore(System.Collections.IList) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::Sort() -> System.Void virtual
 M protected System.Windows.Forms.ListBox::WmReflectCommand(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.ListBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::get_AllowSelection() -> System.Boolean virtual
-M protected System.Windows.Forms.ListBox::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.ListBox::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ListView::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ListView::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.ListView::Dispose(System.Boolean) -> System.Void virtual
@@ -1323,24 +1254,15 @@ M protected System.Windows.Forms.MenuStrip::get_DefaultShowItemToolTips() -> Sys
 M protected System.Windows.Forms.MenuStrip::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.MonthCalendar::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.MonthCalendar::CreateHandle() -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.MonthCalendar::OnBackColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::OnDateChanged(System.Windows.Forms.DateRangeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::OnDateSelected(System.Windows.Forms.DateRangeEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::OnForeColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.MonthCalendar::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
 M protected System.Windows.Forms.MonthCalendar::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.MonthCalendar::get_DefaultMargin() -> System.Windows.Forms.Padding virtual
-M protected System.Windows.Forms.MonthCalendar::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.MonthCalendar::get_DoubleBuffered() -> System.Boolean virtual
 M protected System.Windows.Forms.MonthCalendar::set_DoubleBuffered(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.NativeWindow::Finalize() -> System.Void virtual
@@ -4644,14 +4566,6 @@ M public System.Windows.Forms.DataObjectExtensions::TryGetData`1(System.Windows.
 M public System.Windows.Forms.DataObjectExtensions::TryGetData`1(System.Windows.Forms.IDataObject, System.String, System.Func`2<System.Reflection.Metadata.TypeName, System.Type>, System.Boolean, out T) -> System.Boolean static
 M public System.Windows.Forms.DataObjectExtensions::TryGetData`1(System.Windows.Forms.IDataObject, System.String, out T) -> System.Boolean static
 M public System.Windows.Forms.DataObjectExtensions::TryGetData`1(System.Windows.Forms.IDataObject, out T) -> System.Boolean static
-M public System.Windows.Forms.DateBoldEventArgs::get_DaysToBold() -> System.Int32[]
-M public System.Windows.Forms.DateBoldEventArgs::get_Size() -> System.Int32
-M public System.Windows.Forms.DateBoldEventArgs::get_StartDate() -> System.DateTime
-M public System.Windows.Forms.DateBoldEventArgs::set_DaysToBold(System.Int32[]) -> System.Void
-M public System.Windows.Forms.DateBoldEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DateBoldEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DateBoldEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DateBoldEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DateBoldEventHandler::Invoke(System.Object, System.Windows.Forms.DateBoldEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject::.ctor(System.Windows.Forms.DateTimePicker)
 M public System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject::DoDefaultAction() -> System.Void virtual
 M public System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject::get_DefaultAction() -> System.String virtual
@@ -4883,22 +4797,6 @@ M public System.Windows.Forms.DragEventHandler::.ctor(System.Object, System.IntP
 M public System.Windows.Forms.DragEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DragEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.DragEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.DragEventHandler::Invoke(System.Object, System.Windows.Forms.DragEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DrawItemEventArgs::.ctor(System.Drawing.Graphics, System.Drawing.Font, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DrawItemState)
-M public System.Windows.Forms.DrawItemEventArgs::.ctor(System.Drawing.Graphics, System.Drawing.Font, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DrawItemState, System.Drawing.Color, System.Drawing.Color)
-M public System.Windows.Forms.DrawItemEventArgs::Dispose() -> System.Void
-M public System.Windows.Forms.DrawItemEventArgs::DrawBackground() -> System.Void virtual
-M public System.Windows.Forms.DrawItemEventArgs::DrawFocusRectangle() -> System.Void virtual
-M public System.Windows.Forms.DrawItemEventArgs::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.DrawItemEventArgs::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DrawItemEventArgs::get_Font() -> System.Drawing.Font
-M public System.Windows.Forms.DrawItemEventArgs::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.DrawItemEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DrawItemEventArgs::get_Index() -> System.Int32
-M public System.Windows.Forms.DrawItemEventArgs::get_State() -> System.Windows.Forms.DrawItemState
-M public System.Windows.Forms.DrawItemEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DrawItemEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawItemEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DrawItemEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DrawItemEventHandler::Invoke(System.Object, System.Windows.Forms.DrawItemEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::.ctor(System.Drawing.Graphics, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.ColumnHeader, System.Windows.Forms.ListViewItemStates, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
 M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::DrawBackground() -> System.Void
 M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::DrawText() -> System.Void
@@ -5732,108 +5630,17 @@ M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::CanConver
 M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
 M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::.ctor()
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::CreateInstance(System.ComponentModel.ITypeDescriptorContext, System.Collections.IDictionary) -> System.Object virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::GetCreateInstanceSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::GetProperties(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.LinkArea+LinkAreaConverter::GetPropertiesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.LinkArea::.ctor(System.Int32, System.Int32)
-M public System.Windows.Forms.LinkArea::Equals(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.LinkArea::Equals(System.Windows.Forms.LinkArea) -> System.Boolean
-M public System.Windows.Forms.LinkArea::GetHashCode() -> System.Int32 virtual
-M public System.Windows.Forms.LinkArea::ToString() -> System.String virtual
-M public System.Windows.Forms.LinkArea::get_IsEmpty() -> System.Boolean
-M public System.Windows.Forms.LinkArea::get_Length() -> System.Int32
-M public System.Windows.Forms.LinkArea::get_Start() -> System.Int32
-M public System.Windows.Forms.LinkArea::op_Equality(System.Windows.Forms.LinkArea, System.Windows.Forms.LinkArea) -> System.Boolean static
-M public System.Windows.Forms.LinkArea::op_Inequality(System.Windows.Forms.LinkArea, System.Windows.Forms.LinkArea) -> System.Boolean static
-M public System.Windows.Forms.LinkArea::set_Length(System.Int32) -> System.Void
-M public System.Windows.Forms.LinkArea::set_Start(System.Int32) -> System.Void
 M public System.Windows.Forms.LinkConverter::.ctor()
 M public System.Windows.Forms.LinkConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.LinkConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.LinkConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
 M public System.Windows.Forms.LinkConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.LinkLabel+Link::.ctor()
-M public System.Windows.Forms.LinkLabel+Link::.ctor(System.Int32, System.Int32)
-M public System.Windows.Forms.LinkLabel+Link::.ctor(System.Int32, System.Int32, System.Object)
-M public System.Windows.Forms.LinkLabel+Link::get_Description() -> System.String
-M public System.Windows.Forms.LinkLabel+Link::get_Enabled() -> System.Boolean
-M public System.Windows.Forms.LinkLabel+Link::get_Length() -> System.Int32
-M public System.Windows.Forms.LinkLabel+Link::get_LinkData() -> System.Object
-M public System.Windows.Forms.LinkLabel+Link::get_Name() -> System.String
-M public System.Windows.Forms.LinkLabel+Link::get_Start() -> System.Int32
-M public System.Windows.Forms.LinkLabel+Link::get_Tag() -> System.Object
-M public System.Windows.Forms.LinkLabel+Link::get_Visited() -> System.Boolean
-M public System.Windows.Forms.LinkLabel+Link::set_Description(System.String) -> System.Void
-M public System.Windows.Forms.LinkLabel+Link::set_Enabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.LinkLabel+Link::set_Length(System.Int32) -> System.Void
-M public System.Windows.Forms.LinkLabel+Link::set_LinkData(System.Object) -> System.Void
-M public System.Windows.Forms.LinkLabel+Link::set_Name(System.String) -> System.Void
-M public System.Windows.Forms.LinkLabel+Link::set_Start(System.Int32) -> System.Void
-M public System.Windows.Forms.LinkLabel+Link::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.LinkLabel+Link::set_Visited(System.Boolean) -> System.Void
-M public System.Windows.Forms.LinkLabel+LinkCollection::.ctor(System.Windows.Forms.LinkLabel)
-M public System.Windows.Forms.LinkLabel+LinkCollection::Add(System.Int32, System.Int32) -> System.Windows.Forms.LinkLabel+Link
-M public System.Windows.Forms.LinkLabel+LinkCollection::Add(System.Int32, System.Int32, System.Object) -> System.Windows.Forms.LinkLabel+Link
-M public System.Windows.Forms.LinkLabel+LinkCollection::Add(System.Windows.Forms.LinkLabel+Link) -> System.Int32
-M public System.Windows.Forms.LinkLabel+LinkCollection::Clear() -> System.Void virtual
-M public System.Windows.Forms.LinkLabel+LinkCollection::Contains(System.Windows.Forms.LinkLabel+Link) -> System.Boolean
-M public System.Windows.Forms.LinkLabel+LinkCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.LinkLabel+LinkCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.LinkLabel+LinkCollection::IndexOf(System.Windows.Forms.LinkLabel+Link) -> System.Int32
-M public System.Windows.Forms.LinkLabel+LinkCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.LinkLabel+LinkCollection::Remove(System.Windows.Forms.LinkLabel+Link) -> System.Void
-M public System.Windows.Forms.LinkLabel+LinkCollection::RemoveAt(System.Int32) -> System.Void
-M public System.Windows.Forms.LinkLabel+LinkCollection::RemoveByKey(System.String) -> System.Void virtual
-M public System.Windows.Forms.LinkLabel+LinkCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.LinkLabel+LinkCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.LinkLabel+LinkCollection::get_Item(System.Int32) -> System.Windows.Forms.LinkLabel+Link virtual
-M public System.Windows.Forms.LinkLabel+LinkCollection::get_Item(System.String) -> System.Windows.Forms.LinkLabel+Link virtual
-M public System.Windows.Forms.LinkLabel+LinkCollection::get_LinksAdded() -> System.Boolean
-M public System.Windows.Forms.LinkLabel+LinkCollection::set_Item(System.Int32, System.Windows.Forms.LinkLabel+Link) -> System.Void virtual
-M public System.Windows.Forms.LinkLabel::.ctor()
-M public System.Windows.Forms.LinkLabel::add_LinkClicked(System.Windows.Forms.LinkLabelLinkClickedEventHandler) -> System.Void
 M public System.Windows.Forms.LinkLabel::add_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.LinkLabel::get_ActiveLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.LinkLabel::get_DisabledLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.LinkLabel::get_FlatStyle() -> System.Windows.Forms.FlatStyle
-M public System.Windows.Forms.LinkLabel::get_LinkArea() -> System.Windows.Forms.LinkArea
-M public System.Windows.Forms.LinkLabel::get_LinkBehavior() -> System.Windows.Forms.LinkBehavior
-M public System.Windows.Forms.LinkLabel::get_LinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.LinkLabel::get_LinkVisited() -> System.Boolean
-M public System.Windows.Forms.LinkLabel::get_Links() -> System.Windows.Forms.LinkLabel+LinkCollection
 M public System.Windows.Forms.LinkLabel::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.LinkLabel::get_TabStop() -> System.Boolean
 M public System.Windows.Forms.LinkLabel::get_Text() -> System.String virtual
-M public System.Windows.Forms.LinkLabel::get_UseCompatibleTextRendering() -> System.Boolean
-M public System.Windows.Forms.LinkLabel::get_VisitedLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.LinkLabel::remove_LinkClicked(System.Windows.Forms.LinkLabelLinkClickedEventHandler) -> System.Void
 M public System.Windows.Forms.LinkLabel::remove_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_ActiveLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_DisabledLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_FlatStyle(System.Windows.Forms.FlatStyle) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_LinkArea(System.Windows.Forms.LinkArea) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_LinkBehavior(System.Windows.Forms.LinkBehavior) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_LinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_LinkVisited(System.Boolean) -> System.Void
 M public System.Windows.Forms.LinkLabel::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_TabStop(System.Boolean) -> System.Void
 M public System.Windows.Forms.LinkLabel::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.LinkLabel::set_UseCompatibleTextRendering(System.Boolean) -> System.Void
-M public System.Windows.Forms.LinkLabel::set_VisitedLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.LinkLabelLinkClickedEventArgs::.ctor(System.Windows.Forms.LinkLabel+Link)
-M public System.Windows.Forms.LinkLabelLinkClickedEventArgs::.ctor(System.Windows.Forms.LinkLabel+Link, System.Windows.Forms.MouseButtons)
-M public System.Windows.Forms.LinkLabelLinkClickedEventArgs::get_Button() -> System.Windows.Forms.MouseButtons
-M public System.Windows.Forms.LinkLabelLinkClickedEventArgs::get_Link() -> System.Windows.Forms.LinkLabel+Link
-M public System.Windows.Forms.LinkLabelLinkClickedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.LinkLabelLinkClickedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.LinkLabelLinkClickedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.LinkLabelLinkClickedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.LinkLabelLinkClickedEventHandler::Invoke(System.Object, System.Windows.Forms.LinkLabelLinkClickedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ListBindingConverter::.ctor()
 M public System.Windows.Forms.ListBindingConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.ListBindingConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
@@ -5846,149 +5653,6 @@ M public System.Windows.Forms.ListBindingHelper::GetListItemProperties(System.Ob
 M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object) -> System.Type static
 M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object, System.String) -> System.Type static
 M public System.Windows.Forms.ListBindingHelper::GetListName(System.Object, System.ComponentModel.PropertyDescriptor[]) -> System.String static
-M public System.Windows.Forms.ListBox+IntegerCollection::.ctor(System.Windows.Forms.ListBox)
-M public System.Windows.Forms.ListBox+IntegerCollection::Add(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox+IntegerCollection::AddRange(System.Int32[]) -> System.Void
-M public System.Windows.Forms.ListBox+IntegerCollection::AddRange(System.Windows.Forms.ListBox+IntegerCollection) -> System.Void
-M public System.Windows.Forms.ListBox+IntegerCollection::Clear() -> System.Void
-M public System.Windows.Forms.ListBox+IntegerCollection::Contains(System.Int32) -> System.Boolean
-M public System.Windows.Forms.ListBox+IntegerCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+IntegerCollection::IndexOf(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox+IntegerCollection::Remove(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+IntegerCollection::RemoveAt(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+IntegerCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListBox+IntegerCollection::get_Item(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox+IntegerCollection::set_Item(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+ObjectCollection::.ctor(System.Windows.Forms.ListBox)
-M public System.Windows.Forms.ListBox+ObjectCollection::.ctor(System.Windows.Forms.ListBox, System.Object[])
-M public System.Windows.Forms.ListBox+ObjectCollection::.ctor(System.Windows.Forms.ListBox, System.Windows.Forms.ListBox+ObjectCollection)
-M public System.Windows.Forms.ListBox+ObjectCollection::Add(System.Object) -> System.Int32
-M public System.Windows.Forms.ListBox+ObjectCollection::AddRange(System.Object[]) -> System.Void
-M public System.Windows.Forms.ListBox+ObjectCollection::AddRange(System.Windows.Forms.ListBox+ObjectCollection) -> System.Void
-M public System.Windows.Forms.ListBox+ObjectCollection::Clear() -> System.Void virtual
-M public System.Windows.Forms.ListBox+ObjectCollection::Contains(System.Object) -> System.Boolean
-M public System.Windows.Forms.ListBox+ObjectCollection::CopyTo(System.Object[], System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+ObjectCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListBox+ObjectCollection::IndexOf(System.Object) -> System.Int32
-M public System.Windows.Forms.ListBox+ObjectCollection::Insert(System.Int32, System.Object) -> System.Void
-M public System.Windows.Forms.ListBox+ObjectCollection::Remove(System.Object) -> System.Void
-M public System.Windows.Forms.ListBox+ObjectCollection::RemoveAt(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+ObjectCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListBox+ObjectCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListBox+ObjectCollection::get_Item(System.Int32) -> System.Object virtual
-M public System.Windows.Forms.ListBox+ObjectCollection::set_Item(System.Int32, System.Object) -> System.Void virtual
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::.ctor(System.Windows.Forms.ListBox)
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::Add(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::Clear() -> System.Void
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::Contains(System.Int32) -> System.Boolean
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::IndexOf(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::Remove(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListBox+SelectedIndexCollection::get_Item(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::.ctor(System.Windows.Forms.ListBox)
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::Add(System.Object) -> System.Void
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::Clear() -> System.Void
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::Contains(System.Object) -> System.Boolean
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::IndexOf(System.Object) -> System.Int32
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::Remove(System.Object) -> System.Void
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::get_Item(System.Int32) -> System.Object
-M public System.Windows.Forms.ListBox+SelectedObjectCollection::set_Item(System.Int32, System.Object) -> System.Void
-M public System.Windows.Forms.ListBox::.ctor()
-M public System.Windows.Forms.ListBox::BeginUpdate() -> System.Void
-M public System.Windows.Forms.ListBox::ClearSelected() -> System.Void
-M public System.Windows.Forms.ListBox::EndUpdate() -> System.Void
-M public System.Windows.Forms.ListBox::FindString(System.String) -> System.Int32
-M public System.Windows.Forms.ListBox::FindString(System.String, System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox::FindStringExact(System.String) -> System.Int32
-M public System.Windows.Forms.ListBox::FindStringExact(System.String, System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox::GetItemHeight(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox::GetItemRectangle(System.Int32) -> System.Drawing.Rectangle
-M public System.Windows.Forms.ListBox::GetSelected(System.Int32) -> System.Boolean
-M public System.Windows.Forms.ListBox::IndexFromPoint(System.Drawing.Point) -> System.Int32
-M public System.Windows.Forms.ListBox::IndexFromPoint(System.Int32, System.Int32) -> System.Int32
-M public System.Windows.Forms.ListBox::Refresh() -> System.Void virtual
-M public System.Windows.Forms.ListBox::ResetBackColor() -> System.Void virtual
-M public System.Windows.Forms.ListBox::ResetForeColor() -> System.Void virtual
-M public System.Windows.Forms.ListBox::SetSelected(System.Int32, System.Boolean) -> System.Void
-M public System.Windows.Forms.ListBox::ToString() -> System.String virtual
-M public System.Windows.Forms.ListBox::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_MeasureItem(System.Windows.Forms.MeasureItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::get_BackColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.ListBox::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.ListBox::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.ListBox::get_BorderStyle() -> System.Windows.Forms.BorderStyle
-M public System.Windows.Forms.ListBox::get_ColumnWidth() -> System.Int32
-M public System.Windows.Forms.ListBox::get_CustomTabOffsets() -> System.Windows.Forms.ListBox+IntegerCollection
-M public System.Windows.Forms.ListBox::get_DrawMode() -> System.Windows.Forms.DrawMode virtual
-M public System.Windows.Forms.ListBox::get_Font() -> System.Drawing.Font virtual
-M public System.Windows.Forms.ListBox::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.ListBox::get_HorizontalExtent() -> System.Int32
-M public System.Windows.Forms.ListBox::get_HorizontalScrollbar() -> System.Boolean
-M public System.Windows.Forms.ListBox::get_IntegralHeight() -> System.Boolean
-M public System.Windows.Forms.ListBox::get_ItemHeight() -> System.Int32 virtual
-M public System.Windows.Forms.ListBox::get_Items() -> System.Windows.Forms.ListBox+ObjectCollection
-M public System.Windows.Forms.ListBox::get_MultiColumn() -> System.Boolean
-M public System.Windows.Forms.ListBox::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.ListBox::get_PreferredHeight() -> System.Int32
-M public System.Windows.Forms.ListBox::get_ScrollAlwaysVisible() -> System.Boolean
-M public System.Windows.Forms.ListBox::get_SelectedIndex() -> System.Int32 virtual
-M public System.Windows.Forms.ListBox::get_SelectedIndices() -> System.Windows.Forms.ListBox+SelectedIndexCollection
-M public System.Windows.Forms.ListBox::get_SelectedItem() -> System.Object
-M public System.Windows.Forms.ListBox::get_SelectedItems() -> System.Windows.Forms.ListBox+SelectedObjectCollection
-M public System.Windows.Forms.ListBox::get_SelectionMode() -> System.Windows.Forms.SelectionMode virtual
-M public System.Windows.Forms.ListBox::get_Sorted() -> System.Boolean
-M public System.Windows.Forms.ListBox::get_Text() -> System.String virtual
-M public System.Windows.Forms.ListBox::get_TopIndex() -> System.Int32
-M public System.Windows.Forms.ListBox::get_UseCustomTabOffsets() -> System.Boolean
-M public System.Windows.Forms.ListBox::get_UseTabStops() -> System.Boolean
-M public System.Windows.Forms.ListBox::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_MeasureItem(System.Windows.Forms.MeasureItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListBox::set_BackColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
-M public System.Windows.Forms.ListBox::set_ColumnWidth(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox::set_DrawMode(System.Windows.Forms.DrawMode) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_Font(System.Drawing.Font) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_HorizontalExtent(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox::set_HorizontalScrollbar(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListBox::set_IntegralHeight(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListBox::set_ItemHeight(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_MultiColumn(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListBox::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.ListBox::set_ScrollAlwaysVisible(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListBox::set_SelectedIndex(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_SelectedItem(System.Object) -> System.Void
-M public System.Windows.Forms.ListBox::set_SelectionMode(System.Windows.Forms.SelectionMode) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_Sorted(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListBox::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.ListBox::set_TopIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.ListBox::set_UseCustomTabOffsets(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListBox::set_UseTabStops(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView+CheckedIndexCollection::.ctor(System.Windows.Forms.ListView)
 M public System.Windows.Forms.ListView+CheckedIndexCollection::Contains(System.Int32) -> System.Boolean
 M public System.Windows.Forms.ListView+CheckedIndexCollection::GetEnumerator() -> System.Collections.IEnumerator
@@ -6650,111 +6314,38 @@ M public System.Windows.Forms.MenuStrip::set_GripStyle(System.Windows.Forms.Tool
 M public System.Windows.Forms.MenuStrip::set_MdiWindowListItem(System.Windows.Forms.ToolStripMenuItem) -> System.Void
 M public System.Windows.Forms.MenuStrip::set_ShowItemToolTips(System.Boolean) -> System.Void
 M public System.Windows.Forms.MenuStrip::set_Stretch(System.Boolean) -> System.Void
-M public System.Windows.Forms.MonthCalendar+HitTestInfo::get_HitArea() -> System.Windows.Forms.MonthCalendar+HitArea
-M public System.Windows.Forms.MonthCalendar+HitTestInfo::get_Point() -> System.Drawing.Point
-M public System.Windows.Forms.MonthCalendar+HitTestInfo::get_Time() -> System.DateTime
-M public System.Windows.Forms.MonthCalendar::.ctor()
-M public System.Windows.Forms.MonthCalendar::AddAnnuallyBoldedDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::AddBoldedDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::AddMonthlyBoldedDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::GetDisplayRange(System.Boolean) -> System.Windows.Forms.SelectionRange
-M public System.Windows.Forms.MonthCalendar::HitTest(System.Drawing.Point) -> System.Windows.Forms.MonthCalendar+HitTestInfo
-M public System.Windows.Forms.MonthCalendar::HitTest(System.Int32, System.Int32) -> System.Windows.Forms.MonthCalendar+HitTestInfo
-M public System.Windows.Forms.MonthCalendar::RemoveAllAnnuallyBoldedDates() -> System.Void
-M public System.Windows.Forms.MonthCalendar::RemoveAllBoldedDates() -> System.Void
-M public System.Windows.Forms.MonthCalendar::RemoveAllMonthlyBoldedDates() -> System.Void
-M public System.Windows.Forms.MonthCalendar::RemoveAnnuallyBoldedDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::RemoveBoldedDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::RemoveMonthlyBoldedDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::SetCalendarDimensions(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.MonthCalendar::SetDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::SetSelectionRange(System.DateTime, System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::ToString() -> System.String virtual
-M public System.Windows.Forms.MonthCalendar::UpdateBoldedDates() -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::add_DateChanged(System.Windows.Forms.DateRangeEventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::add_DateSelected(System.Windows.Forms.DateRangeEventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_DoubleClick(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::get_AnnuallyBoldedDates() -> System.DateTime[]
-M public System.Windows.Forms.MonthCalendar::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.MonthCalendar::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.MonthCalendar::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.MonthCalendar::get_BoldedDates() -> System.DateTime[]
-M public System.Windows.Forms.MonthCalendar::get_CalendarDimensions() -> System.Drawing.Size
-M public System.Windows.Forms.MonthCalendar::get_FirstDayOfWeek() -> System.Windows.Forms.Day
-M public System.Windows.Forms.MonthCalendar::get_ForeColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.MonthCalendar::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.MonthCalendar::get_MaxDate() -> System.DateTime
-M public System.Windows.Forms.MonthCalendar::get_MaxSelectionCount() -> System.Int32
-M public System.Windows.Forms.MonthCalendar::get_MinDate() -> System.DateTime
-M public System.Windows.Forms.MonthCalendar::get_MonthlyBoldedDates() -> System.DateTime[]
 M public System.Windows.Forms.MonthCalendar::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.MonthCalendar::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.MonthCalendar::get_ScrollChange() -> System.Int32
-M public System.Windows.Forms.MonthCalendar::get_SelectionEnd() -> System.DateTime
-M public System.Windows.Forms.MonthCalendar::get_SelectionRange() -> System.Windows.Forms.SelectionRange
-M public System.Windows.Forms.MonthCalendar::get_SelectionStart() -> System.DateTime
-M public System.Windows.Forms.MonthCalendar::get_ShowToday() -> System.Boolean
-M public System.Windows.Forms.MonthCalendar::get_ShowTodayCircle() -> System.Boolean
-M public System.Windows.Forms.MonthCalendar::get_ShowWeekNumbers() -> System.Boolean
-M public System.Windows.Forms.MonthCalendar::get_SingleMonthSize() -> System.Drawing.Size
 M public System.Windows.Forms.MonthCalendar::get_Size() -> System.Drawing.Size
 M public System.Windows.Forms.MonthCalendar::get_Text() -> System.String virtual
-M public System.Windows.Forms.MonthCalendar::get_TitleBackColor() -> System.Drawing.Color
-M public System.Windows.Forms.MonthCalendar::get_TitleForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.MonthCalendar::get_TodayDate() -> System.DateTime
-M public System.Windows.Forms.MonthCalendar::get_TodayDateSet() -> System.Boolean
-M public System.Windows.Forms.MonthCalendar::get_TrailingForeColor() -> System.Drawing.Color
 M public System.Windows.Forms.MonthCalendar::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::remove_DateChanged(System.Windows.Forms.DateRangeEventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::remove_DateSelected(System.Windows.Forms.DateRangeEventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_DoubleClick(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_AnnuallyBoldedDates(System.DateTime[]) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.MonthCalendar::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.MonthCalendar::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.MonthCalendar::set_BoldedDates(System.DateTime[]) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_CalendarDimensions(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_FirstDayOfWeek(System.Windows.Forms.Day) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_ForeColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.MonthCalendar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_MaxDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_MaxSelectionCount(System.Int32) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_MinDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_MonthlyBoldedDates(System.DateTime[]) -> System.Void
 M public System.Windows.Forms.MonthCalendar::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.MonthCalendar::set_ScrollChange(System.Int32) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_SelectionEnd(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_SelectionRange(System.Windows.Forms.SelectionRange) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_SelectionStart(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_ShowToday(System.Boolean) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_ShowTodayCircle(System.Boolean) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_ShowWeekNumbers(System.Boolean) -> System.Void
 M public System.Windows.Forms.MonthCalendar::set_Size(System.Drawing.Size) -> System.Void
 M public System.Windows.Forms.MonthCalendar::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.MonthCalendar::set_TitleBackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_TitleForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_TodayDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_TrailingForeColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.NativeWindow::.ctor()
 M public System.Windows.Forms.NativeWindow::AssignHandle(System.IntPtr) -> System.Void
 M public System.Windows.Forms.NativeWindow::CreateHandle(System.Windows.Forms.CreateParams) -> System.Void virtual
@@ -7727,23 +7318,6 @@ M public System.Windows.Forms.SelectedGridItemChangedEventHandler::.ctor(System.
 M public System.Windows.Forms.SelectedGridItemChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.SelectedGridItemChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.SelectedGridItemChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.SelectedGridItemChangedEventHandler::Invoke(System.Object, System.Windows.Forms.SelectedGridItemChangedEventArgs) -> System.Void virtual
-M public System.Windows.Forms.SelectionRange::.ctor()
-M public System.Windows.Forms.SelectionRange::.ctor(System.DateTime, System.DateTime)
-M public System.Windows.Forms.SelectionRange::.ctor(System.Windows.Forms.SelectionRange)
-M public System.Windows.Forms.SelectionRange::ToString() -> System.String virtual
-M public System.Windows.Forms.SelectionRange::get_End() -> System.DateTime
-M public System.Windows.Forms.SelectionRange::get_Start() -> System.DateTime
-M public System.Windows.Forms.SelectionRange::set_End(System.DateTime) -> System.Void
-M public System.Windows.Forms.SelectionRange::set_Start(System.DateTime) -> System.Void
-M public System.Windows.Forms.SelectionRangeConverter::.ctor()
-M public System.Windows.Forms.SelectionRangeConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.SelectionRangeConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.SelectionRangeConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.SelectionRangeConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.SelectionRangeConverter::CreateInstance(System.ComponentModel.ITypeDescriptorContext, System.Collections.IDictionary) -> System.Object virtual
-M public System.Windows.Forms.SelectionRangeConverter::GetCreateInstanceSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.SelectionRangeConverter::GetProperties(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.SelectionRangeConverter::GetPropertiesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
 M public System.Windows.Forms.SendKeys::Flush() -> System.Void static
 M public System.Windows.Forms.SendKeys::Send(System.String) -> System.Void static
 M public System.Windows.Forms.SendKeys::SendWait(System.String) -> System.Void static
@@ -10877,7 +10451,6 @@ T class System.Windows.Forms.DataGridViewTextBoxColumn : System.Windows.Forms.Da
 T class System.Windows.Forms.DataGridViewTextBoxEditingControl : System.Windows.Forms.TextBox
 T class System.Windows.Forms.DataGridViewTopLeftHeaderCell : System.Windows.Forms.DataGridViewColumnHeaderCell
 T class System.Windows.Forms.DataObject
-T class System.Windows.Forms.DateBoldEventArgs : System.EventArgs
 T class System.Windows.Forms.DateTimePicker : System.Windows.Forms.Control
 T class System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.Design.ComponentEditorForm : System.Windows.Forms.Form
@@ -10887,7 +10460,6 @@ T class System.Windows.Forms.DomainUpDown+DomainItemAccessibleObject : System.Wi
 T class System.Windows.Forms.DomainUpDown+DomainUpDownAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.DomainUpDown+DomainUpDownItemCollection : System.Collections.ArrayList
 T class System.Windows.Forms.DragEventArgs : System.EventArgs
-T class System.Windows.Forms.DrawItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewColumnHeaderEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewSubItemEventArgs : System.EventArgs
@@ -10911,18 +10483,8 @@ T class System.Windows.Forms.ItemCheckEventArgs : System.EventArgs
 T class System.Windows.Forms.ItemCheckedEventArgs : System.EventArgs
 T class System.Windows.Forms.KeysConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.LinkArea+LinkAreaConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.LinkConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.LinkLabel : System.Windows.Forms.Label
-T class System.Windows.Forms.LinkLabel+Link
-T class System.Windows.Forms.LinkLabel+LinkCollection
-T class System.Windows.Forms.LinkLabelLinkClickedEventArgs : System.EventArgs
 T class System.Windows.Forms.ListBindingConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.ListBox : System.Windows.Forms.ListControl
-T class System.Windows.Forms.ListBox+IntegerCollection
-T class System.Windows.Forms.ListBox+ObjectCollection
-T class System.Windows.Forms.ListBox+SelectedIndexCollection
-T class System.Windows.Forms.ListBox+SelectedObjectCollection
 T class System.Windows.Forms.ListView : System.Windows.Forms.Control
 T class System.Windows.Forms.ListView+CheckedIndexCollection
 T class System.Windows.Forms.ListView+CheckedListViewItemCollection
@@ -10945,7 +10507,6 @@ T class System.Windows.Forms.MdiClient+ControlCollection : System.Windows.Forms.
 T class System.Windows.Forms.Menu+MenuItemCollection
 T class System.Windows.Forms.MenuItem : System.Windows.Forms.Menu
 T class System.Windows.Forms.MenuStrip : System.Windows.Forms.ToolStrip
-T class System.Windows.Forms.MonthCalendar : System.Windows.Forms.Control
 T class System.Windows.Forms.NativeWindow : System.MarshalByRefObject
 T class System.Windows.Forms.NavigateEventArgs : System.EventArgs
 T class System.Windows.Forms.NodeLabelEditEventArgs : System.EventArgs
@@ -10968,7 +10529,6 @@ T class System.Windows.Forms.RichTextBox : System.Windows.Forms.TextBoxBase
 T class System.Windows.Forms.ScrollableControl+DockPaddingEdges
 T class System.Windows.Forms.ScrollableControl+DockPaddingEdgesConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.SelectedGridItemChangedEventArgs : System.EventArgs
-T class System.Windows.Forms.SelectionRangeConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.SendKeys
 T class System.Windows.Forms.StatusBar : System.Windows.Forms.Control
 T class System.Windows.Forms.StatusBar+StatusBarPanelCollection
@@ -11078,10 +10638,8 @@ T delegate System.Windows.Forms.DataGridViewRowPostPaintEventHandler
 T delegate System.Windows.Forms.DataGridViewRowPrePaintEventHandler
 T delegate System.Windows.Forms.DataGridViewRowStateChangedEventHandler
 T delegate System.Windows.Forms.DataGridViewSortCompareEventHandler
-T delegate System.Windows.Forms.DateBoldEventHandler
 T delegate System.Windows.Forms.DpiChangedEventHandler
 T delegate System.Windows.Forms.DragEventHandler
-T delegate System.Windows.Forms.DrawItemEventHandler
 T delegate System.Windows.Forms.DrawListViewColumnHeaderEventHandler
 T delegate System.Windows.Forms.DrawListViewItemEventHandler
 T delegate System.Windows.Forms.DrawListViewSubItemEventHandler
@@ -11093,7 +10651,6 @@ T delegate System.Windows.Forms.InputLanguageChangedEventHandler
 T delegate System.Windows.Forms.InputLanguageChangingEventHandler
 T delegate System.Windows.Forms.ItemCheckEventHandler
 T delegate System.Windows.Forms.ItemCheckedEventHandler
-T delegate System.Windows.Forms.LinkLabelLinkClickedEventHandler
 T delegate System.Windows.Forms.ListViewItemMouseHoverEventHandler
 T delegate System.Windows.Forms.ListViewItemSelectionChangedEventHandler
 T delegate System.Windows.Forms.NavigateEventHandler
@@ -11124,7 +10681,6 @@ T delegate System.Windows.Forms.TreeViewCancelEventHandler
 T delegate System.Windows.Forms.TreeViewEventHandler
 T enum System.Windows.Forms.AxHost+ActiveXInvokeKind : System.Int32
 T enum System.Windows.Forms.DataGrid+HitTestType : System.Int32
-T enum System.Windows.Forms.MonthCalendar+HitArea : System.Int32
 T interface System.Drawing.Design.IPropertyValueUIService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser
@@ -11167,12 +10723,10 @@ T sealed class System.Windows.Forms.InputLanguage
 T sealed class System.Windows.Forms.ListViewGroup
 T sealed class System.Windows.Forms.ListViewInsertionMark
 T sealed class System.Windows.Forms.MdiClient : System.Windows.Forms.Control
-T sealed class System.Windows.Forms.MonthCalendar+HitTestInfo
 T sealed class System.Windows.Forms.NotifyIcon : System.ComponentModel.Component
 T sealed class System.Windows.Forms.PageSetupDialog : System.Windows.Forms.CommonDialog
 T sealed class System.Windows.Forms.PrintDialog : System.Windows.Forms.CommonDialog
 T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute
-T sealed class System.Windows.Forms.SelectionRange
 T sealed class System.Windows.Forms.TaskDialogCommandLinkButton : System.Windows.Forms.TaskDialogButton
 T sealed class System.Windows.Forms.TaskDialogExpander : System.Windows.Forms.TaskDialogControl
 T sealed class System.Windows.Forms.TaskDialogFootnote : System.Windows.Forms.TaskDialogControl
@@ -11390,4 +10944,3 @@ T static class System.Windows.Forms.VisualStyles.VisualStyleElement+Window+Verti
 T static class System.Windows.Forms.VisualStyles.VisualStyleInformation
 T struct System.Windows.Forms.DataGridCell
 T struct System.Windows.Forms.ImeModeConversion
-T struct System.Windows.Forms.LinkArea
