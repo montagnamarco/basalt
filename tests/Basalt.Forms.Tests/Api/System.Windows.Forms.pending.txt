@@ -1,4 +1,3 @@
-F protected System.Windows.Forms.FontDialog::EventApply : System.Object static readonly
 F protected System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::wfcMenuCommand : System.Guid static readonly
 F protected System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::wfcMenuGroup : System.Guid static readonly
 F public System.Resources.ResXResourceWriter::BinSerializedObjectMimeType : System.String static readonly
@@ -283,9 +282,6 @@ M protected System.Windows.Forms.CheckedListBox::OnSelectedIndexChanged(System.E
 M protected System.Windows.Forms.CheckedListBox::WmReflectCommand(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.ColorDialog::RunDialog(System.IntPtr) -> System.Boolean virtual
-M protected System.Windows.Forms.ColorDialog::get_Instance() -> System.IntPtr virtual
-M protected System.Windows.Forms.ColorDialog::get_Options() -> System.Int32 virtual
 M protected System.Windows.Forms.ColumnHeader::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::AddItemsCore(System.Object[]) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
@@ -958,10 +954,6 @@ M protected System.Windows.Forms.FeatureSupport::.ctor()
 M protected System.Windows.Forms.FileDialog::HookProc(System.IntPtr, System.Int32, System.IntPtr, System.IntPtr) -> System.IntPtr virtual
 M protected System.Windows.Forms.FileDialog::get_Instance() -> System.IntPtr virtual
 M protected System.Windows.Forms.FileDialog::get_Options() -> System.Int32
-M protected System.Windows.Forms.FontDialog::HookProc(System.IntPtr, System.Int32, System.IntPtr, System.IntPtr) -> System.IntPtr virtual
-M protected System.Windows.Forms.FontDialog::OnApply(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.FontDialog::RunDialog(System.IntPtr) -> System.Boolean virtual
-M protected System.Windows.Forms.FontDialog::get_Options() -> System.Int32
 M protected System.Windows.Forms.Form::ActivateMdiChild(System.Windows.Forms.Form) -> System.Void
 M protected System.Windows.Forms.Form::AdjustFormScrollbars(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.Form::ApplyAutoScaling() -> System.Void
@@ -2248,23 +2240,6 @@ M public System.Windows.Forms.Clipboard::SetText(System.String, System.Windows.F
 M public System.Windows.Forms.Clipboard::TryGetData`1(System.String, System.Func`2<System.Reflection.Metadata.TypeName, System.Type>, out T) -> System.Boolean static
 M public System.Windows.Forms.Clipboard::TryGetData`1(System.String, out T) -> System.Boolean static
 M public System.Windows.Forms.Clipboard::TryGetData`1(out T) -> System.Boolean static
-M public System.Windows.Forms.ColorDialog::.ctor()
-M public System.Windows.Forms.ColorDialog::Reset() -> System.Void virtual
-M public System.Windows.Forms.ColorDialog::ToString() -> System.String virtual
-M public System.Windows.Forms.ColorDialog::get_AllowFullOpen() -> System.Boolean virtual
-M public System.Windows.Forms.ColorDialog::get_AnyColor() -> System.Boolean virtual
-M public System.Windows.Forms.ColorDialog::get_Color() -> System.Drawing.Color
-M public System.Windows.Forms.ColorDialog::get_CustomColors() -> System.Int32[]
-M public System.Windows.Forms.ColorDialog::get_FullOpen() -> System.Boolean virtual
-M public System.Windows.Forms.ColorDialog::get_ShowHelp() -> System.Boolean virtual
-M public System.Windows.Forms.ColorDialog::get_SolidColorOnly() -> System.Boolean virtual
-M public System.Windows.Forms.ColorDialog::set_AllowFullOpen(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ColorDialog::set_AnyColor(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ColorDialog::set_Color(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ColorDialog::set_CustomColors(System.Int32[]) -> System.Void
-M public System.Windows.Forms.ColorDialog::set_FullOpen(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ColorDialog::set_ShowHelp(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ColorDialog::set_SolidColorOnly(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.ColumnHeader::.ctor(System.Int32)
 M public System.Windows.Forms.ColumnHeader::.ctor(System.String)
 M public System.Windows.Forms.ColumnHeader::AutoResize(System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
@@ -4434,41 +4409,6 @@ M public System.Windows.Forms.FlatButtonAppearance::set_MouseDownBackColor(Syste
 M public System.Windows.Forms.FlatButtonAppearance::set_MouseOverBackColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.FolderBrowserDialog::add_HelpRequest(System.EventHandler) -> System.Void
 M public System.Windows.Forms.FolderBrowserDialog::remove_HelpRequest(System.EventHandler) -> System.Void
-M public System.Windows.Forms.FontDialog::.ctor()
-M public System.Windows.Forms.FontDialog::Reset() -> System.Void virtual
-M public System.Windows.Forms.FontDialog::ToString() -> System.String virtual
-M public System.Windows.Forms.FontDialog::add_Apply(System.EventHandler) -> System.Void
-M public System.Windows.Forms.FontDialog::get_AllowScriptChange() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_AllowSimulations() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_AllowVectorFonts() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_AllowVerticalFonts() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_Color() -> System.Drawing.Color
-M public System.Windows.Forms.FontDialog::get_FixedPitchOnly() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_Font() -> System.Drawing.Font
-M public System.Windows.Forms.FontDialog::get_FontMustExist() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_MaxSize() -> System.Int32
-M public System.Windows.Forms.FontDialog::get_MinSize() -> System.Int32
-M public System.Windows.Forms.FontDialog::get_ScriptsOnly() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_ShowApply() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_ShowColor() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_ShowEffects() -> System.Boolean
-M public System.Windows.Forms.FontDialog::get_ShowHelp() -> System.Boolean
-M public System.Windows.Forms.FontDialog::remove_Apply(System.EventHandler) -> System.Void
-M public System.Windows.Forms.FontDialog::set_AllowScriptChange(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_AllowSimulations(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_AllowVectorFonts(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_AllowVerticalFonts(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_Color(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.FontDialog::set_FixedPitchOnly(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_Font(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.FontDialog::set_FontMustExist(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_MaxSize(System.Int32) -> System.Void
-M public System.Windows.Forms.FontDialog::set_MinSize(System.Int32) -> System.Void
-M public System.Windows.Forms.FontDialog::set_ScriptsOnly(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_ShowApply(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_ShowColor(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_ShowEffects(System.Boolean) -> System.Void
-M public System.Windows.Forms.FontDialog::set_ShowHelp(System.Boolean) -> System.Void
 M public System.Windows.Forms.Form+ControlCollection::.ctor(System.Windows.Forms.Form)
 M public System.Windows.Forms.Form+ControlCollection::Add(System.Windows.Forms.Control) -> System.Void virtual
 M public System.Windows.Forms.Form+ControlCollection::Remove(System.Windows.Forms.Control) -> System.Void virtual
@@ -8352,7 +8292,6 @@ T class System.Windows.Forms.BindingNavigator : System.Windows.Forms.ToolStrip
 T class System.Windows.Forms.BindingSource : System.ComponentModel.Component
 T class System.Windows.Forms.ButtonBase+ButtonBaseAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.CheckBox+CheckBoxAccessibleObject : System.Windows.Forms.ButtonBase+ButtonBaseAccessibleObject
-T class System.Windows.Forms.ColorDialog : System.Windows.Forms.CommonDialog
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ColumnReorderedEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.ComboBox+ChildAccessibleObject : System.Windows.Forms.AccessibleObject
@@ -8443,7 +8382,6 @@ T class System.Windows.Forms.DrawListViewSubItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawTreeNodeEventArgs : System.EventArgs
 T class System.Windows.Forms.ErrorProvider : System.ComponentModel.Component
 T class System.Windows.Forms.FlatButtonAppearance
-T class System.Windows.Forms.FontDialog : System.Windows.Forms.CommonDialog
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.GiveFeedbackEventArgs : System.EventArgs
 T class System.Windows.Forms.GridColumnStylesCollection : System.Windows.Forms.BaseCollection
