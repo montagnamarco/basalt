@@ -1,7 +1,7 @@
 namespace System.Windows.Forms;
 
 /// <summary>
-/// A check box is about to change in a <see cref="CheckedListBox"/>: the
+/// A check box is about to change in a <see cref="CheckedListBox"/> or <see cref="ListView"/>: the
 /// value it is about to take, which a handler may still replace, and the
 /// value it currently has.
 /// </summary>

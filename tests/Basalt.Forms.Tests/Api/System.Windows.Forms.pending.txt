@@ -96,7 +96,6 @@ I System.Windows.Forms.BindingSource : System.ComponentModel.ISupportInitialize
 I System.Windows.Forms.BindingSource : System.ComponentModel.ISupportInitializeNotification
 I System.Windows.Forms.BindingSource : System.ComponentModel.ITypedList
 I System.Windows.Forms.BindingSource : System.Windows.Forms.ICurrencyManagerProvider
-I System.Windows.Forms.ColumnHeader : System.ICloneable
 I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.Generic.IComparer`1<System.Windows.Forms.ComboBox+ObjectCollection+Entry>
 I System.Windows.Forms.Control : System.ComponentModel.ISynchronizeInvoke
 I System.Windows.Forms.Control : System.Windows.Forms.IDropTarget
@@ -147,33 +146,8 @@ I System.Windows.Forms.IAsyncDropTarget : System.Windows.Forms.IDropTarget
 I System.Windows.Forms.ITypedDataObject : System.Windows.Forms.IDataObject
 I System.Windows.Forms.KeysConverter : System.Collections.IComparer
 I System.Windows.Forms.Label : System.Windows.Forms.Automation.IAutomationLiveRegion
-I System.Windows.Forms.ListView+CheckedIndexCollection : System.Collections.ICollection
-I System.Windows.Forms.ListView+CheckedIndexCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListView+CheckedIndexCollection : System.Collections.IList
-I System.Windows.Forms.ListView+CheckedListViewItemCollection : System.Collections.ICollection
-I System.Windows.Forms.ListView+CheckedListViewItemCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListView+CheckedListViewItemCollection : System.Collections.IList
-I System.Windows.Forms.ListView+ColumnHeaderCollection : System.Collections.ICollection
-I System.Windows.Forms.ListView+ColumnHeaderCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListView+ColumnHeaderCollection : System.Collections.IList
-I System.Windows.Forms.ListView+ListViewItemCollection : System.Collections.ICollection
-I System.Windows.Forms.ListView+ListViewItemCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListView+ListViewItemCollection : System.Collections.IList
-I System.Windows.Forms.ListView+SelectedIndexCollection : System.Collections.ICollection
-I System.Windows.Forms.ListView+SelectedIndexCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListView+SelectedIndexCollection : System.Collections.IList
-I System.Windows.Forms.ListView+SelectedListViewItemCollection : System.Collections.ICollection
-I System.Windows.Forms.ListView+SelectedListViewItemCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListView+SelectedListViewItemCollection : System.Collections.IList
 I System.Windows.Forms.ListViewGroup : System.Runtime.Serialization.ISerializable
-I System.Windows.Forms.ListViewGroupCollection : System.Collections.ICollection
-I System.Windows.Forms.ListViewGroupCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListViewGroupCollection : System.Collections.IList
-I System.Windows.Forms.ListViewItem : System.ICloneable
 I System.Windows.Forms.ListViewItem : System.Runtime.Serialization.ISerializable
-I System.Windows.Forms.ListViewItem+ListViewSubItemCollection : System.Collections.ICollection
-I System.Windows.Forms.ListViewItem+ListViewSubItemCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ListViewItem+ListViewSubItemCollection : System.Collections.IList
 I System.Windows.Forms.Menu+MenuItemCollection : System.Collections.ICollection
 I System.Windows.Forms.Menu+MenuItemCollection : System.Collections.IEnumerable
 I System.Windows.Forms.Menu+MenuItemCollection : System.Collections.IList
@@ -1100,9 +1074,7 @@ M protected System.Windows.Forms.ListView::OnAfterLabelEdit(System.Windows.Forms
 M protected System.Windows.Forms.ListView::OnBackgroundImageChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnBeforeLabelEdit(System.Windows.Forms.LabelEditEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnCacheVirtualItems(System.Windows.Forms.CacheVirtualItemsEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnColumnClick(System.Windows.Forms.ColumnClickEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnColumnReordered(System.Windows.Forms.ColumnReorderedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnColumnWidthChanged(System.Windows.Forms.ColumnWidthChangedEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnColumnWidthChanging(System.Windows.Forms.ColumnWidthChangingEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnDrawColumnHeader(System.Windows.Forms.DrawListViewColumnHeaderEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnDrawItem(System.Windows.Forms.DrawListViewItemEventArgs) -> System.Void virtual
@@ -1113,12 +1085,8 @@ M protected System.Windows.Forms.ListView::OnGroupCollapsedStateChanged(System.W
 M protected System.Windows.Forms.ListView::OnGroupTaskLinkClick(System.Windows.Forms.ListViewGroupEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnItemActivate(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnItemCheck(System.Windows.Forms.ItemCheckEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnItemChecked(System.Windows.Forms.ItemCheckedEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnItemDrag(System.Windows.Forms.ItemDragEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnItemSelectionChanged(System.Windows.Forms.ListViewItemSelectionChangedEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnLostFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnMouseHover(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnMouseLeave(System.EventArgs) -> System.Void virtual
@@ -1127,14 +1095,11 @@ M protected System.Windows.Forms.ListView::OnResize(System.EventArgs) -> System.
 M protected System.Windows.Forms.ListView::OnRetrieveVirtualItem(System.Windows.Forms.RetrieveVirtualItemEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnSearchForVirtualItem(System.Windows.Forms.SearchForVirtualItemEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnSelectedIndexChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnVirtualItemsSelectionRangeChanged(System.Windows.Forms.ListViewVirtualItemsSelectionRangeChangedEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::RealizeProperties() -> System.Void
 M protected System.Windows.Forms.ListView::UpdateExtendedStyles() -> System.Void
 M protected System.Windows.Forms.ListView::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ListView::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.ListView::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ListView::get_DoubleBuffered() -> System.Boolean virtual
 M protected System.Windows.Forms.ListView::set_DoubleBuffered(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ListViewItem::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
@@ -2300,31 +2265,14 @@ M public System.Windows.Forms.ColorDialog::set_CustomColors(System.Int32[]) -> S
 M public System.Windows.Forms.ColorDialog::set_FullOpen(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.ColorDialog::set_ShowHelp(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.ColorDialog::set_SolidColorOnly(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ColumnHeader::.ctor()
 M public System.Windows.Forms.ColumnHeader::.ctor(System.Int32)
 M public System.Windows.Forms.ColumnHeader::.ctor(System.String)
 M public System.Windows.Forms.ColumnHeader::AutoResize(System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
-M public System.Windows.Forms.ColumnHeader::Clone() -> System.Object
-M public System.Windows.Forms.ColumnHeader::ToString() -> System.String virtual
-M public System.Windows.Forms.ColumnHeader::get_DisplayIndex() -> System.Int32
 M public System.Windows.Forms.ColumnHeader::get_ImageIndex() -> System.Int32
 M public System.Windows.Forms.ColumnHeader::get_ImageKey() -> System.String
 M public System.Windows.Forms.ColumnHeader::get_ImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.ColumnHeader::get_Index() -> System.Int32
-M public System.Windows.Forms.ColumnHeader::get_ListView() -> System.Windows.Forms.ListView
-M public System.Windows.Forms.ColumnHeader::get_Name() -> System.String
-M public System.Windows.Forms.ColumnHeader::get_Tag() -> System.Object
-M public System.Windows.Forms.ColumnHeader::get_Text() -> System.String
-M public System.Windows.Forms.ColumnHeader::get_TextAlign() -> System.Windows.Forms.HorizontalAlignment
-M public System.Windows.Forms.ColumnHeader::get_Width() -> System.Int32
-M public System.Windows.Forms.ColumnHeader::set_DisplayIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.ColumnHeader::set_ImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.ColumnHeader::set_ImageKey(System.String) -> System.Void
-M public System.Windows.Forms.ColumnHeader::set_Name(System.String) -> System.Void
-M public System.Windows.Forms.ColumnHeader::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.ColumnHeader::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.ColumnHeader::set_TextAlign(System.Windows.Forms.HorizontalAlignment) -> System.Void
-M public System.Windows.Forms.ColumnHeader::set_Width(System.Int32) -> System.Void
 M public System.Windows.Forms.ColumnHeaderConverter::.ctor()
 M public System.Windows.Forms.ColumnHeaderConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.ColumnHeaderConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
@@ -5125,12 +5073,6 @@ M public System.Windows.Forms.InputLanguageCollection::Contains(System.Windows.F
 M public System.Windows.Forms.InputLanguageCollection::CopyTo(System.Windows.Forms.InputLanguage[], System.Int32) -> System.Void
 M public System.Windows.Forms.InputLanguageCollection::IndexOf(System.Windows.Forms.InputLanguage) -> System.Int32
 M public System.Windows.Forms.InputLanguageCollection::get_Item(System.Int32) -> System.Windows.Forms.InputLanguage
-M public System.Windows.Forms.ItemCheckedEventArgs::.ctor(System.Windows.Forms.ListViewItem)
-M public System.Windows.Forms.ItemCheckedEventArgs::get_Item() -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ItemCheckedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.ItemCheckedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.ItemCheckedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.ItemCheckedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.ItemCheckedEventHandler::Invoke(System.Object, System.Windows.Forms.ItemCheckedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.KeysConverter::.ctor()
 M public System.Windows.Forms.KeysConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.KeysConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
@@ -5209,320 +5151,128 @@ M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object) 
 M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object, System.String) -> System.Type static
 M public System.Windows.Forms.ListBindingHelper::GetListName(System.Object, System.ComponentModel.PropertyDescriptor[]) -> System.String static
 M public System.Windows.Forms.ListView+CheckedIndexCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+CheckedIndexCollection::Contains(System.Int32) -> System.Boolean
-M public System.Windows.Forms.ListView+CheckedIndexCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListView+CheckedIndexCollection::IndexOf(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListView+CheckedIndexCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListView+CheckedIndexCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListView+CheckedIndexCollection::get_Item(System.Int32) -> System.Int32
 M public System.Windows.Forms.ListView+CheckedListViewItemCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::Contains(System.Windows.Forms.ListViewItem) -> System.Boolean
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::IndexOf(System.Windows.Forms.ListViewItem) -> System.Int32
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::get_Item(System.Int32) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::get_Item(System.String) -> System.Windows.Forms.ListViewItem virtual
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.Int32) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.Int32, System.Windows.Forms.HorizontalAlignment) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String, System.Int32) -> System.Windows.Forms.ColumnHeader virtual
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.Int32) -> System.Windows.Forms.ColumnHeader virtual
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.String) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.Windows.Forms.ColumnHeader) -> System.Int32 virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::AddRange(System.Windows.Forms.ColumnHeader[]) -> System.Void virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Clear() -> System.Void virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Contains(System.Windows.Forms.ColumnHeader) -> System.Boolean
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::IndexOf(System.Windows.Forms.ColumnHeader) -> System.Int32
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String) -> System.Void
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment) -> System.Void
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String) -> System.Void
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32) -> System.Void
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.Int32) -> System.Void
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.String) -> System.Void
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.Windows.Forms.ColumnHeader) -> System.Void
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Remove(System.Windows.Forms.ColumnHeader) -> System.Void virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::RemoveAt(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::RemoveByKey(System.String) -> System.Void virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::get_Item(System.Int32) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::get_Item(System.String) -> System.Windows.Forms.ColumnHeader virtual
 M public System.Windows.Forms.ListView+ListViewItemCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+ListViewItemCollection::Add(System.String) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Add(System.String, System.Int32) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Add(System.String, System.String) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Add(System.String, System.String, System.Int32) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Add(System.String, System.String, System.String) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Add(System.Windows.Forms.ListViewItem) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::AddRange(System.Windows.Forms.ListView+ListViewItemCollection) -> System.Void
-M public System.Windows.Forms.ListView+ListViewItemCollection::AddRange(System.Windows.Forms.ListViewItem[]) -> System.Void
-M public System.Windows.Forms.ListView+ListViewItemCollection::Clear() -> System.Void virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Contains(System.Windows.Forms.ListViewItem) -> System.Boolean
-M public System.Windows.Forms.ListView+ListViewItemCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+ListViewItemCollection::Find(System.String, System.Boolean) -> System.Windows.Forms.ListViewItem[]
-M public System.Windows.Forms.ListView+ListViewItemCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListView+ListViewItemCollection::IndexOf(System.Windows.Forms.ListViewItem) -> System.Int32
-M public System.Windows.Forms.ListView+ListViewItemCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Insert(System.Int32, System.String) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView+ListViewItemCollection::Insert(System.Int32, System.String, System.Int32) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView+ListViewItemCollection::Insert(System.Int32, System.String, System.String) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView+ListViewItemCollection::Insert(System.Int32, System.String, System.String, System.Int32) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Insert(System.Int32, System.String, System.String, System.String) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::Insert(System.Int32, System.Windows.Forms.ListViewItem) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView+ListViewItemCollection::Remove(System.Windows.Forms.ListViewItem) -> System.Void virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::RemoveAt(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::RemoveByKey(System.String) -> System.Void virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListView+ListViewItemCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListView+ListViewItemCollection::get_Item(System.Int32) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::get_Item(System.String) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView+ListViewItemCollection::set_Item(System.Int32, System.Windows.Forms.ListViewItem) -> System.Void virtual
 M public System.Windows.Forms.ListView+SelectedIndexCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+SelectedIndexCollection::Add(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListView+SelectedIndexCollection::Clear() -> System.Void
-M public System.Windows.Forms.ListView+SelectedIndexCollection::Contains(System.Int32) -> System.Boolean
-M public System.Windows.Forms.ListView+SelectedIndexCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+SelectedIndexCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListView+SelectedIndexCollection::IndexOf(System.Int32) -> System.Int32
-M public System.Windows.Forms.ListView+SelectedIndexCollection::Remove(System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+SelectedIndexCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListView+SelectedIndexCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListView+SelectedIndexCollection::get_Item(System.Int32) -> System.Int32
 M public System.Windows.Forms.ListView+SelectedListViewItemCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::Clear() -> System.Void
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::Contains(System.Windows.Forms.ListViewItem) -> System.Boolean
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::IndexOf(System.Windows.Forms.ListViewItem) -> System.Int32
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::get_Item(System.Int32) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::get_Item(System.String) -> System.Windows.Forms.ListViewItem virtual
-M public System.Windows.Forms.ListView::.ctor()
 M public System.Windows.Forms.ListView::ArrangeIcons() -> System.Void
 M public System.Windows.Forms.ListView::ArrangeIcons(System.Windows.Forms.ListViewAlignment) -> System.Void
 M public System.Windows.Forms.ListView::AutoResizeColumn(System.Int32, System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
 M public System.Windows.Forms.ListView::AutoResizeColumns(System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
-M public System.Windows.Forms.ListView::BeginUpdate() -> System.Void
-M public System.Windows.Forms.ListView::Clear() -> System.Void
-M public System.Windows.Forms.ListView::EndUpdate() -> System.Void
-M public System.Windows.Forms.ListView::EnsureVisible(System.Int32) -> System.Void
 M public System.Windows.Forms.ListView::FindItemWithText(System.String) -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ListView::FindItemWithText(System.String, System.Boolean, System.Int32) -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ListView::FindItemWithText(System.String, System.Boolean, System.Int32, System.Boolean) -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ListView::FindNearestItem(System.Windows.Forms.SearchDirectionHint, System.Drawing.Point) -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ListView::FindNearestItem(System.Windows.Forms.SearchDirectionHint, System.Int32, System.Int32) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView::GetItemAt(System.Int32, System.Int32) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView::GetItemRect(System.Int32) -> System.Drawing.Rectangle
-M public System.Windows.Forms.ListView::GetItemRect(System.Int32, System.Windows.Forms.ItemBoundsPortion) -> System.Drawing.Rectangle
-M public System.Windows.Forms.ListView::HitTest(System.Drawing.Point) -> System.Windows.Forms.ListViewHitTestInfo
-M public System.Windows.Forms.ListView::HitTest(System.Int32, System.Int32) -> System.Windows.Forms.ListViewHitTestInfo
 M public System.Windows.Forms.ListView::RedrawItems(System.Int32, System.Int32, System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::Sort() -> System.Void
-M public System.Windows.Forms.ListView::ToString() -> System.String virtual
 M public System.Windows.Forms.ListView::add_AfterLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_BeforeLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_CacheVirtualItems(System.Windows.Forms.CacheVirtualItemsEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ColumnClick(System.Windows.Forms.ColumnClickEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_ColumnReordered(System.Windows.Forms.ColumnReorderedEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ColumnWidthChanged(System.Windows.Forms.ColumnWidthChangedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_ColumnWidthChanging(System.Windows.Forms.ColumnWidthChangingEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_DrawColumnHeader(System.Windows.Forms.DrawListViewColumnHeaderEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_DrawItem(System.Windows.Forms.DrawListViewItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_DrawSubItem(System.Windows.Forms.DrawListViewSubItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_GroupCollapsedStateChanged(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
 M public System.Windows.Forms.ListView::add_GroupTaskLinkClick(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
-M public System.Windows.Forms.ListView::add_ItemActivate(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ItemCheck(System.Windows.Forms.ItemCheckEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ItemChecked(System.Windows.Forms.ItemCheckedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_ItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ItemSelectionChanged(System.Windows.Forms.ListViewItemSelectionChangedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_RetrieveVirtualItem(System.Windows.Forms.RetrieveVirtualItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_SearchForVirtualItem(System.Windows.Forms.SearchForVirtualItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_SelectedIndexChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_VirtualItemsSelectionRangeChanged(System.Windows.Forms.ListViewVirtualItemsSelectionRangeChangedEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::get_Activation() -> System.Windows.Forms.ItemActivation
 M public System.Windows.Forms.ListView::get_Alignment() -> System.Windows.Forms.ListViewAlignment
 M public System.Windows.Forms.ListView::get_AllowColumnReorder() -> System.Boolean
 M public System.Windows.Forms.ListView::get_AutoArrange() -> System.Boolean
 M public System.Windows.Forms.ListView::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.ListView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
 M public System.Windows.Forms.ListView::get_BackgroundImageTiled() -> System.Boolean
-M public System.Windows.Forms.ListView::get_BorderStyle() -> System.Windows.Forms.BorderStyle
-M public System.Windows.Forms.ListView::get_CheckBoxes() -> System.Boolean
-M public System.Windows.Forms.ListView::get_CheckedIndices() -> System.Windows.Forms.ListView+CheckedIndexCollection
-M public System.Windows.Forms.ListView::get_CheckedItems() -> System.Windows.Forms.ListView+CheckedListViewItemCollection
-M public System.Windows.Forms.ListView::get_Columns() -> System.Windows.Forms.ListView+ColumnHeaderCollection
-M public System.Windows.Forms.ListView::get_FocusedItem() -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ListView::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.ListView::get_FullRowSelect() -> System.Boolean
-M public System.Windows.Forms.ListView::get_GridLines() -> System.Boolean
 M public System.Windows.Forms.ListView::get_GroupImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.ListView::get_Groups() -> System.Windows.Forms.ListViewGroupCollection
-M public System.Windows.Forms.ListView::get_HeaderStyle() -> System.Windows.Forms.ColumnHeaderStyle
-M public System.Windows.Forms.ListView::get_HideSelection() -> System.Boolean
 M public System.Windows.Forms.ListView::get_HotTracking() -> System.Boolean
 M public System.Windows.Forms.ListView::get_HoverSelection() -> System.Boolean
 M public System.Windows.Forms.ListView::get_InsertionMark() -> System.Windows.Forms.ListViewInsertionMark
-M public System.Windows.Forms.ListView::get_Items() -> System.Windows.Forms.ListView+ListViewItemCollection
 M public System.Windows.Forms.ListView::get_LabelEdit() -> System.Boolean
 M public System.Windows.Forms.ListView::get_LabelWrap() -> System.Boolean
-M public System.Windows.Forms.ListView::get_LargeImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.ListView::get_ListViewItemSorter() -> System.Collections.IComparer
-M public System.Windows.Forms.ListView::get_MultiSelect() -> System.Boolean
 M public System.Windows.Forms.ListView::get_OwnerDraw() -> System.Boolean
 M public System.Windows.Forms.ListView::get_Padding() -> System.Windows.Forms.Padding
 M public System.Windows.Forms.ListView::get_RightToLeftLayout() -> System.Boolean virtual
 M public System.Windows.Forms.ListView::get_Scrollable() -> System.Boolean
-M public System.Windows.Forms.ListView::get_SelectedIndices() -> System.Windows.Forms.ListView+SelectedIndexCollection
-M public System.Windows.Forms.ListView::get_SelectedItems() -> System.Windows.Forms.ListView+SelectedListViewItemCollection
-M public System.Windows.Forms.ListView::get_ShowGroups() -> System.Boolean
 M public System.Windows.Forms.ListView::get_ShowItemToolTips() -> System.Boolean
-M public System.Windows.Forms.ListView::get_SmallImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.ListView::get_Sorting() -> System.Windows.Forms.SortOrder
 M public System.Windows.Forms.ListView::get_StateImageList() -> System.Windows.Forms.ImageList
 M public System.Windows.Forms.ListView::get_Text() -> System.String virtual
 M public System.Windows.Forms.ListView::get_TileSize() -> System.Drawing.Size
-M public System.Windows.Forms.ListView::get_TopItem() -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ListView::get_UseCompatibleStateImageBehavior() -> System.Boolean
-M public System.Windows.Forms.ListView::get_View() -> System.Windows.Forms.View
 M public System.Windows.Forms.ListView::get_VirtualListSize() -> System.Int32
 M public System.Windows.Forms.ListView::get_VirtualMode() -> System.Boolean
 M public System.Windows.Forms.ListView::remove_AfterLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_BeforeLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_CacheVirtualItems(System.Windows.Forms.CacheVirtualItemsEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ColumnClick(System.Windows.Forms.ColumnClickEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_ColumnReordered(System.Windows.Forms.ColumnReorderedEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ColumnWidthChanged(System.Windows.Forms.ColumnWidthChangedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_ColumnWidthChanging(System.Windows.Forms.ColumnWidthChangingEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_DrawColumnHeader(System.Windows.Forms.DrawListViewColumnHeaderEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_DrawItem(System.Windows.Forms.DrawListViewItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_DrawSubItem(System.Windows.Forms.DrawListViewSubItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_GroupCollapsedStateChanged(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
 M public System.Windows.Forms.ListView::remove_GroupTaskLinkClick(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
-M public System.Windows.Forms.ListView::remove_ItemActivate(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ItemCheck(System.Windows.Forms.ItemCheckEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ItemChecked(System.Windows.Forms.ItemCheckedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_ItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ItemSelectionChanged(System.Windows.Forms.ListViewItemSelectionChangedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_RetrieveVirtualItem(System.Windows.Forms.RetrieveVirtualItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_SearchForVirtualItem(System.Windows.Forms.SearchForVirtualItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_SelectedIndexChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_VirtualItemsSelectionRangeChanged(System.Windows.Forms.ListViewVirtualItemsSelectionRangeChangedEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::set_Activation(System.Windows.Forms.ItemActivation) -> System.Void
 M public System.Windows.Forms.ListView::set_Alignment(System.Windows.Forms.ListViewAlignment) -> System.Void
 M public System.Windows.Forms.ListView::set_AllowColumnReorder(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_AutoArrange(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.ListView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
 M public System.Windows.Forms.ListView::set_BackgroundImageTiled(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
-M public System.Windows.Forms.ListView::set_CheckBoxes(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_FocusedItem(System.Windows.Forms.ListViewItem) -> System.Void
 M public System.Windows.Forms.ListView::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.ListView::set_FullRowSelect(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_GridLines(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_GroupImageList(System.Windows.Forms.ImageList) -> System.Void
-M public System.Windows.Forms.ListView::set_HeaderStyle(System.Windows.Forms.ColumnHeaderStyle) -> System.Void
-M public System.Windows.Forms.ListView::set_HideSelection(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_HotTracking(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_HoverSelection(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_LabelEdit(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_LabelWrap(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_LargeImageList(System.Windows.Forms.ImageList) -> System.Void
-M public System.Windows.Forms.ListView::set_ListViewItemSorter(System.Collections.IComparer) -> System.Void
-M public System.Windows.Forms.ListView::set_MultiSelect(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_OwnerDraw(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_Padding(System.Windows.Forms.Padding) -> System.Void
 M public System.Windows.Forms.ListView::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.ListView::set_Scrollable(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_ShowGroups(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_ShowItemToolTips(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_SmallImageList(System.Windows.Forms.ImageList) -> System.Void
-M public System.Windows.Forms.ListView::set_Sorting(System.Windows.Forms.SortOrder) -> System.Void
 M public System.Windows.Forms.ListView::set_StateImageList(System.Windows.Forms.ImageList) -> System.Void
 M public System.Windows.Forms.ListView::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.ListView::set_TileSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.ListView::set_TopItem(System.Windows.Forms.ListViewItem) -> System.Void
 M public System.Windows.Forms.ListView::set_UseCompatibleStateImageBehavior(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_View(System.Windows.Forms.View) -> System.Void
 M public System.Windows.Forms.ListView::set_VirtualListSize(System.Int32) -> System.Void
 M public System.Windows.Forms.ListView::set_VirtualMode(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListViewGroup::.ctor()
-M public System.Windows.Forms.ListViewGroup::.ctor(System.String)
-M public System.Windows.Forms.ListViewGroup::.ctor(System.String, System.String)
-M public System.Windows.Forms.ListViewGroup::.ctor(System.String, System.Windows.Forms.HorizontalAlignment)
-M public System.Windows.Forms.ListViewGroup::ToString() -> System.String virtual
 M public System.Windows.Forms.ListViewGroup::get_CollapsedState() -> System.Windows.Forms.ListViewGroupCollapsedState
 M public System.Windows.Forms.ListViewGroup::get_Footer() -> System.String
 M public System.Windows.Forms.ListViewGroup::get_FooterAlignment() -> System.Windows.Forms.HorizontalAlignment
-M public System.Windows.Forms.ListViewGroup::get_Header() -> System.String
-M public System.Windows.Forms.ListViewGroup::get_HeaderAlignment() -> System.Windows.Forms.HorizontalAlignment
-M public System.Windows.Forms.ListViewGroup::get_Items() -> System.Windows.Forms.ListView+ListViewItemCollection
-M public System.Windows.Forms.ListViewGroup::get_ListView() -> System.Windows.Forms.ListView
-M public System.Windows.Forms.ListViewGroup::get_Name() -> System.String
 M public System.Windows.Forms.ListViewGroup::get_Subtitle() -> System.String
-M public System.Windows.Forms.ListViewGroup::get_Tag() -> System.Object
 M public System.Windows.Forms.ListViewGroup::get_TaskLink() -> System.String
 M public System.Windows.Forms.ListViewGroup::get_TitleImageIndex() -> System.Int32
 M public System.Windows.Forms.ListViewGroup::get_TitleImageKey() -> System.String
 M public System.Windows.Forms.ListViewGroup::set_CollapsedState(System.Windows.Forms.ListViewGroupCollapsedState) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_Footer(System.String) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_FooterAlignment(System.Windows.Forms.HorizontalAlignment) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_Header(System.String) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_HeaderAlignment(System.Windows.Forms.HorizontalAlignment) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_Name(System.String) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_Subtitle(System.String) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_Tag(System.Object) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_TaskLink(System.String) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_TitleImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_TitleImageKey(System.String) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::Add(System.String, System.String) -> System.Windows.Forms.ListViewGroup
-M public System.Windows.Forms.ListViewGroupCollection::Add(System.Windows.Forms.ListViewGroup) -> System.Int32
-M public System.Windows.Forms.ListViewGroupCollection::AddRange(System.Windows.Forms.ListViewGroupCollection) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::AddRange(System.Windows.Forms.ListViewGroup[]) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::Clear() -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::Contains(System.Windows.Forms.ListViewGroup) -> System.Boolean
-M public System.Windows.Forms.ListViewGroupCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListViewGroupCollection::IndexOf(System.Windows.Forms.ListViewGroup) -> System.Int32
-M public System.Windows.Forms.ListViewGroupCollection::Insert(System.Int32, System.Windows.Forms.ListViewGroup) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::Remove(System.Windows.Forms.ListViewGroup) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::RemoveAt(System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ListViewGroupCollection::get_Item(System.Int32) -> System.Windows.Forms.ListViewGroup
-M public System.Windows.Forms.ListViewGroupCollection::get_Item(System.String) -> System.Windows.Forms.ListViewGroup
-M public System.Windows.Forms.ListViewGroupCollection::set_Item(System.Int32, System.Windows.Forms.ListViewGroup) -> System.Void
-M public System.Windows.Forms.ListViewGroupCollection::set_Item(System.String, System.Windows.Forms.ListViewGroup) -> System.Void
-M public System.Windows.Forms.ListViewHitTestInfo::.ctor(System.Windows.Forms.ListViewItem, System.Windows.Forms.ListViewItem+ListViewSubItem, System.Windows.Forms.ListViewHitTestLocations)
-M public System.Windows.Forms.ListViewHitTestInfo::get_Item() -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListViewHitTestInfo::get_Location() -> System.Windows.Forms.ListViewHitTestLocations
-M public System.Windows.Forms.ListViewHitTestInfo::get_SubItem() -> System.Windows.Forms.ListViewItem+ListViewSubItem
 M public System.Windows.Forms.ListViewInsertionMark::NearestIndex(System.Drawing.Point) -> System.Int32
 M public System.Windows.Forms.ListViewInsertionMark::get_AppearsAfterItem() -> System.Boolean
 M public System.Windows.Forms.ListViewInsertionMark::get_Bounds() -> System.Drawing.Rectangle
@@ -5531,55 +5281,12 @@ M public System.Windows.Forms.ListViewInsertionMark::get_Index() -> System.Int32
 M public System.Windows.Forms.ListViewInsertionMark::set_AppearsAfterItem(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListViewInsertionMark::set_Color(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.ListViewInsertionMark::set_Index(System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::.ctor()
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::.ctor(System.Windows.Forms.ListViewItem, System.String)
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::.ctor(System.Windows.Forms.ListViewItem, System.String, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::ResetStyle() -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::ToString() -> System.String virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::get_Font() -> System.Drawing.Font
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::get_Name() -> System.String
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::get_Tag() -> System.Object
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::get_Text() -> System.String
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::set_BackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::set_Font(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::set_ForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::set_Name(System.String) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItem::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::.ctor(System.Windows.Forms.ListViewItem)
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::Add(System.String) -> System.Windows.Forms.ListViewItem+ListViewSubItem
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::Add(System.String, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font) -> System.Windows.Forms.ListViewItem+ListViewSubItem
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::Add(System.Windows.Forms.ListViewItem+ListViewSubItem) -> System.Windows.Forms.ListViewItem+ListViewSubItem
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::AddRange(System.String[]) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::AddRange(System.String[], System.Drawing.Color, System.Drawing.Color, System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::AddRange(System.Windows.Forms.ListViewItem+ListViewSubItem[]) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::Clear() -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::Contains(System.Windows.Forms.ListViewItem+ListViewSubItem) -> System.Boolean
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::IndexOf(System.Windows.Forms.ListViewItem+ListViewSubItem) -> System.Int32
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::Insert(System.Int32, System.Windows.Forms.ListViewItem+ListViewSubItem) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::Remove(System.Windows.Forms.ListViewItem+ListViewSubItem) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::RemoveAt(System.Int32) -> System.Void
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::RemoveByKey(System.String) -> System.Void virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::get_Count() -> System.Int32
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::get_Item(System.Int32) -> System.Windows.Forms.ListViewItem+ListViewSubItem
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::get_Item(System.String) -> System.Windows.Forms.ListViewItem+ListViewSubItem virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::set_Item(System.Int32, System.Windows.Forms.ListViewItem+ListViewSubItem) -> System.Void
-M public System.Windows.Forms.ListViewItem::.ctor()
-M public System.Windows.Forms.ListViewItem::.ctor(System.String)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String, System.Int32)
 M public System.Windows.Forms.ListViewItem::.ctor(System.String, System.Int32, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String, System.String)
 M public System.Windows.Forms.ListViewItem::.ctor(System.String, System.String, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[])
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Int32)
 M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Int32, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
 M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Int32, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font, System.Windows.Forms.ListViewGroup)
 M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Int32, System.Windows.Forms.ListViewGroup)
@@ -5587,59 +5294,18 @@ M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String
 M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
 M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font, System.Windows.Forms.ListViewGroup)
 M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewGroup)
 M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.Int32)
 M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.Int32, System.Windows.Forms.ListViewGroup)
 M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.String)
 M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.String, System.Windows.Forms.ListViewGroup)
 M public System.Windows.Forms.ListViewItem::BeginEdit() -> System.Void
-M public System.Windows.Forms.ListViewItem::Clone() -> System.Object virtual
-M public System.Windows.Forms.ListViewItem::EnsureVisible() -> System.Void virtual
 M public System.Windows.Forms.ListViewItem::FindNearestItem(System.Windows.Forms.SearchDirectionHint) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListViewItem::GetBounds(System.Windows.Forms.ItemBoundsPortion) -> System.Drawing.Rectangle
-M public System.Windows.Forms.ListViewItem::GetSubItemAt(System.Int32, System.Int32) -> System.Windows.Forms.ListViewItem+ListViewSubItem
-M public System.Windows.Forms.ListViewItem::Remove() -> System.Void virtual
-M public System.Windows.Forms.ListViewItem::ToString() -> System.String virtual
-M public System.Windows.Forms.ListViewItem::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.ListViewItem::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.ListViewItem::get_Checked() -> System.Boolean
-M public System.Windows.Forms.ListViewItem::get_Focused() -> System.Boolean
-M public System.Windows.Forms.ListViewItem::get_Font() -> System.Drawing.Font
-M public System.Windows.Forms.ListViewItem::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.ListViewItem::get_Group() -> System.Windows.Forms.ListViewGroup
-M public System.Windows.Forms.ListViewItem::get_ImageIndex() -> System.Int32
-M public System.Windows.Forms.ListViewItem::get_ImageKey() -> System.String
-M public System.Windows.Forms.ListViewItem::get_ImageList() -> System.Windows.Forms.ImageList
 M public System.Windows.Forms.ListViewItem::get_IndentCount() -> System.Int32
-M public System.Windows.Forms.ListViewItem::get_Index() -> System.Int32
-M public System.Windows.Forms.ListViewItem::get_ListView() -> System.Windows.Forms.ListView
-M public System.Windows.Forms.ListViewItem::get_Name() -> System.String
 M public System.Windows.Forms.ListViewItem::get_Position() -> System.Drawing.Point
-M public System.Windows.Forms.ListViewItem::get_Selected() -> System.Boolean
 M public System.Windows.Forms.ListViewItem::get_StateImageIndex() -> System.Int32
-M public System.Windows.Forms.ListViewItem::get_SubItems() -> System.Windows.Forms.ListViewItem+ListViewSubItemCollection
-M public System.Windows.Forms.ListViewItem::get_Tag() -> System.Object
-M public System.Windows.Forms.ListViewItem::get_Text() -> System.String
-M public System.Windows.Forms.ListViewItem::get_ToolTipText() -> System.String
-M public System.Windows.Forms.ListViewItem::get_UseItemStyleForSubItems() -> System.Boolean
-M public System.Windows.Forms.ListViewItem::set_BackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Checked(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Focused(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Font(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_ForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Group(System.Windows.Forms.ListViewGroup) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_ImageIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_ImageKey(System.String) -> System.Void
 M public System.Windows.Forms.ListViewItem::set_IndentCount(System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Name(System.String) -> System.Void
 M public System.Windows.Forms.ListViewItem::set_Position(System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Selected(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListViewItem::set_StateImageIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_ToolTipText(System.String) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_UseItemStyleForSubItems(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListViewItemConverter::.ctor()
 M public System.Windows.Forms.ListViewItemConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.ListViewItemConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
@@ -5649,14 +5315,6 @@ M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::.ctor(System.O
 M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::BeginInvoke(System.Object, System.Windows.Forms.ListViewItemMouseHoverEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::Invoke(System.Object, System.Windows.Forms.ListViewItemMouseHoverEventArgs) -> System.Void virtual
-M public System.Windows.Forms.ListViewItemSelectionChangedEventArgs::.ctor(System.Windows.Forms.ListViewItem, System.Int32, System.Boolean)
-M public System.Windows.Forms.ListViewItemSelectionChangedEventArgs::get_IsSelected() -> System.Boolean
-M public System.Windows.Forms.ListViewItemSelectionChangedEventArgs::get_Item() -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListViewItemSelectionChangedEventArgs::get_ItemIndex() -> System.Int32
-M public System.Windows.Forms.ListViewItemSelectionChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.ListViewItemSelectionChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.ListViewItemSelectionChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.ListViewItemSelectionChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.ListViewItemSelectionChangedEventHandler::Invoke(System.Object, System.Windows.Forms.ListViewItemSelectionChangedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ListViewItemStateImageIndexConverter::.ctor()
 M public System.Windows.Forms.ListViewItemStateImageIndexConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
 M public System.Windows.Forms.MainMenu::.ctor()
@@ -8695,7 +8353,6 @@ T class System.Windows.Forms.BindingSource : System.ComponentModel.Component
 T class System.Windows.Forms.ButtonBase+ButtonBaseAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.CheckBox+CheckBoxAccessibleObject : System.Windows.Forms.ButtonBase+ButtonBaseAccessibleObject
 T class System.Windows.Forms.ColorDialog : System.Windows.Forms.CommonDialog
-T class System.Windows.Forms.ColumnHeader : System.ComponentModel.Component
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ColumnReorderedEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.ComboBox+ChildAccessibleObject : System.Windows.Forms.AccessibleObject
@@ -8799,26 +8456,12 @@ T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringCon
 T class System.Windows.Forms.InputLanguageChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.InputLanguageChangingEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.InputLanguageCollection : System.Collections.ReadOnlyCollectionBase
-T class System.Windows.Forms.ItemCheckedEventArgs : System.EventArgs
 T class System.Windows.Forms.KeysConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.LinkConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.ListBindingConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.ListView : System.Windows.Forms.Control
-T class System.Windows.Forms.ListView+CheckedIndexCollection
-T class System.Windows.Forms.ListView+CheckedListViewItemCollection
-T class System.Windows.Forms.ListView+ColumnHeaderCollection
-T class System.Windows.Forms.ListView+ListViewItemCollection
-T class System.Windows.Forms.ListView+SelectedIndexCollection
-T class System.Windows.Forms.ListView+SelectedListViewItemCollection
-T class System.Windows.Forms.ListViewGroupCollection
-T class System.Windows.Forms.ListViewHitTestInfo
-T class System.Windows.Forms.ListViewItem
-T class System.Windows.Forms.ListViewItem+ListViewSubItem
-T class System.Windows.Forms.ListViewItem+ListViewSubItemCollection
 T class System.Windows.Forms.ListViewItemConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ListViewItemMouseHoverEventArgs : System.EventArgs
-T class System.Windows.Forms.ListViewItemSelectionChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.ListViewItemStateImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.MainMenu : System.Windows.Forms.Menu
 T class System.Windows.Forms.MdiClient+ControlCollection : System.Windows.Forms.Control+ControlCollection
@@ -8941,9 +8584,7 @@ T delegate System.Windows.Forms.HtmlElementErrorEventHandler
 T delegate System.Windows.Forms.HtmlElementEventHandler
 T delegate System.Windows.Forms.InputLanguageChangedEventHandler
 T delegate System.Windows.Forms.InputLanguageChangingEventHandler
-T delegate System.Windows.Forms.ItemCheckedEventHandler
 T delegate System.Windows.Forms.ListViewItemMouseHoverEventHandler
-T delegate System.Windows.Forms.ListViewItemSelectionChangedEventHandler
 T delegate System.Windows.Forms.NavigateEventHandler
 T delegate System.Windows.Forms.NodeLabelEditEventHandler
 T delegate System.Windows.Forms.PropertyTabChangedEventHandler
@@ -8999,7 +8640,6 @@ T sealed class System.Windows.Forms.HtmlElementEventArgs : System.EventArgs
 T sealed class System.Windows.Forms.HtmlHistory
 T sealed class System.Windows.Forms.HtmlWindow
 T sealed class System.Windows.Forms.InputLanguage
-T sealed class System.Windows.Forms.ListViewGroup
 T sealed class System.Windows.Forms.ListViewInsertionMark
 T sealed class System.Windows.Forms.MdiClient : System.Windows.Forms.Control
 T sealed class System.Windows.Forms.NotifyIcon : System.ComponentModel.Component
