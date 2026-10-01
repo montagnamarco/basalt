@@ -47,20 +47,26 @@ public partial class Control
         _mousePressed = true;
         _doubleClickFired = clicks >= 2 && GetStyle(ControlStyles.StandardDoubleClick);
 
-        if (button == MouseButtons.Left && GetStyle(ControlStyles.Selectable)) Focus();
+        var arguments = new MouseEventArgs(button, clicks, location.X, location.Y, 0);
+
+        // A native control handles the press first (and takes the focus itself); ours only focus.
+        if (!GetStyle(ControlStyles.UserMouse)) DefaultMouseDown(arguments);
+        else if (button == MouseButtons.Left && GetStyle(ControlStyles.Selectable)) Focus();
 
         // A handler that opened a dialog or released the button has changed the situation.
-        if (buttonsBefore != MouseButtons) return;
+        if (IsDisposed || buttonsBefore != MouseButtons) return;
 
         Capture = true;
 
-        if (Enabled) OnMouseDown(new MouseEventArgs(button, clicks, location.X, location.Y, 0));
+        if (Enabled) OnMouseDown(arguments);
     }
 
     internal void RaiseMouseUp(MouseButtons button, int clicks, Point location, bool releasedOverThisControl)
     {
         try
         {
+            if (!GetStyle(ControlStyles.UserMouse)) DefaultMouseUp(new MouseEventArgs(button, clicks, location.X, location.Y, 0));
+
             var fireClick = GetStyle(ControlStyles.StandardClick) && _mousePressed && !IsDisposed && releasedOverThisControl;
 
             if (fireClick)
@@ -89,7 +95,14 @@ public partial class Control
         }
     }
 
-    internal void RaiseMouseMove(MouseButtons buttons, Point location) => OnMouseMove(new MouseEventArgs(buttons, 0, location.X, location.Y, 0));
+    internal void RaiseMouseMove(MouseButtons buttons, Point location)
+    {
+        var arguments = new MouseEventArgs(buttons, 0, location.X, location.Y, 0);
+
+        if (!GetStyle(ControlStyles.UserMouse)) DefaultMouseMove(arguments);
+
+        OnMouseMove(arguments);
+    }
 
     internal void RaiseMouseEnter() => OnMouseEnter(EventArgs.Empty);
 

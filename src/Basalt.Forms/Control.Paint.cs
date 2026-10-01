@@ -299,6 +299,13 @@ public partial class Control
     {
         var graphics = arguments.Graphics;
 
+        // A control Windows would draw itself: its default procedure paints, and Paint is not raised.
+        if (!GetStyle(ControlStyles.UserPaint))
+        {
+            DefaultPaint(arguments);
+            return;
+        }
+
         if (!GetStyle(ControlStyles.Opaque))
         {
             var state = graphics.Save();
@@ -306,7 +313,7 @@ public partial class Control
             graphics.Restore(state);
         }
 
-        if (GetStyle(ControlStyles.UserPaint)) OnPaint(arguments);
+        OnPaint(arguments);
     }
 
     /// <summary>

@@ -76,10 +76,33 @@ public class InputTests
         form.Close();
     }
 
+    /// <summary>A control that handles the mouse itself, as buttons do: a click focuses it.</summary>
+    private sealed class MouseControl : Control
+    {
+        public MouseControl() => SetStyle(ControlStyles.UserMouse, true);
+    }
+
+    [AvaloniaFact]
+    public void A_plain_control_is_not_focused_by_a_click_as_with_the_default_window_procedure()
+    {
+        var target = new Control { Bounds = new Rectangle(0, 0, 50, 50) };
+        var other = new Control { Bounds = new Rectangle(100, 0, 50, 50) };
+        var form = ShowForm(target, other);
+        other.Focus();
+
+        form.Host!.MouseDown(new Avalonia.Point(10, 10), MouseButton.Left);
+        form.Host.MouseUp(new Avalonia.Point(10, 10), MouseButton.Left);
+
+        Assert.False(target.Focused);
+        Assert.True(other.Focused);
+
+        form.Close();
+    }
+
     [AvaloniaFact]
     public void Clicking_a_selectable_control_focuses_it_and_keys_go_to_it()
     {
-        var target = new Control { Bounds = new Rectangle(0, 0, 50, 50) };
+        var target = new MouseControl { Bounds = new Rectangle(0, 0, 50, 50) };
         var keys = new List<string>();
         target.KeyDown += (_, e) => keys.Add($"KeyDown {e.KeyCode}");
         target.KeyPress += (_, e) => keys.Add($"KeyPress {e.KeyChar}");

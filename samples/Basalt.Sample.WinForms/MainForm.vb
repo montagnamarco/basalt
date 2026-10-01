@@ -20,6 +20,12 @@ Public Class MainForm
         End Using
     End Sub
 
+    Private Sub MainForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        If _clicks > 0 AndAlso MessageBox.Show("Quit the demo?", "Basalt.Forms", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.No Then
+            e.Cancel = True
+        End If
+    End Sub
+
     Private Sub drawingPanel_MouseDown(sender As Object, e As MouseEventArgs) Handles drawingPanel.MouseDown
         _points.Clear()
         _points.Add(e.Location)

@@ -129,13 +129,19 @@ public partial class Control
         if (old == this) return;
 
         window._windowFocus = this;
-        old?.OnLostFocus(EventArgs.Empty);
+
+        if (old is not null)
+        {
+            old.DefaultLostFocus();
+            old.OnLostFocus(EventArgs.Empty);
+        }
 
         if (_parent is not null && GetContainerControl() is ContainerControl container && !container.ActivateControl(this))
         {
             return;
         }
 
+        DefaultGotFocus();
         OnGotFocus(EventArgs.Empty);
     }
 

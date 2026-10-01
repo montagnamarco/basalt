@@ -543,7 +543,6 @@ M protected System.Windows.Forms.Control::OnDragEnter(System.Windows.Forms.DragE
 M protected System.Windows.Forms.Control::OnDragLeave(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.Control::OnDragOver(System.Windows.Forms.DragEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.Control::OnGiveFeedback(System.Windows.Forms.GiveFeedbackEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnHelpRequested(System.Windows.Forms.HelpEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.Control::OnImeModeChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.Control::OnNotifyMessage(System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.Control::OnParentBindingContextChanged(System.EventArgs) -> System.Void virtual
@@ -1751,7 +1750,6 @@ M protected System.Windows.Forms.TaskDialogRadioButtonCollection::RemoveItem(Sys
 M protected System.Windows.Forms.TaskDialogRadioButtonCollection::SetItem(System.Int32, System.Windows.Forms.TaskDialogRadioButton) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.TextBox::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.TextBox::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.TextBox::OnBackColorChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::OnGotFocus(System.EventArgs) -> System.Void virtual
@@ -1759,34 +1757,15 @@ M protected System.Windows.Forms.TextBox::OnHandleCreated(System.EventArgs) -> S
 M protected System.Windows.Forms.TextBox::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::OnMouseDown(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBox::OnTextAlignChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.TextBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TextBox::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
 M protected System.Windows.Forms.TextBoxBase::ContainsNavigationKeyCode(System.Windows.Forms.Keys) -> System.Boolean
 M protected System.Windows.Forms.TextBoxBase::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.TextBoxBase::CreateHandle() -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.TextBoxBase::OnAcceptsTabChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnBorderStyleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TextBoxBase::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnHideSelectionChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnModifiedChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TextBoxBase::OnMouseUp(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnMultilineChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnPaddingChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnReadOnlyChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::OnTextChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.TextBoxBase::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.TextBoxBase::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
 M protected System.Windows.Forms.TextBoxBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.TextBoxBase::get_CanEnableIme() -> System.Boolean virtual
-M protected System.Windows.Forms.TextBoxBase::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.TextBoxBase::get_DefaultCursor() -> System.Windows.Forms.Cursor virtual
-M protected System.Windows.Forms.TextBoxBase::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.TextBoxBase::get_DoubleBuffered() -> System.Boolean virtual
 M protected System.Windows.Forms.TextBoxBase::get_ImeModeBase() -> System.Windows.Forms.ImeMode virtual
 M protected System.Windows.Forms.TextBoxBase::set_DoubleBuffered(System.Boolean) -> System.Void virtual
@@ -3008,19 +2987,16 @@ M public System.Windows.Forms.CheckedListBox::set_SelectionMode(System.Windows.F
 M public System.Windows.Forms.CheckedListBox::set_ThreeDCheckBoxes(System.Boolean) -> System.Void
 M public System.Windows.Forms.CheckedListBox::set_UseCompatibleTextRendering(System.Boolean) -> System.Void
 M public System.Windows.Forms.CheckedListBox::set_ValueMember(System.String) -> System.Void
-M public System.Windows.Forms.Clipboard::Clear() -> System.Void static
 M public System.Windows.Forms.Clipboard::ContainsAudio() -> System.Boolean static
 M public System.Windows.Forms.Clipboard::ContainsData(System.String) -> System.Boolean static
 M public System.Windows.Forms.Clipboard::ContainsFileDropList() -> System.Boolean static
 M public System.Windows.Forms.Clipboard::ContainsImage() -> System.Boolean static
-M public System.Windows.Forms.Clipboard::ContainsText() -> System.Boolean static
 M public System.Windows.Forms.Clipboard::ContainsText(System.Windows.Forms.TextDataFormat) -> System.Boolean static
 M public System.Windows.Forms.Clipboard::GetAudioStream() -> System.IO.Stream static
 M public System.Windows.Forms.Clipboard::GetData(System.String) -> System.Object static
 M public System.Windows.Forms.Clipboard::GetDataObject() -> System.Windows.Forms.IDataObject static
 M public System.Windows.Forms.Clipboard::GetFileDropList() -> System.Collections.Specialized.StringCollection static
 M public System.Windows.Forms.Clipboard::GetImage() -> System.Drawing.Image static
-M public System.Windows.Forms.Clipboard::GetText() -> System.String static
 M public System.Windows.Forms.Clipboard::GetText(System.Windows.Forms.TextDataFormat) -> System.String static
 M public System.Windows.Forms.Clipboard::SetAudio(System.Byte[]) -> System.Void static
 M public System.Windows.Forms.Clipboard::SetAudio(System.IO.Stream) -> System.Void static
@@ -3031,7 +3007,6 @@ M public System.Windows.Forms.Clipboard::SetDataObject(System.Object, System.Boo
 M public System.Windows.Forms.Clipboard::SetDataObject(System.Object, System.Boolean, System.Int32, System.Int32) -> System.Void static
 M public System.Windows.Forms.Clipboard::SetFileDropList(System.Collections.Specialized.StringCollection) -> System.Void static
 M public System.Windows.Forms.Clipboard::SetImage(System.Drawing.Image) -> System.Void static
-M public System.Windows.Forms.Clipboard::SetText(System.String) -> System.Void static
 M public System.Windows.Forms.Clipboard::SetText(System.String, System.Windows.Forms.TextDataFormat) -> System.Void static
 M public System.Windows.Forms.Clipboard::TryGetData`1(System.String, System.Func`2<System.Reflection.Metadata.TypeName, System.Type>, out T) -> System.Boolean static
 M public System.Windows.Forms.Clipboard::TryGetData`1(System.String, out T) -> System.Boolean static
@@ -3302,7 +3277,6 @@ M public System.Windows.Forms.Control::add_DragEnter(System.Windows.Forms.DragEv
 M public System.Windows.Forms.Control::add_DragLeave(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_HelpRequested(System.Windows.Forms.HelpEventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
@@ -3343,7 +3317,6 @@ M public System.Windows.Forms.Control::remove_DragEnter(System.Windows.Forms.Dra
 M public System.Windows.Forms.Control::remove_DragLeave(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_HelpRequested(System.Windows.Forms.HelpEventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
@@ -7326,27 +7299,6 @@ M public System.Windows.Forms.MenuStrip::set_GripStyle(System.Windows.Forms.Tool
 M public System.Windows.Forms.MenuStrip::set_MdiWindowListItem(System.Windows.Forms.ToolStripMenuItem) -> System.Void
 M public System.Windows.Forms.MenuStrip::set_ShowItemToolTips(System.Boolean) -> System.Void
 M public System.Windows.Forms.MenuStrip::set_Stretch(System.Boolean) -> System.Void
-M public System.Windows.Forms.MessageBox::Show(System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.Boolean) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String, System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String, System.Windows.Forms.HelpNavigator) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String, System.Windows.Forms.HelpNavigator, System.Object) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String, System.String) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String, System.Windows.Forms.HelpNavigator) -> System.Windows.Forms.DialogResult static
-M public System.Windows.Forms.MessageBox::Show(System.Windows.Forms.IWin32Window, System.String, System.String, System.Windows.Forms.MessageBoxButtons, System.Windows.Forms.MessageBoxIcon, System.Windows.Forms.MessageBoxDefaultButton, System.Windows.Forms.MessageBoxOptions, System.String, System.Windows.Forms.HelpNavigator, System.Object) -> System.Windows.Forms.DialogResult static
 M public System.Windows.Forms.MonthCalendar+HitTestInfo::get_HitArea() -> System.Windows.Forms.MonthCalendar+HitArea
 M public System.Windows.Forms.MonthCalendar+HitTestInfo::get_Point() -> System.Drawing.Point
 M public System.Windows.Forms.MonthCalendar+HitTestInfo::get_Time() -> System.DateTime
@@ -9498,121 +9450,36 @@ M public System.Windows.Forms.TaskDialogVerificationCheckBox::op_Implicit(System
 M public System.Windows.Forms.TaskDialogVerificationCheckBox::remove_CheckedChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TaskDialogVerificationCheckBox::set_Checked(System.Boolean) -> System.Void
 M public System.Windows.Forms.TaskDialogVerificationCheckBox::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.TextBox::.ctor()
-M public System.Windows.Forms.TextBox::Paste(System.String) -> System.Void
-M public System.Windows.Forms.TextBox::add_TextAlignChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBox::get_AcceptsReturn() -> System.Boolean
 M public System.Windows.Forms.TextBox::get_AutoCompleteCustomSource() -> System.Windows.Forms.AutoCompleteStringCollection
 M public System.Windows.Forms.TextBox::get_AutoCompleteMode() -> System.Windows.Forms.AutoCompleteMode
 M public System.Windows.Forms.TextBox::get_AutoCompleteSource() -> System.Windows.Forms.AutoCompleteSource
-M public System.Windows.Forms.TextBox::get_CharacterCasing() -> System.Windows.Forms.CharacterCasing
-M public System.Windows.Forms.TextBox::get_Multiline() -> System.Boolean virtual
-M public System.Windows.Forms.TextBox::get_PasswordChar() -> System.Char
-M public System.Windows.Forms.TextBox::get_PlaceholderText() -> System.String virtual
-M public System.Windows.Forms.TextBox::get_ScrollBars() -> System.Windows.Forms.ScrollBars
-M public System.Windows.Forms.TextBox::get_Text() -> System.String virtual
-M public System.Windows.Forms.TextBox::get_TextAlign() -> System.Windows.Forms.HorizontalAlignment
-M public System.Windows.Forms.TextBox::get_UseSystemPasswordChar() -> System.Boolean
-M public System.Windows.Forms.TextBox::remove_TextAlignChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBox::set_AcceptsReturn(System.Boolean) -> System.Void
 M public System.Windows.Forms.TextBox::set_AutoCompleteCustomSource(System.Windows.Forms.AutoCompleteStringCollection) -> System.Void
 M public System.Windows.Forms.TextBox::set_AutoCompleteMode(System.Windows.Forms.AutoCompleteMode) -> System.Void
 M public System.Windows.Forms.TextBox::set_AutoCompleteSource(System.Windows.Forms.AutoCompleteSource) -> System.Void
-M public System.Windows.Forms.TextBox::set_CharacterCasing(System.Windows.Forms.CharacterCasing) -> System.Void
-M public System.Windows.Forms.TextBox::set_Multiline(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.TextBox::set_PasswordChar(System.Char) -> System.Void
-M public System.Windows.Forms.TextBox::set_PlaceholderText(System.String) -> System.Void virtual
-M public System.Windows.Forms.TextBox::set_ScrollBars(System.Windows.Forms.ScrollBars) -> System.Void
-M public System.Windows.Forms.TextBox::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TextBox::set_TextAlign(System.Windows.Forms.HorizontalAlignment) -> System.Void
-M public System.Windows.Forms.TextBox::set_UseSystemPasswordChar(System.Boolean) -> System.Void
-M public System.Windows.Forms.TextBoxBase::AppendText(System.String) -> System.Void
-M public System.Windows.Forms.TextBoxBase::Clear() -> System.Void
-M public System.Windows.Forms.TextBoxBase::ClearUndo() -> System.Void
-M public System.Windows.Forms.TextBoxBase::Copy() -> System.Void
-M public System.Windows.Forms.TextBoxBase::Cut() -> System.Void
-M public System.Windows.Forms.TextBoxBase::DeselectAll() -> System.Void
-M public System.Windows.Forms.TextBoxBase::GetCharFromPosition(System.Drawing.Point) -> System.Char virtual
-M public System.Windows.Forms.TextBoxBase::GetCharIndexFromPosition(System.Drawing.Point) -> System.Int32 virtual
-M public System.Windows.Forms.TextBoxBase::GetFirstCharIndexFromLine(System.Int32) -> System.Int32
-M public System.Windows.Forms.TextBoxBase::GetFirstCharIndexOfCurrentLine() -> System.Int32
-M public System.Windows.Forms.TextBoxBase::GetLineFromCharIndex(System.Int32) -> System.Int32 virtual
-M public System.Windows.Forms.TextBoxBase::GetPositionFromCharIndex(System.Int32) -> System.Drawing.Point virtual
-M public System.Windows.Forms.TextBoxBase::Paste() -> System.Void
-M public System.Windows.Forms.TextBoxBase::ScrollToCaret() -> System.Void
-M public System.Windows.Forms.TextBoxBase::Select(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.TextBoxBase::SelectAll() -> System.Void
-M public System.Windows.Forms.TextBoxBase::ToString() -> System.String virtual
-M public System.Windows.Forms.TextBoxBase::Undo() -> System.Void
-M public System.Windows.Forms.TextBoxBase::add_AcceptsTabChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::add_BorderStyleChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::add_HideSelectionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::add_ModifiedChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::add_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::add_MultilineChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::add_ReadOnlyChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::get_AcceptsTab() -> System.Boolean
-M public System.Windows.Forms.TextBoxBase::get_AutoSize() -> System.Boolean virtual
 M public System.Windows.Forms.TextBoxBase::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.TextBoxBase::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.TextBoxBase::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.TextBoxBase::get_BorderStyle() -> System.Windows.Forms.BorderStyle
-M public System.Windows.Forms.TextBoxBase::get_CanUndo() -> System.Boolean
 M public System.Windows.Forms.TextBoxBase::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.TextBoxBase::get_HideSelection() -> System.Boolean
-M public System.Windows.Forms.TextBoxBase::get_Lines() -> System.String[]
-M public System.Windows.Forms.TextBoxBase::get_MaxLength() -> System.Int32 virtual
-M public System.Windows.Forms.TextBoxBase::get_Modified() -> System.Boolean
-M public System.Windows.Forms.TextBoxBase::get_Multiline() -> System.Boolean virtual
 M public System.Windows.Forms.TextBoxBase::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.TextBoxBase::get_PreferredHeight() -> System.Int32
-M public System.Windows.Forms.TextBoxBase::get_ReadOnly() -> System.Boolean
-M public System.Windows.Forms.TextBoxBase::get_SelectedText() -> System.String virtual
-M public System.Windows.Forms.TextBoxBase::get_SelectionLength() -> System.Int32 virtual
-M public System.Windows.Forms.TextBoxBase::get_SelectionStart() -> System.Int32
-M public System.Windows.Forms.TextBoxBase::get_ShortcutsEnabled() -> System.Boolean virtual
-M public System.Windows.Forms.TextBoxBase::get_Text() -> System.String virtual
-M public System.Windows.Forms.TextBoxBase::get_TextLength() -> System.Int32 virtual
-M public System.Windows.Forms.TextBoxBase::get_WordWrap() -> System.Boolean
-M public System.Windows.Forms.TextBoxBase::remove_AcceptsTabChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::remove_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::remove_BorderStyleChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::remove_HideSelectionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::remove_ModifiedChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::remove_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::remove_MultilineChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TextBoxBase::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::remove_ReadOnlyChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_AcceptsTab(System.Boolean) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_AutoSize(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.TextBoxBase::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.TextBoxBase::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.TextBoxBase::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.TextBoxBase::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
 M public System.Windows.Forms.TextBoxBase::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.TextBoxBase::set_HideSelection(System.Boolean) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_Lines(System.String[]) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_MaxLength(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.TextBoxBase::set_Modified(System.Boolean) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_Multiline(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.TextBoxBase::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_ReadOnly(System.Boolean) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_SelectedText(System.String) -> System.Void virtual
-M public System.Windows.Forms.TextBoxBase::set_SelectionLength(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.TextBoxBase::set_SelectionStart(System.Int32) -> System.Void
-M public System.Windows.Forms.TextBoxBase::set_ShortcutsEnabled(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.TextBoxBase::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TextBoxBase::set_WordWrap(System.Boolean) -> System.Void
 M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Rectangle, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
 M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
 M public System.Windows.Forms.TextBoxRenderer::DrawTextBox(System.Drawing.Graphics, System.Drawing.Rectangle, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags, System.Windows.Forms.VisualStyles.TextBoxState) -> System.Void static
@@ -12249,7 +12116,6 @@ T abstract class System.Windows.Forms.ScrollProperties
 T abstract class System.Windows.Forms.TableLayoutStyle
 T abstract class System.Windows.Forms.TableLayoutStyleCollection
 T abstract class System.Windows.Forms.TaskDialogControl
-T abstract class System.Windows.Forms.TextBoxBase : System.Windows.Forms.Control
 T abstract class System.Windows.Forms.ToolStripDropDownItem : System.Windows.Forms.ToolStripItem
 T abstract class System.Windows.Forms.ToolStripItem : System.Windows.Forms.BindableComponent
 T abstract class System.Windows.Forms.ToolStripRenderer
@@ -12442,7 +12308,6 @@ T class System.Windows.Forms.MdiClient+ControlCollection : System.Windows.Forms.
 T class System.Windows.Forms.Menu+MenuItemCollection
 T class System.Windows.Forms.MenuItem : System.Windows.Forms.Menu
 T class System.Windows.Forms.MenuStrip : System.Windows.Forms.ToolStrip
-T class System.Windows.Forms.MessageBox
 T class System.Windows.Forms.MonthCalendar : System.Windows.Forms.Control
 T class System.Windows.Forms.NativeWindow : System.MarshalByRefObject
 T class System.Windows.Forms.NavigateEventArgs : System.EventArgs
@@ -12505,7 +12370,6 @@ T class System.Windows.Forms.TaskDialogButtonCollection : System.Collections.Obj
 T class System.Windows.Forms.TaskDialogIcon
 T class System.Windows.Forms.TaskDialogPage
 T class System.Windows.Forms.TaskDialogRadioButtonCollection : System.Collections.ObjectModel.Collection`1<System.Windows.Forms.TaskDialogRadioButton>
-T class System.Windows.Forms.TextBox : System.Windows.Forms.TextBoxBase
 T class System.Windows.Forms.ThreadExceptionDialog : System.Windows.Forms.Form
 T class System.Windows.Forms.ToolBar : System.Windows.Forms.Control
 T class System.Windows.Forms.ToolBar+ToolBarButtonCollection
@@ -12733,7 +12597,6 @@ T sealed class System.Windows.Forms.WindowsFormsSection
 T sealed class System.Windows.Forms.WindowsFormsSynchronizationContext : System.Threading.SynchronizationContext
 T static class System.Windows.Forms.ButtonRenderer
 T static class System.Windows.Forms.CheckBoxRenderer
-T static class System.Windows.Forms.Clipboard
 T static class System.Windows.Forms.ComboBoxRenderer
 T static class System.Windows.Forms.DataFormats
 T static class System.Windows.Forms.DataObjectExtensions

@@ -130,9 +130,15 @@ public partial class Control
     /// or press a dialog button. A plain control wants none of them, as a
     /// window that does not answer WM_GETDLGCODE.
     /// </summary>
-    protected virtual bool IsInputKey(Keys keyData) => false;
+    protected virtual bool IsInputKey(Keys keyData) => (keyData & Keys.Alt) != Keys.Alt && DialogCodeWantsKey(keyData);
 
-    protected virtual bool IsInputChar(char charCode) => false;
+    protected virtual bool IsInputChar(char charCode) => DialogCodeWantsChar(charCode);
+
+    /// <summary>What a native control answers to WM_GETDLGCODE about a key: a plain window wants none.</summary>
+    internal virtual bool DialogCodeWantsKey(Keys keyData) => false;
+
+    /// <summary>What a native control answers to WM_GETDLGCODE about characters: an edit control wants them all.</summary>
+    internal virtual bool DialogCodeWantsChar(char charCode) => false;
 
     /// <summary>A mnemonic (the letter after an ampersand): only controls that have one answer.</summary>
     protected internal virtual bool ProcessMnemonic(char charCode) => false;
@@ -157,6 +163,8 @@ public partial class Control
             OnKeyPress(press);
             _inputChar = false;
 
+            if (!press.Handled) DefaultKeyPress(press);
+
             // A handler may replace the character, which the control then receives.
             m.WParam = press.KeyChar;
 
@@ -171,10 +179,13 @@ public partial class Control
             OnKeyDown(arguments);
             _inputKey = false;
             if (arguments.SuppressKeyPress) FormsInputState.SuppressNextCharacter = true;
+
+            if (!arguments.Handled) DefaultKeyDown(arguments);
         }
         else
         {
             OnKeyUp(arguments);
+            if (!arguments.Handled) DefaultKeyUp(arguments);
         }
 
         return arguments.Handled;
