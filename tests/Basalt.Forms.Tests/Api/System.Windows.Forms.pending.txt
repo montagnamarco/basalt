@@ -250,7 +250,6 @@ I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.IEnu
 I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.IList
 I System.Windows.Forms.ToolStripItem : System.Windows.Forms.IDropTarget
 I System.Windows.Forms.ToolStripStatusLabel : System.Windows.Forms.Automation.IAutomationLiveRegion
-I System.Windows.Forms.ToolTip : System.ComponentModel.IExtenderProvider
 I System.Windows.Forms.TreeNode : System.ICloneable
 I System.Windows.Forms.TreeNode : System.Runtime.Serialization.ISerializable
 I System.Windows.Forms.TreeNodeCollection : System.Collections.ICollection
@@ -1965,10 +1964,6 @@ M protected System.Windows.Forms.ToolStripTextBox::OnSubscribeControlEvents(Syst
 M protected System.Windows.Forms.ToolStripTextBox::OnUnsubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripTextBox::get_DefaultMargin() -> System.Windows.Forms.Padding virtual
 M protected System.Windows.Forms.ToolStripTextBox::get_DefaultSize() -> System.Drawing.Size virtual
-M protected System.Windows.Forms.ToolTip::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ToolTip::Finalize() -> System.Void virtual
-M protected System.Windows.Forms.ToolTip::StopTimer() -> System.Void
-M protected System.Windows.Forms.ToolTip::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
 M protected System.Windows.Forms.TrackBar::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.TrackBar::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.TrackBar::OnBackColorChanged(System.EventArgs) -> System.Void virtual
@@ -4983,21 +4978,6 @@ M public System.Windows.Forms.DrawListViewSubItemEventHandler::.ctor(System.Obje
 M public System.Windows.Forms.DrawListViewSubItemEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawListViewSubItemEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.DrawListViewSubItemEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.DrawListViewSubItemEventHandler::Invoke(System.Object, System.Windows.Forms.DrawListViewSubItemEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DrawToolTipEventArgs::.ctor(System.Drawing.Graphics, System.Windows.Forms.IWin32Window, System.Windows.Forms.Control, System.Drawing.Rectangle, System.String, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
-M public System.Windows.Forms.DrawToolTipEventArgs::DrawBackground() -> System.Void
-M public System.Windows.Forms.DrawToolTipEventArgs::DrawBorder() -> System.Void
-M public System.Windows.Forms.DrawToolTipEventArgs::DrawText() -> System.Void
-M public System.Windows.Forms.DrawToolTipEventArgs::DrawText(System.Windows.Forms.TextFormatFlags) -> System.Void
-M public System.Windows.Forms.DrawToolTipEventArgs::get_AssociatedControl() -> System.Windows.Forms.Control
-M public System.Windows.Forms.DrawToolTipEventArgs::get_AssociatedWindow() -> System.Windows.Forms.IWin32Window
-M public System.Windows.Forms.DrawToolTipEventArgs::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DrawToolTipEventArgs::get_Font() -> System.Drawing.Font
-M public System.Windows.Forms.DrawToolTipEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DrawToolTipEventArgs::get_ToolTipText() -> System.String
-M public System.Windows.Forms.DrawToolTipEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DrawToolTipEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawToolTipEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DrawToolTipEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DrawToolTipEventHandler::Invoke(System.Object, System.Windows.Forms.DrawToolTipEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DrawTreeNodeEventArgs::.ctor(System.Drawing.Graphics, System.Windows.Forms.TreeNode, System.Drawing.Rectangle, System.Windows.Forms.TreeNodeStates)
 M public System.Windows.Forms.DrawTreeNodeEventArgs::get_Bounds() -> System.Drawing.Rectangle
 M public System.Windows.Forms.DrawTreeNodeEventArgs::get_DrawDefault() -> System.Boolean
@@ -6977,16 +6957,6 @@ M public System.Windows.Forms.PictureBox::set_TabIndex(System.Int32) -> System.V
 M public System.Windows.Forms.PictureBox::set_TabStop(System.Boolean) -> System.Void
 M public System.Windows.Forms.PictureBox::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.PictureBox::set_WaitOnLoad(System.Boolean) -> System.Void
-M public System.Windows.Forms.PopupEventArgs::.ctor(System.Windows.Forms.IWin32Window, System.Windows.Forms.Control, System.Boolean, System.Drawing.Size)
-M public System.Windows.Forms.PopupEventArgs::get_AssociatedControl() -> System.Windows.Forms.Control
-M public System.Windows.Forms.PopupEventArgs::get_AssociatedWindow() -> System.Windows.Forms.IWin32Window
-M public System.Windows.Forms.PopupEventArgs::get_IsBalloon() -> System.Boolean
-M public System.Windows.Forms.PopupEventArgs::get_ToolTipSize() -> System.Drawing.Size
-M public System.Windows.Forms.PopupEventArgs::set_ToolTipSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.PopupEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.PopupEventHandler::BeginInvoke(System.Object, System.Windows.Forms.PopupEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.PopupEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.PopupEventHandler::Invoke(System.Object, System.Windows.Forms.PopupEventArgs) -> System.Void virtual
 M public System.Windows.Forms.PrintControllerWithStatusDialog::.ctor(System.Drawing.Printing.PrintController)
 M public System.Windows.Forms.PrintControllerWithStatusDialog::.ctor(System.Drawing.Printing.PrintController, System.String)
 M public System.Windows.Forms.PrintControllerWithStatusDialog::OnEndPage(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintPageEventArgs) -> System.Void virtual
@@ -9866,56 +9836,6 @@ M public System.Windows.Forms.ToolStripTextBox::set_SelectionStart(System.Int32)
 M public System.Windows.Forms.ToolStripTextBox::set_ShortcutsEnabled(System.Boolean) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_TextBoxTextAlign(System.Windows.Forms.HorizontalAlignment) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_WordWrap(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolTip::.ctor()
-M public System.Windows.Forms.ToolTip::.ctor(System.ComponentModel.IContainer)
-M public System.Windows.Forms.ToolTip::CanExtend(System.Object) -> System.Boolean
-M public System.Windows.Forms.ToolTip::GetToolTip(System.Windows.Forms.Control) -> System.String
-M public System.Windows.Forms.ToolTip::Hide(System.Windows.Forms.IWin32Window) -> System.Void
-M public System.Windows.Forms.ToolTip::RemoveAll() -> System.Void
-M public System.Windows.Forms.ToolTip::SetToolTip(System.Windows.Forms.Control, System.String) -> System.Void
-M public System.Windows.Forms.ToolTip::Show(System.String, System.Windows.Forms.IWin32Window) -> System.Void
-M public System.Windows.Forms.ToolTip::Show(System.String, System.Windows.Forms.IWin32Window, System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.ToolTip::Show(System.String, System.Windows.Forms.IWin32Window, System.Drawing.Point, System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::Show(System.String, System.Windows.Forms.IWin32Window, System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::Show(System.String, System.Windows.Forms.IWin32Window, System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::Show(System.String, System.Windows.Forms.IWin32Window, System.Int32, System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::ToString() -> System.String virtual
-M public System.Windows.Forms.ToolTip::add_Draw(System.Windows.Forms.DrawToolTipEventHandler) -> System.Void
-M public System.Windows.Forms.ToolTip::add_Popup(System.Windows.Forms.PopupEventHandler) -> System.Void
-M public System.Windows.Forms.ToolTip::get_Active() -> System.Boolean
-M public System.Windows.Forms.ToolTip::get_AutoPopDelay() -> System.Int32
-M public System.Windows.Forms.ToolTip::get_AutomaticDelay() -> System.Int32
-M public System.Windows.Forms.ToolTip::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.ToolTip::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.ToolTip::get_InitialDelay() -> System.Int32
-M public System.Windows.Forms.ToolTip::get_IsBalloon() -> System.Boolean
-M public System.Windows.Forms.ToolTip::get_OwnerDraw() -> System.Boolean
-M public System.Windows.Forms.ToolTip::get_ReshowDelay() -> System.Int32
-M public System.Windows.Forms.ToolTip::get_ShowAlways() -> System.Boolean
-M public System.Windows.Forms.ToolTip::get_StripAmpersands() -> System.Boolean
-M public System.Windows.Forms.ToolTip::get_Tag() -> System.Object
-M public System.Windows.Forms.ToolTip::get_ToolTipIcon() -> System.Windows.Forms.ToolTipIcon
-M public System.Windows.Forms.ToolTip::get_ToolTipTitle() -> System.String
-M public System.Windows.Forms.ToolTip::get_UseAnimation() -> System.Boolean
-M public System.Windows.Forms.ToolTip::get_UseFading() -> System.Boolean
-M public System.Windows.Forms.ToolTip::remove_Draw(System.Windows.Forms.DrawToolTipEventHandler) -> System.Void
-M public System.Windows.Forms.ToolTip::remove_Popup(System.Windows.Forms.PopupEventHandler) -> System.Void
-M public System.Windows.Forms.ToolTip::set_Active(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolTip::set_AutoPopDelay(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::set_AutomaticDelay(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::set_BackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ToolTip::set_ForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ToolTip::set_InitialDelay(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::set_IsBalloon(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolTip::set_OwnerDraw(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolTip::set_ReshowDelay(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolTip::set_ShowAlways(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolTip::set_StripAmpersands(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolTip::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.ToolTip::set_ToolTipIcon(System.Windows.Forms.ToolTipIcon) -> System.Void
-M public System.Windows.Forms.ToolTip::set_ToolTipTitle(System.String) -> System.Void
-M public System.Windows.Forms.ToolTip::set_UseAnimation(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolTip::set_UseFading(System.Boolean) -> System.Void
 M public System.Windows.Forms.TrackBar::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TrackBar::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TrackBar::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
@@ -11104,7 +11024,6 @@ T class System.Windows.Forms.DrawItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewColumnHeaderEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewSubItemEventArgs : System.EventArgs
-T class System.Windows.Forms.DrawToolTipEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawTreeNodeEventArgs : System.EventArgs
 T class System.Windows.Forms.ErrorProvider : System.ComponentModel.Component
 T class System.Windows.Forms.FlatButtonAppearance
@@ -11166,7 +11085,6 @@ T class System.Windows.Forms.NodeLabelEditEventArgs : System.EventArgs
 T class System.Windows.Forms.OSFeature : System.Windows.Forms.FeatureSupport
 T class System.Windows.Forms.OpacityConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.OwnerDrawPropertyBag : System.MarshalByRefObject
-T class System.Windows.Forms.PopupEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.PrintControllerWithStatusDialog : System.Drawing.Printing.PrintController
 T class System.Windows.Forms.PrintPreviewControl : System.Windows.Forms.Control
 T class System.Windows.Forms.PrintPreviewDialog : System.Windows.Forms.Form
@@ -11252,7 +11170,6 @@ T class System.Windows.Forms.ToolStripSplitButton+ToolStripSplitButtonAccessible
 T class System.Windows.Forms.ToolStripStatusLabel : System.Windows.Forms.ToolStripLabel
 T class System.Windows.Forms.ToolStripSystemRenderer : System.Windows.Forms.ToolStripRenderer
 T class System.Windows.Forms.ToolStripTextBox : System.Windows.Forms.ToolStripControlHost
-T class System.Windows.Forms.ToolTip : System.ComponentModel.Component
 T class System.Windows.Forms.TreeNode : System.MarshalByRefObject
 T class System.Windows.Forms.TreeNodeCollection
 T class System.Windows.Forms.TreeNodeConverter : System.ComponentModel.TypeConverter
@@ -11308,7 +11225,6 @@ T delegate System.Windows.Forms.DrawItemEventHandler
 T delegate System.Windows.Forms.DrawListViewColumnHeaderEventHandler
 T delegate System.Windows.Forms.DrawListViewItemEventHandler
 T delegate System.Windows.Forms.DrawListViewSubItemEventHandler
-T delegate System.Windows.Forms.DrawToolTipEventHandler
 T delegate System.Windows.Forms.DrawTreeNodeEventHandler
 T delegate System.Windows.Forms.GiveFeedbackEventHandler
 T delegate System.Windows.Forms.HtmlElementErrorEventHandler
@@ -11322,7 +11238,6 @@ T delegate System.Windows.Forms.ListViewItemMouseHoverEventHandler
 T delegate System.Windows.Forms.ListViewItemSelectionChangedEventHandler
 T delegate System.Windows.Forms.NavigateEventHandler
 T delegate System.Windows.Forms.NodeLabelEditEventHandler
-T delegate System.Windows.Forms.PopupEventHandler
 T delegate System.Windows.Forms.PropertyTabChangedEventHandler
 T delegate System.Windows.Forms.PropertyValueChangedEventHandler
 T delegate System.Windows.Forms.RetrieveVirtualItemEventHandler
