@@ -139,6 +139,19 @@ public class ImageAttributesTests
         Assert.Equal(128, result.Item4);
     }
 
+    /// <summary>The fifth row adds to each channel, in the same 0..1 scale as the colours.</summary>
+    [Fact]
+    public void A_colour_matrix_translation_adds_its_fraction_of_full_intensity()
+    {
+        using var attributes = new ImageAttributes();
+        attributes.SetColorMatrix(new ColorMatrix([[1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 1, 0], [0.5f, 0, 0, 0, 1]]));
+
+        var result = Render(attributes, ColorAdjustType.Default, Color.FromArgb(255, 0, 0, 0));
+
+        Assert.InRange(result.Item1, 126, 129);
+        Assert.Equal(0, result.Item2);
+    }
+
     [Fact]
     public void A_category_with_nothing_of_its_own_set_falls_back_to_Default()
     {

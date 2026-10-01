@@ -103,4 +103,21 @@ public class TextureBrushTests
 
         Assert.Throws<OutOfMemoryException>(() => new TextureBrush(image, System.Drawing.Drawing2D.WrapMode.Tile, new RectangleF(2, 2, 4, 4)));
     }
+
+    /// <summary>The colour matrix of the attributes recolours the texture once, when the brush is made.</summary>
+    [Fact]
+    public void Image_attributes_recolour_the_texture()
+    {
+        using var image = new Bitmap(2, 2);
+        using (var graphics = Graphics.FromImage(image)) graphics.Clear(Color.Red);
+        using var attributes = new System.Drawing.Imaging.ImageAttributes();
+        attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix([[0, 0, 1, 0, 0], [0, 1, 0, 0, 0], [1, 0, 0, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]]));
+        using var brush = new TextureBrush(image, new Rectangle(0, 0, 2, 2), attributes);
+        using var target = new Bitmap(4, 4);
+
+        using (var graphics = Graphics.FromImage(target)) graphics.FillRectangle(brush, 0, 0, 4, 4);
+
+        Assert.Equal(Color.Blue.ToArgb(), target.GetPixel(3, 3).ToArgb());
+        Assert.Equal(Color.Red.ToArgb(), image.GetPixel(0, 0).ToArgb());
+    }
 }

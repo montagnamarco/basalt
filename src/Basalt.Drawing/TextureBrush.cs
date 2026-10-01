@@ -1,4 +1,5 @@
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Numerics;
 using SkiaSharp;
 
@@ -39,6 +40,22 @@ public sealed class TextureBrush : Brush
 
     public TextureBrush(Image image, Rectangle dstRect)
         : this(image, WrapMode.Tile, (RectangleF)dstRect)
+    {
+    }
+
+    public TextureBrush(Image image, Rectangle dstRect, ImageAttributes? imageAttr)
+        : this(image, (RectangleF)dstRect, imageAttr)
+    {
+    }
+
+    /// <summary>
+    /// A texture recoloured once, when the brush is made, by the bitmap
+    /// adjustments of the attributes. It tiles; which of the attributes'
+    /// categories and wrap mode GDI+ takes here has not been compared with
+    /// Windows.
+    /// </summary>
+    public TextureBrush(Image image, RectangleF dstRect, ImageAttributes? imageAttr)
+        : this(Recoloured(image, imageAttr), WrapMode.Tile, dstRect)
     {
     }
 
@@ -145,6 +162,23 @@ public sealed class TextureBrush : Brush
     /// the image, with the OutOfMemory status that System.Drawing turns into
     /// this exception; Skia would quietly crop to what is there.
     /// </summary>
+    private static Image Recoloured(Image image, ImageAttributes? attributes)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        using var filter = attributes?.ToColorFilter(ColorAdjustType.Bitmap);
+        if (filter is null) return image;
+
+        var copy = new SKBitmap(image.Pixels.Info);
+        using (var canvas = new SKCanvas(copy))
+        using (var paint = new SKPaint { ColorFilter = filter, BlendMode = SKBlendMode.Src })
+        {
+            canvas.DrawBitmap(image.Pixels, 0, 0, paint);
+        }
+
+        return new Bitmap(copy, PixelFormat.Format32bppArgb, ImageFormat.MemoryBmp);
+    }
+
     private static void CheckInside(Image image, RectangleF rect)
     {
         if (rect.X < 0 || rect.Y < 0 || rect.Width <= 0 || rect.Height <= 0 || rect.Right > image.Width || rect.Bottom > image.Height)

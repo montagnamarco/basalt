@@ -103,7 +103,7 @@ public sealed partial class Graphics
     /// </summary>
     private Matrix3x2 ToDeviceSpace(CoordinateSpace space)
     {
-        var pageToDevice = Matrix3x2.CreateScale(MatrixInterop.UnitScale(_pageUnit) * _pageScale);
+        var pageToDevice = Matrix3x2.CreateScale(PixelsPerUnit(_pageUnit) * _pageScale);
 
         return space switch
         {

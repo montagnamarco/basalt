@@ -29,6 +29,13 @@
       Microsoft's surface is still in the pending list.
     -->
     <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!--
+      For Interop.LOGFONT alone, whose face name is a fixed buffer of 32
+      characters in Microsoft's assembly: code that marshals it to and from
+      native memory relies on that exact layout.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

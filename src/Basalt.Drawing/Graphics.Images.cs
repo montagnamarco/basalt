@@ -143,11 +143,19 @@ public sealed partial class Graphics
         DrawWithAttributes(image, Corners(destRect), source, imageAttrs);
     }
 
-    public void DrawImage(Image image, Effect effect, RectangleF srcRect = default, Matrix? transform = null, GraphicsUnit srcUnit = GraphicsUnit.Pixel, ImageAttributes? imageAttr = null) =>
-        throw new NotImplementedException("Drawing an image through a bitmap Effect is not implemented.");
+    public void DrawImage(Image image, Effect effect, RectangleF srcRect = default, Matrix? transform = null, GraphicsUnit srcUnit = GraphicsUnit.Pixel, ImageAttributes? imageAttr = null)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        ArgumentNullException.ThrowIfNull(effect);
+
+        var source = srcRect.Width <= 0 || srcRect.Height <= 0 ? WholeImage(image) : SourceInPixels(image, srcRect, srcUnit);
+        var size = PhysicalSize(image, source.Width, source.Height);
+
+        DrawImageThroughEffect(image, Corners(new RectangleF(0, 0, size.Width, size.Height)), source, effect, imageAttr, transform);
+    }
 
     public void DrawImage(Image image, Effect effect) =>
-        throw new NotImplementedException("Drawing an image through a bitmap Effect is not implemented.");
+        DrawImage(image, effect, default, null, GraphicsUnit.Pixel, null);
 
     /// <summary>Despite the name, scaled to the image's physical size, as GDI+ does.</summary>
     public void DrawImageUnscaled(Image image, Point point) => DrawImage(image, (float)point.X, point.Y);
@@ -237,6 +245,92 @@ public sealed partial class Graphics
         using var filter = attributes?.ToColorFilter(ColorAdjustType.Bitmap);
 
         DrawImageCore(image, destination, source, filter, attributes?.Wrap);
+    }
+
+    public void DrawCachedBitmap(CachedBitmap cachedBitmap, int x, int y)
+    {
+        ArgumentNullException.ThrowIfNull(cachedBitmap);
+
+        _canvas.Save();
+        try
+        {
+            if (_clip is not null) _canvas.ClipPath(_clip, SKClipOperation.Intersect, antialias: IsSmooth);
+            _canvas.SetMatrix(WorldTranslationToDevice().ToSkia());
+
+            using var pixels = cachedBitmap.Pixels.PeekPixels();
+            using var picture = SKImage.FromPixels(pixels);
+            _canvas.DrawImage(picture, x, y);
+        }
+        finally
+        {
+            _canvas.Restore();
+        }
+    }
+
+    /// <summary>
+    /// The device mapping <see cref="DrawCachedBitmap"/> uses: page unit and
+    /// scale, then the canvas's own base matrix, apply as usual, but the
+    /// world transform (<see cref="Transform"/>) contributes only its
+    /// translation - GDI+ documents DrawCachedBitmap as ignoring the rest of
+    /// that transform.
+    /// </summary>
+    private Matrix3x2 WorldTranslationToDevice()
+    {
+        var translationOnly = Matrix3x2.CreateTranslation(_worldTransform.M31, _worldTransform.M32);
+        var page = Matrix3x2.CreateScale(PixelsPerUnit(_pageUnit) * _pageScale);
+        var toPage = MatrixInterop.Combine(translationOnly, page, MatrixOrder.Append);
+
+        return MatrixInterop.Combine(toPage, _baseMatrix, MatrixOrder.Append);
+    }
+
+    /// <summary>
+    /// Draws a rectangle of the image's pixels through an Effect's filter,
+    /// composed with ImageAttributes' own colour filter on top - the effect
+    /// reshapes the source first, as Bitmap.ApplyEffect would, and the
+    /// ImageAttributes adjustment runs on that result, the same order
+    /// DrawWithAttributes applies its own filter in.
+    /// </summary>
+    private void DrawImageThroughEffect(Image image, (PointF UpperLeft, PointF UpperRight, PointF LowerLeft) destination, RectangleF source, Effect effect, ImageAttributes? attributes, Matrix? transform)
+    {
+        // A metafile is drawn from the picture its records were played into
+        // when it was read, at its own bounds.
+        if (image is not (Bitmap or Metafile)) throw new NotImplementedException($"Drawing an image of type {image.GetType().Name} is not implemented.");
+        if (source.Width <= 0 || source.Height <= 0) throw new ArgumentException("Parameter is not valid.");
+
+        using var effectFilter = effect.CreateFilter();
+        using var attributesFilter = attributes?.ToColorFilter(ColorAdjustType.Bitmap);
+        using var attributesImageFilter = attributesFilter is null ? null : SKImageFilter.CreateColorFilter(attributesFilter);
+        using var combined = attributesImageFilter is null ? null : SKImageFilter.CreateCompose(attributesImageFilter, effectFilter);
+
+        var (upperLeft, upperRight, lowerLeft) = destination;
+        var scaleX = (upperRight.X - upperLeft.X) / source.Width;
+        var skewY = (upperRight.Y - upperLeft.Y) / source.Width;
+        var skewX = (lowerLeft.X - upperLeft.X) / source.Height;
+        var scaleY = (lowerLeft.Y - upperLeft.Y) / source.Height;
+        var mapping = new Matrix3x2(
+            scaleX, skewY,
+            skewX, scaleY,
+            upperLeft.X - scaleX * source.X - skewX * source.Y,
+            upperLeft.Y - skewY * source.X - scaleY * source.Y);
+
+        if (transform is { } extra) mapping = MatrixInterop.Combine(mapping, extra.Value, MatrixOrder.Append);
+
+        using var paint = new SKPaint
+        {
+            IsAntialias = IsSmooth,
+            BlendMode = BlendMode,
+            ImageFilter = combined ?? effectFilter,
+        };
+
+        using var pixels = image.Pixels.PeekPixels();
+        using var picture = SKImage.FromPixels(pixels);
+        var sampling = SamplingFor(mapping);
+
+        using var aligned = AlignToPixels();
+        _canvas.Concat(mapping.ToSkia());
+
+        var rect = new SKRect(source.Left, source.Top, source.Right, source.Bottom);
+        _canvas.DrawImage(picture, rect, rect, sampling, paint);
     }
 
     private const string ScreenCapture =
@@ -358,7 +452,7 @@ public sealed partial class Graphics
     /// </summary>
     private SizeF PhysicalSize(Image image, float width, float height)
     {
-        var unitsPerPixel = MatrixInterop.Dpi / (MatrixInterop.UnitScale(_pageUnit) * _pageScale);
+        var unitsPerPixel = Resolution / (PixelsPerUnit(_pageUnit) * _pageScale);
 
         return new SizeF(
             width / image.HorizontalResolution * unitsPerPixel,

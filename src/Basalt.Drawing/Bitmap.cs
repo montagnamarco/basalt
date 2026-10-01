@@ -86,12 +86,71 @@ public sealed class Bitmap : Image
     {
     }
 
+    /// <summary>
+    /// Runs <paramref name="effect"/> over <paramref name="rectangle"/> of
+    /// this bitmap's own pixels, in place; an empty rectangle means the whole
+    /// bitmap, as GDI+ documents.
+    /// </summary>
+    /// <remarks>
+    /// This writes straight into the existing pixel buffer rather than
+    /// swapping it for another one (unlike RotateFlip, which must: it changes
+    /// the bitmap's own dimensions). That still has to refuse a bitmap with an
+    /// outstanding LockBits call, the same hazard RotateFlip's own in-use
+    /// check guards against: finishing that lock would write its separate,
+    /// now-stale copy of the pixels back over whatever the effect produced.
+    /// Unlike RotateFlip, this cannot also see an outstanding Graphics over
+    /// the same Image - that counter is private to Image.cs - so only an
+    /// active lock is refused here, a narrower guard than GDI+'s own.
+    /// </remarks>
     public void ApplyEffect(Effect effect, Rectangle rectangle)
     {
         ArgumentNullException.ThrowIfNull(effect);
 
-        throw new NotImplementedException(
-            "Bitmap.ApplyEffect is not implemented yet: no System.Drawing.Imaging.Effects.Effect subclass (BlurEffect, SharpenEffect, and so on) is implemented to apply.");
+        var area = rectangle == Rectangle.Empty ? new Rectangle(0, 0, Width, Height) : rectangle;
+        CheckWithinBounds(area);
+
+        if (_locks.Count > 0) throw new InvalidOperationException("Object is currently in use elsewhere.");
+
+        using var filter = effect.CreateFilter();
+        ApplyFilterInPlace(filter, area);
+    }
+
+    /// <summary>Renders the filtered rectangle off to the side, then copies it pixel by pixel back into this bitmap's own buffer.</summary>
+    /// <remarks>
+    /// The rectangle is filtered on its own: a blur or sharpen near its edge
+    /// sees transparency there, not the bitmap's pixels just outside it. Whether
+    /// GDI+ reads those neighbours has not been compared with Windows.
+    /// </remarks>
+    private void ApplyFilterInPlace(SKImageFilter filter, Rectangle area)
+    {
+        var info = new SKImageInfo(area.Width, area.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+
+        using var subset = new SKBitmap(info);
+        if (!Pixels.ExtractSubset(subset, new SKRectI(area.Left, area.Top, area.Right, area.Bottom)))
+        {
+            throw new ArgumentException("Parameter is not valid.");
+        }
+
+        using var surface = SKSurface.Create(info);
+
+        using (var paint = new SKPaint { ImageFilter = filter })
+        using (var pixels = subset.PeekPixels())
+        using (var picture = SKImage.FromPixels(pixels))
+        {
+            surface.Canvas.Clear(SKColors.Transparent);
+            surface.Canvas.DrawImage(picture, 0, 0, paint);
+        }
+
+        using var filtered = surface.Snapshot();
+        using var filteredBitmap = SKBitmap.FromImage(filtered);
+
+        for (var y = 0; y < area.Height; y++)
+        {
+            for (var x = 0; x < area.Width; x++)
+            {
+                Pixels.SetPixel(area.Left + x, area.Top + y, filteredBitmap.GetPixel(x, y));
+            }
+        }
     }
 
     public Bitmap Clone(Rectangle rect, PixelFormat format) => CloneCore(rect, format);
@@ -221,14 +280,21 @@ public sealed class Bitmap : Image
     /// </summary>
     private protected override void ReleaseUnmanaged()
     {
-        foreach (var region in _locks.Values)
+        // A constructor that hands over to another with this(...) runs no field
+        // initialiser until that other one starts. When computing its arguments
+        // throws (a stream that is not an image), the object exists without its
+        // lock table and the finalizer still runs: measured, the test host died
+        // of a NullReferenceException on the finalizer thread.
+        if (_locks is not { } locks) return;
+
+        foreach (var region in locks.Values)
         {
             if (region.OwnsBuffer) Marshal.FreeHGlobal(region.Buffer);
 
             MarkFree();
         }
 
-        _locks.Clear();
+        locks.Clear();
     }
 
     public void MakeTransparent() => MakeTransparent(GetPixel(0, Height - 1));

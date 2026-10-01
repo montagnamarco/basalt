@@ -28,9 +28,9 @@ public sealed partial class Graphics
     public Point RenderingOrigin { get; set; } = Point.Empty;
 
     /// <summary>There is no real device to ask: this assembly always reports the one DPI it draws at.</summary>
-    public float DpiX => MatrixInterop.Dpi;
+    public float DpiX => Resolution;
 
-    public float DpiY => MatrixInterop.Dpi;
+    public float DpiY => Resolution;
 
     public GraphicsUnit PageUnit
     {

@@ -182,11 +182,32 @@ public sealed partial class Graphics : MarshalByRefObject, IDeviceContext, IDisp
     /// </summary>
     private Matrix3x2 WorldToDevice()
     {
-        var page = Matrix3x2.CreateScale(MatrixInterop.UnitScale(_pageUnit) * _pageScale);
+        var page = Matrix3x2.CreateScale(PixelsPerUnit(_pageUnit) * _pageScale);
         var toPage = MatrixInterop.Combine(_worldTransform, page, MatrixOrder.Append);
 
         return MatrixInterop.Combine(toPage, _baseMatrix, MatrixOrder.Append);
     }
+
+    /// <summary>
+    /// The resolution of what this Graphics draws on: 96 for the screen and for
+    /// bitmaps, as GDI+ reports them, and 100 for a printed page, whose device
+    /// unit is the hundredth of an inch.
+    /// </summary>
+    internal float Resolution { get; init; } = MatrixInterop.Dpi;
+
+    /// <summary>A printed page, where GraphicsUnit.Display is a hundredth of an inch rather than a pixel.</summary>
+    internal bool IsPrinter { get; init; }
+
+    /// <summary>Device units per unit of measurement at this Graphics' resolution.</summary>
+    internal float PixelsPerUnit(GraphicsUnit unit) => unit switch
+    {
+        GraphicsUnit.Point => Resolution / 72f,
+        GraphicsUnit.Inch => Resolution,
+        GraphicsUnit.Millimeter => Resolution / 25.4f,
+        GraphicsUnit.Document => Resolution / 300f,
+        GraphicsUnit.Display => IsPrinter ? Resolution / 100f : 1f,
+        _ => 1f,
+    };
 
     // Small enough to be invisible, large enough to survive single precision
     // at any coordinate a window can have.

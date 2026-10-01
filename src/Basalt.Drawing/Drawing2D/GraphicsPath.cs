@@ -435,6 +435,45 @@ public sealed class GraphicsPath : MarshalByRefObject, ICloneable, IDisposable
         _newFigure = (_types[^1] & PathGeometry.Close) != 0;
     }
 
+    // --- Text ------------------------------------------------------------
+
+    public void AddString(string s, FontFamily family, int style, float emSize, Point origin, StringFormat? format) =>
+        AddString(s, family, style, emSize, new RectangleF(origin.X, origin.Y, 0, 0), format);
+
+    public void AddString(string s, FontFamily family, int style, float emSize, PointF origin, StringFormat? format) =>
+        AddString(s, family, style, emSize, new RectangleF(origin.X, origin.Y, 0, 0), format);
+
+    public void AddString(string s, FontFamily family, int style, float emSize, Rectangle layoutRect, StringFormat? format) =>
+        AddString(s, family, style, emSize, (RectangleF)layoutRect, format);
+
+    /// <summary>
+    /// The outlines of the string's letters, laid out as DrawString lays them
+    /// out, one closed figure per contour. The em size is in the path's own
+    /// units.
+    /// </summary>
+    public void AddString(string s, FontFamily family, int style, float emSize, RectangleF layoutRect, StringFormat? format)
+    {
+        ArgumentNullException.ThrowIfNull(s);
+        ArgumentNullException.ThrowIfNull(family);
+
+        using var font = new Font(family, emSize, (FontStyle)style, GraphicsUnit.World);
+        using var layout = System.Drawing.Text.TextLayout.Create(s, font, emSize, layoutRect, format);
+
+        foreach (var line in layout.Lines)
+        {
+            var baseline = line.Top + layout.Ascent;
+
+            foreach (var (text, skFont, offset) in layout.Runs(line))
+            {
+                using var outline = skFont.GetTextPath(text, new SKPoint(line.X + offset, baseline));
+
+                StartFigure();
+                PathGeometry.FromSkia(outline, _points, _types);
+                _newFigure = true;
+            }
+        }
+    }
+
     // --- Changing the path -----------------------------------------------
 
     public void Transform(Matrix matrix)

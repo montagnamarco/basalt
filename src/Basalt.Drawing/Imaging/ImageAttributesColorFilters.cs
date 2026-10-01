@@ -80,8 +80,7 @@ internal static class ImageAttributesColorFilters
 
     /// <summary>
     /// <see cref="ColorMatrixFlag.Default"/> is SkiaSharp's own 4x5 matrix
-    /// filter (the translation column is 0..255, GDI+'s is 0..1: the last
-    /// factor below converts). It works on the straight colour, unlike a
+    /// filter (see SkiaRowMajor for the translation column). It works on the straight colour, unlike a
     /// SkSL filter: measured by halving red on a pixel of alpha 128, which
     /// came out at 100 from 200. <see cref="ColorMatrixFlag.SkipGrays"/> needs
     /// the per-pixel decision only a shader gives; a GDI+ colour matrix is
@@ -151,7 +150,12 @@ internal static class ImageAttributesColorFilters
         return SKColorFilter.CreateTable(identity, table, table, table);
     }
 
-    /// <summary>GDI+'s row-vector matrix (0..1 translation) as SkiaSharp's row-major 4x5 matrix (0..255 translation).</summary>
+    /// <summary>GDI+'s row-vector matrix as Skia's row-major 4×5 matrix.</summary>
+    /// <remarks>
+    /// Both take the translation column in 0..1: Skia's matrix filter works on
+    /// normalised colours. Measured: scaling it to 0..255, as older SkiaSharp
+    /// needed, turned a translation of 0.5 red into full red.
+    /// </remarks>
     private static float[] SkiaRowMajor(ColorMatrix matrix)
     {
         var result = new float[20];
@@ -160,7 +164,7 @@ internal static class ImageAttributesColorFilters
         {
             for (var input = 0; input < 4; input++) result[output * 5 + input] = matrix.Coefficient(input, output);
 
-            result[output * 5 + 4] = matrix.Coefficient(4, output) * 255f;
+            result[output * 5 + 4] = matrix.Coefficient(4, output);
         }
 
         return result;

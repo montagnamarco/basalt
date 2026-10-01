@@ -294,4 +294,18 @@ public class BitmapTests
 
         Assert.Equal(viaSetPixel.GetPixel(0, 0).ToArgb(), viaLock.GetPixel(0, 0).ToArgb());
     }
+
+    /// <summary>
+    /// A bitmap whose constructor failed is still finalized. It must not take
+    /// the process down with it.
+    /// </summary>
+    [Fact]
+    public void A_bitmap_that_failed_to_load_is_finalized_quietly()
+    {
+        Assert.Throws<ArgumentException>(() => new Bitmap(new MemoryStream([1, 2, 3, 4])));
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+    }
 }

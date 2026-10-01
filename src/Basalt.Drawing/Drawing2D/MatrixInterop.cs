@@ -12,9 +12,9 @@ namespace System.Drawing.Drawing2D;
 /// </summary>
 internal static class MatrixInterop
 {
-    // The one DPI this assembly reports: Graphics.DpiX/DpiY are always 96,
-    // there is no real device to ask, and every GraphicsUnit conversion below
-    // is defined relative to it.
+    // The resolution GDI+ reports for the screen and for bitmaps. A printed
+    // page reports 100 instead (Graphics.Resolution), and Graphics converts
+    // units with its own resolution; UnitScale below is for the screen's.
     internal const float Dpi = 96f;
 
     /// <summary>

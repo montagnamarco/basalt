@@ -31,6 +31,38 @@ public abstract class Image : MarshalByRefObject, ICloneable, IDisposable, ISeri
         _source = source;
         PixelFormat = format;
         RawFormat = rawFormat;
+
+        AddFrameProperties();
+    }
+
+    // The property tags GDI+ fills in for an animated image: each frame's delay
+    // in hundredths of a second, and how many times the animation repeats.
+    private const int FrameDelayTag = 0x5100;
+    private const int LoopCountTag = 0x5101;
+
+    /// <summary>
+    /// Records an animation's frame delays and loop count as property items,
+    /// where ImageAnimator and applications read them, as GDI+ does on decoding.
+    /// </summary>
+    private void AddFrameProperties()
+    {
+        if (_source is null) return;
+
+        using var codec = SKCodec.Create(SKData.CreateCopy(_source));
+        if (codec is null || codec.FrameCount < 2) return;
+
+        var delays = new byte[codec.FrameCount * 4];
+        for (var i = 0; i < codec.FrameCount; i++)
+        {
+            // Skia gives milliseconds; GDI+ keeps hundredths of a second.
+            BitConverter.TryWriteBytes(delays.AsSpan(i * 4), codec.FrameInfo[i].Duration / 10);
+        }
+
+        _propertyItems[FrameDelayTag] = new PropertyItem { Id = FrameDelayTag, Type = 4, Len = delays.Length, Value = delays };
+
+        // Skia answers -1 for "forever", which GIF writes as 0.
+        var loops = (short)Math.Max(0, codec.RepetitionCount);
+        _propertyItems[LoopCountTag] = new PropertyItem { Id = LoopCountTag, Type = 3, Len = 2, Value = BitConverter.GetBytes(loops) };
     }
 
     ~Image() => Dispose(false);
