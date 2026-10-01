@@ -681,6 +681,8 @@ public partial class ListBox : ListControl
         var newIndexOf = new int[oldIndexAt.Length];
         for (var newIndex = 0; newIndex < oldIndexAt.Length; newIndex++) newIndexOf[oldIndexAt[newIndex]] = newIndex;
 
+        ItemsReorderedInternal(oldIndexAt);
+
         var sortedItems = oldIndexAt.Select(index => _items[index]).ToArray();
         _items.Clear();
         _items.AddRange(sortedItems);

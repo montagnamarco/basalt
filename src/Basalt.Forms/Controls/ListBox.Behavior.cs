@@ -21,8 +21,34 @@ public partial class ListBox
 
     // --- Item-structure notifications, called by ObjectCollection ----------
 
+    // Per-item state kept by a subclass (CheckedListBox's check marks) follows
+    // the items through these, before any selection event lets a handler look.
+    internal virtual void ItemInsertedInternal(int index)
+    {
+    }
+
+    internal virtual void ItemRemovedInternal(int index)
+    {
+    }
+
+    internal virtual void ItemsClearedInternal()
+    {
+    }
+
+    /// <summary>The whole list was replaced with this many new items.</summary>
+    internal virtual void ItemsResetInternal(int count)
+    {
+    }
+
+    /// <summary>The items were reordered: the item now at position i was at oldIndexAt[i].</summary>
+    internal virtual void ItemsReorderedInternal(int[] oldIndexAt)
+    {
+    }
+
     private void OnItemsInserted(int index)
     {
+        ItemInsertedInternal(index);
+
         for (var i = 0; i < _selectedIndices.Count; i++)
         {
             if (_selectedIndices[i] >= index) _selectedIndices[i]++;
@@ -45,6 +71,8 @@ public partial class ListBox
 
     private void OnItemsRemoved(int index)
     {
+        ItemRemovedInternal(index);
+
         var wasSelected = _selectedIndices.Remove(index);
 
         for (var i = 0; i < _selectedIndices.Count; i++)
@@ -72,6 +100,8 @@ public partial class ListBox
 
     private void OnItemsCleared()
     {
+        ItemsClearedInternal();
+
         var hadSelection = _selectedIndices.Count > 0;
 
         _selectedIndices.Clear();
@@ -90,6 +120,8 @@ public partial class ListBox
     /// <summary>The whole list was replaced from a DataSource: selection and scroll reset, nothing to compare against.</summary>
     private void OnItemsReset()
     {
+        ItemsResetInternal(_items.Count);
+
         _selectedIndices.Clear();
         _focusedIndex = -1;
         _selectionAnchor = -1;

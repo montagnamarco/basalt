@@ -105,12 +105,6 @@ I System.Windows.Forms.BindingSource : System.ComponentModel.ISupportInitialize
 I System.Windows.Forms.BindingSource : System.ComponentModel.ISupportInitializeNotification
 I System.Windows.Forms.BindingSource : System.ComponentModel.ITypedList
 I System.Windows.Forms.BindingSource : System.Windows.Forms.ICurrencyManagerProvider
-I System.Windows.Forms.CheckedListBox+CheckedIndexCollection : System.Collections.ICollection
-I System.Windows.Forms.CheckedListBox+CheckedIndexCollection : System.Collections.IEnumerable
-I System.Windows.Forms.CheckedListBox+CheckedIndexCollection : System.Collections.IList
-I System.Windows.Forms.CheckedListBox+CheckedItemCollection : System.Collections.ICollection
-I System.Windows.Forms.CheckedListBox+CheckedItemCollection : System.Collections.IEnumerable
-I System.Windows.Forms.CheckedListBox+CheckedItemCollection : System.Collections.IList
 I System.Windows.Forms.ColumnHeader : System.ICloneable
 I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.Generic.IComparer`1<System.Windows.Forms.ComboBox+ObjectCollection+Entry>
 I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.ICollection
@@ -322,17 +316,14 @@ M protected System.Windows.Forms.CheckBox::OnHandleCreated(System.EventArgs) -> 
 M protected System.Windows.Forms.CheckBox::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.CheckBox::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
 M protected System.Windows.Forms.CheckedListBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.CheckedListBox::CreateItemCollection() -> System.Windows.Forms.ListBox+ObjectCollection virtual
 M protected System.Windows.Forms.CheckedListBox::OnBackColorChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::OnClick(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::OnDrawItem(System.Windows.Forms.DrawItemEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.CheckedListBox::OnItemCheck(System.Windows.Forms.ItemCheckEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::OnKeyPress(System.Windows.Forms.KeyPressEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::OnMeasureItem(System.Windows.Forms.MeasureItemEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::OnSelectedIndexChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.CheckedListBox::RefreshItems() -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::WmReflectCommand(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.CheckedListBox::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
@@ -2434,66 +2425,30 @@ M public System.Windows.Forms.CheckBox::add_DoubleClick(System.EventHandler) -> 
 M public System.Windows.Forms.CheckBox::add_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.CheckBox::remove_DoubleClick(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckBox::remove_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::Contains(System.Int32) -> System.Boolean
-M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::IndexOf(System.Int32) -> System.Int32
-M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.CheckedListBox+CheckedIndexCollection::get_Item(System.Int32) -> System.Int32
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::Contains(System.Object) -> System.Boolean
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::IndexOf(System.Object) -> System.Int32
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::get_Item(System.Int32) -> System.Object
-M public System.Windows.Forms.CheckedListBox+CheckedItemCollection::set_Item(System.Int32, System.Object) -> System.Void
-M public System.Windows.Forms.CheckedListBox+ObjectCollection::.ctor(System.Windows.Forms.CheckedListBox)
-M public System.Windows.Forms.CheckedListBox+ObjectCollection::Add(System.Object, System.Boolean) -> System.Int32
-M public System.Windows.Forms.CheckedListBox+ObjectCollection::Add(System.Object, System.Windows.Forms.CheckState) -> System.Int32
-M public System.Windows.Forms.CheckedListBox::.ctor()
-M public System.Windows.Forms.CheckedListBox::GetItemCheckState(System.Int32) -> System.Windows.Forms.CheckState
-M public System.Windows.Forms.CheckedListBox::GetItemChecked(System.Int32) -> System.Boolean
-M public System.Windows.Forms.CheckedListBox::SetItemCheckState(System.Int32, System.Windows.Forms.CheckState) -> System.Void
-M public System.Windows.Forms.CheckedListBox::SetItemChecked(System.Int32, System.Boolean) -> System.Void
 M public System.Windows.Forms.CheckedListBox::add_Click(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::add_DataSourceChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::add_DisplayMemberChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::add_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
-M public System.Windows.Forms.CheckedListBox::add_ItemCheck(System.Windows.Forms.ItemCheckEventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::add_MeasureItem(System.Windows.Forms.MeasureItemEventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::add_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::add_ValueMemberChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.CheckedListBox::get_CheckOnClick() -> System.Boolean
-M public System.Windows.Forms.CheckedListBox::get_CheckedIndices() -> System.Windows.Forms.CheckedListBox+CheckedIndexCollection
-M public System.Windows.Forms.CheckedListBox::get_CheckedItems() -> System.Windows.Forms.CheckedListBox+CheckedItemCollection
 M public System.Windows.Forms.CheckedListBox::get_DataSource() -> System.Object
 M public System.Windows.Forms.CheckedListBox::get_DisplayMember() -> System.String
-M public System.Windows.Forms.CheckedListBox::get_DrawMode() -> System.Windows.Forms.DrawMode virtual
 M public System.Windows.Forms.CheckedListBox::get_ItemHeight() -> System.Int32 virtual
-M public System.Windows.Forms.CheckedListBox::get_Items() -> System.Windows.Forms.CheckedListBox+ObjectCollection
 M public System.Windows.Forms.CheckedListBox::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.CheckedListBox::get_SelectionMode() -> System.Windows.Forms.SelectionMode virtual
-M public System.Windows.Forms.CheckedListBox::get_ThreeDCheckBoxes() -> System.Boolean
 M public System.Windows.Forms.CheckedListBox::get_UseCompatibleTextRendering() -> System.Boolean
 M public System.Windows.Forms.CheckedListBox::get_ValueMember() -> System.String
 M public System.Windows.Forms.CheckedListBox::remove_Click(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::remove_DataSourceChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::remove_DisplayMemberChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::remove_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
-M public System.Windows.Forms.CheckedListBox::remove_ItemCheck(System.Windows.Forms.ItemCheckEventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::remove_MeasureItem(System.Windows.Forms.MeasureItemEventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::remove_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.CheckedListBox::remove_ValueMemberChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.CheckedListBox::set_CheckOnClick(System.Boolean) -> System.Void
 M public System.Windows.Forms.CheckedListBox::set_DataSource(System.Object) -> System.Void
 M public System.Windows.Forms.CheckedListBox::set_DisplayMember(System.String) -> System.Void
-M public System.Windows.Forms.CheckedListBox::set_DrawMode(System.Windows.Forms.DrawMode) -> System.Void virtual
 M public System.Windows.Forms.CheckedListBox::set_ItemHeight(System.Int32) -> System.Void virtual
 M public System.Windows.Forms.CheckedListBox::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.CheckedListBox::set_SelectionMode(System.Windows.Forms.SelectionMode) -> System.Void virtual
-M public System.Windows.Forms.CheckedListBox::set_ThreeDCheckBoxes(System.Boolean) -> System.Void
 M public System.Windows.Forms.CheckedListBox::set_UseCompatibleTextRendering(System.Boolean) -> System.Void
 M public System.Windows.Forms.CheckedListBox::set_ValueMember(System.String) -> System.Void
 M public System.Windows.Forms.Clipboard::ContainsAudio() -> System.Boolean static
@@ -5492,15 +5447,6 @@ M public System.Windows.Forms.InputLanguageCollection::Contains(System.Windows.F
 M public System.Windows.Forms.InputLanguageCollection::CopyTo(System.Windows.Forms.InputLanguage[], System.Int32) -> System.Void
 M public System.Windows.Forms.InputLanguageCollection::IndexOf(System.Windows.Forms.InputLanguage) -> System.Int32
 M public System.Windows.Forms.InputLanguageCollection::get_Item(System.Int32) -> System.Windows.Forms.InputLanguage
-M public System.Windows.Forms.ItemCheckEventArgs::.ctor(System.Int32, System.Windows.Forms.CheckState, System.Windows.Forms.CheckState)
-M public System.Windows.Forms.ItemCheckEventArgs::get_CurrentValue() -> System.Windows.Forms.CheckState
-M public System.Windows.Forms.ItemCheckEventArgs::get_Index() -> System.Int32
-M public System.Windows.Forms.ItemCheckEventArgs::get_NewValue() -> System.Windows.Forms.CheckState
-M public System.Windows.Forms.ItemCheckEventArgs::set_NewValue(System.Windows.Forms.CheckState) -> System.Void
-M public System.Windows.Forms.ItemCheckEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.ItemCheckEventHandler::BeginInvoke(System.Object, System.Windows.Forms.ItemCheckEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.ItemCheckEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.ItemCheckEventHandler::Invoke(System.Object, System.Windows.Forms.ItemCheckEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ItemCheckedEventArgs::.ctor(System.Windows.Forms.ListViewItem)
 M public System.Windows.Forms.ItemCheckedEventArgs::get_Item() -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ItemCheckedEventHandler::.ctor(System.Object, System.IntPtr)
@@ -9714,10 +9660,6 @@ T class System.Windows.Forms.BindingNavigator : System.Windows.Forms.ToolStrip
 T class System.Windows.Forms.BindingSource : System.ComponentModel.Component
 T class System.Windows.Forms.ButtonBase+ButtonBaseAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.CheckBox+CheckBoxAccessibleObject : System.Windows.Forms.ButtonBase+ButtonBaseAccessibleObject
-T class System.Windows.Forms.CheckedListBox : System.Windows.Forms.ListBox
-T class System.Windows.Forms.CheckedListBox+CheckedIndexCollection
-T class System.Windows.Forms.CheckedListBox+CheckedItemCollection
-T class System.Windows.Forms.CheckedListBox+ObjectCollection : System.Windows.Forms.ListBox+ObjectCollection
 T class System.Windows.Forms.ColorDialog : System.Windows.Forms.CommonDialog
 T class System.Windows.Forms.ColumnHeader : System.ComponentModel.Component
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
@@ -9826,7 +9768,6 @@ T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringCon
 T class System.Windows.Forms.InputLanguageChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.InputLanguageChangingEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.InputLanguageCollection : System.Collections.ReadOnlyCollectionBase
-T class System.Windows.Forms.ItemCheckEventArgs : System.EventArgs
 T class System.Windows.Forms.ItemCheckedEventArgs : System.EventArgs
 T class System.Windows.Forms.KeysConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter : System.ComponentModel.TypeConverter
@@ -9994,7 +9935,6 @@ T delegate System.Windows.Forms.HtmlElementErrorEventHandler
 T delegate System.Windows.Forms.HtmlElementEventHandler
 T delegate System.Windows.Forms.InputLanguageChangedEventHandler
 T delegate System.Windows.Forms.InputLanguageChangingEventHandler
-T delegate System.Windows.Forms.ItemCheckEventHandler
 T delegate System.Windows.Forms.ItemCheckedEventHandler
 T delegate System.Windows.Forms.ListViewItemMouseHoverEventHandler
 T delegate System.Windows.Forms.ListViewItemSelectionChangedEventHandler
