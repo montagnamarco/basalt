@@ -114,6 +114,33 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
         FillGradientButton(e.Graphics, e.Item.Bounds, ColorTable.MenuItemSelectedGradientBegin, ColorTable.MenuItemSelected, ColorTable.MenuItemSelectedGradientEnd, ColorTable.MenuItemBorder);
     }
 
+    /// <summary>The item's own image, drawn at the rectangle the layout (or a menu item's own paint) worked out.</summary>
+    /// <summary>Nothing extra beyond the base drawing: the Office look does not change how image or text paint.</summary>
+    protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e) => base.OnRenderItemImage(e);
+
+    protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) => base.OnRenderItemText(e);
+
+    /// <summary>A soft highlighted square in the image margin, as Office shows a checked menu item.</summary>
+    protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
+    {
+        base.OnRenderItemCheck(e);
+
+        var bounds = e.ImageRectangle;
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+
+        var background = e.Item.Pressed ? ColorTable.CheckPressedBackground
+            : e.Item.Selected ? ColorTable.CheckSelectedBackground
+            : ColorTable.CheckBackground;
+
+        using var face = new SolidBrush(background);
+        e.Graphics.FillRectangle(face, bounds);
+
+        using var border = new Pen(ColorTable.ButtonSelectedBorder);
+        e.Graphics.DrawRectangle(border, bounds.Left, bounds.Top, bounds.Width - 1, bounds.Height - 1);
+
+        ControlPaint.DrawMenuGlyph(e.Graphics, Rectangle.Inflate(bounds, -2, -2), MenuGlyph.Checkmark, SystemColors.ControlText, Color.Empty);
+    }
+
     protected override void OnRenderLabelBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderLabelBackground(e);

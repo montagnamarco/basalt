@@ -295,7 +295,8 @@ public class ToolStripTests
         Assert.True(second.Bounds.Left < secondLeftWithFirst);
     }
 
-    [Fact]
+    // On the UI thread, as an application changes the manager's renderer: it repaints every live strip.
+    [AvaloniaFact]
     public void A_strip_following_the_manager_repaints_when_the_managers_renderer_changes()
     {
         var original = ToolStripManager.RenderMode;

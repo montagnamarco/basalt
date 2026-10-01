@@ -99,6 +99,9 @@ public class ToolStripSystemRenderer : ToolStripRenderer
         e.Graphics.FillRectangle(brush, e.Item.Bounds);
     }
 
+    // Default item image/text/check painting lives on the base ToolStripRenderer (Microsoft's own
+    // ToolStripSystemRenderer does not re-override it either); ToolStripProfessionalRenderer does.
+
     protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)
     {
         base.OnRenderImageMargin(e);

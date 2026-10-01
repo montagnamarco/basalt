@@ -139,11 +139,40 @@ public abstract class ToolStripRenderer
 
     protected virtual void OnRenderItemBackground(ToolStripItemRenderEventArgs e) => RenderItemBackground?.Invoke(this, e);
 
-    protected virtual void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e) => RenderItemCheck?.Invoke(this, e);
+    /// <summary>The classic default: a sunken square in the image margin, with a check mark glyph inside.</summary>
+    protected virtual void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
+    {
+        RenderItemCheck?.Invoke(this, e);
 
-    protected virtual void OnRenderItemImage(ToolStripItemImageRenderEventArgs e) => RenderItemImage?.Invoke(this, e);
+        var bounds = e.ImageRectangle;
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-    protected virtual void OnRenderItemText(ToolStripItemTextRenderEventArgs e) => RenderItemText?.Invoke(this, e);
+        using var face = new SolidBrush(SystemColors.ControlLight);
+        e.Graphics.FillRectangle(face, bounds);
+        ControlPaint.DrawBorder3D(e.Graphics, bounds, Border3DStyle.Sunken);
+        ControlPaint.DrawMenuGlyph(e.Graphics, Rectangle.Inflate(bounds, -2, -2), MenuGlyph.Checkmark, SystemColors.ControlText, Color.Empty);
+    }
+
+    /// <summary>The item's own image, drawn at the rectangle the layout (or an item's own paint) worked out.</summary>
+    protected virtual void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
+    {
+        RenderItemImage?.Invoke(this, e);
+
+        if (e.Image is null || e.ImageRectangle.Width <= 0 || e.ImageRectangle.Height <= 0) return;
+
+        if (e.Item.Enabled) e.Graphics.DrawImage(e.Image, e.ImageRectangle);
+        else ControlPaint.DrawImageDisabled(e.Graphics, e.Image, e.ImageRectangle.Left, e.ImageRectangle.Top, SystemColors.Control);
+    }
+
+    /// <summary>The item's own caption, in its own colour and font.</summary>
+    protected virtual void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+    {
+        RenderItemText?.Invoke(this, e);
+
+        if (string.IsNullOrEmpty(e.Text) || e.TextRectangle.Width <= 0 || e.TextRectangle.Height <= 0) return;
+
+        TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont ?? e.Item.Font, e.TextRectangle, e.TextColor, e.TextFormat);
+    }
 
     protected virtual void OnRenderLabelBackground(ToolStripItemRenderEventArgs e) => RenderLabelBackground?.Invoke(this, e);
 

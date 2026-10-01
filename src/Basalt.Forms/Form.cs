@@ -733,6 +733,18 @@ public partial class Form : ContainerControl
         _host?.SetClientSize(ClientSize);
     }
 
+    /// <summary>The menu bar of the form; Windows Forms uses it for menu merging and keyboard menu mode.</summary>
+    [DefaultValue(null)]
+    public MenuStrip? MainMenuStrip { get; set; }
+
+    /// <summary>After the focused control's chain: a menu item's shortcut key, whatever control has the focus.</summary>
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (base.ProcessCmdKey(ref msg, keyData)) return true;
+
+        return ToolStripManager.ProcessShortcut(this, keyData);
+    }
+
     /// <summary>Enter presses the accept button and Escape the cancel button; Tab moves among the controls, wrapping.</summary>
     protected override bool ProcessDialogKey(Keys keyData)
     {

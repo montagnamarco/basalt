@@ -115,6 +115,14 @@ public class ToolStrip : ScrollableControl
     [Browsable(false)]
     public ToolStripGripDisplayStyle GripDisplayStyle => Orientation == Orientation.Horizontal ? ToolStripGripDisplayStyle.Vertical : ToolStripGripDisplayStyle.Horizontal;
 
+    /// <summary>
+    /// Whether items stack top-to-bottom instead of left-to-right. A drop-down
+    /// (always a vertical list of items, whatever its LayoutStyle) overrides
+    /// this instead of Orientation, which plain ToolStrip computes from
+    /// LayoutStyle alone and does not expose as virtual.
+    /// </summary>
+    internal virtual bool StacksVertically => Orientation == Orientation.Vertical;
+
     public Padding GripMargin
     {
         get => _gripMargin;
@@ -224,6 +232,15 @@ public class ToolStrip : ScrollableControl
 
     private static readonly ToolStripSystemRenderer ToolStripSystemRendererInstance = new();
     private static readonly ToolStripProfessionalRenderer ToolStripProfessionalRendererInstance = new();
+
+    private ToolStripDropDownDirection _defaultDropDownDirection = ToolStripDropDownDirection.BelowRight;
+
+    /// <summary>Which way a drop-down item on this strip opens by default, absent its own DropDownDirection.</summary>
+    public virtual ToolStripDropDownDirection DefaultDropDownDirection
+    {
+        get => _defaultDropDownDirection;
+        set => _defaultDropDownDirection = value;
+    }
 
     public event ToolStripItemEventHandler? ItemAdded
     {
@@ -474,6 +491,30 @@ public class ToolStrip : ScrollableControl
         return base.ProcessMnemonic(charCode);
     }
 
+    /// <summary>
+    /// Whether this strip wants a dialog key (an arrow, Enter, Escape, Space,
+    /// Tab) for its own keyboard navigation, routed to <see cref="ProcessNavigationKey"/>.
+    /// A drop-down (always) and a menu bar (once a key has opened one of its
+    /// items) claim keys this way; a plain toolbar claims none.
+    /// </summary>
+    internal virtual bool WantsNavigationKey(Keys keyData) => false;
+
+    /// <summary>Handles a key <see cref="WantsNavigationKey"/> claimed; true when it did something with it.</summary>
+    internal virtual bool ProcessNavigationKey(Keys keyData) => false;
+
+    /// <summary>
+    /// Arrows, Enter, Escape, Space and Tab reach here (not OnKeyDown) because
+    /// the base IsInputKey (unchanged: DialogCodeWantsKey is false for a
+    /// ToolStrip) already answers false for them, the way it must for
+    /// ProcessDialogKey to run at all.
+    /// </summary>
+    protected override bool ProcessDialogKey(Keys keyData)
+    {
+        if (WantsNavigationKey(keyData) && ProcessNavigationKey(keyData)) return true;
+
+        return base.ProcessDialogKey(keyData);
+    }
+
     protected override void OnPaintBackground(PaintEventArgs e)
     {
         // The renderer paints the whole background in OnPaint; Control's plain fill would show through the gaps between items.
@@ -484,6 +525,7 @@ public class ToolStrip : ScrollableControl
         var renderer = Renderer;
 
         renderer.DrawToolStripBackground(new ToolStripRenderEventArgs(e.Graphics, this, ClientRectangle, BackColor));
+        PaintLeadingMargin(e);
         OnPaintGrip(e);
 
         foreach (ToolStripItem item in DisplayedItems)
@@ -494,8 +536,23 @@ public class ToolStrip : ScrollableControl
         }
 
         renderer.DrawToolStripBorder(new ToolStripRenderEventArgs(e.Graphics, this, ClientRectangle, BackColor));
+        PaintTrailingDecoration(e);
 
         base.OnPaint(e);
+    }
+
+    /// <summary>
+    /// A band a subclass reserves on its leading edge, painted after the
+    /// ordinary background fill and before the grip and items: a drop-down
+    /// menu's image margin.
+    /// </summary>
+    internal virtual void PaintLeadingMargin(PaintEventArgs e)
+    {
+    }
+
+    /// <summary>Something a subclass paints after everything else, on top: a status bar's sizing grip.</summary>
+    internal virtual void PaintTrailingDecoration(PaintEventArgs e)
+    {
     }
 
     protected virtual void OnPaintGrip(PaintEventArgs e)
@@ -513,7 +570,7 @@ public class ToolStrip : ScrollableControl
     {
         var padding = Padding;
 
-        if (Orientation == Orientation.Vertical)
+        if (StacksVertically)
         {
             var width = 0;
             var height = padding.Vertical + LeadingGripSpace();
@@ -552,7 +609,7 @@ public class ToolStrip : ScrollableControl
     /// <summary>Arranges every available item in one row (or column), the strip's own layout algorithm.</summary>
     internal void PerformItemLayout()
     {
-        if (Orientation == Orientation.Vertical) LayoutVertical();
+        if (StacksVertically) LayoutVertical();
         else LayoutHorizontal();
     }
 

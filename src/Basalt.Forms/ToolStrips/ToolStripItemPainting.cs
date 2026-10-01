@@ -15,7 +15,10 @@ internal static class ToolStripItemPainting
         var showText = (item.DisplayStyle & ToolStripItemDisplayStyle.Text) != 0 && !string.IsNullOrEmpty(item.Text);
         var showImage = (item.DisplayStyle & ToolStripItemDisplayStyle.Image) != 0 && item.ImageToDraw is not null;
 
+        // ContentRectangle is item-relative (it also serves layout, where that is what is wanted); painting runs on
+        // the strip's own untranslated Graphics, so it needs the item's absolute position added in.
         var content = item.ContentRectangle;
+        content.Offset(item.Bounds.Location);
         if (item.Pressed) content.Offset(1, 1);
 
         var imageSize = showImage ? item.ImageToDraw!.Size : Size.Empty;

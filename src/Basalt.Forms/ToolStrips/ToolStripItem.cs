@@ -735,6 +735,12 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
         Parent = parent;
         OnParentChanged(old, parent);
         OnOwnerChanged(EventArgs.Empty);
+        ParentChangedInternal();
+    }
+
+    /// <summary>After the item moved to another strip or left its strip: an item with a drop-down closes it.</summary>
+    internal virtual void ParentChangedInternal()
+    {
     }
 
     Rectangle IArrangedElement.Bounds => Bounds;

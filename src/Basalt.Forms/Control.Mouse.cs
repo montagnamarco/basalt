@@ -129,8 +129,43 @@ public partial class Control
     /// <summary>What the right button does when released: the control's context menu, when it has one.</summary>
     private void ShowContextMenu(Point location) => ContextMenuStripInternal?.ShowFromControl(this, location);
 
-    /// <summary>The context menu; the menu family attaches it once it exists.</summary>
+    /// <summary>The context menu right-click shows; the menu family implements it.</summary>
     internal IContextMenuSource? ContextMenuStripInternal { get; set; }
+
+    /// <summary>The menu shown when the user right-clicks the control. A menu that is disposed stops being the control's menu.</summary>
+    [DefaultValue(null)]
+    public virtual ContextMenuStrip? ContextMenuStrip
+    {
+        get => ContextMenuStripInternal as ContextMenuStrip;
+        set
+        {
+            var old = ContextMenuStrip;
+            if (ReferenceEquals(old, value)) return;
+
+            if (old is not null) old.Disposed -= OnContextMenuStripDisposed;
+            ContextMenuStripInternal = value;
+            if (value is not null) value.Disposed += OnContextMenuStripDisposed;
+
+            OnContextMenuStripChanged(EventArgs.Empty);
+        }
+    }
+
+    private void OnContextMenuStripDisposed(object? sender, EventArgs e) => ContextMenuStrip = null;
+
+    private void DetachContextMenuStripOnDispose()
+    {
+        if (ContextMenuStrip is { } menu) menu.Disposed -= OnContextMenuStripDisposed;
+    }
+
+    public event EventHandler? ContextMenuStripChanged
+    {
+        add => Events.AddHandler(s_contextMenuStripChangedEvent, value);
+        remove => Events.RemoveHandler(s_contextMenuStripChangedEvent, value);
+    }
+
+    private static readonly object s_contextMenuStripChangedEvent = new();
+
+    protected virtual void OnContextMenuStripChanged(EventArgs e) => ((EventHandler?)Events[s_contextMenuStripChangedEvent])?.Invoke(this, e);
 
     protected virtual void OnClick(EventArgs e) => ((EventHandler?)Events[s_clickEvent])?.Invoke(this, e);
 

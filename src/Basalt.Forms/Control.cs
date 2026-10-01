@@ -378,6 +378,9 @@ public partial class Control : Component, IWin32Window, IArrangedElement
 
     protected override void Dispose(bool disposing)
     {
+        // The menu outlives the control: it must not keep a handler bound to it.
+        if (disposing) DetachContextMenuStripOnDispose();
+
         if (GetState(States.Disposed)) return;
 
         if (disposing)

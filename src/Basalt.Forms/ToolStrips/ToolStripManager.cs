@@ -69,6 +69,50 @@ public static class ToolStripManager
         }
     }
 
+    /// <summary>
+    /// A shortcut key pressed anywhere in the form: the menu items of the
+    /// form's strips (and of their drop-down buttons) are matched, as Windows
+    /// Forms does for menu accelerators whatever control has the focus.
+    /// </summary>
+    internal static bool ProcessShortcut(Form form, Keys keyData)
+    {
+        if (keyData == Keys.None) return false;
+
+        List<ToolStrip> strips = [];
+        lock (s_stripsLock)
+        {
+            foreach (var reference in s_strips)
+            {
+                if (reference.TryGetTarget(out var strip) && strip is not ToolStripDropDown && !strip.IsDisposed) strips.Add(strip);
+            }
+        }
+
+        foreach (var strip in strips)
+        {
+            if (!strip.Enabled || !ReferenceEquals(strip.FindForm(), form)) continue;
+
+            foreach (ToolStripItem item in strip.Items)
+            {
+                if (TryShortcut(item, keyData)) return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryShortcut(ToolStripItem item, Keys keyData)
+    {
+        if (item is ToolStripMenuItem menuItem) return menuItem.TryInvokeShortcut(keyData);
+        if (item is not ToolStripDropDownItem { HasDropDown: true, Enabled: true } dropDownItem) return false;
+
+        foreach (ToolStripItem child in dropDownItem.DropDownItems)
+        {
+            if (TryShortcut(child, keyData)) return true;
+        }
+
+        return false;
+    }
+
     private static void OnRendererChanged()
     {
         List<ToolStrip> live = [];
