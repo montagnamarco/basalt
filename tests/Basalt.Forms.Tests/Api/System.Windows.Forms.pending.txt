@@ -104,9 +104,6 @@ I System.Windows.Forms.BindingSource : System.ComponentModel.ITypedList
 I System.Windows.Forms.BindingSource : System.Windows.Forms.ICurrencyManagerProvider
 I System.Windows.Forms.ColumnHeader : System.ICloneable
 I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.Generic.IComparer`1<System.Windows.Forms.ComboBox+ObjectCollection+Entry>
-I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.ICollection
-I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.IEnumerable
-I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.IList
 I System.Windows.Forms.Control : System.ComponentModel.ISynchronizeInvoke
 I System.Windows.Forms.Control : System.Windows.Forms.IDropTarget
 I System.Windows.Forms.DataGrid : System.ComponentModel.ISupportInitialize
@@ -330,43 +327,24 @@ M protected System.Windows.Forms.ComboBox::IsInputKey(System.Windows.Forms.Keys)
 M protected System.Windows.Forms.ComboBox::OnBackColorChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnDataSourceChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnDisplayMemberChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnDrawItem(System.Windows.Forms.DrawItemEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnDropDown(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnDropDownClosed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnDropDownStyleChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnForeColorChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnKeyDown(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnKeyPress(System.Windows.Forms.KeyPressEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnLostFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnMeasureItem(System.Windows.Forms.MeasureItemEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnMouseDown(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnMouseEnter(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnMouseLeave(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnParentBackColorChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnSelectedIndexChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnSelectedItemChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnSelectedValueChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnSelectionChangeCommitted(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnTextChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::OnTextUpdate(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::OnValidating(System.ComponentModel.CancelEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.ComboBox::ProcessKeyEventArgs(ref System.Windows.Forms.Message) -> System.Boolean virtual
-M protected System.Windows.Forms.ComboBox::RefreshItem(System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::RefreshItems() -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::SetItemCore(System.Int32, System.Object) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::SetItemsCore(System.Collections.IList) -> System.Void virtual
 M protected System.Windows.Forms.ComboBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.ComboBox::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ContainerControl::AdjustFormScrollbars(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ContainerControl::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ContainerControl::OnCreateControl() -> System.Void virtual
@@ -2376,46 +2354,11 @@ M public System.Windows.Forms.ColumnReorderedEventHandler::EndInvoke(System.IAsy
 M public System.Windows.Forms.ColumnReorderedEventHandler::Invoke(System.Object, System.Windows.Forms.ColumnReorderedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ComboBox+ChildAccessibleObject::.ctor(System.Windows.Forms.ComboBox, System.IntPtr)
 M public System.Windows.Forms.ComboBox+ChildAccessibleObject::get_Name() -> System.String virtual
-M public System.Windows.Forms.ComboBox+ObjectCollection::.ctor(System.Windows.Forms.ComboBox)
-M public System.Windows.Forms.ComboBox+ObjectCollection::Add(System.Object) -> System.Int32
-M public System.Windows.Forms.ComboBox+ObjectCollection::AddRange(System.Object[]) -> System.Void
-M public System.Windows.Forms.ComboBox+ObjectCollection::Clear() -> System.Void
-M public System.Windows.Forms.ComboBox+ObjectCollection::Contains(System.Object) -> System.Boolean
-M public System.Windows.Forms.ComboBox+ObjectCollection::CopyTo(System.Object[], System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox+ObjectCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.ComboBox+ObjectCollection::IndexOf(System.Object) -> System.Int32
-M public System.Windows.Forms.ComboBox+ObjectCollection::Insert(System.Int32, System.Object) -> System.Void
-M public System.Windows.Forms.ComboBox+ObjectCollection::Remove(System.Object) -> System.Void
-M public System.Windows.Forms.ComboBox+ObjectCollection::RemoveAt(System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox+ObjectCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.ComboBox+ObjectCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ComboBox+ObjectCollection::get_Item(System.Int32) -> System.Object virtual
-M public System.Windows.Forms.ComboBox+ObjectCollection::set_Item(System.Int32, System.Object) -> System.Void virtual
-M public System.Windows.Forms.ComboBox::.ctor()
-M public System.Windows.Forms.ComboBox::BeginUpdate() -> System.Void
-M public System.Windows.Forms.ComboBox::EndUpdate() -> System.Void
-M public System.Windows.Forms.ComboBox::FindString(System.String) -> System.Int32
-M public System.Windows.Forms.ComboBox::FindString(System.String, System.Int32) -> System.Int32
-M public System.Windows.Forms.ComboBox::FindStringExact(System.String) -> System.Int32
-M public System.Windows.Forms.ComboBox::FindStringExact(System.String, System.Int32) -> System.Int32
-M public System.Windows.Forms.ComboBox::GetItemHeight(System.Int32) -> System.Int32
-M public System.Windows.Forms.ComboBox::ResetText() -> System.Void virtual
-M public System.Windows.Forms.ComboBox::Select(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox::SelectAll() -> System.Void
-M public System.Windows.Forms.ComboBox::ToString() -> System.String virtual
 M public System.Windows.Forms.ComboBox::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::add_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_DropDown(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_DropDownClosed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_DropDownStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_MeasureItem(System.Windows.Forms.MeasureItemEventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_SelectionChangeCommitted(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::add_TextUpdate(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::get_AutoCompleteCustomSource() -> System.Windows.Forms.AutoCompleteStringCollection
 M public System.Windows.Forms.ComboBox::get_AutoCompleteMode() -> System.Windows.Forms.AutoCompleteMode
 M public System.Windows.Forms.ComboBox::get_AutoCompleteSource() -> System.Windows.Forms.AutoCompleteSource
@@ -2423,43 +2366,17 @@ M public System.Windows.Forms.ComboBox::get_BackColor() -> System.Drawing.Color 
 M public System.Windows.Forms.ComboBox::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.ComboBox::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
 M public System.Windows.Forms.ComboBox::get_DataSource() -> System.Object
-M public System.Windows.Forms.ComboBox::get_DrawMode() -> System.Windows.Forms.DrawMode
-M public System.Windows.Forms.ComboBox::get_DropDownHeight() -> System.Int32
-M public System.Windows.Forms.ComboBox::get_DropDownStyle() -> System.Windows.Forms.ComboBoxStyle
-M public System.Windows.Forms.ComboBox::get_DropDownWidth() -> System.Int32
-M public System.Windows.Forms.ComboBox::get_DroppedDown() -> System.Boolean
 M public System.Windows.Forms.ComboBox::get_FlatStyle() -> System.Windows.Forms.FlatStyle
 M public System.Windows.Forms.ComboBox::get_Focused() -> System.Boolean virtual
 M public System.Windows.Forms.ComboBox::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.ComboBox::get_IntegralHeight() -> System.Boolean
-M public System.Windows.Forms.ComboBox::get_ItemHeight() -> System.Int32
-M public System.Windows.Forms.ComboBox::get_Items() -> System.Windows.Forms.ComboBox+ObjectCollection
-M public System.Windows.Forms.ComboBox::get_MaxDropDownItems() -> System.Int32
-M public System.Windows.Forms.ComboBox::get_MaxLength() -> System.Int32
 M public System.Windows.Forms.ComboBox::get_MaximumSize() -> System.Drawing.Size virtual
 M public System.Windows.Forms.ComboBox::get_MinimumSize() -> System.Drawing.Size virtual
 M public System.Windows.Forms.ComboBox::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.ComboBox::get_PreferredHeight() -> System.Int32
-M public System.Windows.Forms.ComboBox::get_SelectedIndex() -> System.Int32 virtual
-M public System.Windows.Forms.ComboBox::get_SelectedItem() -> System.Object
-M public System.Windows.Forms.ComboBox::get_SelectedText() -> System.String
-M public System.Windows.Forms.ComboBox::get_SelectionLength() -> System.Int32
-M public System.Windows.Forms.ComboBox::get_SelectionStart() -> System.Int32
-M public System.Windows.Forms.ComboBox::get_Sorted() -> System.Boolean
-M public System.Windows.Forms.ComboBox::get_Text() -> System.String virtual
 M public System.Windows.Forms.ComboBox::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::remove_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_DrawItem(System.Windows.Forms.DrawItemEventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_DropDown(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_DropDownClosed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_DropDownStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_MeasureItem(System.Windows.Forms.MeasureItemEventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_SelectionChangeCommitted(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ComboBox::remove_TextUpdate(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ComboBox::set_AutoCompleteCustomSource(System.Windows.Forms.AutoCompleteStringCollection) -> System.Void
 M public System.Windows.Forms.ComboBox::set_AutoCompleteMode(System.Windows.Forms.AutoCompleteMode) -> System.Void
 M public System.Windows.Forms.ComboBox::set_AutoCompleteSource(System.Windows.Forms.AutoCompleteSource) -> System.Void
@@ -2467,27 +2384,11 @@ M public System.Windows.Forms.ComboBox::set_BackColor(System.Drawing.Color) -> S
 M public System.Windows.Forms.ComboBox::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.ComboBox::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
 M public System.Windows.Forms.ComboBox::set_DataSource(System.Object) -> System.Void
-M public System.Windows.Forms.ComboBox::set_DrawMode(System.Windows.Forms.DrawMode) -> System.Void
-M public System.Windows.Forms.ComboBox::set_DropDownHeight(System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox::set_DropDownStyle(System.Windows.Forms.ComboBoxStyle) -> System.Void
-M public System.Windows.Forms.ComboBox::set_DropDownWidth(System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox::set_DroppedDown(System.Boolean) -> System.Void
 M public System.Windows.Forms.ComboBox::set_FlatStyle(System.Windows.Forms.FlatStyle) -> System.Void
 M public System.Windows.Forms.ComboBox::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.ComboBox::set_IntegralHeight(System.Boolean) -> System.Void
-M public System.Windows.Forms.ComboBox::set_ItemHeight(System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox::set_MaxDropDownItems(System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox::set_MaxLength(System.Int32) -> System.Void
 M public System.Windows.Forms.ComboBox::set_MaximumSize(System.Drawing.Size) -> System.Void virtual
 M public System.Windows.Forms.ComboBox::set_MinimumSize(System.Drawing.Size) -> System.Void virtual
 M public System.Windows.Forms.ComboBox::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.ComboBox::set_SelectedIndex(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.ComboBox::set_SelectedItem(System.Object) -> System.Void
-M public System.Windows.Forms.ComboBox::set_SelectedText(System.String) -> System.Void
-M public System.Windows.Forms.ComboBox::set_SelectionLength(System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox::set_SelectionStart(System.Int32) -> System.Void
-M public System.Windows.Forms.ComboBox::set_Sorted(System.Boolean) -> System.Void
-M public System.Windows.Forms.ComboBox::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant::.ctor()
 M public System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService::ShowPropertyPage(System.String, System.Object, System.Int32, System.Guid, System.IntPtr) -> System.Void abstract
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::DropDownDone() -> System.Void abstract
@@ -8866,9 +8767,7 @@ T class System.Windows.Forms.ColorDialog : System.Windows.Forms.CommonDialog
 T class System.Windows.Forms.ColumnHeader : System.ComponentModel.Component
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ColumnReorderedEventArgs : System.ComponentModel.CancelEventArgs
-T class System.Windows.Forms.ComboBox : System.Windows.Forms.ListControl
 T class System.Windows.Forms.ComboBox+ChildAccessibleObject : System.Windows.Forms.AccessibleObject
-T class System.Windows.Forms.ComboBox+ObjectCollection
 T class System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant
 T class System.Windows.Forms.ContextMenu : System.Windows.Forms.Menu
 T class System.Windows.Forms.ContextMenuStrip : System.Windows.Forms.ToolStripDropDownMenu
