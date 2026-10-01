@@ -1,0 +1,138 @@
+using System.Drawing;
+using System.Drawing.Drawing2D;
+
+namespace System.Windows.Forms;
+
+public partial class TreeView
+{
+    /// <summary>Window white (or the control colour when disabled) unless a colour was set.</summary>
+    private Color EffectiveBackColor => Enabled ? BackColor : SystemColors.Control;
+
+    /// <summary>The native control's painting: the background, the lines, the glyphs and every visible row's label.</summary>
+    internal override void DefaultPaint(PaintEventArgs e)
+    {
+        var graphics = e.Graphics;
+
+        using (var background = new SolidBrush(EffectiveBackColor))
+        {
+            graphics.FillRectangle(background, ClientRectangle);
+        }
+
+        if (_nodes.Count == 0) return;
+
+        var rowTop = 0;
+        var client = ClientSize;
+
+        foreach (var node in VisibleRows())
+        {
+            if (rowTop >= client.Height) break;
+
+            PaintRow(graphics, node, rowTop);
+            rowTop += ItemHeight;
+        }
+    }
+
+    /// <summary>The nodes shown from TopNode downward, as many as fit (and one extra, partly clipped).</summary>
+    private IEnumerable<TreeNode> VisibleRows()
+    {
+        var topIndex = ExpandedOrderIndex(EffectiveTopNode()!);
+        if (topIndex < 0) yield break;
+
+        var rows = VisibleCount + 1;
+        var index = 0;
+        foreach (var node in EnumerateExpandedOrder())
+        {
+            if (index >= topIndex) yield return node;
+            index++;
+            if (index - topIndex >= rows) yield break;
+        }
+    }
+
+    private void PaintRow(Graphics graphics, TreeNode node, int rowTop)
+    {
+        var layout = RowLayout(node, rowTop);
+
+        if (ShowLines) PaintLines(graphics, node, layout.Row, layout.PlusMinus);
+        if (ShowPlusMinus && node.Nodes.Count > 0 && (node.Level > 0 || ShowRootLines)) PaintPlusMinus(graphics, layout.PlusMinus, node.IsExpanded);
+
+        if (!layout.CheckBox.IsEmpty) ControlPaint.DrawCheckBox(graphics, layout.CheckBox, node.Checked ? ButtonState.Checked : ButtonState.Normal);
+
+        if (!layout.Image.IsEmpty && _imageList is { } images)
+        {
+            var index = EffectiveImageIndex(node);
+            if (index >= 0 && index < images.Images.Count) images.Draw(graphics, layout.Image.Location, index);
+        }
+
+        PaintLabel(graphics, node, layout.Row, layout.Label);
+    }
+
+    /// <summary>The node's own picture when it has one, else the tree view's default.</summary>
+    private int EffectiveImageIndex(TreeNode node)
+    {
+        if (node.IsSelected && node.SelectedImageIndex >= 0) return node.SelectedImageIndex;
+        if (node.ImageIndex >= 0) return node.ImageIndex;
+        if (node.IsSelected && _selectedImageIndex >= 0) return _selectedImageIndex;
+
+        return _imageIndex;
+    }
+
+    /// <summary>A dotted vertical line down the node's own level, and a short horizontal stub into its glyph.</summary>
+    private void PaintLines(Graphics graphics, TreeNode node, Rectangle row, Rectangle plusMinus)
+    {
+        if (node.Level == 0 && !ShowRootLines) return;
+
+        using var pen = new Pen(_lineColor) { DashStyle = DashStyleOf() };
+
+        var centerY = row.Top + row.Height / 2;
+        var centerX = plusMinus.Left + plusMinus.Width / 2;
+
+        graphics.DrawLine(pen, centerX, row.Top, centerX, row.Bottom);
+        graphics.DrawLine(pen, centerX, centerY, plusMinus.Left - 1, centerY);
+    }
+
+    private static DashStyle DashStyleOf() => DashStyle.Dot;
+
+    private void PaintPlusMinus(Graphics graphics, Rectangle bounds, bool expanded)
+    {
+        using var border = new Pen(SystemColors.ControlDark);
+        using var fill = new SolidBrush(SystemColors.Window);
+        using var sign = new Pen(SystemColors.WindowText);
+
+        graphics.FillRectangle(fill, bounds);
+        graphics.DrawRectangle(border, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
+
+        var centerY = bounds.Top + bounds.Height / 2;
+        var centerX = bounds.Left + bounds.Width / 2;
+        graphics.DrawLine(sign, bounds.Left + 2, centerY, bounds.Right - 3, centerY);
+        if (!expanded) graphics.DrawLine(sign, centerX, bounds.Top + 2, centerX, bounds.Bottom - 3);
+    }
+
+    private void PaintLabel(Graphics graphics, TreeNode node, Rectangle row, Rectangle label)
+    {
+        var selected = node.IsSelected;
+        var showHighlight = selected && (Focused || !_hideSelection);
+
+        var backColor = showHighlight ? (Focused ? SystemColors.Highlight : SystemColors.Control) : EffectiveBackColor;
+        var foreColor = showHighlight
+            ? (Focused ? SystemColors.HighlightText : SystemColors.WindowText)
+            : (node.ForeColor.IsEmpty ? ForeColor : node.ForeColor);
+
+        var highlight = _fullRowSelect ? row : label;
+
+        if (showHighlight)
+        {
+            using var highlightBrush = new SolidBrush(backColor);
+            graphics.FillRectangle(highlightBrush, highlight);
+        }
+        else if (!node.BackColor.IsEmpty)
+        {
+            using var nodeBrush = new SolidBrush(node.BackColor);
+            graphics.FillRectangle(nodeBrush, label);
+        }
+
+        var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.NoPadding;
+        TextRenderer.DrawText(graphics, node.Text, Font, label, foreColor, flags);
+
+        if (selected && Focused) ControlPaint.DrawFocusRectangle(graphics, highlight);
+    }
+}

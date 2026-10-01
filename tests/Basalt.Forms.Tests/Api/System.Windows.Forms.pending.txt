@@ -206,11 +206,7 @@ I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.IEnu
 I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.IList
 I System.Windows.Forms.ToolStripItem : System.Windows.Forms.IDropTarget
 I System.Windows.Forms.ToolStripStatusLabel : System.Windows.Forms.Automation.IAutomationLiveRegion
-I System.Windows.Forms.TreeNode : System.ICloneable
 I System.Windows.Forms.TreeNode : System.Runtime.Serialization.ISerializable
-I System.Windows.Forms.TreeNodeCollection : System.Collections.ICollection
-I System.Windows.Forms.TreeNodeCollection : System.Collections.IEnumerable
-I System.Windows.Forms.TreeNodeCollection : System.Collections.IList
 I System.Windows.Forms.WebBrowserSiteBase : System.IDisposable
 I System.Windows.Forms.WindowsFormsSynchronizationContext : System.IDisposable
 M protected System.Resources.ResXResourceReader::Dispose(System.Boolean) -> System.Void virtual
@@ -1861,34 +1857,18 @@ M protected System.Windows.Forms.TreeView::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.TreeView::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::GetItemRenderStyles(System.Windows.Forms.TreeNode, System.Int32) -> System.Windows.Forms.OwnerDrawPropertyBag
 M protected System.Windows.Forms.TreeView::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.TreeView::OnAfterCheck(System.Windows.Forms.TreeViewEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnAfterCollapse(System.Windows.Forms.TreeViewEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnAfterExpand(System.Windows.Forms.TreeViewEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnAfterLabelEdit(System.Windows.Forms.NodeLabelEditEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnAfterSelect(System.Windows.Forms.TreeViewEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnBeforeCheck(System.Windows.Forms.TreeViewCancelEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnBeforeCollapse(System.Windows.Forms.TreeViewCancelEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnBeforeExpand(System.Windows.Forms.TreeViewCancelEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnBeforeLabelEdit(System.Windows.Forms.NodeLabelEditEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnBeforeSelect(System.Windows.Forms.TreeViewCancelEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnDrawNode(System.Windows.Forms.DrawTreeNodeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnItemDrag(System.Windows.Forms.ItemDragEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnKeyDown(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnKeyPress(System.Windows.Forms.KeyPressEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnLostFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnMouseHover(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnMouseLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnNodeMouseClick(System.Windows.Forms.TreeNodeMouseClickEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnNodeMouseDoubleClick(System.Windows.Forms.TreeNodeMouseClickEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnNodeMouseHover(System.Windows.Forms.TreeNodeMouseHoverEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.TreeView::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.TreeView::get_DoubleBuffered() -> System.Boolean virtual
 M protected System.Windows.Forms.TreeView::set_DoubleBuffered(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.TreeViewImageIndexConverter::get_IncludeNoneAsStandardValue() -> System.Boolean virtual
@@ -9088,258 +9068,81 @@ M public System.Windows.Forms.TrackBar::set_ImeMode(System.Windows.Forms.ImeMode
 M public System.Windows.Forms.TrackBar::set_Padding(System.Windows.Forms.Padding) -> System.Void
 M public System.Windows.Forms.TrackBar::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.TrackBar::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TreeNode::.ctor()
-M public System.Windows.Forms.TreeNode::.ctor(System.String)
-M public System.Windows.Forms.TreeNode::.ctor(System.String, System.Int32, System.Int32)
-M public System.Windows.Forms.TreeNode::.ctor(System.String, System.Int32, System.Int32, System.Windows.Forms.TreeNode[])
-M public System.Windows.Forms.TreeNode::.ctor(System.String, System.Windows.Forms.TreeNode[])
 M public System.Windows.Forms.TreeNode::BeginEdit() -> System.Void
-M public System.Windows.Forms.TreeNode::Clone() -> System.Object virtual
-M public System.Windows.Forms.TreeNode::Collapse() -> System.Void
-M public System.Windows.Forms.TreeNode::Collapse(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeNode::EndEdit(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeNode::EnsureVisible() -> System.Void
-M public System.Windows.Forms.TreeNode::Expand() -> System.Void
-M public System.Windows.Forms.TreeNode::ExpandAll() -> System.Void
 M public System.Windows.Forms.TreeNode::FromHandle(System.Windows.Forms.TreeView, System.IntPtr) -> System.Windows.Forms.TreeNode static
-M public System.Windows.Forms.TreeNode::GetNodeCount(System.Boolean) -> System.Int32
-M public System.Windows.Forms.TreeNode::Remove() -> System.Void
-M public System.Windows.Forms.TreeNode::ToString() -> System.String virtual
-M public System.Windows.Forms.TreeNode::Toggle() -> System.Void
-M public System.Windows.Forms.TreeNode::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.TreeNode::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.TreeNode::get_Checked() -> System.Boolean
 M public System.Windows.Forms.TreeNode::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.TreeNode::get_FirstNode() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNode::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.TreeNode::get_FullPath() -> System.String
 M public System.Windows.Forms.TreeNode::get_Handle() -> System.IntPtr
-M public System.Windows.Forms.TreeNode::get_ImageIndex() -> System.Int32
 M public System.Windows.Forms.TreeNode::get_ImageKey() -> System.String
-M public System.Windows.Forms.TreeNode::get_Index() -> System.Int32
 M public System.Windows.Forms.TreeNode::get_IsEditing() -> System.Boolean
-M public System.Windows.Forms.TreeNode::get_IsExpanded() -> System.Boolean
-M public System.Windows.Forms.TreeNode::get_IsSelected() -> System.Boolean
-M public System.Windows.Forms.TreeNode::get_IsVisible() -> System.Boolean
-M public System.Windows.Forms.TreeNode::get_LastNode() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNode::get_Level() -> System.Int32
-M public System.Windows.Forms.TreeNode::get_Name() -> System.String
-M public System.Windows.Forms.TreeNode::get_NextNode() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNode::get_NextVisibleNode() -> System.Windows.Forms.TreeNode
 M public System.Windows.Forms.TreeNode::get_NodeFont() -> System.Drawing.Font
-M public System.Windows.Forms.TreeNode::get_Nodes() -> System.Windows.Forms.TreeNodeCollection
-M public System.Windows.Forms.TreeNode::get_Parent() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNode::get_PrevNode() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNode::get_PrevVisibleNode() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNode::get_SelectedImageIndex() -> System.Int32
 M public System.Windows.Forms.TreeNode::get_SelectedImageKey() -> System.String
 M public System.Windows.Forms.TreeNode::get_StateImageIndex() -> System.Int32
 M public System.Windows.Forms.TreeNode::get_StateImageKey() -> System.String
-M public System.Windows.Forms.TreeNode::get_Tag() -> System.Object
-M public System.Windows.Forms.TreeNode::get_Text() -> System.String
 M public System.Windows.Forms.TreeNode::get_ToolTipText() -> System.String
-M public System.Windows.Forms.TreeNode::get_TreeView() -> System.Windows.Forms.TreeView
-M public System.Windows.Forms.TreeNode::set_BackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.TreeNode::set_Checked(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeNode::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.TreeNode::set_ForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.TreeNode::set_ImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.TreeNode::set_ImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeNode::set_Name(System.String) -> System.Void
 M public System.Windows.Forms.TreeNode::set_NodeFont(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.TreeNode::set_SelectedImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.TreeNode::set_SelectedImageKey(System.String) -> System.Void
 M public System.Windows.Forms.TreeNode::set_StateImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.TreeNode::set_StateImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeNode::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.TreeNode::set_Text(System.String) -> System.Void
 M public System.Windows.Forms.TreeNode::set_ToolTipText(System.String) -> System.Void
-M public System.Windows.Forms.TreeNodeCollection::Add(System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Add(System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Add(System.String, System.String, System.Int32) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Add(System.String, System.String, System.Int32, System.Int32) -> System.Windows.Forms.TreeNode virtual
 M public System.Windows.Forms.TreeNodeCollection::Add(System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
 M public System.Windows.Forms.TreeNodeCollection::Add(System.String, System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Add(System.Windows.Forms.TreeNode) -> System.Int32 virtual
-M public System.Windows.Forms.TreeNodeCollection::AddRange(System.Windows.Forms.TreeNode[]) -> System.Void virtual
-M public System.Windows.Forms.TreeNodeCollection::Clear() -> System.Void virtual
-M public System.Windows.Forms.TreeNodeCollection::Contains(System.Windows.Forms.TreeNode) -> System.Boolean
-M public System.Windows.Forms.TreeNodeCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.TreeNodeCollection::CopyTo(System.Array, System.Int32) -> System.Void
-M public System.Windows.Forms.TreeNodeCollection::Find(System.String, System.Boolean) -> System.Windows.Forms.TreeNode[]
-M public System.Windows.Forms.TreeNodeCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.TreeNodeCollection::IndexOf(System.Windows.Forms.TreeNode) -> System.Int32
-M public System.Windows.Forms.TreeNodeCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String, System.String, System.Int32) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String, System.String, System.Int32, System.Int32) -> System.Windows.Forms.TreeNode virtual
 M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
 M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String, System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.Windows.Forms.TreeNode) -> System.Void virtual
-M public System.Windows.Forms.TreeNodeCollection::Remove(System.Windows.Forms.TreeNode) -> System.Void
-M public System.Windows.Forms.TreeNodeCollection::RemoveAt(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.TreeNodeCollection::RemoveByKey(System.String) -> System.Void virtual
-M public System.Windows.Forms.TreeNodeCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.TreeNodeCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.TreeNodeCollection::get_Item(System.Int32) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::get_Item(System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::set_Item(System.Int32, System.Windows.Forms.TreeNode) -> System.Void virtual
-M public System.Windows.Forms.TreeNodeConverter::.ctor()
-M public System.Windows.Forms.TreeNodeConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.TreeNodeConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.TreeNodeMouseClickEventArgs::.ctor(System.Windows.Forms.TreeNode, System.Windows.Forms.MouseButtons, System.Int32, System.Int32, System.Int32)
-M public System.Windows.Forms.TreeNodeMouseClickEventArgs::get_Node() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNodeMouseClickEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.TreeNodeMouseClickEventHandler::BeginInvoke(System.Object, System.Windows.Forms.TreeNodeMouseClickEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.TreeNodeMouseClickEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.TreeNodeMouseClickEventHandler::Invoke(System.Object, System.Windows.Forms.TreeNodeMouseClickEventArgs) -> System.Void virtual
 M public System.Windows.Forms.TreeNodeMouseHoverEventArgs::.ctor(System.Windows.Forms.TreeNode)
 M public System.Windows.Forms.TreeNodeMouseHoverEventArgs::get_Node() -> System.Windows.Forms.TreeNode
 M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::.ctor(System.Object, System.IntPtr)
 M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::BeginInvoke(System.Object, System.Windows.Forms.TreeNodeMouseHoverEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::Invoke(System.Object, System.Windows.Forms.TreeNodeMouseHoverEventArgs) -> System.Void virtual
-M public System.Windows.Forms.TreeView::.ctor()
-M public System.Windows.Forms.TreeView::BeginUpdate() -> System.Void
-M public System.Windows.Forms.TreeView::CollapseAll() -> System.Void
-M public System.Windows.Forms.TreeView::EndUpdate() -> System.Void
-M public System.Windows.Forms.TreeView::ExpandAll() -> System.Void
-M public System.Windows.Forms.TreeView::GetNodeAt(System.Drawing.Point) -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeView::GetNodeAt(System.Int32, System.Int32) -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeView::GetNodeCount(System.Boolean) -> System.Int32
-M public System.Windows.Forms.TreeView::HitTest(System.Drawing.Point) -> System.Windows.Forms.TreeViewHitTestInfo
-M public System.Windows.Forms.TreeView::HitTest(System.Int32, System.Int32) -> System.Windows.Forms.TreeViewHitTestInfo
-M public System.Windows.Forms.TreeView::Sort() -> System.Void
-M public System.Windows.Forms.TreeView::ToString() -> System.String virtual
-M public System.Windows.Forms.TreeView::add_AfterCheck(System.Windows.Forms.TreeViewEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_AfterCollapse(System.Windows.Forms.TreeViewEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_AfterExpand(System.Windows.Forms.TreeViewEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_AfterLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_AfterSelect(System.Windows.Forms.TreeViewEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_BeforeCheck(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_BeforeCollapse(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_BeforeExpand(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_BeforeLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_BeforeSelect(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_DrawNode(System.Windows.Forms.DrawTreeNodeEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_NodeMouseClick(System.Windows.Forms.TreeNodeMouseClickEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_NodeMouseDoubleClick(System.Windows.Forms.TreeNodeMouseClickEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_NodeMouseHover(System.Windows.Forms.TreeNodeMouseHoverEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.TreeView::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.TreeView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.TreeView::get_BorderStyle() -> System.Windows.Forms.BorderStyle
-M public System.Windows.Forms.TreeView::get_CheckBoxes() -> System.Boolean
 M public System.Windows.Forms.TreeView::get_DrawMode() -> System.Windows.Forms.TreeViewDrawMode
-M public System.Windows.Forms.TreeView::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.TreeView::get_FullRowSelect() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_HideSelection() -> System.Boolean
 M public System.Windows.Forms.TreeView::get_HotTracking() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_ImageIndex() -> System.Int32
 M public System.Windows.Forms.TreeView::get_ImageKey() -> System.String
-M public System.Windows.Forms.TreeView::get_ImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.TreeView::get_Indent() -> System.Int32
-M public System.Windows.Forms.TreeView::get_ItemHeight() -> System.Int32
 M public System.Windows.Forms.TreeView::get_LabelEdit() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_LineColor() -> System.Drawing.Color
-M public System.Windows.Forms.TreeView::get_Nodes() -> System.Windows.Forms.TreeNodeCollection
 M public System.Windows.Forms.TreeView::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.TreeView::get_PathSeparator() -> System.String
 M public System.Windows.Forms.TreeView::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.TreeView::get_Scrollable() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_SelectedImageIndex() -> System.Int32
 M public System.Windows.Forms.TreeView::get_SelectedImageKey() -> System.String
-M public System.Windows.Forms.TreeView::get_SelectedNode() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeView::get_ShowLines() -> System.Boolean
 M public System.Windows.Forms.TreeView::get_ShowNodeToolTips() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_ShowPlusMinus() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_ShowRootLines() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_Sorted() -> System.Boolean
 M public System.Windows.Forms.TreeView::get_StateImageList() -> System.Windows.Forms.ImageList
 M public System.Windows.Forms.TreeView::get_Text() -> System.String virtual
-M public System.Windows.Forms.TreeView::get_TopNode() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeView::get_TreeViewNodeSorter() -> System.Collections.IComparer
-M public System.Windows.Forms.TreeView::get_VisibleCount() -> System.Int32
-M public System.Windows.Forms.TreeView::remove_AfterCheck(System.Windows.Forms.TreeViewEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_AfterCollapse(System.Windows.Forms.TreeViewEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_AfterExpand(System.Windows.Forms.TreeViewEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_AfterLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_AfterSelect(System.Windows.Forms.TreeViewEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_BeforeCheck(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_BeforeCollapse(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_BeforeExpand(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_BeforeLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_BeforeSelect(System.Windows.Forms.TreeViewCancelEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_DrawNode(System.Windows.Forms.DrawTreeNodeEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_NodeMouseClick(System.Windows.Forms.TreeNodeMouseClickEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_NodeMouseDoubleClick(System.Windows.Forms.TreeNodeMouseClickEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_NodeMouseHover(System.Windows.Forms.TreeNodeMouseHoverEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.TreeView::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.TreeView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
-M public System.Windows.Forms.TreeView::set_CheckBoxes(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeView::set_DrawMode(System.Windows.Forms.TreeViewDrawMode) -> System.Void
-M public System.Windows.Forms.TreeView::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_FullRowSelect(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_HideSelection(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeView::set_HotTracking(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_ImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.TreeView::set_ImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeView::set_ImageList(System.Windows.Forms.ImageList) -> System.Void
-M public System.Windows.Forms.TreeView::set_Indent(System.Int32) -> System.Void
-M public System.Windows.Forms.TreeView::set_ItemHeight(System.Int32) -> System.Void
 M public System.Windows.Forms.TreeView::set_LabelEdit(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_LineColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.TreeView::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.TreeView::set_PathSeparator(System.String) -> System.Void
 M public System.Windows.Forms.TreeView::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_Scrollable(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_SelectedImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.TreeView::set_SelectedImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeView::set_SelectedNode(System.Windows.Forms.TreeNode) -> System.Void
-M public System.Windows.Forms.TreeView::set_ShowLines(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeView::set_ShowNodeToolTips(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_ShowPlusMinus(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_ShowRootLines(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_Sorted(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeView::set_StateImageList(System.Windows.Forms.ImageList) -> System.Void
 M public System.Windows.Forms.TreeView::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_TopNode(System.Windows.Forms.TreeNode) -> System.Void
-M public System.Windows.Forms.TreeView::set_TreeViewNodeSorter(System.Collections.IComparer) -> System.Void
-M public System.Windows.Forms.TreeViewCancelEventArgs::.ctor(System.Windows.Forms.TreeNode, System.Boolean, System.Windows.Forms.TreeViewAction)
-M public System.Windows.Forms.TreeViewCancelEventArgs::get_Action() -> System.Windows.Forms.TreeViewAction
-M public System.Windows.Forms.TreeViewCancelEventArgs::get_Node() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeViewCancelEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.TreeViewCancelEventHandler::BeginInvoke(System.Object, System.Windows.Forms.TreeViewCancelEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.TreeViewCancelEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.TreeViewCancelEventHandler::Invoke(System.Object, System.Windows.Forms.TreeViewCancelEventArgs) -> System.Void virtual
-M public System.Windows.Forms.TreeViewEventArgs::.ctor(System.Windows.Forms.TreeNode)
-M public System.Windows.Forms.TreeViewEventArgs::.ctor(System.Windows.Forms.TreeNode, System.Windows.Forms.TreeViewAction)
-M public System.Windows.Forms.TreeViewEventArgs::get_Action() -> System.Windows.Forms.TreeViewAction
-M public System.Windows.Forms.TreeViewEventArgs::get_Node() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeViewEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.TreeViewEventHandler::BeginInvoke(System.Object, System.Windows.Forms.TreeViewEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.TreeViewEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.TreeViewEventHandler::Invoke(System.Object, System.Windows.Forms.TreeViewEventArgs) -> System.Void virtual
-M public System.Windows.Forms.TreeViewHitTestInfo::.ctor(System.Windows.Forms.TreeNode, System.Windows.Forms.TreeViewHitTestLocations)
-M public System.Windows.Forms.TreeViewHitTestInfo::get_Location() -> System.Windows.Forms.TreeViewHitTestLocations
-M public System.Windows.Forms.TreeViewHitTestInfo::get_Node() -> System.Windows.Forms.TreeNode
 M public System.Windows.Forms.TreeViewImageIndexConverter::.ctor()
 M public System.Windows.Forms.TreeViewImageIndexConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
 M public System.Windows.Forms.TreeViewImageIndexConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
@@ -9877,15 +9680,7 @@ T class System.Windows.Forms.ToolStripSplitButton+ToolStripSplitButtonAccessible
 T class System.Windows.Forms.ToolStripStatusLabel : System.Windows.Forms.ToolStripLabel
 T class System.Windows.Forms.ToolStripSystemRenderer : System.Windows.Forms.ToolStripRenderer
 T class System.Windows.Forms.ToolStripTextBox : System.Windows.Forms.ToolStripControlHost
-T class System.Windows.Forms.TreeNode : System.MarshalByRefObject
-T class System.Windows.Forms.TreeNodeCollection
-T class System.Windows.Forms.TreeNodeConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.TreeNodeMouseClickEventArgs : System.Windows.Forms.MouseEventArgs
 T class System.Windows.Forms.TreeNodeMouseHoverEventArgs : System.EventArgs
-T class System.Windows.Forms.TreeView : System.Windows.Forms.Control
-T class System.Windows.Forms.TreeViewCancelEventArgs : System.ComponentModel.CancelEventArgs
-T class System.Windows.Forms.TreeViewEventArgs : System.EventArgs
-T class System.Windows.Forms.TreeViewHitTestInfo
 T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.TreeViewImageKeyConverter : System.Windows.Forms.ImageKeyConverter
 T class System.Windows.Forms.WebBrowser : System.Windows.Forms.WebBrowserBase
@@ -9960,10 +9755,7 @@ T delegate System.Windows.Forms.ToolStripItemTextRenderEventHandler
 T delegate System.Windows.Forms.ToolStripPanelRenderEventHandler
 T delegate System.Windows.Forms.ToolStripRenderEventHandler
 T delegate System.Windows.Forms.ToolStripSeparatorRenderEventHandler
-T delegate System.Windows.Forms.TreeNodeMouseClickEventHandler
 T delegate System.Windows.Forms.TreeNodeMouseHoverEventHandler
-T delegate System.Windows.Forms.TreeViewCancelEventHandler
-T delegate System.Windows.Forms.TreeViewEventHandler
 T enum System.Windows.Forms.AxHost+ActiveXInvokeKind : System.Int32
 T enum System.Windows.Forms.DataGrid+HitTestType : System.Int32
 T interface System.Drawing.Design.IPropertyValueUIService
