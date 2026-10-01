@@ -450,16 +450,27 @@ public abstract partial class TextBoxBase : Control
     {
         ArgumentOutOfRangeException.ThrowIfNegative(lineNumber);
 
+        return FirstCharIndexFromLineCore(lineNumber);
+    }
+
+    public int GetFirstCharIndexOfCurrentLine() => FirstCharIndexOfCurrentLineCore(_editor.Caret);
+
+    // Not virtual in WinForms, where the native control answers EM_LINEINDEX; a box with its own
+    // layout (RichTextBox's formatted lines) answers from that layout through these.
+
+    internal virtual int FirstCharIndexFromLineCore(int lineNumber)
+    {
         EnsureView();
 
         return lineNumber < _view.Lines.Count ? _view.Lines[lineNumber].Start : -1;
     }
 
-    public int GetFirstCharIndexOfCurrentLine()
+    /// <summary>The start of the caret's line: the caret, not SelectionStart, which is the other end of a forward selection.</summary>
+    internal virtual int FirstCharIndexOfCurrentLineCore(int caret)
     {
         EnsureView();
 
-        return _view.Lines.Count == 0 ? 0 : _view.Lines[_view.LineOf(_editor.Caret)].Start;
+        return _view.Lines.Count == 0 ? 0 : _view.Lines[_view.LineOf(caret)].Start;
     }
 
     /// <summary>Whether the keys move around the text, which a text box wants and a dialog does not get.</summary>
@@ -654,6 +665,12 @@ public abstract partial class TextBoxBase : Control
     {
         ResetCaretBlink();
         ScrollToCaret();
+        SelectionChangedInternal();
+    }
+
+    /// <summary>After any change of selection or caret, from code or the user: RichTextBox raises SelectionChanged here.</summary>
+    internal virtual void SelectionChangedInternal()
+    {
     }
 
     /// <summary>The edit control takes the focus and places the caret before OnMouseDown runs.</summary>

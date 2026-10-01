@@ -1228,21 +1228,11 @@ M protected System.Windows.Forms.RadioButton::get_CreateParams() -> System.Windo
 M protected System.Windows.Forms.RichTextBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.RichTextBox::CreateRichEditOleCallback() -> System.Object virtual
 M protected System.Windows.Forms.RichTextBox::OnBackColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnContentsResized(System.Windows.Forms.ContentsResizedEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.RichTextBox::OnGotFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnHScroll(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.RichTextBox::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnImeChange(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnLinkClicked(System.Windows.Forms.LinkClickedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnProtected(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.RichTextBox::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnSelectionChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::OnVScroll(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.RichTextBox::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.RichTextBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.RichTextBox::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ScrollBar::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ScrollBar::GetScaledBounds(System.Drawing.Rectangle, System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.ScrollBar::OnHandleCreated(System.EventArgs) -> System.Void virtual
@@ -5905,130 +5895,35 @@ M public System.Windows.Forms.RetrieveVirtualItemEventHandler::.ctor(System.Obje
 M public System.Windows.Forms.RetrieveVirtualItemEventHandler::BeginInvoke(System.Object, System.Windows.Forms.RetrieveVirtualItemEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.RetrieveVirtualItemEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.RetrieveVirtualItemEventHandler::Invoke(System.Object, System.Windows.Forms.RetrieveVirtualItemEventArgs) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::.ctor()
 M public System.Windows.Forms.RichTextBox::CanPaste(System.Windows.Forms.DataFormats+Format) -> System.Boolean
 M public System.Windows.Forms.RichTextBox::DrawToBitmap(System.Drawing.Bitmap, System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.RichTextBox::Find(System.Char[]) -> System.Int32
-M public System.Windows.Forms.RichTextBox::Find(System.Char[], System.Int32) -> System.Int32
-M public System.Windows.Forms.RichTextBox::Find(System.Char[], System.Int32, System.Int32) -> System.Int32
-M public System.Windows.Forms.RichTextBox::Find(System.String) -> System.Int32
-M public System.Windows.Forms.RichTextBox::Find(System.String, System.Int32, System.Int32, System.Windows.Forms.RichTextBoxFinds) -> System.Int32
-M public System.Windows.Forms.RichTextBox::Find(System.String, System.Int32, System.Windows.Forms.RichTextBoxFinds) -> System.Int32
-M public System.Windows.Forms.RichTextBox::Find(System.String, System.Windows.Forms.RichTextBoxFinds) -> System.Int32
-M public System.Windows.Forms.RichTextBox::GetCharIndexFromPosition(System.Drawing.Point) -> System.Int32 virtual
-M public System.Windows.Forms.RichTextBox::GetLineFromCharIndex(System.Int32) -> System.Int32 virtual
-M public System.Windows.Forms.RichTextBox::GetPositionFromCharIndex(System.Int32) -> System.Drawing.Point virtual
-M public System.Windows.Forms.RichTextBox::LoadFile(System.IO.Stream, System.Windows.Forms.RichTextBoxStreamType) -> System.Void
-M public System.Windows.Forms.RichTextBox::LoadFile(System.String) -> System.Void
-M public System.Windows.Forms.RichTextBox::LoadFile(System.String, System.Windows.Forms.RichTextBoxStreamType) -> System.Void
 M public System.Windows.Forms.RichTextBox::Paste(System.Windows.Forms.DataFormats+Format) -> System.Void
-M public System.Windows.Forms.RichTextBox::Redo() -> System.Void
-M public System.Windows.Forms.RichTextBox::SaveFile(System.IO.Stream, System.Windows.Forms.RichTextBoxStreamType) -> System.Void
-M public System.Windows.Forms.RichTextBox::SaveFile(System.String) -> System.Void
-M public System.Windows.Forms.RichTextBox::SaveFile(System.String, System.Windows.Forms.RichTextBoxStreamType) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::add_ContentsResized(System.Windows.Forms.ContentsResizedEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_DragDrop(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_DragEnter(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_DragLeave(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::add_HScroll(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::add_ImeChange(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::add_LinkClicked(System.Windows.Forms.LinkClickedEventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::add_Protected(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::add_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::add_SelectionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::add_VScroll(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::get_AllowDrop() -> System.Boolean virtual
 M public System.Windows.Forms.RichTextBox::get_AutoSize() -> System.Boolean virtual
-M public System.Windows.Forms.RichTextBox::get_AutoWordSelection() -> System.Boolean
-M public System.Windows.Forms.RichTextBox::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.RichTextBox::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.RichTextBox::get_BulletIndent() -> System.Int32
-M public System.Windows.Forms.RichTextBox::get_CanRedo() -> System.Boolean
-M public System.Windows.Forms.RichTextBox::get_DetectUrls() -> System.Boolean
-M public System.Windows.Forms.RichTextBox::get_EnableAutoDragDrop() -> System.Boolean
-M public System.Windows.Forms.RichTextBox::get_Font() -> System.Drawing.Font virtual
-M public System.Windows.Forms.RichTextBox::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.RichTextBox::get_LanguageOption() -> System.Windows.Forms.RichTextBoxLanguageOptions
 M public System.Windows.Forms.RichTextBox::get_MaxLength() -> System.Int32 virtual
 M public System.Windows.Forms.RichTextBox::get_Multiline() -> System.Boolean virtual
-M public System.Windows.Forms.RichTextBox::get_RedoActionName() -> System.String
-M public System.Windows.Forms.RichTextBox::get_RichTextShortcutsEnabled() -> System.Boolean
-M public System.Windows.Forms.RichTextBox::get_RightMargin() -> System.Int32
-M public System.Windows.Forms.RichTextBox::get_Rtf() -> System.String
-M public System.Windows.Forms.RichTextBox::get_ScrollBars() -> System.Windows.Forms.RichTextBoxScrollBars
-M public System.Windows.Forms.RichTextBox::get_SelectedRtf() -> System.String
-M public System.Windows.Forms.RichTextBox::get_SelectedText() -> System.String virtual
-M public System.Windows.Forms.RichTextBox::get_SelectionAlignment() -> System.Windows.Forms.HorizontalAlignment
-M public System.Windows.Forms.RichTextBox::get_SelectionBackColor() -> System.Drawing.Color
-M public System.Windows.Forms.RichTextBox::get_SelectionBullet() -> System.Boolean
-M public System.Windows.Forms.RichTextBox::get_SelectionCharOffset() -> System.Int32
-M public System.Windows.Forms.RichTextBox::get_SelectionColor() -> System.Drawing.Color
-M public System.Windows.Forms.RichTextBox::get_SelectionFont() -> System.Drawing.Font
-M public System.Windows.Forms.RichTextBox::get_SelectionHangingIndent() -> System.Int32
-M public System.Windows.Forms.RichTextBox::get_SelectionIndent() -> System.Int32
-M public System.Windows.Forms.RichTextBox::get_SelectionLength() -> System.Int32 virtual
-M public System.Windows.Forms.RichTextBox::get_SelectionProtected() -> System.Boolean
-M public System.Windows.Forms.RichTextBox::get_SelectionRightIndent() -> System.Int32
-M public System.Windows.Forms.RichTextBox::get_SelectionTabs() -> System.Int32[]
-M public System.Windows.Forms.RichTextBox::get_SelectionType() -> System.Windows.Forms.RichTextBoxSelectionTypes
-M public System.Windows.Forms.RichTextBox::get_ShowSelectionMargin() -> System.Boolean
 M public System.Windows.Forms.RichTextBox::get_Text() -> System.String virtual
-M public System.Windows.Forms.RichTextBox::get_TextLength() -> System.Int32 virtual
-M public System.Windows.Forms.RichTextBox::get_UndoActionName() -> System.String
-M public System.Windows.Forms.RichTextBox::get_ZoomFactor() -> System.Single
 M public System.Windows.Forms.RichTextBox::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::remove_ContentsResized(System.Windows.Forms.ContentsResizedEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::remove_DragDrop(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::remove_DragEnter(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::remove_DragLeave(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::remove_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::remove_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::remove_HScroll(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::remove_ImeChange(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::remove_LinkClicked(System.Windows.Forms.LinkClickedEventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::remove_Protected(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::remove_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::remove_SelectionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.RichTextBox::remove_VScroll(System.EventHandler) -> System.Void
 M public System.Windows.Forms.RichTextBox::set_AllowDrop(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.RichTextBox::set_AutoSize(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_AutoWordSelection(System.Boolean) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_BulletIndent(System.Int32) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_DetectUrls(System.Boolean) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_EnableAutoDragDrop(System.Boolean) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_Font(System.Drawing.Font) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_LanguageOption(System.Windows.Forms.RichTextBoxLanguageOptions) -> System.Void
 M public System.Windows.Forms.RichTextBox::set_MaxLength(System.Int32) -> System.Void virtual
 M public System.Windows.Forms.RichTextBox::set_Multiline(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_RichTextShortcutsEnabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_RightMargin(System.Int32) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_Rtf(System.String) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_ScrollBars(System.Windows.Forms.RichTextBoxScrollBars) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectedRtf(System.String) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectedText(System.String) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_SelectionAlignment(System.Windows.Forms.HorizontalAlignment) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionBackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionBullet(System.Boolean) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionCharOffset(System.Int32) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionFont(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionHangingIndent(System.Int32) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionIndent(System.Int32) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionLength(System.Int32) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_SelectionProtected(System.Boolean) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionRightIndent(System.Int32) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_SelectionTabs(System.Int32[]) -> System.Void
-M public System.Windows.Forms.RichTextBox::set_ShowSelectionMargin(System.Boolean) -> System.Void
 M public System.Windows.Forms.RichTextBox::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.RichTextBox::set_ZoomFactor(System.Single) -> System.Void
 M public System.Windows.Forms.ScrollBar::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ScrollBar::add_BackColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ScrollBar::add_BackgroundImageChanged(System.EventHandler) -> System.Void
@@ -8113,7 +8008,6 @@ T class System.Windows.Forms.PropertyTabChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.PropertyValueChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.RadioButton+RadioButtonAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.RetrieveVirtualItemEventArgs : System.EventArgs
-T class System.Windows.Forms.RichTextBox : System.Windows.Forms.TextBoxBase
 T class System.Windows.Forms.ScrollableControl+DockPaddingEdges
 T class System.Windows.Forms.ScrollableControl+DockPaddingEdgesConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.SelectedGridItemChangedEventArgs : System.EventArgs
