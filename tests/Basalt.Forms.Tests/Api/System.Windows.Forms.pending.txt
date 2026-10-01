@@ -1,7 +1,3 @@
-F protected System.Windows.Forms.DateTimePicker::DefaultMonthBackColor : System.Drawing.Color static readonly
-F protected System.Windows.Forms.DateTimePicker::DefaultTitleBackColor : System.Drawing.Color static readonly
-F protected System.Windows.Forms.DateTimePicker::DefaultTitleForeColor : System.Drawing.Color static readonly
-F protected System.Windows.Forms.DateTimePicker::DefaultTrailingForeColor : System.Drawing.Color static readonly
 F protected System.Windows.Forms.FontDialog::EventApply : System.Object static readonly
 F protected System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::wfcMenuCommand : System.Guid static readonly
 F protected System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::wfcMenuGroup : System.Guid static readonly
@@ -52,8 +48,6 @@ F public System.Windows.Forms.DataGridView+HitTestInfo::Nowhere : System.Windows
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Default : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::No : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Yes : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
-F public System.Windows.Forms.DateTimePicker::MaxDateTime : System.DateTime static readonly
-F public System.Windows.Forms.DateTimePicker::MinDateTime : System.DateTime static readonly
 F public System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute::Default : System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute static readonly
 F public System.Windows.Forms.DockingAttribute::Default : System.Windows.Forms.DockingAttribute static readonly
 F public System.Windows.Forms.GridItemCollection::Empty : System.Windows.Forms.GridItemCollection static
@@ -948,21 +942,11 @@ M protected System.Windows.Forms.DataObject::TryGetDataCore`1(System.String, Sys
 M protected System.Windows.Forms.DateTimePicker::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DateTimePicker::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::DestroyHandle() -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.DateTimePicker::OnCloseUp(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::OnDropDown(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::OnEnabledChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::OnFormatChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::OnValueChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.DateTimePicker::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.DateTimePicker::get_DoubleBuffered() -> System.Boolean virtual
 M protected System.Windows.Forms.DateTimePicker::set_DoubleBuffered(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.Design.ComponentEditorForm::OnActivated(System.EventArgs) -> System.Void virtual
@@ -4237,87 +4221,34 @@ M public System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject::get
 M public System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject::get_Role() -> System.Windows.Forms.AccessibleRole virtual
 M public System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject::get_State() -> System.Windows.Forms.AccessibleStates virtual
 M public System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject::get_Value() -> System.String virtual
-M public System.Windows.Forms.DateTimePicker::.ctor()
-M public System.Windows.Forms.DateTimePicker::ToString() -> System.String virtual
 M public System.Windows.Forms.DateTimePicker::add_BackColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::add_CloseUp(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::add_DropDown(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::add_FormatChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::add_ValueChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::get_BackColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.DateTimePicker::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.DateTimePicker::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.DateTimePicker::get_CalendarFont() -> System.Drawing.Font
-M public System.Windows.Forms.DateTimePicker::get_CalendarForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.DateTimePicker::get_CalendarMonthBackground() -> System.Drawing.Color
-M public System.Windows.Forms.DateTimePicker::get_CalendarTitleBackColor() -> System.Drawing.Color
-M public System.Windows.Forms.DateTimePicker::get_CalendarTitleForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.DateTimePicker::get_CalendarTrailingForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.DateTimePicker::get_Checked() -> System.Boolean
-M public System.Windows.Forms.DateTimePicker::get_CustomFormat() -> System.String
-M public System.Windows.Forms.DateTimePicker::get_DropDownAlign() -> System.Windows.Forms.LeftRightAlignment
-M public System.Windows.Forms.DateTimePicker::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.DateTimePicker::get_Format() -> System.Windows.Forms.DateTimePickerFormat
-M public System.Windows.Forms.DateTimePicker::get_MaxDate() -> System.DateTime
-M public System.Windows.Forms.DateTimePicker::get_MaximumDateTime() -> System.DateTime static
-M public System.Windows.Forms.DateTimePicker::get_MinDate() -> System.DateTime
-M public System.Windows.Forms.DateTimePicker::get_MinimumDateTime() -> System.DateTime static
 M public System.Windows.Forms.DateTimePicker::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.DateTimePicker::get_PreferredHeight() -> System.Int32
 M public System.Windows.Forms.DateTimePicker::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.DateTimePicker::get_ShowCheckBox() -> System.Boolean
-M public System.Windows.Forms.DateTimePicker::get_ShowUpDown() -> System.Boolean
-M public System.Windows.Forms.DateTimePicker::get_Text() -> System.String virtual
-M public System.Windows.Forms.DateTimePicker::get_Value() -> System.DateTime
 M public System.Windows.Forms.DateTimePicker::remove_BackColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::remove_CloseUp(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::remove_DropDown(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::remove_FormatChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DateTimePicker::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::remove_ValueChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_BackColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.DateTimePicker::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.DateTimePicker::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.DateTimePicker::set_CalendarFont(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_CalendarForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_CalendarMonthBackground(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_CalendarTitleBackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_CalendarTitleForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_CalendarTrailingForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_Checked(System.Boolean) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_CustomFormat(System.String) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_DropDownAlign(System.Windows.Forms.LeftRightAlignment) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.DateTimePicker::set_Format(System.Windows.Forms.DateTimePickerFormat) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_MaxDate(System.DateTime) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_MinDate(System.DateTime) -> System.Void
 M public System.Windows.Forms.DateTimePicker::set_Padding(System.Windows.Forms.Padding) -> System.Void
 M public System.Windows.Forms.DateTimePicker::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.DateTimePicker::set_ShowCheckBox(System.Boolean) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_ShowUpDown(System.Boolean) -> System.Void
-M public System.Windows.Forms.DateTimePicker::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.DateTimePicker::set_Value(System.DateTime) -> System.Void
 M public System.Windows.Forms.Design.ComponentEditorForm::.ctor(System.Object, System.Type[])
 M public System.Windows.Forms.Design.ComponentEditorForm::PreProcessMessage(ref System.Windows.Forms.Message) -> System.Boolean virtual
 M public System.Windows.Forms.Design.ComponentEditorForm::ShowForm() -> System.Windows.Forms.DialogResult virtual
@@ -8843,7 +8774,6 @@ T class System.Windows.Forms.DataGridViewTextBoxColumn : System.Windows.Forms.Da
 T class System.Windows.Forms.DataGridViewTextBoxEditingControl : System.Windows.Forms.TextBox
 T class System.Windows.Forms.DataGridViewTopLeftHeaderCell : System.Windows.Forms.DataGridViewColumnHeaderCell
 T class System.Windows.Forms.DataObject
-T class System.Windows.Forms.DateTimePicker : System.Windows.Forms.Control
 T class System.Windows.Forms.DateTimePicker+DateTimePickerAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.Design.ComponentEditorForm : System.Windows.Forms.Form
 T class System.Windows.Forms.Design.EventsTab : System.Windows.Forms.Design.PropertyTab
