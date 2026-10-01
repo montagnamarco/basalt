@@ -348,6 +348,22 @@ public partial class Control
         return origin;
     }
 
+    /// <summary>A point in client coordinates as the frame sees it: from the control's top-left corner.</summary>
+    internal Point ClientToOuter(Point p)
+    {
+        var frame = NonClient;
+
+        return new Point(p.X + frame.Left, p.Y + frame.Top);
+    }
+
+    /// <summary>Moves the control without it or its parent's layout taking it as a new position: what scrolling a window does to its children.</summary>
+    internal void ScrollBy(int dx, int dy)
+    {
+        if (dx == 0 && dy == 0) return;
+
+        UpdateBounds(_x + dx, _y + dy, _width, _height, _clientWidth, _clientHeight);
+    }
+
     public Point PointToScreen(Point p)
     {
         var origin = ClientOriginOnScreen();

@@ -8,7 +8,7 @@ namespace System.Windows.Forms.Internal.Skins;
 /// </summary>
 internal sealed class ClassicSkin : Skin
 {
-    public override void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle)
+    public override void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle, WindowScrollInfo? horizontal, WindowScrollInfo? vertical)
     {
         var bounds = new Rectangle(Point.Empty, outerSize);
 
@@ -33,7 +33,7 @@ internal sealed class ClassicSkin : Skin
             bounds.Inflate(-1, -1);
         }
 
-        DrawScrollBarPlaceholders(graphics, bounds, style);
+        DrawScrollBars(graphics, outerSize, style, exStyle, horizontal, vertical);
     }
 
     /// <summary>
@@ -55,19 +55,30 @@ internal sealed class ClassicSkin : Skin
         graphics.FillRectangle(second, bounds.Right - 1, bounds.Top, 1, bounds.Height);
     }
 
-    /// <summary>The area the window's scroll bars occupy, until scroll bars are drawn.</summary>
-    private static void DrawScrollBarPlaceholders(Graphics graphics, Rectangle inside, int style)
+    /// <summary>The window's own scroll bars, drawn like the ScrollBar control, and the corner where they meet.</summary>
+    private static void DrawScrollBars(Graphics graphics, Size outerSize, int style, int exStyle, WindowScrollInfo? horizontal, WindowScrollInfo? vertical)
     {
-        using var brush = new SolidBrush(SystemColors.ScrollBar);
-
-        if ((style & WindowStyles.VerticalScroll) != 0)
+        var verticalBounds = WindowScrollBars.Vertical(outerSize, style, exStyle);
+        if (!verticalBounds.IsEmpty)
         {
-            graphics.FillRectangle(brush, inside.Right - NonClientArea.ScrollBarSize, inside.Top, NonClientArea.ScrollBarSize, inside.Height);
+            var info = vertical ?? new WindowScrollInfo(0, 0, 0, 0, false);
+            var thumb = info.ThumbBounds(ScrollBarPainter.TrackBounds(Orientation.Vertical, verticalBounds), vertical: true);
+            ScrollBarPainter.Draw(graphics, Orientation.Vertical, verticalBounds, thumb, ScrollBarPainter.PressedPart.None, info.Enabled);
         }
 
-        if ((style & WindowStyles.HorizontalScroll) != 0)
+        var horizontalBounds = WindowScrollBars.Horizontal(outerSize, style, exStyle);
+        if (!horizontalBounds.IsEmpty)
         {
-            graphics.FillRectangle(brush, inside.Left, inside.Bottom - NonClientArea.ScrollBarSize, inside.Width, NonClientArea.ScrollBarSize);
+            var info = horizontal ?? new WindowScrollInfo(0, 0, 0, 0, false);
+            var thumb = info.ThumbBounds(ScrollBarPainter.TrackBounds(Orientation.Horizontal, horizontalBounds), vertical: false);
+            ScrollBarPainter.Draw(graphics, Orientation.Horizontal, horizontalBounds, thumb, ScrollBarPainter.PressedPart.None, info.Enabled);
+        }
+
+        var corner = WindowScrollBars.Corner(outerSize, style, exStyle);
+        if (!corner.IsEmpty)
+        {
+            using var brush = new SolidBrush(SystemColors.Control);
+            graphics.FillRectangle(brush, corner);
         }
     }
 }

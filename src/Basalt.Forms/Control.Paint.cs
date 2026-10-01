@@ -354,7 +354,7 @@ public partial class Control
         if (NonClient == default) return;
 
         using var graphics = Graphics.FromCanvas(canvas);
-        Skin.Current.DrawNonClientFrame(graphics, Size, parameters.Style, parameters.ExStyle);
+        Skin.Current.DrawNonClientFrame(graphics, Size, parameters.Style, parameters.ExStyle, GetWindowScroll(vertical: false), GetWindowScroll(vertical: true));
     }
 
     /// <summary>Draws the control, frame and children included, into the bitmap at the target bounds.</summary>

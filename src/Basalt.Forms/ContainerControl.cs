@@ -118,9 +118,24 @@ public class ContainerControl : ScrollableControl, IContainerControl
             var keyCode = keyData & Keys.KeyCode;
 
             if (keyCode == Keys.Tab && ProcessTabKey((keyData & Keys.Shift) == Keys.None)) return true;
+
+            // Arrows the focused control did not want move among its siblings, as the
+            // dialog manager moves among the buttons of a dialog or the radio buttons of a group.
+            if (keyCode is Keys.Left or Keys.Right or Keys.Up or Keys.Down && ProcessArrowKey(keyCode is Keys.Right or Keys.Down)) return true;
         }
 
         return base.ProcessDialogKey(keyData);
+    }
+
+    /// <summary>
+    /// The next control among the active control's siblings, tab stop or not,
+    /// wrapping at the ends: the arrow keys of a dialog.
+    /// </summary>
+    private bool ProcessArrowKey(bool forward)
+    {
+        var group = _activeControl?.Parent ?? this;
+
+        return group.SelectNextControl(_activeControl, forward, tabStopOnly: false, nested: false, wrap: true);
     }
 
     /// <summary>Selects the next control in tab order, without wrapping: the form wraps.</summary>

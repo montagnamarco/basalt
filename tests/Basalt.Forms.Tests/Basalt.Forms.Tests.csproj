@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Basalt.Forms\Basalt.Forms.csproj" />
+    <ProjectReference Include="..\..\src\Basalt.Forms.VisualBasic\Basalt.Forms.VisualBasic.csproj" />
   </ItemGroup>
 
   <ItemGroup>

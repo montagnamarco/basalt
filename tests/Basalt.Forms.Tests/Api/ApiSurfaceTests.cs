@@ -19,11 +19,13 @@ public class ApiSurfaceTests
 {
     private static readonly string Folder = Path.GetDirectoryName(ThisFile())!;
 
-    public static TheoryData<string> Assemblies() => ["System.Windows.Forms", "System.Windows.Forms.Primitives"];
+    public static TheoryData<string> Assemblies() =>
+        ["System.Windows.Forms", "System.Windows.Forms.Primitives", "Microsoft.VisualBasic.Forms"];
 
     private static Assembly Load(string name) => name switch
     {
         "System.Windows.Forms" => typeof(Control).Assembly,
+        "Microsoft.VisualBasic.Forms" => typeof(Microsoft.VisualBasic.AudioPlayMode).Assembly,
         _ => typeof(Padding).Assembly,
     };
 

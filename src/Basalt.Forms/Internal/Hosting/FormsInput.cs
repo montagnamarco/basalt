@@ -21,6 +21,14 @@ internal static class FormsInput
 
     public static Keys Modifiers { get; private set; }
 
+    /// <summary>The keys held down now, for code that asks the state of one key as GetKeyState does.</summary>
+    private static readonly HashSet<Keys> HeldKeys = [];
+
+    public static bool IsKeyHeld(Keys key) => HeldKeys.Contains(key);
+
+    /// <summary>A window gained or lost the keyboard: releases it never saw must not leave keys held.</summary>
+    public static void ForgetHeldKeys() => HeldKeys.Clear();
+
     /// <summary>The control the pointer is over, for MouseEnter and MouseLeave.</summary>
     private static Control? s_hovered;
 
@@ -32,6 +40,14 @@ internal static class FormsInput
             Track(form, point, e.GetCurrentPoint(canvas).Properties, e.KeyModifiers);
 
             var (target, location) = Target(form, point);
+
+            // A press on a scroll bar of the frame follows the pointer by itself.
+            if (target.IsTrackingNonClient)
+            {
+                target.NonClientMouseMove(target.ClientToOuter(location));
+                return;
+            }
+
             UpdateHover(form, point);
             target.RaiseMouseMove(Buttons, location);
         });
@@ -53,6 +69,15 @@ internal static class FormsInput
             canvas.Focus();
 
             var (target, location) = Target(form, point);
+
+            // On the frame (a scroll bar), not in the client area: the window handles it, no mouse events.
+            if (!target.ClientRectangle.Contains(location) && target != form)
+            {
+                if (target.NonClientMouseDown(button, target.ClientToOuter(location))) CapturedControl = target;
+
+                return;
+            }
+
             target.RaiseMouseDown(button, Math.Min(e.ClickCount, 2), location);
         });
     }
@@ -69,6 +94,16 @@ internal static class FormsInput
             if (button == MouseButtons.None) return;
 
             var (target, location) = Target(form, point);
+
+            if (target.IsTrackingNonClient)
+            {
+                target.NonClientMouseUp(target.ClientToOuter(location));
+                if (CapturedControl == target) CapturedControl = null;
+                if (Buttons == MouseButtons.None) e.Pointer.Capture(null);
+
+                return;
+            }
+
             var (under, _) = form.HitTest(point);
             target.RaiseMouseUp(button, 1, location, releasedOverThisControl: under == target);
 
@@ -115,6 +150,8 @@ internal static class FormsInput
 
     public static void CaptureLost(Form form)
     {
+        if (CapturedControl is { IsTrackingNonClient: true } tracking) tracking.DefaultCaptureLost();
+
         if (CapturedControl is { } captured && captured.TopLevelControl == form) captured.Capture = false;
 
         Buttons = MouseButtons.None;
@@ -127,9 +164,13 @@ internal static class FormsInput
         var keyCode = KeyMapping.ToKeys(e.Key);
         if (keyCode == Keys.None) return false;
 
+        HeldKeys.Add(keyCode);
+
         return Guard(form, () =>
         {
             FormsInputState.SuppressNextCharacter = false;
+
+            if (CapturedControl is { } captured && captured.TopLevelControl == form && captured.KeyDownWhileCaptured(keyCode | Modifiers)) return true;
 
             var target = form.WindowFocus ?? form;
             var messageKind = (Modifiers & Keys.Alt) != 0 ? WindowMessages.SystemKeyDown : WindowMessages.KeyDown;
@@ -152,6 +193,8 @@ internal static class FormsInput
 
         var keyCode = KeyMapping.ToKeys(e.Key);
         if (keyCode == Keys.None) return false;
+
+        HeldKeys.Remove(keyCode);
 
         return Guard(form, () =>
         {

@@ -682,6 +682,7 @@ public partial class Form : ContainerControl
         FormsInput.Guard(this, () =>
         {
             ActiveForm = this;
+            FormsInput.ForgetHeldKeys();
             _host?.Canvas.Focus();
             OnActivated(EventArgs.Empty);
 
@@ -696,6 +697,7 @@ public partial class Form : ContainerControl
         FormsInput.Guard(this, () =>
         {
             if (ActiveForm == this) ActiveForm = null;
+            FormsInput.ForgetHeldKeys();
             OnDeactivate(EventArgs.Empty);
         });
     }

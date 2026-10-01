@@ -107,6 +107,22 @@ public class TableLayoutPanel : Panel, IExtenderProvider
     [Browsable(false)]
     public override LayoutEngine LayoutEngine => TableLayout.Instance;
 
+    private TableLayoutSettings? _layoutSettings;
+
+    /// <summary>The panel's table as settings; assigning settings of another panel copies its table.</summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public TableLayoutSettings LayoutSettings
+    {
+        get => _layoutSettings ??= new TableLayoutSettings(this);
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            LayoutSettings.CopyFrom(value);
+        }
+    }
+
     protected override ControlCollection CreateControlsInstance() => new TableLayoutControlCollection(this);
 
     bool IExtenderProvider.CanExtend(object extendee) => extendee is Control and not TableLayoutPanel;

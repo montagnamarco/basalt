@@ -14,5 +14,5 @@ internal abstract class Skin
     public static Skin Current { get; set; } = new ClassicSkin();
 
     /// <summary>Draws the frame the window styles describe, in the control's outer coordinates.</summary>
-    public abstract void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle);
+    public abstract void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle, WindowScrollInfo? horizontal, WindowScrollInfo? vertical);
 }

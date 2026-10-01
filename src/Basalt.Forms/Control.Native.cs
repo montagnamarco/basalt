@@ -68,4 +68,31 @@ public partial class Control
     internal virtual void DefaultCaptureLost()
     {
     }
+
+    /// <summary>The state of the window's own scroll bar, for drawing it; null when the control has none.</summary>
+    internal virtual Internal.WindowScrollInfo? GetWindowScroll(bool vertical) => null;
+
+    /// <summary>
+    /// A press on the window's frame (its scroll bars), in outer coordinates;
+    /// true when the control took it and wants the moves until the release.
+    /// </summary>
+    internal virtual bool NonClientMouseDown(MouseButtons button, System.Drawing.Point outer) => false;
+
+    internal virtual void NonClientMouseMove(System.Drawing.Point outer)
+    {
+    }
+
+    internal virtual void NonClientMouseUp(System.Drawing.Point outer)
+    {
+    }
+
+    /// <summary>Whether the control is tracking a press on its frame, which receives the moves and the release.</summary>
+    internal virtual bool IsTrackingNonClient => false;
+
+    /// <summary>
+    /// A key pressed while this control holds the mouse capture, before the
+    /// focused control sees it: what WinForms controls catch with a message
+    /// filter during a drag (Escape cancels a splitter). True when handled.
+    /// </summary>
+    internal virtual bool KeyDownWhileCaptured(Keys keyData) => false;
 }

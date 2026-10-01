@@ -131,9 +131,11 @@ public class InputTests
         second.Focus();
 
         form.Host!.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(PhysicalKey.Tab, RawInputModifiers.None);
         Assert.True(first.Focused);
 
         form.Host!.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(PhysicalKey.Tab, RawInputModifiers.None);
         Assert.True(second.Focused);
 
         form.Close();

@@ -262,4 +262,71 @@ public class CheckBoxRadioButtonTests
 
         Assert.True(checkBox.Width > before.Width && checkBox.Height > before.Height, $"{before} -> {checkBox.Size}");
     }
+
+    [AvaloniaFact]
+    public void Arrow_keys_move_through_a_radio_group_and_select_as_they_go()
+    {
+        var first = new RadioButton { Bounds = new Rectangle(10, 10, 100, 24), Checked = true };
+        var second = new RadioButton { Bounds = new Rectangle(10, 40, 100, 24) };
+        var third = new RadioButton { Bounds = new Rectangle(10, 70, 100, 24) };
+        var form = new Form { ClientSize = new Size(200, 120) };
+        form.Controls.AddRange([first, second, third]);
+        form.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        first.Focus();
+
+        form.Host!.KeyPressQwerty(Avalonia.Input.PhysicalKey.ArrowDown, Avalonia.Input.RawInputModifiers.None);
+
+        Assert.True(second.Focused, $"focused: first {first.Focused} second {second.Focused} third {third.Focused}, active {form.ActiveControl?.Text}");
+        Assert.True(second.Checked);
+        Assert.False(first.Checked);
+
+        form.Host!.KeyPressQwerty(Avalonia.Input.PhysicalKey.ArrowUp, Avalonia.Input.RawInputModifiers.None);
+        form.Host!.KeyPressQwerty(Avalonia.Input.PhysicalKey.ArrowUp, Avalonia.Input.RawInputModifiers.None);
+
+        // Past the first comes the last: the group wraps.
+        Assert.True(third.Checked);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Arrow_keys_move_between_the_buttons_of_a_dialog()
+    {
+        var ok = new Button { Location = new Point(10, 10) };
+        var cancel = new Button { Location = new Point(100, 10) };
+        var form = new Form { ClientSize = new Size(200, 60) };
+        form.Controls.AddRange([ok, cancel]);
+        form.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        ok.Focus();
+
+        form.Host!.KeyPressQwerty(Avalonia.Input.PhysicalKey.ArrowRight, Avalonia.Input.RawInputModifiers.None);
+
+        Assert.True(cancel.Focused);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_radio_button_focused_from_code_selects_itself_as_in_WinForms_but_not_when_tabbed_into()
+    {
+        var first = new RadioButton { Bounds = new Rectangle(10, 10, 100, 24) };
+        var second = new RadioButton { Bounds = new Rectangle(10, 40, 100, 24) };
+        var other = new Button { Location = new Point(10, 80) };
+        var form = new Form { ClientSize = new Size(200, 120) };
+        form.Controls.AddRange([other, first, second]);
+        form.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        second.Focus();
+        Assert.True(second.Checked);
+
+        other.Focus();
+        form.Host!.KeyPressQwerty(Avalonia.Input.PhysicalKey.Tab, Avalonia.Input.RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(Avalonia.Input.PhysicalKey.Tab, Avalonia.Input.RawInputModifiers.None);
+        Assert.False(first.Checked);
+
+        form.Close();
+    }
 }

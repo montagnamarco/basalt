@@ -1,3 +1,4 @@
+using System.Windows.Forms.Internal.Hosting;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms.Internal;
@@ -173,8 +174,17 @@ public class RadioButton : ButtonBase
         }
     }
 
+    /// <summary>
+    /// Entered without Tab and without the mouse, a radio button selects
+    /// itself: that is how the arrows select through a group. WinForms keeps
+    /// the rule even when the focus is set from code or when a form opens with
+    /// an unchecked radio button as its first control, which then gets
+    /// checked; applications rely on that (and work around it) as it is.
+    /// </summary>
     protected override void OnEnter(EventArgs e)
     {
+        if (MouseButtons == MouseButtons.None && !FormsInput.IsKeyHeld(Keys.Tab) && AutoCheck && !Checked) OnClick(EventArgs.Empty);
+
         base.OnEnter(e);
         Invalidate();
     }
@@ -189,13 +199,6 @@ public class RadioButton : ButtonBase
 
         return base.ProcessMnemonic(charCode);
     }
-
-    // Arrow-key navigation between sibling radio buttons is a native dialog-
-    // manager behaviour (WM_GETDLGCODE's DLGC_RADIOBUTTON plus IsDialogMessage
-    // grouping by WS_GROUP), not a RadioButton override in real WinForms: there
-    // is no ProcessDialogKey entry for it in the reference surface. It needs a
-    // hook in Control's dialog-key pipeline or ContainerControl, outside this
-    // family's exclusive files; left out here and reported as a needed hook.
 
     private protected override void PaintButton(Graphics graphics)
     {

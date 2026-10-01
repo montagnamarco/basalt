@@ -17,14 +17,14 @@ internal static class PlatformClipboard
     {
         s_inProcessText = text;
 
-        if (Clipboard() is { } clipboard) Wait(clipboard.SetTextAsync(text));
+        if (Clipboard() is { } clipboard) SynchronousWait.For(clipboard.SetTextAsync(text));
     }
 
     public static string? GetText()
     {
         if (Clipboard() is { } clipboard)
         {
-            var text = Wait(clipboard.TryGetTextAsync());
+            var text = SynchronousWait.For(clipboard.TryGetTextAsync());
             if (text is not null) return text;
         }
 
@@ -35,7 +35,7 @@ internal static class PlatformClipboard
     {
         s_inProcessText = null;
 
-        if (Clipboard() is { } clipboard) Wait(clipboard.ClearAsync());
+        if (Clipboard() is { } clipboard) SynchronousWait.For(clipboard.ClearAsync());
     }
 
     private static IClipboard? Clipboard()
@@ -43,25 +43,5 @@ internal static class PlatformClipboard
         var host = Application.OpenForms.Snapshot().Select(form => form.Host).FirstOrDefault(window => window is not null);
 
         return host?.Clipboard;
-    }
-
-    private static void Wait(Task task)
-    {
-        if (!task.IsCompleted)
-        {
-            var frame = new DispatcherFrame();
-            // Ended from the UI thread, which also wakes the loop if it is waiting for messages.
-            task.ContinueWith(_ => Dispatcher.UIThread.Post(() => frame.Continue = false), TaskScheduler.Default);
-            Dispatcher.UIThread.PushFrame(frame);
-        }
-
-        task.GetAwaiter().GetResult();
-    }
-
-    private static T Wait<T>(Task<T> task)
-    {
-        Wait((Task)task);
-
-        return task.Result;
     }
 }

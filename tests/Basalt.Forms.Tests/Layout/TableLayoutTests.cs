@@ -227,4 +227,34 @@ public class TableLayoutTests
 
         Assert.Null(panel.GetControlFromPosition(5, 5));
     }
+
+    [Fact]
+    public void The_layout_settings_read_and_write_the_panels_table()
+    {
+        var panel = new TableLayoutPanel { ColumnCount = 2, RowCount = 1 };
+        var child = new Control();
+        panel.Controls.Add(child, 1, 0);
+
+        var settings = panel.LayoutSettings;
+        settings.ColumnCount = 3;
+
+        Assert.Equal(3, panel.ColumnCount);
+        Assert.Equal(1, settings.GetColumn(child));
+        Assert.Same(panel.LayoutEngine, settings.LayoutEngine);
+    }
+
+    [Fact]
+    public void Assigning_another_panels_settings_copies_its_table()
+    {
+        var source = new TableLayoutPanel { ColumnCount = 2, RowCount = 3, GrowStyle = TableLayoutPanelGrowStyle.FixedSize };
+        source.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40));
+        var target = new TableLayoutPanel();
+
+        target.LayoutSettings = source.LayoutSettings;
+
+        Assert.Equal(2, target.ColumnCount);
+        Assert.Equal(3, target.RowCount);
+        Assert.Equal(TableLayoutPanelGrowStyle.FixedSize, target.GrowStyle);
+        Assert.Equal(40, target.ColumnStyles[0].Width);
+    }
 }
