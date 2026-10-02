@@ -9,43 +9,40 @@ namespace System.Windows.Forms;
 /// toolbar of zoom and page-layout buttons: the common way an application
 /// shows what a <see cref="PrintDocument"/> would print.
 /// </summary>
+/// <remarks>
+/// Most of the members Form declares are re-declared here, hidden from the
+/// designer, because a print preview dialog is a fixed-purpose window: see
+/// PrintPreviewDialog.HiddenMembers*.cs, PrintPreviewDialog.HiddenEvents.cs
+/// and PrintPreviewDialog.Overrides.cs.
+/// </remarks>
 [Designer("System.ComponentModel.Design.ComponentDesigner, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
 [DesignTimeVisible(true)]
 [DefaultProperty("Document")]
+[ToolboxItemFilter("System.Windows.Forms.Control.TopLevel")]
 [ToolboxItem(true)]
-public class PrintPreviewDialog : Form
+public partial class PrintPreviewDialog : Form
 {
     private readonly ToolStrip _toolStrip = new();
     private readonly PrintPreviewControl _printPreviewControl = new();
+    private readonly NumericUpDown _pageNumberBox = new();
 
     public PrintPreviewDialog()
     {
         Text = "Print Preview";
         ClientSize = new Size(400, 300);
 
+        // A preview is a tool window of the application: Windows shows it with no minimize box and no taskbar button.
+        MinimizeBox = false;
+        ShowInTaskbar = false;
+
         _printPreviewControl.Dock = DockStyle.Fill;
         _printPreviewControl.UseAntiAlias = false;
+        _printPreviewControl.StartPageChanged += (_, _) => SyncPageNumberBox();
 
         BuildToolStrip();
 
         Controls.Add(_printPreviewControl);
         Controls.Add(_toolStrip);
-    }
-
-    [Browsable(false)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public new IButtonControl? AcceptButton
-    {
-        get => base.AcceptButton;
-        set => base.AcceptButton = value;
-    }
-
-    [Browsable(false)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public new IButtonControl? CancelButton
-    {
-        get => base.CancelButton;
-        set => base.CancelButton = value;
     }
 
     [DefaultValue(null)]
@@ -58,14 +55,6 @@ public class PrintPreviewDialog : Form
     [Browsable(false)]
     public PrintPreviewControl PrintPreviewControl => _printPreviewControl;
 
-    [Browsable(false)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public new bool TabStop
-    {
-        get => base.TabStop;
-        set => base.TabStop = value;
-    }
-
     [DefaultValue(false)]
     public bool UseAntiAlias
     {
@@ -73,18 +62,10 @@ public class PrintPreviewDialog : Form
         set => _printPreviewControl.UseAntiAlias = value;
     }
 
-    protected override bool ProcessDialogKey(Keys keyData)
-    {
-        if (keyData == Keys.Escape)
-        {
-            Close();
-            return true;
-        }
-
-        return base.ProcessDialogKey(keyData);
-    }
-
-    /// <summary>One toolbar: a page-layout group (1/2/3/4/6 pages), a zoom group, print, and close.</summary>
+    /// <summary>
+    /// One toolbar: a page-layout group (1/2/3/4/6 pages), a zoom group, the
+    /// current page number, print, and close.
+    /// </summary>
     private void BuildToolStrip()
     {
         _toolStrip.Dock = DockStyle.Top;
@@ -97,11 +78,19 @@ public class PrintPreviewDialog : Form
 
         _toolStrip.Items.Add(new ToolStripSeparator());
 
+        AddZoomButton("Auto", null);
+        AddZoomButton("500%", 5.0);
+        AddZoomButton("250%", 2.5);
+        AddZoomButton("150%", 1.5);
         AddZoomButton("100%", 1.0);
         AddZoomButton("75%", 0.75);
         AddZoomButton("50%", 0.5);
         AddZoomButton("25%", 0.25);
-        AddZoomButton("Auto", null);
+        AddZoomButton("10%", 0.1);
+
+        _toolStrip.Items.Add(new ToolStripSeparator());
+
+        BuildPageNumberBox();
 
         _toolStrip.Items.Add(new ToolStripSeparator());
 
@@ -148,5 +137,41 @@ public class PrintPreviewDialog : Form
         };
 
         _toolStrip.Items.Add(button);
+    }
+
+    /// <summary>The 1-based page number box: it both shows and drives PrintPreviewControl.StartPage (0-based).</summary>
+    private void BuildPageNumberBox()
+    {
+        _toolStrip.Items.Add(new ToolStripLabel("Page:") { Name = "pageLabelToolStripLabel" });
+
+        // The real page count is only known once PrintPreviewControl renders the document (lazily,
+        // on first paint or StartPage access); until then, a generously high ceiling keeps the box usable.
+        _pageNumberBox.Name = "pageNumberNumericUpDown";
+        _pageNumberBox.Minimum = 1;
+        _pageNumberBox.Maximum = 9999;
+        _pageNumberBox.Value = 1;
+        _pageNumberBox.ValueChanged += (_, _) => ShowPageFromBox();
+
+        _toolStrip.Items.Add(new ToolStripControlHost(_pageNumberBox) { Name = "pageNumberToolStripControlHost" });
+    }
+
+    /// <summary>
+    /// Moves the preview to the typed page, then shows the page it really
+    /// moved to: a number past the last page clamps there, and when that is
+    /// the page already shown StartPageChanged does not fire to correct the box.
+    /// </summary>
+    private void ShowPageFromBox()
+    {
+        _printPreviewControl.StartPage = (int)_pageNumberBox.Value - 1;
+        SyncPageNumberBox();
+    }
+
+    /// <summary>Reflects the control's current page back into the page number box, without re-entering StartPage.</summary>
+    private void SyncPageNumberBox()
+    {
+        var oneBased = _printPreviewControl.StartPage + 1;
+
+        _pageNumberBox.Maximum = Math.Max(_pageNumberBox.Maximum, oneBased);
+        if (_pageNumberBox.Value != oneBased) _pageNumberBox.Value = oneBased;
     }
 }

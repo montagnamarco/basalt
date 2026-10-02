@@ -673,12 +673,7 @@ M protected System.Windows.Forms.PictureBox::OnParentChanged(System.EventArgs) -
 M protected System.Windows.Forms.PictureBox::OnResize(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PictureBox::OnVisibleChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PictureBox::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.PrintPreviewControl::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.PrintPreviewControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.PrintPreviewDialog::CreateHandle() -> System.Void virtual
-M protected System.Windows.Forms.PrintPreviewDialog::OnClosing(System.ComponentModel.CancelEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PrintPreviewDialog::ProcessTabKey(System.Boolean) -> System.Boolean virtual
-M protected System.Windows.Forms.PrintPreviewDialog::get_DefaultMinimumSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ProgressBar::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ProgressBar::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.ProgressBar::OnBackColorChanged(System.EventArgs) -> System.Void virtual
@@ -3054,156 +3049,31 @@ M public System.Windows.Forms.PrintControllerWithStatusDialog::OnEndPrint(System
 M public System.Windows.Forms.PrintControllerWithStatusDialog::OnStartPage(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintPageEventArgs) -> System.Drawing.Graphics virtual
 M public System.Windows.Forms.PrintControllerWithStatusDialog::OnStartPrint(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
 M public System.Windows.Forms.PrintControllerWithStatusDialog::get_IsPreview() -> System.Boolean virtual
-M public System.Windows.Forms.PrintPreviewDialog::add_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_AutoValidateChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_CausesValidationChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_ContextMenuStripChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_CursorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_DockChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_EnabledChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_ForeColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_LocationChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_MarginChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::add_MaximumSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::add_MinimumSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_RightToLeftChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_SizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_VisibleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::get_AccessibleDescription() -> System.String
-M public System.Windows.Forms.PrintPreviewDialog::get_AccessibleName() -> System.String
-M public System.Windows.Forms.PrintPreviewDialog::get_AccessibleRole() -> System.Windows.Forms.AccessibleRole
-M public System.Windows.Forms.PrintPreviewDialog::get_AllowDrop() -> System.Boolean virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_Anchor() -> System.Windows.Forms.AnchorStyles virtual
 M public System.Windows.Forms.PrintPreviewDialog::get_AutoScale() -> System.Boolean
 M public System.Windows.Forms.PrintPreviewDialog::get_AutoScaleBaseSize() -> System.Drawing.Size virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_AutoScroll() -> System.Boolean virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_AutoScrollMargin() -> System.Drawing.Size
-M public System.Windows.Forms.PrintPreviewDialog::get_AutoScrollMinSize() -> System.Drawing.Size
-M public System.Windows.Forms.PrintPreviewDialog::get_AutoSize() -> System.Boolean virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_AutoValidate() -> System.Windows.Forms.AutoValidate virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_BackColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_CausesValidation() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_ControlBox() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_Cursor() -> System.Windows.Forms.Cursor virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_DataBindings() -> System.Windows.Forms.ControlBindingsCollection
-M public System.Windows.Forms.PrintPreviewDialog::get_Dock() -> System.Windows.Forms.DockStyle virtual
 M public System.Windows.Forms.PrintPreviewDialog::get_DockPadding() -> System.Windows.Forms.ScrollableControl+DockPaddingEdges
-M public System.Windows.Forms.PrintPreviewDialog::get_Enabled() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_Font() -> System.Drawing.Font virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_FormBorderStyle() -> System.Windows.Forms.FormBorderStyle
 M public System.Windows.Forms.PrintPreviewDialog::get_HelpButton() -> System.Boolean
 M public System.Windows.Forms.PrintPreviewDialog::get_Icon() -> System.Drawing.Icon
 M public System.Windows.Forms.PrintPreviewDialog::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.PrintPreviewDialog::get_IsMdiContainer() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_KeyPreview() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_Location() -> System.Drawing.Point
-M public System.Windows.Forms.PrintPreviewDialog::get_Margin() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.PrintPreviewDialog::get_MaximizeBox() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_MaximumSize() -> System.Drawing.Size
-M public System.Windows.Forms.PrintPreviewDialog::get_MinimizeBox() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_MinimumSize() -> System.Drawing.Size
-M public System.Windows.Forms.PrintPreviewDialog::get_Opacity() -> System.Double
-M public System.Windows.Forms.PrintPreviewDialog::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.PrintPreviewDialog::get_RightToLeft() -> System.Windows.Forms.RightToLeft virtual
 M public System.Windows.Forms.PrintPreviewDialog::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_ShowInTaskbar() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_Size() -> System.Drawing.Size
 M public System.Windows.Forms.PrintPreviewDialog::get_SizeGripStyle() -> System.Windows.Forms.SizeGripStyle
-M public System.Windows.Forms.PrintPreviewDialog::get_StartPosition() -> System.Windows.Forms.FormStartPosition
-M public System.Windows.Forms.PrintPreviewDialog::get_Tag() -> System.Object
-M public System.Windows.Forms.PrintPreviewDialog::get_Text() -> System.String virtual
-M public System.Windows.Forms.PrintPreviewDialog::get_TopMost() -> System.Boolean
 M public System.Windows.Forms.PrintPreviewDialog::get_TransparencyKey() -> System.Drawing.Color
-M public System.Windows.Forms.PrintPreviewDialog::get_UseWaitCursor() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_Visible() -> System.Boolean
-M public System.Windows.Forms.PrintPreviewDialog::get_WindowState() -> System.Windows.Forms.FormWindowState
-M public System.Windows.Forms.PrintPreviewDialog::remove_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_AutoValidateChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_CausesValidationChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_ContextMenuStripChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_CursorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_DockChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_EnabledChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_ForeColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_LocationChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_MarginChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::remove_MaximumSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::remove_MinimumSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_RightToLeftChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_SizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::remove_VisibleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_AccessibleDescription(System.String) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_AccessibleName(System.String) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_AccessibleRole(System.Windows.Forms.AccessibleRole) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_AllowDrop(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_Anchor(System.Windows.Forms.AnchorStyles) -> System.Void virtual
 M public System.Windows.Forms.PrintPreviewDialog::set_AutoScale(System.Boolean) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::set_AutoScaleBaseSize(System.Drawing.Size) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_AutoScroll(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_AutoScrollMargin(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_AutoScrollMinSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_AutoSize(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_AutoValidate(System.Windows.Forms.AutoValidate) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_BackColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_CausesValidation(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_ControlBox(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Cursor(System.Windows.Forms.Cursor) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_Dock(System.Windows.Forms.DockStyle) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_Enabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Font(System.Drawing.Font) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_FormBorderStyle(System.Windows.Forms.FormBorderStyle) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::set_HelpButton(System.Boolean) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::set_Icon(System.Drawing.Icon) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_IsMdiContainer(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_KeyPreview(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Location(System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Margin(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_MaximizeBox(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_MaximumSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_MinimizeBox(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_MinimumSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Opacity(System.Double) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_RightToLeft(System.Windows.Forms.RightToLeft) -> System.Void virtual
 M public System.Windows.Forms.PrintPreviewDialog::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_ShowInTaskbar(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Size(System.Drawing.Size) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::set_SizeGripStyle(System.Windows.Forms.SizeGripStyle) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_StartPosition(System.Windows.Forms.FormStartPosition) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.PrintPreviewDialog::set_TopMost(System.Boolean) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::set_TransparencyKey(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_UseWaitCursor(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_Visible(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_WindowState(System.Windows.Forms.FormWindowState) -> System.Void
 M public System.Windows.Forms.ProgressBar::ResetForeColor() -> System.Void virtual
 M public System.Windows.Forms.ProgressBar::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ProgressBar::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void

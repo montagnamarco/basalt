@@ -184,6 +184,9 @@ public class PrintPreviewControl : Control
         remove => base.TextChanged -= value;
     }
 
+    /// <summary>Re-declared only to keep the public shape Microsoft declares on this type; the accessible object is the base control's.</summary>
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
+
     /// <summary>Forgets the cached pages, so the next paint renders the document again.</summary>
     public void InvalidatePreview()
     {
