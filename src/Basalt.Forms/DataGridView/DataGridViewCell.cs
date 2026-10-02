@@ -15,12 +15,31 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
     private string _errorText = string.Empty;
     private string _toolTipText = string.Empty;
     private bool _selected;
+    private ContextMenuStrip? _contextMenuStrip;
 
     protected DataGridViewCell()
     {
     }
 
     public int ColumnIndex => OwningColumn?.Index ?? -1;
+
+    /// <summary>
+    /// The cell's own menu, or - while it has none and a grid owns it - whatever
+    /// CellContextMenuStripNeeded supplies this time, asked again on every read rather than cached,
+    /// exactly as ErrorText asks CellErrorTextNeeded fresh in virtual mode.
+    /// </summary>
+    [Browsable(false)]
+    public virtual ContextMenuStrip? ContextMenuStrip
+    {
+        get => _contextMenuStrip ?? (DataGridView is { } grid ? grid.GetCellContextMenuStripCore(this, RowIndex) : null);
+        set
+        {
+            if (ReferenceEquals(_contextMenuStrip, value)) return;
+
+            _contextMenuStrip = value;
+            DataGridView?.OnCellContextMenuStripChangedCore(this);
+        }
+    }
 
     /// <summary>Where the formatted value is drawn, in client coordinates; empty while unattached to a grid.</summary>
     public Rectangle ContentBounds => DataGridView is null ? Rectangle.Empty : GetContentBounds(RowIndex);
@@ -44,7 +63,14 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
     public string ErrorText
     {
         get => GetErrorText(RowIndex);
-        set => _errorText = value ?? string.Empty;
+        set
+        {
+            var newValue = value ?? string.Empty;
+            if (newValue == _errorText) return;
+
+            _errorText = newValue;
+            DataGridView?.OnCellErrorTextChangedCore(this);
+        }
     }
 
     public object? FormattedValue => DataGridView is null ? null : GetFormattedValueCore(DataGridViewDataErrorContexts.Formatting);
@@ -109,6 +135,7 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
             _selected = value;
             DataGridView?.SetCellSelectedCore(this, value);
+            DataGridView?.OnCellStateChangedCore(this, DataGridViewElementStates.Selected);
             DataGridView?.InvalidateCellCore(this);
         }
     }
@@ -118,15 +145,27 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
     public DataGridViewCellStyle Style
     {
         get => _style ??= new DataGridViewCellStyle();
-        set => _style = value;
+        set
+        {
+            _style = value;
+            DataGridView?.OnCellStyleChangedCore(this);
+            if (value is not null) DataGridView?.OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.Cell);
+        }
     }
 
     public object? Tag { get; set; }
 
     public string ToolTipText
     {
-        get => _toolTipText;
-        set => _toolTipText = value ?? string.Empty;
+        get => _toolTipText.Length > 0 || DataGridView is not { } grid ? _toolTipText : grid.GetCellToolTipTextCore(this, RowIndex) ?? string.Empty;
+        set
+        {
+            var newValue = value ?? string.Empty;
+            if (newValue == _toolTipText) return;
+
+            _toolTipText = newValue;
+            DataGridView?.OnCellToolTipTextChangedCore(this);
+        }
     }
 
     public object? Value
@@ -279,7 +318,21 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
     protected virtual Size GetSize(int rowIndex) => new(OwningColumn?.Width ?? 0, OwningRow?.Height ?? 0);
 
-    protected virtual object? GetValue(int rowIndex) => _value;
+    protected virtual object? GetValue(int rowIndex) => DataGridView is { VirtualMode: true } grid ? grid.GetCellValueCore(this, rowIndex) : _value;
+
+    /// <summary>
+    /// Walks cell, then row, then column, then the grid's own ContextMenuStrip (Control's), asking
+    /// CellContextMenuStripNeeded for the cell step the same way the public ContextMenuStrip getter
+    /// does, so a handler supplying one dynamically is honoured here too.
+    /// </summary>
+    public virtual ContextMenuStrip? GetInheritedContextMenuStrip(int rowIndex)
+    {
+        if (ContextMenuStrip is { } own) return own;
+        if (OwningRow is { } row && row.GetContextMenuStrip(rowIndex) is { } rowStrip) return rowStrip;
+        if (OwningColumn?.ContextMenuStrip is { } columnStrip) return columnStrip;
+
+        return DataGridView?.ContextMenuStrip;
+    }
 
     public virtual void InitializeEditingControl(int rowIndex, object? initialFormattedValue, DataGridViewCellStyle dataGridViewCellStyle)
     {
@@ -529,10 +582,18 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
     protected virtual bool SetValue(int rowIndex, object? value)
     {
-        var old = _value;
+        if (DataGridView is { VirtualMode: true } grid)
+        {
+            var old = grid.GetCellValueCore(this, rowIndex);
+            grid.SetCellValueCore(this, rowIndex, value);
+
+            return !Equals(old, value);
+        }
+
+        var previous = _value;
         _value = value;
 
-        return !Equals(old, value);
+        return !Equals(previous, value);
     }
 
     public override string ToString() => $"{GetType().Name} {{ ColumnIndex={ColumnIndex}, RowIndex={RowIndex} }}";

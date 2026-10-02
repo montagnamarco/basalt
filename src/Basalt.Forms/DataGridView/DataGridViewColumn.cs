@@ -28,7 +28,21 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
         _cellTemplate = cellTemplate;
     }
 
-    public DataGridViewAutoSizeColumnMode AutoSizeMode { get; set; } = DataGridViewAutoSizeColumnMode.NotSet;
+    private DataGridViewAutoSizeColumnMode _autoSizeMode = DataGridViewAutoSizeColumnMode.NotSet;
+    private int _dividerWidth;
+
+    public DataGridViewAutoSizeColumnMode AutoSizeMode
+    {
+        get => _autoSizeMode;
+        set
+        {
+            if (value == _autoSizeMode) return;
+
+            var previous = _autoSizeMode;
+            _autoSizeMode = value;
+            DataGridView?.OnAutoSizeColumnModeChangedCore(this, previous);
+        }
+    }
 
     public virtual DataGridViewCell? CellTemplate
     {
@@ -38,16 +52,41 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
 
     public Type? CellType => _cellTemplate?.GetType();
 
+    /// <summary>Column's own menu, raising ColumnContextMenuStripChanged on the owning grid when it is replaced (Column has no "Needed" counterpart: only the cell and row ask for one dynamically).</summary>
+    public override ContextMenuStrip? ContextMenuStrip
+    {
+        get => base.ContextMenuStrip;
+        set
+        {
+            if (ReferenceEquals(base.ContextMenuStrip, value)) return;
+
+            base.ContextMenuStrip = value;
+            DataGridView?.OnColumnContextMenuStripChangedCore(this);
+        }
+    }
+
     public string DataPropertyName
     {
         get => _dataPropertyName;
-        set => _dataPropertyName = value ?? string.Empty;
+        set
+        {
+            var newValue = value ?? string.Empty;
+            if (newValue == _dataPropertyName) return;
+
+            _dataPropertyName = newValue;
+            DataGridView?.OnColumnDataPropertyNameChangedCore(this);
+        }
     }
 
     public override DataGridViewCellStyle DefaultCellStyle
     {
         get => base.DefaultCellStyle;
-        set => base.DefaultCellStyle = value;
+        set
+        {
+            base.DefaultCellStyle = value;
+            DataGridView?.OnColumnDefaultCellStyleChangedCore(this);
+            if (value is not null) DataGridView?.OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.Column);
+        }
     }
 
     public int DisplayIndex
@@ -56,14 +95,24 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
         set => DataGridView?.SetColumnDisplayIndex(this, value);
     }
 
-    public int DividerWidth { get; set; }
+    public int DividerWidth
+    {
+        get => _dividerWidth;
+        set
+        {
+            if (value == _dividerWidth) return;
+
+            _dividerWidth = value;
+            DataGridView?.OnColumnDividerWidthChangedCore(this);
+        }
+    }
 
     public float FillWeight { get; set; } = 100f;
 
     public override bool Frozen
     {
         get => base.Frozen;
-        set => base.Frozen = value;
+        set => SetStateFlag(value, base.Frozen, v => base.Frozen = v, DataGridViewElementStates.Frozen);
     }
 
     public DataGridViewColumnHeaderCell HeaderCell
@@ -82,6 +131,7 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
         {
             _headerCell = value;
             if (value is not null) value.OwningColumn = this;
+            DataGridView?.OnColumnHeaderCellChangedCore(this);
         }
     }
 
@@ -104,8 +154,14 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
         set
         {
             if (value < 2) throw new ArgumentOutOfRangeException(nameof(value));
+            if (value == _minimumWidth)
+            {
+                if (_width < value) Width = value;
+                return;
+            }
 
             _minimumWidth = value;
+            DataGridView?.OnColumnMinimumWidthChangedCore(this);
             if (_width < value) Width = value;
         }
     }
@@ -113,13 +169,20 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
     public string Name
     {
         get => _name;
-        set => _name = value ?? string.Empty;
+        set
+        {
+            var newValue = value ?? string.Empty;
+            if (newValue == _name) return;
+
+            _name = newValue;
+            DataGridView?.OnColumnNameChangedCore(this);
+        }
     }
 
     public override bool ReadOnly
     {
         get => base.ReadOnly;
-        set => base.ReadOnly = value;
+        set => SetStateFlag(value, base.ReadOnly, v => base.ReadOnly = v, DataGridViewElementStates.ReadOnly);
     }
 
     public override DataGridViewTriState Resizable
@@ -130,12 +193,31 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
 
     public ISite? Site { get; set; }
 
-    public DataGridViewColumnSortMode SortMode { get; set; } = DataGridViewColumnSortMode.NotSortable;
+    private DataGridViewColumnSortMode _sortMode = DataGridViewColumnSortMode.NotSortable;
+
+    public DataGridViewColumnSortMode SortMode
+    {
+        get => _sortMode;
+        set
+        {
+            if (value == _sortMode) return;
+
+            _sortMode = value;
+            DataGridView?.OnColumnSortModeChangedCore(this);
+        }
+    }
 
     public string ToolTipText
     {
         get => _toolTipText;
-        set => _toolTipText = value ?? string.Empty;
+        set
+        {
+            var newValue = value ?? string.Empty;
+            if (newValue == _toolTipText) return;
+
+            _toolTipText = newValue;
+            DataGridView?.OnColumnToolTipTextChangedCore(this);
+        }
     }
 
     public Type? ValueType { get; set; }
@@ -143,7 +225,7 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
     public override bool Visible
     {
         get => base.Visible;
-        set => base.Visible = value;
+        set => SetStateFlag(value, base.Visible, v => base.Visible = v, DataGridViewElementStates.Visible);
     }
 
     public int Width
@@ -204,5 +286,20 @@ public class DataGridViewColumn : DataGridViewBand, IComponent
         };
 
     /// <summary>Set by the column collection while laying out columns left to right, without going through the public setter's reorder logic.</summary>
-    internal void SetDisplayIndexCore(int value) => _displayIndex = value;
+    internal void SetDisplayIndexCore(int value)
+    {
+        if (value == _displayIndex) return;
+
+        _displayIndex = value;
+        DataGridView?.OnColumnDisplayIndexChangedCore(this);
+    }
+
+    /// <summary>Applies one of the Band boolean flags through its own setter only when it really changes, then reports the flip to the owning grid as ColumnStateChanged.</summary>
+    private void SetStateFlag(bool value, bool current, Action<bool> apply, DataGridViewElementStates flag)
+    {
+        if (value == current) return;
+
+        apply(value);
+        DataGridView?.OnColumnStateChangedCore(this, flag);
+    }
 }

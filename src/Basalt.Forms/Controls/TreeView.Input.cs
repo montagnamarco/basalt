@@ -41,6 +41,8 @@ public partial class TreeView
     /// <summary>Answers WM_GETDLGCODE: a tree view wants the keys that move and page its selection.</summary>
     internal override bool DialogCodeWantsKey(Keys keyData)
     {
+        if (_editingNode is not null && (keyData == Keys.Return || keyData == Keys.Escape)) return true;
+
         return keyData switch
         {
             Keys.Up or Keys.Down or Keys.Left or Keys.Right or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown => true,
@@ -57,6 +59,9 @@ public partial class TreeView
     protected override void OnLostFocus(EventArgs e)
     {
         base.OnLostFocus(e);
+
+        // Leaving the tree commits a label edit in progress, as the native edit box does.
+        if (_editingNode is { } editing) EndEditNode(editing, cancel: false);
         if (_hideSelection) Invalidate();
     }
 
@@ -69,6 +74,8 @@ public partial class TreeView
         var hit = HitTest(e.Location);
         if (hit.Node is not { } node) return;
 
+        ArmDragCandidate(node, e.Button, e.Location);
+
         if (hit.Location == TreeViewHitTestLocations.PlusMinus)
         {
             node.Toggle();
@@ -79,7 +86,10 @@ public partial class TreeView
         }
         else if (e.Button == MouseButtons.Left)
         {
+            var wasSelected = node == _selectedNode && hit.Location == TreeViewHitTestLocations.Label;
+
             if (SelectNode(node, TreeViewAction.ByMouse) && e.Clicks >= 2) node.Toggle();
+            else if (wasSelected && e.Clicks == 1 && LabelEdit) BeginEditNode(node);
         }
 
         var arguments = new TreeNodeMouseClickEventArgs(node, e.Button, e.Clicks, e.X, e.Y);
@@ -92,8 +102,22 @@ public partial class TreeView
         base.OnKeyDown(e);
         if (e.Handled) return;
 
+        if (_editingNode is { } editing)
+        {
+            if (e.KeyCode == Keys.Return) EndEditNode(editing, cancel: false);
+            else if (e.KeyCode == Keys.Escape) EndEditNode(editing, cancel: true);
+
+            e.Handled = true;
+            return;
+        }
+
         switch (e.KeyCode)
         {
+            case Keys.F2:
+                if (_selectedNode is { } toEdit && LabelEdit) BeginEditNode(toEdit);
+                e.Handled = true;
+                break;
+
             case Keys.Up:
                 MoveSelection(-1);
                 e.Handled = true;
@@ -140,6 +164,17 @@ public partial class TreeView
     {
         base.OnKeyPress(e);
         if (e.Handled) return;
+
+        if (_editingNode is not null)
+        {
+            if (e.KeyChar == (char)8) _editText = _editText.Length > 0 ? _editText[..^1] : _editText;
+            else if (!char.IsControl(e.KeyChar)) _editText += e.KeyChar;
+
+            Invalidate();
+            e.Handled = true;
+            return;
+        }
+
         if (_selectedNode is not { } node) return;
 
         switch (e.KeyChar)
@@ -275,7 +310,13 @@ public partial class TreeView
 
     internal override void NonClientMouseUp(Point outer) => _thumbDragOffset = null;
 
-    internal override void DefaultCaptureLost() => _thumbDragOffset = null;
+    internal override void DefaultCaptureLost()
+    {
+        _thumbDragOffset = null;
+        DisarmDragCandidate();
+    }
+
+    internal override void DefaultMouseUp(MouseEventArgs e) => DisarmDragCandidate();
 
     private void StepRows(int delta)
     {

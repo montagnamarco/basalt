@@ -18,8 +18,12 @@ public partial class ListView
     private int _resizeStartX;
     private int _resizeStartWidth;
 
-    /// <summary>The column a press landed on in the header, fired as ColumnClick only if released there without a resize.</summary>
+    /// <summary>The column a press landed on in the header, fired as ColumnClick only if released there without a resize or a reorder drag.</summary>
     private int _pendingColumnClick = -1;
+
+    /// <summary>The column being dragged to a new position, once AllowColumnReorder and the press has moved far enough; -1 while none is.</summary>
+    private int _reorderingColumn = -1;
+    private int _columnPressX;
 
     private Color EffectiveBackColor => ShouldSerializeBackColor() ? BackColor : SystemColors.Window;
 
@@ -35,6 +39,13 @@ public partial class ListView
         var client = ClientRectangle;
 
         using (var back = new SolidBrush(EffectiveBackColor)) graphics.FillRectangle(back, client);
+
+        if (IsVirtualLayoutView)
+        {
+            PaintVirtualItems(graphics);
+            if (_view == View.Details) PaintHeader(graphics);
+            return;
+        }
 
         var rects = ComputeItemLayout(out _);
 
@@ -73,6 +84,8 @@ public partial class ListView
 
     private void PaintHeaderCell(Graphics graphics, ColumnHeader column, Rectangle rect)
     {
+        if (TryOwnerDrawColumnHeader(graphics, column, rect)) return;
+
         ControlPaint.DrawButton(graphics, rect, ButtonState.Normal);
 
         var textRect = new Rectangle(rect.X + 3, rect.Y, Math.Max(rect.Width - 6, 0), rect.Height);
@@ -123,6 +136,12 @@ public partial class ListView
 
     private void PaintDetailsRow(Graphics graphics, ListViewItem item, Rectangle row)
     {
+        if (TryOwnerDrawItem(graphics, item, row, out _))
+        {
+            PaintDetailsRowSubItemsOwnerDrawn(graphics, item, row);
+            return;
+        }
+
         var selected = _selected.Contains(item);
         var highlighted = selected && (!_hideSelection || Focused);
         var focused = Focused && ReferenceEquals(_focusedItem, item);
@@ -181,6 +200,28 @@ public partial class ListView
         if (focused) ControlPaint.DrawFocusRectangle(graphics, highlightRect, EffectiveForeColor, EffectiveBackColor);
     }
 
+    /// <summary>Draws one row's columns through DrawSubItem, once the handler asked for a hand-drawn row via DrawItem.</summary>
+    private void PaintDetailsRowSubItemsOwnerDrawn(Graphics graphics, ListViewItem item, Rectangle row)
+    {
+        var x = row.X;
+        var columnCount = Math.Max(_columns.Count, 1);
+
+        for (var c = 0; c < columnCount && c < item.SubItems.Count; c++)
+        {
+            var columnWidth = c < _columns.Count ? _columns[c].Width : row.Width;
+            var cell = new Rectangle(x, row.Y, columnWidth, row.Height);
+
+            if (!TryOwnerDrawSubItem(graphics, item, c, cell))
+            {
+                var subItem = item.SubItems[c];
+                TextRenderer.DrawText(graphics, subItem.Text, subItem.Font ?? Font, cell, subItem.ForeColor,
+                    TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
+            }
+
+            x += columnWidth;
+        }
+    }
+
     /// <summary>
     /// Draws every separator as a filled 1-pixel-wide rectangle rather than a
     /// stroked line, so it lands exactly on the pixel row or column GetItemRect
@@ -221,6 +262,8 @@ public partial class ListView
 
     private void PaintIconOrListItem(Graphics graphics, ListViewItem item, Rectangle content, Rectangle cell)
     {
+        if (TryOwnerDrawItem(graphics, item, cell, out _)) return;
+
         var selected = _selected.Contains(item);
         var highlighted = selected && (!_hideSelection || Focused);
         var focused = Focused && ReferenceEquals(_focusedItem, item);
@@ -253,6 +296,98 @@ public partial class ListView
         if (focused) ControlPaint.DrawFocusRectangle(graphics, labelRect, EffectiveForeColor, EffectiveBackColor);
     }
 
+    /// <summary>
+    /// DefaultPaint's VirtualMode path: paints only the rows VisibleVirtualRange reports (never one
+    /// Rectangle, let alone one RetrieveVirtualItem call, per row of a VirtualListSize of 100,000),
+    /// and raises CacheVirtualItems once per distinct visible range rather than on every paint.
+    /// </summary>
+    private void PaintVirtualItems(Graphics graphics)
+    {
+        var (first, last) = VisibleVirtualRange();
+        if (first > last) return;
+
+        NotifyCacheVirtualItemsIfRangeChanged(first, last);
+
+        for (var index = first; index <= last; index++)
+        {
+            var item = GetVirtualItem(index);
+            var row = ToClient(VirtualItemContentBounds(index));
+
+            if (_view == View.Details) PaintVirtualDetailsRow(graphics, item, index, row);
+            else PaintVirtualListItem(graphics, item, index, row);
+        }
+    }
+
+    /// <summary>PaintDetailsRow's VirtualMode counterpart: selection comes from IsVirtualIndexSelected(index), since a virtual item has no identity of its own to look up in _selected.</summary>
+    private void PaintVirtualDetailsRow(Graphics graphics, ListViewItem item, int index, Rectangle row)
+    {
+        var highlighted = IsVirtualIndexSelected(index) && (!_hideSelection || Focused);
+        var highlightWidth = _fullRowSelect ? row.Width : (_columns.Count > 0 ? _columns[0].Width : row.Width);
+        var highlightRect = new Rectangle(row.X, row.Y, highlightWidth, row.Height);
+
+        if (highlighted)
+        {
+            using var brush = new SolidBrush(SystemColors.Highlight);
+            graphics.FillRectangle(brush, highlightRect);
+        }
+
+        var foreColor = highlighted ? SystemColors.HighlightText : EffectiveForeColor;
+        var x = row.X;
+        var columnCount = Math.Max(_columns.Count, 1);
+
+        for (var c = 0; c < columnCount && c < item.SubItems.Count; c++)
+        {
+            var columnWidth = c < _columns.Count ? _columns[c].Width : row.Width;
+            var cell = new Rectangle(x, row.Y, columnWidth, row.Height);
+            var subItem = item.SubItems[c];
+            var textRect = cell;
+
+            if (c == 0)
+            {
+                var iconSize = SmallIconSize;
+                if (_smallImageList is not null && item.ImageIndex >= 0 && item.ImageIndex < _smallImageList.Images.Count)
+                {
+                    _smallImageList.Draw(graphics, cell.X + 2, row.Y + (row.Height - iconSize.Height) / 2, item.ImageIndex);
+                }
+
+                textRect = new Rectangle(cell.X + iconSize.Width + 4, cell.Y, Math.Max(cell.Width - iconSize.Width - 6, 0), cell.Height);
+            }
+            else
+            {
+                textRect = new Rectangle(cell.X + 2, cell.Y, Math.Max(cell.Width - 4, 0), cell.Height);
+            }
+
+            TextRenderer.DrawText(graphics, subItem.Text, subItem.Font ?? Font, textRect, highlighted ? foreColor : subItem.ForeColor,
+                TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
+
+            x += columnWidth;
+        }
+    }
+
+    /// <summary>PaintIconOrListItem's VirtualMode counterpart, used for View.List (the one icon-ish view VirtualMode supports this round).</summary>
+    private void PaintVirtualListItem(Graphics graphics, ListViewItem item, int index, Rectangle row)
+    {
+        var highlighted = IsVirtualIndexSelected(index) && (!_hideSelection || Focused);
+        var foreColor = highlighted ? SystemColors.HighlightText : EffectiveForeColor;
+
+        if (highlighted)
+        {
+            using var brush = new SolidBrush(SystemColors.Highlight);
+            graphics.FillRectangle(brush, row);
+        }
+
+        var iconSize = SmallIconSize;
+        var iconRect = new Rectangle(row.X + 2, row.Y + (row.Height - iconSize.Height) / 2, iconSize.Width, iconSize.Height);
+        if (_smallImageList is not null && item.ImageIndex >= 0 && item.ImageIndex < _smallImageList.Images.Count)
+        {
+            _smallImageList.Draw(graphics, iconRect.X, iconRect.Y, item.ImageIndex);
+        }
+
+        var labelRect = new Rectangle(iconRect.Right + 4, row.Y, Math.Max(row.Width - iconRect.Width - 6, 0), row.Height);
+        TextRenderer.DrawText(graphics, item.Text, item.Font, labelRect, foreColor,
+            TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
+    }
+
     // --- Focus -----------------------------------------------------------------
 
     internal override void DefaultGotFocus() => Invalidate();
@@ -272,6 +407,19 @@ public partial class ListView
             return;
         }
 
+        if (IsVirtualLayoutView)
+        {
+            var virtualIndex = VirtualIndexAt(e.Y);
+            if (virtualIndex < 0)
+            {
+                if ((ModifierKeys & (Keys.Control | Keys.Shift)) == 0) ClearVirtualSelection();
+                return;
+            }
+
+            SelectVirtualFromMouse(virtualIndex, e);
+            return;
+        }
+
         var hit = HitTestCore(e.X, e.Y);
         if (hit.Item is null)
         {
@@ -285,7 +433,14 @@ public partial class ListView
             return;
         }
 
+        // A click on the label of an item already selected re-opens it for editing, same as Explorer's list view.
+        var wasSelected = hit.Item.Selected;
         SelectFromMouse(hit.Item, e);
+
+        if (_labelEdit && wasSelected && hit.Location == ListViewHitTestLocations.Label && (ModifierKeys & (Keys.Control | Keys.Shift)) == 0)
+        {
+            BeginEditCore(hit.Item);
+        }
     }
 
     internal override void DefaultMouseMove(MouseEventArgs e)
@@ -293,7 +448,18 @@ public partial class ListView
         if (_resizingColumn >= 0)
         {
             var delta = e.X - _resizeStartX;
-            _columns[_resizingColumn].Width = Math.Max(_resizeStartWidth + delta, 0);
+            var proposed = Math.Max(_resizeStartWidth + delta, 0);
+
+            var args = new ColumnWidthChangingEventArgs(_resizingColumn, proposed);
+            OnColumnWidthChanging(args);
+            if (!args.Cancel) _columns[_resizingColumn].Width = args.NewWidth;
+
+            return;
+        }
+
+        if (_allowColumnReorder && _pendingColumnClick >= 0 && _reorderingColumn < 0 && Math.Abs(e.X - _columnPressX) > DividerGrabWidth)
+        {
+            _reorderingColumn = _pendingColumnClick;
         }
     }
 
@@ -302,6 +468,22 @@ public partial class ListView
         if (_resizingColumn >= 0)
         {
             _resizingColumn = -1;
+            _pendingColumnClick = -1;
+            return;
+        }
+
+        if (_reorderingColumn >= 0)
+        {
+            var newIndex = HeaderColumnAt(e.X);
+            if (newIndex >= 0 && newIndex != _reorderingColumn)
+            {
+                var header = _columns[_reorderingColumn];
+                var args = new ColumnReorderedEventArgs(_reorderingColumn, newIndex, header);
+                OnColumnReordered(args);
+                if (!args.Cancel) MoveColumnDisplayIndex(header, newIndex);
+            }
+
+            _reorderingColumn = -1;
             _pendingColumnClick = -1;
             return;
         }
@@ -318,6 +500,7 @@ public partial class ListView
     {
         _resizingColumn = -1;
         _pendingColumnClick = -1;
+        _reorderingColumn = -1;
         _thumbDrag = null;
     }
 
@@ -333,6 +516,7 @@ public partial class ListView
         }
 
         _pendingColumnClick = HeaderColumnAt(x);
+        _columnPressX = x;
     }
 
     /// <summary>The column whose right edge is within grabbing distance of x, in client coordinates; -1 if none.</summary>
@@ -430,19 +614,38 @@ public partial class ListView
 
     internal override bool DialogCodeWantsChar(char charCode) => false;
 
-    /// <summary>Claims the arrow keys and paging keys before ContainerControl can read them as dialog navigation.</summary>
+    /// <summary>
+    /// Claims the arrow keys and paging keys before ContainerControl can read them as dialog
+    /// navigation, Shift/Control held or not: keyData carries them ORed in (Keys.Down | Keys.Shift
+    /// for Shift+Down), so matching keyData itself only ever recognised the unmodified key and
+    /// silently lost every Shift/Control-arrow combination - including the Shift-range and
+    /// Control-move-without-selecting gestures DefaultKeyDown and DefaultKeyDownVirtual implement.
+    /// </summary>
     internal override bool DialogCodeWantsKey(Keys keyData) =>
-        keyData is Keys.Up or Keys.Down or Keys.Left or Keys.Right or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown;
+        (keyData & Keys.KeyCode) is Keys.Up or Keys.Down or Keys.Left or Keys.Right or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown;
 
     internal override void DefaultKeyDown(KeyEventArgs e)
     {
-        if (_items.Count == 0) return;
+        if (EffectiveItemCount == 0) return;
+
+        if (IsVirtualLayoutView)
+        {
+            DefaultKeyDownVirtual(e);
+            return;
+        }
 
         var currentIndex = _focusedItem is null ? -1 : IndexOfItem(_focusedItem);
 
         if (e.KeyCode == Keys.Space)
         {
             if (_checkBoxes && _focusedItem is not null) _focusedItem.Checked = !_focusedItem.Checked;
+            e.Handled = true;
+            return;
+        }
+
+        if (e.KeyCode == Keys.F2 && _labelEdit && _focusedItem is not null)
+        {
+            BeginEditCore(_focusedItem);
             e.Handled = true;
             return;
         }
@@ -530,7 +733,7 @@ public partial class ListView
 
     internal override WindowScrollInfo? GetWindowScroll(bool vertical)
     {
-        ComputeItemLayout(out var contentSize);
+        var contentSize = CurrentContentSize();
         var viewport = ContentRectangle;
 
         if (vertical)

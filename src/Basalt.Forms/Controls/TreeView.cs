@@ -365,6 +365,9 @@ public partial class TreeView : Control
     {
         if (_selectedNode == node) return true;
 
+        // Moving to another node commits the label being edited first.
+        if (_editingNode is { } editing) EndEditNode(editing, cancel: false);
+
         var cancel = new TreeViewCancelEventArgs(node, false, action);
         OnBeforeSelect(cancel);
         if (cancel.Cancel) return false;
@@ -424,6 +427,9 @@ public partial class TreeView : Control
     {
         if (_selectedNode is { } selected && (selected == node || IsDescendant(node, selected))) _selectedNode = null;
         if (_topNode is { } top && (top == node || IsDescendant(node, top))) _topNode = null;
+
+        // The node being renamed is gone: its edit ends with nothing to rename and no event.
+        if (_editingNode is { } editing && (editing == node || IsDescendant(node, editing))) _editingNode = null;
     }
 
     private static bool IsDescendant(TreeNode ancestor, TreeNode node)

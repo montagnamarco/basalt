@@ -46,6 +46,9 @@ public class DataGridViewHeaderCell : DataGridViewCell
         base.Dispose(disposing);
     }
 
+    /// <summary>A header cell has no row/column of its own to ask next: its own menu, or the grid's (Control's own ContextMenuStrip).</summary>
+    public override ContextMenuStrip? GetInheritedContextMenuStrip(int rowIndex) => ContextMenuStrip ?? DataGridView?.ContextMenuStrip;
+
     public override DataGridViewElementStates GetInheritedState(int rowIndex) => DataGridViewElementStates.Visible | (Selected ? DataGridViewElementStates.Selected : DataGridViewElementStates.None);
 
     protected override Size GetSize(int rowIndex) => new(OwningColumn?.Width ?? DataGridView?.RowHeadersWidth ?? 0, OwningRow?.Height ?? DataGridView?.ColumnHeadersHeight ?? 0);

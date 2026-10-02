@@ -112,6 +112,7 @@ public partial class DataGridView
     private bool CancelEditCore()
     {
         if (EditingControl is null || _currentCell is not { } current) return true;
+        if (!ConfirmCancelRowEditCore()) return false;
 
         RemoveEditingControl();
         OnCellEndEdit(new DataGridViewCellEventArgs(current.ColumnIndex, current.RowIndex));

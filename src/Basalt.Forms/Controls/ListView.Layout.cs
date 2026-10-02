@@ -203,8 +203,19 @@ public partial class ListView
     /// <summary>The unscrolled content-space rectangle for one item's whole row or cell.</summary>
     private Rectangle ItemContentBounds(int index)
     {
+        if (IsVirtualLayoutView) return index >= 0 && index < _virtualListSize ? VirtualItemContentBounds(index) : Rectangle.Empty;
+
         var rects = ComputeItemLayout(out _);
         return index >= 0 && index < rects.Length ? rects[index] : Rectangle.Empty;
+    }
+
+    /// <summary>The content size scroll bars and clamping measure against: VirtualListSize x row height in VirtualMode (Details/List), never one Rectangle per item.</summary>
+    private Size CurrentContentSize()
+    {
+        if (IsVirtualLayoutView) return VirtualContentSize();
+
+        ComputeItemLayout(out var contentSize);
+        return contentSize;
     }
 
     private Rectangle ItemPortionBounds(int index, ItemBoundsPortion portion)
@@ -261,35 +272,19 @@ public partial class ListView
         return new Rectangle(x, 0, _columns[columnIndex].Width, HeaderHeight);
     }
 
-    private bool NeedsVerticalScrollBar
-    {
-        get
-        {
-            ComputeItemLayout(out var contentSize);
-            return ScrollsVertically && contentSize.Height > ContentRectangle.Height;
-        }
-    }
+    private bool NeedsVerticalScrollBar => ScrollsVertically && CurrentContentSize().Height > ContentRectangle.Height;
 
-    private bool NeedsHorizontalScrollBar
-    {
-        get
-        {
-            ComputeItemLayout(out var contentSize);
-            return ScrollsHorizontally && contentSize.Width > ContentRectangle.Width;
-        }
-    }
+    private bool NeedsHorizontalScrollBar => ScrollsHorizontally && CurrentContentSize().Width > ContentRectangle.Width;
 
     private int ClampScrollY(int value)
     {
-        ComputeItemLayout(out var contentSize);
-        var max = Math.Max(contentSize.Height - ContentRectangle.Height, 0);
+        var max = Math.Max(CurrentContentSize().Height - ContentRectangle.Height, 0);
         return Math.Clamp(value, 0, max);
     }
 
     private int ClampScrollX(int value)
     {
-        ComputeItemLayout(out var contentSize);
-        var max = Math.Max(contentSize.Width - ContentRectangle.Width, 0);
+        var max = Math.Max(CurrentContentSize().Width - ContentRectangle.Width, 0);
         return Math.Clamp(value, 0, max);
     }
 
@@ -318,6 +313,12 @@ public partial class ListView
     /// <summary>The first item whose row or cell is at least partially inside the visible viewport.</summary>
     private ListViewItem? TopItemCore()
     {
+        if (IsVirtualLayoutView)
+        {
+            var (first, last) = VisibleVirtualRange();
+            return first <= last ? GetVirtualItem(first) : null;
+        }
+
         var rects = ComputeItemLayout(out _);
         var viewport = ContentRectangle;
 
@@ -339,6 +340,8 @@ public partial class ListView
         if (y > viewport.Bottom) return new ListViewHitTestInfo(null, null, ListViewHitTestLocations.BelowClientArea);
         if (x < viewport.Left) return new ListViewHitTestInfo(null, null, ListViewHitTestLocations.LeftOfClientArea);
         if (x > viewport.Right) return new ListViewHitTestInfo(null, null, ListViewHitTestLocations.RightOfClientArea);
+
+        if (IsVirtualLayoutView) return HitTestVirtualCore(x, y, point);
 
         var rects = ComputeItemLayout(out _);
         for (var i = 0; i < rects.Length; i++)
@@ -370,5 +373,28 @@ public partial class ListView
         }
 
         return new ListViewHitTestInfo(null, null, ListViewHitTestLocations.None);
+    }
+
+    /// <summary>HitTestCore's VirtualMode counterpart: the row is found by arithmetic (VirtualIndexAt), and RetrieveVirtualItem is asked for only that one index, never for every row.</summary>
+    private ListViewHitTestInfo HitTestVirtualCore(int x, int y, Point point)
+    {
+        var index = VirtualIndexAt(y);
+        if (index < 0) return new ListViewHitTestInfo(null, null, ListViewHitTestLocations.None);
+
+        var content = VirtualItemContentBounds(index);
+        var client = ToClient(content);
+        if (!client.Contains(point)) return new ListViewHitTestInfo(null, null, ListViewHitTestLocations.None);
+
+        var item = GetVirtualItem(index);
+
+        if (_view == View.Details)
+        {
+            var location = x < client.X + SmallIconSize.Width + 2 ? ListViewHitTestLocations.Image : ListViewHitTestLocations.Label;
+            return new ListViewHitTestInfo(item, null, location);
+        }
+
+        var (icon, _) = SplitItemRect(content);
+        var iconLocation = ToClient(icon).Contains(point) ? ListViewHitTestLocations.Image : ListViewHitTestLocations.Label;
+        return new ListViewHitTestInfo(item, null, iconLocation);
     }
 }

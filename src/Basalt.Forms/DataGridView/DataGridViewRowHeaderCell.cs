@@ -15,7 +15,10 @@ public class DataGridViewRowHeaderCell : DataGridViewHeaderCell
 
     protected override Rectangle GetErrorIconBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
 
-    protected override string GetErrorText(int rowIndex) => OwningRow?.ErrorText ?? base.GetErrorText(rowIndex);
+    protected override string GetErrorText(int rowIndex) => OwningRow?.GetErrorText(rowIndex) ?? base.GetErrorText(rowIndex);
+
+    /// <summary>This cell's own menu, or its row's, or the grid's - the row header has a row to fall back on that a plain header cell does not.</summary>
+    public override ContextMenuStrip? GetInheritedContextMenuStrip(int rowIndex) => ContextMenuStrip ?? OwningRow?.GetContextMenuStrip(rowIndex) ?? DataGridView?.ContextMenuStrip;
 
     public override DataGridViewCellStyle GetInheritedStyle(DataGridViewCellStyle? inheritedCellStyle, int rowIndex, bool includeColors)
     {

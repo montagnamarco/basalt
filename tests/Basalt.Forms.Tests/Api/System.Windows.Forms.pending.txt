@@ -69,60 +69,12 @@ M protected System.Windows.Forms.ContextMenuStrip::SetVisibleCore(System.Boolean
 M protected System.Windows.Forms.Cursor::Finalize() -> System.Void virtual
 M protected System.Windows.Forms.DataGridColumnStyle::CreateHeaderAccessibleObject() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridView::AccessibilityNotifyCurrentCellChanged(System.Drawing.Point) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::AutoResizeColumn(System.Int32, System.Windows.Forms.DataGridViewAutoSizeColumnMode, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeColumnHeadersHeight(System.Boolean, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeColumnHeadersHeight(System.Int32, System.Boolean, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeColumns(System.Windows.Forms.DataGridViewAutoSizeColumnsMode, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeRow(System.Int32, System.Windows.Forms.DataGridViewAutoSizeRowMode, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeRowHeadersWidth(System.Int32, System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode, System.Boolean, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeRowHeadersWidth(System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode, System.Boolean, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeRows(System.Int32, System.Int32, System.Windows.Forms.DataGridViewAutoSizeRowMode, System.Boolean) -> System.Void
-M protected System.Windows.Forms.DataGridView::AutoResizeRows(System.Windows.Forms.DataGridViewAutoSizeRowsMode, System.Boolean) -> System.Void
 M protected System.Windows.Forms.DataGridView::ClearSelection(System.Int32, System.Int32, System.Boolean) -> System.Void
 M protected System.Windows.Forms.DataGridView::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridView::CreateControlsInstance() -> System.Windows.Forms.Control+ControlCollection virtual
 M protected System.Windows.Forms.DataGridView::GetAccessibilityObjectById(System.Int32) -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridView::IsInputChar(System.Char) -> System.Boolean virtual
-M protected System.Windows.Forms.DataGridView::OnAllowUserToOrderColumnsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnAutoSizeColumnModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnAutoSizeColumnsModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnsModeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnAutoSizeRowsModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCancelRowEdit(System.Windows.Forms.QuestionEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellContextMenuStripChanged(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellContextMenuStripNeeded(System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellErrorTextChanged(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellErrorTextNeeded(System.Windows.Forms.DataGridViewCellErrorTextNeededEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellMouseClick(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellMouseEnter(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellMouseLeave(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellMouseMove(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellPainting(System.Windows.Forms.DataGridViewCellPaintingEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellStateChanged(System.Windows.Forms.DataGridViewCellStateChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellStyleChanged(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellStyleContentChanged(System.Windows.Forms.DataGridViewCellStyleContentChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellToolTipTextChanged(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellToolTipTextNeeded(System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellValueNeeded(System.Windows.Forms.DataGridViewCellValueEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnCellValuePushed(System.Windows.Forms.DataGridViewCellValueEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnContextMenuStripChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnDataPropertyNameChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnDefaultCellStyleChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnDisplayIndexChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnDividerDoubleClick(System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnDividerWidthChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnHeaderCellChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnHeaderMouseClick(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnHeaderMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnHeadersBorderStyleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnHeadersHeightSizeModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnMinimumWidthChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnNameChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnSortModeChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnStateChanged(System.Windows.Forms.DataGridViewColumnStateChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnColumnToolTipTextChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnCursorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnDefaultValuesNeeded(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnDoubleClick(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnEnabledChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnEnter(System.EventArgs) -> System.Void virtual
@@ -138,35 +90,8 @@ M protected System.Windows.Forms.DataGridView::OnMouseClick(System.Windows.Forms
 M protected System.Windows.Forms.DataGridView::OnMouseDoubleClick(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnMouseEnter(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnMouseWheel(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnNewRowNeeded(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowContextMenuStripChanged(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowContextMenuStripNeeded(System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowDefaultCellStyleChanged(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowDirtyStateNeeded(System.Windows.Forms.QuestionEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowDividerDoubleClick(System.Windows.Forms.DataGridViewRowDividerDoubleClickEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowDividerHeightChanged(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowEnter(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowErrorTextChanged(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowErrorTextNeeded(System.Windows.Forms.DataGridViewRowErrorTextNeededEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowHeaderCellChanged(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowHeaderMouseClick(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowHeaderMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowHeadersBorderStyleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowHeadersWidthSizeModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowHeightInfoNeeded(System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowHeightInfoPushed(System.Windows.Forms.DataGridViewRowHeightInfoPushedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowLeave(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowMinimumHeightChanged(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowPostPaint(System.Windows.Forms.DataGridViewRowPostPaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowPrePaint(System.Windows.Forms.DataGridViewRowPrePaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowStateChanged(System.Int32, System.Windows.Forms.DataGridViewRowStateChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowUnshared(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnRowValidated(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnScroll(System.Windows.Forms.ScrollEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnUserAddedRow(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnUserDeletedRow(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnUserDeletingRow(System.Windows.Forms.DataGridViewRowCancelEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnValidating(System.ComponentModel.CancelEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnVisibleChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::ProcessAKey(System.Windows.Forms.Keys) -> System.Boolean
@@ -355,17 +280,8 @@ M protected System.Windows.Forms.ListBox::WmReflectCommand(ref System.Windows.Fo
 M protected System.Windows.Forms.ListBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.ListView::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ListView::CreateHandle() -> System.Void virtual
-M protected System.Windows.Forms.ListView::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.ListView::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ListView::OnAfterLabelEdit(System.Windows.Forms.LabelEditEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnBackgroundImageChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnBeforeLabelEdit(System.Windows.Forms.LabelEditEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnCacheVirtualItems(System.Windows.Forms.CacheVirtualItemsEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnColumnReordered(System.Windows.Forms.ColumnReorderedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnColumnWidthChanging(System.Windows.Forms.ColumnWidthChangingEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnDrawColumnHeader(System.Windows.Forms.DrawListViewColumnHeaderEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnDrawItem(System.Windows.Forms.DrawListViewItemEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnDrawSubItem(System.Windows.Forms.DrawListViewSubItemEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnGroupCollapsedStateChanged(System.Windows.Forms.ListViewGroupEventArgs) -> System.Void virtual
@@ -379,11 +295,8 @@ M protected System.Windows.Forms.ListView::OnMouseHover(System.EventArgs) -> Sys
 M protected System.Windows.Forms.ListView::OnMouseLeave(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnParentChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnRetrieveVirtualItem(System.Windows.Forms.RetrieveVirtualItemEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnSearchForVirtualItem(System.Windows.Forms.SearchForVirtualItemEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnVirtualItemsSelectionRangeChanged(System.Windows.Forms.ListViewVirtualItemsSelectionRangeChangedEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ListView::RealizeProperties() -> System.Void
 M protected System.Windows.Forms.ListView::UpdateExtendedStyles() -> System.Void
 M protected System.Windows.Forms.ListView::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
@@ -627,16 +540,10 @@ M protected System.Windows.Forms.TreeView::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.TreeView::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::GetItemRenderStyles(System.Windows.Forms.TreeNode, System.Int32) -> System.Windows.Forms.OwnerDrawPropertyBag
 M protected System.Windows.Forms.TreeView::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.TreeView::OnAfterLabelEdit(System.Windows.Forms.NodeLabelEditEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnBeforeLabelEdit(System.Windows.Forms.NodeLabelEditEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnDrawNode(System.Windows.Forms.DrawTreeNodeEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnItemDrag(System.Windows.Forms.ItemDragEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnMouseHover(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnMouseLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnNodeMouseHover(System.Windows.Forms.TreeNodeMouseHoverEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::get_DoubleBuffered() -> System.Boolean virtual
@@ -767,14 +674,6 @@ M public System.Windows.Forms.ColumnHeader::set_ImageKey(System.String) -> Syste
 M public System.Windows.Forms.ColumnHeaderConverter::.ctor()
 M public System.Windows.Forms.ColumnHeaderConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.ColumnHeaderConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.ColumnReorderedEventArgs::.ctor(System.Int32, System.Int32, System.Windows.Forms.ColumnHeader)
-M public System.Windows.Forms.ColumnReorderedEventArgs::get_Header() -> System.Windows.Forms.ColumnHeader
-M public System.Windows.Forms.ColumnReorderedEventArgs::get_NewDisplayIndex() -> System.Int32
-M public System.Windows.Forms.ColumnReorderedEventArgs::get_OldDisplayIndex() -> System.Int32
-M public System.Windows.Forms.ColumnReorderedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.ColumnReorderedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.ColumnReorderedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.ColumnReorderedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.ColumnReorderedEventHandler::Invoke(System.Object, System.Windows.Forms.ColumnReorderedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant::.ctor()
 M public System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService::ShowPropertyPage(System.String, System.Object, System.Int32, System.Guid, System.IntPtr) -> System.Void abstract
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::DropDownDone() -> System.Void abstract
@@ -794,25 +693,9 @@ M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::CopyTo
 M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::Insert(System.Int32, System.Windows.Forms.Control) -> System.Void
 M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::Remove(System.Windows.Forms.Control) -> System.Void virtual
 M public System.Windows.Forms.DataGridView::AdjustColumnHeaderBorderStyle(System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Boolean, System.Boolean) -> System.Windows.Forms.DataGridViewAdvancedBorderStyle virtual
-M public System.Windows.Forms.DataGridView::AutoResizeColumn(System.Int32) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeColumn(System.Int32, System.Windows.Forms.DataGridViewAutoSizeColumnMode) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeColumnHeadersHeight() -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeColumnHeadersHeight(System.Int32) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeColumns() -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeColumns(System.Windows.Forms.DataGridViewAutoSizeColumnsMode) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeRow(System.Int32) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeRow(System.Int32, System.Windows.Forms.DataGridViewAutoSizeRowMode) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeRowHeadersWidth(System.Int32, System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeRowHeadersWidth(System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode) -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeRows() -> System.Void
-M public System.Windows.Forms.DataGridView::AutoResizeRows(System.Windows.Forms.DataGridViewAutoSizeRowsMode) -> System.Void
 M public System.Windows.Forms.DataGridView::CommitEdit(System.Windows.Forms.DataGridViewDataErrorContexts) -> System.Boolean
-M public System.Windows.Forms.DataGridView::DisplayedColumnCount(System.Boolean) -> System.Int32
-M public System.Windows.Forms.DataGridView::DisplayedRowCount(System.Boolean) -> System.Int32
 M public System.Windows.Forms.DataGridView::GetCellCount(System.Windows.Forms.DataGridViewElementStates) -> System.Int32
 M public System.Windows.Forms.DataGridView::GetClipboardContent() -> System.Windows.Forms.DataObject virtual
-M public System.Windows.Forms.DataGridView::GetColumnDisplayRectangle(System.Int32, System.Boolean) -> System.Drawing.Rectangle
-M public System.Windows.Forms.DataGridView::GetRowDisplayRectangle(System.Int32, System.Boolean) -> System.Drawing.Rectangle
 M public System.Windows.Forms.DataGridView::RefreshEdit() -> System.Boolean
 M public System.Windows.Forms.DataGridView::ResetText() -> System.Void virtual
 M public System.Windows.Forms.DataGridView::UpdateCellErrorText(System.Int32, System.Int32) -> System.Void
@@ -820,84 +703,9 @@ M public System.Windows.Forms.DataGridView::UpdateCellValue(System.Int32, System
 M public System.Windows.Forms.DataGridView::UpdateRowErrorText(System.Int32) -> System.Void
 M public System.Windows.Forms.DataGridView::UpdateRowErrorText(System.Int32, System.Int32) -> System.Void
 M public System.Windows.Forms.DataGridView::UpdateRowHeightInfo(System.Int32, System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridView::add_AllowUserToOrderColumnsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_AutoSizeColumnModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_AutoSizeColumnsModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnsModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_AutoSizeRowsModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CancelRowEdit(System.Windows.Forms.QuestionEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellContextMenuStripChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellContextMenuStripNeeded(System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellErrorTextChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellErrorTextNeeded(System.Windows.Forms.DataGridViewCellErrorTextNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellMouseClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellMouseEnter(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellMouseLeave(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellMouseMove(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellPainting(System.Windows.Forms.DataGridViewCellPaintingEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellStateChanged(System.Windows.Forms.DataGridViewCellStateChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellStyleChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellStyleContentChanged(System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellToolTipTextChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellToolTipTextNeeded(System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellValueNeeded(System.Windows.Forms.DataGridViewCellValueEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_CellValuePushed(System.Windows.Forms.DataGridViewCellValueEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnContextMenuStripChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnDataPropertyNameChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnDefaultCellStyleChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnDisplayIndexChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnDividerDoubleClick(System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnDividerWidthChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnHeaderCellChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnHeaderMouseClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnHeaderMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnHeadersBorderStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnHeadersHeightSizeModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnMinimumWidthChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnNameChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnSortModeChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnStateChanged(System.Windows.Forms.DataGridViewColumnStateChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ColumnToolTipTextChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_DefaultValuesNeeded(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_NewRowNeeded(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowContextMenuStripChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowContextMenuStripNeeded(System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowDefaultCellStyleChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowDirtyStateNeeded(System.Windows.Forms.QuestionEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowDividerDoubleClick(System.Windows.Forms.DataGridViewRowDividerDoubleClickEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowDividerHeightChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowEnter(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowErrorTextChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowErrorTextNeeded(System.Windows.Forms.DataGridViewRowErrorTextNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowHeaderCellChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowHeaderMouseClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowHeaderMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowHeadersBorderStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowHeadersWidthSizeModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowHeightInfoNeeded(System.Windows.Forms.DataGridViewRowHeightInfoNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowHeightInfoPushed(System.Windows.Forms.DataGridViewRowHeightInfoPushedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowLeave(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowMinimumHeightChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowPostPaint(System.Windows.Forms.DataGridViewRowPostPaintEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowPrePaint(System.Windows.Forms.DataGridViewRowPrePaintEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowStateChanged(System.Windows.Forms.DataGridViewRowStateChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowUnshared(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_RowValidated(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_Scroll(System.Windows.Forms.ScrollEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_StyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_UserAddedRow(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_UserDeletedRow(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_UserDeletingRow(System.Windows.Forms.DataGridViewRowCancelEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::get_AllowUserToOrderColumns() -> System.Boolean
 M public System.Windows.Forms.DataGridView::get_AutoSize() -> System.Boolean virtual
-M public System.Windows.Forms.DataGridView::get_AutoSizeRowsMode() -> System.Windows.Forms.DataGridViewAutoSizeRowsMode
 M public System.Windows.Forms.DataGridView::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.DataGridView::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.DataGridView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
@@ -913,7 +721,6 @@ M public System.Windows.Forms.DataGridView::get_FirstDisplayedScrollingRowIndex(
 M public System.Windows.Forms.DataGridView::get_Font() -> System.Drawing.Font virtual
 M public System.Windows.Forms.DataGridView::get_ForeColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.DataGridView::get_HorizontalScrollingOffset() -> System.Int32
-M public System.Windows.Forms.DataGridView::get_IsCurrentRowDirty() -> System.Boolean
 M public System.Windows.Forms.DataGridView::get_Padding() -> System.Windows.Forms.Padding
 M public System.Windows.Forms.DataGridView::get_RowCount() -> System.Int32
 M public System.Windows.Forms.DataGridView::get_ScrollBars() -> System.Windows.Forms.ScrollBars
@@ -925,85 +732,9 @@ M public System.Windows.Forms.DataGridView::get_StandardTab() -> System.Boolean
 M public System.Windows.Forms.DataGridView::get_Text() -> System.String virtual
 M public System.Windows.Forms.DataGridView::get_UserSetCursor() -> System.Windows.Forms.Cursor
 M public System.Windows.Forms.DataGridView::get_VerticalScrollingOffset() -> System.Int32
-M public System.Windows.Forms.DataGridView::get_VirtualMode() -> System.Boolean
-M public System.Windows.Forms.DataGridView::remove_AllowUserToOrderColumnsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_AutoSizeColumnModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_AutoSizeColumnsModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnsModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_AutoSizeRowsModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CancelRowEdit(System.Windows.Forms.QuestionEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellContextMenuStripChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellContextMenuStripNeeded(System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellErrorTextChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellErrorTextNeeded(System.Windows.Forms.DataGridViewCellErrorTextNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellMouseClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellMouseEnter(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellMouseLeave(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellMouseMove(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellPainting(System.Windows.Forms.DataGridViewCellPaintingEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellStateChanged(System.Windows.Forms.DataGridViewCellStateChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellStyleChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellStyleContentChanged(System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellToolTipTextChanged(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellToolTipTextNeeded(System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellValueNeeded(System.Windows.Forms.DataGridViewCellValueEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_CellValuePushed(System.Windows.Forms.DataGridViewCellValueEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnContextMenuStripChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnDataPropertyNameChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnDefaultCellStyleChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnDisplayIndexChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnDividerDoubleClick(System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnDividerWidthChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnHeaderCellChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnHeaderMouseClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnHeaderMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnHeadersBorderStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnHeadersHeightSizeModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnMinimumWidthChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnNameChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnSortModeChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnStateChanged(System.Windows.Forms.DataGridViewColumnStateChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ColumnToolTipTextChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_DefaultValuesNeeded(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_NewRowNeeded(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowContextMenuStripChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowContextMenuStripNeeded(System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowDefaultCellStyleChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowDirtyStateNeeded(System.Windows.Forms.QuestionEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowDividerDoubleClick(System.Windows.Forms.DataGridViewRowDividerDoubleClickEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowDividerHeightChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowEnter(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowErrorTextChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowErrorTextNeeded(System.Windows.Forms.DataGridViewRowErrorTextNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowHeaderCellChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowHeaderMouseClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowHeaderMouseDoubleClick(System.Windows.Forms.DataGridViewCellMouseEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowHeadersBorderStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowHeadersWidthSizeModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowHeightInfoNeeded(System.Windows.Forms.DataGridViewRowHeightInfoNeededEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowHeightInfoPushed(System.Windows.Forms.DataGridViewRowHeightInfoPushedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowLeave(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowMinimumHeightChanged(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowPostPaint(System.Windows.Forms.DataGridViewRowPostPaintEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowPrePaint(System.Windows.Forms.DataGridViewRowPrePaintEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowStateChanged(System.Windows.Forms.DataGridViewRowStateChangedEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowUnshared(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_RowValidated(System.Windows.Forms.DataGridViewCellEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_Scroll(System.Windows.Forms.ScrollEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_StyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_UserAddedRow(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_UserDeletedRow(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_UserDeletingRow(System.Windows.Forms.DataGridViewRowCancelEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::set_AllowUserToOrderColumns(System.Boolean) -> System.Void
 M public System.Windows.Forms.DataGridView::set_AutoSize(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.DataGridView::set_AutoSizeRowsMode(System.Windows.Forms.DataGridViewAutoSizeRowsMode) -> System.Void
 M public System.Windows.Forms.DataGridView::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.DataGridView::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.DataGridView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
@@ -1025,204 +756,26 @@ M public System.Windows.Forms.DataGridView::set_ShowEditingIcon(System.Boolean) 
 M public System.Windows.Forms.DataGridView::set_ShowRowErrors(System.Boolean) -> System.Void
 M public System.Windows.Forms.DataGridView::set_StandardTab(System.Boolean) -> System.Void
 M public System.Windows.Forms.DataGridView::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.DataGridView::set_VirtualMode(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs::.ctor(System.Windows.Forms.DataGridViewColumn, System.Windows.Forms.DataGridViewAutoSizeColumnMode)
-M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs::get_Column() -> System.Windows.Forms.DataGridViewColumn
-M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs::get_PreviousMode() -> System.Windows.Forms.DataGridViewAutoSizeColumnMode
-M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewBand::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.DataGridViewBand::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCell::GetInheritedContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip virtual
 M public System.Windows.Forms.DataGridViewCell::MeasureTextHeight(System.Drawing.Graphics, System.String, System.Drawing.Font, System.Int32, System.Windows.Forms.TextFormatFlags) -> System.Int32 static
 M public System.Windows.Forms.DataGridViewCell::MeasureTextHeight(System.Drawing.Graphics, System.String, System.Drawing.Font, System.Int32, System.Windows.Forms.TextFormatFlags, out System.Boolean) -> System.Int32 static
 M public System.Windows.Forms.DataGridViewCell::MeasureTextPreferredSize(System.Drawing.Graphics, System.String, System.Drawing.Font, System.Single, System.Windows.Forms.TextFormatFlags) -> System.Drawing.Size static
 M public System.Windows.Forms.DataGridViewCell::MeasureTextSize(System.Drawing.Graphics, System.String, System.Drawing.Font, System.Windows.Forms.TextFormatFlags) -> System.Drawing.Size static
 M public System.Windows.Forms.DataGridViewCell::MeasureTextWidth(System.Drawing.Graphics, System.String, System.Drawing.Font, System.Int32, System.Windows.Forms.TextFormatFlags) -> System.Int32 static
 M public System.Windows.Forms.DataGridViewCell::get_AccessibilityObject() -> System.Windows.Forms.AccessibleObject
-M public System.Windows.Forms.DataGridViewCell::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.DataGridViewCell::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs::.ctor(System.Int32, System.Int32)
-M public System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip
-M public System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void
-M public System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellErrorTextNeededEventArgs::get_ErrorText() -> System.String
-M public System.Windows.Forms.DataGridViewCellErrorTextNeededEventArgs::set_ErrorText(System.String) -> System.Void
-M public System.Windows.Forms.DataGridViewCellErrorTextNeededEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewCellErrorTextNeededEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewCellErrorTextNeededEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewCellErrorTextNeededEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellErrorTextNeededEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewCellErrorTextNeededEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::.ctor(System.Windows.Forms.DataGridView, System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Object, System.Object, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewPaintParts)
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::Paint(System.Drawing.Rectangle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::PaintBackground(System.Drawing.Rectangle, System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::PaintContent(System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_AdvancedBorderStyle() -> System.Windows.Forms.DataGridViewAdvancedBorderStyle
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_CellBounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_CellStyle() -> System.Windows.Forms.DataGridViewCellStyle
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_ClipBounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_ColumnIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_ErrorText() -> System.String
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_FormattedValue() -> System.Object
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_PaintParts() -> System.Windows.Forms.DataGridViewPaintParts
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_State() -> System.Windows.Forms.DataGridViewElementStates
-M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::get_Value() -> System.Object
-M public System.Windows.Forms.DataGridViewCellPaintingEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewCellPaintingEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewCellPaintingEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewCellPaintingEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellPaintingEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewCellPaintingEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellStateChangedEventArgs::.ctor(System.Windows.Forms.DataGridViewCell, System.Windows.Forms.DataGridViewElementStates)
-M public System.Windows.Forms.DataGridViewCellStateChangedEventArgs::get_Cell() -> System.Windows.Forms.DataGridViewCell
-M public System.Windows.Forms.DataGridViewCellStateChangedEventArgs::get_StateChanged() -> System.Windows.Forms.DataGridViewElementStates
-M public System.Windows.Forms.DataGridViewCellStateChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewCellStateChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewCellStateChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewCellStateChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellStateChangedEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewCellStateChangedEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellStyleContentChangedEventArgs::get_CellStyle() -> System.Windows.Forms.DataGridViewCellStyle
-M public System.Windows.Forms.DataGridViewCellStyleContentChangedEventArgs::get_CellStyleScope() -> System.Windows.Forms.DataGridViewCellStyleScopes
-M public System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewCellStyleContentChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewCellStyleContentChangedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewCellStyleConverter::.ctor()
 M public System.Windows.Forms.DataGridViewCellStyleConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.DataGridViewCellStyleConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs::get_ToolTipText() -> System.String
-M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs::set_ToolTipText(System.String) -> System.Void
-M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewColumn::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.DataGridViewColumn::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::.ctor()
 M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::.ctor(System.Boolean)
 M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Equals(System.Object) -> System.Boolean virtual
 M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::GetHashCode() -> System.Int32 virtual
 M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::IsDefaultAttribute() -> System.Boolean virtual
 M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::get_Visible() -> System.Boolean
-M public System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventArgs::.ctor(System.Int32, System.Windows.Forms.HandledMouseEventArgs)
-M public System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventArgs::get_ColumnIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewColumnHeaderCell::GetInheritedContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.DataGridViewColumnStateChangedEventArgs::.ctor(System.Windows.Forms.DataGridViewColumn, System.Windows.Forms.DataGridViewElementStates)
-M public System.Windows.Forms.DataGridViewColumnStateChangedEventArgs::get_Column() -> System.Windows.Forms.DataGridViewColumn
-M public System.Windows.Forms.DataGridViewColumnStateChangedEventArgs::get_StateChanged() -> System.Windows.Forms.DataGridViewElementStates
-M public System.Windows.Forms.DataGridViewColumnStateChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewColumnStateChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewColumnStateChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewColumnStateChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewColumnStateChangedEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewColumnStateChangedEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewHeaderCell::GetInheritedContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip virtual
 M public System.Windows.Forms.DataGridViewRow::AdjustRowHeaderBorderStyle(System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Boolean, System.Boolean, System.Boolean, System.Boolean) -> System.Windows.Forms.DataGridViewAdvancedBorderStyle virtual
-M public System.Windows.Forms.DataGridViewRow::GetContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip
 M public System.Windows.Forms.DataGridViewRow::get_AccessibilityObject() -> System.Windows.Forms.AccessibleObject
-M public System.Windows.Forms.DataGridViewRow::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.DataGridViewRow::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowCancelEventArgs::.ctor(System.Windows.Forms.DataGridViewRow)
-M public System.Windows.Forms.DataGridViewRowCancelEventArgs::get_Row() -> System.Windows.Forms.DataGridViewRow
-M public System.Windows.Forms.DataGridViewRowCancelEventArgs::set_Row(System.Windows.Forms.DataGridViewRow) -> System.Void
-M public System.Windows.Forms.DataGridViewRowCancelEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowCancelEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowCancelEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowCancelEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowCancelEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowCancelEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs::.ctor(System.Int32)
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowDividerDoubleClickEventArgs::.ctor(System.Int32, System.Windows.Forms.HandledMouseEventArgs)
-M public System.Windows.Forms.DataGridViewRowDividerDoubleClickEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowDividerDoubleClickEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowDividerDoubleClickEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowDividerDoubleClickEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowDividerDoubleClickEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowDividerDoubleClickEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowDividerDoubleClickEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowErrorTextNeededEventArgs::get_ErrorText() -> System.String
-M public System.Windows.Forms.DataGridViewRowErrorTextNeededEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowErrorTextNeededEventArgs::set_ErrorText(System.String) -> System.Void
-M public System.Windows.Forms.DataGridViewRowErrorTextNeededEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowErrorTextNeededEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowErrorTextNeededEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowErrorTextNeededEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowErrorTextNeededEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowErrorTextNeededEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowHeaderCell::GetInheritedContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs::get_Height() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs::get_MinimumHeight() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs::set_Height(System.Int32) -> System.Void
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs::set_MinimumHeight(System.Int32) -> System.Void
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowHeightInfoNeededEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowHeightInfoPushedEventArgs::get_Height() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowHeightInfoPushedEventArgs::get_MinimumHeight() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowHeightInfoPushedEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowHeightInfoPushedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowHeightInfoPushedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowHeightInfoPushedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowHeightInfoPushedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowHeightInfoPushedEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowHeightInfoPushedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::.ctor(System.Windows.Forms.DataGridView, System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Boolean, System.Boolean)
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::DrawFocus(System.Drawing.Rectangle, System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::PaintCells(System.Drawing.Rectangle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::PaintCellsBackground(System.Drawing.Rectangle, System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::PaintCellsContent(System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::PaintHeader(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::PaintHeader(System.Windows.Forms.DataGridViewPaintParts) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_ClipBounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_ErrorText() -> System.String
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_InheritedRowStyle() -> System.Windows.Forms.DataGridViewCellStyle
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_IsFirstDisplayedRow() -> System.Boolean
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_IsLastVisibleRow() -> System.Boolean
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_RowBounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::get_State() -> System.Windows.Forms.DataGridViewElementStates
-M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::set_ClipBounds(System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPostPaintEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowPostPaintEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowPostPaintEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowPostPaintEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowPostPaintEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowPostPaintEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::.ctor(System.Windows.Forms.DataGridView, System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Boolean, System.Boolean)
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::DrawFocus(System.Drawing.Rectangle, System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::PaintCells(System.Drawing.Rectangle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::PaintCellsBackground(System.Drawing.Rectangle, System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::PaintCellsContent(System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::PaintHeader(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::PaintHeader(System.Windows.Forms.DataGridViewPaintParts) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_ClipBounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_ErrorText() -> System.String
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_InheritedRowStyle() -> System.Windows.Forms.DataGridViewCellStyle
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_IsFirstDisplayedRow() -> System.Boolean
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_IsLastVisibleRow() -> System.Boolean
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_PaintParts() -> System.Windows.Forms.DataGridViewPaintParts
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_RowBounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_RowIndex() -> System.Int32
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::get_State() -> System.Windows.Forms.DataGridViewElementStates
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::set_ClipBounds(System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventArgs::set_PaintParts(System.Windows.Forms.DataGridViewPaintParts) -> System.Void
-M public System.Windows.Forms.DataGridViewRowPrePaintEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowPrePaintEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowPrePaintEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowPrePaintEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowPrePaintEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowPrePaintEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowStateChangedEventArgs::.ctor(System.Windows.Forms.DataGridViewRow, System.Windows.Forms.DataGridViewElementStates)
-M public System.Windows.Forms.DataGridViewRowStateChangedEventArgs::get_Row() -> System.Windows.Forms.DataGridViewRow
-M public System.Windows.Forms.DataGridViewRowStateChangedEventArgs::get_StateChanged() -> System.Windows.Forms.DataGridViewElementStates
-M public System.Windows.Forms.DataGridViewRowStateChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewRowStateChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewRowStateChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewRowStateChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewRowStateChangedEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewRowStateChangedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewTopLeftHeaderCell::.ctor()
 M public System.Windows.Forms.DataGridViewTopLeftHeaderCell::ToString() -> System.String virtual
 M public System.Windows.Forms.DataObject::SetDataAsJson`1(System.String, T) -> System.Void
@@ -1295,70 +848,6 @@ M public System.Windows.Forms.DockingAttribute::Equals(System.Object) -> System.
 M public System.Windows.Forms.DockingAttribute::GetHashCode() -> System.Int32 virtual
 M public System.Windows.Forms.DockingAttribute::IsDefaultAttribute() -> System.Boolean virtual
 M public System.Windows.Forms.DockingAttribute::get_DockingBehavior() -> System.Windows.Forms.DockingBehavior
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::.ctor(System.Drawing.Graphics, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.ColumnHeader, System.Windows.Forms.ListViewItemStates, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::DrawBackground() -> System.Void
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::DrawText() -> System.Void
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::DrawText(System.Windows.Forms.TextFormatFlags) -> System.Void
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_ColumnIndex() -> System.Int32
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_DrawDefault() -> System.Boolean
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_Font() -> System.Drawing.Font
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_Header() -> System.Windows.Forms.ColumnHeader
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::get_State() -> System.Windows.Forms.ListViewItemStates
-M public System.Windows.Forms.DrawListViewColumnHeaderEventArgs::set_DrawDefault(System.Boolean) -> System.Void
-M public System.Windows.Forms.DrawListViewColumnHeaderEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DrawListViewColumnHeaderEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawListViewColumnHeaderEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DrawListViewColumnHeaderEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DrawListViewColumnHeaderEventHandler::Invoke(System.Object, System.Windows.Forms.DrawListViewColumnHeaderEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DrawListViewItemEventArgs::.ctor(System.Drawing.Graphics, System.Windows.Forms.ListViewItem, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.ListViewItemStates)
-M public System.Windows.Forms.DrawListViewItemEventArgs::DrawBackground() -> System.Void
-M public System.Windows.Forms.DrawListViewItemEventArgs::DrawFocusRectangle() -> System.Void
-M public System.Windows.Forms.DrawListViewItemEventArgs::DrawText() -> System.Void
-M public System.Windows.Forms.DrawListViewItemEventArgs::DrawText(System.Windows.Forms.TextFormatFlags) -> System.Void
-M public System.Windows.Forms.DrawListViewItemEventArgs::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DrawListViewItemEventArgs::get_DrawDefault() -> System.Boolean
-M public System.Windows.Forms.DrawListViewItemEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DrawListViewItemEventArgs::get_Item() -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.DrawListViewItemEventArgs::get_ItemIndex() -> System.Int32
-M public System.Windows.Forms.DrawListViewItemEventArgs::get_State() -> System.Windows.Forms.ListViewItemStates
-M public System.Windows.Forms.DrawListViewItemEventArgs::set_DrawDefault(System.Boolean) -> System.Void
-M public System.Windows.Forms.DrawListViewItemEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DrawListViewItemEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawListViewItemEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DrawListViewItemEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DrawListViewItemEventHandler::Invoke(System.Object, System.Windows.Forms.DrawListViewItemEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::.ctor(System.Drawing.Graphics, System.Drawing.Rectangle, System.Windows.Forms.ListViewItem, System.Windows.Forms.ListViewItem+ListViewSubItem, System.Int32, System.Int32, System.Windows.Forms.ColumnHeader, System.Windows.Forms.ListViewItemStates)
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::DrawBackground() -> System.Void
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::DrawFocusRectangle(System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::DrawText() -> System.Void
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::DrawText(System.Windows.Forms.TextFormatFlags) -> System.Void
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_ColumnIndex() -> System.Int32
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_DrawDefault() -> System.Boolean
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_Header() -> System.Windows.Forms.ColumnHeader
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_Item() -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_ItemIndex() -> System.Int32
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_ItemState() -> System.Windows.Forms.ListViewItemStates
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::get_SubItem() -> System.Windows.Forms.ListViewItem+ListViewSubItem
-M public System.Windows.Forms.DrawListViewSubItemEventArgs::set_DrawDefault(System.Boolean) -> System.Void
-M public System.Windows.Forms.DrawListViewSubItemEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DrawListViewSubItemEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawListViewSubItemEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DrawListViewSubItemEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DrawListViewSubItemEventHandler::Invoke(System.Object, System.Windows.Forms.DrawListViewSubItemEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DrawTreeNodeEventArgs::.ctor(System.Drawing.Graphics, System.Windows.Forms.TreeNode, System.Drawing.Rectangle, System.Windows.Forms.TreeNodeStates)
-M public System.Windows.Forms.DrawTreeNodeEventArgs::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.DrawTreeNodeEventArgs::get_DrawDefault() -> System.Boolean
-M public System.Windows.Forms.DrawTreeNodeEventArgs::get_Graphics() -> System.Drawing.Graphics
-M public System.Windows.Forms.DrawTreeNodeEventArgs::get_Node() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.DrawTreeNodeEventArgs::get_State() -> System.Windows.Forms.TreeNodeStates
-M public System.Windows.Forms.DrawTreeNodeEventArgs::set_DrawDefault(System.Boolean) -> System.Void
-M public System.Windows.Forms.DrawTreeNodeEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DrawTreeNodeEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DrawTreeNodeEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DrawTreeNodeEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DrawTreeNodeEventHandler::Invoke(System.Object, System.Windows.Forms.DrawTreeNodeEventArgs) -> System.Void virtual
 M public System.Windows.Forms.FileDialog::get_CustomPlaces() -> System.Windows.Forms.FileDialogCustomPlacesCollection
 M public System.Windows.Forms.FolderBrowserDialog::add_HelpRequest(System.EventHandler) -> System.Void
 M public System.Windows.Forms.FolderBrowserDialog::remove_HelpRequest(System.EventHandler) -> System.Void
@@ -1481,50 +970,27 @@ M public System.Windows.Forms.ListBindingHelper::GetListItemProperties(System.Ob
 M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object) -> System.Type static
 M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object, System.String) -> System.Type static
 M public System.Windows.Forms.ListBindingHelper::GetListName(System.Object, System.ComponentModel.PropertyDescriptor[]) -> System.String static
-M public System.Windows.Forms.ListView+CheckedIndexCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+CheckedListViewItemCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::.ctor(System.Windows.Forms.ListView)
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.Int32) -> System.Windows.Forms.ColumnHeader virtual
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.String) -> System.Windows.Forms.ColumnHeader virtual
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String) -> System.Void
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32) -> System.Void
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.Int32) -> System.Void
 M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.String) -> System.Void
-M public System.Windows.Forms.ListView+ListViewItemCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+SelectedIndexCollection::.ctor(System.Windows.Forms.ListView)
-M public System.Windows.Forms.ListView+SelectedListViewItemCollection::.ctor(System.Windows.Forms.ListView)
 M public System.Windows.Forms.ListView::ArrangeIcons() -> System.Void
 M public System.Windows.Forms.ListView::ArrangeIcons(System.Windows.Forms.ListViewAlignment) -> System.Void
 M public System.Windows.Forms.ListView::AutoResizeColumn(System.Int32, System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
 M public System.Windows.Forms.ListView::AutoResizeColumns(System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
-M public System.Windows.Forms.ListView::FindItemWithText(System.String) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView::FindItemWithText(System.String, System.Boolean, System.Int32) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView::FindItemWithText(System.String, System.Boolean, System.Int32, System.Boolean) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView::FindNearestItem(System.Windows.Forms.SearchDirectionHint, System.Drawing.Point) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListView::FindNearestItem(System.Windows.Forms.SearchDirectionHint, System.Int32, System.Int32) -> System.Windows.Forms.ListViewItem
 M public System.Windows.Forms.ListView::RedrawItems(System.Int32, System.Int32, System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::add_AfterLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_BeforeLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_CacheVirtualItems(System.Windows.Forms.CacheVirtualItemsEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ColumnReordered(System.Windows.Forms.ColumnReorderedEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ColumnWidthChanging(System.Windows.Forms.ColumnWidthChangingEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_DrawColumnHeader(System.Windows.Forms.DrawListViewColumnHeaderEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_DrawItem(System.Windows.Forms.DrawListViewItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_DrawSubItem(System.Windows.Forms.DrawListViewSubItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_GroupCollapsedStateChanged(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
 M public System.Windows.Forms.ListView::add_GroupTaskLinkClick(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
 M public System.Windows.Forms.ListView::add_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_ItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_RetrieveVirtualItem(System.Windows.Forms.RetrieveVirtualItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_SearchForVirtualItem(System.Windows.Forms.SearchForVirtualItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_VirtualItemsSelectionRangeChanged(System.Windows.Forms.ListViewVirtualItemsSelectionRangeChangedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::get_Alignment() -> System.Windows.Forms.ListViewAlignment
-M public System.Windows.Forms.ListView::get_AllowColumnReorder() -> System.Boolean
 M public System.Windows.Forms.ListView::get_AutoArrange() -> System.Boolean
 M public System.Windows.Forms.ListView::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.ListView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
@@ -1533,10 +999,7 @@ M public System.Windows.Forms.ListView::get_ForeColor() -> System.Drawing.Color 
 M public System.Windows.Forms.ListView::get_GroupImageList() -> System.Windows.Forms.ImageList
 M public System.Windows.Forms.ListView::get_HotTracking() -> System.Boolean
 M public System.Windows.Forms.ListView::get_HoverSelection() -> System.Boolean
-M public System.Windows.Forms.ListView::get_InsertionMark() -> System.Windows.Forms.ListViewInsertionMark
-M public System.Windows.Forms.ListView::get_LabelEdit() -> System.Boolean
 M public System.Windows.Forms.ListView::get_LabelWrap() -> System.Boolean
-M public System.Windows.Forms.ListView::get_OwnerDraw() -> System.Boolean
 M public System.Windows.Forms.ListView::get_Padding() -> System.Windows.Forms.Padding
 M public System.Windows.Forms.ListView::get_RightToLeftLayout() -> System.Boolean virtual
 M public System.Windows.Forms.ListView::get_Scrollable() -> System.Boolean
@@ -1545,30 +1008,16 @@ M public System.Windows.Forms.ListView::get_StateImageList() -> System.Windows.F
 M public System.Windows.Forms.ListView::get_Text() -> System.String virtual
 M public System.Windows.Forms.ListView::get_TileSize() -> System.Drawing.Size
 M public System.Windows.Forms.ListView::get_UseCompatibleStateImageBehavior() -> System.Boolean
-M public System.Windows.Forms.ListView::get_VirtualListSize() -> System.Int32
-M public System.Windows.Forms.ListView::get_VirtualMode() -> System.Boolean
-M public System.Windows.Forms.ListView::remove_AfterLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_BeforeLabelEdit(System.Windows.Forms.LabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_CacheVirtualItems(System.Windows.Forms.CacheVirtualItemsEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ColumnReordered(System.Windows.Forms.ColumnReorderedEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ColumnWidthChanging(System.Windows.Forms.ColumnWidthChangingEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_DrawColumnHeader(System.Windows.Forms.DrawListViewColumnHeaderEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_DrawItem(System.Windows.Forms.DrawListViewItemEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_DrawSubItem(System.Windows.Forms.DrawListViewSubItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_GroupCollapsedStateChanged(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
 M public System.Windows.Forms.ListView::remove_GroupTaskLinkClick(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
 M public System.Windows.Forms.ListView::remove_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_ItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_RetrieveVirtualItem(System.Windows.Forms.RetrieveVirtualItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_SearchForVirtualItem(System.Windows.Forms.SearchForVirtualItemEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_VirtualItemsSelectionRangeChanged(System.Windows.Forms.ListViewVirtualItemsSelectionRangeChangedEventHandler) -> System.Void
 M public System.Windows.Forms.ListView::set_Alignment(System.Windows.Forms.ListViewAlignment) -> System.Void
-M public System.Windows.Forms.ListView::set_AllowColumnReorder(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_AutoArrange(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.ListView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
@@ -1577,9 +1026,7 @@ M public System.Windows.Forms.ListView::set_ForeColor(System.Drawing.Color) -> S
 M public System.Windows.Forms.ListView::set_GroupImageList(System.Windows.Forms.ImageList) -> System.Void
 M public System.Windows.Forms.ListView::set_HotTracking(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_HoverSelection(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_LabelEdit(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_LabelWrap(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_OwnerDraw(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListView::set_Padding(System.Windows.Forms.Padding) -> System.Void
 M public System.Windows.Forms.ListView::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.ListView::set_Scrollable(System.Boolean) -> System.Void
@@ -1588,8 +1035,6 @@ M public System.Windows.Forms.ListView::set_StateImageList(System.Windows.Forms.
 M public System.Windows.Forms.ListView::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.ListView::set_TileSize(System.Drawing.Size) -> System.Void
 M public System.Windows.Forms.ListView::set_UseCompatibleStateImageBehavior(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_VirtualListSize(System.Int32) -> System.Void
-M public System.Windows.Forms.ListView::set_VirtualMode(System.Boolean) -> System.Void
 M public System.Windows.Forms.ListViewGroup::get_CollapsedState() -> System.Windows.Forms.ListViewGroupCollapsedState
 M public System.Windows.Forms.ListViewGroup::get_Footer() -> System.String
 M public System.Windows.Forms.ListViewGroup::get_FooterAlignment() -> System.Windows.Forms.HorizontalAlignment
@@ -1604,48 +1049,13 @@ M public System.Windows.Forms.ListViewGroup::set_Subtitle(System.String) -> Syst
 M public System.Windows.Forms.ListViewGroup::set_TaskLink(System.String) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_TitleImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.ListViewGroup::set_TitleImageKey(System.String) -> System.Void
-M public System.Windows.Forms.ListViewInsertionMark::NearestIndex(System.Drawing.Point) -> System.Int32
-M public System.Windows.Forms.ListViewInsertionMark::get_AppearsAfterItem() -> System.Boolean
-M public System.Windows.Forms.ListViewInsertionMark::get_Bounds() -> System.Drawing.Rectangle
-M public System.Windows.Forms.ListViewInsertionMark::get_Color() -> System.Drawing.Color
-M public System.Windows.Forms.ListViewInsertionMark::get_Index() -> System.Int32
-M public System.Windows.Forms.ListViewInsertionMark::set_AppearsAfterItem(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListViewInsertionMark::set_Color(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.ListViewInsertionMark::set_Index(System.Int32) -> System.Void
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::ContainsKey(System.String) -> System.Boolean virtual
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::IndexOfKey(System.String) -> System.Int32 virtual
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::RemoveByKey(System.String) -> System.Void virtual
 M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListViewItem::.ctor(System.String, System.Int32, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String, System.String, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Int32, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Int32, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.Int32, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String, System.Drawing.Color, System.Drawing.Color, System.Drawing.Font, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.String[], System.String, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.Int32)
-M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.Int32, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.String)
-M public System.Windows.Forms.ListViewItem::.ctor(System.Windows.Forms.ListViewItem+ListViewSubItem[], System.String, System.Windows.Forms.ListViewGroup)
-M public System.Windows.Forms.ListViewItem::BeginEdit() -> System.Void
-M public System.Windows.Forms.ListViewItem::FindNearestItem(System.Windows.Forms.SearchDirectionHint) -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListViewItem::get_IndentCount() -> System.Int32
-M public System.Windows.Forms.ListViewItem::get_Position() -> System.Drawing.Point
-M public System.Windows.Forms.ListViewItem::get_StateImageIndex() -> System.Int32
-M public System.Windows.Forms.ListViewItem::set_IndentCount(System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_Position(System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.ListViewItem::set_StateImageIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.ListViewItemConverter::.ctor()
 M public System.Windows.Forms.ListViewItemConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.ListViewItemConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.ListViewItemMouseHoverEventArgs::.ctor(System.Windows.Forms.ListViewItem)
-M public System.Windows.Forms.ListViewItemMouseHoverEventArgs::get_Item() -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::BeginInvoke(System.Object, System.Windows.Forms.ListViewItemMouseHoverEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.ListViewItemMouseHoverEventHandler::Invoke(System.Object, System.Windows.Forms.ListViewItemMouseHoverEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ListViewItemStateImageIndexConverter::.ctor()
 M public System.Windows.Forms.ListViewItemStateImageIndexConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
 M public System.Windows.Forms.MdiClient::get_BackgroundImage() -> System.Drawing.Image virtual
@@ -1658,16 +1068,6 @@ M public System.Windows.Forms.MonthCalendar::add_ImeModeChanged(System.EventHand
 M public System.Windows.Forms.MonthCalendar::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.MonthCalendar::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.MonthCalendar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.NodeLabelEditEventArgs::.ctor(System.Windows.Forms.TreeNode)
-M public System.Windows.Forms.NodeLabelEditEventArgs::.ctor(System.Windows.Forms.TreeNode, System.String)
-M public System.Windows.Forms.NodeLabelEditEventArgs::get_CancelEdit() -> System.Boolean
-M public System.Windows.Forms.NodeLabelEditEventArgs::get_Label() -> System.String
-M public System.Windows.Forms.NodeLabelEditEventArgs::get_Node() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.NodeLabelEditEventArgs::set_CancelEdit(System.Boolean) -> System.Void
-M public System.Windows.Forms.NodeLabelEditEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.NodeLabelEditEventHandler::BeginInvoke(System.Object, System.Windows.Forms.NodeLabelEditEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.NodeLabelEditEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.NodeLabelEditEventHandler::Invoke(System.Object, System.Windows.Forms.NodeLabelEditEventArgs) -> System.Void virtual
 M public System.Windows.Forms.OpacityConverter::.ctor()
 M public System.Windows.Forms.OpacityConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.OpacityConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
@@ -1781,14 +1181,6 @@ M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::get_TabName() 
 M public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::.ctor()
 M public System.Windows.Forms.RelatedImageListAttribute::.ctor(System.String)
 M public System.Windows.Forms.RelatedImageListAttribute::get_RelatedImageList() -> System.String
-M public System.Windows.Forms.RetrieveVirtualItemEventArgs::.ctor(System.Int32)
-M public System.Windows.Forms.RetrieveVirtualItemEventArgs::get_Item() -> System.Windows.Forms.ListViewItem
-M public System.Windows.Forms.RetrieveVirtualItemEventArgs::get_ItemIndex() -> System.Int32
-M public System.Windows.Forms.RetrieveVirtualItemEventArgs::set_Item(System.Windows.Forms.ListViewItem) -> System.Void
-M public System.Windows.Forms.RetrieveVirtualItemEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.RetrieveVirtualItemEventHandler::BeginInvoke(System.Object, System.Windows.Forms.RetrieveVirtualItemEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.RetrieveVirtualItemEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.RetrieveVirtualItemEventHandler::Invoke(System.Object, System.Windows.Forms.RetrieveVirtualItemEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ScrollBar::add_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ScrollBar::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.ScrollBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
@@ -2518,80 +1910,31 @@ M public System.Windows.Forms.TrackBar::add_ImeModeChanged(System.EventHandler) 
 M public System.Windows.Forms.TrackBar::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.TrackBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TrackBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.TreeNode::BeginEdit() -> System.Void
-M public System.Windows.Forms.TreeNode::EndEdit(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeNode::FromHandle(System.Windows.Forms.TreeView, System.IntPtr) -> System.Windows.Forms.TreeNode static
 M public System.Windows.Forms.TreeNode::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
 M public System.Windows.Forms.TreeNode::get_Handle() -> System.IntPtr
-M public System.Windows.Forms.TreeNode::get_ImageKey() -> System.String
-M public System.Windows.Forms.TreeNode::get_IsEditing() -> System.Boolean
-M public System.Windows.Forms.TreeNode::get_NodeFont() -> System.Drawing.Font
-M public System.Windows.Forms.TreeNode::get_SelectedImageKey() -> System.String
-M public System.Windows.Forms.TreeNode::get_StateImageIndex() -> System.Int32
-M public System.Windows.Forms.TreeNode::get_StateImageKey() -> System.String
-M public System.Windows.Forms.TreeNode::get_ToolTipText() -> System.String
 M public System.Windows.Forms.TreeNode::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.TreeNode::set_ImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeNode::set_NodeFont(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.TreeNode::set_SelectedImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeNode::set_StateImageIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.TreeNode::set_StateImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeNode::set_ToolTipText(System.String) -> System.Void
-M public System.Windows.Forms.TreeNodeCollection::Add(System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Add(System.String, System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeCollection::Insert(System.Int32, System.String, System.String, System.String, System.String) -> System.Windows.Forms.TreeNode virtual
-M public System.Windows.Forms.TreeNodeMouseHoverEventArgs::.ctor(System.Windows.Forms.TreeNode)
-M public System.Windows.Forms.TreeNodeMouseHoverEventArgs::get_Node() -> System.Windows.Forms.TreeNode
-M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::BeginInvoke(System.Object, System.Windows.Forms.TreeNodeMouseHoverEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.TreeNodeMouseHoverEventHandler::Invoke(System.Object, System.Windows.Forms.TreeNodeMouseHoverEventArgs) -> System.Void virtual
-M public System.Windows.Forms.TreeView::add_AfterLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_BeforeLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_DrawNode(System.Windows.Forms.DrawTreeNodeEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_NodeMouseHover(System.Windows.Forms.TreeNodeMouseHoverEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::add_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.TreeView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.TreeView::get_DrawMode() -> System.Windows.Forms.TreeViewDrawMode
-M public System.Windows.Forms.TreeView::get_HotTracking() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_ImageKey() -> System.String
-M public System.Windows.Forms.TreeView::get_LabelEdit() -> System.Boolean
 M public System.Windows.Forms.TreeView::get_Padding() -> System.Windows.Forms.Padding
 M public System.Windows.Forms.TreeView::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.TreeView::get_SelectedImageKey() -> System.String
-M public System.Windows.Forms.TreeView::get_ShowNodeToolTips() -> System.Boolean
-M public System.Windows.Forms.TreeView::get_StateImageList() -> System.Windows.Forms.ImageList
 M public System.Windows.Forms.TreeView::get_Text() -> System.String virtual
-M public System.Windows.Forms.TreeView::remove_AfterLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_BeforeLabelEdit(System.Windows.Forms.NodeLabelEditEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_DrawNode(System.Windows.Forms.DrawTreeNodeEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_NodeMouseHover(System.Windows.Forms.TreeNodeMouseHoverEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::remove_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.TreeView::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.TreeView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_DrawMode(System.Windows.Forms.TreeViewDrawMode) -> System.Void
-M public System.Windows.Forms.TreeView::set_HotTracking(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_ImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeView::set_LabelEdit(System.Boolean) -> System.Void
 M public System.Windows.Forms.TreeView::set_Padding(System.Windows.Forms.Padding) -> System.Void
 M public System.Windows.Forms.TreeView::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_SelectedImageKey(System.String) -> System.Void
-M public System.Windows.Forms.TreeView::set_ShowNodeToolTips(System.Boolean) -> System.Void
-M public System.Windows.Forms.TreeView::set_StateImageList(System.Windows.Forms.ImageList) -> System.Void
 M public System.Windows.Forms.TreeView::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.TreeViewImageIndexConverter::.ctor()
 M public System.Windows.Forms.TreeViewImageIndexConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
@@ -2667,35 +2010,12 @@ T class System.Resources.ResXResourceSet : System.Resources.ResourceSet
 T class System.Resources.ResXResourceWriter
 T class System.Windows.Forms.AxHost+AxComponentEditor : System.Windows.Forms.Design.WindowsFormsComponentEditor
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
-T class System.Windows.Forms.ColumnReorderedEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant
 T class System.Windows.Forms.DataGridView+DataGridViewControlCollection : System.Windows.Forms.Control+ControlCollection
-T class System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs : System.Windows.Forms.DataGridViewCellEventArgs
-T class System.Windows.Forms.DataGridViewCellErrorTextNeededEventArgs : System.Windows.Forms.DataGridViewCellEventArgs
-T class System.Windows.Forms.DataGridViewCellPaintingEventArgs : System.ComponentModel.HandledEventArgs
-T class System.Windows.Forms.DataGridViewCellStateChangedEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewCellStyleContentChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.DataGridViewCellStyleConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs : System.Windows.Forms.DataGridViewCellEventArgs
-T class System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventArgs : System.Windows.Forms.HandledMouseEventArgs
-T class System.Windows.Forms.DataGridViewColumnStateChangedEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewRowCancelEventArgs : System.ComponentModel.CancelEventArgs
-T class System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewRowDividerDoubleClickEventArgs : System.Windows.Forms.HandledMouseEventArgs
-T class System.Windows.Forms.DataGridViewRowErrorTextNeededEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewRowHeightInfoNeededEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewRowHeightInfoPushedEventArgs : System.ComponentModel.HandledEventArgs
-T class System.Windows.Forms.DataGridViewRowPostPaintEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewRowPrePaintEventArgs : System.ComponentModel.HandledEventArgs
-T class System.Windows.Forms.DataGridViewRowStateChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.DataGridViewTopLeftHeaderCell : System.Windows.Forms.DataGridViewColumnHeaderCell
 T class System.Windows.Forms.Design.ComponentEditorForm : System.Windows.Forms.Form
 T class System.Windows.Forms.Design.EventsTab : System.Windows.Forms.Design.PropertyTab
-T class System.Windows.Forms.DrawListViewColumnHeaderEventArgs : System.EventArgs
-T class System.Windows.Forms.DrawListViewItemEventArgs : System.EventArgs
-T class System.Windows.Forms.DrawListViewSubItemEventArgs : System.EventArgs
-T class System.Windows.Forms.DrawTreeNodeEventArgs : System.EventArgs
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.ImageIndexConverter : System.ComponentModel.Int32Converter
 T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringConverter
@@ -2704,16 +2024,13 @@ T class System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter : System.Co
 T class System.Windows.Forms.LinkConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.ListBindingConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.ListViewItemConverter : System.ComponentModel.ExpandableObjectConverter
-T class System.Windows.Forms.ListViewItemMouseHoverEventArgs : System.EventArgs
 T class System.Windows.Forms.ListViewItemStateImageIndexConverter : System.Windows.Forms.ImageIndexConverter
-T class System.Windows.Forms.NodeLabelEditEventArgs : System.EventArgs
 T class System.Windows.Forms.OpacityConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.OwnerDrawPropertyBag : System.MarshalByRefObject
 T class System.Windows.Forms.PrintControllerWithStatusDialog : System.Drawing.Printing.PrintController
 T class System.Windows.Forms.PropertyGrid+PropertyTabCollection
 T class System.Windows.Forms.PropertyGridInternal.PropertiesTab : System.Windows.Forms.Design.PropertyTab
 T class System.Windows.Forms.PropertyGridInternal.PropertyGridCommands
-T class System.Windows.Forms.RetrieveVirtualItemEventArgs : System.EventArgs
 T class System.Windows.Forms.ThreadExceptionDialog : System.Windows.Forms.Form
 T class System.Windows.Forms.ToolStrip+ToolStripAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.ToolStripControlHost+ToolStripHostedControlAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
@@ -2722,37 +2039,9 @@ T class System.Windows.Forms.ToolStripDropDownItemAccessibleObject : System.Wind
 T class System.Windows.Forms.ToolStripItem+ToolStripItemAccessibleObject : System.Windows.Forms.AccessibleObject
 T class System.Windows.Forms.ToolStripPanel+ToolStripPanelRowCollection : System.Windows.Forms.Layout.ArrangedElementCollection
 T class System.Windows.Forms.ToolStripSplitButton+ToolStripSplitButtonAccessibleObject : System.Windows.Forms.ToolStripItem+ToolStripItemAccessibleObject
-T class System.Windows.Forms.TreeNodeMouseHoverEventArgs : System.EventArgs
 T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.TreeViewImageKeyConverter : System.Windows.Forms.ImageKeyConverter
 T delegate System.Drawing.Design.PropertyValueUIItemInvokeHandler
-T delegate System.Windows.Forms.ColumnReorderedEventHandler
-T delegate System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler
-T delegate System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler
-T delegate System.Windows.Forms.DataGridViewCellErrorTextNeededEventHandler
-T delegate System.Windows.Forms.DataGridViewCellPaintingEventHandler
-T delegate System.Windows.Forms.DataGridViewCellStateChangedEventHandler
-T delegate System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler
-T delegate System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler
-T delegate System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler
-T delegate System.Windows.Forms.DataGridViewColumnStateChangedEventHandler
-T delegate System.Windows.Forms.DataGridViewRowCancelEventHandler
-T delegate System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler
-T delegate System.Windows.Forms.DataGridViewRowDividerDoubleClickEventHandler
-T delegate System.Windows.Forms.DataGridViewRowErrorTextNeededEventHandler
-T delegate System.Windows.Forms.DataGridViewRowHeightInfoNeededEventHandler
-T delegate System.Windows.Forms.DataGridViewRowHeightInfoPushedEventHandler
-T delegate System.Windows.Forms.DataGridViewRowPostPaintEventHandler
-T delegate System.Windows.Forms.DataGridViewRowPrePaintEventHandler
-T delegate System.Windows.Forms.DataGridViewRowStateChangedEventHandler
-T delegate System.Windows.Forms.DrawListViewColumnHeaderEventHandler
-T delegate System.Windows.Forms.DrawListViewItemEventHandler
-T delegate System.Windows.Forms.DrawListViewSubItemEventHandler
-T delegate System.Windows.Forms.DrawTreeNodeEventHandler
-T delegate System.Windows.Forms.ListViewItemMouseHoverEventHandler
-T delegate System.Windows.Forms.NodeLabelEditEventHandler
-T delegate System.Windows.Forms.RetrieveVirtualItemEventHandler
-T delegate System.Windows.Forms.TreeNodeMouseHoverEventHandler
 T interface System.Drawing.Design.IPropertyValueUIService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser
@@ -2764,7 +2053,6 @@ T sealed class System.Resources.ResXDataNode
 T sealed class System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute : System.Attribute
 T sealed class System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute : System.Attribute
 T sealed class System.Windows.Forms.DockingAttribute : System.Attribute
-T sealed class System.Windows.Forms.ListViewInsertionMark
 T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute
 T sealed class System.Windows.Forms.WindowsFormsSection
 T static class System.Windows.Forms.ImeContext

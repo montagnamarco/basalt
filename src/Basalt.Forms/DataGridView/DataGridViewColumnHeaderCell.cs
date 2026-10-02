@@ -21,6 +21,9 @@ public class DataGridViewColumnHeaderCell : DataGridViewHeaderCell
 
     protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
 
+    /// <summary>This cell's own menu, or its column's, or the grid's - the column header has a column to fall back on that a plain header cell does not.</summary>
+    public override ContextMenuStrip? GetInheritedContextMenuStrip(int rowIndex) => ContextMenuStrip ?? OwningColumn?.ContextMenuStrip ?? DataGridView?.ContextMenuStrip;
+
     public override DataGridViewCellStyle GetInheritedStyle(DataGridViewCellStyle? inheritedCellStyle, int rowIndex, bool includeColors)
     {
         var resolved = inheritedCellStyle ?? new DataGridViewCellStyle();

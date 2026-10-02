@@ -14,6 +14,7 @@ public class DataGridViewRow : DataGridViewBand
     private int _minimumHeight = 3;
     private bool _selected;
     private string _errorText = string.Empty;
+    private int _dividerHeight;
 
     public DataGridViewRow()
     {
@@ -27,23 +28,64 @@ public class DataGridViewRow : DataGridViewBand
     public override DataGridViewCellStyle DefaultCellStyle
     {
         get => base.DefaultCellStyle;
-        set => base.DefaultCellStyle = value;
+        set
+        {
+            base.DefaultCellStyle = value;
+            DataGridView?.OnRowDefaultCellStyleChangedCore(this);
+            if (value is not null) DataGridView?.OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.Row);
+        }
     }
 
     public override bool Displayed => base.Displayed;
 
-    public int DividerHeight { get; set; }
+    public int DividerHeight
+    {
+        get => _dividerHeight;
+        set
+        {
+            if (value == _dividerHeight) return;
+
+            _dividerHeight = value;
+            DataGridView?.OnRowDividerHeightChangedCore(this);
+        }
+    }
 
     public string ErrorText
     {
-        get => _errorText;
-        set => _errorText = value ?? string.Empty;
+        get => GetErrorText(Index);
+        set
+        {
+            var newValue = value ?? string.Empty;
+            if (newValue == _errorText) return;
+
+            _errorText = newValue;
+            DataGridView?.OnRowErrorTextChangedCore(this);
+        }
     }
 
     public override bool Frozen
     {
         get => base.Frozen;
-        set => base.Frozen = value;
+        set => SetStateFlag(value, base.Frozen, v => base.Frozen = v, DataGridViewElementStates.Frozen);
+    }
+
+    /// <summary>
+    /// The row's own menu while it has one, or - while it has none and a grid owns it -
+    /// whatever RowContextMenuStripNeeded supplies this time, asked again on every call rather
+    /// than cached, exactly as GetErrorText asks RowErrorTextNeeded fresh in virtual mode.
+    /// </summary>
+    public ContextMenuStrip? GetContextMenuStrip(int rowIndex) => base.ContextMenuStrip ?? DataGridView?.GetRowContextMenuStripCore(rowIndex);
+
+    public override ContextMenuStrip? ContextMenuStrip
+    {
+        get => GetContextMenuStrip(Index);
+        set
+        {
+            if (ReferenceEquals(base.ContextMenuStrip, value)) return;
+
+            base.ContextMenuStrip = value;
+            DataGridView?.OnRowContextMenuStripChangedCore(this);
+        }
     }
 
     public DataGridViewRowHeaderCell HeaderCell
@@ -62,6 +104,7 @@ public class DataGridViewRow : DataGridViewBand
         {
             _headerCell = value;
             if (value is not null) value.OwningRow = this;
+            DataGridView?.OnRowHeaderCellChangedCore(this);
         }
     }
 
@@ -99,8 +142,14 @@ public class DataGridViewRow : DataGridViewBand
         set
         {
             if (value < 2) throw new ArgumentOutOfRangeException(nameof(value));
+            if (value == _minimumHeight)
+            {
+                if (_height < value) Height = value;
+                return;
+            }
 
             _minimumHeight = value;
+            DataGridView?.OnRowMinimumHeightChangedCore(this);
             if (_height < value) Height = value;
         }
     }
@@ -108,7 +157,7 @@ public class DataGridViewRow : DataGridViewBand
     public override bool ReadOnly
     {
         get => base.ReadOnly;
-        set => base.ReadOnly = value;
+        set => SetStateFlag(value, base.ReadOnly, v => base.ReadOnly = v, DataGridViewElementStates.ReadOnly);
     }
 
     public override DataGridViewTriState Resizable
@@ -126,6 +175,7 @@ public class DataGridViewRow : DataGridViewBand
 
             _selected = value;
             DataGridView?.OnRowSelectedChangedCore(this);
+            DataGridView?.OnRowStateChangedCore(this, DataGridViewElementStates.Selected);
         }
     }
 
@@ -138,7 +188,7 @@ public class DataGridViewRow : DataGridViewBand
     public override bool Visible
     {
         get => base.Visible;
-        set => base.Visible = value;
+        set => SetStateFlag(value, base.Visible, v => base.Visible = v, DataGridViewElementStates.Visible);
     }
 
     public override object Clone()
@@ -173,7 +223,8 @@ public class DataGridViewRow : DataGridViewBand
 
     protected virtual DataGridViewCellCollection CreateCellsInstance() => new(this);
 
-    public string GetErrorText(int rowIndex) => ErrorText;
+    /// <summary>The row's own text while VirtualMode is off, or - once it is on - whatever RowErrorTextNeeded supplies this time, asked again on every call.</summary>
+    public string GetErrorText(int rowIndex) => DataGridView?.GetRowErrorTextCore(this, _errorText) ?? _errorText;
 
     public virtual int GetPreferredHeight(int rowIndex, DataGridViewAutoSizeRowMode autoSizeRowMode, bool fixedWidth) => Height;
 
@@ -195,4 +246,13 @@ public class DataGridViewRow : DataGridViewBand
     }
 
     public override string ToString() => $"DataGridViewRow {{ Index={Index} }}";
+
+    /// <summary>Applies one of the Band boolean flags through its own setter only when it really changes, then reports the flip to the owning grid as RowStateChanged.</summary>
+    private void SetStateFlag(bool value, bool current, Action<bool> apply, DataGridViewElementStates flag)
+    {
+        if (value == current) return;
+
+        apply(value);
+        DataGridView?.OnRowStateChangedCore(this, flag);
+    }
 }

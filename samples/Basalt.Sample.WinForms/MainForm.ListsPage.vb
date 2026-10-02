@@ -10,7 +10,8 @@ Partial Class MainForm
         page.Controls.Add(outer)
 
         ' Left: a tree of folders.
-        Dim tree As New TreeView With {.Dock = DockStyle.Fill, .CheckBoxes = False}
+        ' F2 or a second click on the selected node renames it.
+        Dim tree As New TreeView With {.Dock = DockStyle.Fill, .CheckBoxes = False, .LabelEdit = True}
         Dim root = tree.Nodes.Add("Computer")
         Dim documents = root.Nodes.Add("Documents")
         documents.Nodes.Add("Letters")
@@ -21,6 +22,8 @@ Partial Class MainForm
         root.Nodes.Add("Music")
         root.Expand()
         AddHandler tree.AfterSelect, Sub(s, e) statusLabel.Text = $"Tree: {e.Node.FullPath}"
+        AddHandler tree.AfterLabelEdit, Sub(s, e) statusLabel.Text = If(e.Label Is Nothing, "Rename cancelled", $"Renamed to {e.Label}")
+        AddHandler tree.NodeMouseHover, Sub(s, e) statusLabel.Text = $"Over {e.Node.Text}"
         outer.Panel1.Controls.Add(tree)
 
         ' Top right: a list box and a checked list box.
@@ -39,7 +42,9 @@ Partial Class MainForm
         inner.Panel1.Controls.Add(fruits)
 
         ' Bottom right: a details list view with sortable columns.
-        Dim files As New ListView With {.Dock = DockStyle.Fill, .View = View.Details, .FullRowSelect = True, .GridLines = True}
+        ' Columns can be dragged into another order, and file names renamed in place.
+        Dim files As New ListView With {.Dock = DockStyle.Fill, .View = View.Details, .FullRowSelect = True, .GridLines = True, .AllowColumnReorder = True, .LabelEdit = True}
+        AddHandler files.AfterLabelEdit, Sub(s, e) statusLabel.Text = If(e.Label Is Nothing, "Rename cancelled", $"Renamed to {e.Label}")
         files.Columns.Add("Name", 140)
         files.Columns.Add("Size", 70, HorizontalAlignment.Right)
         files.Columns.Add("Modified", 110)

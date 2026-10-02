@@ -185,7 +185,7 @@ public partial class TreeView
             contentX += images.ImageSize.Width + ImageGap;
         }
 
-        var textSize = TextRenderer.MeasureText(node.Text, Font);
+        var textSize = TextRenderer.MeasureText(node.Text, node.NodeFont ?? Font);
         var label = new Rectangle(contentX, row.Top, textSize.Width + 4, row.Height);
 
         return new NodeRowLayout(row, glyph, checkBox, image, label);

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Linq;
 
 namespace System.Windows.Forms;
 
@@ -146,7 +147,7 @@ public partial class ListView
         private readonly ListViewGroup? _group;
         private readonly List<ListViewItem> _detached = [];
 
-        internal ListViewItemCollection(ListView owner)
+        public ListViewItemCollection(ListView owner)
         {
             _owner = owner;
         }
@@ -157,12 +158,15 @@ public partial class ListView
             _group = group;
         }
 
-        /// <summary>The items this collection exposes, in Items order: every one when unfiltered, or only this group's.</summary>
+        /// <summary>The items this collection exposes, in Items order: every one when unfiltered, or only this group's. Empty in VirtualMode, which reads through GetVirtualItem instead.</summary>
         private List<ListViewItem> Source => _owner is null
             ? _detached
             : _group is null ? _owner._items : _owner._items.Where(i => i.Group == _group).ToList();
 
-        public int Count => Source.Count;
+        /// <summary>Whether this is the main, ungrouped collection of a ListView whose VirtualMode is on: the only case Items reads through RetrieveVirtualItem.</summary>
+        private bool IsVirtual => _owner is not null && _group is null && _owner._virtualMode;
+
+        public int Count => IsVirtual ? _owner!._virtualListSize : Source.Count;
 
         public bool IsReadOnly => false;
 
@@ -170,6 +174,12 @@ public partial class ListView
         {
             get
             {
+                if (IsVirtual)
+                {
+                    if (index < 0 || index >= _owner!._virtualListSize) throw new ArgumentOutOfRangeException(nameof(index));
+                    return _owner.GetVirtualItem(index);
+                }
+
                 var source = Source;
                 if (index < 0 || index >= source.Count) throw new ArgumentOutOfRangeException(nameof(index));
                 return source[index];
@@ -177,6 +187,7 @@ public partial class ListView
             set
             {
                 ArgumentNullException.ThrowIfNull(value);
+                if (IsVirtual) throw new InvalidOperationException("Items cannot be replaced directly while VirtualMode is on.");
                 if (_owner is null) return;
 
                 var realIndex = _owner.IndexOfItem(this[index]);
@@ -194,6 +205,7 @@ public partial class ListView
         public virtual ListViewItem Add(ListViewItem value)
         {
             ArgumentNullException.ThrowIfNull(value);
+            if (IsVirtual) throw new InvalidOperationException("Items cannot be added directly while VirtualMode is on; set VirtualListSize and handle RetrieveVirtualItem instead.");
 
             if (_group is not null) value.Group = _group;
 
@@ -255,7 +267,12 @@ public partial class ListView
             return matches.ToArray();
         }
 
-        public IEnumerator GetEnumerator() => Source.GetEnumerator();
+        public IEnumerator GetEnumerator() => IsVirtual ? VirtualEnumerate() : Source.GetEnumerator();
+
+        private IEnumerator VirtualEnumerate()
+        {
+            for (var i = 0; i < _owner!._virtualListSize; i++) yield return _owner.GetVirtualItem(i);
+        }
 
         public int IndexOf(ListViewItem item) => Source.IndexOf(item);
 
@@ -270,6 +287,7 @@ public partial class ListView
         public ListViewItem Insert(int index, ListViewItem item)
         {
             ArgumentNullException.ThrowIfNull(item);
+            if (IsVirtual) throw new InvalidOperationException("Items cannot be inserted directly while VirtualMode is on; set VirtualListSize and handle RetrieveVirtualItem instead.");
             if (_group is not null) item.Group = _group;
 
             if (_owner is null)
@@ -302,6 +320,7 @@ public partial class ListView
 
         public virtual void Remove(ListViewItem item)
         {
+            if (IsVirtual) throw new InvalidOperationException("Items cannot be removed directly while VirtualMode is on; set VirtualListSize instead.");
             if (_owner is not null) _owner.RemoveItemCore(item);
             else _detached.Remove(item);
         }
@@ -355,7 +374,7 @@ public partial class ListView
     {
         private readonly ListView _owner;
 
-        internal ColumnHeaderCollection(ListView owner)
+        public ColumnHeaderCollection(ListView owner)
         {
             _owner = owner;
         }
@@ -512,16 +531,19 @@ public partial class ListView
     {
         private readonly ListView _owner;
 
-        internal SelectedIndexCollection(ListView owner)
+        public SelectedIndexCollection(ListView owner)
         {
             _owner = owner;
         }
 
-        private List<int> Source => _owner._items
-            .Select((item, index) => (item, index))
-            .Where(pair => _owner._selected.Contains(pair.item))
-            .Select(pair => pair.index)
-            .ToList();
+        /// <summary>In VirtualMode, selection is tracked by index (there are no live items to hold a selected flag); otherwise, indices of the selected items.</summary>
+        private List<int> Source => _owner._virtualMode
+            ? _owner.VirtualSelectedIndices.OrderBy(i => i).ToList()
+            : _owner._items
+                .Select((item, index) => (item, index))
+                .Where(pair => _owner._selected.Contains(pair.item))
+                .Select(pair => pair.index)
+                .ToList();
 
         public int Count => Source.Count;
 
@@ -539,6 +561,13 @@ public partial class ListView
 
         public int Add(int itemIndex)
         {
+            if (_owner._virtualMode)
+            {
+                if (itemIndex < 0 || itemIndex >= _owner._virtualListSize) throw new ArgumentOutOfRangeException(nameof(itemIndex));
+                _owner.SetVirtualItemSelected(itemIndex, true);
+                return IndexOf(itemIndex);
+            }
+
             if (itemIndex < 0 || itemIndex >= _owner._items.Count) throw new ArgumentOutOfRangeException(nameof(itemIndex));
 
             _owner.SetItemSelected(_owner._items[itemIndex], true);
@@ -547,6 +576,12 @@ public partial class ListView
 
         public void Clear()
         {
+            if (_owner._virtualMode)
+            {
+                foreach (var index in _owner.VirtualSelectedIndices.ToArray()) _owner.SetVirtualItemSelected(index, false);
+                return;
+            }
+
             foreach (var item in _owner._selected.ToArray()) _owner.SetItemSelected(item, false);
         }
 
@@ -560,6 +595,12 @@ public partial class ListView
 
         public void Remove(int itemIndex)
         {
+            if (_owner._virtualMode)
+            {
+                _owner.SetVirtualItemSelected(itemIndex, false);
+                return;
+            }
+
             if (itemIndex < 0 || itemIndex >= _owner._items.Count) return;
             _owner.SetItemSelected(_owner._items[itemIndex], false);
         }
@@ -597,7 +638,7 @@ public partial class ListView
     {
         private readonly ListView _owner;
 
-        internal SelectedListViewItemCollection(ListView owner)
+        public SelectedListViewItemCollection(ListView owner)
         {
             _owner = owner;
         }
@@ -674,7 +715,7 @@ public partial class ListView
     {
         private readonly ListView _owner;
 
-        internal CheckedIndexCollection(ListView owner)
+        public CheckedIndexCollection(ListView owner)
         {
             _owner = owner;
         }
@@ -739,7 +780,7 @@ public partial class ListView
     {
         private readonly ListView _owner;
 
-        internal CheckedListViewItemCollection(ListView owner)
+        public CheckedListViewItemCollection(ListView owner)
         {
             _owner = owner;
         }

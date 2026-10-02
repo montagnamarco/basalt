@@ -52,6 +52,7 @@ public partial class DataGridView : Control, ISupportInitialize
     private DataGridViewCellBorderStyle _cellBorderStyle = DataGridViewCellBorderStyle.Single;
     private DataGridViewSelectionMode _selectionMode = DataGridViewSelectionMode.RowHeaderSelect;
     private DataGridViewEditMode _editMode = DataGridViewEditMode.EditOnKeystrokeOrF2;
+    private DataGridViewAutoSizeColumnsMode _autoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
 
     public DataGridView()
     {
@@ -134,6 +135,7 @@ public partial class DataGridView : Control, ISupportInitialize
         {
             _alternatingRowsDefaultCellStyle = value;
             OnAlternatingRowsDefaultCellStyleChanged(EventArgs.Empty);
+            if (value is not null) OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.AlternatingRows);
             Invalidate();
         }
     }
@@ -156,7 +158,19 @@ public partial class DataGridView : Control, ISupportInitialize
     }
 
     [DefaultValue(DataGridViewAutoSizeColumnsMode.None)]
-    public DataGridViewAutoSizeColumnsMode AutoSizeColumnsMode { get; set; } = DataGridViewAutoSizeColumnsMode.None;
+    public DataGridViewAutoSizeColumnsMode AutoSizeColumnsMode
+    {
+        get => _autoSizeColumnsMode;
+        set
+        {
+            if (!Enum.IsDefined(value)) throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(DataGridViewAutoSizeColumnsMode));
+            if (value == _autoSizeColumnsMode) return;
+
+            var previousModes = Columns.Cast<DataGridViewColumn>().Select(column => column.AutoSizeMode).ToArray();
+            _autoSizeColumnsMode = value;
+            OnAutoSizeColumnsModeChanged(new DataGridViewAutoSizeColumnsModeEventArgs(previousModes));
+        }
+    }
 
     public Color BackgroundColor
     {
@@ -195,6 +209,7 @@ public partial class DataGridView : Control, ISupportInitialize
         {
             _columnHeadersDefaultCellStyle = value;
             OnColumnHeadersDefaultCellStyleChanged(EventArgs.Empty);
+            if (value is not null) OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.ColumnHeaders);
             Invalidate();
         }
     }
@@ -258,6 +273,7 @@ public partial class DataGridView : Control, ISupportInitialize
         {
             _defaultCellStyle = value;
             OnDefaultCellStyleChanged(EventArgs.Empty);
+            if (value is not null) OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.DataGridView);
             Invalidate();
         }
     }
@@ -354,6 +370,7 @@ public partial class DataGridView : Control, ISupportInitialize
         {
             _rowHeadersDefaultCellStyle = value;
             OnRowHeadersDefaultCellStyleChanged(EventArgs.Empty);
+            if (value is not null) OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.RowHeaders);
             Invalidate();
         }
     }
@@ -403,6 +420,7 @@ public partial class DataGridView : Control, ISupportInitialize
         {
             _rowsDefaultCellStyle = value;
             OnRowsDefaultCellStyleChanged(EventArgs.Empty);
+            if (value is not null) OnCellStyleContentChangedCore(value, DataGridViewCellStyleScopes.Rows);
             Invalidate();
         }
     }

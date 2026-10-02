@@ -77,9 +77,23 @@ public class TreeNodeCollection : ICollection, IEnumerable, IList
         return node;
     }
 
+    public virtual TreeNode Add(string? key, string? text, string? imageKey)
+    {
+        var node = new TreeNode(text) { Name = key ?? string.Empty, ImageKey = imageKey ?? string.Empty };
+        Add(node);
+        return node;
+    }
+
     public virtual TreeNode Add(string? key, string? text, int imageIndex, int selectedImageIndex)
     {
         var node = new TreeNode(text) { Name = key ?? string.Empty, ImageIndex = imageIndex, SelectedImageIndex = selectedImageIndex };
+        Add(node);
+        return node;
+    }
+
+    public virtual TreeNode Add(string? key, string? text, string? imageKey, string? selectedImageKey)
+    {
+        var node = new TreeNode(text) { Name = key ?? string.Empty, ImageKey = imageKey ?? string.Empty, SelectedImageKey = selectedImageKey ?? string.Empty };
         Add(node);
         return node;
     }
@@ -183,9 +197,23 @@ public class TreeNodeCollection : ICollection, IEnumerable, IList
         return node;
     }
 
+    public virtual TreeNode Insert(int index, string? key, string? text, string? imageKey)
+    {
+        var node = new TreeNode(text) { Name = key ?? string.Empty, ImageKey = imageKey ?? string.Empty };
+        Insert(index, node);
+        return node;
+    }
+
     public virtual TreeNode Insert(int index, string? key, string? text, int imageIndex, int selectedImageIndex)
     {
         var node = new TreeNode(text) { Name = key ?? string.Empty, ImageIndex = imageIndex, SelectedImageIndex = selectedImageIndex };
+        Insert(index, node);
+        return node;
+    }
+
+    public virtual TreeNode Insert(int index, string? key, string? text, string? imageKey, string? selectedImageKey)
+    {
+        var node = new TreeNode(text) { Name = key ?? string.Empty, ImageKey = imageKey ?? string.Empty, SelectedImageKey = selectedImageKey ?? string.Empty };
         Insert(index, node);
         return node;
     }

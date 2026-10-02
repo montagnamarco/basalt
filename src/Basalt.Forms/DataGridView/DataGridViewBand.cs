@@ -10,6 +10,7 @@ public class DataGridViewBand : DataGridViewElement, ICloneable, IDisposable
     private bool _selected;
     private bool _visible = true;
     private DataGridViewTriState _resizable = DataGridViewTriState.NotSet;
+    private ContextMenuStrip? _contextMenuStrip;
 
     /// <summary>The index this band had in its collection the last time it was asked; -1 before it is added.</summary>
     internal int IndexCore = -1;
@@ -23,6 +24,17 @@ public class DataGridViewBand : DataGridViewElement, ICloneable, IDisposable
     {
         get => _defaultCellStyle ??= new DataGridViewCellStyle();
         set => _defaultCellStyle = value;
+    }
+
+    /// <summary>
+    /// Band's own backing field; Column and Row each override this to raise their own Changed
+    /// event on the owning grid (ColumnContextMenuStripChanged/RowContextMenuStripChanged) - a
+    /// plain DataGridViewBand is never instantiated directly, only through those two.
+    /// </summary>
+    public virtual ContextMenuStrip? ContextMenuStrip
+    {
+        get => _contextMenuStrip;
+        set => _contextMenuStrip = value;
     }
 
     public Type DefaultHeaderCellType { get; set; } = typeof(DataGridViewHeaderCell);

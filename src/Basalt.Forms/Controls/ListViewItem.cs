@@ -16,6 +16,9 @@ public class ListViewItem : ICloneable
     private int _imageIndex = -1;
     private string _imageKey = string.Empty;
     private ListViewGroup? _group;
+    private int _indentCount;
+    private Point _position;
+    private int _stateImageIndex = -1;
 
     /// <summary>The ListView this item belongs to, set by ListView.ListViewItemCollection when the item is added or removed.</summary>
     private ListView? _listView;
@@ -72,6 +75,86 @@ public class ListViewItem : ICloneable
         : this(items)
     {
         Group = group;
+    }
+
+    public ListViewItem(string[]? items, string? imageKey)
+        : this(items)
+    {
+        ImageKey = imageKey ?? string.Empty;
+    }
+
+    public ListViewItem(ListViewSubItem[]? subItems, int imageIndex)
+        : this()
+    {
+        AddListViewSubItems(subItems);
+        ImageIndex = imageIndex;
+    }
+
+    public ListViewItem(ListViewSubItem[]? subItems, string? imageKey)
+        : this()
+    {
+        AddListViewSubItems(subItems);
+        ImageKey = imageKey ?? string.Empty;
+    }
+
+    public ListViewItem(string? text, int imageIndex, ListViewGroup? group)
+        : this(text, imageIndex)
+    {
+        Group = group;
+    }
+
+    public ListViewItem(string[]? items, int imageIndex, ListViewGroup? group)
+        : this(items, imageIndex)
+    {
+        Group = group;
+    }
+
+    public ListViewItem(ListViewSubItem[]? subItems, int imageIndex, ListViewGroup? group)
+        : this(subItems, imageIndex)
+    {
+        Group = group;
+    }
+
+    public ListViewItem(string? text, string? imageKey, ListViewGroup? group)
+        : this(text, imageKey)
+    {
+        Group = group;
+    }
+
+    public ListViewItem(string[]? items, string? imageKey, ListViewGroup? group)
+        : this(items, imageKey)
+    {
+        Group = group;
+    }
+
+    public ListViewItem(ListViewSubItem[]? subItems, string? imageKey, ListViewGroup? group)
+        : this(subItems, imageKey)
+    {
+        Group = group;
+    }
+
+    public ListViewItem(string[]? items, int imageIndex, Color foreColor, Color backColor, Font? font)
+        : this(items, imageIndex)
+    {
+        ApplyStyleToAllSubItems(foreColor, backColor, font);
+    }
+
+    public ListViewItem(string[]? items, string? imageKey, Color foreColor, Color backColor, Font? font)
+        : this(items, imageKey)
+    {
+        ApplyStyleToAllSubItems(foreColor, backColor, font);
+    }
+
+    public ListViewItem(string[]? items, int imageIndex, Color foreColor, Color backColor, Font? font, ListViewGroup? group)
+        : this(items, imageIndex, group)
+    {
+        ApplyStyleToAllSubItems(foreColor, backColor, font);
+    }
+
+    public ListViewItem(string[]? items, string? imageKey, Color foreColor, Color backColor, Font? font, ListViewGroup? group)
+        : this(items, imageKey, group)
+    {
+        ApplyStyleToAllSubItems(foreColor, backColor, font);
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -165,6 +248,20 @@ public class ListViewItem : ICloneable
     [Browsable(false)]
     public ImageList? ImageList => _listView?.SmallImageList;
 
+    /// <summary>How many icon widths this item's icon and label are indented; stored but not yet reflected in icon-view layout.</summary>
+    [DefaultValue(0)]
+    public int IndentCount
+    {
+        get => _indentCount;
+        set
+        {
+            if (value == _indentCount) return;
+
+            _indentCount = value;
+            _listView?.InvalidateItem(this);
+        }
+    }
+
     [Browsable(false)]
     public int Index => _listView is null ? -1 : _listView.IndexOfItem(this);
 
@@ -173,6 +270,20 @@ public class ListViewItem : ICloneable
 
     [Browsable(false)]
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>This item's own pixel position in icon views with AutoArrange off; stored but not yet used by the auto-arranging layout this ListView always runs.</summary>
+    [Browsable(false)]
+    public Point Position
+    {
+        get => _position;
+        set
+        {
+            if (value == _position) return;
+
+            _position = value;
+            _listView?.InvalidateItem(this);
+        }
+    }
 
     [Browsable(false)]
     public bool Selected
@@ -184,6 +295,21 @@ public class ListViewItem : ICloneable
 
             if (_listView is not null) _listView.SetItemSelected(this, value);
             else _selected = value;
+        }
+    }
+
+    /// <summary>The index into StateImageList this item's checkbox-like state glyph draws from; -1 for none.</summary>
+    [DefaultValue(-1)]
+    public int StateImageIndex
+    {
+        get => _stateImageIndex;
+        set
+        {
+            if (value is < -1 or > 14) throw new ArgumentOutOfRangeException(nameof(value));
+            if (value == _stateImageIndex) return;
+
+            _stateImageIndex = value;
+            _listView?.InvalidateItem(this);
         }
     }
 
@@ -227,7 +353,14 @@ public class ListViewItem : ICloneable
         return clone;
     }
 
+    /// <summary>Opens LabelEdit's in-place TextBox over this item, same as the user pressing F2 on it; no-op outside a ListView.</summary>
+    public void BeginEdit() => _listView?.BeginEditCore(this);
+
     public virtual void EnsureVisible() => _listView?.EnsureVisible(Index);
+
+    /// <summary>The nearest other item to this one's current location, in the given direction; null outside a ListView.</summary>
+    public ListViewItem FindNearestItem(SearchDirectionHint searchDirection) =>
+        _listView?.FindNearestItem(searchDirection, Bounds.Location)!;
 
     public Rectangle GetBounds(ItemBoundsPortion portion) => _listView?.GetItemRect(Index, portion) ?? Rectangle.Empty;
 
@@ -272,6 +405,25 @@ public class ListViewItem : ICloneable
 
         Text = items[0];
         for (var i = 1; i < items.Length; i++) _subItems.Add(items[i]);
+    }
+
+    /// <summary>Appends ready-made sub-items, as the ListViewSubItem[] constructors do; the default empty one from the parameterless constructor stays at index 0 only if none are given.</summary>
+    private void AddListViewSubItems(ListViewSubItem[]? subItems)
+    {
+        if (subItems is null || subItems.Length == 0) return;
+
+        _subItems.ReplaceAll(subItems);
+    }
+
+    /// <summary>Applies one fore colour, back colour and font to every sub-item, as the colour-and-font constructors do.</summary>
+    private void ApplyStyleToAllSubItems(Color foreColor, Color backColor, Font? font)
+    {
+        foreach (ListViewSubItem subItem in _subItems)
+        {
+            subItem.ForeColor = foreColor;
+            subItem.BackColor = backColor;
+            subItem.Font = font;
+        }
     }
 
     [DefaultProperty("Text")]
@@ -465,6 +617,19 @@ public class ListViewItem : ICloneable
 
         /// <summary>The sub-item at column 0 always exists, standing for the item's own Text; created once, in the item's constructor.</summary>
         internal void AddDefault() => _subItems.Add(new ListViewSubItem(_owner, string.Empty));
+
+        /// <summary>Replaces every sub-item with the given ones, without AddDefault's rule of always keeping an empty one; used by the ListViewSubItem[] constructors.</summary>
+        internal void ReplaceAll(IEnumerable<ListViewSubItem> items)
+        {
+            _subItems.Clear();
+            foreach (var item in items)
+            {
+                item.Owner = _owner;
+                _subItems.Add(item);
+            }
+
+            if (_subItems.Count == 0) AddDefault();
+        }
 
         bool IList.IsFixedSize => false;
 

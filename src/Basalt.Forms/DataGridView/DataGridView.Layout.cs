@@ -65,6 +65,63 @@ public partial class DataGridView
         return cutOverflow ? Rectangle.Intersect(bounds, ClientRectangle) : bounds;
     }
 
+    public Rectangle GetColumnDisplayRectangle(int columnIndex, bool cutOverflow) => GetCellDisplayRectangle(columnIndex, -1, cutOverflow);
+
+    public Rectangle GetRowDisplayRectangle(int rowIndex, bool cutOverflow) => GetCellDisplayRectangle(-1, rowIndex, cutOverflow);
+
+    /// <summary>
+    /// How many rows fit top to bottom in the client area below the column headers, starting at
+    /// row 0 (there is no scrolling this round, so row 0 is always the first displayed row):
+    /// includePartialRow counts a row that only partly fits, otherwise only whole rows count.
+    /// </summary>
+    public int DisplayedRowCount(bool includePartialRow)
+    {
+        var available = ClientSize.Height - OriginY;
+        var count = 0;
+        var used = 0;
+
+        for (var index = 0; index < Rows.Count; index++)
+        {
+            if (!Rows[index].Visible) continue;
+
+            var height = Rows[index].Height;
+            if (used + height > available)
+            {
+                if (includePartialRow && used < available) count++;
+                break;
+            }
+
+            used += height;
+            count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>How many columns fit left to right in the client area to the right of the row headers, starting at column 0 (there is no scrolling this round).</summary>
+    public int DisplayedColumnCount(bool includePartialColumn)
+    {
+        var available = ClientSize.Width - OriginX;
+        var count = 0;
+        var used = 0;
+
+        foreach (var column in ColumnsInDisplayOrder())
+        {
+            if (!column.Visible) continue;
+
+            if (used + column.Width > available)
+            {
+                if (includePartialColumn && used < available) count++;
+                break;
+            }
+
+            used += column.Width;
+            count++;
+        }
+
+        return count;
+    }
+
     public void InvalidateCell(DataGridViewCell dataGridViewCell)
     {
         ArgumentNullException.ThrowIfNull(dataGridViewCell);

@@ -23,6 +23,7 @@ Public Class MainForm
         pages.TabPages.Add(BuildGridPage())
         pages.TabPages.Add(BuildTextPage())
         pages.TabPages.Add(BuildCalendarPage())
+        pages.TabPages.Add(BuildAdvancedPage())
 
         tips.SetToolTip(countButton, "Counts your clicks")
         tips.SetToolTip(drawingPanel, "Drag with the left button; right-click for the menu")
@@ -243,7 +244,7 @@ Public Class MainForm
     End Sub
 
     Private Sub clockTimer_Tick(sender As Object, e As EventArgs) Handles clockTimer.Tick
-        clockLabel.Text = DateTime.Now.ToString("HH:mm:ss")
+        clockLabel.Text = DateTime.Now.ToString("HH:mm:ss") & If(Control.IsKeyLocked(Keys.CapsLock), "  CAPS", "")
     End Sub
 
 End Class

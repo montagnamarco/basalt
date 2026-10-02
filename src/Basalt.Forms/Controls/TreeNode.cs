@@ -15,7 +15,7 @@ namespace System.Windows.Forms;
 /// </remarks>
 [TypeConverter(typeof(TreeNodeConverter))]
 [DefaultProperty("Text")]
-public class TreeNode : MarshalByRefObject, ICloneable
+public partial class TreeNode : MarshalByRefObject, ICloneable
 {
     private string _text;
     private bool _expanded;
@@ -149,6 +149,9 @@ public class TreeNode : MarshalByRefObject, ICloneable
 
     /// <summary>Where this node sits among its siblings, or -1 when it belongs to no collection.</summary>
     public int Index => Owner?.IndexOf(this) ?? -1;
+
+    [Browsable(false)]
+    public bool IsEditing => TreeView?.EditingNode == this;
 
     [Browsable(false)]
     public bool IsExpanded => _expanded;
@@ -316,6 +319,16 @@ public class TreeNode : MarshalByRefObject, ICloneable
         foreach (TreeNode child in Nodes) count += child.GetNodeCount(true);
 
         return count;
+    }
+
+    public void BeginEdit()
+    {
+        if (TreeView is { } tree) tree.BeginEditNode(this);
+    }
+
+    public void EndEdit(bool cancel)
+    {
+        if (TreeView is { } tree) tree.EndEditNode(this, cancel);
     }
 
     public void Remove() => Owner?.Remove(this);

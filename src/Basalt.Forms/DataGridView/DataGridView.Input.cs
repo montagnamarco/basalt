@@ -19,6 +19,11 @@ public partial class DataGridView
     /// <summary>The cell currently under the pointer, so entering/leaving it is reported exactly once per crossing.</summary>
     private DataGridViewCell? _hoverCell;
 
+    /// <summary>The column/row index _hoverCell was last seen at, needed by CellMouseLeave once the pointer has already moved off it.</summary>
+    private int _hoverColumnIndex = -1;
+
+    private int _hoverRowIndex = -1;
+
     /// <summary>Claims the keys a grid moves its current cell with, so dialog/tab navigation does not take them first.</summary>
     protected override bool IsInputKey(Keys keyData)
     {
@@ -38,6 +43,12 @@ public partial class DataGridView
 
         if (CanSelect) Focus();
         if (e.Button != MouseButtons.Left) return;
+
+        if (e.Clicks >= 2)
+        {
+            HandleColumnDividerDoubleClick(e.X, e.Y);
+            HandleRowDividerDoubleClick(e.X, e.Y);
+        }
 
         var hit = HitTest(e.X, e.Y);
         var shift = (ModifierKeys & Keys.Shift) == Keys.Shift;
@@ -92,11 +103,17 @@ public partial class DataGridView
             cell.OnMouseUpCore(args);
             if (hit.Type == DataGridViewHitTestType.Cell) OnCellMouseUp(args);
 
-            // CellClick/CellContentClick belong here, on mouse-up, and only when the button comes
-            // back up over the very cell it went down on - never on mouse-down (that fired them
-            // immediately, before the user had even released the button) and never when a drag
-            // carried the release onto a different cell.
-            if (hit.Type == DataGridViewHitTestType.Cell && ReferenceEquals(cell, _mouseDownCell)) RaiseClick(cell, hit, args, e);
+            // CellMouseClick (and the column/row header equivalents) and CellClick/CellContentClick
+            // all belong here, on mouse-up, and only when the button comes back up over the very
+            // cell/header it went down on - never on mouse-down (that fired CellMouseDown immediately,
+            // before the user had even released the button) and never when a drag carried the
+            // release onto a different cell.
+            if (ReferenceEquals(cell, _mouseDownCell))
+            {
+                var isDoubleClick = args.Clicks >= 2 || _mouseDownWasDoubleClick;
+                RaiseMouseClickCore(hit, args, isDoubleClick);
+                if (hit.Type == DataGridViewHitTestType.Cell) RaiseClick(cell, hit, args, e);
+            }
         }
 
         // A drag that started on one cell (pressed state) and let go over another, or over no
@@ -119,15 +136,28 @@ public partial class DataGridView
 
         if (!ReferenceEquals(cell, _hoverCell))
         {
-            _hoverCell?.OnMouseLeaveCore(_hoverCell.RowIndex);
+            if (_hoverCell is not null)
+            {
+                _hoverCell.OnMouseLeaveCore(_hoverCell.RowIndex);
+                RaiseCellMouseLeaveCore(_hoverColumnIndex, _hoverRowIndex);
+            }
+
             _hoverCell = cell;
-            _hoverCell?.OnMouseEnterCore(_hoverCell.RowIndex);
+            _hoverColumnIndex = hit.ColumnIndex;
+            _hoverRowIndex = hit.RowIndex;
+
+            if (_hoverCell is not null)
+            {
+                _hoverCell.OnMouseEnterCore(_hoverCell.RowIndex);
+                RaiseCellMouseEnterCore(hit.ColumnIndex, hit.RowIndex);
+            }
         }
 
         if (cell is not null)
         {
             var args = new DataGridViewCellMouseEventArgs(hit.ColumnIndex, hit.RowIndex, e.X - hit.ColumnX, e.Y - hit.RowY, e);
             cell.OnMouseMoveCore(args);
+            RaiseCellMouseMoveCore(args);
         }
     }
 
@@ -135,8 +165,15 @@ public partial class DataGridView
     {
         base.OnMouseLeave(e);
 
-        _hoverCell?.OnMouseLeaveCore(_hoverCell.RowIndex);
+        if (_hoverCell is not null)
+        {
+            _hoverCell.OnMouseLeaveCore(_hoverCell.RowIndex);
+            RaiseCellMouseLeaveCore(_hoverColumnIndex, _hoverRowIndex);
+        }
+
         _hoverCell = null;
+        _hoverColumnIndex = -1;
+        _hoverRowIndex = -1;
     }
 
     /// <summary>

@@ -52,10 +52,15 @@ public partial class TreeView
     {
         var layout = RowLayout(node, rowTop);
 
+        if (DrawMode == TreeViewDrawMode.OwnerDrawAll)
+        {
+            if (!RaiseDrawNode(graphics, node, layout.Row)) return;
+        }
+
         if (ShowLines) PaintLines(graphics, node, layout.Row, layout.PlusMinus);
         if (ShowPlusMinus && node.Nodes.Count > 0 && (node.Level > 0 || ShowRootLines)) PaintPlusMinus(graphics, layout.PlusMinus, node.IsExpanded);
 
-        if (!layout.CheckBox.IsEmpty) ControlPaint.DrawCheckBox(graphics, layout.CheckBox, node.Checked ? ButtonState.Checked : ButtonState.Normal);
+        if (!layout.CheckBox.IsEmpty) PaintStateGlyph(graphics, node, layout.CheckBox);
 
         if (!layout.Image.IsEmpty && _imageList is { } images)
         {
@@ -66,14 +71,31 @@ public partial class TreeView
         PaintLabel(graphics, node, layout.Row, layout.Label);
     }
 
+    /// <summary>A picture from StateImageList when the node names one, else the plain Windows check box.</summary>
+    private void PaintStateGlyph(Graphics graphics, TreeNode node, Rectangle bounds)
+    {
+        var index = node.ResolveStateImageIndex(_stateImageList);
+        if (_stateImageList is { } states && index >= 0 && index < states.Images.Count)
+        {
+            states.Draw(graphics, bounds.Location, index);
+            return;
+        }
+
+        ControlPaint.DrawCheckBox(graphics, bounds, node.Checked ? ButtonState.Checked : ButtonState.Normal);
+    }
+
     /// <summary>The node's own picture when it has one, else the tree view's default.</summary>
     private int EffectiveImageIndex(TreeNode node)
     {
-        if (node.IsSelected && node.SelectedImageIndex >= 0) return node.SelectedImageIndex;
-        if (node.ImageIndex >= 0) return node.ImageIndex;
-        if (node.IsSelected && _selectedImageIndex >= 0) return _selectedImageIndex;
+        var selected = node.ResolveSelectedImageIndex(_imageList);
+        if (node.IsSelected && selected >= 0) return selected;
 
-        return _imageIndex;
+        var own = node.ResolveImageIndex(_imageList);
+        if (own >= 0) return own;
+
+        if (node.IsSelected && ResolveSelectedImageIndex() >= 0) return ResolveSelectedImageIndex();
+
+        return ResolveImageIndex();
     }
 
     /// <summary>A dotted vertical line down the node's own level, and a short horizontal stub into its glyph.</summary>
@@ -130,8 +152,23 @@ public partial class TreeView
             graphics.FillRectangle(nodeBrush, label);
         }
 
+        if (node == _editingNode)
+        {
+            PaintLabelEdit(graphics, label);
+            return;
+        }
+
+        if (DrawMode == TreeViewDrawMode.OwnerDrawText && !RaiseDrawNode(graphics, node, label)) return;
+
         var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.NoPadding;
-        TextRenderer.DrawText(graphics, node.Text, Font, label, foreColor, flags);
+        TextRenderer.DrawText(graphics, node.Text, node.NodeFont ?? Font, label, foreColor, flags);
+
+        if (HotTracking && node == _hoverNode)
+        {
+            using var underline = new Pen(foreColor);
+            var textWidth = TextRenderer.MeasureText(node.Text, Font).Width;
+            graphics.DrawLine(underline, label.Left, label.Bottom - 1, label.Left + textWidth, label.Bottom - 1);
+        }
 
         if (selected && Focused) ControlPaint.DrawFocusRectangle(graphics, highlight);
     }

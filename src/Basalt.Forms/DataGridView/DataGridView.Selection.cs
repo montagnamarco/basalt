@@ -72,7 +72,7 @@ public partial class DataGridView
     }
 
     /// <summary>Moves CurrentCell, ending any edit on the old one first and raising CurrentCellChanged when it really moved.</summary>
-    /// <returns>False, leaving everything as it was, when the edit on the old cell could not be committed (CellValidating cancelled).</returns>
+    /// <returns>False, leaving everything as it was, when the edit on the old cell could not be committed (CellValidating cancelled) or RowValidating cancels leaving the row.</returns>
     private bool SetCurrentCell(DataGridViewCell? value, bool throughMouseClick)
     {
         if (ReferenceEquals(_currentCell, value)) return true;
@@ -80,18 +80,38 @@ public partial class DataGridView
         if (_currentCell is not null && IsCurrentCellInEditMode && !EndEditCore(DataGridViewDataErrorContexts.CurrentCellChange)) return false;
 
         var previous = _currentCell;
+        var rowChanging = previous?.OwningRow != value?.OwningRow;
+
+        // Leaving a row (not just moving between its own cells) validates it first, exactly as
+        // leaving a cell in edit mode validates the cell first: a cancelled RowValidating keeps
+        // CurrentCell where it was, the same refusal EndEditCore above already gives a cancelled
+        // CellValidating.
+        if (rowChanging && previous?.OwningRow is { } previousRow)
+        {
+            var rowValidating = new DataGridViewCellCancelEventArgs(previous.ColumnIndex, previousRow.Index);
+            OnRowValidating(rowValidating);
+            if (rowValidating.Cancel) return false;
+        }
+
         _currentCell = value;
 
         if (previous is not null)
         {
             InvalidateCellCore(previous);
             OnCellLeave(new DataGridViewCellEventArgs(previous.ColumnIndex, previous.RowIndex));
+
+            if (rowChanging && previous.OwningRow is { } leftRow)
+            {
+                OnRowValidated(new DataGridViewCellEventArgs(previous.ColumnIndex, leftRow.Index));
+                OnRowLeave(new DataGridViewCellEventArgs(previous.ColumnIndex, leftRow.Index));
+            }
         }
 
         if (value is not null)
         {
             InvalidateCellCore(value);
             OnCellEnter(new DataGridViewCellEventArgs(value.ColumnIndex, value.RowIndex));
+            if (rowChanging) OnRowEnter(new DataGridViewCellEventArgs(value.ColumnIndex, value.RowIndex));
         }
 
         OnCurrentCellChanged(EventArgs.Empty);

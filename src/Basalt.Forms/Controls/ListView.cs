@@ -53,6 +53,7 @@ public partial class ListView : Control
 
     /// <summary>Where a Shift range starts: the last item chosen without Shift, which repeated Shift gestures pivot on.</summary>
     private ListViewItem? _selectionAnchor;
+    private bool _allowColumnReorder;
     private bool _checkBoxes;
     private bool _fullRowSelect;
     private bool _gridLines;
@@ -70,6 +71,13 @@ public partial class ListView : Control
         // A native list view paints and handles input itself; it does not go through OnPaint/OnMouseDown.
         SetStyle(ControlStyles.UserPaint, false);
         MouseDoubleClick += OnMouseDoubleClickCore;
+    }
+
+    [DefaultValue(false)]
+    public bool AllowColumnReorder
+    {
+        get => _allowColumnReorder;
+        set => _allowColumnReorder = value;
     }
 
     [DefaultValue(ItemActivation.Standard)]
@@ -323,10 +331,22 @@ public partial class ListView : Control
         remove => Events.RemoveHandler(s_columnClickEvent, value);
     }
 
+    public event ColumnReorderedEventHandler? ColumnReordered
+    {
+        add => Events.AddHandler(s_columnReorderedEvent, value);
+        remove => Events.RemoveHandler(s_columnReorderedEvent, value);
+    }
+
     public event ColumnWidthChangedEventHandler? ColumnWidthChanged
     {
         add => Events.AddHandler(s_columnWidthChangedEvent, value);
         remove => Events.RemoveHandler(s_columnWidthChangedEvent, value);
+    }
+
+    public event ColumnWidthChangingEventHandler? ColumnWidthChanging
+    {
+        add => Events.AddHandler(s_columnWidthChangingEvent, value);
+        remove => Events.RemoveHandler(s_columnWidthChangingEvent, value);
     }
 
     public event EventHandler? ItemActivate
@@ -360,7 +380,9 @@ public partial class ListView : Control
     }
 
     private static readonly object s_columnClickEvent = new();
+    private static readonly object s_columnReorderedEvent = new();
     private static readonly object s_columnWidthChangedEvent = new();
+    private static readonly object s_columnWidthChangingEvent = new();
     private static readonly object s_itemActivateEvent = new();
     private static readonly object s_itemCheckEvent = new();
     private static readonly object s_itemCheckedEvent = new();
@@ -369,7 +391,11 @@ public partial class ListView : Control
 
     protected virtual void OnColumnClick(ColumnClickEventArgs e) => ((ColumnClickEventHandler?)Events[s_columnClickEvent])?.Invoke(this, e);
 
+    protected virtual void OnColumnReordered(ColumnReorderedEventArgs e) => ((ColumnReorderedEventHandler?)Events[s_columnReorderedEvent])?.Invoke(this, e);
+
     protected virtual void OnColumnWidthChanged(ColumnWidthChangedEventArgs e) => ((ColumnWidthChangedEventHandler?)Events[s_columnWidthChangedEvent])?.Invoke(this, e);
+
+    protected virtual void OnColumnWidthChanging(ColumnWidthChangingEventArgs e) => ((ColumnWidthChangingEventHandler?)Events[s_columnWidthChangingEvent])?.Invoke(this, e);
 
     protected virtual void OnItemActivate(EventArgs e) => ((EventHandler?)Events[s_itemActivateEvent])?.Invoke(this, e);
 
@@ -410,7 +436,7 @@ public partial class ListView : Control
 
     public void EnsureVisible(int index)
     {
-        if (index < 0 || index >= _items.Count) return;
+        if (index < 0 || index >= EffectiveItemCount) return;
 
         ScrollIntoView(ItemContentBounds(index));
     }
@@ -421,10 +447,13 @@ public partial class ListView : Control
 
     public Rectangle GetItemRect(int index, ItemBoundsPortion portion)
     {
-        if (index < 0 || index >= _items.Count) throw new ArgumentOutOfRangeException(nameof(index));
+        if (index < 0 || index >= EffectiveItemCount) throw new ArgumentOutOfRangeException(nameof(index));
 
         return ItemPortionBounds(index, portion);
     }
+
+    /// <summary>Items.Count without going through the ListViewItemCollection wrapper: VirtualListSize in VirtualMode, the real collection's count otherwise.</summary>
+    private int EffectiveItemCount => _virtualMode ? _virtualListSize : _items.Count;
 
     public new ListViewHitTestInfo HitTest(Point point) => HitTest(point.X, point.Y);
 
