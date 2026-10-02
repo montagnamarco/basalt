@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Globalization;
 
 namespace System.Windows.Forms.Internal;
 
@@ -142,51 +141,21 @@ internal sealed class MessageBoxForm : Form
     /// <summary>
     /// Button captions in the user's language, as Windows takes them from the
     /// system; English for languages not listed. DialogResult.None is Help.
+    /// Shared with TaskDialogButton's standard buttons through StandardButtonCaptions.
     /// </summary>
-    private static string Caption(DialogResult result)
-    {
-        var language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-        var table = Captions.TryGetValue(language, out var found) ? found : Captions["en"];
+    private static string Caption(DialogResult result) => StandardButtonCaptions.For(ToStandardButton(result));
 
-        return table[result];
-    }
-
-    private static readonly Dictionary<string, Dictionary<DialogResult, string>> Captions = new()
+    private static StandardButton ToStandardButton(DialogResult result) => result switch
     {
-        ["en"] = new()
-        {
-            [DialogResult.OK] = "OK", [DialogResult.Cancel] = "Cancel", [DialogResult.Abort] = "&Abort",
-            [DialogResult.Retry] = "&Retry", [DialogResult.Ignore] = "&Ignore", [DialogResult.Yes] = "&Yes",
-            [DialogResult.No] = "&No", [DialogResult.TryAgain] = "&Try Again", [DialogResult.Continue] = "&Continue",
-            [DialogResult.None] = "Help",
-        },
-        ["it"] = new()
-        {
-            [DialogResult.OK] = "OK", [DialogResult.Cancel] = "Annulla", [DialogResult.Abort] = "&Interrompi",
-            [DialogResult.Retry] = "&Riprova", [DialogResult.Ignore] = "I&gnora", [DialogResult.Yes] = "&Sì",
-            [DialogResult.No] = "&No", [DialogResult.TryAgain] = "&Riprova", [DialogResult.Continue] = "&Continua",
-            [DialogResult.None] = "Guida",
-        },
-        ["de"] = new()
-        {
-            [DialogResult.OK] = "OK", [DialogResult.Cancel] = "Abbrechen", [DialogResult.Abort] = "&Abbrechen",
-            [DialogResult.Retry] = "&Wiederholen", [DialogResult.Ignore] = "&Ignorieren", [DialogResult.Yes] = "&Ja",
-            [DialogResult.No] = "&Nein", [DialogResult.TryAgain] = "&Wiederholen", [DialogResult.Continue] = "&Weiter",
-            [DialogResult.None] = "Hilfe",
-        },
-        ["fr"] = new()
-        {
-            [DialogResult.OK] = "OK", [DialogResult.Cancel] = "Annuler", [DialogResult.Abort] = "&Abandonner",
-            [DialogResult.Retry] = "&Recommencer", [DialogResult.Ignore] = "&Ignorer", [DialogResult.Yes] = "&Oui",
-            [DialogResult.No] = "&Non", [DialogResult.TryAgain] = "&Réessayer", [DialogResult.Continue] = "&Continuer",
-            [DialogResult.None] = "Aide",
-        },
-        ["es"] = new()
-        {
-            [DialogResult.OK] = "Aceptar", [DialogResult.Cancel] = "Cancelar", [DialogResult.Abort] = "&Anular",
-            [DialogResult.Retry] = "&Reintentar", [DialogResult.Ignore] = "&Omitir", [DialogResult.Yes] = "&Sí",
-            [DialogResult.No] = "&No", [DialogResult.TryAgain] = "&Volver a intentarlo", [DialogResult.Continue] = "&Continuar",
-            [DialogResult.None] = "Ayuda",
-        },
+        DialogResult.OK => StandardButton.OK,
+        DialogResult.Cancel => StandardButton.Cancel,
+        DialogResult.Abort => StandardButton.Abort,
+        DialogResult.Retry => StandardButton.Retry,
+        DialogResult.Ignore => StandardButton.Ignore,
+        DialogResult.Yes => StandardButton.Yes,
+        DialogResult.No => StandardButton.No,
+        DialogResult.TryAgain => StandardButton.TryAgain,
+        DialogResult.Continue => StandardButton.Continue,
+        _ => StandardButton.Help,
     };
 }

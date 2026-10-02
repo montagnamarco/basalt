@@ -36,16 +36,6 @@ F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Command
 F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Description : System.ComponentModel.Design.CommandID static readonly
 F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Hide : System.ComponentModel.Design.CommandID static readonly
 F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Reset : System.ComponentModel.Design.CommandID static readonly
-F public System.Windows.Forms.TaskDialogIcon::Error : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::Information : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::None : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::Shield : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::ShieldBlueBar : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::ShieldErrorRedBar : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::ShieldGrayBar : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::ShieldSuccessGreenBar : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::ShieldWarningYellowBar : System.Windows.Forms.TaskDialogIcon static readonly
-F public System.Windows.Forms.TaskDialogIcon::Warning : System.Windows.Forms.TaskDialogIcon static readonly
 I System.Resources.ResXDataNode : System.Runtime.Serialization.ISerializable
 I System.Resources.ResXResourceReader : System.Collections.IEnumerable
 I System.Resources.ResXResourceReader : System.IDisposable
@@ -98,8 +88,6 @@ I System.Windows.Forms.StatusBar+StatusBarPanelCollection : System.Collections.I
 I System.Windows.Forms.StatusBar+StatusBarPanelCollection : System.Collections.IEnumerable
 I System.Windows.Forms.StatusBar+StatusBarPanelCollection : System.Collections.IList
 I System.Windows.Forms.StatusBarPanel : System.ComponentModel.ISupportInitialize
-I System.Windows.Forms.TaskDialog : System.Windows.Forms.IWin32Window
-I System.Windows.Forms.TaskDialogIcon : System.IDisposable
 I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.ICollection
 I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.IEnumerable
 I System.Windows.Forms.ToolBar+ToolBarButtonCollection : System.Collections.IList
@@ -997,18 +985,6 @@ M protected System.Windows.Forms.TabPage::get_CreateParams() -> System.Windows.F
 M protected System.Windows.Forms.TableLayoutPanel::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.TableLayoutPanel::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
 M protected System.Windows.Forms.TableLayoutPanel::ScaleCore(System.Single, System.Single) -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogButtonCollection::ClearItems() -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogButtonCollection::InsertItem(System.Int32, System.Windows.Forms.TaskDialogButton) -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogButtonCollection::RemoveItem(System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogButtonCollection::SetItem(System.Int32, System.Windows.Forms.TaskDialogButton) -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogPage::OnCreated(System.EventArgs) -> System.Void
-M protected System.Windows.Forms.TaskDialogPage::OnDestroyed(System.EventArgs) -> System.Void
-M protected System.Windows.Forms.TaskDialogPage::OnHelpRequest(System.EventArgs) -> System.Void
-M protected System.Windows.Forms.TaskDialogPage::OnLinkClicked(System.Windows.Forms.TaskDialogLinkClickedEventArgs) -> System.Void
-M protected System.Windows.Forms.TaskDialogRadioButtonCollection::ClearItems() -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogRadioButtonCollection::InsertItem(System.Int32, System.Windows.Forms.TaskDialogRadioButton) -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogRadioButtonCollection::RemoveItem(System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.TaskDialogRadioButtonCollection::SetItem(System.Int32, System.Windows.Forms.TaskDialogRadioButton) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.TextBox::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.TextBox::OnBackColorChanged(System.EventArgs) -> System.Void virtual
@@ -4699,160 +4675,6 @@ M public System.Windows.Forms.TabPage::set_Text(System.String) -> System.Void vi
 M public System.Windows.Forms.TabPage::set_Visible(System.Boolean) -> System.Void
 M public System.Windows.Forms.TableLayoutPanel::get_BorderStyle() -> System.Windows.Forms.BorderStyle
 M public System.Windows.Forms.TableLayoutPanel::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
-M public System.Windows.Forms.TaskDialog::Close() -> System.Void
-M public System.Windows.Forms.TaskDialog::ShowDialog(System.IntPtr, System.Windows.Forms.TaskDialogPage, System.Windows.Forms.TaskDialogStartupLocation) -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialog::ShowDialog(System.Windows.Forms.IWin32Window, System.Windows.Forms.TaskDialogPage, System.Windows.Forms.TaskDialogStartupLocation) -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialog::ShowDialog(System.Windows.Forms.TaskDialogPage, System.Windows.Forms.TaskDialogStartupLocation) -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialog::ShowDialogAsync(System.IntPtr, System.Windows.Forms.TaskDialogPage, System.Windows.Forms.TaskDialogStartupLocation) -> System.Threading.Tasks.Task`1<System.Windows.Forms.TaskDialogButton> static
-M public System.Windows.Forms.TaskDialog::ShowDialogAsync(System.Windows.Forms.IWin32Window, System.Windows.Forms.TaskDialogPage, System.Windows.Forms.TaskDialogStartupLocation) -> System.Threading.Tasks.Task`1<System.Windows.Forms.TaskDialogButton> static
-M public System.Windows.Forms.TaskDialog::ShowDialogAsync(System.Windows.Forms.TaskDialogPage, System.Windows.Forms.TaskDialogStartupLocation) -> System.Threading.Tasks.Task`1<System.Windows.Forms.TaskDialogButton> static
-M public System.Windows.Forms.TaskDialog::get_Handle() -> System.IntPtr
-M public System.Windows.Forms.TaskDialogButton::.ctor()
-M public System.Windows.Forms.TaskDialogButton::.ctor(System.String, System.Boolean, System.Boolean)
-M public System.Windows.Forms.TaskDialogButton::Equals(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.TaskDialogButton::GetHashCode() -> System.Int32 virtual
-M public System.Windows.Forms.TaskDialogButton::PerformClick() -> System.Void
-M public System.Windows.Forms.TaskDialogButton::ToString() -> System.String virtual
-M public System.Windows.Forms.TaskDialogButton::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogButton::get_Abort() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_AllowCloseDialog() -> System.Boolean
-M public System.Windows.Forms.TaskDialogButton::get_Cancel() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_Close() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_Continue() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_Enabled() -> System.Boolean
-M public System.Windows.Forms.TaskDialogButton::get_Help() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_Ignore() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_No() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_OK() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_Retry() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_ShowShieldIcon() -> System.Boolean
-M public System.Windows.Forms.TaskDialogButton::get_Text() -> System.String
-M public System.Windows.Forms.TaskDialogButton::get_TryAgain() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::get_Visible() -> System.Boolean
-M public System.Windows.Forms.TaskDialogButton::get_Yes() -> System.Windows.Forms.TaskDialogButton static
-M public System.Windows.Forms.TaskDialogButton::op_Equality(System.Windows.Forms.TaskDialogButton, System.Windows.Forms.TaskDialogButton) -> System.Boolean static
-M public System.Windows.Forms.TaskDialogButton::op_Inequality(System.Windows.Forms.TaskDialogButton, System.Windows.Forms.TaskDialogButton) -> System.Boolean static
-M public System.Windows.Forms.TaskDialogButton::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogButton::set_AllowCloseDialog(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogButton::set_Enabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogButton::set_ShowShieldIcon(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogButton::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogButton::set_Visible(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogButtonCollection::.ctor()
-M public System.Windows.Forms.TaskDialogButtonCollection::Add(System.String, System.Boolean, System.Boolean) -> System.Windows.Forms.TaskDialogButton
-M public System.Windows.Forms.TaskDialogCommandLinkButton::.ctor()
-M public System.Windows.Forms.TaskDialogCommandLinkButton::.ctor(System.String, System.String, System.Boolean, System.Boolean)
-M public System.Windows.Forms.TaskDialogCommandLinkButton::get_DescriptionText() -> System.String
-M public System.Windows.Forms.TaskDialogCommandLinkButton::set_DescriptionText(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogControl::get_BoundPage() -> System.Windows.Forms.TaskDialogPage
-M public System.Windows.Forms.TaskDialogControl::get_Tag() -> System.Object
-M public System.Windows.Forms.TaskDialogControl::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.TaskDialogExpander::.ctor()
-M public System.Windows.Forms.TaskDialogExpander::.ctor(System.String)
-M public System.Windows.Forms.TaskDialogExpander::ToString() -> System.String virtual
-M public System.Windows.Forms.TaskDialogExpander::add_ExpandedChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogExpander::get_CollapsedButtonText() -> System.String
-M public System.Windows.Forms.TaskDialogExpander::get_Expanded() -> System.Boolean
-M public System.Windows.Forms.TaskDialogExpander::get_ExpandedButtonText() -> System.String
-M public System.Windows.Forms.TaskDialogExpander::get_Position() -> System.Windows.Forms.TaskDialogExpanderPosition
-M public System.Windows.Forms.TaskDialogExpander::get_Text() -> System.String
-M public System.Windows.Forms.TaskDialogExpander::remove_ExpandedChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogExpander::set_CollapsedButtonText(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogExpander::set_Expanded(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogExpander::set_ExpandedButtonText(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogExpander::set_Position(System.Windows.Forms.TaskDialogExpanderPosition) -> System.Void
-M public System.Windows.Forms.TaskDialogExpander::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogFootnote::.ctor()
-M public System.Windows.Forms.TaskDialogFootnote::.ctor(System.String)
-M public System.Windows.Forms.TaskDialogFootnote::ToString() -> System.String virtual
-M public System.Windows.Forms.TaskDialogFootnote::get_Icon() -> System.Windows.Forms.TaskDialogIcon
-M public System.Windows.Forms.TaskDialogFootnote::get_Text() -> System.String
-M public System.Windows.Forms.TaskDialogFootnote::op_Implicit(System.String) -> System.Windows.Forms.TaskDialogFootnote static
-M public System.Windows.Forms.TaskDialogFootnote::set_Icon(System.Windows.Forms.TaskDialogIcon) -> System.Void
-M public System.Windows.Forms.TaskDialogFootnote::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogIcon::.ctor(System.Drawing.Bitmap)
-M public System.Windows.Forms.TaskDialogIcon::.ctor(System.Drawing.Icon)
-M public System.Windows.Forms.TaskDialogIcon::.ctor(System.IntPtr)
-M public System.Windows.Forms.TaskDialogIcon::Dispose() -> System.Void
-M public System.Windows.Forms.TaskDialogIcon::get_IconHandle() -> System.IntPtr
-M public System.Windows.Forms.TaskDialogPage::.ctor()
-M public System.Windows.Forms.TaskDialogPage::Navigate(System.Windows.Forms.TaskDialogPage) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::add_Created(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::add_Destroyed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::add_HelpRequest(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::add_LinkClicked(System.EventHandler`1<System.Windows.Forms.TaskDialogLinkClickedEventArgs>) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::get_AllowCancel() -> System.Boolean
-M public System.Windows.Forms.TaskDialogPage::get_AllowMinimize() -> System.Boolean
-M public System.Windows.Forms.TaskDialogPage::get_BoundDialog() -> System.Windows.Forms.TaskDialog
-M public System.Windows.Forms.TaskDialogPage::get_Buttons() -> System.Windows.Forms.TaskDialogButtonCollection
-M public System.Windows.Forms.TaskDialogPage::get_Caption() -> System.String
-M public System.Windows.Forms.TaskDialogPage::get_DefaultButton() -> System.Windows.Forms.TaskDialogButton
-M public System.Windows.Forms.TaskDialogPage::get_EnableLinks() -> System.Boolean
-M public System.Windows.Forms.TaskDialogPage::get_Expander() -> System.Windows.Forms.TaskDialogExpander
-M public System.Windows.Forms.TaskDialogPage::get_Footnote() -> System.Windows.Forms.TaskDialogFootnote
-M public System.Windows.Forms.TaskDialogPage::get_Heading() -> System.String
-M public System.Windows.Forms.TaskDialogPage::get_Icon() -> System.Windows.Forms.TaskDialogIcon
-M public System.Windows.Forms.TaskDialogPage::get_ProgressBar() -> System.Windows.Forms.TaskDialogProgressBar
-M public System.Windows.Forms.TaskDialogPage::get_RadioButtons() -> System.Windows.Forms.TaskDialogRadioButtonCollection
-M public System.Windows.Forms.TaskDialogPage::get_RightToLeftLayout() -> System.Boolean
-M public System.Windows.Forms.TaskDialogPage::get_SizeToContent() -> System.Boolean
-M public System.Windows.Forms.TaskDialogPage::get_Text() -> System.String
-M public System.Windows.Forms.TaskDialogPage::get_Verification() -> System.Windows.Forms.TaskDialogVerificationCheckBox
-M public System.Windows.Forms.TaskDialogPage::remove_Created(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::remove_Destroyed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::remove_HelpRequest(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::remove_LinkClicked(System.EventHandler`1<System.Windows.Forms.TaskDialogLinkClickedEventArgs>) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_AllowCancel(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_AllowMinimize(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Buttons(System.Windows.Forms.TaskDialogButtonCollection) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Caption(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_DefaultButton(System.Windows.Forms.TaskDialogButton) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_EnableLinks(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Expander(System.Windows.Forms.TaskDialogExpander) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Footnote(System.Windows.Forms.TaskDialogFootnote) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Heading(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Icon(System.Windows.Forms.TaskDialogIcon) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_ProgressBar(System.Windows.Forms.TaskDialogProgressBar) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_RadioButtons(System.Windows.Forms.TaskDialogRadioButtonCollection) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_RightToLeftLayout(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_SizeToContent(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogPage::set_Verification(System.Windows.Forms.TaskDialogVerificationCheckBox) -> System.Void
-M public System.Windows.Forms.TaskDialogProgressBar::.ctor()
-M public System.Windows.Forms.TaskDialogProgressBar::.ctor(System.Windows.Forms.TaskDialogProgressBarState)
-M public System.Windows.Forms.TaskDialogProgressBar::get_MarqueeSpeed() -> System.Int32
-M public System.Windows.Forms.TaskDialogProgressBar::get_Maximum() -> System.Int32
-M public System.Windows.Forms.TaskDialogProgressBar::get_Minimum() -> System.Int32
-M public System.Windows.Forms.TaskDialogProgressBar::get_State() -> System.Windows.Forms.TaskDialogProgressBarState
-M public System.Windows.Forms.TaskDialogProgressBar::get_Value() -> System.Int32
-M public System.Windows.Forms.TaskDialogProgressBar::set_MarqueeSpeed(System.Int32) -> System.Void
-M public System.Windows.Forms.TaskDialogProgressBar::set_Maximum(System.Int32) -> System.Void
-M public System.Windows.Forms.TaskDialogProgressBar::set_Minimum(System.Int32) -> System.Void
-M public System.Windows.Forms.TaskDialogProgressBar::set_State(System.Windows.Forms.TaskDialogProgressBarState) -> System.Void
-M public System.Windows.Forms.TaskDialogProgressBar::set_Value(System.Int32) -> System.Void
-M public System.Windows.Forms.TaskDialogRadioButton::.ctor()
-M public System.Windows.Forms.TaskDialogRadioButton::.ctor(System.String)
-M public System.Windows.Forms.TaskDialogRadioButton::ToString() -> System.String virtual
-M public System.Windows.Forms.TaskDialogRadioButton::add_CheckedChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogRadioButton::get_Checked() -> System.Boolean
-M public System.Windows.Forms.TaskDialogRadioButton::get_Enabled() -> System.Boolean
-M public System.Windows.Forms.TaskDialogRadioButton::get_Text() -> System.String
-M public System.Windows.Forms.TaskDialogRadioButton::remove_CheckedChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogRadioButton::set_Checked(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogRadioButton::set_Enabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogRadioButton::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.TaskDialogRadioButtonCollection::.ctor()
-M public System.Windows.Forms.TaskDialogRadioButtonCollection::Add(System.String) -> System.Windows.Forms.TaskDialogRadioButton
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::.ctor()
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::.ctor(System.String, System.Boolean)
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::ToString() -> System.String virtual
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::add_CheckedChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::get_Checked() -> System.Boolean
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::get_Text() -> System.String
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::op_Implicit(System.String) -> System.Windows.Forms.TaskDialogVerificationCheckBox static
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::remove_CheckedChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::set_Checked(System.Boolean) -> System.Void
-M public System.Windows.Forms.TaskDialogVerificationCheckBox::set_Text(System.String) -> System.Void
 M public System.Windows.Forms.TextBox::get_AutoCompleteCustomSource() -> System.Windows.Forms.AutoCompleteStringCollection
 M public System.Windows.Forms.TextBox::get_AutoCompleteMode() -> System.Windows.Forms.AutoCompleteMode
 M public System.Windows.Forms.TextBox::get_AutoCompleteSource() -> System.Windows.Forms.AutoCompleteSource
@@ -6073,7 +5895,6 @@ T abstract class System.Windows.Forms.Design.WindowsFormsComponentEditor : Syste
 T abstract class System.Windows.Forms.FeatureSupport
 T abstract class System.Windows.Forms.GridItem
 T abstract class System.Windows.Forms.Menu : System.ComponentModel.Component
-T abstract class System.Windows.Forms.TaskDialogControl
 T class System.Drawing.Design.PropertyValueUIItem
 T class System.Drawing.Design.UITypeEditor
 T class System.Resources.ResXFileRef
@@ -6177,12 +5998,6 @@ T class System.Windows.Forms.StatusBar+StatusBarPanelCollection
 T class System.Windows.Forms.StatusBarDrawItemEventArgs : System.Windows.Forms.DrawItemEventArgs
 T class System.Windows.Forms.StatusBarPanel : System.ComponentModel.Component
 T class System.Windows.Forms.StatusBarPanelClickEventArgs : System.Windows.Forms.MouseEventArgs
-T class System.Windows.Forms.TaskDialog
-T class System.Windows.Forms.TaskDialogButton : System.Windows.Forms.TaskDialogControl
-T class System.Windows.Forms.TaskDialogButtonCollection : System.Collections.ObjectModel.Collection`1<System.Windows.Forms.TaskDialogButton>
-T class System.Windows.Forms.TaskDialogIcon
-T class System.Windows.Forms.TaskDialogPage
-T class System.Windows.Forms.TaskDialogRadioButtonCollection : System.Collections.ObjectModel.Collection`1<System.Windows.Forms.TaskDialogRadioButton>
 T class System.Windows.Forms.ThreadExceptionDialog : System.Windows.Forms.Form
 T class System.Windows.Forms.ToolBar : System.Windows.Forms.Control
 T class System.Windows.Forms.ToolBar+ToolBarButtonCollection
@@ -6289,12 +6104,6 @@ T sealed class System.Windows.Forms.InputLanguage
 T sealed class System.Windows.Forms.ListViewInsertionMark
 T sealed class System.Windows.Forms.NotifyIcon : System.ComponentModel.Component
 T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute
-T sealed class System.Windows.Forms.TaskDialogCommandLinkButton : System.Windows.Forms.TaskDialogButton
-T sealed class System.Windows.Forms.TaskDialogExpander : System.Windows.Forms.TaskDialogControl
-T sealed class System.Windows.Forms.TaskDialogFootnote : System.Windows.Forms.TaskDialogControl
-T sealed class System.Windows.Forms.TaskDialogProgressBar : System.Windows.Forms.TaskDialogControl
-T sealed class System.Windows.Forms.TaskDialogRadioButton : System.Windows.Forms.TaskDialogControl
-T sealed class System.Windows.Forms.TaskDialogVerificationCheckBox : System.Windows.Forms.TaskDialogControl
 T sealed class System.Windows.Forms.WindowsFormsSection
 T sealed class System.Windows.Forms.WindowsFormsSynchronizationContext : System.Threading.SynchronizationContext
 T static class System.Windows.Forms.ImeContext
