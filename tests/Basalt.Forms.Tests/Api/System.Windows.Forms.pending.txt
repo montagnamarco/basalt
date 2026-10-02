@@ -1,26 +1,7 @@
-F protected System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::wfcMenuCommand : System.Guid static readonly
-F protected System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::wfcMenuGroup : System.Guid static readonly
-F public System.Resources.ResXResourceWriter::BinSerializedObjectMimeType : System.String static readonly
-F public System.Resources.ResXResourceWriter::ByteArraySerializedObjectMimeType : System.String static readonly
-F public System.Resources.ResXResourceWriter::DefaultSerializedObjectMimeType : System.String static readonly
-F public System.Resources.ResXResourceWriter::ResMimeType : System.String static readonly
-F public System.Resources.ResXResourceWriter::ResourceSchema : System.String static readonly
-F public System.Resources.ResXResourceWriter::SoapSerializedObjectMimeType : System.String static readonly
-F public System.Resources.ResXResourceWriter::Version : System.String static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Default : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::No : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Yes : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DockingAttribute::Default : System.Windows.Forms.DockingAttribute static readonly
-F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Commands : System.ComponentModel.Design.CommandID static readonly
-F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Description : System.ComponentModel.Design.CommandID static readonly
-F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Hide : System.ComponentModel.Design.CommandID static readonly
-F public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::Reset : System.ComponentModel.Design.CommandID static readonly
-I System.Resources.ResXDataNode : System.Runtime.Serialization.ISerializable
-I System.Resources.ResXResourceReader : System.Collections.IEnumerable
-I System.Resources.ResXResourceReader : System.IDisposable
-I System.Resources.ResXResourceReader : System.Resources.IResourceReader
-I System.Resources.ResXResourceWriter : System.IDisposable
-I System.Resources.ResXResourceWriter : System.Resources.IResourceWriter
 I System.Windows.Forms.AccessibleObject : Accessibility.IAccessible
 I System.Windows.Forms.AccessibleObject : Windows.Win32.System.Com.IDispatch+Interface
 I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDataObject
@@ -29,13 +10,7 @@ I System.Windows.Forms.ListViewGroup : System.Runtime.Serialization.ISerializabl
 I System.Windows.Forms.ListViewItem : System.Runtime.Serialization.ISerializable
 I System.Windows.Forms.OwnerDrawPropertyBag : System.Runtime.Serialization.ISerializable
 I System.Windows.Forms.PropertyGrid : System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser
-I System.Windows.Forms.PropertyGrid+PropertyTabCollection : System.Collections.ICollection
-I System.Windows.Forms.PropertyGrid+PropertyTabCollection : System.Collections.IEnumerable
 I System.Windows.Forms.TreeNode : System.Runtime.Serialization.ISerializable
-M protected System.Resources.ResXResourceReader::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Resources.ResXResourceReader::Finalize() -> System.Void virtual
-M protected System.Resources.ResXResourceWriter::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Resources.ResXResourceWriter::Finalize() -> System.Void virtual
 M protected System.Windows.Forms.AxHost::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.Button::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.Button::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
@@ -321,26 +296,9 @@ M protected System.Windows.Forms.OwnerDrawPropertyBag::.ctor(System.Runtime.Seri
 M protected System.Windows.Forms.PictureBox::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
 M protected System.Windows.Forms.PrintPreviewControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.ProgressBar::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.PropertyGrid::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.PropertyGrid::CreatePropertyTab(System.Type) -> System.Windows.Forms.Design.PropertyTab virtual
-M protected System.Windows.Forms.PropertyGrid::OnComComponentNameChanged(System.ComponentModel.Design.ComponentRenameEventArgs) -> System.Void
-M protected System.Windows.Forms.PropertyGrid::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnNotifyPropertyValueUIItemsChanged(System.Object, System.EventArgs) -> System.Void
 M protected System.Windows.Forms.PropertyGrid::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnVisibleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::ScaleCore(System.Single, System.Single) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::ShowEventsButton(System.Boolean) -> System.Void
 M protected System.Windows.Forms.PropertyGrid::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::get_DefaultTabType() -> System.Type virtual
-M protected System.Windows.Forms.PropertyGrid::get_DrawFlatToolbar() -> System.Boolean
 M protected System.Windows.Forms.PropertyGrid::get_ShowFocusCues() -> System.Boolean virtual
-M protected System.Windows.Forms.PropertyGrid::get_ShowPropertyPageImage() -> System.Drawing.Bitmap virtual
-M protected System.Windows.Forms.PropertyGrid::get_SortByCategoryImage() -> System.Drawing.Bitmap virtual
-M protected System.Windows.Forms.PropertyGrid::get_SortByPropertyImage() -> System.Drawing.Bitmap virtual
-M protected System.Windows.Forms.PropertyGrid::get_ToolStripRenderer() -> System.Windows.Forms.ToolStripRenderer
-M protected System.Windows.Forms.PropertyGrid::set_DrawFlatToolbar(System.Boolean) -> System.Void
-M protected System.Windows.Forms.PropertyGrid::set_ToolStripRenderer(System.Windows.Forms.ToolStripRenderer) -> System.Void
 M protected System.Windows.Forms.RadioButton::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.RichTextBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.ScrollBar::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
@@ -479,98 +437,6 @@ M protected System.Windows.Forms.UserControl::OnResize(System.EventArgs) -> Syst
 M protected System.Windows.Forms.UserControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.WebBrowser::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.WebBrowserBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M public System.Drawing.Design.IPropertyValueUIService::AddPropertyValueUIHandler(System.Drawing.Design.PropertyValueUIHandler) -> System.Void abstract
-M public System.Drawing.Design.IPropertyValueUIService::GetPropertyUIValueItems(System.ComponentModel.ITypeDescriptorContext, System.ComponentModel.PropertyDescriptor) -> System.Drawing.Design.PropertyValueUIItem[] abstract
-M public System.Drawing.Design.IPropertyValueUIService::NotifyPropertyValueUIItemsChanged() -> System.Void abstract
-M public System.Drawing.Design.IPropertyValueUIService::RemovePropertyValueUIHandler(System.Drawing.Design.PropertyValueUIHandler) -> System.Void abstract
-M public System.Drawing.Design.IPropertyValueUIService::add_PropertyUIValueItemsChanged(System.EventHandler) -> System.Void abstract
-M public System.Drawing.Design.IPropertyValueUIService::remove_PropertyUIValueItemsChanged(System.EventHandler) -> System.Void abstract
-M public System.Drawing.Design.PropertyValueUIItem::.ctor(System.Drawing.Image, System.Drawing.Design.PropertyValueUIItemInvokeHandler, System.String)
-M public System.Drawing.Design.PropertyValueUIItem::Reset() -> System.Void virtual
-M public System.Drawing.Design.PropertyValueUIItem::get_Image() -> System.Drawing.Image virtual
-M public System.Drawing.Design.PropertyValueUIItem::get_InvokeHandler() -> System.Drawing.Design.PropertyValueUIItemInvokeHandler virtual
-M public System.Drawing.Design.PropertyValueUIItem::get_ToolTip() -> System.String virtual
-M public System.Drawing.Design.PropertyValueUIItemInvokeHandler::.ctor(System.Object, System.IntPtr)
-M public System.Drawing.Design.PropertyValueUIItemInvokeHandler::BeginInvoke(System.ComponentModel.ITypeDescriptorContext, System.ComponentModel.PropertyDescriptor, System.Drawing.Design.PropertyValueUIItem, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Drawing.Design.PropertyValueUIItemInvokeHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Drawing.Design.PropertyValueUIItemInvokeHandler::Invoke(System.ComponentModel.ITypeDescriptorContext, System.ComponentModel.PropertyDescriptor, System.Drawing.Design.PropertyValueUIItem) -> System.Void virtual
-M public System.Drawing.Design.UITypeEditor::.ctor()
-M public System.Drawing.Design.UITypeEditor::EditValue(System.ComponentModel.ITypeDescriptorContext, System.IServiceProvider, System.Object) -> System.Object virtual
-M public System.Drawing.Design.UITypeEditor::EditValue(System.IServiceProvider, System.Object) -> System.Object
-M public System.Drawing.Design.UITypeEditor::GetEditStyle() -> System.Drawing.Design.UITypeEditorEditStyle
-M public System.Drawing.Design.UITypeEditor::GetEditStyle(System.ComponentModel.ITypeDescriptorContext) -> System.Drawing.Design.UITypeEditorEditStyle virtual
-M public System.Drawing.Design.UITypeEditor::GetPaintValueSupported() -> System.Boolean
-M public System.Drawing.Design.UITypeEditor::GetPaintValueSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Drawing.Design.UITypeEditor::PaintValue(System.Drawing.Design.PaintValueEventArgs) -> System.Void virtual
-M public System.Drawing.Design.UITypeEditor::PaintValue(System.Object, System.Drawing.Graphics, System.Drawing.Rectangle) -> System.Void
-M public System.Drawing.Design.UITypeEditor::get_IsDropDownResizable() -> System.Boolean virtual
-M public System.Resources.ResXDataNode::.ctor(System.String, System.Object)
-M public System.Resources.ResXDataNode::.ctor(System.String, System.Object, System.Func`2<System.Type, System.String>)
-M public System.Resources.ResXDataNode::.ctor(System.String, System.Resources.ResXFileRef)
-M public System.Resources.ResXDataNode::.ctor(System.String, System.Resources.ResXFileRef, System.Func`2<System.Type, System.String>)
-M public System.Resources.ResXDataNode::GetNodePosition() -> System.Drawing.Point
-M public System.Resources.ResXDataNode::GetValue(System.ComponentModel.Design.ITypeResolutionService) -> System.Object
-M public System.Resources.ResXDataNode::GetValue(System.Reflection.AssemblyName[]) -> System.Object
-M public System.Resources.ResXDataNode::GetValueTypeName(System.ComponentModel.Design.ITypeResolutionService) -> System.String
-M public System.Resources.ResXDataNode::GetValueTypeName(System.Reflection.AssemblyName[]) -> System.String
-M public System.Resources.ResXDataNode::get_Comment() -> System.String
-M public System.Resources.ResXDataNode::get_FileRef() -> System.Resources.ResXFileRef
-M public System.Resources.ResXDataNode::get_Name() -> System.String
-M public System.Resources.ResXDataNode::set_Comment(System.String) -> System.Void
-M public System.Resources.ResXDataNode::set_Name(System.String) -> System.Void
-M public System.Resources.ResXFileRef+Converter::.ctor()
-M public System.Resources.ResXFileRef+Converter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Resources.ResXFileRef+Converter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Resources.ResXFileRef+Converter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Resources.ResXFileRef+Converter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Resources.ResXFileRef::.ctor(System.String, System.String)
-M public System.Resources.ResXFileRef::.ctor(System.String, System.String, System.Text.Encoding)
-M public System.Resources.ResXFileRef::ToString() -> System.String virtual
-M public System.Resources.ResXFileRef::get_FileName() -> System.String
-M public System.Resources.ResXFileRef::get_TextFileEncoding() -> System.Text.Encoding
-M public System.Resources.ResXFileRef::get_TypeName() -> System.String
-M public System.Resources.ResXResourceReader::.ctor(System.IO.Stream)
-M public System.Resources.ResXResourceReader::.ctor(System.IO.Stream, System.ComponentModel.Design.ITypeResolutionService)
-M public System.Resources.ResXResourceReader::.ctor(System.IO.Stream, System.Reflection.AssemblyName[])
-M public System.Resources.ResXResourceReader::.ctor(System.IO.TextReader)
-M public System.Resources.ResXResourceReader::.ctor(System.IO.TextReader, System.ComponentModel.Design.ITypeResolutionService)
-M public System.Resources.ResXResourceReader::.ctor(System.IO.TextReader, System.Reflection.AssemblyName[])
-M public System.Resources.ResXResourceReader::.ctor(System.String)
-M public System.Resources.ResXResourceReader::.ctor(System.String, System.ComponentModel.Design.ITypeResolutionService)
-M public System.Resources.ResXResourceReader::.ctor(System.String, System.Reflection.AssemblyName[])
-M public System.Resources.ResXResourceReader::Close() -> System.Void
-M public System.Resources.ResXResourceReader::FromFileContents(System.String) -> System.Resources.ResXResourceReader static
-M public System.Resources.ResXResourceReader::FromFileContents(System.String, System.ComponentModel.Design.ITypeResolutionService) -> System.Resources.ResXResourceReader static
-M public System.Resources.ResXResourceReader::FromFileContents(System.String, System.Reflection.AssemblyName[]) -> System.Resources.ResXResourceReader static
-M public System.Resources.ResXResourceReader::GetEnumerator() -> System.Collections.IDictionaryEnumerator
-M public System.Resources.ResXResourceReader::GetMetadataEnumerator() -> System.Collections.IDictionaryEnumerator
-M public System.Resources.ResXResourceReader::get_BasePath() -> System.String
-M public System.Resources.ResXResourceReader::get_UseResXDataNodes() -> System.Boolean
-M public System.Resources.ResXResourceReader::set_BasePath(System.String) -> System.Void
-M public System.Resources.ResXResourceReader::set_UseResXDataNodes(System.Boolean) -> System.Void
-M public System.Resources.ResXResourceSet::.ctor(System.IO.Stream)
-M public System.Resources.ResXResourceSet::.ctor(System.String)
-M public System.Resources.ResXResourceSet::GetDefaultReader() -> System.Type virtual
-M public System.Resources.ResXResourceSet::GetDefaultWriter() -> System.Type virtual
-M public System.Resources.ResXResourceWriter::.ctor(System.IO.Stream)
-M public System.Resources.ResXResourceWriter::.ctor(System.IO.Stream, System.Func`2<System.Type, System.String>)
-M public System.Resources.ResXResourceWriter::.ctor(System.IO.TextWriter)
-M public System.Resources.ResXResourceWriter::.ctor(System.IO.TextWriter, System.Func`2<System.Type, System.String>)
-M public System.Resources.ResXResourceWriter::.ctor(System.String)
-M public System.Resources.ResXResourceWriter::.ctor(System.String, System.Func`2<System.Type, System.String>)
-M public System.Resources.ResXResourceWriter::AddAlias(System.String, System.Reflection.AssemblyName) -> System.Void virtual
-M public System.Resources.ResXResourceWriter::AddMetadata(System.String, System.Byte[]) -> System.Void
-M public System.Resources.ResXResourceWriter::AddMetadata(System.String, System.Object) -> System.Void
-M public System.Resources.ResXResourceWriter::AddMetadata(System.String, System.String) -> System.Void
-M public System.Resources.ResXResourceWriter::AddResource(System.Resources.ResXDataNode) -> System.Void
-M public System.Resources.ResXResourceWriter::AddResource(System.String, System.Byte[]) -> System.Void
-M public System.Resources.ResXResourceWriter::AddResource(System.String, System.Object) -> System.Void
-M public System.Resources.ResXResourceWriter::AddResource(System.String, System.String) -> System.Void
-M public System.Resources.ResXResourceWriter::Close() -> System.Void
-M public System.Resources.ResXResourceWriter::Dispose() -> System.Void virtual
-M public System.Resources.ResXResourceWriter::Generate() -> System.Void
-M public System.Resources.ResXResourceWriter::get_BasePath() -> System.String
-M public System.Resources.ResXResourceWriter::set_BasePath(System.String) -> System.Void
 M public System.Windows.Forms.AccessibleObject::RaiseAutomationNotification(System.Windows.Forms.Automation.AutomationNotificationKind, System.Windows.Forms.Automation.AutomationNotificationProcessing, System.String) -> System.Boolean
 M public System.Windows.Forms.AmbientProperties::get_Cursor() -> System.Windows.Forms.Cursor
 M public System.Windows.Forms.AmbientProperties::set_Cursor(System.Windows.Forms.Cursor) -> System.Void
@@ -734,29 +600,6 @@ M public System.Windows.Forms.Design.ComponentEditorPage::remove_AutoSizeChanged
 M public System.Windows.Forms.Design.ComponentEditorPage::set_AutoSize(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.Design.ComponentEditorPage::set_CommitOnDeactivate(System.Boolean) -> System.Void
 M public System.Windows.Forms.Design.ComponentEditorPage::set_Icon(System.Drawing.Icon) -> System.Void
-M public System.Windows.Forms.Design.EventsTab::.ctor(System.IServiceProvider)
-M public System.Windows.Forms.Design.EventsTab::CanExtend(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.Design.EventsTab::GetDefaultProperty(System.Object) -> System.ComponentModel.PropertyDescriptor virtual
-M public System.Windows.Forms.Design.EventsTab::GetProperties(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.Design.EventsTab::GetProperties(System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.Design.EventsTab::get_HelpKeyword() -> System.String virtual
-M public System.Windows.Forms.Design.EventsTab::get_TabName() -> System.String virtual
-M public System.Windows.Forms.Design.IUIService::CanShowComponentEditor(System.Object) -> System.Boolean abstract
-M public System.Windows.Forms.Design.IUIService::GetDialogOwnerWindow() -> System.Windows.Forms.IWin32Window abstract
-M public System.Windows.Forms.Design.IUIService::SetUIDirty() -> System.Void abstract
-M public System.Windows.Forms.Design.IUIService::ShowComponentEditor(System.Object, System.Windows.Forms.IWin32Window) -> System.Boolean abstract
-M public System.Windows.Forms.Design.IUIService::ShowDialog(System.Windows.Forms.Form) -> System.Windows.Forms.DialogResult abstract
-M public System.Windows.Forms.Design.IUIService::ShowError(System.Exception) -> System.Void abstract
-M public System.Windows.Forms.Design.IUIService::ShowError(System.Exception, System.String) -> System.Void abstract
-M public System.Windows.Forms.Design.IUIService::ShowError(System.String) -> System.Void abstract
-M public System.Windows.Forms.Design.IUIService::ShowMessage(System.String) -> System.Void abstract
-M public System.Windows.Forms.Design.IUIService::ShowMessage(System.String, System.String) -> System.Void abstract
-M public System.Windows.Forms.Design.IUIService::ShowMessage(System.String, System.String, System.Windows.Forms.MessageBoxButtons) -> System.Windows.Forms.DialogResult abstract
-M public System.Windows.Forms.Design.IUIService::ShowToolWindow(System.Guid) -> System.Boolean abstract
-M public System.Windows.Forms.Design.IUIService::get_Styles() -> System.Collections.IDictionary abstract
-M public System.Windows.Forms.Design.IWindowsFormsEditorService::CloseDropDown() -> System.Void abstract
-M public System.Windows.Forms.Design.IWindowsFormsEditorService::DropDownControl(System.Windows.Forms.Control) -> System.Void abstract
-M public System.Windows.Forms.Design.IWindowsFormsEditorService::ShowDialog(System.Windows.Forms.Form) -> System.Windows.Forms.DialogResult abstract
 M public System.Windows.Forms.Design.WindowsFormsComponentEditor::EditComponent(System.ComponentModel.ITypeDescriptorContext, System.Object) -> System.Boolean virtual
 M public System.Windows.Forms.Design.WindowsFormsComponentEditor::EditComponent(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Windows.Forms.IWin32Window) -> System.Boolean virtual
 M public System.Windows.Forms.Design.WindowsFormsComponentEditor::EditComponent(System.Object, System.Windows.Forms.IWin32Window) -> System.Boolean
@@ -830,8 +673,6 @@ M public System.Windows.Forms.Form::set_FormCaptionTextColor(System.Drawing.Colo
 M public System.Windows.Forms.Form::set_FormCornerPreference(System.Windows.Forms.FormCornerPreference) -> System.Void
 M public System.Windows.Forms.Form::set_FormScreenCaptureMode(System.Windows.Forms.ScreenCaptureMode) -> System.Void
 M public System.Windows.Forms.Form::set_Menu(System.Windows.Forms.MainMenu) -> System.Void
-M public System.Windows.Forms.IComponentEditorPageSite::GetControl() -> System.Windows.Forms.Control abstract
-M public System.Windows.Forms.IComponentEditorPageSite::SetDirty() -> System.Void abstract
 M public System.Windows.Forms.ImageIndexConverter::.ctor()
 M public System.Windows.Forms.ImageIndexConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
 M public System.Windows.Forms.ImageIndexConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
@@ -1017,86 +858,9 @@ M public System.Windows.Forms.ProgressBar::add_ImeModeChanged(System.EventHandle
 M public System.Windows.Forms.ProgressBar::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.ProgressBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ProgressBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::AddTabType(System.Type) -> System.Void
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::AddTabType(System.Type, System.ComponentModel.PropertyTabScope) -> System.Void
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::Clear(System.ComponentModel.PropertyTabScope) -> System.Void
-M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::RemoveTabType(System.Type) -> System.Void
-M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::get_Item(System.Int32) -> System.Windows.Forms.Design.PropertyTab
 M public System.Windows.Forms.PropertyGrid::RefreshTabs(System.ComponentModel.PropertyTabScope) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_MouseEnter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_MouseLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::get_AutoScroll() -> System.Boolean virtual
-M public System.Windows.Forms.PropertyGrid::get_BackColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.PropertyGrid::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.PropertyGrid::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.PropertyGrid::get_CanShowCommands() -> System.Boolean virtual
-M public System.Windows.Forms.PropertyGrid::get_CommandsActiveLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_CommandsBackColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_CommandsBorderColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_CommandsDisabledLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_CommandsForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_CommandsLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_CommandsVisible() -> System.Boolean virtual
-M public System.Windows.Forms.PropertyGrid::get_CommandsVisibleIfAvailable() -> System.Boolean virtual
-M public System.Windows.Forms.PropertyGrid::get_ContextMenuDefaultLocation() -> System.Drawing.Point
-M public System.Windows.Forms.PropertyGrid::get_Controls() -> System.Windows.Forms.Control+ControlCollection
-M public System.Windows.Forms.PropertyGrid::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.PropertyGrid::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.PropertyGrid::get_PropertyTabs() -> System.Windows.Forms.PropertyGrid+PropertyTabCollection
-M public System.Windows.Forms.PropertyGrid::get_Site() -> System.ComponentModel.ISite virtual
-M public System.Windows.Forms.PropertyGrid::get_Text() -> System.String virtual
-M public System.Windows.Forms.PropertyGrid::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_MouseEnter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_MouseLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_AutoScroll(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_BackColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_CommandsActiveLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CommandsBackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CommandsBorderColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CommandsDisabledLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CommandsForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CommandsLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CommandsVisibleIfAvailable(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_Site(System.ComponentModel.ISite) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.PropertyGridInternal.IRootGridEntry::ResetBrowsableAttributes() -> System.Void abstract
-M public System.Windows.Forms.PropertyGridInternal.IRootGridEntry::ShowCategories(System.Boolean) -> System.Void abstract
-M public System.Windows.Forms.PropertyGridInternal.IRootGridEntry::get_BrowsableAttributes() -> System.ComponentModel.AttributeCollection abstract
-M public System.Windows.Forms.PropertyGridInternal.IRootGridEntry::set_BrowsableAttributes(System.ComponentModel.AttributeCollection) -> System.Void abstract
-M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::.ctor()
-M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::GetDefaultProperty(System.Object) -> System.ComponentModel.PropertyDescriptor virtual
-M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::GetProperties(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::GetProperties(System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::get_HelpKeyword() -> System.String virtual
-M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::get_TabName() -> System.String virtual
-M public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::.ctor()
 M public System.Windows.Forms.RelatedImageListAttribute::.ctor(System.String)
 M public System.Windows.Forms.RelatedImageListAttribute::get_RelatedImageList() -> System.String
 M public System.Windows.Forms.ScrollBar::add_ImeModeChanged(System.EventHandler) -> System.Void
@@ -1677,13 +1441,6 @@ M public System.Windows.Forms.WindowsFormsSection::get_JitDebugging() -> System.
 M public System.Windows.Forms.WindowsFormsSection::set_JitDebugging(System.Boolean) -> System.Void
 T abstract class System.Windows.Forms.Design.ComponentEditorPage : System.Windows.Forms.Panel
 T abstract class System.Windows.Forms.Design.WindowsFormsComponentEditor : System.ComponentModel.ComponentEditor
-T class System.Drawing.Design.PropertyValueUIItem
-T class System.Drawing.Design.UITypeEditor
-T class System.Resources.ResXFileRef
-T class System.Resources.ResXFileRef+Converter : System.ComponentModel.TypeConverter
-T class System.Resources.ResXResourceReader
-T class System.Resources.ResXResourceSet : System.Resources.ResourceSet
-T class System.Resources.ResXResourceWriter
 T class System.Windows.Forms.AxHost+AxComponentEditor : System.Windows.Forms.Design.WindowsFormsComponentEditor
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant
@@ -1691,7 +1448,6 @@ T class System.Windows.Forms.DataGridView+DataGridViewControlCollection : System
 T class System.Windows.Forms.DataGridViewCellStyleConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.DataGridViewTopLeftHeaderCell : System.Windows.Forms.DataGridViewColumnHeaderCell
 T class System.Windows.Forms.Design.ComponentEditorForm : System.Windows.Forms.Form
-T class System.Windows.Forms.Design.EventsTab : System.Windows.Forms.Design.PropertyTab
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.ImageIndexConverter : System.ComponentModel.Int32Converter
 T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringConverter
@@ -1704,24 +1460,14 @@ T class System.Windows.Forms.ListViewItemStateImageIndexConverter : System.Windo
 T class System.Windows.Forms.OpacityConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.OwnerDrawPropertyBag : System.MarshalByRefObject
 T class System.Windows.Forms.PrintControllerWithStatusDialog : System.Drawing.Printing.PrintController
-T class System.Windows.Forms.PropertyGrid+PropertyTabCollection
-T class System.Windows.Forms.PropertyGridInternal.PropertiesTab : System.Windows.Forms.Design.PropertyTab
-T class System.Windows.Forms.PropertyGridInternal.PropertyGridCommands
 T class System.Windows.Forms.ThreadExceptionDialog : System.Windows.Forms.Form
 T class System.Windows.Forms.ToolStrip+ToolStripAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.ToolStripDropDown+ToolStripDropDownAccessibleObject : System.Windows.Forms.ToolStrip+ToolStripAccessibleObject
 T class System.Windows.Forms.ToolStripPanel+ToolStripPanelRowCollection : System.Windows.Forms.Layout.ArrangedElementCollection
 T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.TreeViewImageKeyConverter : System.Windows.Forms.ImageKeyConverter
-T delegate System.Drawing.Design.PropertyValueUIItemInvokeHandler
-T interface System.Drawing.Design.IPropertyValueUIService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser
-T interface System.Windows.Forms.Design.IUIService
-T interface System.Windows.Forms.Design.IWindowsFormsEditorService
-T interface System.Windows.Forms.IComponentEditorPageSite
-T interface System.Windows.Forms.PropertyGridInternal.IRootGridEntry
-T sealed class System.Resources.ResXDataNode
 T sealed class System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute : System.Attribute
 T sealed class System.Windows.Forms.DockingAttribute : System.Attribute
 T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute

@@ -294,6 +294,39 @@ public class DevicesTests
         Assert.False(clipboard.ContainsText());
     }
 
+    [AvaloniaFact]
+    public void ClipboardProxy_forwards_data_text_format_and_file_drop_list_to_Clipboard()
+    {
+        var clipboard = CreateProxy<ClipboardProxy>();
+
+        clipboard.SetData("MyFormat", "payload");
+        Assert.True(clipboard.ContainsData("MyFormat"));
+        Assert.True(clipboard.TryGetData<string>("MyFormat", out var roundTripped));
+        Assert.Equal("payload", roundTripped);
+
+        var files = new System.Collections.Specialized.StringCollection();
+        files.Add("a.txt");
+        files.Add("b.txt");
+        clipboard.SetFileDropList(files);
+        Assert.True(clipboard.ContainsFileDropList());
+        Assert.Equal(["a.txt", "b.txt"], clipboard.GetFileDropList().Cast<string>());
+
+        clipboard.SetText("plain", TextDataFormat.UnicodeText);
+        Assert.True(clipboard.ContainsText(TextDataFormat.UnicodeText));
+        Assert.Equal("plain", clipboard.GetText(TextDataFormat.UnicodeText));
+    }
+
+    [AvaloniaFact]
+    public void ClipboardProxy_SetDataAsJson_round_trips_through_TryGetData()
+    {
+        var clipboard = CreateProxy<ClipboardProxy>();
+
+        clipboard.SetDataAsJson("JsonFormat", new[] { 1, 2, 3 });
+
+        Assert.True(clipboard.TryGetData<string>("JsonFormat", out var json));
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(new[] { 1, 2, 3 }), json);
+    }
+
     [Fact]
     public void FileSystemProxy_combines_paths_the_way_Path_Combine_would()
     {

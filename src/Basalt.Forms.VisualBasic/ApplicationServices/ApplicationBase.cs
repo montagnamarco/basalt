@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using Microsoft.VisualBasic.Logging;
 
 namespace Microsoft.VisualBasic.ApplicationServices;
 
@@ -7,14 +8,10 @@ namespace Microsoft.VisualBasic.ApplicationServices;
 /// The root of My.Application: the running assembly's information and the
 /// culture the application reads and writes dates, numbers and text with.
 /// </summary>
-/// <remarks>
-/// Info.Log (My.Application.Log) is not implemented here: it returns
-/// Microsoft.VisualBasic.Logging.Log, a type this task does not own and that
-/// does not exist yet in Basalt.Forms.VisualBasic, so the property stays out
-/// rather than being stubbed against a type that is not there.
-/// </remarks>
 public class ApplicationBase
 {
+    private Log? _log;
+
     public ApplicationBase()
     {
         Info = new AssemblyInfo(Assembly.GetEntryAssembly() ?? GetType().Assembly);
@@ -23,6 +20,9 @@ public class ApplicationBase
     public CultureInfo Culture => CultureInfo.CurrentCulture;
 
     public AssemblyInfo Info { get; }
+
+    /// <summary>My.Application.Log: lazily created with this application's assembly name as its TraceSource name, so every call shares the one default file listener.</summary>
+    public Log Log => _log ??= new Log(Info.AssemblyName);
 
     public CultureInfo UICulture => CultureInfo.CurrentUICulture;
 
