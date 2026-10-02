@@ -91,6 +91,13 @@ public class ToolStripTextBox : ToolStripControlHost
     }
 
     [DefaultValue(false)]
+    public bool Multiline
+    {
+        get => TextBox.Multiline;
+        set => TextBox.Multiline = value;
+    }
+
+    [DefaultValue(false)]
     public bool ReadOnly
     {
         get => TextBox.ReadOnly;
@@ -121,13 +128,86 @@ public class ToolStripTextBox : ToolStripControlHost
         set => TextBox.SelectionStart = value;
     }
 
+    [DefaultValue(true)]
+    public bool ShortcutsEnabled
+    {
+        get => TextBox.ShortcutsEnabled;
+        set => TextBox.ShortcutsEnabled = value;
+    }
+
     /// <summary>The hosted edit control, for members this wrapper does not repeat.</summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TextBox TextBox => (TextBox)Control;
 
+    /// <summary>Named differently from the base item's own TextAlign (a ContentAlignment): this one is the edit control's HorizontalAlignment.</summary>
+    [DefaultValue(HorizontalAlignment.Left)]
+    [Localizable(true)]
+    public HorizontalAlignment TextBoxTextAlign
+    {
+        get => TextBox.TextAlign;
+        set => TextBox.TextAlign = value;
+    }
+
     [Browsable(false)]
     public int TextLength => TextBox.TextLength;
+
+    [DefaultValue(true)]
+    public bool WordWrap
+    {
+        get => TextBox.WordWrap;
+        set => TextBox.WordWrap = value;
+    }
+
+    public event EventHandler? AcceptsTabChanged
+    {
+        add => Events.AddHandler(s_acceptsTabChangedEvent, value);
+        remove => Events.RemoveHandler(s_acceptsTabChangedEvent, value);
+    }
+
+    public event EventHandler? BorderStyleChanged
+    {
+        add => Events.AddHandler(s_borderStyleChangedEvent, value);
+        remove => Events.RemoveHandler(s_borderStyleChangedEvent, value);
+    }
+
+    public event EventHandler? HideSelectionChanged
+    {
+        add => Events.AddHandler(s_hideSelectionChangedEvent, value);
+        remove => Events.RemoveHandler(s_hideSelectionChangedEvent, value);
+    }
+
+    public event EventHandler? ModifiedChanged
+    {
+        add => Events.AddHandler(s_modifiedChangedEvent, value);
+        remove => Events.RemoveHandler(s_modifiedChangedEvent, value);
+    }
+
+    public event EventHandler? MultilineChanged
+    {
+        add => Events.AddHandler(s_multilineChangedEvent, value);
+        remove => Events.RemoveHandler(s_multilineChangedEvent, value);
+    }
+
+    public event EventHandler? ReadOnlyChanged
+    {
+        add => Events.AddHandler(s_readOnlyChangedEvent, value);
+        remove => Events.RemoveHandler(s_readOnlyChangedEvent, value);
+    }
+
+    public event EventHandler? TextBoxTextAlignChanged
+    {
+        add => Events.AddHandler(s_textBoxTextAlignChangedEvent, value);
+        remove => Events.RemoveHandler(s_textBoxTextAlignChangedEvent, value);
+    }
+
+    private static readonly object s_acceptsTabChangedEvent = new();
+    private static readonly object s_borderStyleChangedEvent = new();
+    private static readonly object s_hideSelectionChangedEvent = new();
+    private static readonly object s_modifiedChangedEvent = new();
+    private static readonly object s_multilineChangedEvent = new();
+    private static readonly object s_readOnlyChangedEvent = new();
+    private static readonly object s_textBoxTextAlignChangedEvent = new();
 
     public void AppendText(string? text) => TextBox.AppendText(text);
 
@@ -154,6 +234,76 @@ public class ToolStripTextBox : ToolStripControlHost
     public Point GetPositionFromCharIndex(int index) => TextBox.GetPositionFromCharIndex(index);
 
     public override Size GetPreferredSize(Size constrainingSize) => TextBox.GetPreferredSize(constrainingSize);
+
+    protected virtual void OnAcceptsTabChanged(EventArgs e) => ((EventHandler?)Events[s_acceptsTabChangedEvent])?.Invoke(this, e);
+
+    public override Image? BackgroundImage
+    {
+        get => base.BackgroundImage;
+        set => base.BackgroundImage = value;
+    }
+
+    public override ImageLayout BackgroundImageLayout
+    {
+        get => base.BackgroundImageLayout;
+        set => base.BackgroundImageLayout = value;
+    }
+
+    protected virtual void OnBorderStyleChanged(EventArgs e) => ((EventHandler?)Events[s_borderStyleChangedEvent])?.Invoke(this, e);
+
+    protected virtual void OnHideSelectionChanged(EventArgs e) => ((EventHandler?)Events[s_hideSelectionChangedEvent])?.Invoke(this, e);
+
+    protected virtual void OnModifiedChanged(EventArgs e) => ((EventHandler?)Events[s_modifiedChangedEvent])?.Invoke(this, e);
+
+    protected virtual void OnMultilineChanged(EventArgs e) => ((EventHandler?)Events[s_multilineChangedEvent])?.Invoke(this, e);
+
+    protected virtual void OnReadOnlyChanged(EventArgs e) => ((EventHandler?)Events[s_readOnlyChangedEvent])?.Invoke(this, e);
+
+    /// <summary>On top of the base's generic Enter/KeyDown/Validating wiring, the edit control's own property-changed events are forwarded too.</summary>
+    protected override void OnSubscribeControlEvents(Control? control)
+    {
+        base.OnSubscribeControlEvents(control);
+
+        if (control is not TextBox textBox) return;
+
+        textBox.AcceptsTabChanged += HandleAcceptsTabChanged;
+        textBox.BorderStyleChanged += HandleBorderStyleChanged;
+        textBox.HideSelectionChanged += HandleHideSelectionChanged;
+        textBox.ModifiedChanged += HandleModifiedChanged;
+        textBox.MultilineChanged += HandleMultilineChanged;
+        textBox.ReadOnlyChanged += HandleReadOnlyChanged;
+        textBox.TextAlignChanged += HandleTextBoxTextAlignChanged;
+    }
+
+    protected override void OnUnsubscribeControlEvents(Control? control)
+    {
+        base.OnUnsubscribeControlEvents(control);
+
+        if (control is not TextBox textBox) return;
+
+        textBox.AcceptsTabChanged -= HandleAcceptsTabChanged;
+        textBox.BorderStyleChanged -= HandleBorderStyleChanged;
+        textBox.HideSelectionChanged -= HandleHideSelectionChanged;
+        textBox.ModifiedChanged -= HandleModifiedChanged;
+        textBox.MultilineChanged -= HandleMultilineChanged;
+        textBox.ReadOnlyChanged -= HandleReadOnlyChanged;
+        textBox.TextAlignChanged -= HandleTextBoxTextAlignChanged;
+    }
+
+    private void HandleAcceptsTabChanged(object? sender, EventArgs e) => OnAcceptsTabChanged(e);
+
+    private void HandleBorderStyleChanged(object? sender, EventArgs e) => OnBorderStyleChanged(e);
+
+    private void HandleHideSelectionChanged(object? sender, EventArgs e) => OnHideSelectionChanged(e);
+
+    private void HandleModifiedChanged(object? sender, EventArgs e) => OnModifiedChanged(e);
+
+    private void HandleMultilineChanged(object? sender, EventArgs e) => OnMultilineChanged(e);
+
+    private void HandleReadOnlyChanged(object? sender, EventArgs e) => OnReadOnlyChanged(e);
+
+    private void HandleTextBoxTextAlignChanged(object? sender, EventArgs e) =>
+        ((EventHandler?)Events[s_textBoxTextAlignChangedEvent])?.Invoke(this, e);
 
     public void Paste() => TextBox.Paste();
 

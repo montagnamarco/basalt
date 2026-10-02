@@ -171,6 +171,25 @@ public class ToolStripComboBox : ToolStripControlHost
     private static readonly object s_selectedIndexChangedEvent = new();
     private static readonly object s_textUpdateEvent = new();
 
+    public override Image? BackgroundImage
+    {
+        get => base.BackgroundImage;
+        set => base.BackgroundImage = value;
+    }
+
+    public override ImageLayout BackgroundImageLayout
+    {
+        get => base.BackgroundImageLayout;
+        set => base.BackgroundImageLayout = value;
+    }
+
+    /// <summary>A combo box's own double-click opens its drop-down; this item-level event is hidden, not removed.</summary>
+    public new event EventHandler? DoubleClick
+    {
+        add => base.DoubleClick += value;
+        remove => base.DoubleClick -= value;
+    }
+
     public void BeginUpdate() => ComboBox.BeginUpdate();
 
     public void EndUpdate() => ComboBox.EndUpdate();
@@ -199,7 +218,40 @@ public class ToolStripComboBox : ToolStripControlHost
 
     protected virtual void OnSelectedIndexChanged(EventArgs e) => ((EventHandler?)Events[s_selectedIndexChangedEvent])?.Invoke(this, e);
 
+    /// <summary>
+    /// The exact moment a selection commits (a click, Enter, or an arrow key -
+    /// not merely highlighting an item while the list is open): a seam a
+    /// subclass overrides, same as Microsoft's own has no public event of its
+    /// own at this level either.
+    /// </summary>
+    protected virtual void OnSelectionChangeCommitted(EventArgs e)
+    {
+    }
+
+    /// <summary>On top of the base's generic Enter/KeyDown/Validating wiring, the combo's own drop-down and selection events are forwarded too.</summary>
+    protected override void OnSubscribeControlEvents(Control? control)
+    {
+        base.OnSubscribeControlEvents(control);
+
+        if (control is not ComboBox comboBox) return;
+
+        comboBox.SelectionChangeCommitted += HandleSelectionChangeCommitted;
+    }
+
+    protected override void OnUnsubscribeControlEvents(Control? control)
+    {
+        base.OnUnsubscribeControlEvents(control);
+
+        if (control is not ComboBox comboBox) return;
+
+        comboBox.SelectionChangeCommitted -= HandleSelectionChangeCommitted;
+    }
+
     protected virtual void OnTextUpdate(EventArgs e) => ((EventHandler?)Events[s_textUpdateEvent])?.Invoke(this, e);
+
+    public override string ToString() => $"{base.ToString()}, Items.Count: {Items.Count}";
+
+    private void HandleSelectionChangeCommitted(object? sender, EventArgs e) => OnSelectionChangeCommitted(e);
 
     /// <summary>Forwards the hosted ComboBox's own drop-down and selection events to this item's events.</summary>
     private void SubscribeComboBoxEvents()

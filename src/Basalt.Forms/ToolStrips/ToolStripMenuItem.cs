@@ -228,6 +228,82 @@ public class ToolStripMenuItem : ToolStripDropDownItem
         StopHoverTimer();
     }
 
+    /// <summary>A checked menu item surfaces that to assistive technology the same way a checked button does.</summary>
+    protected override AccessibleObject CreateAccessibilityInstance()
+    {
+        var accessibleObject = new ToolStripDropDownItemAccessibleObject(this);
+        if (Checked) accessibleObject.AddState(AccessibleStates.Checked);
+
+        return accessibleObject;
+    }
+
+    /// <summary>Whatever hover-reopens a sibling's submenu must not fire once this one's own just hid.</summary>
+    protected override void OnDropDownHide(EventArgs e)
+    {
+        base.OnDropDownHide(e);
+        StopHoverTimer();
+    }
+
+    protected override void OnFontChanged(EventArgs e) => base.OnFontChanged(e);
+
+    /// <summary>Letting go cancels whatever hover-driven submenu swap a hover over this item had queued.</summary>
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        StopHoverTimer();
+    }
+
+    /// <summary>A Ctrl/Alt shortcut reaches a menu item through the normal command-key preview, same as TryInvokeShortcut reaches it from the keyboard pipeline that calls that directly.</summary>
+    protected internal override bool ProcessCmdKey(ref Message m, Keys keyData)
+    {
+        if (TryInvokeShortcut(keyData)) return true;
+
+        return base.ProcessCmdKey(ref m, keyData);
+    }
+
+    /// <summary>The mnemonic opens a submenu instead of merely clicking through it, when there is one.</summary>
+    protected internal override bool ProcessMnemonic(char charCode)
+    {
+        if (!Enabled || !Available || !Control.IsMnemonic(charCode, Text)) return false;
+
+        if (HasDropDownItems) ShowDropDown();
+        else PerformClick();
+
+        return true;
+    }
+
+    /// <summary>
+    /// A submenu entry (not a menu bar's own top-level item) is never let smaller than its own
+    /// DefaultSize: autosize measurement does not add room for the arrow it still has to paint.
+    /// </summary>
+    protected override void SetBounds(Rectangle bounds)
+    {
+        if (HasDropDownItems && Owner is not MenuStrip && bounds.Width < DefaultSize.Width)
+        {
+            bounds = new Rectangle(bounds.Location, new Size(DefaultSize.Width, bounds.Height));
+        }
+
+        base.SetBounds(bounds);
+    }
+
+    /// <summary>
+    /// Whether an MDI parent form generated this item as an entry of its own "Window" list: this
+    /// codebase has no such merging yet, so there is no data source that could ever mark one, and this
+    /// honestly always answers false rather than pretending a feature that does not exist.
+    /// </summary>
+    [Browsable(false)]
+    public bool IsMdiWindowListEntry => false;
+
+    /// <summary>
+    /// Forwards verbatim: Microsoft's own override additionally special-cases an MDI window-list entry,
+    /// a branch <see cref="IsMdiWindowListEntry"/> can never take here (see its own remarks).
+    /// </summary>
+    public override bool Enabled
+    {
+        get => base.Enabled;
+        set => base.Enabled = value;
+    }
+
     protected override void OnDropDownShow(EventArgs e)
     {
         base.OnDropDownShow(e);

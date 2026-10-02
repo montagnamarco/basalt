@@ -393,6 +393,15 @@ public partial class ToolStrip : ScrollableControl
         foreach (ToolStripItem item in Items) item.RaiseOwnerFontChanged(e);
     }
 
+
+    /// <summary>Mirrors OnFontChanged above: an item that still inherits RightToLeft (has none of its own set) follows the strip's.</summary>
+    protected override void OnRightToLeftChanged(EventArgs e)
+    {
+        base.OnRightToLeftChanged(e);
+
+        foreach (ToolStripItem item in Items) item.RaiseParentRightToLeftChanged(e);
+    }
+
     protected override void OnEnabledChanged(EventArgs e)
     {
         base.OnEnabledChanged(e);

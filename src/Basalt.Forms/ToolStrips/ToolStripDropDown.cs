@@ -361,12 +361,21 @@ public class ToolStripDropDown : ToolStrip
         nextItem.DropDown.SelectFirstAvailableItem();
     }
 
-    /// <summary>A leaf item was clicked: the whole drop-down (not its still-open submenus, there are none left) closes.</summary>
+    /// <summary>
+    /// A leaf item was clicked: the whole drop-down (not a submenu this very
+    /// click just opened) closes. DismissWhenClicked is the item's own veto
+    /// (a split button's arrow half says no, since clicking it only ever
+    /// opens its own submenu, never a reason to close anything); whether its
+    /// own drop-down is open right now covers every other item that owns one
+    /// (a submenu entry's click already opened - or re-closed - that, and
+    /// either way is not this ancestor's to react to the same click for).
+    /// </summary>
     protected internal override void OnItemClicked(ToolStripItemClickedEventArgs e)
     {
         base.OnItemClicked(e);
 
-        if (e.ClickedItem is ToolStripDropDownItem { HasDropDownItems: true }) return;
+        if (e.ClickedItem is not { } clickedItem || !clickedItem.DismissWhenClickedInternal) return;
+        if (clickedItem is ToolStripDropDownItem { HasDropDown: true, DropDown.IsOpen: true }) return;
 
         Close(ToolStripDropDownCloseReason.ItemClicked);
     }

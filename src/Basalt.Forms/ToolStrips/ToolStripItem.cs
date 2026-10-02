@@ -9,7 +9,7 @@ namespace System.Windows.Forms;
 /// bounds and paints itself like a control, but it is a component, not a
 /// control, so the strip (not Windows) tracks its mouse and lays it out.
 /// </summary>
-public abstract class ToolStripItem : BindableComponent, IArrangedElement
+public abstract partial class ToolStripItem : BindableComponent, IArrangedElement
 {
     private ToolStripItemAlignment _alignment = ToolStripItemAlignment.Left;
     private bool _autoSize = true;
@@ -40,6 +40,7 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
     protected ToolStripItem()
     {
         _displayStyle = DefaultDisplayStyle;
+        _autoToolTip = DefaultAutoToolTip;
         _overflow = DefaultOverflow;
         _margin = DefaultMargin;
         _padding = DefaultPadding;
@@ -381,7 +382,38 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
         }
     }
 
-    public string? ToolTipText { get; set; }
+    /// <summary>
+    /// The tool tip; with AutoToolTip on and no text of its own, the item's
+    /// text without its mnemonic ampersands, as WinForms shows on buttons.
+    /// </summary>
+    public string? ToolTipText
+    {
+        get
+        {
+            if (AutoToolTip && string.IsNullOrEmpty(_toolTipText)) return WithoutMnemonics(Text);
+
+            return _toolTipText;
+        }
+        set => _toolTipText = value;
+    }
+
+    private string? _toolTipText;
+
+    /// <summary>The text as it reads: a single ampersand marks a mnemonic and goes, a doubled one is a literal.</summary>
+    private static string? WithoutMnemonics(string? text)
+    {
+        if (string.IsNullOrEmpty(text) || !text.Contains('&')) return text;
+
+        var result = new System.Text.StringBuilder(text.Length);
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] != '&') result.Append(text[i]);
+            else if (i + 1 < text.Length && text[i + 1] == '&') result.Append(text[++i]);
+        }
+
+        return result.ToString();
+    }
 
     /// <summary>
     /// Whether the item is on screen: placed (<see cref="Available"/>) on a
@@ -534,6 +566,10 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
         {
             IsDisposed = true;
             _owner?.Items.Remove(this);
+
+            // Otherwise a disposed item lingers in the command's own invocation list, forever reachable
+            // (and never collectible) from whatever still holds that command.
+            if (_command is not null) _command.CanExecuteChanged -= HandleCommandCanExecuteChanged;
         }
 
         base.Dispose(disposing);
@@ -605,7 +641,11 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
     {
     }
 
-    protected virtual void OnClick(EventArgs e) => ((EventHandler?)Events[s_clickEvent])?.Invoke(this, e);
+    protected virtual void OnClick(EventArgs e)
+    {
+        ((EventHandler?)Events[s_clickEvent])?.Invoke(this, e);
+        OnRequestCommandExecute(EventArgs.Empty);
+    }
 
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected virtual void OnDisplayStyleChanged(EventArgs e)
@@ -737,8 +777,10 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
     {
         if (bounds == _bounds) return;
 
+        var locationChanged = bounds.Location != _bounds.Location;
         _bounds = bounds;
         OnBoundsChanged();
+        if (locationChanged) OnLocationChanged(EventArgs.Empty);
     }
 
     // Visible and Available are one switch, as in WinForms: hiding an item takes it out of the layout.

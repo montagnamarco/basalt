@@ -174,6 +174,50 @@ public abstract class ToolStripDropDownItem : ToolStripItem
         if (_dropDownShown) ShowDropDown();
     }
 
+    protected override AccessibleObject CreateAccessibilityInstance() => new ToolStripDropDownItemAccessibleObject(this);
+
+    /// <summary>An open submenu measures its items from this one's Font; refreshed so a live Font change does not leave it stale.</summary>
+    protected override void OnFontChanged(EventArgs e)
+    {
+        base.OnFontChanged(e);
+
+        if (HasDropDown && DropDown.IsOpen) DropDown.PerformLayout();
+    }
+
+    /// <summary>A submenu reads its own direction ambiently, same as any other control: it mirrors once its owner does.</summary>
+    protected override void OnRightToLeftChanged(EventArgs e)
+    {
+        base.OnRightToLeftChanged(e);
+
+        if (HasDropDown) DropDown.RightToLeft = RightToLeft;
+    }
+
+    /// <summary>While the submenu is open, each of its own items gets first refusal at a command key.</summary>
+    protected internal override bool ProcessCmdKey(ref Message m, Keys keyData)
+    {
+        if (HasDropDown && DropDown.IsOpen)
+        {
+            foreach (ToolStripItem item in DropDownItems)
+            {
+                if (item.ProcessCmdKey(ref m, keyData)) return true;
+            }
+        }
+
+        return base.ProcessCmdKey(ref m, keyData);
+    }
+
+    /// <summary>Enter (or Space) opens the submenu instead of clicking, when there is one to open.</summary>
+    protected internal override bool ProcessDialogKey(Keys keyData)
+    {
+        if ((keyData == Keys.Enter || keyData == Keys.Space) && HasDropDownItems)
+        {
+            ShowDropDown();
+            return true;
+        }
+
+        return base.ProcessDialogKey(keyData);
+    }
+
     protected virtual void OnDropDownClosed(EventArgs e) => DropDownClosed?.Invoke(this, e);
 
     /// <summary>Called right as the drop-down is about to disappear, before it actually closes.</summary>

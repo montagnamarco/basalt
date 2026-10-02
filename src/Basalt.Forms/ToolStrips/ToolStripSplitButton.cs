@@ -7,11 +7,21 @@ namespace System.Windows.Forms;
 /// A button with a narrow drop-down arrow beside it: clicking the main face
 /// raises <see cref="ButtonClick"/>, clicking the arrow opens the menu.
 /// </summary>
-public class ToolStripSplitButton : ToolStripDropDownItem
+public partial class ToolStripSplitButton : ToolStripDropDownItem
 {
     private int _dropDownButtonWidth = 11;
     private bool _buttonPressed;
     private bool _dropDownButtonPressed;
+    private ToolStripItem? _defaultItem;
+
+    /// <summary>
+    /// Which half the most recent press landed on, kept past the mouse-up
+    /// reset of <see cref="_dropDownButtonPressed"/> so <see cref="DismissWhenClicked"/>
+    /// can still tell, once the click itself is being processed, whether it
+    /// should close a parent chain (the button half) or not (the arrow half,
+    /// which only ever opens this item's own submenu).
+    /// </summary>
+    private bool _lastPressWasDropDownPart;
 
     public ToolStripSplitButton()
     {
@@ -48,11 +58,17 @@ public class ToolStripSplitButton : ToolStripDropDownItem
     }
 
     [DefaultValue(true)]
-    public bool AutoToolTip { get; set; } = true;
+    public new bool AutoToolTip
+    {
+        get => base.AutoToolTip;
+        set => base.AutoToolTip = value;
+    }
 
-    /// <summary>The main, left part of the item: a click here raises ButtonClick, not the drop-down.</summary>
+    /// <summary>The main part of the item: a click here raises ButtonClick, not the drop-down. Mirrored to the right edge under RightToLeft.</summary>
     [Browsable(false)]
-    public Rectangle ButtonBounds => new(0, 0, Math.Max(Bounds.Width - _dropDownButtonWidth, 0), Bounds.Height);
+    public Rectangle ButtonBounds => RightToLeft == RightToLeft.Yes
+        ? new Rectangle(_dropDownButtonWidth, 0, Math.Max(Bounds.Width - _dropDownButtonWidth, 0), Bounds.Height)
+        : new Rectangle(0, 0, Math.Max(Bounds.Width - _dropDownButtonWidth, 0), Bounds.Height);
 
     [Browsable(false)]
     public bool ButtonPressed => _buttonPressed;
@@ -67,13 +83,28 @@ public class ToolStripSplitButton : ToolStripDropDownItem
 
     protected override bool DefaultAutoToolTip => true;
 
-    /// <summary>The item clicking the button part performs, if different from the button part's own Click handlers.</summary>
+    /// <summary>The item clicking the button part performs, in addition to the button part's own Click/ButtonClick handlers.</summary>
     [DefaultValue(null)]
     [Browsable(false)]
-    public ToolStripItem? DefaultItem { get; set; }
+    public ToolStripItem? DefaultItem
+    {
+        get => _defaultItem;
+        set
+        {
+            if (value == _defaultItem) return;
+
+            _defaultItem = value;
+            OnDefaultItemChanged(EventArgs.Empty);
+        }
+    }
+
+    /// <summary>Whether a click should close the drop-down chain this item is shown on: no while the arrow half is what was pressed, since that only opens this item's own submenu.</summary>
+    protected override bool DismissWhenClicked => !_lastPressWasDropDownPart;
 
     [Browsable(false)]
-    public Rectangle DropDownButtonBounds => new(ButtonBounds.Right, 0, _dropDownButtonWidth, Bounds.Height);
+    public Rectangle DropDownButtonBounds => RightToLeft == RightToLeft.Yes
+        ? new Rectangle(0, 0, _dropDownButtonWidth, Bounds.Height)
+        : new Rectangle(ButtonBounds.Right, 0, _dropDownButtonWidth, Bounds.Height);
 
     [Browsable(false)]
     public bool DropDownButtonPressed => _dropDownButtonPressed;
@@ -96,11 +127,20 @@ public class ToolStripSplitButton : ToolStripDropDownItem
         }
     }
 
+    /// <summary>The thin dividing line between the button and the arrow, wherever RightToLeft currently puts it.</summary>
+    [Browsable(false)]
+    public Rectangle SplitterBounds => new(Math.Min(ButtonBounds.Right, DropDownButtonBounds.Right) - 1, 0, 1, Bounds.Height);
+
     public event EventHandler? ButtonClick;
 
     public event EventHandler? ButtonDoubleClick;
 
     public event EventHandler? DefaultItemChanged;
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new ToolStripSplitButtonAccessibleObject(this);
+
+    /// <summary>The split button's own submenu looks like a menu (image margin, checkmarks), the same shape ToolStripMenuItem's own uses.</summary>
+    protected override ToolStripDropDown CreateDefaultDropDown() => new ToolStripDropDownMenu { OwnerItem = this };
 
     public override Size GetPreferredSize(Size constrainingSize)
     {
@@ -116,14 +156,22 @@ public class ToolStripSplitButton : ToolStripDropDownItem
         OnButtonClick(EventArgs.Empty);
     }
 
-    protected virtual void OnButtonClick(EventArgs e) => ButtonClick?.Invoke(this, e);
+    /// <summary>Raises ButtonClick, then performs DefaultItem's own action, if one was chosen from the drop-down to stand in as this button's quick action.</summary>
+    protected virtual void OnButtonClick(EventArgs e)
+    {
+        ButtonClick?.Invoke(this, e);
+        DefaultItem?.PerformClick();
+    }
 
     public virtual void OnButtonDoubleClick(EventArgs e) => ButtonDoubleClick?.Invoke(this, e);
 
     protected virtual void OnDefaultItemChanged(EventArgs e) => DefaultItemChanged?.Invoke(this, e);
 
     /// <summary>Which half of the button the point (in the strip's own, absolute coordinates) is in.</summary>
-    private bool IsOverDropDownPart(Point location) => location.X - Bounds.Left >= ButtonBounds.Width;
+    private bool IsOverDropDownPart(Point location) =>
+        RightToLeft == RightToLeft.Yes
+            ? location.X - Bounds.Left < _dropDownButtonWidth
+            : location.X - Bounds.Left >= ButtonBounds.Width;
 
     protected override void OnMouseDown(MouseEventArgs e)
     {
@@ -132,12 +180,14 @@ public class ToolStripSplitButton : ToolStripDropDownItem
         if (IsOverDropDownPart(e.Location))
         {
             _dropDownButtonPressed = true;
+            _lastPressWasDropDownPart = true;
             if (HasDropDown && DropDown.IsOpen) HideDropDown();
             else ShowDropDown();
         }
         else
         {
             _buttonPressed = true;
+            _lastPressWasDropDownPart = false;
         }
 
         Invalidate();
@@ -183,4 +233,41 @@ public class ToolStripSplitButton : ToolStripDropDownItem
 
         base.OnPaint(e);
     }
+
+    /// <summary>Repaints so the mirrored ButtonBounds/DropDownButtonBounds above show up on the correct side right away.</summary>
+    protected override void OnRightToLeftChanged(EventArgs e)
+    {
+        base.OnRightToLeftChanged(e);
+        Invalidate();
+    }
+
+    /// <summary>Enter/Space performs the button's own action; Down (like a combo box) opens the submenu instead.</summary>
+    protected internal override bool ProcessDialogKey(Keys keyData)
+    {
+        if (keyData is Keys.Enter or Keys.Space)
+        {
+            PerformButtonClick();
+            return true;
+        }
+
+        if (keyData == Keys.Down && HasDropDownItems)
+        {
+            ShowDropDown();
+            return true;
+        }
+
+        return base.ProcessDialogKey(keyData);
+    }
+
+    /// <summary>The mnemonic performs the button's own default action, the part a plain click would otherwise reach.</summary>
+    protected internal override bool ProcessMnemonic(char charCode)
+    {
+        if (!Enabled || !Available || !Control.IsMnemonic(charCode, Text)) return false;
+
+        PerformButtonClick();
+        return true;
+    }
+
+    /// <summary>Back to the item's own construction-time default (11), the same value DropDownButtonWidth starts with.</summary>
+    public virtual void ResetDropDownButtonWidth() => DropDownButtonWidth = 11;
 }

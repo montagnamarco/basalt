@@ -18,6 +18,8 @@ public class ToolStripOverflowButton : ToolStripDropDownButton
     /// <summary>Not constructible by user code: only <see cref="ToolStrip.OverflowButton"/> ever creates one.</summary>
     internal ToolStripOverflowButton()
     {
+        // Its chevron points the other way in a right-to-left strip, unlike an ordinary item's image.
+        RightToLeftAutoMirrorImage = true;
     }
 
     protected override Padding DefaultMargin => Padding.Empty;
@@ -28,11 +30,30 @@ public class ToolStripOverflowButton : ToolStripDropDownButton
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool RightToLeftAutoMirrorImage { get; set; }
+    [DefaultValue(true)]
+    public new bool RightToLeftAutoMirrorImage
+    {
+        get => base.RightToLeftAutoMirrorImage;
+        set => base.RightToLeftAutoMirrorImage = value;
+    }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new ToolStripDropDownItemAccessibleObject(this);
 
     protected override ToolStripDropDown CreateDefaultDropDown() => new ToolStripOverflow(this);
 
+    /// <summary>Nothing of its own to release; declared again only because disposing this button also means forgetting the strip never truly owned it as an Items entry.</summary>
+    protected override void Dispose(bool disposing) => base.Dispose(disposing);
+
     public override Size GetPreferredSize(Size constrainingSize) => new(Thickness, Thickness);
+
+    /// <summary>
+    /// Declared again only to document that, unlike most items, an empty
+    /// rectangle here is not clamped up to Thickness: the strip collapses
+    /// this button to zero on purpose when there is nothing to overflow,
+    /// which is how it stays hidden without a separate Visible switch of
+    /// its own (see <see cref="ToolStrip.OverflowButton"/>).
+    /// </summary>
+    protected override void SetBounds(Rectangle bounds) => base.SetBounds(bounds);
 
     protected override void OnPaint(PaintEventArgs e)
     {

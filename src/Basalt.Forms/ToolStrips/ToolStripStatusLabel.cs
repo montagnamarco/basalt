@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.Windows.Forms.Automation;
 
 namespace System.Windows.Forms;
 
@@ -8,11 +9,12 @@ namespace System.Windows.Forms;
 /// but it may draw a sunken or raised border on any side, and may spring to
 /// take up the status bar's leftover width.
 /// </summary>
-public class ToolStripStatusLabel : ToolStripLabel
+public class ToolStripStatusLabel : ToolStripLabel, IAutomationLiveRegion
 {
     private ToolStripStatusLabelBorderSides _borderSides = ToolStripStatusLabelBorderSides.None;
     private Border3DStyle _borderStyle = Border3DStyle.Flat;
     private bool _spring;
+    private AutomationLiveSetting _liveSetting = AutomationLiveSetting.Off;
 
     public ToolStripStatusLabel()
     {
@@ -69,7 +71,23 @@ public class ToolStripStatusLabel : ToolStripLabel
         }
     }
 
+    /// <summary>Only the designer default differs from the base's: the value itself lives there, which the strip's layout reads.</summary>
+    [DefaultValue(ToolStripItemAlignment.Left)]
+    public new ToolStripItemAlignment Alignment
+    {
+        get => base.Alignment;
+        set => base.Alignment = value;
+    }
+
     protected override Padding DefaultMargin => new(0, 2, 0, 2);
+
+    /// <summary>Whether, and how urgently, a screen reader should announce this label's text changing on its own.</summary>
+    [DefaultValue(AutomationLiveSetting.Off)]
+    public AutomationLiveSetting LiveSetting
+    {
+        get => _liveSetting;
+        set => _liveSetting = value;
+    }
 
     /// <summary>Whether this label grows to use whatever width its StatusStrip siblings leave unclaimed.</summary>
     [DefaultValue(false)]
@@ -83,6 +101,16 @@ public class ToolStripStatusLabel : ToolStripLabel
             _spring = value;
             Owner?.DoLayout(this, nameof(Spring));
         }
+    }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new ToolStripItemAccessibleObject(this);
+
+    /// <summary>A status label with a live region announces its own text changing, the same as a Label does.</summary>
+    protected override void OnTextChanged(EventArgs e)
+    {
+        base.OnTextChanged(e);
+
+        if (_liveSetting != AutomationLiveSetting.Off) AccessibilityObject.RaiseLiveRegionChanged();
     }
 
     public override Size GetPreferredSize(Size constrainingSize)

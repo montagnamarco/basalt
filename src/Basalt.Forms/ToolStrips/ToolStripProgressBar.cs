@@ -102,9 +102,106 @@ public class ToolStripProgressBar : ToolStripControlHost
 
     private static readonly object s_rightToLeftLayoutEvent = new();
 
+    // --- A progress bar never takes keyboard focus, so the keyboard and validation events a plain
+    // control host wires up do not apply to it: each is hidden from the designer, forwarding to the
+    // base's own storage, exactly as Printing/PrintPreviewDialog.HiddenEvents.cs does. ---
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event KeyEventHandler? KeyDown
+    {
+        add => base.KeyDown += value;
+        remove => base.KeyDown -= value;
+    }
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event KeyPressEventHandler? KeyPress
+    {
+        add => base.KeyPress += value;
+        remove => base.KeyPress -= value;
+    }
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event KeyEventHandler? KeyUp
+    {
+        add => base.KeyUp += value;
+        remove => base.KeyUp -= value;
+    }
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event EventHandler? LocationChanged
+    {
+        add => base.LocationChanged += value;
+        remove => base.LocationChanged -= value;
+    }
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event EventHandler? OwnerChanged
+    {
+        add => base.OwnerChanged += value;
+        remove => base.OwnerChanged -= value;
+    }
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event EventHandler? TextChanged
+    {
+        add => base.TextChanged += value;
+        remove => base.TextChanged -= value;
+    }
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event EventHandler? Validated
+    {
+        add => base.Validated += value;
+        remove => base.Validated -= value;
+    }
+
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public new event CancelEventHandler? Validating
+    {
+        add => base.Validating += value;
+        remove => base.Validating -= value;
+    }
+
+    public override Image? BackgroundImage
+    {
+        get => base.BackgroundImage;
+        set => base.BackgroundImage = value;
+    }
+
+    public override ImageLayout BackgroundImageLayout
+    {
+        get => base.BackgroundImageLayout;
+        set => base.BackgroundImageLayout = value;
+    }
+
     public void Increment(int value) => ProgressBar.Increment(value);
 
     protected virtual void OnRightToLeftLayoutChanged(EventArgs e) => ((EventHandler?)Events[s_rightToLeftLayoutEvent])?.Invoke(this, e);
+
+    /// <summary>Only Resize matters for a non-focusable control: the keyboard and validation wiring a plain host does is skipped.</summary>
+    protected override void OnSubscribeControlEvents(Control? control)
+    {
+        if (control is null) return;
+
+        control.Resize += HandleProgressBarResize;
+    }
+
+    protected override void OnUnsubscribeControlEvents(Control? control)
+    {
+        if (control is null) return;
+
+        control.Resize -= HandleProgressBarResize;
+    }
+
+    private void HandleProgressBarResize(object? sender, EventArgs e) => OnHostedControlResize(e);
 
     public void PerformStep() => ProgressBar.PerformStep();
 }

@@ -39,7 +39,11 @@ public class ToolStripButton : ToolStripItem
     }
 
     [DefaultValue(true)]
-    public bool AutoToolTip { get; set; } = true;
+    public new bool AutoToolTip
+    {
+        get => base.AutoToolTip;
+        set => base.AutoToolTip = value;
+    }
 
     protected override bool DefaultAutoToolTip => true;
 
@@ -76,6 +80,17 @@ public class ToolStripButton : ToolStripItem
 
     public event EventHandler? CheckedChanged;
 
+    /// <summary>A checked toggle button surfaces that the same way a check box does: as an extra accessible state bit.</summary>
+    protected override AccessibleObject CreateAccessibilityInstance()
+    {
+        var accessibleObject = new ToolStripItemAccessibleObject(this);
+        if (Checked) accessibleObject.AddState(AccessibleStates.Checked);
+
+        return accessibleObject;
+    }
+
+    public override Size GetPreferredSize(Size constrainingSize) => base.GetPreferredSize(constrainingSize);
+
     protected virtual void OnCheckStateChanged(EventArgs e) => CheckStateChanged?.Invoke(this, e);
 
     protected virtual void OnCheckedChanged(EventArgs e) => CheckedChanged?.Invoke(this, e);
@@ -86,6 +101,18 @@ public class ToolStripButton : ToolStripItem
         if (_checkOnClick) Checked = !Checked;
 
         base.OnClick(e);
+    }
+
+    /// <summary>Space clicks a button the same way Enter does; the base class only wires Enter.</summary>
+    protected internal override bool ProcessDialogKey(Keys keyData)
+    {
+        if (keyData == Keys.Space)
+        {
+            PerformClick();
+            return true;
+        }
+
+        return base.ProcessDialogKey(keyData);
     }
 
     /// <summary>The flat face, raised while hovered, sunken while pressed or checked, as a classic toolbar button.</summary>

@@ -43,7 +43,11 @@ public class ToolStripDropDownButton : ToolStripDropDownItem
     }
 
     [DefaultValue(true)]
-    public bool AutoToolTip { get; set; } = true;
+    public new bool AutoToolTip
+    {
+        get => base.AutoToolTip;
+        set => base.AutoToolTip = value;
+    }
 
     protected override bool DefaultAutoToolTip => true;
 
@@ -57,6 +61,26 @@ public class ToolStripDropDownButton : ToolStripDropDownItem
 
         if (HasDropDown && DropDown.IsOpen) HideDropDown();
         else ShowDropDown();
+    }
+
+    /// <summary>Plain forwards: the toggle itself already happened on mouse down, so mouse up and leave need nothing extra here.</summary>
+    protected override void OnMouseLeave(EventArgs e) => base.OnMouseLeave(e);
+
+    protected override void OnMouseUp(MouseEventArgs e) => base.OnMouseUp(e);
+
+    protected override AccessibleObject CreateAccessibilityInstance() => new ToolStripDropDownItemAccessibleObject(this);
+
+    protected override ToolStripDropDown CreateDefaultDropDown() => new() { OwnerItem = this };
+
+    /// <summary>The mnemonic opens the drop-down instead of merely clicking through it, when there is one.</summary>
+    protected internal override bool ProcessMnemonic(char charCode)
+    {
+        if (!Enabled || !Available || !Control.IsMnemonic(charCode, Text)) return false;
+
+        if (HasDropDownItems) ShowDropDown();
+        else PerformClick();
+
+        return true;
     }
 
     protected override void OnPaint(PaintEventArgs e)
