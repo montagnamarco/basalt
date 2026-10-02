@@ -199,6 +199,10 @@ internal static class FormsInput
 
         HeldKeys.Remove(keyCode);
 
+        // SuppressKeyPress removes the character of that one key press; a key that typed nothing
+        // (Enter on some platforms, a synthesized press) must not leave it waiting for the next text.
+        FormsInputState.SuppressNextCharacter = false;
+
         return Guard(window, () =>
         {
             var target = KeyTarget(window);

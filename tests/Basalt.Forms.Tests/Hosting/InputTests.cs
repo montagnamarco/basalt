@@ -290,4 +290,25 @@ public class InputTests
 
         form.Close();
     }
+
+    [AvaloniaFact]
+    public void A_suppressed_key_that_typed_nothing_does_not_swallow_the_next_character()
+    {
+        var box = new TextBox();
+        box.KeyDown += (_, e) => { if (e.KeyCode == Keys.Enter) e.SuppressKeyPress = true; };
+        var form = new Form();
+        form.Controls.Add(box);
+        form.Show();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        box.Focus();
+
+        // Enter is pressed and released without any character arriving, as a synthesized or
+        // modifier-only press does; the suppression was for that press alone.
+        form.Host!.KeyPressQwerty(Avalonia.Input.PhysicalKey.Enter, Avalonia.Input.RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(Avalonia.Input.PhysicalKey.Enter, Avalonia.Input.RawInputModifiers.None);
+        form.Host!.KeyTextInput("a");
+
+        Assert.Equal("a", box.Text);
+        form.Close();
+    }
 }
