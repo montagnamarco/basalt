@@ -44,6 +44,7 @@ internal sealed class HostWindow : Avalonia.Controls.Window
         Activated += (_, _) => _form.OnHostActivated();
         Deactivated += (_, _) => _form.OnHostDeactivated();
         Closing += (_, e) => e.Cancel = !_form.OnHostClosing(e.IsProgrammatic);
+        ScalingChanged += (_, _) => _form.OnHostScalingChanged(DesktopScaling);
     }
 
     public FormsCanvas Canvas { get; }
@@ -76,5 +77,21 @@ internal sealed class HostWindow : Avalonia.Controls.Window
         var scaling = DesktopScaling;
 
         return new Drawing.Point((int)Math.Round(point.X / scaling), (int)Math.Round(point.Y / scaling));
+    }
+
+    /// <summary>The window's icon, as the one Form.Icon paints in its own non-client frame when it has none of its own.</summary>
+    public void SetIcon(Drawing.Icon? icon)
+    {
+        if (icon is null)
+        {
+            Icon = null;
+            return;
+        }
+
+        using var bitmap = icon.ToBitmap();
+        using var stream = new MemoryStream();
+        bitmap.Save(stream, Drawing.Imaging.ImageFormat.Png);
+        stream.Position = 0;
+        Icon = new WindowIcon(stream);
     }
 }

@@ -32,9 +32,29 @@ internal static class ClassicCaption
         }
 
         var textRight = DrawButtons(graphics, bar, caption, toolWindow);
-        DrawTitle(graphics, bar, textRight, caption, toolWindow);
+        var textLeft = DrawIcon(graphics, bar, caption, toolWindow);
+        DrawTitle(graphics, bar, textLeft, textRight, caption, toolWindow);
 
         return Rectangle.FromLTRB(inside.Left, bar.Bottom + 1, inside.Right, inside.Bottom);
+    }
+
+    /// <summary>
+    /// The system menu icon: Windows draws it where the close box is drawn on
+    /// the other side, only for a window that has a system menu and is not a
+    /// tool window (whose small caption has no room for it). Returns where the
+    /// title must start.
+    /// </summary>
+    private static int DrawIcon(Graphics graphics, Rectangle bar, WindowCaption caption, bool toolWindow)
+    {
+        if (toolWindow || !caption.HasSystemMenu || caption.Icon is not { } icon) return bar.Left + 2;
+
+        var size = Math.Max(bar.Height - 6, 1);
+        var top = bar.Top + (bar.Height - size) / 2;
+        var left = bar.Left + 2;
+
+        graphics.DrawIcon(icon, new Rectangle(left, top, size, size));
+
+        return left + size + 2;
     }
 
     /// <summary>Draws the buttons the window has; returns where the title must stop.</summary>
@@ -74,11 +94,11 @@ internal static class ClassicCaption
         return caption.Pressed == button ? ButtonState.Pushed : ButtonState.Normal;
     }
 
-    private static void DrawTitle(Graphics graphics, Rectangle bar, int right, WindowCaption caption, bool toolWindow)
+    private static void DrawTitle(Graphics graphics, Rectangle bar, int left, int right, WindowCaption caption, bool toolWindow)
     {
         if (string.IsNullOrEmpty(caption.Text)) return;
 
-        var bounds = Rectangle.FromLTRB(bar.Left + 2, bar.Top, Math.Max(right, bar.Left + 2), bar.Bottom);
+        var bounds = Rectangle.FromLTRB(left, bar.Top, Math.Max(right, left), bar.Bottom);
         var font = toolWindow ? SystemFonts.SmallCaptionFont : SystemFonts.CaptionFont;
         var color = caption.Active ? SystemColors.ActiveCaptionText : SystemColors.InactiveCaptionText;
         const TextFormatFlags flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;

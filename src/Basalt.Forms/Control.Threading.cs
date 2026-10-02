@@ -247,7 +247,7 @@ public partial class Control : ISynchronizeInvoke
                 if (_invokeQueue is not { Count: > 0 } queue)
                 {
                     _invokePosted = false;
-                    return;
+                    break;
                 }
 
                 entry = queue.Dequeue();
@@ -261,6 +261,9 @@ public partial class Control : ISynchronizeInvoke
 
             Run(entry);
         }
+
+        // A marshalled call is a message processed: once the queue has emptied, the application is idle again.
+        Application.ScheduleIdle();
     }
 
     private static void Run(InvokeEntry entry)

@@ -105,5 +105,11 @@ public class Timer : Component
         {
             Application.OnThreadException(exception);
         }
+        finally
+        {
+            // A WM_TIMER is a message like any other: the queue that just delivered it is
+            // where WinForms would next find itself empty and raise Idle.
+            Application.ScheduleIdle();
+        }
     }
 }

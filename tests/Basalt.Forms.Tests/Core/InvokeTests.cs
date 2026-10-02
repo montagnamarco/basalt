@@ -185,6 +185,29 @@ public class InvokeTests
         }
     }
 
+    [AvaloniaFact]
+    public void A_call_marshalled_by_BeginInvoke_is_followed_by_one_Idle()
+    {
+        using var control = ControlWithHandle();
+        Application.DoEvents();
+        var idles = 0;
+        EventHandler count = (_, _) => idles++;
+        Application.Idle += count;
+
+        try
+        {
+            control.BeginInvoke(() => { });
+            Application.DoEvents();
+            Application.DoEvents();
+
+            Assert.Equal(1, idles);
+        }
+        finally
+        {
+            Application.Idle -= count;
+        }
+    }
+
     private static Control ControlWithHandle()
     {
         var control = new Control();

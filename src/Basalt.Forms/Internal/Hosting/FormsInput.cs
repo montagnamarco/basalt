@@ -27,7 +27,12 @@ internal static class FormsInput
 
     public static Point ScreenPosition { get; private set; }
 
-    public static Keys Modifiers { get; private set; }
+    /// <summary>
+    /// The modifiers held now. The setter is internal so SendKeys can hold
+    /// +^% for the keys a group sends, the same way a real key held down
+    /// would.
+    /// </summary>
+    public static Keys Modifiers { get; internal set; }
 
     /// <summary>The keys held down now, for code that asks the state of one key as GetKeyState does.</summary>
     private static readonly HashSet<Keys> HeldKeys = [];
@@ -301,6 +306,12 @@ internal static class FormsInput
         {
             Application.OnThreadException(exception);
             return default;
+        }
+        finally
+        {
+            // Every mouse and keyboard message passes through here: the queue just drained one,
+            // so this is where WinForms would next find it empty and raise Idle.
+            Application.ScheduleIdle();
         }
     }
 

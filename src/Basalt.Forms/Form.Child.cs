@@ -39,7 +39,8 @@ public partial class Form
     internal override WindowCaption? NonClientCaption => GetTopLevel()
         ? null
         : new WindowCaption(Text, IsActiveChild, ControlBox, MinimizeBox, MaximizeBox,
-            _windowState == FormWindowState.Maximized, _windowState == FormWindowState.Minimized, _framePressed);
+            _windowState == FormWindowState.Maximized, _windowState == FormWindowState.Minimized, _framePressed,
+            ShowIcon ? _icon : null);
 
     /// <summary>The frame and title bar are drawn with the child: redraw them.</summary>
     internal void InvalidateFrame() => Invalidate();
@@ -221,8 +222,6 @@ public partial class Form
     {
         if (Parent is not { } parent) return;
 
-        if (previous == FormWindowState.Normal) _restoreBounds = Bounds;
-
         switch (_windowState)
         {
             case FormWindowState.Normal:
@@ -230,7 +229,7 @@ public partial class Form
                 break;
 
             case FormWindowState.Maximized:
-                Bounds = MaximizedBounds(parent);
+                Bounds = MaximizedChildBounds(parent);
                 break;
 
             case FormWindowState.Minimized:
@@ -246,7 +245,7 @@ public partial class Form
     /// The title bar stays visible: Windows would move its buttons into the parent's menu bar,
     /// which is not done yet, and without them a maximized child could not be restored.
     /// </summary>
-    internal Rectangle MaximizedBounds(Control parent)
+    internal Rectangle MaximizedChildBounds(Control parent)
     {
         var client = parent.ClientRectangle;
         var frame = NonClient;

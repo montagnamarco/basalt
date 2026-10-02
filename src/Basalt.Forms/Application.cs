@@ -12,7 +12,7 @@ namespace System.Windows.Forms;
 /// The application: its message loop, its open forms and its settings. The
 /// loop is Avalonia's dispatcher, started on the thread that calls Run.
 /// </summary>
-public sealed class Application
+public sealed partial class Application
 {
     private static readonly FormCollection s_openForms = new();
     private static CancellationTokenSource? s_loop;
@@ -54,6 +54,8 @@ public sealed class Application
 
         AvaloniaPlatform.EnsureStarted();
 
+        var previousContext = SynchronizationContext.Current;
+
         using var loop = new CancellationTokenSource();
         s_loop = loop;
         s_exiting = false;
@@ -62,8 +64,15 @@ public sealed class Application
 
         context.ThreadExit += EndLoop;
 
+        // Everything after s_loop is set runs inside the try: a failure here must not leave the thread
+        // believing a loop is still running, which would refuse every later Run.
         try
         {
+            WindowsFormsSynchronizationContext.InstallIfNeeded();
+
+            // The queue starts empty: one Idle, as WinForms raises when the loop first finds it so.
+            ScheduleIdle();
+
             if (context.MainForm is { } mainForm) mainForm.Visible = true;
 
             if (!loop.IsCancellationRequested) Dispatcher.UIThread.MainLoop(loop.Token);
@@ -72,6 +81,10 @@ public sealed class Application
         {
             context.ThreadExit -= EndLoop;
             s_loop = null;
+
+            // Only ours to put back: WinForms' AutoInstall-driven install is undone the same way it was done.
+            SynchronizationContext.SetSynchronizationContext(previousContext);
+
             ThreadExit?.Invoke(null, EventArgs.Empty);
             context.Dispose();
         }
@@ -112,13 +125,6 @@ public sealed class Application
 
     /// <summary>Ends the message loop without closing the forms.</summary>
     public static void ExitThread() => s_loop?.Cancel();
-
-    /// <summary>Processes the messages waiting, then returns.</summary>
-    public static void DoEvents()
-    {
-        AvaloniaPlatform.EnsureStarted();
-        Dispatcher.UIThread.RunJobs();
-    }
 
     public static event EventHandler? ApplicationExit;
 

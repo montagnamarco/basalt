@@ -50,4 +50,51 @@ internal static class HandleTable
             return null;
         }
     }
+
+    // A separate map for NativeWindow: it is not a Control, but its handles come from the
+    // same counter, so a NativeWindow's handle is never mistaken for a Control's or the other way round.
+    private static readonly Dictionary<IntPtr, WeakReference<NativeWindow>> Windows = [];
+
+    public static IntPtr RegisterWindow(NativeWindow window)
+    {
+        lock (Gate)
+        {
+            s_next += 2;
+            var handle = new IntPtr(s_next);
+            Windows[handle] = new WeakReference<NativeWindow>(window);
+
+            return handle;
+        }
+    }
+
+    /// <summary>AssignHandle's case: the handle already exists (often a Control's own), so the window is filed under it, not a fresh one.</summary>
+    public static void RegisterWindow(IntPtr handle, NativeWindow window)
+    {
+        lock (Gate)
+        {
+            Windows[handle] = new WeakReference<NativeWindow>(window);
+        }
+    }
+
+    public static void UnregisterWindow(IntPtr handle)
+    {
+        lock (Gate)
+        {
+            Windows.Remove(handle);
+        }
+    }
+
+    public static NativeWindow? FindWindow(IntPtr handle)
+    {
+        lock (Gate)
+        {
+            if (!Windows.TryGetValue(handle, out var reference)) return null;
+
+            if (reference.TryGetTarget(out var window)) return window;
+
+            Windows.Remove(handle);
+
+            return null;
+        }
+    }
 }

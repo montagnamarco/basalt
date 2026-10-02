@@ -222,6 +222,8 @@ public partial class Form : ContainerControl
             if (value == _windowState) return;
 
             var previous = _windowState;
+            if (previous == FormWindowState.Normal) _restoreBounds = Bounds;
+
             _windowState = value;
             if (_host is not null) _host.WindowState = ToAvalonia(value);
             if (!GetTopLevel()) ApplyChildWindowState(previous);
@@ -372,6 +374,10 @@ public partial class Form : ContainerControl
             if (_modal && !IsDisposed)
             {
                 _modalFrame = new DispatcherFrame();
+
+                // The modal loop's own queue starts empty: one Idle, as entering Run's does.
+                Application.ScheduleIdle();
+
                 Dispatcher.UIThread.PushFrame(_modalFrame);
             }
         }
@@ -597,6 +603,7 @@ public partial class Form : ContainerControl
         host.Opacity = _opacity;
         host.WindowState = ToAvalonia(_windowState);
         host.SetClientSize(ClientSize);
+        host.SetIcon(_showIcon ? _icon : null);
         ApplyWindowStyle();
 
         if (_owner?._host is { } ownerHost && !_modal)
@@ -664,7 +671,11 @@ public partial class Form : ContainerControl
         AvaloniaPlatform.EnsureStarted();
 
         // Only a top-level form opens a native window; one inside another control draws in its parent's.
-        if (GetTopLevel()) _host ??= new HostWindow(this);
+        if (GetTopLevel() && _host is null)
+        {
+            _host = new HostWindow(this);
+            InitializeHostScaling(_host.DesktopScaling);
+        }
 
         base.CreateHandle();
     }
@@ -805,6 +816,7 @@ public partial class Form : ContainerControl
                 case Keys.Escape when CancelButton is { } cancel:
                     cancel.PerformClick();
                     return true;
+
             }
         }
 

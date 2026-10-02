@@ -46,7 +46,7 @@ public sealed class MdiClient : Control
 
         foreach (var child in _children)
         {
-            if (child.WindowState == FormWindowState.Maximized) child.Bounds = child.MaximizedBounds(this);
+            if (child.WindowState == FormWindowState.Maximized) child.Bounds = child.MaximizedChildBounds(this);
         }
     }
 

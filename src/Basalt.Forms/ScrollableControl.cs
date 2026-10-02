@@ -16,7 +16,7 @@ namespace System.Windows.Forms;
 /// display rectangle: children keep their places in it, and their Location
 /// changes by the amount scrolled, as on Windows.
 /// </remarks>
-public class ScrollableControl : Control
+public partial class ScrollableControl : Control
 {
     protected const int ScrollStateAutoScrolling = 0x0001;
     protected const int ScrollStateHScrollVisible = 0x0002;

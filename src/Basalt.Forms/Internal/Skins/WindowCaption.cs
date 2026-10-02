@@ -16,7 +16,8 @@ internal readonly record struct WindowCaption(
     bool HasMaximizeBox,
     bool Maximized,
     bool Minimized,
-    CaptionHitArea Pressed);
+    CaptionHitArea Pressed,
+    Icon? Icon = null);
 
 /// <summary>Where on a frame a point falls: what a press there does.</summary>
 internal enum CaptionHitArea
