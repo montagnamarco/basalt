@@ -56,6 +56,10 @@ public partial class DataGridView
 
         cell.Value = cell.ParseFormattedValue(textBox.Text, cell.InheritedStyle, null, null);
 
+        // A bound column writes the parsed value back into the data source here; a DataError
+        // handler that cancels it keeps the cell in edit mode, exactly as a refused CellValidating does.
+        if (!PushCellValueToDataSource(cell)) return false;
+
         RemoveEditingControl();
 
         OnCellValidated(new DataGridViewCellEventArgs(cell.ColumnIndex, cell.RowIndex));

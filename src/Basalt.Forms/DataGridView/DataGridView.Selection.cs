@@ -95,6 +95,10 @@ public partial class DataGridView
         }
 
         OnCurrentCellChanged(EventArgs.Empty);
+
+        // Keeps a bound CurrencyManager's Position pointed at the same row CurrentCell just moved to; a no-op while unbound.
+        SyncCurrencyManagerPosition();
+
         return true;
     }
 

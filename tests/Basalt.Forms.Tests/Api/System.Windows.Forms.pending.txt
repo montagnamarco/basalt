@@ -436,11 +436,9 @@ M protected System.Windows.Forms.DataGridView::Dispose(System.Boolean) -> System
 M protected System.Windows.Forms.DataGridView::GetAccessibilityObjectById(System.Int32) -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridView::IsInputChar(System.Char) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridView::OnAllowUserToOrderColumnsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnAutoGenerateColumnsChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnAutoSizeColumnModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnAutoSizeColumnsModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnsModeEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnAutoSizeRowsModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnBindingContextChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnCancelRowEdit(System.Windows.Forms.QuestionEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnCellContextMenuStripChanged(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnCellContextMenuStripNeeded(System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs) -> System.Void virtual
@@ -476,10 +474,6 @@ M protected System.Windows.Forms.DataGridView::OnColumnSortModeChanged(System.Wi
 M protected System.Windows.Forms.DataGridView::OnColumnStateChanged(System.Windows.Forms.DataGridViewColumnStateChangedEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnColumnToolTipTextChanged(System.Windows.Forms.DataGridViewColumnEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnCursorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnDataBindingComplete(System.Windows.Forms.DataGridViewBindingCompleteEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnDataError(System.Boolean, System.Windows.Forms.DataGridViewDataErrorEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnDataMemberChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnDataSourceChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnDefaultValuesNeeded(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnDoubleClick(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnEditingControlShowing(System.Windows.Forms.DataGridViewEditingControlShowingEventArgs) -> System.Void virtual
@@ -2227,7 +2221,6 @@ M public System.Windows.Forms.DataGridView::UpdateRowErrorText(System.Int32) -> 
 M public System.Windows.Forms.DataGridView::UpdateRowErrorText(System.Int32, System.Int32) -> System.Void
 M public System.Windows.Forms.DataGridView::UpdateRowHeightInfo(System.Int32, System.Boolean) -> System.Void
 M public System.Windows.Forms.DataGridView::add_AllowUserToOrderColumnsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_AutoGenerateColumnsChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_AutoSizeColumnModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_AutoSizeColumnsModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnsModeEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_AutoSizeRowsModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
@@ -2268,10 +2261,6 @@ M public System.Windows.Forms.DataGridView::add_ColumnNameChanged(System.Windows
 M public System.Windows.Forms.DataGridView::add_ColumnSortModeChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_ColumnStateChanged(System.Windows.Forms.DataGridViewColumnStateChangedEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_ColumnToolTipTextChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_DataBindingComplete(System.Windows.Forms.DataGridViewBindingCompleteEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_DataError(System.Windows.Forms.DataGridViewDataErrorEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_DataMemberChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::add_DataSourceChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_DefaultValuesNeeded(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_EditingControlShowing(System.Windows.Forms.DataGridViewEditingControlShowingEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_FontChanged(System.EventHandler) -> System.Void
@@ -2308,7 +2297,6 @@ M public System.Windows.Forms.DataGridView::add_UserAddedRow(System.Windows.Form
 M public System.Windows.Forms.DataGridView::add_UserDeletedRow(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::add_UserDeletingRow(System.Windows.Forms.DataGridViewRowCancelEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::get_AllowUserToOrderColumns() -> System.Boolean
-M public System.Windows.Forms.DataGridView::get_AutoGenerateColumns() -> System.Boolean
 M public System.Windows.Forms.DataGridView::get_AutoSize() -> System.Boolean virtual
 M public System.Windows.Forms.DataGridView::get_AutoSizeRowsMode() -> System.Windows.Forms.DataGridViewAutoSizeRowsMode
 M public System.Windows.Forms.DataGridView::get_BackColor() -> System.Drawing.Color virtual
@@ -2316,8 +2304,6 @@ M public System.Windows.Forms.DataGridView::get_BackgroundImage() -> System.Draw
 M public System.Windows.Forms.DataGridView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
 M public System.Windows.Forms.DataGridView::get_ClipboardCopyMode() -> System.Windows.Forms.DataGridViewClipboardCopyMode
 M public System.Windows.Forms.DataGridView::get_ColumnCount() -> System.Int32
-M public System.Windows.Forms.DataGridView::get_DataMember() -> System.String
-M public System.Windows.Forms.DataGridView::get_DataSource() -> System.Object
 M public System.Windows.Forms.DataGridView::get_DisplayRectangle() -> System.Drawing.Rectangle virtual
 M public System.Windows.Forms.DataGridView::get_EditingPanel() -> System.Windows.Forms.Panel
 M public System.Windows.Forms.DataGridView::get_EnableHeadersVisualStyles() -> System.Boolean
@@ -2342,7 +2328,6 @@ M public System.Windows.Forms.DataGridView::get_UserSetCursor() -> System.Window
 M public System.Windows.Forms.DataGridView::get_VerticalScrollingOffset() -> System.Int32
 M public System.Windows.Forms.DataGridView::get_VirtualMode() -> System.Boolean
 M public System.Windows.Forms.DataGridView::remove_AllowUserToOrderColumnsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_AutoGenerateColumnsChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_AutoSizeColumnModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_AutoSizeColumnsModeChanged(System.Windows.Forms.DataGridViewAutoSizeColumnsModeEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_AutoSizeRowsModeChanged(System.Windows.Forms.DataGridViewAutoSizeModeEventHandler) -> System.Void
@@ -2383,10 +2368,6 @@ M public System.Windows.Forms.DataGridView::remove_ColumnNameChanged(System.Wind
 M public System.Windows.Forms.DataGridView::remove_ColumnSortModeChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_ColumnStateChanged(System.Windows.Forms.DataGridViewColumnStateChangedEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_ColumnToolTipTextChanged(System.Windows.Forms.DataGridViewColumnEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_DataBindingComplete(System.Windows.Forms.DataGridViewBindingCompleteEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_DataError(System.Windows.Forms.DataGridViewDataErrorEventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_DataMemberChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.DataGridView::remove_DataSourceChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_DefaultValuesNeeded(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_EditingControlShowing(System.Windows.Forms.DataGridViewEditingControlShowingEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_FontChanged(System.EventHandler) -> System.Void
@@ -2423,7 +2404,6 @@ M public System.Windows.Forms.DataGridView::remove_UserAddedRow(System.Windows.F
 M public System.Windows.Forms.DataGridView::remove_UserDeletedRow(System.Windows.Forms.DataGridViewRowEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::remove_UserDeletingRow(System.Windows.Forms.DataGridViewRowCancelEventHandler) -> System.Void
 M public System.Windows.Forms.DataGridView::set_AllowUserToOrderColumns(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridView::set_AutoGenerateColumns(System.Boolean) -> System.Void
 M public System.Windows.Forms.DataGridView::set_AutoSize(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.DataGridView::set_AutoSizeRowsMode(System.Windows.Forms.DataGridViewAutoSizeRowsMode) -> System.Void
 M public System.Windows.Forms.DataGridView::set_BackColor(System.Drawing.Color) -> System.Void virtual
@@ -2431,8 +2411,6 @@ M public System.Windows.Forms.DataGridView::set_BackgroundImage(System.Drawing.I
 M public System.Windows.Forms.DataGridView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
 M public System.Windows.Forms.DataGridView::set_ClipboardCopyMode(System.Windows.Forms.DataGridViewClipboardCopyMode) -> System.Void
 M public System.Windows.Forms.DataGridView::set_ColumnCount(System.Int32) -> System.Void
-M public System.Windows.Forms.DataGridView::set_DataMember(System.String) -> System.Void
-M public System.Windows.Forms.DataGridView::set_DataSource(System.Object) -> System.Void
 M public System.Windows.Forms.DataGridView::set_EnableHeadersVisualStyles(System.Boolean) -> System.Void
 M public System.Windows.Forms.DataGridView::set_FirstDisplayedCell(System.Windows.Forms.DataGridViewCell) -> System.Void
 M public System.Windows.Forms.DataGridView::set_FirstDisplayedScrollingColumnIndex(System.Int32) -> System.Void
@@ -2633,15 +2611,6 @@ M public System.Windows.Forms.DataGridViewComboBoxEditingControl::set_EditingCon
 M public System.Windows.Forms.DataGridViewComboBoxEditingControl::set_EditingControlFormattedValue(System.Object) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewComboBoxEditingControl::set_EditingControlRowIndex(System.Int32) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewComboBoxEditingControl::set_EditingControlValueChanged(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewDataErrorEventArgs::.ctor(System.Exception, System.Int32, System.Int32, System.Windows.Forms.DataGridViewDataErrorContexts)
-M public System.Windows.Forms.DataGridViewDataErrorEventArgs::get_Context() -> System.Windows.Forms.DataGridViewDataErrorContexts
-M public System.Windows.Forms.DataGridViewDataErrorEventArgs::get_Exception() -> System.Exception
-M public System.Windows.Forms.DataGridViewDataErrorEventArgs::get_ThrowException() -> System.Boolean
-M public System.Windows.Forms.DataGridViewDataErrorEventArgs::set_ThrowException(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewDataErrorEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.DataGridViewDataErrorEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewDataErrorEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.DataGridViewDataErrorEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewDataErrorEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewDataErrorEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewEditingControlShowingEventArgs::.ctor(System.Windows.Forms.Control, System.Windows.Forms.DataGridViewCellStyle)
 M public System.Windows.Forms.DataGridViewEditingControlShowingEventArgs::get_CellStyle() -> System.Windows.Forms.DataGridViewCellStyle
 M public System.Windows.Forms.DataGridViewEditingControlShowingEventArgs::get_Control() -> System.Windows.Forms.Control
@@ -6299,7 +6268,6 @@ T class System.Windows.Forms.DataGridViewComboBoxCell : System.Windows.Forms.Dat
 T class System.Windows.Forms.DataGridViewComboBoxCell+ObjectCollection
 T class System.Windows.Forms.DataGridViewComboBoxColumn : System.Windows.Forms.DataGridViewColumn
 T class System.Windows.Forms.DataGridViewComboBoxEditingControl : System.Windows.Forms.ComboBox
-T class System.Windows.Forms.DataGridViewDataErrorEventArgs : System.Windows.Forms.DataGridViewCellCancelEventArgs
 T class System.Windows.Forms.DataGridViewEditingControlShowingEventArgs : System.EventArgs
 T class System.Windows.Forms.DataGridViewRowCancelEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs : System.EventArgs
@@ -6410,7 +6378,6 @@ T delegate System.Windows.Forms.DataGridViewCellStyleContentChangedEventHandler
 T delegate System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler
 T delegate System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventHandler
 T delegate System.Windows.Forms.DataGridViewColumnStateChangedEventHandler
-T delegate System.Windows.Forms.DataGridViewDataErrorEventHandler
 T delegate System.Windows.Forms.DataGridViewEditingControlShowingEventHandler
 T delegate System.Windows.Forms.DataGridViewRowCancelEventHandler
 T delegate System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventHandler

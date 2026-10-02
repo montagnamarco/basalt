@@ -128,6 +128,9 @@ public partial class DataGridView
             }
         }
 
+        // A column added after the grid is already bound starts out empty: fill it from the bound items.
+        PopulateNewColumnValues(column);
+
         OnColumnAdded(new DataGridViewColumnEventArgs(column));
     }
 

@@ -58,6 +58,13 @@ public class DataGridViewRowCollection : ICollection, IEnumerable, IList
 
     public virtual int Add(DataGridViewRow dataGridViewRow)
     {
+        EnsureNotDataBound();
+
+        return AddCore(dataGridViewRow);
+    }
+
+    private int AddCore(DataGridViewRow dataGridViewRow)
+    {
         ArgumentNullException.ThrowIfNull(dataGridViewRow);
 
         dataGridViewRow.SetDataGridView(_dataGridView);
@@ -106,6 +113,12 @@ public class DataGridViewRowCollection : ICollection, IEnumerable, IList
     }
 
     public virtual void Clear()
+    {
+        EnsureNotDataBound();
+        ClearCore();
+    }
+
+    private void ClearCore()
     {
         var count = _rows.Count;
         if (count == 0) return;
@@ -187,6 +200,12 @@ public class DataGridViewRowCollection : ICollection, IEnumerable, IList
 
     public virtual void Insert(int rowIndex, DataGridViewRow dataGridViewRow)
     {
+        EnsureNotDataBound();
+        InsertCore(rowIndex, dataGridViewRow);
+    }
+
+    private void InsertCore(int rowIndex, DataGridViewRow dataGridViewRow)
+    {
         ArgumentNullException.ThrowIfNull(dataGridViewRow);
 
         dataGridViewRow.SetDataGridView(_dataGridView);
@@ -230,6 +249,12 @@ public class DataGridViewRowCollection : ICollection, IEnumerable, IList
 
     public virtual void RemoveAt(int index)
     {
+        EnsureNotDataBound();
+        RemoveAtCore(index);
+    }
+
+    private void RemoveAtCore(int index)
+    {
         var row = this[index];
         _dataGridView.EndEditBeforeRemoving(cell => ReferenceEquals(cell.OwningRow, row));
 
@@ -243,6 +268,32 @@ public class DataGridViewRowCollection : ICollection, IEnumerable, IList
 
     /// <summary>Row sharing is not implemented: every row already is its own unshared instance, so this simply indexes.</summary>
     public DataGridViewRow SharedRow(int rowIndex) => this[rowIndex];
+
+    /// <summary>
+    /// Refuses a programmatic Add/Insert/Remove/Clear while the grid is data-bound, as WinForms
+    /// does: the bound list, through the CurrencyManager, is the only thing allowed to change
+    /// which rows exist. AddBound/InsertBound/RemoveBoundAt/ClearBound (called only from
+    /// DataGridView's own binding code, mirroring the list) bypass this check.
+    /// </summary>
+    private void EnsureNotDataBound()
+    {
+        if (_dataGridView.IsDataBound)
+        {
+            throw new InvalidOperationException("Rows cannot be programmatically added, inserted, or removed from the DataGridView control's rows collection when the control is data-bound.");
+        }
+    }
+
+    /// <summary>Mirrors a bound list item being added, bypassing the data-bound guard: called only from DataGridView's own binding code.</summary>
+    internal int AddBound(DataGridViewRow dataGridViewRow) => AddCore(dataGridViewRow);
+
+    /// <summary>Mirrors a bound list item being inserted, bypassing the data-bound guard: called only from DataGridView's own binding code.</summary>
+    internal void InsertBound(int rowIndex, DataGridViewRow dataGridViewRow) => InsertCore(rowIndex, dataGridViewRow);
+
+    /// <summary>Mirrors a bound list item being removed, bypassing the data-bound guard: called only from DataGridView's own binding code.</summary>
+    internal void RemoveBoundAt(int index) => RemoveAtCore(index);
+
+    /// <summary>Mirrors the bound list being reset, bypassing the data-bound guard: called only from DataGridView's own binding code.</summary>
+    internal void ClearBound() => ClearCore();
 
     IEnumerator IEnumerable.GetEnumerator() => _rows.GetEnumerator();
 
