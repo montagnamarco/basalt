@@ -90,7 +90,6 @@ I System.Windows.Forms.DataGrid : System.ComponentModel.ISupportInitialize
 I System.Windows.Forms.DataGrid : System.Windows.Forms.IDataGridEditingService
 I System.Windows.Forms.DataGridColumnStyle : System.Windows.Forms.IDataGridColumnStyleEditingNotificationService
 I System.Windows.Forms.DataGridTableStyle : System.Windows.Forms.IDataGridEditingService
-I System.Windows.Forms.DataGridViewCheckBoxCell : System.Windows.Forms.IDataGridViewEditingCell
 I System.Windows.Forms.DataGridViewComboBoxCell+ObjectCollection : System.Collections.ICollection
 I System.Windows.Forms.DataGridViewComboBoxCell+ObjectCollection : System.Collections.IEnumerable
 I System.Windows.Forms.DataGridViewComboBoxCell+ObjectCollection : System.Collections.IList
@@ -522,15 +521,12 @@ M protected System.Windows.Forms.DataGridView::OnForeColorChanged(System.EventAr
 M protected System.Windows.Forms.DataGridView::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnLeave(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnLostFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnMouseClick(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnMouseDoubleClick(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnMouseEnter(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnMouseLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridView::OnMouseMove(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnMouseWheel(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnNewRowNeeded(System.Windows.Forms.DataGridViewRowEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
@@ -598,7 +594,6 @@ M protected System.Windows.Forms.DataGridViewButtonCell::CreateAccessibilityInst
 M protected System.Windows.Forms.DataGridViewButtonCell::GetContentBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::GetErrorIconBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::GetPreferredSize(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32, System.Drawing.Size) -> System.Drawing.Size virtual
-M protected System.Windows.Forms.DataGridViewButtonCell::GetValue(System.Int32) -> System.Object virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::KeyDownUnsharesRow(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::KeyUpUnsharesRow(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::MouseDownUnsharesRow(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Boolean virtual
@@ -608,20 +603,14 @@ M protected System.Windows.Forms.DataGridViewButtonCell::MouseUpUnsharesRow(Syst
 M protected System.Windows.Forms.DataGridViewButtonCell::OnKeyDown(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::OnKeyUp(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::OnLeave(System.Int32, System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewButtonCell::OnMouseDown(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::OnMouseLeave(System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewButtonCell::OnMouseMove(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewButtonCell::OnMouseUp(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewButtonCell::Paint(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Object, System.Object, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCell::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridViewCell::Finalize() -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCell::GetClipboardContent(System.Int32, System.Boolean, System.Boolean, System.Boolean, System.Boolean, System.String) -> System.Object virtual
-M protected System.Windows.Forms.DataGridViewCheckBoxCell::ContentClickUnsharesRow(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Boolean virtual
-M protected System.Windows.Forms.DataGridViewCheckBoxCell::ContentDoubleClickUnsharesRow(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::GetContentBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::GetErrorIconBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
-M protected System.Windows.Forms.DataGridViewCheckBoxCell::GetFormattedValue(System.Object, System.Int32, ref System.Windows.Forms.DataGridViewCellStyle, System.ComponentModel.TypeConverter, System.ComponentModel.TypeConverter, System.Windows.Forms.DataGridViewDataErrorContexts) -> System.Object virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::GetPreferredSize(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32, System.Drawing.Size) -> System.Drawing.Size virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::KeyDownUnsharesRow(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::KeyUpUnsharesRow(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Boolean virtual
@@ -629,16 +618,13 @@ M protected System.Windows.Forms.DataGridViewCheckBoxCell::MouseDownUnsharesRow(
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::MouseEnterUnsharesRow(System.Int32) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::MouseLeaveUnsharesRow(System.Int32) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::MouseUpUnsharesRow(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Boolean virtual
-M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnContentClick(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnContentDoubleClick(System.Windows.Forms.DataGridViewCellEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnKeyDown(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnKeyUp(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnLeave(System.Int32, System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnMouseDown(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnMouseLeave(System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnMouseMove(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewCheckBoxCell::OnMouseUp(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewCheckBoxCell::Paint(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Object, System.Object, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewColumnHeaderCell::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridViewColumnHeaderCell::GetClipboardContent(System.Int32, System.Boolean, System.Boolean, System.Boolean, System.Boolean, System.String) -> System.Object virtual
 M protected System.Windows.Forms.DataGridViewComboBoxCell::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
@@ -661,26 +647,19 @@ M protected System.Windows.Forms.DataGridViewElement::RaiseMouseWheel(System.Win
 M protected System.Windows.Forms.DataGridViewImageCell::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridViewImageCell::GetContentBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.DataGridViewImageCell::GetErrorIconBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
-M protected System.Windows.Forms.DataGridViewImageCell::GetFormattedValue(System.Object, System.Int32, ref System.Windows.Forms.DataGridViewCellStyle, System.ComponentModel.TypeConverter, System.ComponentModel.TypeConverter, System.Windows.Forms.DataGridViewDataErrorContexts) -> System.Object virtual
 M protected System.Windows.Forms.DataGridViewImageCell::GetPreferredSize(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32, System.Drawing.Size) -> System.Drawing.Size virtual
-M protected System.Windows.Forms.DataGridViewImageCell::GetValue(System.Int32) -> System.Object virtual
-M protected System.Windows.Forms.DataGridViewImageCell::Paint(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Object, System.Object, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::GetContentBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::GetErrorIconBounds(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32) -> System.Drawing.Rectangle virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::GetPreferredSize(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32, System.Drawing.Size) -> System.Drawing.Size virtual
-M protected System.Windows.Forms.DataGridViewLinkCell::GetValue(System.Int32) -> System.Object virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::KeyUpUnsharesRow(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::MouseDownUnsharesRow(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::MouseLeaveUnsharesRow(System.Int32) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::MouseMoveUnsharesRow(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::MouseUpUnsharesRow(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Boolean virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::OnKeyUp(System.Windows.Forms.KeyEventArgs, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewLinkCell::OnMouseDown(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::OnMouseLeave(System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewLinkCell::OnMouseMove(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewLinkCell::OnMouseUp(System.Windows.Forms.DataGridViewCellMouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DataGridViewLinkCell::Paint(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Object, System.Object, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewRow::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridViewRow::DrawFocus(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Windows.Forms.DataGridViewCellStyle, System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewRow::Paint(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Boolean, System.Boolean) -> System.Void virtual
@@ -2597,29 +2576,6 @@ M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler::EndInv
 M public System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewBand::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
 M public System.Windows.Forms.DataGridViewBand::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewButtonCell::.ctor()
-M public System.Windows.Forms.DataGridViewButtonCell::Clone() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewButtonCell::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewButtonCell::get_EditType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewButtonCell::get_FlatStyle() -> System.Windows.Forms.FlatStyle
-M public System.Windows.Forms.DataGridViewButtonCell::get_FormattedValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewButtonCell::get_UseColumnTextForButtonValue() -> System.Boolean
-M public System.Windows.Forms.DataGridViewButtonCell::get_ValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewButtonCell::set_FlatStyle(System.Windows.Forms.FlatStyle) -> System.Void
-M public System.Windows.Forms.DataGridViewButtonCell::set_UseColumnTextForButtonValue(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewButtonColumn::.ctor()
-M public System.Windows.Forms.DataGridViewButtonColumn::Clone() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewButtonColumn::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewButtonColumn::get_CellTemplate() -> System.Windows.Forms.DataGridViewCell virtual
-M public System.Windows.Forms.DataGridViewButtonColumn::get_DefaultCellStyle() -> System.Windows.Forms.DataGridViewCellStyle virtual
-M public System.Windows.Forms.DataGridViewButtonColumn::get_FlatStyle() -> System.Windows.Forms.FlatStyle
-M public System.Windows.Forms.DataGridViewButtonColumn::get_Text() -> System.String
-M public System.Windows.Forms.DataGridViewButtonColumn::get_UseColumnTextForButtonValue() -> System.Boolean
-M public System.Windows.Forms.DataGridViewButtonColumn::set_CellTemplate(System.Windows.Forms.DataGridViewCell) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewButtonColumn::set_DefaultCellStyle(System.Windows.Forms.DataGridViewCellStyle) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewButtonColumn::set_FlatStyle(System.Windows.Forms.FlatStyle) -> System.Void
-M public System.Windows.Forms.DataGridViewButtonColumn::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.DataGridViewButtonColumn::set_UseColumnTextForButtonValue(System.Boolean) -> System.Void
 M public System.Windows.Forms.DataGridViewCell::GetInheritedContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip virtual
 M public System.Windows.Forms.DataGridViewCell::MeasureTextHeight(System.Drawing.Graphics, System.String, System.Drawing.Font, System.Int32, System.Windows.Forms.TextFormatFlags) -> System.Int32 static
 M public System.Windows.Forms.DataGridViewCell::MeasureTextHeight(System.Drawing.Graphics, System.String, System.Drawing.Font, System.Int32, System.Windows.Forms.TextFormatFlags, out System.Boolean) -> System.Int32 static
@@ -2684,48 +2640,6 @@ M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::.ct
 M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::BeginInvoke(System.Object, System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewCellToolTipTextNeededEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::.ctor()
-M public System.Windows.Forms.DataGridViewCheckBoxCell::.ctor(System.Boolean)
-M public System.Windows.Forms.DataGridViewCheckBoxCell::Clone() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::GetEditingCellFormattedValue(System.Windows.Forms.DataGridViewDataErrorContexts) -> System.Object virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::ParseFormattedValue(System.Object, System.Windows.Forms.DataGridViewCellStyle, System.ComponentModel.TypeConverter, System.ComponentModel.TypeConverter) -> System.Object virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::PrepareEditingCellForEdit(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_EditType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_EditingCellFormattedValue() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_EditingCellValueChanged() -> System.Boolean virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_FalseValue() -> System.Object
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_FlatStyle() -> System.Windows.Forms.FlatStyle
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_FormattedValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_IndeterminateValue() -> System.Object
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_ThreeState() -> System.Boolean
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_TrueValue() -> System.Object
-M public System.Windows.Forms.DataGridViewCheckBoxCell::get_ValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_EditingCellFormattedValue(System.Object) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_EditingCellValueChanged(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_FalseValue(System.Object) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_FlatStyle(System.Windows.Forms.FlatStyle) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_IndeterminateValue(System.Object) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_ThreeState(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_TrueValue(System.Object) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxCell::set_ValueType(System.Type) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::.ctor()
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::.ctor(System.Boolean)
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::get_CellTemplate() -> System.Windows.Forms.DataGridViewCell virtual
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::get_DefaultCellStyle() -> System.Windows.Forms.DataGridViewCellStyle virtual
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::get_FalseValue() -> System.Object
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::get_FlatStyle() -> System.Windows.Forms.FlatStyle
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::get_IndeterminateValue() -> System.Object
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::get_ThreeState() -> System.Boolean
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::get_TrueValue() -> System.Object
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::set_CellTemplate(System.Windows.Forms.DataGridViewCell) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::set_DefaultCellStyle(System.Windows.Forms.DataGridViewCellStyle) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::set_FalseValue(System.Object) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::set_FlatStyle(System.Windows.Forms.FlatStyle) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::set_IndeterminateValue(System.Object) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::set_ThreeState(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewCheckBoxColumn::set_TrueValue(System.Object) -> System.Void
 M public System.Windows.Forms.DataGridViewColumn::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
 M public System.Windows.Forms.DataGridViewColumn::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::.ctor()
@@ -2854,78 +2768,6 @@ M public System.Windows.Forms.DataGridViewEditingControlShowingEventHandler::Beg
 M public System.Windows.Forms.DataGridViewEditingControlShowingEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewEditingControlShowingEventHandler::Invoke(System.Object, System.Windows.Forms.DataGridViewEditingControlShowingEventArgs) -> System.Void virtual
 M public System.Windows.Forms.DataGridViewHeaderCell::GetInheritedContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.DataGridViewImageCell::.ctor()
-M public System.Windows.Forms.DataGridViewImageCell::.ctor(System.Boolean)
-M public System.Windows.Forms.DataGridViewImageCell::Clone() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewImageCell::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewImageCell::get_DefaultNewRowValue() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewImageCell::get_Description() -> System.String
-M public System.Windows.Forms.DataGridViewImageCell::get_EditType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewImageCell::get_FormattedValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewImageCell::get_ImageLayout() -> System.Windows.Forms.DataGridViewImageCellLayout
-M public System.Windows.Forms.DataGridViewImageCell::get_ValueIsIcon() -> System.Boolean
-M public System.Windows.Forms.DataGridViewImageCell::get_ValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewImageCell::set_Description(System.String) -> System.Void
-M public System.Windows.Forms.DataGridViewImageCell::set_ImageLayout(System.Windows.Forms.DataGridViewImageCellLayout) -> System.Void
-M public System.Windows.Forms.DataGridViewImageCell::set_ValueIsIcon(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewImageCell::set_ValueType(System.Type) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewImageColumn::.ctor()
-M public System.Windows.Forms.DataGridViewImageColumn::.ctor(System.Boolean)
-M public System.Windows.Forms.DataGridViewImageColumn::Clone() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewImageColumn::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewImageColumn::get_CellTemplate() -> System.Windows.Forms.DataGridViewCell virtual
-M public System.Windows.Forms.DataGridViewImageColumn::get_DefaultCellStyle() -> System.Windows.Forms.DataGridViewCellStyle virtual
-M public System.Windows.Forms.DataGridViewImageColumn::get_Description() -> System.String
-M public System.Windows.Forms.DataGridViewImageColumn::get_Icon() -> System.Drawing.Icon
-M public System.Windows.Forms.DataGridViewImageColumn::get_Image() -> System.Drawing.Image
-M public System.Windows.Forms.DataGridViewImageColumn::get_ImageLayout() -> System.Windows.Forms.DataGridViewImageCellLayout
-M public System.Windows.Forms.DataGridViewImageColumn::get_ValuesAreIcons() -> System.Boolean
-M public System.Windows.Forms.DataGridViewImageColumn::set_CellTemplate(System.Windows.Forms.DataGridViewCell) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewImageColumn::set_DefaultCellStyle(System.Windows.Forms.DataGridViewCellStyle) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewImageColumn::set_Description(System.String) -> System.Void
-M public System.Windows.Forms.DataGridViewImageColumn::set_Icon(System.Drawing.Icon) -> System.Void
-M public System.Windows.Forms.DataGridViewImageColumn::set_Image(System.Drawing.Image) -> System.Void
-M public System.Windows.Forms.DataGridViewImageColumn::set_ImageLayout(System.Windows.Forms.DataGridViewImageCellLayout) -> System.Void
-M public System.Windows.Forms.DataGridViewImageColumn::set_ValuesAreIcons(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkCell::.ctor()
-M public System.Windows.Forms.DataGridViewLinkCell::Clone() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewLinkCell::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewLinkCell::get_ActiveLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.DataGridViewLinkCell::get_EditType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewLinkCell::get_FormattedValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewLinkCell::get_LinkBehavior() -> System.Windows.Forms.LinkBehavior
-M public System.Windows.Forms.DataGridViewLinkCell::get_LinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.DataGridViewLinkCell::get_LinkVisited() -> System.Boolean
-M public System.Windows.Forms.DataGridViewLinkCell::get_TrackVisitedState() -> System.Boolean
-M public System.Windows.Forms.DataGridViewLinkCell::get_UseColumnTextForLinkValue() -> System.Boolean
-M public System.Windows.Forms.DataGridViewLinkCell::get_ValueType() -> System.Type virtual
-M public System.Windows.Forms.DataGridViewLinkCell::get_VisitedLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.DataGridViewLinkCell::set_ActiveLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkCell::set_LinkBehavior(System.Windows.Forms.LinkBehavior) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkCell::set_LinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkCell::set_LinkVisited(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkCell::set_TrackVisitedState(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkCell::set_UseColumnTextForLinkValue(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkCell::set_VisitedLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkColumn::.ctor()
-M public System.Windows.Forms.DataGridViewLinkColumn::Clone() -> System.Object virtual
-M public System.Windows.Forms.DataGridViewLinkColumn::ToString() -> System.String virtual
-M public System.Windows.Forms.DataGridViewLinkColumn::get_ActiveLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.DataGridViewLinkColumn::get_CellTemplate() -> System.Windows.Forms.DataGridViewCell virtual
-M public System.Windows.Forms.DataGridViewLinkColumn::get_LinkBehavior() -> System.Windows.Forms.LinkBehavior
-M public System.Windows.Forms.DataGridViewLinkColumn::get_LinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.DataGridViewLinkColumn::get_Text() -> System.String
-M public System.Windows.Forms.DataGridViewLinkColumn::get_TrackVisitedState() -> System.Boolean
-M public System.Windows.Forms.DataGridViewLinkColumn::get_UseColumnTextForLinkValue() -> System.Boolean
-M public System.Windows.Forms.DataGridViewLinkColumn::get_VisitedLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.DataGridViewLinkColumn::set_ActiveLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkColumn::set_CellTemplate(System.Windows.Forms.DataGridViewCell) -> System.Void virtual
-M public System.Windows.Forms.DataGridViewLinkColumn::set_LinkBehavior(System.Windows.Forms.LinkBehavior) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkColumn::set_LinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkColumn::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkColumn::set_TrackVisitedState(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkColumn::set_UseColumnTextForLinkValue(System.Boolean) -> System.Void
-M public System.Windows.Forms.DataGridViewLinkColumn::set_VisitedLinkColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.DataGridViewRow::AdjustRowHeaderBorderStyle(System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Boolean, System.Boolean, System.Boolean, System.Boolean) -> System.Windows.Forms.DataGridViewAdvancedBorderStyle virtual
 M public System.Windows.Forms.DataGridViewRow::GetContextMenuStrip(System.Int32) -> System.Windows.Forms.ContextMenuStrip
 M public System.Windows.Forms.DataGridViewRow::get_AccessibilityObject() -> System.Windows.Forms.AccessibleObject
@@ -3805,12 +3647,6 @@ M public System.Windows.Forms.IComponentEditorPageSite::SetDirty() -> System.Voi
 M public System.Windows.Forms.IDataGridColumnStyleEditingNotificationService::ColumnStartedEditing(System.Windows.Forms.Control) -> System.Void abstract
 M public System.Windows.Forms.IDataGridEditingService::BeginEdit(System.Windows.Forms.DataGridColumnStyle, System.Int32) -> System.Boolean abstract
 M public System.Windows.Forms.IDataGridEditingService::EndEdit(System.Windows.Forms.DataGridColumnStyle, System.Int32, System.Boolean) -> System.Boolean abstract
-M public System.Windows.Forms.IDataGridViewEditingCell::GetEditingCellFormattedValue(System.Windows.Forms.DataGridViewDataErrorContexts) -> System.Object abstract
-M public System.Windows.Forms.IDataGridViewEditingCell::PrepareEditingCellForEdit(System.Boolean) -> System.Void abstract
-M public System.Windows.Forms.IDataGridViewEditingCell::get_EditingCellFormattedValue() -> System.Object abstract
-M public System.Windows.Forms.IDataGridViewEditingCell::get_EditingCellValueChanged() -> System.Boolean abstract
-M public System.Windows.Forms.IDataGridViewEditingCell::set_EditingCellFormattedValue(System.Object) -> System.Void abstract
-M public System.Windows.Forms.IDataGridViewEditingCell::set_EditingCellValueChanged(System.Boolean) -> System.Void abstract
 M public System.Windows.Forms.IDataGridViewEditingControl::ApplyCellStyleToEditingControl(System.Windows.Forms.DataGridViewCellStyle) -> System.Void abstract
 M public System.Windows.Forms.IDataGridViewEditingControl::EditingControlWantsInputKey(System.Windows.Forms.Keys, System.Boolean) -> System.Boolean abstract
 M public System.Windows.Forms.IDataGridViewEditingControl::GetEditingControlFormattedValue(System.Windows.Forms.DataGridViewDataErrorContexts) -> System.Object abstract
@@ -6851,8 +6687,6 @@ T class System.Windows.Forms.DataGridTextBox : System.Windows.Forms.TextBox
 T class System.Windows.Forms.DataGridTextBoxColumn : System.Windows.Forms.DataGridColumnStyle
 T class System.Windows.Forms.DataGridView+DataGridViewControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.DataGridViewAutoSizeColumnModeEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewButtonCell : System.Windows.Forms.DataGridViewCell
-T class System.Windows.Forms.DataGridViewButtonColumn : System.Windows.Forms.DataGridViewColumn
 T class System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventArgs : System.Windows.Forms.DataGridViewCellEventArgs
 T class System.Windows.Forms.DataGridViewCellErrorTextNeededEventArgs : System.Windows.Forms.DataGridViewCellEventArgs
 T class System.Windows.Forms.DataGridViewCellPaintingEventArgs : System.ComponentModel.HandledEventArgs
@@ -6860,8 +6694,6 @@ T class System.Windows.Forms.DataGridViewCellStateChangedEventArgs : System.Even
 T class System.Windows.Forms.DataGridViewCellStyleContentChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.DataGridViewCellStyleConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.DataGridViewCellToolTipTextNeededEventArgs : System.Windows.Forms.DataGridViewCellEventArgs
-T class System.Windows.Forms.DataGridViewCheckBoxCell : System.Windows.Forms.DataGridViewCell
-T class System.Windows.Forms.DataGridViewCheckBoxColumn : System.Windows.Forms.DataGridViewColumn
 T class System.Windows.Forms.DataGridViewColumnDividerDoubleClickEventArgs : System.Windows.Forms.HandledMouseEventArgs
 T class System.Windows.Forms.DataGridViewColumnStateChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.DataGridViewComboBoxCell : System.Windows.Forms.DataGridViewCell
@@ -6870,10 +6702,6 @@ T class System.Windows.Forms.DataGridViewComboBoxColumn : System.Windows.Forms.D
 T class System.Windows.Forms.DataGridViewComboBoxEditingControl : System.Windows.Forms.ComboBox
 T class System.Windows.Forms.DataGridViewDataErrorEventArgs : System.Windows.Forms.DataGridViewCellCancelEventArgs
 T class System.Windows.Forms.DataGridViewEditingControlShowingEventArgs : System.EventArgs
-T class System.Windows.Forms.DataGridViewImageCell : System.Windows.Forms.DataGridViewCell
-T class System.Windows.Forms.DataGridViewImageColumn : System.Windows.Forms.DataGridViewColumn
-T class System.Windows.Forms.DataGridViewLinkCell : System.Windows.Forms.DataGridViewCell
-T class System.Windows.Forms.DataGridViewLinkColumn : System.Windows.Forms.DataGridViewColumn
 T class System.Windows.Forms.DataGridViewRowCancelEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.DataGridViewRowContextMenuStripNeededEventArgs : System.EventArgs
 T class System.Windows.Forms.DataGridViewRowDividerDoubleClickEventArgs : System.Windows.Forms.HandledMouseEventArgs
@@ -7038,7 +6866,6 @@ T interface System.Windows.Forms.ICommandExecutor
 T interface System.Windows.Forms.IComponentEditorPageSite
 T interface System.Windows.Forms.IDataGridColumnStyleEditingNotificationService
 T interface System.Windows.Forms.IDataGridEditingService
-T interface System.Windows.Forms.IDataGridViewEditingCell
 T interface System.Windows.Forms.IDataGridViewEditingControl
 T interface System.Windows.Forms.IDataObject
 T interface System.Windows.Forms.IDropTarget

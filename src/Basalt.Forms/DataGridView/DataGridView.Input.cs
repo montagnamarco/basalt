@@ -10,6 +10,15 @@ namespace System.Windows.Forms;
 /// </summary>
 public partial class DataGridView
 {
+    /// <summary>The cell a Left-button press last went down on, so mouse-up only raises a click when it lands back on that same cell.</summary>
+    private DataGridViewCell? _mouseDownCell;
+
+    /// <summary>The press that started this click was the second of a double click (the count comes with the press, not the release).</summary>
+    private bool _mouseDownWasDoubleClick;
+
+    /// <summary>The cell currently under the pointer, so entering/leaving it is reported exactly once per crossing.</summary>
+    private DataGridViewCell? _hoverCell;
+
     /// <summary>Claims the keys a grid moves its current cell with, so dialog/tab navigation does not take them first.</summary>
     protected override bool IsInputKey(Keys keyData)
     {
@@ -34,14 +43,14 @@ public partial class DataGridView
         var shift = (ModifierKeys & Keys.Shift) == Keys.Shift;
         var control = (ModifierKeys & Keys.Control) == Keys.Control;
 
+        _mouseDownCell = CellAt(hit);
+        _mouseDownWasDoubleClick = e.Clicks >= 2;
+
         switch (hit.Type)
         {
             case DataGridViewHitTestType.Cell:
                 SetCurrentCellAddressCore(hit.ColumnIndex, hit.RowIndex, true, true, true);
                 SelectCell(hit.ColumnIndex, hit.RowIndex, shift, control);
-                OnCellMouseDown(new DataGridViewCellMouseEventArgs(hit.ColumnIndex, hit.RowIndex, e.X - hit.ColumnX, e.Y - hit.RowY, e));
-                OnCellClick(new DataGridViewCellEventArgs(hit.ColumnIndex, hit.RowIndex));
-                OnCellContentClick(new DataGridViewCellEventArgs(hit.ColumnIndex, hit.RowIndex));
                 break;
 
             case DataGridViewHitTestType.RowHeader:
@@ -53,24 +62,133 @@ public partial class DataGridView
                 SelectWholeColumn(hit.ColumnIndex, shift, control);
                 break;
         }
+
+        // Every hit cell (data cell or header) gets its own virtual; only a data cell also raises
+        // the public CellMouseDown, matching what the grid raised before this fix.
+        if (_mouseDownCell is { } cell)
+        {
+            var args = new DataGridViewCellMouseEventArgs(hit.ColumnIndex, hit.RowIndex, e.X - hit.ColumnX, e.Y - hit.RowY, e);
+            cell.OnMouseDownCore(args);
+            if (hit.Type == DataGridViewHitTestType.Cell) OnCellMouseDown(args);
+        }
     }
 
     protected override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
 
-        if (e.Button != MouseButtons.Left) return;
+        if (e.Button != MouseButtons.Left)
+        {
+            _mouseDownCell = null;
+            return;
+        }
 
         var hit = HitTest(e.X, e.Y);
-        if (hit.Type == DataGridViewHitTestType.Cell)
+        var cell = CellAt(hit);
+
+        if (cell is not null)
         {
-            OnCellMouseUp(new DataGridViewCellMouseEventArgs(hit.ColumnIndex, hit.RowIndex, e.X - hit.ColumnX, e.Y - hit.RowY, e));
+            var args = new DataGridViewCellMouseEventArgs(hit.ColumnIndex, hit.RowIndex, e.X - hit.ColumnX, e.Y - hit.RowY, e);
+            cell.OnMouseUpCore(args);
+            if (hit.Type == DataGridViewHitTestType.Cell) OnCellMouseUp(args);
+
+            // CellClick/CellContentClick belong here, on mouse-up, and only when the button comes
+            // back up over the very cell it went down on - never on mouse-down (that fired them
+            // immediately, before the user had even released the button) and never when a drag
+            // carried the release onto a different cell.
+            if (hit.Type == DataGridViewHitTestType.Cell && ReferenceEquals(cell, _mouseDownCell)) RaiseClick(cell, hit, args, e);
+        }
+
+        // A drag that started on one cell (pressed state) and let go over another, or over no
+        // cell at all, still owes the original cell its own mouse-up: otherwise a button or link
+        // cell that only resets "pressed" there would be stuck looking pressed forever.
+        if (_mouseDownCell is { } downCell && !ReferenceEquals(downCell, cell))
+        {
+            downCell.OnMouseUpCore(new DataGridViewCellMouseEventArgs(downCell.ColumnIndex, downCell.RowIndex, -1, -1, e));
+        }
+
+        _mouseDownCell = null;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        var hit = HitTest(e.X, e.Y);
+        var cell = CellAt(hit);
+
+        if (!ReferenceEquals(cell, _hoverCell))
+        {
+            _hoverCell?.OnMouseLeaveCore(_hoverCell.RowIndex);
+            _hoverCell = cell;
+            _hoverCell?.OnMouseEnterCore(_hoverCell.RowIndex);
+        }
+
+        if (cell is not null)
+        {
+            var args = new DataGridViewCellMouseEventArgs(hit.ColumnIndex, hit.RowIndex, e.X - hit.ColumnX, e.Y - hit.RowY, e);
+            cell.OnMouseMoveCore(args);
         }
     }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+
+        _hoverCell?.OnMouseLeaveCore(_hoverCell.RowIndex);
+        _hoverCell = null;
+    }
+
+    /// <summary>
+    /// Raises Click/ContentClick (or, on the second click of a double-click, DoubleClick/
+    /// ContentDoubleClick) for the cell the mouse just came back up on: the cell's own virtual
+    /// first, then the grid's public event, then - only when the release point is still inside
+    /// GetContentBounds - the content-click pair the same way.
+    /// </summary>
+    private void RaiseClick(DataGridViewCell cell, HitTestInfo hit, DataGridViewCellMouseEventArgs mouseArgs, MouseEventArgs e)
+    {
+        var cellArgs = new DataGridViewCellEventArgs(hit.ColumnIndex, hit.RowIndex);
+        var isDoubleClick = mouseArgs.Clicks >= 2 || _mouseDownWasDoubleClick;
+
+        // As WinForms: every release is a click (the second one of a double click too), and a
+        // double click adds the double-click events after it - so a check box toggles twice.
+        cell.OnClickCore(cellArgs);
+        OnCellClick(cellArgs);
+
+        var onContent = cell.GetContentBounds(hit.RowIndex).Contains(e.X, e.Y);
+        if (onContent)
+        {
+            cell.OnContentClickCore(cellArgs);
+            OnCellContentClick(cellArgs);
+        }
+
+        if (!isDoubleClick) return;
+
+        cell.OnDoubleClickCore(cellArgs);
+        OnCellDoubleClick(cellArgs);
+
+        if (onContent)
+        {
+            cell.OnContentDoubleClickCore(cellArgs);
+            OnCellContentDoubleClick(cellArgs);
+        }
+    }
+
+    /// <summary>The cell (data cell, row header or column header) a hit-test result points to, or null away from all of them.</summary>
+    private DataGridViewCell? CellAt(HitTestInfo hit) => hit.Type switch
+    {
+        DataGridViewHitTestType.Cell => Rows[hit.RowIndex].Cells[hit.ColumnIndex],
+        DataGridViewHitTestType.RowHeader => Rows[hit.RowIndex].HeaderCell,
+        DataGridViewHitTestType.ColumnHeader => Columns[hit.ColumnIndex].HeaderCell,
+        _ => null,
+    };
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (e.Handled) return;
+
+        _currentCell?.OnKeyDownCore(e, _currentCell.RowIndex);
         if (e.Handled) return;
 
         switch (e.KeyCode)
@@ -129,6 +247,14 @@ public partial class DataGridView
         }
 
         e.Handled = true;
+    }
+
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+        if (e.Handled) return;
+
+        _currentCell?.OnKeyUpCore(e, _currentCell.RowIndex);
     }
 
     protected override void OnKeyPress(KeyPressEventArgs e)

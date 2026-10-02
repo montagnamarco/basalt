@@ -31,6 +31,12 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
     public virtual Type? EditType => null;
 
+    /// <summary>
+    /// Whether typing or F2 opens a text editor over the cell. A check box, button, link or image
+    /// cell has no editing control and says no, so a Space meant for the check box does not open one.
+    /// </summary>
+    internal virtual bool UsesTextEditorInternal => true;
+
     public object? EditedFormattedValue => GetEditedFormattedValue(RowIndex, DataGridViewDataErrorContexts.Formatting);
 
     public Rectangle ErrorIconBounds => DataGridView is null ? Rectangle.Empty : GetErrorIconBounds(null!, InheritedStyle, RowIndex);
@@ -370,6 +376,34 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
     protected virtual void OnMouseUp(DataGridViewCellMouseEventArgs e)
     {
     }
+
+    /// <summary>
+    /// The grid's only way into the protected mouse/keyboard/click virtuals below: called straight
+    /// from hit-testing in DataGridView.Input.cs so a cell reacts the moment it is clicked or
+    /// keyed, whether or not it has ever been painted, and without the grid holding a lasting
+    /// delegate onto the cell the way a subscription added lazily from Paint would.
+    /// </summary>
+    internal void OnMouseDownCore(DataGridViewCellMouseEventArgs e) => OnMouseDown(e);
+
+    internal void OnMouseUpCore(DataGridViewCellMouseEventArgs e) => OnMouseUp(e);
+
+    internal void OnMouseMoveCore(DataGridViewCellMouseEventArgs e) => OnMouseMove(e);
+
+    internal void OnMouseEnterCore(int rowIndex) => OnMouseEnter(rowIndex);
+
+    internal void OnMouseLeaveCore(int rowIndex) => OnMouseLeave(rowIndex);
+
+    internal void OnClickCore(DataGridViewCellEventArgs e) => OnClick(e);
+
+    internal void OnDoubleClickCore(DataGridViewCellEventArgs e) => OnDoubleClick(e);
+
+    internal void OnContentClickCore(DataGridViewCellEventArgs e) => OnContentClick(e);
+
+    internal void OnContentDoubleClickCore(DataGridViewCellEventArgs e) => OnContentDoubleClick(e);
+
+    internal void OnKeyDownCore(KeyEventArgs e, int rowIndex) => OnKeyDown(e, rowIndex);
+
+    internal void OnKeyUpCore(KeyEventArgs e, int rowIndex) => OnKeyUp(e, rowIndex);
 
     /// <summary>The grid's only way into the protected Paint below: keeps Paint itself exactly as Microsoft declares it.</summary>
     internal void PaintCore(

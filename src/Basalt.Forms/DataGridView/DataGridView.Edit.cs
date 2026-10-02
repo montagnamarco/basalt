@@ -18,6 +18,7 @@ public partial class DataGridView
         if (_currentCell is not { } cell) return false;
         if (EditingControl is not null) return true;
         if (ReadOnly || cell.ReadOnly) return false;
+        if (!cell.UsesTextEditorInternal) return false;
 
         var cancel = new DataGridViewCellCancelEventArgs(cell.ColumnIndex, cell.RowIndex);
         OnCellBeginEdit(cancel);
