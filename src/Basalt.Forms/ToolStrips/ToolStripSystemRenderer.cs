@@ -73,6 +73,21 @@ public class ToolStripSystemRenderer : ToolStripRenderer
         ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, e.Item.Pressed, e.Item.Selected, e.Item.Enabled);
     }
 
+    /// <summary>
+    /// The generic background for an item none of the other OnRender* hooks
+    /// claims (a plain ToolStripControlHost, say): the same raised/sunken
+    /// face a button gets, so a custom item selected or pressed looks
+    /// consistent with the rest of the strip.
+    /// </summary>
+    protected override void OnRenderItemBackground(ToolStripItemRenderEventArgs e)
+    {
+        base.OnRenderItemBackground(e);
+
+        if (!e.Item.Selected && !e.Item.Pressed) return;
+
+        ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, e.Item.Pressed, e.Item.Selected, e.Item.Enabled);
+    }
+
     protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderMenuItemBackground(e);

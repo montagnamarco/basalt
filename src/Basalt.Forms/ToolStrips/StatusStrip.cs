@@ -9,7 +9,7 @@ namespace System.Windows.Forms;
 /// one of which may spring to take up whatever width the others leave, with
 /// an optional sizing grip in the trailing corner.
 /// </summary>
-public class StatusStrip : ToolStrip
+public partial class StatusStrip : ToolStrip
 {
     private bool _sizingGrip = true;
 
@@ -49,7 +49,7 @@ public class StatusStrip : ToolStrip
 
     /// <summary>Whether the bar stretches to fill its container's width, as a status bar always does.</summary>
     [DefaultValue(true)]
-    public bool Stretch { get; set; } = true;
+    public new bool Stretch { get; set; } = true;
 
     /// <summary>The square in the bottom trailing corner the grip (or, when hidden, nothing) occupies.</summary>
     [Browsable(false)]

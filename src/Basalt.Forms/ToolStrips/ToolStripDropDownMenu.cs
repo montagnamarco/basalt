@@ -9,7 +9,7 @@ namespace System.Windows.Forms;
 /// <see cref="ToolStripMenuItem"/>'s submenu, or a <see cref="ContextMenuStrip"/>),
 /// as opposed to a plain list of items with nothing in that margin.
 /// </summary>
-public class ToolStripDropDownMenu : ToolStripDropDown
+public partial class ToolStripDropDownMenu : ToolStripDropDown
 {
     private bool _showImageMargin = true;
     private bool _showCheckMargin;

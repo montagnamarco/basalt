@@ -6,7 +6,7 @@ namespace System.Windows.Forms;
 /// stay in the strip's <see cref="ToolStrip.Items"/>, and this drop-down only
 /// shows, lays out and hit-tests them through a read-only <see cref="Items"/>.
 /// </summary>
-public class ToolStripOverflow : ToolStripDropDown
+public partial class ToolStripOverflow : ToolStripDropDown
 {
     public ToolStripOverflow(ToolStripItem parentItem)
     {

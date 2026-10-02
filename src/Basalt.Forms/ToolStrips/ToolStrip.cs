@@ -400,6 +400,9 @@ public partial class ToolStrip : ScrollableControl
         base.OnRightToLeftChanged(e);
 
         foreach (ToolStripItem item in Items) item.RaiseParentRightToLeftChanged(e);
+
+        // The layout mirrors: every item and the grip move to the other side.
+        Invalidate(true);
     }
 
     protected override void OnEnabledChanged(EventArgs e)
@@ -411,6 +414,13 @@ public partial class ToolStrip : ScrollableControl
     protected override void OnMouseDown(MouseEventArgs mea)
     {
         base.OnMouseDown(mea);
+
+        if (_gripStyle == ToolStripGripStyle.Visible && GripRectangle.Contains(mea.Location))
+        {
+            _isCurrentlyDragging = true;
+            OnBeginDrag(EventArgs.Empty);
+            return;
+        }
 
         var item = GetItemAtInternal(mea.Location);
         if (item is not { Enabled: true, CanSelect: true }) return;
@@ -447,11 +457,38 @@ public partial class ToolStrip : ScrollableControl
 
         // Dragging the button out of its own area lifts it, back in presses it again, as a plain Control button does.
         _mouseDownItem?.SetPressedInternal(_mouseDownItem == item);
+
+        TryReorderOnDrag(item);
+    }
+
+    /// <summary>
+    /// With <see cref="AllowItemReorder"/>, dragging a pressed item onto
+    /// another one swaps their place in <see cref="Items"/>: a minimal
+    /// stand-in for Microsoft's native drag-and-drop reorder, which this
+    /// project's Control has no OLE drag source/target to run.
+    /// </summary>
+    private void TryReorderOnDrag(ToolStripItem? itemUnderMouse)
+    {
+        if (!AllowItemReorder || _mouseDownItem is not { } dragged || itemUnderMouse is null || itemUnderMouse == dragged || !IsShownHere(itemUnderMouse)) return;
+
+        var from = Items.IndexOf(dragged);
+        var to = Items.IndexOf(itemUnderMouse);
+        if (from < 0 || to < 0) return;
+
+        Items.RemoveAt(from);
+        Items.Insert(to, dragged);
     }
 
     protected override void OnMouseUp(MouseEventArgs mea)
     {
         base.OnMouseUp(mea);
+
+        if (_isCurrentlyDragging)
+        {
+            _isCurrentlyDragging = false;
+            OnEndDrag(EventArgs.Empty);
+            return;
+        }
 
         var item = GetItemAtInternal(mea.Location);
         item?.RaiseMouseUp(mea);

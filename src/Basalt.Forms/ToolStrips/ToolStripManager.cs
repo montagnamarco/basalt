@@ -6,7 +6,7 @@ namespace System.Windows.Forms;
 /// a custom <see cref="ToolStripRenderer"/>. Merging several strips into one
 /// is not implemented in this round.
 /// </summary>
-public static class ToolStripManager
+public static partial class ToolStripManager
 {
     private static ToolStripRenderer? _renderer;
     private static ToolStripManagerRenderMode _renderMode = ToolStripManagerRenderMode.System;

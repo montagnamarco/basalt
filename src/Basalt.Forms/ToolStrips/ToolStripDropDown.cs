@@ -10,7 +10,7 @@ namespace System.Windows.Forms;
 /// context menu. Its items always stack top to bottom, and the keyboard
 /// (arrows, Enter, Escape) navigates them while it is open.
 /// </summary>
-public class ToolStripDropDown : ToolStrip
+public partial class ToolStripDropDown : ToolStrip
 {
     private ToolStripItem? _activeItem;
     private ToolStripDropDownDirection _dropDownDirection = ToolStripDropDownDirection.Default;
@@ -145,6 +145,10 @@ public class ToolStripDropDown : ToolStrip
         var wasOpen = IsOpen;
         Popups.Show(this, owner, new Rectangle(location, Size));
 
+        // Control's own Visible (what AccessibleObject.State and everything else typed against
+        // Control, not this subclass's hiding property, reads) tracks the real, just-changed state.
+        base.SetVisibleCore(true);
+
         if (!wasOpen) OnOpened(EventArgs.Empty);
     }
 
@@ -237,6 +241,7 @@ public class ToolStripDropDown : ToolStrip
         _activeItem?.SetSelectedInternal(false);
         _activeItem = null;
         Popups.Close(this);
+        base.SetVisibleCore(false);
 
         OnClosed(new ToolStripDropDownClosedEventArgs(reason));
     }

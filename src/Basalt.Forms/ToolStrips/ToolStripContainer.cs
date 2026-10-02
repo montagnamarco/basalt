@@ -10,7 +10,7 @@ namespace System.Windows.Forms;
 /// and the whole group resizes together.
 /// </summary>
 [Designer("System.Windows.Forms.Design.ToolStripContainerDesigner, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
-public class ToolStripContainer : ContainerControl
+public partial class ToolStripContainer : ContainerControl
 {
     public ToolStripContainer()
     {

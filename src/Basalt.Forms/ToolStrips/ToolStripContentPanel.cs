@@ -9,7 +9,7 @@ namespace System.Windows.Forms;
 /// <see cref="Load"/> once, the first time its handle is created.
 /// </summary>
 [ToolboxItem(false)]
-public class ToolStripContentPanel : Panel
+public partial class ToolStripContentPanel : Panel
 {
     private ToolStripRenderer? _renderer;
     private ToolStripRenderMode _renderMode = ToolStripRenderMode.ManagerRenderMode;

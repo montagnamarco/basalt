@@ -160,6 +160,28 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
         FillVerticalGradient(e.Graphics, e.AffectedBounds, ColorTable.ImageMarginGradientBegin, ColorTable.ImageMarginGradientEnd);
     }
 
+    /// <summary>The band a strip is dragged into: the same soft gradient as the strip itself, unless a handler already painted it.</summary>
+    protected override void OnRenderToolStripPanelBackground(ToolStripPanelRenderEventArgs e)
+    {
+        base.OnRenderToolStripPanelBackground(e);
+
+        if (e.Handled) return;
+
+        var bounds = e.ToolStripPanel.ClientRectangle;
+        FillVerticalGradient(e.Graphics, bounds, ColorTable.ToolStripPanelGradientBegin, ColorTable.ToolStripPanelGradientEnd);
+    }
+
+    /// <summary>The form's own content area in the middle of a ToolStripContainer: plain, as Office leaves it.</summary>
+    protected override void OnRenderToolStripContentPanelBackground(ToolStripContentPanelRenderEventArgs e)
+    {
+        base.OnRenderToolStripContentPanelBackground(e);
+
+        if (e.Handled) return;
+
+        using var brush = new SolidBrush(ColorTable.ToolStripContentPanelGradientEnd);
+        e.Graphics.FillRectangle(brush, e.ToolStripContentPanel.ClientRectangle);
+    }
+
     protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
     {
         base.OnRenderArrow(e);

@@ -9,7 +9,7 @@ namespace System.Windows.Forms;
 /// Control.ContextMenuStrip property it would still need).
 /// </summary>
 [DefaultEvent("Opening")]
-public class ContextMenuStrip : ToolStripDropDownMenu, IContextMenuSource
+public partial class ContextMenuStrip : ToolStripDropDownMenu, IContextMenuSource
 {
     private Control? _sourceControl;
 
@@ -51,6 +51,13 @@ public class ContextMenuStrip : ToolStripDropDownMenu, IContextMenuSource
         var anchor = control.RectangleToScreen(new Rectangle(location, Size.Empty));
         ShowAt(anchor, ToolStripDropDownDirection.BelowRight, control);
     }
+
+    /// <summary>
+    /// Setting Visible = true without going through Show opens at the mouse position, the same
+    /// fallback ToolStripDropDown.DefaultShowBounds already gives a bare Show() when there is no
+    /// OwnerItem to anchor to -- matching WinForms, not an error, for a ContextMenuStrip either.
+    /// </summary>
+    protected override void SetVisibleCore(bool value) => base.SetVisibleCore(value);
 
     protected override void OnOpened(EventArgs e)
     {

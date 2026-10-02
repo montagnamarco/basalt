@@ -15,7 +15,7 @@ namespace System.Windows.Forms;
 /// Left/Right-between-top-items keystroke works through the normal keyboard
 /// pipeline, because the open drop-down is a popup that owns the keyboard.
 /// </remarks>
-public class MenuStrip : ToolStrip
+public partial class MenuStrip : ToolStrip
 {
     private ToolStripMenuItem? _activeTopItem;
 
@@ -58,7 +58,7 @@ public class MenuStrip : ToolStrip
 
     /// <summary>Whether the bar stretches to fill its container's width, as a form's main menu does.</summary>
     [DefaultValue(true)]
-    public bool Stretch { get; set; } = true;
+    public new bool Stretch { get; set; } = true;
 
     /// <summary>The top item whose drop-down is open, if the bar is in menu mode.</summary>
     internal ToolStripMenuItem? ActiveTopItem => _activeTopItem;

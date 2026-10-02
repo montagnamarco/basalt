@@ -7,7 +7,7 @@ namespace System.Windows.Forms;
 /// raises the matching Render* event; <see cref="ToolStripSystemRenderer"/>
 /// and <see cref="ToolStripProfessionalRenderer"/> do the actual drawing.
 /// </summary>
-public abstract class ToolStripRenderer
+public abstract partial class ToolStripRenderer
 {
     /// <summary>Kept for parity with Microsoft's surface; this project draws arrows without an offset table.</summary>
     protected static int Offset2X;
@@ -122,6 +122,9 @@ public abstract class ToolStripRenderer
     protected virtual void Initialize(ToolStrip toolStrip)
     {
     }
+
+    /// <summary>Lets ToolStrip.OnHandleCreated (a different class) call the protected hook above.</summary>
+    internal void InitializeOnHandleCreated(ToolStrip toolStrip) => Initialize(toolStrip);
 
     protected virtual void InitializeItem(ToolStripItem item)
     {
