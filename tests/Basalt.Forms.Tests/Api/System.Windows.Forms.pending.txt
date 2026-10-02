@@ -7,10 +7,6 @@ F public System.Resources.ResXResourceWriter::ResMimeType : System.String static
 F public System.Resources.ResXResourceWriter::ResourceSchema : System.String static readonly
 F public System.Resources.ResXResourceWriter::SoapSerializedObjectMimeType : System.String static readonly
 F public System.Resources.ResXResourceWriter::Version : System.String static readonly
-F public System.Windows.Forms.AxHost+ActiveXInvokeKind::MethodInvoke : System.Windows.Forms.AxHost+ActiveXInvokeKind const = 0
-F public System.Windows.Forms.AxHost+ActiveXInvokeKind::PropertyGet : System.Windows.Forms.AxHost+ActiveXInvokeKind const = 1
-F public System.Windows.Forms.AxHost+ActiveXInvokeKind::PropertySet : System.Windows.Forms.AxHost+ActiveXInvokeKind const = 2
-F public System.Windows.Forms.AxHost+ActiveXInvokeKind::value__ : System.Int32
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Default : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::No : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Yes : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
@@ -28,16 +24,7 @@ I System.Resources.ResXResourceWriter : System.IDisposable
 I System.Resources.ResXResourceWriter : System.Resources.IResourceWriter
 I System.Windows.Forms.AccessibleObject : Accessibility.IAccessible
 I System.Windows.Forms.AccessibleObject : Windows.Win32.System.Com.IDispatch+Interface
-I System.Windows.Forms.AxHost : System.ComponentModel.ICustomTypeDescriptor
-I System.Windows.Forms.AxHost : System.ComponentModel.ISupportInitialize
-I System.Windows.Forms.AxHost+State : System.IDisposable
-I System.Windows.Forms.AxHost+State : System.Runtime.Serialization.ISerializable
 I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDataObject
-I System.Windows.Forms.HtmlElementCollection : System.Collections.ICollection
-I System.Windows.Forms.HtmlElementCollection : System.Collections.IEnumerable
-I System.Windows.Forms.HtmlHistory : System.IDisposable
-I System.Windows.Forms.HtmlWindowCollection : System.Collections.ICollection
-I System.Windows.Forms.HtmlWindowCollection : System.Collections.IEnumerable
 I System.Windows.Forms.KeysConverter : System.Collections.IComparer
 I System.Windows.Forms.ListViewGroup : System.Runtime.Serialization.ISerializable
 I System.Windows.Forms.ListViewItem : System.Runtime.Serialization.ISerializable
@@ -48,62 +35,11 @@ I System.Windows.Forms.PropertyGrid+PropertyTabCollection : System.Collections.I
 I System.Windows.Forms.ToolStripItem : System.Windows.Forms.IDropTarget
 I System.Windows.Forms.ToolStripStatusLabel : System.Windows.Forms.Automation.IAutomationLiveRegion
 I System.Windows.Forms.TreeNode : System.Runtime.Serialization.ISerializable
-I System.Windows.Forms.WebBrowserSiteBase : System.IDisposable
 M protected System.Resources.ResXResourceReader::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Resources.ResXResourceReader::Finalize() -> System.Void virtual
 M protected System.Resources.ResXResourceWriter::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Resources.ResXResourceWriter::Finalize() -> System.Void virtual
-M protected System.Windows.Forms.AxHost+ConnectionPointCookie::Finalize() -> System.Void virtual
-M protected System.Windows.Forms.AxHost+State::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
-M protected System.Windows.Forms.AxHost+State::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::.ctor(System.String)
-M protected System.Windows.Forms.AxHost::.ctor(System.String, System.Int32)
-M protected System.Windows.Forms.AxHost::AttachInterfaces() -> System.Void virtual
-M protected System.Windows.Forms.AxHost::CreateHandle() -> System.Void virtual
-M protected System.Windows.Forms.AxHost::CreateInstanceCore(System.Guid) -> System.Object virtual
-M protected System.Windows.Forms.AxHost::CreateSink() -> System.Void virtual
-M protected System.Windows.Forms.AxHost::DestroyHandle() -> System.Void virtual
-M protected System.Windows.Forms.AxHost::DetachSink() -> System.Void virtual
-M protected System.Windows.Forms.AxHost::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::GetColorFromOleColor(System.UInt32) -> System.Drawing.Color static
-M protected System.Windows.Forms.AxHost::GetFontFromIFont(System.Object) -> System.Drawing.Font static
-M protected System.Windows.Forms.AxHost::GetFontFromIFontDisp(System.Object) -> System.Drawing.Font static
-M protected System.Windows.Forms.AxHost::GetIFontDispFromFont(System.Drawing.Font) -> System.Object static
-M protected System.Windows.Forms.AxHost::GetIFontFromFont(System.Drawing.Font) -> System.Object static
-M protected System.Windows.Forms.AxHost::GetIPictureDispFromPicture(System.Drawing.Image) -> System.Object static
-M protected System.Windows.Forms.AxHost::GetIPictureFromCursor(System.Windows.Forms.Cursor) -> System.Object static
-M protected System.Windows.Forms.AxHost::GetIPictureFromPicture(System.Drawing.Image) -> System.Object static
-M protected System.Windows.Forms.AxHost::GetOADateFromTime(System.DateTime) -> System.Double static
-M protected System.Windows.Forms.AxHost::GetOleColorFromColor(System.Drawing.Color) -> System.UInt32 static
-M protected System.Windows.Forms.AxHost::GetPictureFromIPicture(System.Object) -> System.Drawing.Image static
-M protected System.Windows.Forms.AxHost::GetPictureFromIPictureDisp(System.Object) -> System.Drawing.Image static
-M protected System.Windows.Forms.AxHost::GetScaledBounds(System.Drawing.Rectangle, System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Drawing.Rectangle virtual
-M protected System.Windows.Forms.AxHost::GetTimeFromOADate(System.Double) -> System.DateTime static
-M protected System.Windows.Forms.AxHost::IsInputChar(System.Char) -> System.Boolean virtual
-M protected System.Windows.Forms.AxHost::OnBackColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::OnForeColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::OnInPlaceActive() -> System.Void virtual
-M protected System.Windows.Forms.AxHost::OnLostFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.AxHost::ProcessMnemonic(System.Char) -> System.Boolean virtual
-M protected System.Windows.Forms.AxHost::PropsValid() -> System.Boolean
-M protected System.Windows.Forms.AxHost::RaiseOnMouseDown(System.Int16, System.Int16, System.Int32, System.Int32) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseDown(System.Int16, System.Int16, System.Single, System.Single) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseDown(System.Object, System.Object, System.Object, System.Object) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseMove(System.Int16, System.Int16, System.Int32, System.Int32) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseMove(System.Int16, System.Int16, System.Single, System.Single) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseMove(System.Object, System.Object, System.Object, System.Object) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseUp(System.Int16, System.Int16, System.Int32, System.Int32) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseUp(System.Int16, System.Int16, System.Single, System.Single) -> System.Void
-M protected System.Windows.Forms.AxHost::RaiseOnMouseUp(System.Object, System.Object, System.Object, System.Object) -> System.Void
-M protected System.Windows.Forms.AxHost::SetAboutBoxDelegate(System.Windows.Forms.AxHost+AboutBoxDelegate) -> System.Void
-M protected System.Windows.Forms.AxHost::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::SetVisibleCore(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.AxHost::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.AxHost::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.AxHost::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.Button::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
 M protected System.Windows.Forms.Button::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.ButtonBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
@@ -710,47 +646,8 @@ M protected System.Windows.Forms.UpDownBase::RescaleConstantsForDpi(System.Int32
 M protected System.Windows.Forms.UpDownBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.UserControl::OnResize(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.UserControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::AttachInterfaces(System.Object) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.WebBrowser::CreateSink() -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::CreateWebBrowserSiteBase() -> System.Windows.Forms.WebBrowserSiteBase virtual
-M protected System.Windows.Forms.WebBrowser::DetachInterfaces() -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::DetachSink() -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnCanGoBackChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnCanGoForwardChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnDocumentCompleted(System.Windows.Forms.WebBrowserDocumentCompletedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnDocumentTitleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnEncryptionLevelChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnFileDownload(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnNavigated(System.Windows.Forms.WebBrowserNavigatedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnNavigating(System.Windows.Forms.WebBrowserNavigatingEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnNewWindow(System.ComponentModel.CancelEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnProgressChanged(System.Windows.Forms.WebBrowserProgressChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::OnStatusTextChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.WebBrowser::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowser::get_DefaultSize() -> System.Drawing.Size virtual
-M protected System.Windows.Forms.WebBrowserBase::AttachInterfaces(System.Object) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::CreateSink() -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::CreateWebBrowserSiteBase() -> System.Windows.Forms.WebBrowserSiteBase virtual
-M protected System.Windows.Forms.WebBrowserBase::DetachInterfaces() -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::DetachSink() -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::IsInputChar(System.Char) -> System.Boolean virtual
-M protected System.Windows.Forms.WebBrowserBase::OnBackColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnForeColorChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnGotFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnLostFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnParentChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::OnVisibleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.WebBrowserBase::ProcessMnemonic(System.Char) -> System.Boolean virtual
 M protected System.Windows.Forms.WebBrowserBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.WebBrowserBase::get_DefaultSize() -> System.Drawing.Size virtual
-M protected System.Windows.Forms.WebBrowserSiteBase::Dispose(System.Boolean) -> System.Void virtual
 M public System.Drawing.Design.IPropertyValueUIService::AddPropertyValueUIHandler(System.Drawing.Design.PropertyValueUIHandler) -> System.Void abstract
 M public System.Drawing.Design.IPropertyValueUIService::GetPropertyUIValueItems(System.ComponentModel.ITypeDescriptorContext, System.ComponentModel.PropertyDescriptor) -> System.Drawing.Design.PropertyValueUIItem[] abstract
 M public System.Drawing.Design.IPropertyValueUIService::NotifyPropertyValueUIItemsChanged() -> System.Void abstract
@@ -848,135 +745,12 @@ M public System.Windows.Forms.AmbientProperties::get_Cursor() -> System.Windows.
 M public System.Windows.Forms.AmbientProperties::set_Cursor(System.Windows.Forms.Cursor) -> System.Void
 M public System.Windows.Forms.AxHost+AxComponentEditor::.ctor()
 M public System.Windows.Forms.AxHost+AxComponentEditor::EditComponent(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Windows.Forms.IWin32Window) -> System.Boolean virtual
-M public System.Windows.Forms.AxHost+ClsidAttribute::.ctor(System.String)
-M public System.Windows.Forms.AxHost+ClsidAttribute::get_Value() -> System.String
-M public System.Windows.Forms.AxHost+ConnectionPointCookie::.ctor(System.Object, System.Object, System.Type)
-M public System.Windows.Forms.AxHost+ConnectionPointCookie::Disconnect() -> System.Void
-M public System.Windows.Forms.AxHost+InvalidActiveXStateException::.ctor()
-M public System.Windows.Forms.AxHost+InvalidActiveXStateException::.ctor(System.String, System.Windows.Forms.AxHost+ActiveXInvokeKind)
-M public System.Windows.Forms.AxHost+InvalidActiveXStateException::ToString() -> System.String virtual
-M public System.Windows.Forms.AxHost+State::.ctor(System.IO.Stream, System.Int32, System.Boolean, System.String)
-M public System.Windows.Forms.AxHost+State::Dispose() -> System.Void
-M public System.Windows.Forms.AxHost+StateConverter::.ctor()
-M public System.Windows.Forms.AxHost+StateConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.AxHost+StateConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.AxHost+StateConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.AxHost+StateConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.AxHost+TypeLibraryTimeStampAttribute::.ctor(System.String)
-M public System.Windows.Forms.AxHost+TypeLibraryTimeStampAttribute::get_Value() -> System.DateTime
-M public System.Windows.Forms.AxHost::BeginInit() -> System.Void
-M public System.Windows.Forms.AxHost::DoVerb(System.Int32) -> System.Void
-M public System.Windows.Forms.AxHost::DrawToBitmap(System.Drawing.Bitmap, System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.AxHost::EndInit() -> System.Void
-M public System.Windows.Forms.AxHost::GetOcx() -> System.Object
-M public System.Windows.Forms.AxHost::HasPropertyPages() -> System.Boolean
-M public System.Windows.Forms.AxHost::InvokeEditMode() -> System.Void
-M public System.Windows.Forms.AxHost::MakeDirty() -> System.Void
-M public System.Windows.Forms.AxHost::PreProcessMessage(ref System.Windows.Forms.Message) -> System.Boolean virtual
-M public System.Windows.Forms.AxHost::ShowAboutBox() -> System.Void
-M public System.Windows.Forms.AxHost::ShowPropertyPages() -> System.Void
-M public System.Windows.Forms.AxHost::ShowPropertyPages(System.Windows.Forms.Control) -> System.Void
-M public System.Windows.Forms.AxHost::add_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_BindingContextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.AxHost::add_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_CursorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_DragDrop(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_DragEnter(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_DragLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_EnabledChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_HelpRequested(System.Windows.Forms.HelpEventHandler) -> System.Void
 M public System.Windows.Forms.AxHost::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_Layout(System.Windows.Forms.LayoutEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseDoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseEnter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseHover(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_MouseWheel(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_RightToLeftChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_StyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::get_BackColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.AxHost::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.AxHost::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.AxHost::get_ContainingControl() -> System.Windows.Forms.ContainerControl
-M public System.Windows.Forms.AxHost::get_Cursor() -> System.Windows.Forms.Cursor virtual
-M public System.Windows.Forms.AxHost::get_EditMode() -> System.Boolean
-M public System.Windows.Forms.AxHost::get_Enabled() -> System.Boolean virtual
-M public System.Windows.Forms.AxHost::get_Font() -> System.Drawing.Font virtual
-M public System.Windows.Forms.AxHost::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.AxHost::get_HasAboutBox() -> System.Boolean
 M public System.Windows.Forms.AxHost::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.AxHost::get_OcxState() -> System.Windows.Forms.AxHost+State
-M public System.Windows.Forms.AxHost::get_RightToLeft() -> System.Boolean virtual
-M public System.Windows.Forms.AxHost::get_Text() -> System.String virtual
-M public System.Windows.Forms.AxHost::remove_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_BindingContextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.AxHost::remove_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_CursorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_DragDrop(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_DragEnter(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_DragLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_EnabledChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_HelpRequested(System.Windows.Forms.HelpEventHandler) -> System.Void
 M public System.Windows.Forms.AxHost::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_Layout(System.Windows.Forms.LayoutEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseDoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseEnter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseHover(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_MouseWheel(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_RightToLeftChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_StyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.AxHost::set_BackColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_ContainingControl(System.Windows.Forms.ContainerControl) -> System.Void
-M public System.Windows.Forms.AxHost::set_Cursor(System.Windows.Forms.Cursor) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_Enabled(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_Font(System.Drawing.Font) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_ForeColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.AxHost::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.AxHost::set_OcxState(System.Windows.Forms.AxHost+State) -> System.Void
-M public System.Windows.Forms.AxHost::set_RightToLeft(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_Site(System.ComponentModel.ISite) -> System.Void virtual
-M public System.Windows.Forms.AxHost::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.ButtonBase::add_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ButtonBase::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.ButtonBase::remove_ImeModeChanged(System.EventHandler) -> System.Void
@@ -1649,262 +1423,6 @@ M public System.Windows.Forms.Form::set_FormCaptionTextColor(System.Drawing.Colo
 M public System.Windows.Forms.Form::set_FormCornerPreference(System.Windows.Forms.FormCornerPreference) -> System.Void
 M public System.Windows.Forms.Form::set_FormScreenCaptureMode(System.Windows.Forms.ScreenCaptureMode) -> System.Void
 M public System.Windows.Forms.Form::set_Menu(System.Windows.Forms.MainMenu) -> System.Void
-M public System.Windows.Forms.HtmlDocument::AttachEventHandler(System.String, System.EventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::CreateElement(System.String) -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlDocument::DetachEventHandler(System.String, System.EventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::Equals(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.HtmlDocument::ExecCommand(System.String, System.Boolean, System.Object) -> System.Void
-M public System.Windows.Forms.HtmlDocument::Focus() -> System.Void
-M public System.Windows.Forms.HtmlDocument::GetElementById(System.String) -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlDocument::GetElementFromPoint(System.Drawing.Point) -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlDocument::GetElementsByTagName(System.String) -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlDocument::GetHashCode() -> System.Int32 virtual
-M public System.Windows.Forms.HtmlDocument::InvokeScript(System.String) -> System.Object
-M public System.Windows.Forms.HtmlDocument::InvokeScript(System.String, System.Object[]) -> System.Object
-M public System.Windows.Forms.HtmlDocument::OpenNew(System.Boolean) -> System.Windows.Forms.HtmlDocument
-M public System.Windows.Forms.HtmlDocument::Write(System.String) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_Click(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_ContextMenuShowing(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_Focusing(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_LosingFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_MouseDown(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_MouseLeave(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_MouseMove(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_MouseOver(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_MouseUp(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::add_Stop(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::get_ActiveElement() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlDocument::get_ActiveLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.HtmlDocument::get_All() -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlDocument::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.HtmlDocument::get_Body() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlDocument::get_Cookie() -> System.String
-M public System.Windows.Forms.HtmlDocument::get_DefaultEncoding() -> System.String
-M public System.Windows.Forms.HtmlDocument::get_DomDocument() -> System.Object
-M public System.Windows.Forms.HtmlDocument::get_Domain() -> System.String
-M public System.Windows.Forms.HtmlDocument::get_Encoding() -> System.String
-M public System.Windows.Forms.HtmlDocument::get_Focused() -> System.Boolean
-M public System.Windows.Forms.HtmlDocument::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.HtmlDocument::get_Forms() -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlDocument::get_Images() -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlDocument::get_LinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.HtmlDocument::get_Links() -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlDocument::get_RightToLeft() -> System.Boolean
-M public System.Windows.Forms.HtmlDocument::get_Title() -> System.String
-M public System.Windows.Forms.HtmlDocument::get_Url() -> System.Uri
-M public System.Windows.Forms.HtmlDocument::get_VisitedLinkColor() -> System.Drawing.Color
-M public System.Windows.Forms.HtmlDocument::get_Window() -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlDocument::op_Equality(System.Windows.Forms.HtmlDocument, System.Windows.Forms.HtmlDocument) -> System.Boolean static
-M public System.Windows.Forms.HtmlDocument::op_Inequality(System.Windows.Forms.HtmlDocument, System.Windows.Forms.HtmlDocument) -> System.Boolean static
-M public System.Windows.Forms.HtmlDocument::remove_Click(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_ContextMenuShowing(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_Focusing(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_LosingFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_MouseDown(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_MouseLeave(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_MouseMove(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_MouseOver(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_MouseUp(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::remove_Stop(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_ActiveLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_BackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_Cookie(System.String) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_Domain(System.String) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_Encoding(System.String) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_ForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_LinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_RightToLeft(System.Boolean) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_Title(System.String) -> System.Void
-M public System.Windows.Forms.HtmlDocument::set_VisitedLinkColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.HtmlElement::AppendChild(System.Windows.Forms.HtmlElement) -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElement::AttachEventHandler(System.String, System.EventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::DetachEventHandler(System.String, System.EventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::Equals(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.HtmlElement::Focus() -> System.Void
-M public System.Windows.Forms.HtmlElement::GetAttribute(System.String) -> System.String
-M public System.Windows.Forms.HtmlElement::GetElementsByTagName(System.String) -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlElement::GetHashCode() -> System.Int32 virtual
-M public System.Windows.Forms.HtmlElement::InsertAdjacentElement(System.Windows.Forms.HtmlElementInsertionOrientation, System.Windows.Forms.HtmlElement) -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElement::InvokeMember(System.String) -> System.Object
-M public System.Windows.Forms.HtmlElement::InvokeMember(System.String, System.Object[]) -> System.Object
-M public System.Windows.Forms.HtmlElement::RaiseEvent(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::RemoveFocus() -> System.Void
-M public System.Windows.Forms.HtmlElement::ScrollIntoView(System.Boolean) -> System.Void
-M public System.Windows.Forms.HtmlElement::SetAttribute(System.String, System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_Click(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_DoubleClick(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_Drag(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_DragEnd(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_DragLeave(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_DragOver(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_Focusing(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_GotFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_KeyDown(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_KeyPress(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_KeyUp(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_LosingFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_LostFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_MouseDown(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_MouseEnter(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_MouseLeave(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_MouseMove(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_MouseOver(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::add_MouseUp(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::get_All() -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlElement::get_CanHaveChildren() -> System.Boolean
-M public System.Windows.Forms.HtmlElement::get_Children() -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlElement::get_ClientRectangle() -> System.Drawing.Rectangle
-M public System.Windows.Forms.HtmlElement::get_Document() -> System.Windows.Forms.HtmlDocument
-M public System.Windows.Forms.HtmlElement::get_DomElement() -> System.Object
-M public System.Windows.Forms.HtmlElement::get_Enabled() -> System.Boolean
-M public System.Windows.Forms.HtmlElement::get_FirstChild() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElement::get_Id() -> System.String
-M public System.Windows.Forms.HtmlElement::get_InnerHtml() -> System.String
-M public System.Windows.Forms.HtmlElement::get_InnerText() -> System.String
-M public System.Windows.Forms.HtmlElement::get_Name() -> System.String
-M public System.Windows.Forms.HtmlElement::get_NextSibling() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElement::get_OffsetParent() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElement::get_OffsetRectangle() -> System.Drawing.Rectangle
-M public System.Windows.Forms.HtmlElement::get_OuterHtml() -> System.String
-M public System.Windows.Forms.HtmlElement::get_OuterText() -> System.String
-M public System.Windows.Forms.HtmlElement::get_Parent() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElement::get_ScrollLeft() -> System.Int32
-M public System.Windows.Forms.HtmlElement::get_ScrollRectangle() -> System.Drawing.Rectangle
-M public System.Windows.Forms.HtmlElement::get_ScrollTop() -> System.Int32
-M public System.Windows.Forms.HtmlElement::get_Style() -> System.String
-M public System.Windows.Forms.HtmlElement::get_TabIndex() -> System.Int16
-M public System.Windows.Forms.HtmlElement::get_TagName() -> System.String
-M public System.Windows.Forms.HtmlElement::op_Equality(System.Windows.Forms.HtmlElement, System.Windows.Forms.HtmlElement) -> System.Boolean static
-M public System.Windows.Forms.HtmlElement::op_Inequality(System.Windows.Forms.HtmlElement, System.Windows.Forms.HtmlElement) -> System.Boolean static
-M public System.Windows.Forms.HtmlElement::remove_Click(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_DoubleClick(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_Drag(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_DragEnd(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_DragLeave(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_DragOver(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_Focusing(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_GotFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_KeyDown(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_KeyPress(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_KeyUp(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_LosingFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_LostFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_MouseDown(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_MouseEnter(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_MouseLeave(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_MouseMove(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_MouseOver(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::remove_MouseUp(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_Enabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_Id(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_InnerHtml(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_InnerText(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_Name(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_OuterHtml(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_OuterText(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_ScrollLeft(System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_ScrollTop(System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_Style(System.String) -> System.Void
-M public System.Windows.Forms.HtmlElement::set_TabIndex(System.Int16) -> System.Void
-M public System.Windows.Forms.HtmlElementCollection::GetElementsByName(System.String) -> System.Windows.Forms.HtmlElementCollection
-M public System.Windows.Forms.HtmlElementCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.HtmlElementCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.HtmlElementCollection::get_Item(System.Int32) -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElementCollection::get_Item(System.String) -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElementErrorEventArgs::get_Description() -> System.String
-M public System.Windows.Forms.HtmlElementErrorEventArgs::get_Handled() -> System.Boolean
-M public System.Windows.Forms.HtmlElementErrorEventArgs::get_LineNumber() -> System.Int32
-M public System.Windows.Forms.HtmlElementErrorEventArgs::get_Url() -> System.Uri
-M public System.Windows.Forms.HtmlElementErrorEventArgs::set_Handled(System.Boolean) -> System.Void
-M public System.Windows.Forms.HtmlElementErrorEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.HtmlElementErrorEventHandler::BeginInvoke(System.Object, System.Windows.Forms.HtmlElementErrorEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.HtmlElementErrorEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.HtmlElementErrorEventHandler::Invoke(System.Object, System.Windows.Forms.HtmlElementErrorEventArgs) -> System.Void virtual
-M public System.Windows.Forms.HtmlElementEventArgs::get_AltKeyPressed() -> System.Boolean
-M public System.Windows.Forms.HtmlElementEventArgs::get_BubbleEvent() -> System.Boolean
-M public System.Windows.Forms.HtmlElementEventArgs::get_ClientMousePosition() -> System.Drawing.Point
-M public System.Windows.Forms.HtmlElementEventArgs::get_CtrlKeyPressed() -> System.Boolean
-M public System.Windows.Forms.HtmlElementEventArgs::get_EventType() -> System.String
-M public System.Windows.Forms.HtmlElementEventArgs::get_FromElement() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElementEventArgs::get_KeyPressedCode() -> System.Int32
-M public System.Windows.Forms.HtmlElementEventArgs::get_MouseButtonsPressed() -> System.Windows.Forms.MouseButtons
-M public System.Windows.Forms.HtmlElementEventArgs::get_MousePosition() -> System.Drawing.Point
-M public System.Windows.Forms.HtmlElementEventArgs::get_OffsetMousePosition() -> System.Drawing.Point
-M public System.Windows.Forms.HtmlElementEventArgs::get_ReturnValue() -> System.Boolean
-M public System.Windows.Forms.HtmlElementEventArgs::get_ShiftKeyPressed() -> System.Boolean
-M public System.Windows.Forms.HtmlElementEventArgs::get_ToElement() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlElementEventArgs::set_BubbleEvent(System.Boolean) -> System.Void
-M public System.Windows.Forms.HtmlElementEventArgs::set_ReturnValue(System.Boolean) -> System.Void
-M public System.Windows.Forms.HtmlElementEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.HtmlElementEventHandler::BeginInvoke(System.Object, System.Windows.Forms.HtmlElementEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.HtmlElementEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.HtmlElementEventHandler::Invoke(System.Object, System.Windows.Forms.HtmlElementEventArgs) -> System.Void virtual
-M public System.Windows.Forms.HtmlHistory::Back(System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlHistory::Dispose() -> System.Void
-M public System.Windows.Forms.HtmlHistory::Forward(System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlHistory::Go(System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlHistory::Go(System.String) -> System.Void
-M public System.Windows.Forms.HtmlHistory::Go(System.Uri) -> System.Void
-M public System.Windows.Forms.HtmlHistory::get_DomHistory() -> System.Object
-M public System.Windows.Forms.HtmlHistory::get_Length() -> System.Int32
-M public System.Windows.Forms.HtmlWindow::Alert(System.String) -> System.Void
-M public System.Windows.Forms.HtmlWindow::AttachEventHandler(System.String, System.EventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::Close() -> System.Void
-M public System.Windows.Forms.HtmlWindow::Confirm(System.String) -> System.Boolean
-M public System.Windows.Forms.HtmlWindow::DetachEventHandler(System.String, System.EventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::Equals(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.HtmlWindow::Focus() -> System.Void
-M public System.Windows.Forms.HtmlWindow::GetHashCode() -> System.Int32 virtual
-M public System.Windows.Forms.HtmlWindow::MoveTo(System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.HtmlWindow::MoveTo(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlWindow::Navigate(System.String) -> System.Void
-M public System.Windows.Forms.HtmlWindow::Navigate(System.Uri) -> System.Void
-M public System.Windows.Forms.HtmlWindow::Open(System.String, System.String, System.String, System.Boolean) -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlWindow::Open(System.Uri, System.String, System.String, System.Boolean) -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlWindow::OpenNew(System.String, System.String) -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlWindow::OpenNew(System.Uri, System.String) -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlWindow::Prompt(System.String, System.String) -> System.String
-M public System.Windows.Forms.HtmlWindow::RemoveFocus() -> System.Void
-M public System.Windows.Forms.HtmlWindow::ResizeTo(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.HtmlWindow::ResizeTo(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlWindow::ScrollTo(System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.HtmlWindow::ScrollTo(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.HtmlWindow::add_Error(System.Windows.Forms.HtmlElementErrorEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::add_GotFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::add_Load(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::add_LostFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::add_Resize(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::add_Scroll(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::add_Unload(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::get_Document() -> System.Windows.Forms.HtmlDocument
-M public System.Windows.Forms.HtmlWindow::get_DomWindow() -> System.Object
-M public System.Windows.Forms.HtmlWindow::get_Frames() -> System.Windows.Forms.HtmlWindowCollection
-M public System.Windows.Forms.HtmlWindow::get_History() -> System.Windows.Forms.HtmlHistory
-M public System.Windows.Forms.HtmlWindow::get_IsClosed() -> System.Boolean
-M public System.Windows.Forms.HtmlWindow::get_Name() -> System.String
-M public System.Windows.Forms.HtmlWindow::get_Opener() -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlWindow::get_Parent() -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlWindow::get_Position() -> System.Drawing.Point
-M public System.Windows.Forms.HtmlWindow::get_Size() -> System.Drawing.Size
-M public System.Windows.Forms.HtmlWindow::get_StatusBarText() -> System.String
-M public System.Windows.Forms.HtmlWindow::get_Url() -> System.Uri
-M public System.Windows.Forms.HtmlWindow::get_WindowFrameElement() -> System.Windows.Forms.HtmlElement
-M public System.Windows.Forms.HtmlWindow::op_Equality(System.Windows.Forms.HtmlWindow, System.Windows.Forms.HtmlWindow) -> System.Boolean static
-M public System.Windows.Forms.HtmlWindow::op_Inequality(System.Windows.Forms.HtmlWindow, System.Windows.Forms.HtmlWindow) -> System.Boolean static
-M public System.Windows.Forms.HtmlWindow::remove_Error(System.Windows.Forms.HtmlElementErrorEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::remove_GotFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::remove_Load(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::remove_LostFocus(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::remove_Resize(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::remove_Scroll(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::remove_Unload(System.Windows.Forms.HtmlElementEventHandler) -> System.Void
-M public System.Windows.Forms.HtmlWindow::set_Name(System.String) -> System.Void
-M public System.Windows.Forms.HtmlWindow::set_Size(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.HtmlWindow::set_StatusBarText(System.String) -> System.Void
-M public System.Windows.Forms.HtmlWindowCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.HtmlWindowCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.HtmlWindowCollection::get_Item(System.Int32) -> System.Windows.Forms.HtmlWindow
-M public System.Windows.Forms.HtmlWindowCollection::get_Item(System.String) -> System.Windows.Forms.HtmlWindow
 M public System.Windows.Forms.IComponentEditorPageSite::GetControl() -> System.Windows.Forms.Control abstract
 M public System.Windows.Forms.IComponentEditorPageSite::SetDirty() -> System.Void abstract
 M public System.Windows.Forms.ImageIndexConverter::.ctor()
@@ -3129,199 +2647,15 @@ M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_Handle() -> 
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_LastHResult() -> System.Int32
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_Part() -> System.Int32
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::get_State() -> System.Int32
-M public System.Windows.Forms.WebBrowser::.ctor()
-M public System.Windows.Forms.WebBrowser::GoBack() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::GoForward() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::GoHome() -> System.Void
-M public System.Windows.Forms.WebBrowser::GoSearch() -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.String) -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.String, System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.String, System.String) -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.String, System.String, System.Byte[], System.String) -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.Uri) -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.Uri, System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.Uri, System.String) -> System.Void
-M public System.Windows.Forms.WebBrowser::Navigate(System.Uri, System.String, System.Byte[], System.String) -> System.Void
-M public System.Windows.Forms.WebBrowser::Print() -> System.Void
-M public System.Windows.Forms.WebBrowser::Refresh() -> System.Void virtual
-M public System.Windows.Forms.WebBrowser::Refresh(System.Windows.Forms.WebBrowserRefreshOption) -> System.Void
-M public System.Windows.Forms.WebBrowser::ShowPageSetupDialog() -> System.Void
-M public System.Windows.Forms.WebBrowser::ShowPrintDialog() -> System.Void
-M public System.Windows.Forms.WebBrowser::ShowPrintPreviewDialog() -> System.Void
-M public System.Windows.Forms.WebBrowser::ShowPropertiesDialog() -> System.Void
-M public System.Windows.Forms.WebBrowser::ShowSaveAsDialog() -> System.Void
-M public System.Windows.Forms.WebBrowser::Stop() -> System.Void
-M public System.Windows.Forms.WebBrowser::add_CanGoBackChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_CanGoForwardChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_DocumentCompleted(System.Windows.Forms.WebBrowserDocumentCompletedEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_DocumentTitleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_EncryptionLevelChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_FileDownload(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_Navigated(System.Windows.Forms.WebBrowserNavigatedEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_Navigating(System.Windows.Forms.WebBrowserNavigatingEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_NewWindow(System.ComponentModel.CancelEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_ProgressChanged(System.Windows.Forms.WebBrowserProgressChangedEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::add_StatusTextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::get_AllowNavigation() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_AllowWebBrowserDrop() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_CanGoBack() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_CanGoForward() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_Document() -> System.Windows.Forms.HtmlDocument
-M public System.Windows.Forms.WebBrowser::get_DocumentStream() -> System.IO.Stream
-M public System.Windows.Forms.WebBrowser::get_DocumentText() -> System.String
-M public System.Windows.Forms.WebBrowser::get_DocumentTitle() -> System.String
-M public System.Windows.Forms.WebBrowser::get_DocumentType() -> System.String
-M public System.Windows.Forms.WebBrowser::get_EncryptionLevel() -> System.Windows.Forms.WebBrowserEncryptionLevel
-M public System.Windows.Forms.WebBrowser::get_Focused() -> System.Boolean virtual
-M public System.Windows.Forms.WebBrowser::get_IsBusy() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_IsOffline() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_IsWebBrowserContextMenuEnabled() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_ObjectForScripting() -> System.Object
-M public System.Windows.Forms.WebBrowser::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.WebBrowser::get_ReadyState() -> System.Windows.Forms.WebBrowserReadyState
-M public System.Windows.Forms.WebBrowser::get_ScriptErrorsSuppressed() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_ScrollBarsEnabled() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::get_StatusText() -> System.String virtual
-M public System.Windows.Forms.WebBrowser::get_Url() -> System.Uri
-M public System.Windows.Forms.WebBrowser::get_Version() -> System.Version
-M public System.Windows.Forms.WebBrowser::get_WebBrowserShortcutsEnabled() -> System.Boolean
-M public System.Windows.Forms.WebBrowser::remove_CanGoBackChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_CanGoForwardChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_DocumentCompleted(System.Windows.Forms.WebBrowserDocumentCompletedEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_DocumentTitleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_EncryptionLevelChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_FileDownload(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_Navigated(System.Windows.Forms.WebBrowserNavigatedEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_Navigating(System.Windows.Forms.WebBrowserNavigatingEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_NewWindow(System.ComponentModel.CancelEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_ProgressChanged(System.Windows.Forms.WebBrowserProgressChangedEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::remove_StatusTextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_AllowNavigation(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_AllowWebBrowserDrop(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_DocumentStream(System.IO.Stream) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_DocumentText(System.String) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_IsWebBrowserContextMenuEnabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_ObjectForScripting(System.Object) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_ScriptErrorsSuppressed(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_ScrollBarsEnabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_Url(System.Uri) -> System.Void
-M public System.Windows.Forms.WebBrowser::set_WebBrowserShortcutsEnabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::DrawToBitmap(System.Drawing.Bitmap, System.Drawing.Rectangle) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::PreProcessMessage(ref System.Windows.Forms.Message) -> System.Boolean virtual
-M public System.Windows.Forms.WebBrowserBase::add_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_BindingContextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.WebBrowserBase::add_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_CursorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_DragDrop(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_DragEnter(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_DragLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_EnabledChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_Enter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_HelpRequested(System.Windows.Forms.HelpEventHandler) -> System.Void
 M public System.Windows.Forms.WebBrowserBase::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_Layout(System.Windows.Forms.LayoutEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_Leave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseCaptureChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseEnter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseHover(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_MouseWheel(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_RightToLeftChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_StyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::get_ActiveXInstance() -> System.Object
-M public System.Windows.Forms.WebBrowserBase::get_AllowDrop() -> System.Boolean virtual
-M public System.Windows.Forms.WebBrowserBase::get_BackColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.WebBrowserBase::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.WebBrowserBase::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.WebBrowserBase::get_Cursor() -> System.Windows.Forms.Cursor virtual
-M public System.Windows.Forms.WebBrowserBase::get_Enabled() -> System.Boolean
-M public System.Windows.Forms.WebBrowserBase::get_Font() -> System.Drawing.Font virtual
-M public System.Windows.Forms.WebBrowserBase::get_ForeColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.WebBrowserBase::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.WebBrowserBase::get_RightToLeft() -> System.Windows.Forms.RightToLeft virtual
-M public System.Windows.Forms.WebBrowserBase::get_Text() -> System.String virtual
-M public System.Windows.Forms.WebBrowserBase::get_UseWaitCursor() -> System.Boolean
-M public System.Windows.Forms.WebBrowserBase::remove_BackColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_BindingContextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.WebBrowserBase::remove_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_CursorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_DragDrop(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_DragEnter(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_DragLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_DragOver(System.Windows.Forms.DragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_EnabledChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_Enter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_GiveFeedback(System.Windows.Forms.GiveFeedbackEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_HelpRequested(System.Windows.Forms.HelpEventHandler) -> System.Void
 M public System.Windows.Forms.WebBrowserBase::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_Layout(System.Windows.Forms.LayoutEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_Leave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseCaptureChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseEnter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseHover(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseLeave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_MouseWheel(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_QueryContinueDrag(System.Windows.Forms.QueryContinueDragEventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_RightToLeftChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_StyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::set_AllowDrop(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_BackColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_Cursor(System.Windows.Forms.Cursor) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_Enabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::set_Font(System.Drawing.Font) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_ForeColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.WebBrowserBase::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.WebBrowserBase::set_RightToLeft(System.Windows.Forms.RightToLeft) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_Site(System.ComponentModel.ISite) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.WebBrowserBase::set_UseWaitCursor(System.Boolean) -> System.Void
-M public System.Windows.Forms.WebBrowserSiteBase::Dispose() -> System.Void
 M public System.Windows.Forms.WindowsFormsSection::.ctor()
 M public System.Windows.Forms.WindowsFormsSection::get_JitDebugging() -> System.Boolean
 M public System.Windows.Forms.WindowsFormsSection::set_JitDebugging(System.Boolean) -> System.Void
-T abstract class System.Windows.Forms.AxHost : System.Windows.Forms.Control
 T abstract class System.Windows.Forms.Design.ComponentEditorPage : System.Windows.Forms.Panel
 T abstract class System.Windows.Forms.Design.WindowsFormsComponentEditor : System.ComponentModel.ComponentEditor
 T class System.Drawing.Design.PropertyValueUIItem
@@ -3332,10 +2666,6 @@ T class System.Resources.ResXResourceReader
 T class System.Resources.ResXResourceSet : System.Resources.ResourceSet
 T class System.Resources.ResXResourceWriter
 T class System.Windows.Forms.AxHost+AxComponentEditor : System.Windows.Forms.Design.WindowsFormsComponentEditor
-T class System.Windows.Forms.AxHost+ConnectionPointCookie
-T class System.Windows.Forms.AxHost+InvalidActiveXStateException : System.Exception
-T class System.Windows.Forms.AxHost+State
-T class System.Windows.Forms.AxHost+StateConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ColumnReorderedEventArgs : System.ComponentModel.CancelEventArgs
 T class System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant
@@ -3367,7 +2697,6 @@ T class System.Windows.Forms.DrawListViewItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawListViewSubItemEventArgs : System.EventArgs
 T class System.Windows.Forms.DrawTreeNodeEventArgs : System.EventArgs
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
-T class System.Windows.Forms.HtmlWindowCollection
 T class System.Windows.Forms.ImageIndexConverter : System.ComponentModel.Int32Converter
 T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringConverter
 T class System.Windows.Forms.KeysConverter : System.ComponentModel.TypeConverter
@@ -3396,9 +2725,6 @@ T class System.Windows.Forms.ToolStripSplitButton+ToolStripSplitButtonAccessible
 T class System.Windows.Forms.TreeNodeMouseHoverEventArgs : System.EventArgs
 T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.TreeViewImageKeyConverter : System.Windows.Forms.ImageKeyConverter
-T class System.Windows.Forms.WebBrowser : System.Windows.Forms.WebBrowserBase
-T class System.Windows.Forms.WebBrowserBase : System.Windows.Forms.Control
-T class System.Windows.Forms.WebBrowserSiteBase
 T delegate System.Drawing.Design.PropertyValueUIItemInvokeHandler
 T delegate System.Windows.Forms.ColumnReorderedEventHandler
 T delegate System.Windows.Forms.DataGridViewAutoSizeColumnModeEventHandler
@@ -3423,13 +2749,10 @@ T delegate System.Windows.Forms.DrawListViewColumnHeaderEventHandler
 T delegate System.Windows.Forms.DrawListViewItemEventHandler
 T delegate System.Windows.Forms.DrawListViewSubItemEventHandler
 T delegate System.Windows.Forms.DrawTreeNodeEventHandler
-T delegate System.Windows.Forms.HtmlElementErrorEventHandler
-T delegate System.Windows.Forms.HtmlElementEventHandler
 T delegate System.Windows.Forms.ListViewItemMouseHoverEventHandler
 T delegate System.Windows.Forms.NodeLabelEditEventHandler
 T delegate System.Windows.Forms.RetrieveVirtualItemEventHandler
 T delegate System.Windows.Forms.TreeNodeMouseHoverEventHandler
-T enum System.Windows.Forms.AxHost+ActiveXInvokeKind : System.Int32
 T interface System.Drawing.Design.IPropertyValueUIService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser
@@ -3438,18 +2761,9 @@ T interface System.Windows.Forms.Design.IWindowsFormsEditorService
 T interface System.Windows.Forms.IComponentEditorPageSite
 T interface System.Windows.Forms.PropertyGridInternal.IRootGridEntry
 T sealed class System.Resources.ResXDataNode
-T sealed class System.Windows.Forms.AxHost+ClsidAttribute : System.Attribute
-T sealed class System.Windows.Forms.AxHost+TypeLibraryTimeStampAttribute : System.Attribute
 T sealed class System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute : System.Attribute
 T sealed class System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute : System.Attribute
 T sealed class System.Windows.Forms.DockingAttribute : System.Attribute
-T sealed class System.Windows.Forms.HtmlDocument
-T sealed class System.Windows.Forms.HtmlElement
-T sealed class System.Windows.Forms.HtmlElementCollection
-T sealed class System.Windows.Forms.HtmlElementErrorEventArgs : System.EventArgs
-T sealed class System.Windows.Forms.HtmlElementEventArgs : System.EventArgs
-T sealed class System.Windows.Forms.HtmlHistory
-T sealed class System.Windows.Forms.HtmlWindow
 T sealed class System.Windows.Forms.ListViewInsertionMark
 T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute
 T sealed class System.Windows.Forms.WindowsFormsSection
