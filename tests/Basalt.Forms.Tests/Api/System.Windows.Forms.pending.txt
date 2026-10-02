@@ -27,7 +27,6 @@ F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::No :
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Yes : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute::Default : System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute static readonly
 F public System.Windows.Forms.DockingAttribute::Default : System.Windows.Forms.DockingAttribute static readonly
-F public System.Windows.Forms.GridItemCollection::Empty : System.Windows.Forms.GridItemCollection static
 F public System.Windows.Forms.Menu::FindHandle : System.Int32 const
 F public System.Windows.Forms.Menu::FindShortcut : System.Int32 const
 F public System.Windows.Forms.OSFeature::LayeredWindows : System.Object static readonly
@@ -58,11 +57,8 @@ I System.Windows.Forms.DataGrid : System.Windows.Forms.IDataGridEditingService
 I System.Windows.Forms.DataGridColumnStyle : System.Windows.Forms.IDataGridColumnStyleEditingNotificationService
 I System.Windows.Forms.DataGridTableStyle : System.Windows.Forms.IDataGridEditingService
 I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDataObject
-I System.Windows.Forms.Design.PropertyTab : System.ComponentModel.IExtenderProvider
 I System.Windows.Forms.FeatureSupport : System.Windows.Forms.IFeatureSupport
 I System.Windows.Forms.GridColumnStylesCollection : System.Collections.IList
-I System.Windows.Forms.GridItemCollection : System.Collections.ICollection
-I System.Windows.Forms.GridItemCollection : System.Collections.IEnumerable
 I System.Windows.Forms.GridTableStylesCollection : System.Collections.IList
 I System.Windows.Forms.HtmlElementCollection : System.Collections.ICollection
 I System.Windows.Forms.HtmlElementCollection : System.Collections.IEnumerable
@@ -633,9 +629,6 @@ M protected System.Windows.Forms.Design.ComponentEditorPage::set_FirstActivate(S
 M protected System.Windows.Forms.Design.ComponentEditorPage::set_LoadRequired(System.Boolean) -> System.Void
 M protected System.Windows.Forms.Design.ComponentEditorPage::set_Loading(System.Int32) -> System.Void
 M protected System.Windows.Forms.Design.ComponentEditorPage::set_PageSite(System.Windows.Forms.IComponentEditorPageSite) -> System.Void
-M protected System.Windows.Forms.Design.PropertyTab::.ctor()
-M protected System.Windows.Forms.Design.PropertyTab::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.Design.PropertyTab::Finalize() -> System.Void virtual
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::.ctor()
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetComponentEditorPages() -> System.Type[] virtual
 M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetInitialComponentEditorPageIndex() -> System.Int32 virtual
@@ -695,7 +688,6 @@ M protected System.Windows.Forms.Form::get_MaximizedBounds() -> System.Drawing.R
 M protected System.Windows.Forms.Form::get_ShowWithoutActivation() -> System.Boolean virtual
 M protected System.Windows.Forms.Form::set_MaximizedBounds(System.Drawing.Rectangle) -> System.Void
 M protected System.Windows.Forms.GridColumnStylesCollection::OnCollectionChanged(System.ComponentModel.CollectionChangeEventArgs) -> System.Void
-M protected System.Windows.Forms.GridItem::.ctor()
 M protected System.Windows.Forms.GridTableStylesCollection::OnCollectionChanged(System.ComponentModel.CollectionChangeEventArgs) -> System.Void
 M protected System.Windows.Forms.GroupBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.GroupBox::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
@@ -870,31 +862,15 @@ M protected System.Windows.Forms.ProgressBar::get_DoubleBuffered() -> System.Boo
 M protected System.Windows.Forms.ProgressBar::set_DoubleBuffered(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.PropertyGrid::CreatePropertyTab(System.Type) -> System.Windows.Forms.Design.PropertyTab virtual
-M protected System.Windows.Forms.PropertyGrid::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::OnComComponentNameChanged(System.ComponentModel.Design.ComponentRenameEventArgs) -> System.Void
-M protected System.Windows.Forms.PropertyGrid::OnEnabledChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnGotFocus(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::OnHandleCreated(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnMouseDown(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnMouseMove(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnMouseUp(System.Windows.Forms.MouseEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::OnNotifyPropertyValueUIItemsChanged(System.Object, System.EventArgs) -> System.Void
-M protected System.Windows.Forms.PropertyGrid::OnPaint(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnPropertySortChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnPropertyTabChanged(System.Windows.Forms.PropertyTabChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnPropertyValueChanged(System.Windows.Forms.PropertyValueChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnSelectedGridItemChanged(System.Windows.Forms.SelectedGridItemChangedEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::OnSelectedObjectsChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::OnVisibleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.PropertyGrid::ScaleCore(System.Single, System.Single) -> System.Void virtual
 M protected System.Windows.Forms.PropertyGrid::ShowEventsButton(System.Boolean) -> System.Void
 M protected System.Windows.Forms.PropertyGrid::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.PropertyGrid::get_DefaultTabType() -> System.Type virtual
 M protected System.Windows.Forms.PropertyGrid::get_DrawFlatToolbar() -> System.Boolean
 M protected System.Windows.Forms.PropertyGrid::get_ShowFocusCues() -> System.Boolean virtual
@@ -2585,17 +2561,6 @@ M public System.Windows.Forms.Design.IUIService::get_Styles() -> System.Collecti
 M public System.Windows.Forms.Design.IWindowsFormsEditorService::CloseDropDown() -> System.Void abstract
 M public System.Windows.Forms.Design.IWindowsFormsEditorService::DropDownControl(System.Windows.Forms.Control) -> System.Void abstract
 M public System.Windows.Forms.Design.IWindowsFormsEditorService::ShowDialog(System.Windows.Forms.Form) -> System.Windows.Forms.DialogResult abstract
-M public System.Windows.Forms.Design.PropertyTab::CanExtend(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.Design.PropertyTab::Dispose() -> System.Void virtual
-M public System.Windows.Forms.Design.PropertyTab::GetDefaultProperty(System.Object) -> System.ComponentModel.PropertyDescriptor virtual
-M public System.Windows.Forms.Design.PropertyTab::GetProperties(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.Design.PropertyTab::GetProperties(System.Object) -> System.ComponentModel.PropertyDescriptorCollection virtual
-M public System.Windows.Forms.Design.PropertyTab::GetProperties(System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection abstract
-M public System.Windows.Forms.Design.PropertyTab::get_Bitmap() -> System.Drawing.Bitmap virtual
-M public System.Windows.Forms.Design.PropertyTab::get_Components() -> System.Object[] virtual
-M public System.Windows.Forms.Design.PropertyTab::get_HelpKeyword() -> System.String virtual
-M public System.Windows.Forms.Design.PropertyTab::get_TabName() -> System.String abstract
-M public System.Windows.Forms.Design.PropertyTab::set_Components(System.Object[]) -> System.Void virtual
 M public System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute::.ctor()
 M public System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute::.ctor(System.Windows.Forms.Design.ToolStripItemDesignerAvailability)
 M public System.Windows.Forms.Design.ToolStripItemDesignerAvailabilityAttribute::Equals(System.Object) -> System.Boolean virtual
@@ -2849,22 +2814,6 @@ M public System.Windows.Forms.GridColumnStylesCollection::get_Item(System.Compon
 M public System.Windows.Forms.GridColumnStylesCollection::get_Item(System.Int32) -> System.Windows.Forms.DataGridColumnStyle
 M public System.Windows.Forms.GridColumnStylesCollection::get_Item(System.String) -> System.Windows.Forms.DataGridColumnStyle
 M public System.Windows.Forms.GridColumnStylesCollection::remove_CollectionChanged(System.ComponentModel.CollectionChangeEventHandler) -> System.Void
-M public System.Windows.Forms.GridItem::Select() -> System.Boolean abstract
-M public System.Windows.Forms.GridItem::get_Expandable() -> System.Boolean virtual
-M public System.Windows.Forms.GridItem::get_Expanded() -> System.Boolean virtual
-M public System.Windows.Forms.GridItem::get_GridItemType() -> System.Windows.Forms.GridItemType abstract
-M public System.Windows.Forms.GridItem::get_GridItems() -> System.Windows.Forms.GridItemCollection abstract
-M public System.Windows.Forms.GridItem::get_Label() -> System.String abstract
-M public System.Windows.Forms.GridItem::get_Parent() -> System.Windows.Forms.GridItem abstract
-M public System.Windows.Forms.GridItem::get_PropertyDescriptor() -> System.ComponentModel.PropertyDescriptor abstract
-M public System.Windows.Forms.GridItem::get_Tag() -> System.Object
-M public System.Windows.Forms.GridItem::get_Value() -> System.Object abstract
-M public System.Windows.Forms.GridItem::set_Expanded(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.GridItem::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.GridItemCollection::GetEnumerator() -> System.Collections.IEnumerator
-M public System.Windows.Forms.GridItemCollection::get_Count() -> System.Int32
-M public System.Windows.Forms.GridItemCollection::get_Item(System.Int32) -> System.Windows.Forms.GridItem
-M public System.Windows.Forms.GridItemCollection::get_Item(System.String) -> System.Windows.Forms.GridItem
 M public System.Windows.Forms.GridTableStylesCollection::Add(System.Windows.Forms.DataGridTableStyle) -> System.Int32 virtual
 M public System.Windows.Forms.GridTableStylesCollection::AddRange(System.Windows.Forms.DataGridTableStyle[]) -> System.Void virtual
 M public System.Windows.Forms.GridTableStylesCollection::Clear() -> System.Void
@@ -4004,12 +3953,7 @@ M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::GetEnumerator(
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::RemoveTabType(System.Type) -> System.Void
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::get_Count() -> System.Int32
 M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::get_Item(System.Int32) -> System.Windows.Forms.Design.PropertyTab
-M public System.Windows.Forms.PropertyGrid::.ctor()
-M public System.Windows.Forms.PropertyGrid::CollapseAllGridItems() -> System.Void
-M public System.Windows.Forms.PropertyGrid::ExpandAllGridItems() -> System.Void
-M public System.Windows.Forms.PropertyGrid::Refresh() -> System.Void virtual
 M public System.Windows.Forms.PropertyGrid::RefreshTabs(System.ComponentModel.PropertyTabScope) -> System.Void
-M public System.Windows.Forms.PropertyGrid::ResetSelectedProperty() -> System.Void
 M public System.Windows.Forms.PropertyGrid::add_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::add_ForeColorChanged(System.EventHandler) -> System.Void
@@ -4022,21 +3966,12 @@ M public System.Windows.Forms.PropertyGrid::add_MouseLeave(System.EventHandler) 
 M public System.Windows.Forms.PropertyGrid::add_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::add_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_PropertySortChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_PropertyTabChanged(System.Windows.Forms.PropertyTabChangedEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_PropertyValueChanged(System.Windows.Forms.PropertyValueChangedEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_SelectedGridItemChanged(System.Windows.Forms.SelectedGridItemChangedEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::add_SelectedObjectsChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::add_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::get_AutoScroll() -> System.Boolean virtual
 M public System.Windows.Forms.PropertyGrid::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.PropertyGrid::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.PropertyGrid::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.PropertyGrid::get_BrowsableAttributes() -> System.ComponentModel.AttributeCollection
 M public System.Windows.Forms.PropertyGrid::get_CanShowCommands() -> System.Boolean virtual
-M public System.Windows.Forms.PropertyGrid::get_CanShowVisualStyleGlyphs() -> System.Boolean
-M public System.Windows.Forms.PropertyGrid::get_CategoryForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_CategorySplitterColor() -> System.Drawing.Color
 M public System.Windows.Forms.PropertyGrid::get_CommandsActiveLinkColor() -> System.Drawing.Color
 M public System.Windows.Forms.PropertyGrid::get_CommandsBackColor() -> System.Drawing.Color
 M public System.Windows.Forms.PropertyGrid::get_CommandsBorderColor() -> System.Drawing.Color
@@ -4047,30 +3982,11 @@ M public System.Windows.Forms.PropertyGrid::get_CommandsVisible() -> System.Bool
 M public System.Windows.Forms.PropertyGrid::get_CommandsVisibleIfAvailable() -> System.Boolean virtual
 M public System.Windows.Forms.PropertyGrid::get_ContextMenuDefaultLocation() -> System.Drawing.Point
 M public System.Windows.Forms.PropertyGrid::get_Controls() -> System.Windows.Forms.Control+ControlCollection
-M public System.Windows.Forms.PropertyGrid::get_DisabledItemForeColor() -> System.Drawing.Color
 M public System.Windows.Forms.PropertyGrid::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.PropertyGrid::get_HelpBackColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_HelpBorderColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_HelpForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_HelpVisible() -> System.Boolean virtual
-M public System.Windows.Forms.PropertyGrid::get_LargeButtons() -> System.Boolean
-M public System.Windows.Forms.PropertyGrid::get_LineColor() -> System.Drawing.Color
 M public System.Windows.Forms.PropertyGrid::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.PropertyGrid::get_PropertySort() -> System.Windows.Forms.PropertySort
 M public System.Windows.Forms.PropertyGrid::get_PropertyTabs() -> System.Windows.Forms.PropertyGrid+PropertyTabCollection
-M public System.Windows.Forms.PropertyGrid::get_SelectedGridItem() -> System.Windows.Forms.GridItem
-M public System.Windows.Forms.PropertyGrid::get_SelectedItemWithFocusBackColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_SelectedItemWithFocusForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_SelectedObject() -> System.Object
-M public System.Windows.Forms.PropertyGrid::get_SelectedObjects() -> System.Object[]
-M public System.Windows.Forms.PropertyGrid::get_SelectedTab() -> System.Windows.Forms.Design.PropertyTab
 M public System.Windows.Forms.PropertyGrid::get_Site() -> System.ComponentModel.ISite virtual
 M public System.Windows.Forms.PropertyGrid::get_Text() -> System.String virtual
-M public System.Windows.Forms.PropertyGrid::get_ToolbarVisible() -> System.Boolean virtual
-M public System.Windows.Forms.PropertyGrid::get_UseCompatibleTextRendering() -> System.Boolean
-M public System.Windows.Forms.PropertyGrid::get_ViewBackColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_ViewBorderColor() -> System.Drawing.Color
-M public System.Windows.Forms.PropertyGrid::get_ViewForeColor() -> System.Drawing.Color
 M public System.Windows.Forms.PropertyGrid::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::remove_ForeColorChanged(System.EventHandler) -> System.Void
@@ -4083,20 +3999,11 @@ M public System.Windows.Forms.PropertyGrid::remove_MouseLeave(System.EventHandle
 M public System.Windows.Forms.PropertyGrid::remove_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::remove_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_PropertySortChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_PropertyTabChanged(System.Windows.Forms.PropertyTabChangedEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_PropertyValueChanged(System.Windows.Forms.PropertyValueChangedEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_SelectedGridItemChanged(System.Windows.Forms.SelectedGridItemChangedEventHandler) -> System.Void
-M public System.Windows.Forms.PropertyGrid::remove_SelectedObjectsChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::remove_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_AutoScroll(System.Boolean) -> System.Void virtual
 M public System.Windows.Forms.PropertyGrid::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.PropertyGrid::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.PropertyGrid::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_BrowsableAttributes(System.ComponentModel.AttributeCollection) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CanShowVisualStyleGlyphs(System.Boolean) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CategoryForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_CategorySplitterColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_CommandsActiveLinkColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_CommandsBackColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_CommandsBorderColor(System.Drawing.Color) -> System.Void
@@ -4104,28 +4011,10 @@ M public System.Windows.Forms.PropertyGrid::set_CommandsDisabledLinkColor(System
 M public System.Windows.Forms.PropertyGrid::set_CommandsForeColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_CommandsLinkColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_CommandsVisibleIfAvailable(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_DisabledItemForeColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_HelpBackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_HelpBorderColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_HelpForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_HelpVisible(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_LargeButtons(System.Boolean) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_LineColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_PropertySort(System.Windows.Forms.PropertySort) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_SelectedGridItem(System.Windows.Forms.GridItem) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_SelectedItemWithFocusBackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_SelectedItemWithFocusForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_SelectedObject(System.Object) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_SelectedObjects(System.Object[]) -> System.Void
 M public System.Windows.Forms.PropertyGrid::set_Site(System.ComponentModel.ISite) -> System.Void virtual
 M public System.Windows.Forms.PropertyGrid::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_ToolbarVisible(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.PropertyGrid::set_UseCompatibleTextRendering(System.Boolean) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_ViewBackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_ViewBorderColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PropertyGrid::set_ViewForeColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.PropertyGridInternal.IRootGridEntry::ResetBrowsableAttributes() -> System.Void abstract
 M public System.Windows.Forms.PropertyGridInternal.IRootGridEntry::ShowCategories(System.Boolean) -> System.Void abstract
 M public System.Windows.Forms.PropertyGridInternal.IRootGridEntry::get_BrowsableAttributes() -> System.ComponentModel.AttributeCollection abstract
@@ -4137,20 +4026,6 @@ M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::GetProperties(
 M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::get_HelpKeyword() -> System.String virtual
 M public System.Windows.Forms.PropertyGridInternal.PropertiesTab::get_TabName() -> System.String virtual
 M public System.Windows.Forms.PropertyGridInternal.PropertyGridCommands::.ctor()
-M public System.Windows.Forms.PropertyTabChangedEventArgs::.ctor(System.Windows.Forms.Design.PropertyTab, System.Windows.Forms.Design.PropertyTab)
-M public System.Windows.Forms.PropertyTabChangedEventArgs::get_NewTab() -> System.Windows.Forms.Design.PropertyTab
-M public System.Windows.Forms.PropertyTabChangedEventArgs::get_OldTab() -> System.Windows.Forms.Design.PropertyTab
-M public System.Windows.Forms.PropertyTabChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.PropertyTabChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.PropertyTabChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.PropertyTabChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.PropertyTabChangedEventHandler::Invoke(System.Object, System.Windows.Forms.PropertyTabChangedEventArgs) -> System.Void virtual
-M public System.Windows.Forms.PropertyValueChangedEventArgs::.ctor(System.Windows.Forms.GridItem, System.Object)
-M public System.Windows.Forms.PropertyValueChangedEventArgs::get_ChangedItem() -> System.Windows.Forms.GridItem
-M public System.Windows.Forms.PropertyValueChangedEventArgs::get_OldValue() -> System.Object
-M public System.Windows.Forms.PropertyValueChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.PropertyValueChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.PropertyValueChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.PropertyValueChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.PropertyValueChangedEventHandler::Invoke(System.Object, System.Windows.Forms.PropertyValueChangedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.RadioButton+RadioButtonAccessibleObject::.ctor(System.Windows.Forms.RadioButton)
 M public System.Windows.Forms.RadioButton+RadioButtonAccessibleObject::DoDefaultAction() -> System.Void virtual
 M public System.Windows.Forms.RadioButton+RadioButtonAccessibleObject::get_DefaultAction() -> System.String virtual
@@ -4270,13 +4145,6 @@ M public System.Windows.Forms.ScrollableControl+DockPaddingEdgesConverter::.ctor
 M public System.Windows.Forms.ScrollableControl+DockPaddingEdgesConverter::GetProperties(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Attribute[]) -> System.ComponentModel.PropertyDescriptorCollection virtual
 M public System.Windows.Forms.ScrollableControl+DockPaddingEdgesConverter::GetPropertiesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
 M public System.Windows.Forms.ScrollableControl::get_DockPadding() -> System.Windows.Forms.ScrollableControl+DockPaddingEdges
-M public System.Windows.Forms.SelectedGridItemChangedEventArgs::.ctor(System.Windows.Forms.GridItem, System.Windows.Forms.GridItem)
-M public System.Windows.Forms.SelectedGridItemChangedEventArgs::get_NewSelection() -> System.Windows.Forms.GridItem
-M public System.Windows.Forms.SelectedGridItemChangedEventArgs::get_OldSelection() -> System.Windows.Forms.GridItem
-M public System.Windows.Forms.SelectedGridItemChangedEventHandler::.ctor(System.Object, System.IntPtr)
-M public System.Windows.Forms.SelectedGridItemChangedEventHandler::BeginInvoke(System.Object, System.Windows.Forms.SelectedGridItemChangedEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
-M public System.Windows.Forms.SelectedGridItemChangedEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
-M public System.Windows.Forms.SelectedGridItemChangedEventHandler::Invoke(System.Object, System.Windows.Forms.SelectedGridItemChangedEventArgs) -> System.Void virtual
 M public System.Windows.Forms.SendKeys::Flush() -> System.Void static
 M public System.Windows.Forms.SendKeys::Send(System.String) -> System.Void static
 M public System.Windows.Forms.SendKeys::SendWait(System.String) -> System.Void static
@@ -5719,10 +5587,8 @@ M public System.Windows.Forms.WindowsFormsSynchronizationContext::set_AutoInstal
 T abstract class System.Windows.Forms.AxHost : System.Windows.Forms.Control
 T abstract class System.Windows.Forms.DataGridColumnStyle : System.ComponentModel.Component
 T abstract class System.Windows.Forms.Design.ComponentEditorPage : System.Windows.Forms.Panel
-T abstract class System.Windows.Forms.Design.PropertyTab
 T abstract class System.Windows.Forms.Design.WindowsFormsComponentEditor : System.ComponentModel.ComponentEditor
 T abstract class System.Windows.Forms.FeatureSupport
-T abstract class System.Windows.Forms.GridItem
 T abstract class System.Windows.Forms.Menu : System.ComponentModel.Component
 T class System.Drawing.Design.PropertyValueUIItem
 T class System.Drawing.Design.UITypeEditor
@@ -5783,7 +5649,6 @@ T class System.Windows.Forms.DrawTreeNodeEventArgs : System.EventArgs
 T class System.Windows.Forms.FlatButtonAppearance
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.GridColumnStylesCollection : System.Windows.Forms.BaseCollection
-T class System.Windows.Forms.GridItemCollection
 T class System.Windows.Forms.GridTableStylesCollection : System.Windows.Forms.BaseCollection
 T class System.Windows.Forms.HtmlWindowCollection
 T class System.Windows.Forms.ImageIndexConverter : System.ComponentModel.Int32Converter
@@ -5808,17 +5673,13 @@ T class System.Windows.Forms.OSFeature : System.Windows.Forms.FeatureSupport
 T class System.Windows.Forms.OpacityConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.OwnerDrawPropertyBag : System.MarshalByRefObject
 T class System.Windows.Forms.PrintControllerWithStatusDialog : System.Drawing.Printing.PrintController
-T class System.Windows.Forms.PropertyGrid : System.Windows.Forms.ContainerControl
 T class System.Windows.Forms.PropertyGrid+PropertyTabCollection
 T class System.Windows.Forms.PropertyGridInternal.PropertiesTab : System.Windows.Forms.Design.PropertyTab
 T class System.Windows.Forms.PropertyGridInternal.PropertyGridCommands
-T class System.Windows.Forms.PropertyTabChangedEventArgs : System.EventArgs
-T class System.Windows.Forms.PropertyValueChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.RadioButton+RadioButtonAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.RetrieveVirtualItemEventArgs : System.EventArgs
 T class System.Windows.Forms.ScrollableControl+DockPaddingEdges
 T class System.Windows.Forms.ScrollableControl+DockPaddingEdgesConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.SelectedGridItemChangedEventArgs : System.EventArgs
 T class System.Windows.Forms.SendKeys
 T class System.Windows.Forms.StatusBar : System.Windows.Forms.Control
 T class System.Windows.Forms.StatusBar+StatusBarPanelCollection
@@ -5876,10 +5737,7 @@ T delegate System.Windows.Forms.InputLanguageChangingEventHandler
 T delegate System.Windows.Forms.ListViewItemMouseHoverEventHandler
 T delegate System.Windows.Forms.NavigateEventHandler
 T delegate System.Windows.Forms.NodeLabelEditEventHandler
-T delegate System.Windows.Forms.PropertyTabChangedEventHandler
-T delegate System.Windows.Forms.PropertyValueChangedEventHandler
 T delegate System.Windows.Forms.RetrieveVirtualItemEventHandler
-T delegate System.Windows.Forms.SelectedGridItemChangedEventHandler
 T delegate System.Windows.Forms.StatusBarDrawItemEventHandler
 T delegate System.Windows.Forms.StatusBarPanelClickEventHandler
 T delegate System.Windows.Forms.ToolBarButtonClickEventHandler
