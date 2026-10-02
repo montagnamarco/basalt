@@ -944,7 +944,6 @@ M protected System.Windows.Forms.NativeWindow::WndProc(ref System.Windows.Forms.
 M protected System.Windows.Forms.NotifyIcon::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.OSFeature::.ctor()
 M protected System.Windows.Forms.OwnerDrawPropertyBag::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
-M protected System.Windows.Forms.PageSetupDialog::RunDialog(System.IntPtr) -> System.Boolean virtual
 M protected System.Windows.Forms.Panel::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.Panel::OnResize(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PictureBox::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
@@ -958,7 +957,6 @@ M protected System.Windows.Forms.PictureBox::OnParentChanged(System.EventArgs) -
 M protected System.Windows.Forms.PictureBox::OnResize(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PictureBox::OnVisibleChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.PictureBox::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.PrintDialog::RunDialog(System.IntPtr) -> System.Boolean virtual
 M protected System.Windows.Forms.PrintPreviewControl::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.PrintPreviewControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.PrintPreviewDialog::CreateHandle() -> System.Void virtual
@@ -4401,30 +4399,6 @@ M public System.Windows.Forms.OwnerDrawPropertyBag::get_ForeColor() -> System.Dr
 M public System.Windows.Forms.OwnerDrawPropertyBag::set_BackColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.OwnerDrawPropertyBag::set_Font(System.Drawing.Font) -> System.Void
 M public System.Windows.Forms.OwnerDrawPropertyBag::set_ForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::.ctor()
-M public System.Windows.Forms.PageSetupDialog::Reset() -> System.Void virtual
-M public System.Windows.Forms.PageSetupDialog::get_AllowMargins() -> System.Boolean
-M public System.Windows.Forms.PageSetupDialog::get_AllowOrientation() -> System.Boolean
-M public System.Windows.Forms.PageSetupDialog::get_AllowPaper() -> System.Boolean
-M public System.Windows.Forms.PageSetupDialog::get_AllowPrinter() -> System.Boolean
-M public System.Windows.Forms.PageSetupDialog::get_Document() -> System.Drawing.Printing.PrintDocument
-M public System.Windows.Forms.PageSetupDialog::get_EnableMetric() -> System.Boolean
-M public System.Windows.Forms.PageSetupDialog::get_MinMargins() -> System.Drawing.Printing.Margins
-M public System.Windows.Forms.PageSetupDialog::get_PageSettings() -> System.Drawing.Printing.PageSettings
-M public System.Windows.Forms.PageSetupDialog::get_PrinterSettings() -> System.Drawing.Printing.PrinterSettings
-M public System.Windows.Forms.PageSetupDialog::get_ShowHelp() -> System.Boolean
-M public System.Windows.Forms.PageSetupDialog::get_ShowNetwork() -> System.Boolean
-M public System.Windows.Forms.PageSetupDialog::set_AllowMargins(System.Boolean) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_AllowOrientation(System.Boolean) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_AllowPaper(System.Boolean) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_AllowPrinter(System.Boolean) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_Document(System.Drawing.Printing.PrintDocument) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_EnableMetric(System.Boolean) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_MinMargins(System.Drawing.Printing.Margins) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_PageSettings(System.Drawing.Printing.PageSettings) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_PrinterSettings(System.Drawing.Printing.PrinterSettings) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_ShowHelp(System.Boolean) -> System.Void
-M public System.Windows.Forms.PageSetupDialog::set_ShowNetwork(System.Boolean) -> System.Void
 M public System.Windows.Forms.Panel::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Panel::add_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
 M public System.Windows.Forms.Panel::add_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
@@ -4499,28 +4473,6 @@ M public System.Windows.Forms.PrintControllerWithStatusDialog::OnEndPrint(System
 M public System.Windows.Forms.PrintControllerWithStatusDialog::OnStartPage(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintPageEventArgs) -> System.Drawing.Graphics virtual
 M public System.Windows.Forms.PrintControllerWithStatusDialog::OnStartPrint(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
 M public System.Windows.Forms.PrintControllerWithStatusDialog::get_IsPreview() -> System.Boolean virtual
-M public System.Windows.Forms.PrintDialog::.ctor()
-M public System.Windows.Forms.PrintDialog::Reset() -> System.Void virtual
-M public System.Windows.Forms.PrintDialog::get_AllowCurrentPage() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::get_AllowPrintToFile() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::get_AllowSelection() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::get_AllowSomePages() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::get_Document() -> System.Drawing.Printing.PrintDocument
-M public System.Windows.Forms.PrintDialog::get_PrintToFile() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::get_PrinterSettings() -> System.Drawing.Printing.PrinterSettings
-M public System.Windows.Forms.PrintDialog::get_ShowHelp() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::get_ShowNetwork() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::get_UseEXDialog() -> System.Boolean
-M public System.Windows.Forms.PrintDialog::set_AllowCurrentPage(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_AllowPrintToFile(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_AllowSelection(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_AllowSomePages(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_Document(System.Drawing.Printing.PrintDocument) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_PrintToFile(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_PrinterSettings(System.Drawing.Printing.PrinterSettings) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_ShowHelp(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_ShowNetwork(System.Boolean) -> System.Void
-M public System.Windows.Forms.PrintDialog::set_UseEXDialog(System.Boolean) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::add_AutoValidateChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::add_BackColorChanged(System.EventHandler) -> System.Void
@@ -7116,8 +7068,6 @@ T sealed class System.Windows.Forms.InputLanguage
 T sealed class System.Windows.Forms.ListViewInsertionMark
 T sealed class System.Windows.Forms.MdiClient : System.Windows.Forms.Control
 T sealed class System.Windows.Forms.NotifyIcon : System.ComponentModel.Component
-T sealed class System.Windows.Forms.PageSetupDialog : System.Windows.Forms.CommonDialog
-T sealed class System.Windows.Forms.PrintDialog : System.Windows.Forms.CommonDialog
 T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute
 T sealed class System.Windows.Forms.TaskDialogCommandLinkButton : System.Windows.Forms.TaskDialogButton
 T sealed class System.Windows.Forms.TaskDialogExpander : System.Windows.Forms.TaskDialogControl
