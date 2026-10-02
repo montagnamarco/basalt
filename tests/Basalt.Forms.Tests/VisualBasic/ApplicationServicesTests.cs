@@ -212,7 +212,7 @@ public class ApplicationServicesTests
         var first = new RecordingApp { SingleInstance = true, SingleInstanceIdOverride = id };
         var second = new RecordingApp { SingleInstance = true, SingleInstanceIdOverride = id };
         ReadOnlyCollection<string>? forwarded = null;
-        var secondReturned = false;
+        Task? secondRun = null;
 
         first.StartupNextInstance += (_, e) =>
         {
@@ -222,17 +222,15 @@ public class ApplicationServicesTests
         first.Startup += (_, _) => Dispatcher.UIThread.Post(() =>
         {
             // Started from a worker thread, as a second process would be: Run must return there at once.
-            Task.Run(() =>
-            {
-                second.Run(["--open", "file.txt"]);
-                secondReturned = true;
-            });
+            secondRun = Task.Run(() => second.Run(["--open", "file.txt"]));
         }, DispatcherPriority.Background);
         using var safetyNet = SafetyNet();
 
         first.Run(["--first"]);
 
-        Assert.True(secondReturned);
+        // The first instance may hear the forwarded line before the second's Run has quite returned: wait for it.
+        Assert.NotNull(secondRun);
+        Assert.True(secondRun.Wait(TimeSpan.FromSeconds(5)), "the second instance's Run did not return");
         Assert.Equal(["--open", "file.txt"], forwarded);
         Assert.DoesNotContain("initialize", second.Steps);
     }
