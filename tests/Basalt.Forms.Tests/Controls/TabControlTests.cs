@@ -334,4 +334,21 @@ public class TabControlTests
         tabs.Size = new Size(300, 200);
         Assert.Equal(tabs.DisplayRectangle, page.Bounds);
     }
+
+    /// <summary>Reintroducing the bug (never checking DrawMode before painting) would draw the classic tab underneath every owner-drawn one, double-painting it.</summary>
+    [AvaloniaFact]
+    public void Owner_drawn_tabs_raise_DrawItem_once_per_tab_instead_of_the_classic_painting()
+    {
+        var tabs = new TabControl { DrawMode = TabDrawMode.OwnerDrawFixed };
+        tabs.TabPages.AddRange(new TabPage("One"), new TabPage("Two"));
+        var drawn = new List<int>();
+        tabs.DrawItem += (_, e) => drawn.Add(e.Index);
+        var form = ShowWith(tabs);
+
+        Draw(tabs);
+
+        Assert.Equal([0, 1], drawn);
+
+        form.Close();
+    }
 }

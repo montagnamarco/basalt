@@ -125,7 +125,7 @@ public partial class TabControl
         var rects = LayOutTabs(out _);
         var pages = TabPagesSnapshot();
 
-        for (var i = 0; i < pages.Length; i++) DrawTab(graphics, pages[i], rects[i], i == _selectedIndex, pageFrame);
+        for (var i = 0; i < pages.Length; i++) DrawTab(graphics, pages[i], rects[i], i, i == _selectedIndex, pageFrame);
     }
 
     /// <summary>
@@ -133,11 +133,13 @@ public partial class TabControl
     /// cref="SelectedTabRaise"/> and joined to the page when it is the
     /// selected one, with its caption centred inside.
     /// </summary>
-    private void DrawTab(Graphics graphics, TabPage page, Rectangle rect, bool selected, Rectangle pageFrame)
+    private void DrawTab(Graphics graphics, TabPage page, Rectangle rect, int index, bool selected, Rectangle pageFrame)
     {
         var tabRect = selected
             ? new Rectangle(rect.X, rect.Y - SelectedTabRaise, rect.Width, rect.Height + SelectedTabRaise)
             : rect;
+
+        if (RaiseDrawItem(graphics, tabRect, index, selected)) return;
 
         using var faceBrush = new SolidBrush(SystemColors.Control);
         graphics.FillRectangle(faceBrush, tabRect);

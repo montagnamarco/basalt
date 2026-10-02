@@ -590,4 +590,24 @@ public class DateTimePickerTests
 
         form.Close();
     }
+
+    /// <summary>
+    /// Reintroducing the bug ("new" instead of "override" on Value/Name) would make Value null here:
+    /// a screen reader, like this test, reads AccessibleObject.Value through the base type, which a
+    /// "new" member hides from (it only answers through DateTimePickerAccessibleObject itself).
+    /// </summary>
+    [Fact]
+    public void AccessibilityObject_Value_reads_the_formatted_date_through_the_base_type()
+    {
+        WithEnglishCulture(() =>
+        {
+            var picker = new DateTimePicker { Format = DateTimePickerFormat.Short, Value = new DateTime(2024, 1, 2) };
+            AccessibleObject accessible = picker.AccessibilityObject;
+            var direct = (DateTimePicker.DateTimePickerAccessibleObject)accessible;
+
+            Assert.Equal(picker.Text, accessible.Value);
+            Assert.Equal(direct.Value, accessible.Value);
+            Assert.Equal(direct.Name, accessible.Name);
+        });
+    }
 }

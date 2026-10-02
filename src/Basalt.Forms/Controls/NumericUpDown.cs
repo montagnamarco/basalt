@@ -6,7 +6,7 @@ namespace System.Windows.Forms;
 /// <summary>A box the user edits as text, but whose content is a decimal <see cref="Value"/> between <see cref="Minimum"/> and <see cref="Maximum"/>.</summary>
 [DefaultProperty("Value")]
 [DefaultEvent("ValueChanged")]
-public class NumericUpDown : UpDownBase, ISupportInitialize
+public partial class NumericUpDown : UpDownBase, ISupportInitialize
 {
     private readonly NumericUpDownAccelerationCollection _accelerations = new();
 

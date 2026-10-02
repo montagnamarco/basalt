@@ -294,4 +294,14 @@ public class DomainUpDownTests
 
         form.Close();
     }
+
+    /// <summary>Reintroducing the bug ("new" instead of "override" on Value) would make this null: a screen reader reads AccessibleObject.Value through the base type, which a "new" member hides from.</summary>
+    [Fact]
+    public void DomainItemAccessibleObject_Value_reads_the_items_text_through_the_base_type()
+    {
+        var parent = new DomainUpDown.DomainUpDownAccessibleObject(new DomainUpDown());
+        AccessibleObject accessible = new DomainUpDown.DomainItemAccessibleObject("Monday", parent);
+
+        Assert.Equal("Monday", accessible.Value);
+    }
 }

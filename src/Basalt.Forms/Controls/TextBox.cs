@@ -5,7 +5,7 @@ using System.Windows.Forms.Internal;
 namespace System.Windows.Forms;
 
 /// <summary>A box the user types text into, on one line or several.</summary>
-public class TextBox : TextBoxBase
+public partial class TextBox : TextBoxBase
 {
     private bool _acceptsReturn;
     private CharacterCasing _characterCasing = CharacterCasing.Normal;
@@ -17,6 +17,10 @@ public class TextBox : TextBoxBase
 
     public TextBox()
     {
+        // Real WinForms wires SHAutoComplete onto the native EDIT window itself, outside the managed
+        // event pipeline, which is why TextBox does not override OnTextChanged. Subscribing to the
+        // public event here gets the same result (and the same public shape) without one.
+        TextChanged += (_, _) => RunAutoComplete();
     }
 
     /// <summary>Whether Enter makes a new line in a multiline box instead of pressing the form's accept button.</summary>

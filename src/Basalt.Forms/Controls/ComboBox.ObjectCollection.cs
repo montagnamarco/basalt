@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace System.Windows.Forms;
@@ -11,7 +12,7 @@ public partial class ComboBox
     /// itself is read-only and only the binding machinery may repopulate it.
     /// </summary>
     [ListBindable(false)]
-    public class ObjectCollection : IList, ICollection, IEnumerable
+    public class ObjectCollection : IList, ICollection, IEnumerable, IComparer<ObjectCollection.Entry>
     {
         private readonly ComboBox _owner;
 
@@ -60,15 +61,7 @@ public partial class ComboBox
             ArgumentNullException.ThrowIfNull(items);
             EnsureNotDataBound();
 
-            _owner.BeginUpdate();
-            try
-            {
-                foreach (var item in items) Add(item);
-            }
-            finally
-            {
-                _owner.EndUpdate();
-            }
+            _owner.AddItemsCore(items);
         }
 
         public void Clear()
@@ -166,6 +159,50 @@ public partial class ComboBox
             }
 
             return low;
+        }
+
+        /// <summary>Resorts every item alphabetically by its display text, keeping the selection on the same item; what Sorted=true and ComboBox.Sort() both call.</summary>
+        internal void SortEntries()
+        {
+            if (_owner._items.Count == 0) return;
+
+            var entries = new Entry[_owner._items.Count];
+            for (var i = 0; i < entries.Length; i++) entries[i] = new Entry(_owner._items[i], i);
+
+            // A stable sort by display text: Array.Sort is not stable on its own, so Entry
+            // remembers each item's original position and the comparer breaks ties with it.
+            Array.Sort(entries, this);
+
+            var selectedItem = _owner.SelectedItem;
+
+            _owner._items.Clear();
+            foreach (var entry in entries) _owner._items.Add(entry.Item);
+
+            // Through the same path SelectedIndex's own setter uses, so moving the selected item to a
+            // new index (the item is unchanged, but its index is) still raises SelectedIndexChanged,
+            // exactly as WinForms raises it for any index change, same item or not.
+            if (selectedItem is not null) _owner.SetSelectedIndexCore(_owner._items.IndexOf(selectedItem));
+        }
+
+        /// <summary>By display text, then by original position, so equal-text items keep their relative order.</summary>
+        int IComparer<Entry>.Compare(Entry? x, Entry? y)
+        {
+            var byText = string.Compare(_owner.GetItemText(x!.Item), _owner.GetItemText(y!.Item), StringComparison.CurrentCultureIgnoreCase);
+            return byText != 0 ? byText : x.OriginalIndex.CompareTo(y.OriginalIndex);
+        }
+
+        /// <summary>One item as it stood before a sort: wrapping it with that position is what makes the sort stable.</summary>
+        private sealed class Entry
+        {
+            public Entry(object item, int originalIndex)
+            {
+                Item = item;
+                OriginalIndex = originalIndex;
+            }
+
+            public object Item { get; }
+
+            public int OriginalIndex { get; }
         }
 
         bool IList.IsFixedSize => false;

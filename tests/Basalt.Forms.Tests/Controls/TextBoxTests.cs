@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Windows.Forms;
+using System.Windows.Forms.Internal.Hosting;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -275,5 +276,147 @@ public class TextBoxTests
         Assert.True(secondLine > 0, "The text should wrap.");
         Assert.Equal(0, box.GetLineFromCharIndex(secondLine - 1));
         Assert.Equal(1, box.GetLineFromCharIndex(secondLine));
+    }
+
+    // --- AutoComplete ----------------------------------------------------
+
+    private static TextBox WithCustomSource(AutoCompleteMode mode)
+    {
+        var box = new TextBox { AutoCompleteMode = mode, AutoCompleteSource = AutoCompleteSource.CustomSource };
+        box.AutoCompleteCustomSource.AddRange(["apple", "application", "banana"]);
+        return box;
+    }
+
+    [AvaloniaFact]
+    public void Append_completes_the_typed_prefix_inline_with_the_rest_selected()
+    {
+        var (form, box) = Show(WithCustomSource(AutoCompleteMode.Append));
+
+        Type(form, "app");
+
+        Assert.Equal("apple", box.Text);
+        Assert.Equal(3, box.SelectionStart);
+        Assert.Equal(2, box.SelectionLength);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Append_does_not_complete_when_nothing_matches()
+    {
+        var (form, box) = Show(WithCustomSource(AutoCompleteMode.Append));
+
+        Type(form, "zz");
+
+        Assert.Equal("zz", box.Text);
+
+        form.Close();
+    }
+
+    /// <summary>Reintroducing the bug (comparing the index to itself) would make every keystroke complete, even backspacing into "zz" above.</summary>
+    [AvaloniaFact]
+    public void Suggest_opens_a_popup_listing_every_match_and_closes_when_none_match()
+    {
+        var (form, box) = Show(WithCustomSource(AutoCompleteMode.Suggest));
+
+        Type(form, "app");
+        Assert.Contains(Popups.All, popup => popup is not Form);
+
+        // "apple" and "application" both match; the text itself is unchanged since Suggest alone never appends.
+        Assert.Equal("app", box.Text);
+
+        Type(form, "zz");
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+
+        form.Close();
+    }
+
+    [Fact]
+    public void Setting_Text_from_code_does_not_trigger_AutoComplete()
+    {
+        var box = WithCustomSource(AutoCompleteMode.Append);
+
+        box.Text = "app";
+
+        Assert.Equal("app", box.Text);
+    }
+
+    [AvaloniaFact]
+    public void Tabbing_away_closes_the_AutoComplete_suggestion_list()
+    {
+        var box = WithCustomSource(AutoCompleteMode.Suggest);
+        var other = new TextBox();
+        var (form, _) = Show(box);
+        form.Controls.Add(other);
+
+        Type(form, "app");
+        Assert.Contains(Popups.All, popup => popup is not Form);
+
+        other.Focus();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Escape_closes_the_AutoComplete_suggestion_list()
+    {
+        var (form, box) = Show(WithCustomSource(AutoCompleteMode.Suggest));
+
+        Type(form, "app");
+        Assert.Contains(Popups.All, popup => popup is not Form);
+
+        Press(form, PhysicalKey.Escape);
+
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+        Assert.Equal("app", box.Text);
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Down_then_Enter_accepts_the_highlighted_AutoComplete_suggestion()
+    {
+        var (form, box) = Show(WithCustomSource(AutoCompleteMode.Suggest));
+
+        Type(form, "app");
+        Press(form, PhysicalKey.ArrowDown);
+        Press(form, PhysicalKey.Enter);
+
+        Assert.Equal("apple", box.Text);
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void With_the_suggestion_list_open_Enter_and_Escape_do_not_press_the_dialog_buttons()
+    {
+        var (form, box) = Show(WithCustomSource(AutoCompleteMode.Suggest));
+        var accept = new Button();
+        var cancel = new Button();
+        form.Controls.Add(accept);
+        form.Controls.Add(cancel);
+        form.AcceptButton = accept;
+        form.CancelButton = cancel;
+        var pressed = new List<string>();
+        accept.Click += (_, _) => pressed.Add("accept");
+        cancel.Click += (_, _) => pressed.Add("cancel");
+        box.Focus();
+
+        Type(form, "app");
+        Press(form, PhysicalKey.Escape);
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+
+        Type(form, "l");
+        Press(form, PhysicalKey.ArrowDown);
+        Press(form, PhysicalKey.Enter);
+
+        Assert.Empty(pressed);
+        Assert.Equal("apple", box.Text);
+
+        // With the list closed, the keys go back to the dialog.
+        Press(form, PhysicalKey.Enter);
+        Assert.Equal(["accept"], pressed);
+        form.Close();
     }
 }

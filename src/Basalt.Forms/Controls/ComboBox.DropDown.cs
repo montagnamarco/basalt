@@ -121,6 +121,18 @@ public partial class ComboBox
             return;
         }
 
+        // The AutoComplete suggestion list (ComboBox.Hidden.cs), not this drop-down list: Up/Down move
+        // its highlight and Enter accepts it instead of stepping the selection or doing nothing.
+        if (_suggestionPopup is { IsOpen: true } popup)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.Up: popup.MoveHighlight(-1); e.Handled = true; return;
+                case Keys.Down: popup.MoveHighlight(1); e.Handled = true; return;
+                case Keys.Enter when popup.AcceptHighlighted(): e.Handled = true; return;
+            }
+        }
+
         switch (e.KeyCode)
         {
             case Keys.Up: StepSelection(-1); e.Handled = true; return;
@@ -179,6 +191,11 @@ public partial class ComboBox
         else if (_dropDownStyle != ComboBoxStyle.Simple && (keyData == Keys.F4 || keyData == (Keys.Alt | Keys.Down)))
         {
             OpenDropDown();
+            return true;
+        }
+        else if (keyData == Keys.Escape && _suggestionPopup is { IsOpen: true })
+        {
+            HideSuggestions();
             return true;
         }
 

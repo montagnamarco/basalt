@@ -67,8 +67,8 @@ public partial class Panel
         get => GetAutoSizeMode();
         set
         {
-            ArgumentOutOfRangeException.ThrowIfLessThan((int)value, (int)AutoSizeMode.GrowOnly);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan((int)value, (int)AutoSizeMode.GrowAndShrink);
+            // WinForms validates enum arguments with InvalidEnumArgumentException.
+            if (!Enum.IsDefined(value)) throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(AutoSizeMode));
 
             SetAutoSizeMode(value);
         }

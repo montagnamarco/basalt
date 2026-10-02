@@ -32,6 +32,11 @@ public class ComboBoxTests
         form.Host!.KeyReleaseQwerty(key, modifiers);
     }
 
+    private static void Type(Form form, string text)
+    {
+        foreach (var character in text) form.Host!.KeyTextInput(character.ToString());
+    }
+
     /// <summary>The borderless popup window currently open, as a plain Control (its real type is private to ComboBox).</summary>
     private static Control OpenPopup() => Popups.All.First(popup => popup is not Form);
 
@@ -88,6 +93,67 @@ public class ComboBoxTests
         box.Items.Add("cherry");
 
         Assert.Equal(["apple", "banana", "cherry"], box.Items.Cast<object>());
+    }
+
+    [Fact]
+    public void Setting_Sorted_on_an_already_populated_list_resorts_it_once_keeping_the_selection()
+    {
+        var box = new ComboBox();
+
+        box.Items.AddRange("banana", "apple", "cherry");
+        box.SelectedItem = "apple";
+
+        box.Sorted = true;
+
+        Assert.Equal(["apple", "banana", "cherry"], box.Items.Cast<object>());
+        Assert.Equal("apple", box.SelectedItem);
+    }
+
+    /// <summary>Reintroducing the bug (setting the field directly instead of going through SetSelectedIndexCore) would make this list empty: WinForms raises SelectedIndexChanged whenever the index changes, same item or not.</summary>
+    [Fact]
+    public void Sorting_the_list_raises_SelectedIndexChanged_when_it_moves_the_selected_item()
+    {
+        var box = new ComboBox();
+        box.Items.AddRange("banana", "apple", "cherry");
+        box.SelectedItem = "banana";
+        var raised = new List<int>();
+        box.SelectedIndexChanged += (_, _) => raised.Add(box.SelectedIndex);
+
+        box.Sorted = true;
+
+        // "banana" moves from index 0 to index 1: the event must fire exactly once, with the new index.
+        Assert.Equal([1], raised);
+    }
+
+    /// <summary>Array.Sort alone is not stable: Entry must carry each item's original position for ties to keep their order.</summary>
+    [Fact]
+    public void Sort_is_stable_for_items_whose_display_text_is_equal()
+    {
+        var box = new ComboBox();
+        var first = new Item("same", 1);
+        var second = new Item("same", 2);
+        var third = new Item("same", 3);
+
+        box.Items.AddRange(first, second, third);
+
+        box.Sorted = true;
+
+        Assert.Equal([first, second, third], box.Items.Cast<object>());
+    }
+
+    private sealed class Item
+    {
+        public Item(string text, int tag)
+        {
+            Text = text;
+            Tag = tag;
+        }
+
+        public string Text { get; }
+
+        public int Tag { get; }
+
+        public override string ToString() => Text;
     }
 
     [Fact]
@@ -471,6 +537,118 @@ public class ComboBoxTests
 
         box.Dispose();
 
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+        form.Close();
+    }
+
+    // --- AutoComplete ------------------------------------------------------
+
+    [AvaloniaFact]
+    public void Append_completes_from_ListItems_with_the_rest_of_the_match_selected()
+    {
+        var box = new ComboBox { AutoCompleteMode = AutoCompleteMode.Append, AutoCompleteSource = AutoCompleteSource.ListItems };
+        box.Items.AddRange(["apple", "application", "banana"]);
+        var (form, _) = Show(box);
+
+        Type(form, "app");
+
+        Assert.Equal("apple", box.Text);
+        Assert.Equal(3, box.SelectionStart);
+        Assert.Equal(2, box.SelectionLength);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Suggest_from_CustomSource_opens_a_popup_that_closes_once_nothing_matches()
+    {
+        var box = new ComboBox { AutoCompleteMode = AutoCompleteMode.Suggest, AutoCompleteSource = AutoCompleteSource.CustomSource };
+        box.AutoCompleteCustomSource.AddRange(["red", "redwood"]);
+        var (form, _) = Show(box);
+
+        Type(form, "re");
+        Assert.Contains(Popups.All, popup => popup is not Form);
+
+        Type(form, "zz");
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+
+        form.Close();
+    }
+
+    /// <summary>Reintroducing the bug (not resetting the flag before OnTextChanged) would make picking an item from the drop-down re-open the suggestion popup.</summary>
+    [AvaloniaFact]
+    public void Picking_an_item_from_the_drop_down_does_not_trigger_AutoComplete()
+    {
+        var box = new ComboBox { AutoCompleteMode = AutoCompleteMode.Suggest, AutoCompleteSource = AutoCompleteSource.ListItems };
+        box.Items.AddRange(["apple", "apricot"]);
+        var (form, _) = Show(box);
+
+        box.SelectedIndex = 0;
+
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+        form.Close();
+    }
+
+    /// <summary>Reintroducing the bug ("new" instead of "override" on Name) would make this null: a screen reader reads AccessibleObject.Name through the base type, which a "new" member hides from.</summary>
+    [Fact]
+    public void ChildAccessibleObject_Name_reads_the_owners_text_through_the_base_type()
+    {
+        var box = new ComboBox { Text = "" };
+        box.Items.Add("apple");
+        box.SelectedIndex = 0;
+        AccessibleObject accessible = new ComboBox.ChildAccessibleObject(box, IntPtr.Zero);
+
+        Assert.Equal(box.Text, accessible.Name);
+    }
+
+    [AvaloniaFact]
+    public void Tabbing_away_closes_the_AutoComplete_suggestion_list()
+    {
+        var box = new ComboBox { AutoCompleteMode = AutoCompleteMode.Suggest, AutoCompleteSource = AutoCompleteSource.ListItems };
+        box.Items.AddRange(["apple", "apricot"]);
+        var other = new TextBox();
+        var (form, _) = Show(box);
+        form.Controls.Add(other);
+
+        Type(form, "ap");
+        Assert.Contains(Popups.All, popup => popup is not Form);
+
+        other.Focus();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Escape_closes_the_AutoComplete_suggestion_list_without_closing_the_combo()
+    {
+        var box = new ComboBox { AutoCompleteMode = AutoCompleteMode.Suggest, AutoCompleteSource = AutoCompleteSource.ListItems };
+        box.Items.AddRange(["apple", "apricot"]);
+        var (form, _) = Show(box);
+
+        Type(form, "ap");
+        Assert.Contains(Popups.All, popup => popup is not Form);
+
+        Press(form, PhysicalKey.Escape);
+
+        Assert.DoesNotContain(Popups.All, popup => popup is not Form);
+        Assert.False(box.DroppedDown);
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Down_then_Enter_accepts_the_highlighted_AutoComplete_suggestion()
+    {
+        var box = new ComboBox { AutoCompleteMode = AutoCompleteMode.Suggest, AutoCompleteSource = AutoCompleteSource.ListItems };
+        box.Items.AddRange(["apple", "apricot"]);
+        var (form, _) = Show(box);
+
+        Type(form, "ap");
+        Press(form, PhysicalKey.ArrowDown);
+        Press(form, PhysicalKey.Enter);
+
+        Assert.Equal("apple", box.Text);
         Assert.DoesNotContain(Popups.All, popup => popup is not Form);
         form.Close();
     }

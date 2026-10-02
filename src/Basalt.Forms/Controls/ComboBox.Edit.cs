@@ -27,6 +27,9 @@ public partial class ComboBox
     private float _scrollX;
     private bool _selectingWithMouse;
 
+    /// <summary>Set right before every OnTextChanged; read by the AutoComplete override in ComboBox.Hidden.cs.</summary>
+    private bool _textChangedByUser;
+
     [Localizable(true)]
     [Bindable(true)]
     [AllowNull]
@@ -51,6 +54,7 @@ public partial class ComboBox
             _scrollX = 0;
             InvalidateEdit();
             SyncSelectedIndexFromText();
+            _textChangedByUser = false;
             OnTextChanged(EventArgs.Empty);
         }
     }
@@ -107,7 +111,10 @@ public partial class ComboBox
     /// <summary>Puts the selected item's text into the editor and raises TextChanged when that changed it.</summary>
     private void SyncTextWithSelection()
     {
-        if (SetTextFromSelection()) OnTextChanged(EventArgs.Empty);
+        if (!SetTextFromSelection()) return;
+
+        _textChangedByUser = false;
+        OnTextChanged(EventArgs.Empty);
     }
 
     /// <summary>Puts the selected item's text into the editor; true when the text changed, for the caller to report.</summary>
@@ -138,6 +145,10 @@ public partial class ComboBox
 
         // As CBN_EDITUPDATE comes before CBN_EDITCHANGE: TextUpdate first, then TextChanged.
         if (userAction) OnTextUpdate(EventArgs.Empty);
+
+        // Read by the OnTextChanged override below, exactly as TextBox reads its own Modified: only a
+        // keystroke (not code assigning Text, including this class's own inline completion) suggests.
+        _textChangedByUser = userAction;
         OnTextChanged(EventArgs.Empty);
     }
 

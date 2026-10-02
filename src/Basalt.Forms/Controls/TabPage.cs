@@ -11,7 +11,7 @@ namespace System.Windows.Forms;
 [DesignTimeVisible(false)]
 [DefaultEvent("Click")]
 [DefaultProperty("Text")]
-public class TabPage : Panel
+public partial class TabPage : Panel
 {
     public TabPage()
     {

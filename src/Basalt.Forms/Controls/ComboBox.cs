@@ -387,20 +387,7 @@ public partial class ComboBox : ListControl
 
     private void Sort()
     {
-        if (_items.Count == 0) return;
-
-        var ordered = _items
-            .Select((item, index) => (item, index))
-            .OrderBy(pair => GetItemText(pair.item), StringComparer.CurrentCultureIgnoreCase)
-            .ToArray();
-
-        var selectedItem = SelectedItem;
-
-        _items.Clear();
-        _items.AddRange(ordered.Select(pair => pair.item));
-
-        if (selectedItem is not null) _selectedIndex = _items.IndexOf(selectedItem);
-
+        Items.SortEntries();
         Invalidate();
     }
 
