@@ -19,16 +19,67 @@ Partial Class MainForm
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
+        Me.mainMenu = New System.Windows.Forms.MenuStrip()
+        Me.mainToolBar = New System.Windows.Forms.ToolStrip()
+        Me.mainStatusBar = New System.Windows.Forms.StatusStrip()
+        Me.statusLabel = New System.Windows.Forms.ToolStripStatusLabel()
+        Me.clockLabel = New System.Windows.Forms.ToolStripStatusLabel()
+        Me.pages = New System.Windows.Forms.TabControl()
+        Me.basicsPage = New System.Windows.Forms.TabPage()
         Me.titleLabel = New System.Windows.Forms.Label()
         Me.counterLabel = New System.Windows.Forms.Label()
         Me.countButton = New System.Windows.Forms.Button()
         Me.dialogButton = New System.Windows.Forms.Button()
         Me.drawingPanel = New System.Windows.Forms.Panel()
-        Me.statusPanel = New System.Windows.Forms.Panel()
-        Me.statusLabel = New System.Windows.Forms.Label()
         Me.clockTimer = New System.Windows.Forms.Timer(Me.components)
-        Me.statusPanel.SuspendLayout()
+        Me.tips = New System.Windows.Forms.ToolTip(Me.components)
+        Me.pages.SuspendLayout()
+        Me.basicsPage.SuspendLayout()
+        Me.mainStatusBar.SuspendLayout()
         Me.SuspendLayout()
+        '
+        'mainMenu
+        '
+        Me.mainMenu.Name = "mainMenu"
+        '
+        'mainToolBar
+        '
+        Me.mainToolBar.Name = "mainToolBar"
+        '
+        'mainStatusBar
+        '
+        Me.mainStatusBar.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.statusLabel, Me.clockLabel})
+        Me.mainStatusBar.Name = "mainStatusBar"
+        '
+        'statusLabel
+        '
+        Me.statusLabel.Name = "statusLabel"
+        Me.statusLabel.Spring = True
+        Me.statusLabel.Text = "Ready"
+        Me.statusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        '
+        'clockLabel
+        '
+        Me.clockLabel.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left
+        Me.clockLabel.Name = "clockLabel"
+        Me.clockLabel.Text = "--:--:--"
+        '
+        'pages
+        '
+        Me.pages.Controls.Add(Me.basicsPage)
+        Me.pages.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.pages.Name = "pages"
+        '
+        'basicsPage
+        '
+        Me.basicsPage.Controls.Add(Me.drawingPanel)
+        Me.basicsPage.Controls.Add(Me.dialogButton)
+        Me.basicsPage.Controls.Add(Me.countButton)
+        Me.basicsPage.Controls.Add(Me.counterLabel)
+        Me.basicsPage.Controls.Add(Me.titleLabel)
+        Me.basicsPage.Name = "basicsPage"
+        Me.basicsPage.Padding = New System.Windows.Forms.Padding(3)
+        Me.basicsPage.Text = "Basics"
         '
         'titleLabel
         '
@@ -68,22 +119,7 @@ Partial Class MainForm
         Me.drawingPanel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D
         Me.drawingPanel.Location = New System.Drawing.Point(12, 105)
         Me.drawingPanel.Name = "drawingPanel"
-        Me.drawingPanel.Size = New System.Drawing.Size(400, 180)
-        '
-        'statusPanel
-        '
-        Me.statusPanel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D
-        Me.statusPanel.Controls.Add(Me.statusLabel)
-        Me.statusPanel.Dock = System.Windows.Forms.DockStyle.Bottom
-        Me.statusPanel.Name = "statusPanel"
-        Me.statusPanel.Size = New System.Drawing.Size(424, 24)
-        '
-        'statusLabel
-        '
-        Me.statusLabel.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.statusLabel.Name = "statusLabel"
-        Me.statusLabel.Text = "Ready"
-        Me.statusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        Me.drawingPanel.Size = New System.Drawing.Size(560, 260)
         '
         'clockTimer
         '
@@ -94,29 +130,37 @@ Partial Class MainForm
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(424, 321)
-        Me.Controls.Add(Me.drawingPanel)
-        Me.Controls.Add(Me.dialogButton)
-        Me.Controls.Add(Me.countButton)
-        Me.Controls.Add(Me.counterLabel)
-        Me.Controls.Add(Me.titleLabel)
-        Me.Controls.Add(Me.statusPanel)
+        Me.ClientSize = New System.Drawing.Size(600, 460)
+        Me.Controls.Add(Me.pages)
+        Me.Controls.Add(Me.mainStatusBar)
+        Me.Controls.Add(Me.mainToolBar)
+        Me.Controls.Add(Me.mainMenu)
+        Me.MainMenuStrip = Me.mainMenu
         Me.Name = "MainForm"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Basalt.Forms demo"
-        Me.statusPanel.ResumeLayout(False)
+        Me.mainStatusBar.ResumeLayout(False)
+        Me.basicsPage.ResumeLayout(False)
+        Me.basicsPage.PerformLayout()
+        Me.pages.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
     End Sub
 
+    Friend WithEvents mainMenu As System.Windows.Forms.MenuStrip
+    Friend WithEvents mainToolBar As System.Windows.Forms.ToolStrip
+    Friend WithEvents mainStatusBar As System.Windows.Forms.StatusStrip
+    Friend WithEvents statusLabel As System.Windows.Forms.ToolStripStatusLabel
+    Friend WithEvents clockLabel As System.Windows.Forms.ToolStripStatusLabel
+    Friend WithEvents pages As System.Windows.Forms.TabControl
+    Friend WithEvents basicsPage As System.Windows.Forms.TabPage
     Friend WithEvents titleLabel As System.Windows.Forms.Label
     Friend WithEvents counterLabel As System.Windows.Forms.Label
     Friend WithEvents countButton As System.Windows.Forms.Button
     Friend WithEvents dialogButton As System.Windows.Forms.Button
     Friend WithEvents drawingPanel As System.Windows.Forms.Panel
-    Friend WithEvents statusPanel As System.Windows.Forms.Panel
-    Friend WithEvents statusLabel As System.Windows.Forms.Label
     Friend WithEvents clockTimer As System.Windows.Forms.Timer
+    Friend WithEvents tips As System.Windows.Forms.ToolTip
 
 End Class
