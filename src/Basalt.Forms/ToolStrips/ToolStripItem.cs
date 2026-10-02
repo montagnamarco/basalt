@@ -653,6 +653,32 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
 
     protected virtual void OnVisibleChanged(EventArgs e) => ((EventHandler?)Events[s_visibleEvent])?.Invoke(this, e);
 
+    public virtual void ResetBackColor() => BackColor = Color.Empty;
+
+    public virtual void ResetForeColor() => ForeColor = Color.Empty;
+
+    // Keyboard processing an item can take part in; ToolStripControlHost forwards it to its control.
+
+    protected internal virtual bool ProcessCmdKey(ref Message m, Keys keyData) => false;
+
+    /// <summary>Enter on the selected item clicks it, as WinForms does.</summary>
+    protected internal virtual bool ProcessDialogKey(Keys keyData)
+    {
+        if (keyData != Keys.Enter) return false;
+
+        PerformClick();
+        return true;
+    }
+
+    /// <summary>The item's mnemonic was pressed: it is clicked.</summary>
+    protected internal virtual bool ProcessMnemonic(char charCode)
+    {
+        if (!Enabled || !Available || !Control.IsMnemonic(charCode, Text)) return false;
+
+        PerformClick();
+        return true;
+    }
+
     /// <summary>Clicks the item as if the user had, running its Click handlers.</summary>
     public void PerformClick()
     {

@@ -1,4 +1,9 @@
+using System.Drawing;
 using System.Windows.Forms;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Threading;
 
 namespace Basalt.Forms.Tests.ToolStrips;
 
@@ -175,16 +180,67 @@ public class BindingNavigatorTests
     }
 
     [Fact]
-    public void Typing_a_number_into_the_position_box_moves_the_BindingSource_there()
+    public void PositionItem_is_a_real_hosted_ToolStripTextBox()
+    {
+        var navigator = new BindingNavigator(addStandardItems: true);
+
+        Assert.IsType<ToolStripTextBox>(navigator.PositionItem);
+    }
+
+    [AvaloniaFact]
+    public void Typing_a_number_into_the_position_box_commits_only_on_Enter()
     {
         var source = NewPeopleSource(5);
         var navigator = new BindingNavigator(source);
+        var form = new Form { ClientSize = new Size(300, 40) };
+        form.Controls.Add(navigator);
+        form.Show();
+        Dispatcher.UIThread.RunJobs();
 
-        // The position box has no real hosted TextBox yet (ToolStripControlHost is missing), so a
-        // typed number is simulated by writing it to the item's Text, the way each keystroke would.
-        navigator.PositionItem!.Text = "4";
+        var positionBox = (ToolStripTextBox)navigator.PositionItem!;
+        positionBox.Focus();
+        positionBox.Clear();
+
+        form.Host!.KeyTextInput("4");
+
+        // Not yet committed: typing alone must not move the BindingSource.
+        Assert.Equal(0, source.Position);
+
+        form.Host!.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(PhysicalKey.Enter, RawInputModifiers.None);
 
         Assert.Equal(3, source.Position);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void Typing_a_number_into_the_position_box_commits_when_it_loses_focus()
+    {
+        var source = NewPeopleSource(5);
+        var navigator = new BindingNavigator(source);
+        var other = new Button();
+        var form = new Form { ClientSize = new Size(300, 60) };
+        form.Controls.Add(navigator);
+        form.Controls.Add(other);
+        form.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var positionBox = (ToolStripTextBox)navigator.PositionItem!;
+        positionBox.Focus();
+
+        // The hosted TextBox's own Leave event (fired when the real focus moves away, here through
+        // the usual Control.Focus()/Leave mechanics) is what the navigator commits on; the text is set
+        // directly to isolate that commit path from the headless platform's keyboard routing, already
+        // proved by Typing_a_number_into_the_position_box_commits_only_on_Enter above.
+        positionBox.Text = "2";
+        Assert.Equal(0, source.Position);
+
+        other.Focus();
+
+        Assert.Equal(1, source.Position);
+
+        form.Close();
     }
 
     [Fact]

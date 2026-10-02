@@ -129,11 +129,19 @@ public class BindingNavigator : ToolStrip, ISupportInitialize
         get => _positionItem;
         set
         {
-            if (_positionItem is not null) _positionItem.TextChanged -= HandlePositionTextChanged;
+            if (_positionItem is ToolStripTextBox oldBox)
+            {
+                oldBox.KeyDown -= HandlePositionKeyDown;
+                oldBox.Leave -= HandlePositionLeave;
+            }
 
             _positionItem = value;
 
-            if (_positionItem is not null) _positionItem.TextChanged += HandlePositionTextChanged;
+            if (_positionItem is ToolStripTextBox newBox)
+            {
+                newBox.KeyDown += HandlePositionKeyDown;
+                newBox.Leave += HandlePositionLeave;
+            }
 
             RefreshItemsCore();
         }
@@ -146,7 +154,7 @@ public class BindingNavigator : ToolStrip, ISupportInitialize
     {
         MoveFirstItem = new ToolStripButton("Move first") { DisplayStyle = ToolStripItemDisplayStyle.Image };
         MovePreviousItem = new ToolStripButton("Move previous") { DisplayStyle = ToolStripItemDisplayStyle.Image };
-        PositionItem = new BindingNavigatorPositionItem { Text = "0" };
+        PositionItem = new ToolStripTextBox { Text = "0", AutoSize = false, Size = new Size(50, 22) };
         CountItem = new ToolStripLabel { Text = "of 0" };
         MoveNextItem = new ToolStripButton("Move next") { DisplayStyle = ToolStripItemDisplayStyle.Image };
         MoveLastItem = new ToolStripButton("Move last") { DisplayStyle = ToolStripItemDisplayStyle.Image };
@@ -208,7 +216,8 @@ public class BindingNavigator : ToolStrip, ISupportInitialize
         {
             _positionItem.Enabled = hasSource && count > 0;
 
-            // Setting Text here must not loop back into HandlePositionTextChanged and re-navigate.
+            // Committing only happens on Enter or Leave (see HandlePositionKeyDown/HandlePositionLeave),
+            // so writing Text here from the BindingSource's own Position cannot loop back into it.
             var text = count > 0 ? oneBasedPosition.ToString() : "0";
             if (_positionItem.Text != text) _positionItem.Text = text;
         }
@@ -257,15 +266,29 @@ public class BindingNavigator : ToolStrip, ISupportInitialize
 
     private void HandleMovePreviousClick(object? sender, EventArgs e) => _bindingSource?.MovePrevious();
 
-    /// <summary>
-    /// What a real ToolStripTextBox's Enter key would commit: here, since the position item is not a
-    /// real hosted TextBox (ToolStripControlHost does not exist yet), a typed number commits as soon
-    /// as it parses, directly from Text.
-    /// </summary>
-    private void HandlePositionTextChanged(object? sender, EventArgs e)
+    /// <summary>Enter commits the typed position, as a real text box's default button would.</summary>
+    private void HandlePositionKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Enter) return;
+
+        CommitPosition();
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+    }
+
+    /// <summary>Leaving the box without pressing Enter still commits, the way leaving a bound text box does.</summary>
+    private void HandlePositionLeave(object? sender, EventArgs e) => CommitPosition();
+
+    /// <summary>Parses the position box's Text and moves the BindingSource there; text that is not a number puts the current position back.</summary>
+    private void CommitPosition()
     {
         if (_bindingSource is null || _positionItem is null) return;
-        if (!int.TryParse(_positionItem.Text, out var typedPosition)) return;
+
+        if (!int.TryParse(_positionItem.Text, out var typedPosition))
+        {
+            _positionItem.Text = (_bindingSource.Position + 1).ToString(System.Globalization.CultureInfo.CurrentCulture);
+            return;
+        }
 
         _bindingSource.Position = typedPosition - 1;
     }
@@ -279,38 +302,5 @@ public class BindingNavigator : ToolStrip, ISupportInitialize
         if (field is not null) field.Click += clickHandler;
 
         RefreshItemsCore();
-    }
-}
-
-/// <summary>
-/// The minimal stand-in for a ToolStripTextBox's hosted TextBox: ToolStripControlHost does not exist
-/// yet in this library, so the position box cannot host a real, independently focusable Control. It
-/// paints like a sunken text field and accepts a typed number through its Text property (see
-/// <see cref="BindingNavigator.HandlePositionTextChanged"/>), but it does not receive real keyboard
-/// input of its own; a caller (or test) sets Text the way a keystroke would.
-/// </summary>
-internal sealed class BindingNavigatorPositionItem : ToolStripItem
-{
-    public BindingNavigatorPositionItem()
-    {
-        AutoSize = false;
-        Size = new Size(50, DefaultSize.Height);
-    }
-
-    public override bool CanSelect => true;
-
-    protected override Size DefaultSize => new(50, 22);
-
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        var bounds = ContentRectangle;
-        bounds.Offset(Bounds.Location);
-
-        ControlPaint.DrawBorder3D(e.Graphics, bounds, Border3DStyle.Sunken);
-
-        var textBounds = Rectangle.Inflate(bounds, -2, -2);
-        TextRenderer.DrawText(e.Graphics, Text ?? string.Empty, Font, textBounds, ForeColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
-
-        base.OnPaint(e);
     }
 }

@@ -1129,16 +1129,9 @@ M protected System.Windows.Forms.ToolStrip::WndProc(ref System.Windows.Forms.Mes
 M protected System.Windows.Forms.ToolStrip::get_MaxItemSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ToolStripButton::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ToolStripButton::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ToolStripComboBox::OnDropDown(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripComboBox::OnDropDownClosed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripComboBox::OnDropDownStyleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripComboBox::OnSelectedIndexChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripComboBox::OnSelectionChangeCommitted(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripComboBox::OnSubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripComboBox::OnTextUpdate(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripComboBox::OnUnsubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripComboBox::get_DefaultMargin() -> System.Windows.Forms.Padding virtual
-M protected System.Windows.Forms.ToolStripComboBox::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ToolStripContainer::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ToolStripContainer::CreateControlsInstance() -> System.Windows.Forms.Control+ControlCollection virtual
 M protected System.Windows.Forms.ToolStripContainer::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
@@ -1149,28 +1142,7 @@ M protected System.Windows.Forms.ToolStripContentPanel::OnLoad(System.EventArgs)
 M protected System.Windows.Forms.ToolStripContentPanel::OnPaintBackground(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripContentPanel::OnRendererChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripControlHost::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.ToolStripControlHost::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnBoundsChanged() -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnEnter(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnGotFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnHostedControlResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnKeyDown(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnKeyPress(System.Windows.Forms.KeyPressEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripControlHost::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnLostFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnPaint(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnParentChanged(System.Windows.Forms.ToolStrip, System.Windows.Forms.ToolStrip) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnSubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnUnsubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnValidated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::OnValidating(System.ComponentModel.CancelEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ToolStripControlHost::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ToolStripControlHost::ProcessMnemonic(System.Char) -> System.Boolean virtual
-M protected System.Windows.Forms.ToolStripControlHost::SetVisibleCore(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripControlHost::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ToolStripDropDown::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ToolStripDropDown::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.ToolStripDropDown::CreateLayoutSettings(System.Windows.Forms.ToolStripLayoutStyle) -> System.Windows.Forms.LayoutSettings virtual
@@ -1223,9 +1195,6 @@ M protected System.Windows.Forms.ToolStripItem::OnParentRightToLeftChanged(Syste
 M protected System.Windows.Forms.ToolStripItem::OnQueryContinueDrag(System.Windows.Forms.QueryContinueDragEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripItem::OnRequestCommandExecute(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripItem::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripItem::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ToolStripItem::ProcessDialogKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ToolStripItem::ProcessMnemonic(System.Char) -> System.Boolean virtual
 M protected System.Windows.Forms.ToolStripItem::get_DismissWhenClicked() -> System.Boolean virtual
 M protected System.Windows.Forms.ToolStripItem::get_Renderer() -> System.Windows.Forms.ToolStripRenderer virtual
 M protected System.Windows.Forms.ToolStripItem::get_ShowKeyboardCues() -> System.Boolean virtual
@@ -1274,11 +1243,8 @@ M protected System.Windows.Forms.ToolStripPanelRow::get_DefaultMargin() -> Syste
 M protected System.Windows.Forms.ToolStripPanelRow::get_DefaultPadding() -> System.Windows.Forms.Padding virtual
 M protected System.Windows.Forms.ToolStripProfessionalRenderer::OnRenderToolStripContentPanelBackground(System.Windows.Forms.ToolStripContentPanelRenderEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripProfessionalRenderer::OnRenderToolStripPanelBackground(System.Windows.Forms.ToolStripPanelRenderEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripProgressBar::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripProgressBar::OnSubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripProgressBar::OnUnsubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripProgressBar::get_DefaultMargin() -> System.Windows.Forms.Padding virtual
-M protected System.Windows.Forms.ToolStripProgressBar::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.ToolStripRenderer::InitializeContentPanel(System.Windows.Forms.ToolStripContentPanel) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripRenderer::InitializePanel(System.Windows.Forms.ToolStripPanel) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripRenderer::OnRenderToolStripContentPanelBackground(System.Windows.Forms.ToolStripContentPanelRenderEventArgs) -> System.Void virtual
@@ -1303,8 +1269,6 @@ M protected System.Windows.Forms.ToolStripTextBox::OnMultilineChanged(System.Eve
 M protected System.Windows.Forms.ToolStripTextBox::OnReadOnlyChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripTextBox::OnSubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripTextBox::OnUnsubscribeControlEvents(System.Windows.Forms.Control) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripTextBox::get_DefaultMargin() -> System.Windows.Forms.Padding virtual
-M protected System.Windows.Forms.ToolStripTextBox::get_DefaultSize() -> System.Drawing.Size virtual
 M protected System.Windows.Forms.TrackBar::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.TrackBar::CreateHandle() -> System.Void virtual
 M protected System.Windows.Forms.TrackBar::OnBackColorChanged(System.EventArgs) -> System.Void virtual
@@ -5493,72 +5457,21 @@ M public System.Windows.Forms.ToolStrip::set_Stretch(System.Boolean) -> System.V
 M public System.Windows.Forms.ToolStrip::set_TabStop(System.Boolean) -> System.Void
 M public System.Windows.Forms.ToolStrip::set_TextDirection(System.Windows.Forms.ToolStripTextDirection) -> System.Void virtual
 M public System.Windows.Forms.ToolStripButton::GetPreferredSize(System.Drawing.Size) -> System.Drawing.Size virtual
-M public System.Windows.Forms.ToolStripComboBox::.ctor()
-M public System.Windows.Forms.ToolStripComboBox::.ctor(System.String)
-M public System.Windows.Forms.ToolStripComboBox::.ctor(System.Windows.Forms.Control)
-M public System.Windows.Forms.ToolStripComboBox::BeginUpdate() -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::EndUpdate() -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::FindString(System.String) -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::FindString(System.String, System.Int32) -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::FindStringExact(System.String) -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::FindStringExact(System.String, System.Int32) -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::GetItemHeight(System.Int32) -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::GetPreferredSize(System.Drawing.Size) -> System.Drawing.Size virtual
-M public System.Windows.Forms.ToolStripComboBox::Select(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::SelectAll() -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::ToString() -> System.String virtual
 M public System.Windows.Forms.ToolStripComboBox::add_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::add_DropDown(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::add_DropDownClosed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::add_DropDownStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::add_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::add_TextUpdate(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::get_AutoCompleteCustomSource() -> System.Windows.Forms.AutoCompleteStringCollection
 M public System.Windows.Forms.ToolStripComboBox::get_AutoCompleteMode() -> System.Windows.Forms.AutoCompleteMode
 M public System.Windows.Forms.ToolStripComboBox::get_AutoCompleteSource() -> System.Windows.Forms.AutoCompleteSource
 M public System.Windows.Forms.ToolStripComboBox::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.ToolStripComboBox::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.ToolStripComboBox::get_ComboBox() -> System.Windows.Forms.ComboBox
-M public System.Windows.Forms.ToolStripComboBox::get_DropDownHeight() -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::get_DropDownStyle() -> System.Windows.Forms.ComboBoxStyle
-M public System.Windows.Forms.ToolStripComboBox::get_DropDownWidth() -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::get_DroppedDown() -> System.Boolean
 M public System.Windows.Forms.ToolStripComboBox::get_FlatStyle() -> System.Windows.Forms.FlatStyle
-M public System.Windows.Forms.ToolStripComboBox::get_IntegralHeight() -> System.Boolean
-M public System.Windows.Forms.ToolStripComboBox::get_Items() -> System.Windows.Forms.ComboBox+ObjectCollection
-M public System.Windows.Forms.ToolStripComboBox::get_MaxDropDownItems() -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::get_MaxLength() -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::get_SelectedIndex() -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::get_SelectedItem() -> System.Object
-M public System.Windows.Forms.ToolStripComboBox::get_SelectedText() -> System.String
-M public System.Windows.Forms.ToolStripComboBox::get_SelectionLength() -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::get_SelectionStart() -> System.Int32
-M public System.Windows.Forms.ToolStripComboBox::get_Sorted() -> System.Boolean
 M public System.Windows.Forms.ToolStripComboBox::remove_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::remove_DropDown(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::remove_DropDownClosed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::remove_DropDownStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::remove_SelectedIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::remove_TextUpdate(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::set_AutoCompleteCustomSource(System.Windows.Forms.AutoCompleteStringCollection) -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::set_AutoCompleteMode(System.Windows.Forms.AutoCompleteMode) -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::set_AutoCompleteSource(System.Windows.Forms.AutoCompleteSource) -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.ToolStripComboBox::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.ToolStripComboBox::set_DropDownHeight(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_DropDownStyle(System.Windows.Forms.ComboBoxStyle) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_DropDownWidth(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_DroppedDown(System.Boolean) -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::set_FlatStyle(System.Windows.Forms.FlatStyle) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_IntegralHeight(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_MaxDropDownItems(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_MaxLength(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_SelectedIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_SelectedItem(System.Object) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_SelectedText(System.String) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_SelectionLength(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_SelectionStart(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripComboBox::set_Sorted(System.Boolean) -> System.Void
 M public System.Windows.Forms.ToolStripContainer::.ctor()
 M public System.Windows.Forms.ToolStripContainer::add_BackColorChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripContainer::add_BackgroundImageChanged(System.EventHandler) -> System.Void
@@ -5669,77 +5582,29 @@ M public System.Windows.Forms.ToolStripContentPanelRenderEventHandler::BeginInvo
 M public System.Windows.Forms.ToolStripContentPanelRenderEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.ToolStripContentPanelRenderEventHandler::Invoke(System.Object, System.Windows.Forms.ToolStripContentPanelRenderEventArgs) -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost+ToolStripHostedControlAccessibleObject::.ctor(System.Windows.Forms.Control, System.Windows.Forms.ToolStripControlHost)
-M public System.Windows.Forms.ToolStripControlHost::.ctor(System.Windows.Forms.Control)
-M public System.Windows.Forms.ToolStripControlHost::.ctor(System.Windows.Forms.Control, System.String)
-M public System.Windows.Forms.ToolStripControlHost::Focus() -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::GetPreferredSize(System.Drawing.Size) -> System.Drawing.Size virtual
-M public System.Windows.Forms.ToolStripControlHost::ResetBackColor() -> System.Void virtual
-M public System.Windows.Forms.ToolStripControlHost::ResetForeColor() -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost::add_DisplayStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_Enter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_GotFocus(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_Leave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_LostFocus(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_Validated(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::add_Validating(System.ComponentModel.CancelEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::get_BackColor() -> System.Drawing.Color virtual
 M public System.Windows.Forms.ToolStripControlHost::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.ToolStripControlHost::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.ToolStripControlHost::get_CanSelect() -> System.Boolean virtual
-M public System.Windows.Forms.ToolStripControlHost::get_CausesValidation() -> System.Boolean
-M public System.Windows.Forms.ToolStripControlHost::get_Control() -> System.Windows.Forms.Control
-M public System.Windows.Forms.ToolStripControlHost::get_ControlAlign() -> System.Drawing.ContentAlignment
 M public System.Windows.Forms.ToolStripControlHost::get_DisplayStyle() -> System.Windows.Forms.ToolStripItemDisplayStyle
 M public System.Windows.Forms.ToolStripControlHost::get_DoubleClickEnabled() -> System.Boolean
-M public System.Windows.Forms.ToolStripControlHost::get_Enabled() -> System.Boolean virtual
-M public System.Windows.Forms.ToolStripControlHost::get_Focused() -> System.Boolean virtual
-M public System.Windows.Forms.ToolStripControlHost::get_Font() -> System.Drawing.Font virtual
-M public System.Windows.Forms.ToolStripControlHost::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.ToolStripControlHost::get_Image() -> System.Drawing.Image virtual
 M public System.Windows.Forms.ToolStripControlHost::get_ImageAlign() -> System.Drawing.ContentAlignment
 M public System.Windows.Forms.ToolStripControlHost::get_ImageScaling() -> System.Windows.Forms.ToolStripItemImageScaling
 M public System.Windows.Forms.ToolStripControlHost::get_ImageTransparentColor() -> System.Drawing.Color
 M public System.Windows.Forms.ToolStripControlHost::get_RightToLeft() -> System.Windows.Forms.RightToLeft virtual
 M public System.Windows.Forms.ToolStripControlHost::get_RightToLeftAutoMirrorImage() -> System.Boolean
-M public System.Windows.Forms.ToolStripControlHost::get_Selected() -> System.Boolean virtual
-M public System.Windows.Forms.ToolStripControlHost::get_Site() -> System.ComponentModel.ISite virtual
-M public System.Windows.Forms.ToolStripControlHost::get_Size() -> System.Drawing.Size virtual
-M public System.Windows.Forms.ToolStripControlHost::get_Text() -> System.String virtual
 M public System.Windows.Forms.ToolStripControlHost::get_TextAlign() -> System.Drawing.ContentAlignment
 M public System.Windows.Forms.ToolStripControlHost::get_TextDirection() -> System.Windows.Forms.ToolStripTextDirection virtual
 M public System.Windows.Forms.ToolStripControlHost::get_TextImageRelation() -> System.Windows.Forms.TextImageRelation
 M public System.Windows.Forms.ToolStripControlHost::remove_DisplayStyleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_Enter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_GotFocus(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_Leave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_LostFocus(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_Validated(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::remove_Validating(System.ComponentModel.CancelEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::set_BackColor(System.Drawing.Color) -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.ToolStripControlHost::set_CausesValidation(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::set_ControlAlign(System.Drawing.ContentAlignment) -> System.Void
 M public System.Windows.Forms.ToolStripControlHost::set_DisplayStyle(System.Windows.Forms.ToolStripItemDisplayStyle) -> System.Void
 M public System.Windows.Forms.ToolStripControlHost::set_DoubleClickEnabled(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::set_Enabled(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ToolStripControlHost::set_Font(System.Drawing.Font) -> System.Void virtual
-M public System.Windows.Forms.ToolStripControlHost::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.ToolStripControlHost::set_Image(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost::set_ImageAlign(System.Drawing.ContentAlignment) -> System.Void
 M public System.Windows.Forms.ToolStripControlHost::set_ImageScaling(System.Windows.Forms.ToolStripItemImageScaling) -> System.Void
 M public System.Windows.Forms.ToolStripControlHost::set_ImageTransparentColor(System.Drawing.Color) -> System.Void
 M public System.Windows.Forms.ToolStripControlHost::set_RightToLeft(System.Windows.Forms.RightToLeft) -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost::set_RightToLeftAutoMirrorImage(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripControlHost::set_Site(System.ComponentModel.ISite) -> System.Void virtual
-M public System.Windows.Forms.ToolStripControlHost::set_Size(System.Drawing.Size) -> System.Void virtual
-M public System.Windows.Forms.ToolStripControlHost::set_Text(System.String) -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost::set_TextAlign(System.Drawing.ContentAlignment) -> System.Void
 M public System.Windows.Forms.ToolStripControlHost::set_TextDirection(System.Windows.Forms.ToolStripTextDirection) -> System.Void virtual
 M public System.Windows.Forms.ToolStripControlHost::set_TextImageRelation(System.Windows.Forms.TextImageRelation) -> System.Void
@@ -5865,10 +5730,8 @@ M public System.Windows.Forms.ToolStripItem+ToolStripItemAccessibleObject::get_S
 M public System.Windows.Forms.ToolStripItem+ToolStripItemAccessibleObject::set_Name(System.String) -> System.Void virtual
 M public System.Windows.Forms.ToolStripItem::DoDragDrop(System.Object, System.Windows.Forms.DragDropEffects) -> System.Windows.Forms.DragDropEffects
 M public System.Windows.Forms.ToolStripItem::DoDragDrop(System.Object, System.Windows.Forms.DragDropEffects, System.Drawing.Bitmap, System.Drawing.Point, System.Boolean) -> System.Windows.Forms.DragDropEffects
-M public System.Windows.Forms.ToolStripItem::ResetBackColor() -> System.Void virtual
 M public System.Windows.Forms.ToolStripItem::ResetDisplayStyle() -> System.Void virtual
 M public System.Windows.Forms.ToolStripItem::ResetFont() -> System.Void virtual
-M public System.Windows.Forms.ToolStripItem::ResetForeColor() -> System.Void virtual
 M public System.Windows.Forms.ToolStripItem::ResetImage() -> System.Void virtual
 M public System.Windows.Forms.ToolStripItem::ResetMargin() -> System.Void
 M public System.Windows.Forms.ToolStripItem::ResetPadding() -> System.Void
@@ -6064,49 +5927,26 @@ M public System.Windows.Forms.ToolStripPanelRow::get_Padding() -> System.Windows
 M public System.Windows.Forms.ToolStripPanelRow::get_ToolStripPanel() -> System.Windows.Forms.ToolStripPanel
 M public System.Windows.Forms.ToolStripPanelRow::set_Margin(System.Windows.Forms.Padding) -> System.Void
 M public System.Windows.Forms.ToolStripPanelRow::set_Padding(System.Windows.Forms.Padding) -> System.Void virtual
-M public System.Windows.Forms.ToolStripProgressBar::.ctor()
-M public System.Windows.Forms.ToolStripProgressBar::.ctor(System.String)
-M public System.Windows.Forms.ToolStripProgressBar::Increment(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::PerformStep() -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_LocationChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_OwnerChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_Validated(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::add_Validating(System.ComponentModel.CancelEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.ToolStripProgressBar::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.ToolStripProgressBar::get_MarqueeAnimationSpeed() -> System.Int32
-M public System.Windows.Forms.ToolStripProgressBar::get_Maximum() -> System.Int32
-M public System.Windows.Forms.ToolStripProgressBar::get_Minimum() -> System.Int32
-M public System.Windows.Forms.ToolStripProgressBar::get_ProgressBar() -> System.Windows.Forms.ProgressBar
-M public System.Windows.Forms.ToolStripProgressBar::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.ToolStripProgressBar::get_Step() -> System.Int32
-M public System.Windows.Forms.ToolStripProgressBar::get_Style() -> System.Windows.Forms.ProgressBarStyle
-M public System.Windows.Forms.ToolStripProgressBar::get_Text() -> System.String virtual
-M public System.Windows.Forms.ToolStripProgressBar::get_Value() -> System.Int32
 M public System.Windows.Forms.ToolStripProgressBar::remove_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::remove_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::remove_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::remove_LocationChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::remove_OwnerChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::remove_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::remove_Validated(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::remove_Validating(System.ComponentModel.CancelEventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripProgressBar::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.ToolStripProgressBar::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.ToolStripProgressBar::set_MarqueeAnimationSpeed(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::set_Maximum(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::set_Minimum(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ToolStripProgressBar::set_Step(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::set_Style(System.Windows.Forms.ProgressBarStyle) -> System.Void
-M public System.Windows.Forms.ToolStripProgressBar::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.ToolStripProgressBar::set_Value(System.Int32) -> System.Void
 M public System.Windows.Forms.ToolStripRenderer::DrawToolStripContentPanelBackground(System.Windows.Forms.ToolStripContentPanelRenderEventArgs) -> System.Void
 M public System.Windows.Forms.ToolStripRenderer::DrawToolStripPanelBackground(System.Windows.Forms.ToolStripPanelRenderEventArgs) -> System.Void
 M public System.Windows.Forms.ToolStripRenderer::add_RenderToolStripContentPanelBackground(System.Windows.Forms.ToolStripContentPanelRenderEventHandler) -> System.Void
@@ -6160,27 +6000,6 @@ M public System.Windows.Forms.ToolStripStatusLabel::get_Alignment() -> System.Wi
 M public System.Windows.Forms.ToolStripStatusLabel::get_LiveSetting() -> System.Windows.Forms.Automation.AutomationLiveSetting
 M public System.Windows.Forms.ToolStripStatusLabel::set_Alignment(System.Windows.Forms.ToolStripItemAlignment) -> System.Void
 M public System.Windows.Forms.ToolStripStatusLabel::set_LiveSetting(System.Windows.Forms.Automation.AutomationLiveSetting) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::.ctor()
-M public System.Windows.Forms.ToolStripTextBox::.ctor(System.String)
-M public System.Windows.Forms.ToolStripTextBox::.ctor(System.Windows.Forms.Control)
-M public System.Windows.Forms.ToolStripTextBox::AppendText(System.String) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::Clear() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::ClearUndo() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::Copy() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::Cut() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::DeselectAll() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::GetCharFromPosition(System.Drawing.Point) -> System.Char
-M public System.Windows.Forms.ToolStripTextBox::GetCharIndexFromPosition(System.Drawing.Point) -> System.Int32
-M public System.Windows.Forms.ToolStripTextBox::GetFirstCharIndexFromLine(System.Int32) -> System.Int32
-M public System.Windows.Forms.ToolStripTextBox::GetFirstCharIndexOfCurrentLine() -> System.Int32
-M public System.Windows.Forms.ToolStripTextBox::GetLineFromCharIndex(System.Int32) -> System.Int32
-M public System.Windows.Forms.ToolStripTextBox::GetPositionFromCharIndex(System.Int32) -> System.Drawing.Point
-M public System.Windows.Forms.ToolStripTextBox::GetPreferredSize(System.Drawing.Size) -> System.Drawing.Size virtual
-M public System.Windows.Forms.ToolStripTextBox::Paste() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::ScrollToCaret() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::Select(System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::SelectAll() -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::Undo() -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::add_AcceptsTabChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::add_BorderStyleChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::add_HideSelectionChanged(System.EventHandler) -> System.Void
@@ -6188,29 +6007,14 @@ M public System.Windows.Forms.ToolStripTextBox::add_ModifiedChanged(System.Event
 M public System.Windows.Forms.ToolStripTextBox::add_MultilineChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::add_ReadOnlyChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::add_TextBoxTextAlignChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::get_AcceptsReturn() -> System.Boolean
-M public System.Windows.Forms.ToolStripTextBox::get_AcceptsTab() -> System.Boolean
 M public System.Windows.Forms.ToolStripTextBox::get_AutoCompleteCustomSource() -> System.Windows.Forms.AutoCompleteStringCollection
 M public System.Windows.Forms.ToolStripTextBox::get_AutoCompleteMode() -> System.Windows.Forms.AutoCompleteMode
 M public System.Windows.Forms.ToolStripTextBox::get_AutoCompleteSource() -> System.Windows.Forms.AutoCompleteSource
 M public System.Windows.Forms.ToolStripTextBox::get_BackgroundImage() -> System.Drawing.Image virtual
 M public System.Windows.Forms.ToolStripTextBox::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.ToolStripTextBox::get_BorderStyle() -> System.Windows.Forms.BorderStyle
-M public System.Windows.Forms.ToolStripTextBox::get_CanUndo() -> System.Boolean
-M public System.Windows.Forms.ToolStripTextBox::get_CharacterCasing() -> System.Windows.Forms.CharacterCasing
-M public System.Windows.Forms.ToolStripTextBox::get_HideSelection() -> System.Boolean
-M public System.Windows.Forms.ToolStripTextBox::get_Lines() -> System.String[]
-M public System.Windows.Forms.ToolStripTextBox::get_MaxLength() -> System.Int32
-M public System.Windows.Forms.ToolStripTextBox::get_Modified() -> System.Boolean
 M public System.Windows.Forms.ToolStripTextBox::get_Multiline() -> System.Boolean
-M public System.Windows.Forms.ToolStripTextBox::get_ReadOnly() -> System.Boolean
-M public System.Windows.Forms.ToolStripTextBox::get_SelectedText() -> System.String
-M public System.Windows.Forms.ToolStripTextBox::get_SelectionLength() -> System.Int32
-M public System.Windows.Forms.ToolStripTextBox::get_SelectionStart() -> System.Int32
 M public System.Windows.Forms.ToolStripTextBox::get_ShortcutsEnabled() -> System.Boolean
-M public System.Windows.Forms.ToolStripTextBox::get_TextBox() -> System.Windows.Forms.TextBox
 M public System.Windows.Forms.ToolStripTextBox::get_TextBoxTextAlign() -> System.Windows.Forms.HorizontalAlignment
-M public System.Windows.Forms.ToolStripTextBox::get_TextLength() -> System.Int32
 M public System.Windows.Forms.ToolStripTextBox::get_WordWrap() -> System.Boolean
 M public System.Windows.Forms.ToolStripTextBox::remove_AcceptsTabChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::remove_BorderStyleChanged(System.EventHandler) -> System.Void
@@ -6219,24 +6023,12 @@ M public System.Windows.Forms.ToolStripTextBox::remove_ModifiedChanged(System.Ev
 M public System.Windows.Forms.ToolStripTextBox::remove_MultilineChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::remove_ReadOnlyChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::remove_TextBoxTextAlignChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_AcceptsReturn(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_AcceptsTab(System.Boolean) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_AutoCompleteCustomSource(System.Windows.Forms.AutoCompleteStringCollection) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_AutoCompleteMode(System.Windows.Forms.AutoCompleteMode) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_AutoCompleteSource(System.Windows.Forms.AutoCompleteSource) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
 M public System.Windows.Forms.ToolStripTextBox::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.ToolStripTextBox::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_CharacterCasing(System.Windows.Forms.CharacterCasing) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_HideSelection(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_Lines(System.String[]) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_MaxLength(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_Modified(System.Boolean) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_Multiline(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_ReadOnly(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_SelectedText(System.String) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_SelectionLength(System.Int32) -> System.Void
-M public System.Windows.Forms.ToolStripTextBox::set_SelectionStart(System.Int32) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_ShortcutsEnabled(System.Boolean) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_TextBoxTextAlign(System.Windows.Forms.HorizontalAlignment) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_WordWrap(System.Boolean) -> System.Void
@@ -6783,11 +6575,9 @@ T class System.Windows.Forms.ToolBar+ToolBarButtonCollection
 T class System.Windows.Forms.ToolBarButton : System.ComponentModel.Component
 T class System.Windows.Forms.ToolBarButtonClickEventArgs : System.EventArgs
 T class System.Windows.Forms.ToolStrip+ToolStripAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
-T class System.Windows.Forms.ToolStripComboBox : System.Windows.Forms.ToolStripControlHost
 T class System.Windows.Forms.ToolStripContainer : System.Windows.Forms.ContainerControl
 T class System.Windows.Forms.ToolStripContentPanel : System.Windows.Forms.Panel
 T class System.Windows.Forms.ToolStripContentPanelRenderEventArgs : System.EventArgs
-T class System.Windows.Forms.ToolStripControlHost : System.Windows.Forms.ToolStripItem
 T class System.Windows.Forms.ToolStripControlHost+ToolStripHostedControlAccessibleObject : System.Windows.Forms.Control+ControlAccessibleObject
 T class System.Windows.Forms.ToolStripDropDown+ToolStripDropDownAccessibleObject : System.Windows.Forms.ToolStrip+ToolStripAccessibleObject
 T class System.Windows.Forms.ToolStripDropDownItemAccessibleObject : System.Windows.Forms.ToolStripItem+ToolStripItemAccessibleObject
@@ -6798,9 +6588,7 @@ T class System.Windows.Forms.ToolStripPanel : System.Windows.Forms.ContainerCont
 T class System.Windows.Forms.ToolStripPanel+ToolStripPanelRowCollection : System.Windows.Forms.Layout.ArrangedElementCollection
 T class System.Windows.Forms.ToolStripPanelRenderEventArgs : System.EventArgs
 T class System.Windows.Forms.ToolStripPanelRow : System.ComponentModel.Component
-T class System.Windows.Forms.ToolStripProgressBar : System.Windows.Forms.ToolStripControlHost
 T class System.Windows.Forms.ToolStripSplitButton+ToolStripSplitButtonAccessibleObject : System.Windows.Forms.ToolStripItem+ToolStripItemAccessibleObject
-T class System.Windows.Forms.ToolStripTextBox : System.Windows.Forms.ToolStripControlHost
 T class System.Windows.Forms.TreeNodeMouseHoverEventArgs : System.EventArgs
 T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.TreeViewImageKeyConverter : System.Windows.Forms.ImageKeyConverter
