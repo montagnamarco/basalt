@@ -170,32 +170,8 @@ M protected System.Windows.Forms.DataGridViewTopLeftHeaderCell::Paint(System.Dra
 M protected System.Windows.Forms.DataGridViewTopLeftHeaderCell::PaintBorder(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle) -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.DateTimePicker::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Design.ComponentEditorForm::OnActivated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Design.ComponentEditorForm::OnHelpRequested(System.Windows.Forms.HelpEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Design.ComponentEditorForm::OnSelChangeSelector(System.Object, System.Windows.Forms.TreeViewEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Design.ComponentEditorPage::EnterLoadingMode() -> System.Void
-M protected System.Windows.Forms.Design.ComponentEditorPage::ExitLoadingMode() -> System.Void
-M protected System.Windows.Forms.Design.ComponentEditorPage::GetSelectedComponent() -> System.ComponentModel.IComponent
-M protected System.Windows.Forms.Design.ComponentEditorPage::IsFirstActivate() -> System.Boolean
-M protected System.Windows.Forms.Design.ComponentEditorPage::IsLoading() -> System.Boolean
-M protected System.Windows.Forms.Design.ComponentEditorPage::LoadComponent() -> System.Void abstract
-M protected System.Windows.Forms.Design.ComponentEditorPage::ReloadComponent() -> System.Void virtual
-M protected System.Windows.Forms.Design.ComponentEditorPage::SaveComponent() -> System.Void abstract
-M protected System.Windows.Forms.Design.ComponentEditorPage::SetDirty() -> System.Void virtual
-M protected System.Windows.Forms.Design.ComponentEditorPage::get_Component() -> System.ComponentModel.IComponent
-M protected System.Windows.Forms.Design.ComponentEditorPage::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.Design.ComponentEditorPage::get_FirstActivate() -> System.Boolean
-M protected System.Windows.Forms.Design.ComponentEditorPage::get_LoadRequired() -> System.Boolean
-M protected System.Windows.Forms.Design.ComponentEditorPage::get_Loading() -> System.Int32
-M protected System.Windows.Forms.Design.ComponentEditorPage::get_PageSite() -> System.Windows.Forms.IComponentEditorPageSite
 M protected System.Windows.Forms.Design.ComponentEditorPage::set_Component(System.ComponentModel.IComponent) -> System.Void
-M protected System.Windows.Forms.Design.ComponentEditorPage::set_FirstActivate(System.Boolean) -> System.Void
-M protected System.Windows.Forms.Design.ComponentEditorPage::set_LoadRequired(System.Boolean) -> System.Void
-M protected System.Windows.Forms.Design.ComponentEditorPage::set_Loading(System.Int32) -> System.Void
 M protected System.Windows.Forms.Design.ComponentEditorPage::set_PageSite(System.Windows.Forms.IComponentEditorPageSite) -> System.Void
-M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::.ctor()
-M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetComponentEditorPages() -> System.Type[] virtual
-M protected System.Windows.Forms.Design.WindowsFormsComponentEditor::GetInitialComponentEditorPageIndex() -> System.Int32 virtual
 M protected System.Windows.Forms.FileDialog::HookProc(System.IntPtr, System.Int32, System.IntPtr, System.IntPtr) -> System.IntPtr virtual
 M protected System.Windows.Forms.FileDialog::get_Instance() -> System.IntPtr virtual
 M protected System.Windows.Forms.FileDialog::get_Options() -> System.Int32
@@ -516,39 +492,6 @@ M public System.Windows.Forms.DataGridViewTopLeftHeaderCell::.ctor()
 M public System.Windows.Forms.DataGridViewTopLeftHeaderCell::ToString() -> System.String virtual
 M public System.Windows.Forms.DataObject::SetDataAsJson`1(System.String, T) -> System.Void
 M public System.Windows.Forms.DataObject::SetDataAsJson`1(T) -> System.Void
-M public System.Windows.Forms.Design.ComponentEditorForm::.ctor(System.Object, System.Type[])
-M public System.Windows.Forms.Design.ComponentEditorForm::PreProcessMessage(ref System.Windows.Forms.Message) -> System.Boolean virtual
-M public System.Windows.Forms.Design.ComponentEditorForm::ShowForm() -> System.Windows.Forms.DialogResult virtual
-M public System.Windows.Forms.Design.ComponentEditorForm::ShowForm(System.Int32) -> System.Windows.Forms.DialogResult virtual
-M public System.Windows.Forms.Design.ComponentEditorForm::ShowForm(System.Windows.Forms.IWin32Window) -> System.Windows.Forms.DialogResult virtual
-M public System.Windows.Forms.Design.ComponentEditorForm::ShowForm(System.Windows.Forms.IWin32Window, System.Int32) -> System.Windows.Forms.DialogResult virtual
-M public System.Windows.Forms.Design.ComponentEditorForm::add_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Design.ComponentEditorForm::get_AutoSize() -> System.Boolean virtual
-M public System.Windows.Forms.Design.ComponentEditorForm::remove_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Design.ComponentEditorForm::set_AutoSize(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::.ctor()
-M public System.Windows.Forms.Design.ComponentEditorPage::Activate() -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::ApplyChanges() -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::Deactivate() -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::GetControl() -> System.Windows.Forms.Control virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::IsPageMessage(ref System.Windows.Forms.Message) -> System.Boolean virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::OnApplyComplete() -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::SetComponent(System.ComponentModel.IComponent) -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::SetSite(System.Windows.Forms.IComponentEditorPageSite) -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::ShowHelp() -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::SupportsHelp() -> System.Boolean virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::add_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Design.ComponentEditorPage::get_AutoSize() -> System.Boolean virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::get_CommitOnDeactivate() -> System.Boolean
-M public System.Windows.Forms.Design.ComponentEditorPage::get_Icon() -> System.Drawing.Icon
-M public System.Windows.Forms.Design.ComponentEditorPage::get_Title() -> System.String virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::remove_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Design.ComponentEditorPage::set_AutoSize(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.Design.ComponentEditorPage::set_CommitOnDeactivate(System.Boolean) -> System.Void
-M public System.Windows.Forms.Design.ComponentEditorPage::set_Icon(System.Drawing.Icon) -> System.Void
-M public System.Windows.Forms.Design.WindowsFormsComponentEditor::EditComponent(System.ComponentModel.ITypeDescriptorContext, System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.Design.WindowsFormsComponentEditor::EditComponent(System.ComponentModel.ITypeDescriptorContext, System.Object, System.Windows.Forms.IWin32Window) -> System.Boolean virtual
-M public System.Windows.Forms.Design.WindowsFormsComponentEditor::EditComponent(System.Object, System.Windows.Forms.IWin32Window) -> System.Boolean
 M public System.Windows.Forms.DockingAttribute::.ctor()
 M public System.Windows.Forms.DockingAttribute::.ctor(System.Windows.Forms.DockingBehavior)
 M public System.Windows.Forms.DockingAttribute::Equals(System.Object) -> System.Boolean virtual
@@ -804,9 +747,6 @@ M public System.Windows.Forms.ProgressBar::add_ImeModeChanged(System.EventHandle
 M public System.Windows.Forms.ProgressBar::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.ProgressBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ProgressBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::AddTabType(System.Type, System.ComponentModel.PropertyTabScope) -> System.Void
-M public System.Windows.Forms.PropertyGrid+PropertyTabCollection::Clear(System.ComponentModel.PropertyTabScope) -> System.Void
-M public System.Windows.Forms.PropertyGrid::RefreshTabs(System.ComponentModel.PropertyTabScope) -> System.Void
 M public System.Windows.Forms.RelatedImageListAttribute::.ctor(System.String)
 M public System.Windows.Forms.RelatedImageListAttribute::get_RelatedImageList() -> System.String
 M public System.Windows.Forms.ScrollBar::add_ImeModeChanged(System.EventHandler) -> System.Void
@@ -1179,15 +1119,12 @@ M public System.Windows.Forms.WebBrowserBase::set_ImeMode(System.Windows.Forms.I
 M public System.Windows.Forms.WindowsFormsSection::.ctor()
 M public System.Windows.Forms.WindowsFormsSection::get_JitDebugging() -> System.Boolean
 M public System.Windows.Forms.WindowsFormsSection::set_JitDebugging(System.Boolean) -> System.Void
-T abstract class System.Windows.Forms.Design.ComponentEditorPage : System.Windows.Forms.Panel
-T abstract class System.Windows.Forms.Design.WindowsFormsComponentEditor : System.ComponentModel.ComponentEditor
 T class System.Windows.Forms.AxHost+AxComponentEditor : System.Windows.Forms.Design.WindowsFormsComponentEditor
 T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant
 T class System.Windows.Forms.DataGridView+DataGridViewControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.DataGridViewCellStyleConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.DataGridViewTopLeftHeaderCell : System.Windows.Forms.DataGridViewColumnHeaderCell
-T class System.Windows.Forms.Design.ComponentEditorForm : System.Windows.Forms.Form
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.ImageIndexConverter : System.ComponentModel.Int32Converter
 T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringConverter
