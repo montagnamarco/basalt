@@ -1,5 +1,6 @@
 namespace System.Windows.Forms;
 
+/// <summary>What a HelpProvider (or a handler written by hand) answers when assistive technology asks for help.</summary>
 public class QueryAccessibilityHelpEventArgs : EventArgs
 {
     public QueryAccessibilityHelpEventArgs()

@@ -43,7 +43,6 @@ I System.Resources.ResXResourceReader : System.Resources.IResourceReader
 I System.Resources.ResXResourceWriter : System.IDisposable
 I System.Resources.ResXResourceWriter : System.Resources.IResourceWriter
 I System.Windows.Forms.AccessibleObject : Accessibility.IAccessible
-I System.Windows.Forms.AccessibleObject : System.Reflection.IReflect
 I System.Windows.Forms.AccessibleObject : Windows.Win32.System.Com.IDispatch+Interface
 I System.Windows.Forms.AutoCompleteStringCollection : System.Collections.ICollection
 I System.Windows.Forms.AutoCompleteStringCollection : System.Collections.IEnumerable
@@ -100,8 +99,6 @@ M protected System.Resources.ResXResourceReader::Dispose(System.Boolean) -> Syst
 M protected System.Resources.ResXResourceReader::Finalize() -> System.Void virtual
 M protected System.Resources.ResXResourceWriter::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Resources.ResXResourceWriter::Finalize() -> System.Void virtual
-M protected System.Windows.Forms.AccessibleObject::UseStdAccessibleObjects(System.IntPtr) -> System.Void
-M protected System.Windows.Forms.AccessibleObject::UseStdAccessibleObjects(System.IntPtr, System.Int32) -> System.Void
 M protected System.Windows.Forms.AutoCompleteStringCollection::OnCollectionChanged(System.ComponentModel.CollectionChangeEventArgs) -> System.Void
 M protected System.Windows.Forms.AxHost+ConnectionPointCookie::Finalize() -> System.Void virtual
 M protected System.Windows.Forms.AxHost+State::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
@@ -241,9 +238,6 @@ M protected System.Windows.Forms.ContextMenu::OnCollapse(System.EventArgs) -> Sy
 M protected System.Windows.Forms.ContextMenu::OnPopup(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ContextMenu::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys, System.Windows.Forms.Control) -> System.Boolean virtual
 M protected System.Windows.Forms.ContextMenuStrip::SetVisibleCore(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.Control::AccessibilityNotifyClients(System.Windows.Forms.AccessibleEvents, System.Int32) -> System.Void
-M protected System.Windows.Forms.Control::AccessibilityNotifyClients(System.Windows.Forms.AccessibleEvents, System.Int32, System.Int32) -> System.Void
-M protected System.Windows.Forms.Control::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.Control::DefWndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.Control::GetAccessibilityObjectById(System.Int32) -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.Control::OnChangeUICues(System.Windows.Forms.UICuesEventArgs) -> System.Void virtual
@@ -1331,30 +1325,7 @@ M public System.Resources.ResXResourceWriter::Dispose() -> System.Void virtual
 M public System.Resources.ResXResourceWriter::Generate() -> System.Void
 M public System.Resources.ResXResourceWriter::get_BasePath() -> System.String
 M public System.Resources.ResXResourceWriter::set_BasePath(System.String) -> System.Void
-M public System.Windows.Forms.AccessibleObject::.ctor()
-M public System.Windows.Forms.AccessibleObject::DoDefaultAction() -> System.Void virtual
-M public System.Windows.Forms.AccessibleObject::GetChild(System.Int32) -> System.Windows.Forms.AccessibleObject virtual
-M public System.Windows.Forms.AccessibleObject::GetChildCount() -> System.Int32 virtual
-M public System.Windows.Forms.AccessibleObject::GetFocused() -> System.Windows.Forms.AccessibleObject virtual
-M public System.Windows.Forms.AccessibleObject::GetHelpTopic(out System.String) -> System.Int32 virtual
-M public System.Windows.Forms.AccessibleObject::GetSelected() -> System.Windows.Forms.AccessibleObject virtual
-M public System.Windows.Forms.AccessibleObject::HitTest(System.Int32, System.Int32) -> System.Windows.Forms.AccessibleObject virtual
-M public System.Windows.Forms.AccessibleObject::Navigate(System.Windows.Forms.AccessibleNavigation) -> System.Windows.Forms.AccessibleObject virtual
 M public System.Windows.Forms.AccessibleObject::RaiseAutomationNotification(System.Windows.Forms.Automation.AutomationNotificationKind, System.Windows.Forms.Automation.AutomationNotificationProcessing, System.String) -> System.Boolean
-M public System.Windows.Forms.AccessibleObject::RaiseLiveRegionChanged() -> System.Boolean virtual
-M public System.Windows.Forms.AccessibleObject::Select(System.Windows.Forms.AccessibleSelection) -> System.Void virtual
-M public System.Windows.Forms.AccessibleObject::get_Bounds() -> System.Drawing.Rectangle virtual
-M public System.Windows.Forms.AccessibleObject::get_DefaultAction() -> System.String virtual
-M public System.Windows.Forms.AccessibleObject::get_Description() -> System.String virtual
-M public System.Windows.Forms.AccessibleObject::get_Help() -> System.String virtual
-M public System.Windows.Forms.AccessibleObject::get_KeyboardShortcut() -> System.String virtual
-M public System.Windows.Forms.AccessibleObject::get_Name() -> System.String virtual
-M public System.Windows.Forms.AccessibleObject::get_Parent() -> System.Windows.Forms.AccessibleObject virtual
-M public System.Windows.Forms.AccessibleObject::get_Role() -> System.Windows.Forms.AccessibleRole virtual
-M public System.Windows.Forms.AccessibleObject::get_State() -> System.Windows.Forms.AccessibleStates virtual
-M public System.Windows.Forms.AccessibleObject::get_Value() -> System.String virtual
-M public System.Windows.Forms.AccessibleObject::set_Name(System.String) -> System.Void virtual
-M public System.Windows.Forms.AccessibleObject::set_Value(System.String) -> System.Void virtual
 M public System.Windows.Forms.AmbientProperties::get_Cursor() -> System.Windows.Forms.Cursor
 M public System.Windows.Forms.AmbientProperties::set_Cursor(System.Windows.Forms.Cursor) -> System.Void
 M public System.Windows.Forms.Application+MessageLoopCallback::.ctor(System.Object, System.IntPtr)
@@ -1705,24 +1676,6 @@ M public System.Windows.Forms.ContextMenu::get_SourceControl() -> System.Windows
 M public System.Windows.Forms.ContextMenu::remove_Collapse(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ContextMenu::remove_Popup(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ContextMenu::set_RightToLeft(System.Windows.Forms.RightToLeft) -> System.Void virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::.ctor(System.Windows.Forms.Control)
-M public System.Windows.Forms.Control+ControlAccessibleObject::GetHelpTopic(out System.String) -> System.Int32 virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::NotifyClients(System.Windows.Forms.AccessibleEvents) -> System.Void
-M public System.Windows.Forms.Control+ControlAccessibleObject::NotifyClients(System.Windows.Forms.AccessibleEvents, System.Int32) -> System.Void
-M public System.Windows.Forms.Control+ControlAccessibleObject::NotifyClients(System.Windows.Forms.AccessibleEvents, System.Int32, System.Int32) -> System.Void
-M public System.Windows.Forms.Control+ControlAccessibleObject::RaiseLiveRegionChanged() -> System.Boolean virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::ToString() -> System.String virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_DefaultAction() -> System.String virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_Description() -> System.String virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_Handle() -> System.IntPtr
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_Help() -> System.String virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_KeyboardShortcut() -> System.String virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_Name() -> System.String virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_Owner() -> System.Windows.Forms.Control
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_Parent() -> System.Windows.Forms.AccessibleObject virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::get_Role() -> System.Windows.Forms.AccessibleRole virtual
-M public System.Windows.Forms.Control+ControlAccessibleObject::set_Handle(System.IntPtr) -> System.Void
-M public System.Windows.Forms.Control+ControlAccessibleObject::set_Name(System.String) -> System.Void virtual
 M public System.Windows.Forms.Control::BeginInvoke(System.Action) -> System.IAsyncResult
 M public System.Windows.Forms.Control::BeginInvoke(System.Delegate) -> System.IAsyncResult
 M public System.Windows.Forms.Control::BeginInvoke(System.Delegate, System.Object[]) -> System.IAsyncResult
@@ -1750,14 +1703,8 @@ M public System.Windows.Forms.Control::add_DataContextChanged(System.EventHandle
 M public System.Windows.Forms.Control::add_DpiChangedAfterParent(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_DpiChangedBeforeParent(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_RegionChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::add_SystemColorsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::get_AccessibilityObject() -> System.Windows.Forms.AccessibleObject
-M public System.Windows.Forms.Control::get_AccessibleDefaultActionDescription() -> System.String
-M public System.Windows.Forms.Control::get_AccessibleDescription() -> System.String
-M public System.Windows.Forms.Control::get_AccessibleName() -> System.String
-M public System.Windows.Forms.Control::get_AccessibleRole() -> System.Windows.Forms.AccessibleRole
 M public System.Windows.Forms.Control::get_AutoScrollOffset() -> System.Drawing.Point virtual
 M public System.Windows.Forms.Control::get_CheckForIllegalCrossThreadCalls() -> System.Boolean static
 M public System.Windows.Forms.Control::get_CompanyName() -> System.String
@@ -1766,7 +1713,6 @@ M public System.Windows.Forms.Control::get_DataContext() -> System.Object virtua
 M public System.Windows.Forms.Control::get_DeviceDpi() -> System.Int32
 M public System.Windows.Forms.Control::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.Control::get_InvokeRequired() -> System.Boolean
-M public System.Windows.Forms.Control::get_IsAccessible() -> System.Boolean
 M public System.Windows.Forms.Control::get_IsMirrored() -> System.Boolean
 M public System.Windows.Forms.Control::get_ProductName() -> System.String
 M public System.Windows.Forms.Control::get_ProductVersion() -> System.String
@@ -1778,19 +1724,13 @@ M public System.Windows.Forms.Control::remove_DataContextChanged(System.EventHan
 M public System.Windows.Forms.Control::remove_DpiChangedAfterParent(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_DpiChangedBeforeParent(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_QueryAccessibilityHelp(System.Windows.Forms.QueryAccessibilityHelpEventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_RegionChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.Control::remove_SystemColorsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::set_AccessibleDefaultActionDescription(System.String) -> System.Void
-M public System.Windows.Forms.Control::set_AccessibleDescription(System.String) -> System.Void
-M public System.Windows.Forms.Control::set_AccessibleName(System.String) -> System.Void
-M public System.Windows.Forms.Control::set_AccessibleRole(System.Windows.Forms.AccessibleRole) -> System.Void
 M public System.Windows.Forms.Control::set_AutoScrollOffset(System.Drawing.Point) -> System.Void virtual
 M public System.Windows.Forms.Control::set_CheckForIllegalCrossThreadCalls(System.Boolean) -> System.Void static
 M public System.Windows.Forms.Control::set_ContextMenu(System.Windows.Forms.ContextMenu) -> System.Void virtual
 M public System.Windows.Forms.Control::set_DataContext(System.Object) -> System.Void virtual
 M public System.Windows.Forms.Control::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.Control::set_IsAccessible(System.Boolean) -> System.Void
 M public System.Windows.Forms.Control::set_Region(System.Drawing.Region) -> System.Void
 M public System.Windows.Forms.Control::set_WindowTarget(System.Windows.Forms.IWindowTarget) -> System.Void
 M public System.Windows.Forms.DataGrid+HitTestInfo::get_Column() -> System.Int32
@@ -5791,7 +5731,6 @@ T class System.Resources.ResXFileRef+Converter : System.ComponentModel.TypeConve
 T class System.Resources.ResXResourceReader
 T class System.Resources.ResXResourceSet : System.Resources.ResourceSet
 T class System.Resources.ResXResourceWriter
-T class System.Windows.Forms.AccessibleObject : System.Runtime.InteropServices.StandardOleMarshalObject
 T class System.Windows.Forms.AutoCompleteStringCollection
 T class System.Windows.Forms.AxHost+AxComponentEditor : System.Windows.Forms.Design.WindowsFormsComponentEditor
 T class System.Windows.Forms.AxHost+ConnectionPointCookie
@@ -5805,7 +5744,6 @@ T class System.Windows.Forms.ColumnReorderedEventArgs : System.ComponentModel.Ca
 T class System.Windows.Forms.ComboBox+ChildAccessibleObject : System.Windows.Forms.AccessibleObject
 T class System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant
 T class System.Windows.Forms.ContextMenu : System.Windows.Forms.Menu
-T class System.Windows.Forms.Control+ControlAccessibleObject : System.Windows.Forms.AccessibleObject
 T class System.Windows.Forms.DataGrid : System.Windows.Forms.Control
 T class System.Windows.Forms.DataGridBoolColumn : System.Windows.Forms.DataGridColumnStyle
 T class System.Windows.Forms.DataGridPreferredColumnWidthTypeConverter : System.ComponentModel.TypeConverter
