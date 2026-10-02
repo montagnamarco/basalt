@@ -34,6 +34,7 @@
   <ItemGroup>
     <!-- The same scenarios the Windows generator runs, run here with Basalt.Forms. -->
     <Compile Include="..\Basalt.Forms.Goldens\Scenarios.cs" Link="Goldens\Scenarios.cs" />
+    <Compile Include="..\Basalt.Forms.Goldens\VisualScenarios*.cs" Link="Goldens\%(Filename)%(Extension)" />
     <None Include="Goldens\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
