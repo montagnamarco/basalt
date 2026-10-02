@@ -65,73 +65,75 @@ public class PictureBoxAsyncTests
     [AvaloniaFact]
     public void CancelAsync_on_a_load_still_running_completes_it_with_Cancelled_true_exactly_once()
     {
-        var path = WriteTempImage();
-        try
-        {
-            var pictureBox = new PictureBox();
-            var completions = 0;
-            AsyncCompletedEventArgs? result = null;
-            pictureBox.LoadCompleted += (_, e) => { completions++; result = e; };
+        using var gate = new ManualResetEventSlim();
+        var pictureBox = new PictureBox { FetchOverride = BlockedRead(gate) };
+        var completions = 0;
+        AsyncCompletedEventArgs? result = null;
+        pictureBox.LoadCompleted += (_, e) => { completions++; result = e; };
 
-            pictureBox.LoadAsync(path);
-            // Cancelled on the very next line, before the background task has
-            // any realistic chance to have even started: Task.Run(Func<T>, token)
-            // skips invoking the delegate at all once the token is already
-            // cancelled by the time the thread pool would start it.
-            pictureBox.CancelAsync();
+        pictureBox.LoadAsync("picture.png");
+        pictureBox.CancelAsync();
+        gate.Set();
 
-            WaitUntil(() => completions > 0);
+        WaitUntil(() => completions > 0);
+        pictureBox.PendingDelivery!.Wait(TimeSpan.FromSeconds(5));
+        Dispatcher.UIThread.RunJobs();
 
-            Assert.Equal(1, completions);
-            Assert.NotNull(result);
-            Assert.True(result!.Cancelled);
-            Assert.Null(result.Error);
-            Assert.Null(pictureBox.Image);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        Assert.Equal(1, completions);
+        Assert.True(result!.Cancelled);
+        Assert.Null(result.Error);
+        Assert.Null(pictureBox.Image);
     }
 
     [AvaloniaFact]
     public void CancelAsync_called_after_the_result_is_already_computed_still_delivers_it_normally()
     {
-        var path = WriteTempImage();
-        try
-        {
-            var pictureBox = new PictureBox();
-            var completions = 0;
-            AsyncCompletedEventArgs? result = null;
-            pictureBox.LoadCompleted += (_, e) => { completions++; result = e; };
+        var pictureBox = new PictureBox { FetchOverride = (_, _) => new Bitmap(4, 4, PixelFormat.Format32bppArgb) };
+        var completions = 0;
+        AsyncCompletedEventArgs? result = null;
+        pictureBox.LoadCompleted += (_, e) => { completions++; result = e; };
 
-            pictureBox.LoadAsync(path);
+        pictureBox.LoadAsync("picture.png");
 
-            // Give the background read (a handful of bytes from a local temp
-            // file) time to finish and its continuation to reach
-            // Dispatcher.UIThread.Post, all without pumping the dispatcher
-            // yet: the point is to call CancelAsync in the window between
-            // "the result is ready and posted" and "the UI thread has
-            // actually processed that posted job" - too late to cancel
-            // anything, the same way BackgroundWorker.CancelAsync treats
-            // work that already finished.
-            Thread.Sleep(300);
+        // The result is posted but the UI thread has not processed it yet: too late to cancel.
+        Assert.True(pictureBox.PendingDelivery!.Wait(TimeSpan.FromSeconds(5)));
+        pictureBox.CancelAsync();
 
-            pictureBox.CancelAsync();
+        WaitUntil(() => completions > 0);
 
-            WaitUntil(() => completions > 0);
-
-            Assert.Equal(1, completions);
-            Assert.NotNull(result);
-            Assert.False(result!.Cancelled);
-            Assert.Null(result.Error);
-            Assert.NotNull(pictureBox.Image);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        Assert.Equal(1, completions);
+        Assert.False(result!.Cancelled);
+        Assert.Null(result.Error);
+        Assert.NotNull(pictureBox.Image);
+        Assert.Equal("picture.png", pictureBox.ImageLocation);
     }
+
+    [AvaloniaFact]
+    public void A_PictureBox_disposed_during_a_load_raises_nothing_afterwards()
+    {
+        using var gate = new ManualResetEventSlim();
+        var pictureBox = new PictureBox { FetchOverride = BlockedRead(gate) };
+        var completions = 0;
+        pictureBox.LoadCompleted += (_, _) => completions++;
+
+        pictureBox.LoadAsync("picture.png");
+        pictureBox.Dispose();
+        gate.Set();
+
+        Assert.True(pictureBox.PendingDelivery!.Wait(TimeSpan.FromSeconds(5)));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0, completions);
+    }
+
+    /// <summary>A read that waits for the test to open the gate, then honours the cancellation as FetchImage does.</summary>
+    private static Func<string, CancellationToken, Image> BlockedRead(ManualResetEventSlim gate) => (_, token) =>
+    {
+        gate.Wait(TimeSpan.FromSeconds(5));
+        token.ThrowIfCancellationRequested();
+
+        return new Bitmap(4, 4, PixelFormat.Format32bppArgb);
+    };
 
     [AvaloniaFact]
     public void A_missing_file_sets_ErrorImage_and_reports_the_error()

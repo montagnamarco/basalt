@@ -19,6 +19,12 @@ public partial class PictureBox
     private CancellationTokenSource? _loadCts;
     private bool _waitOnLoad;
 
+    /// <summary>For tests: replaces the background read, so they can decide when it finishes.</summary>
+    internal Func<string, CancellationToken, Image>? FetchOverride { get; set; }
+
+    /// <summary>For tests: completes once the result of the last LoadAsync has been posted to the UI thread.</summary>
+    internal Task? PendingDelivery { get; private set; }
+
     [DefaultValue(false)]
     public bool WaitOnLoad
     {
@@ -72,7 +78,8 @@ public partial class PictureBox
 
         OnLoadProgressChanged(new ProgressChangedEventArgs(0, null));
 
-        Task.Run(() => FetchImage(url, cts.Token), cts.Token).ContinueWith(task => PostResult(task, cts), TaskScheduler.Default);
+        var fetch = FetchOverride ?? FetchImage;
+        PendingDelivery = Task.Run(() => fetch(url, cts.Token), cts.Token).ContinueWith(task => PostResult(task, cts, url), TaskScheduler.Default);
     }
 
     /// <summary>
@@ -103,10 +110,13 @@ public partial class PictureBox
         return Image.FromFile(path);
     }
 
-    private void PostResult(Task<Image> task, CancellationTokenSource cts)
+    private void PostResult(Task<Image> task, CancellationTokenSource cts, string url)
     {
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
+            // The task has ended, so nothing reads the token any more, whatever happens to the result.
+            cts.Dispose();
+
             // Disposed controls raise no more events, the same reason Dispose cancels a running load in the first place.
             if (IsDisposed) return;
 
@@ -130,7 +140,9 @@ public partial class PictureBox
                 return;
             }
 
+            // The Image setter clears ImageLocation, as a direct assignment should; this image came from it.
             Image = task.Result;
+            _imageLocation = url;
             OnLoadProgressChanged(new ProgressChangedEventArgs(100, null));
             OnLoadCompleted(new AsyncCompletedEventArgs(null, false, null));
         });
