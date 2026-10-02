@@ -233,6 +233,10 @@ public partial class Control : Component, IWin32Window, IArrangedElement
 
         OnHandleDestroyed(EventArgs.Empty);
 
+        // Destroying a window releases its capture on Windows; a capture left
+        // behind would hold back enter and leave in every other window.
+        if (Internal.Hosting.FormsInput.CapturedControl == this) Internal.Hosting.FormsInput.CapturedControl = null;
+
         HandleTable.Unregister(_handle);
         _handle = IntPtr.Zero;
         _state &= ~(States.HandleCreated | States.Created);

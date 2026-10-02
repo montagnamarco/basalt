@@ -58,6 +58,29 @@ public class InputTests
     }
 
     [AvaloniaFact]
+    public void A_window_closed_mid_press_releases_the_capture_so_another_window_still_sees_enter_and_leave()
+    {
+        var pressed = new Control { Bounds = new Rectangle(0, 0, 40, 30) };
+        var abandoned = ShowForm(pressed);
+        abandoned.Host!.MouseDown(new Avalonia.Point(10, 10), MouseButton.Left);
+        abandoned.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        var hovered = new Control { Bounds = new Rectangle(0, 0, 50, 50) };
+        var log = new List<string>();
+        hovered.MouseEnter += (_, _) => log.Add("enter");
+        hovered.MouseLeave += (_, _) => log.Add("leave");
+        var form = ShowForm(hovered);
+
+        form.Host!.MouseMove(new Avalonia.Point(10, 10));
+        form.Host!.MouseMove(new Avalonia.Point(150, 80));
+
+        Assert.Equal(["enter", "leave"], log);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
     public void Moving_over_controls_raises_enter_and_leave()
     {
         var first = new Control { Bounds = new Rectangle(0, 0, 50, 50) };
