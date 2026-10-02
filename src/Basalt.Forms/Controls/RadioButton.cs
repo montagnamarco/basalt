@@ -12,7 +12,7 @@ namespace System.Windows.Forms;
 [DefaultProperty("Checked")]
 [DefaultEvent("CheckedChanged")]
 [DefaultBindingProperty("Checked")]
-public class RadioButton : ButtonBase
+public partial class RadioButton : ButtonBase
 {
     /// <summary>The classic radio dot glyph is always 12x12, whatever the control's size.</summary>
     private static readonly Size DotSize = new(12, 12);

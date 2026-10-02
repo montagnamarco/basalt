@@ -11,7 +11,7 @@ namespace System.Windows.Forms;
 /// </summary>
 [DefaultEvent("Enter")]
 [DefaultProperty("Text")]
-public class GroupBox : Control
+public partial class GroupBox : Control
 {
     /// <summary>How far the caption starts from the frame's left edge, the value WinForms draws it at.</summary>
     private const int CaptionOffset = 8;

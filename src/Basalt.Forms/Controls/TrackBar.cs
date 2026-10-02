@@ -8,7 +8,7 @@ namespace System.Windows.Forms;
 [DefaultProperty("Value")]
 [DefaultEvent("Scroll")]
 [DefaultBindingProperty("Value")]
-public class TrackBar : Control, ISupportInitialize
+public partial class TrackBar : Control, ISupportInitialize
 {
     private int _minimum;
     private int _maximum = 10;

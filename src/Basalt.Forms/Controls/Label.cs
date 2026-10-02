@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Windows.Forms.Automation;
 using System.Windows.Forms.Internal;
 
 namespace System.Windows.Forms;
@@ -8,7 +9,7 @@ namespace System.Windows.Forms;
 /// <summary>A line of text that cannot be selected; its mnemonic moves the focus to the next control.</summary>
 [DefaultProperty("Text")]
 [DefaultEvent("Click")]
-public class Label : Control
+public partial class Label : Control, IAutomationLiveRegion
 {
     private ContentAlignment _textAlign = ContentAlignment.TopLeft;
     private BorderStyle _borderStyle = BorderStyle.None;
@@ -54,6 +55,7 @@ public class Label : Control
 
             _textAlign = value;
             Invalidate();
+            OnTextAlignChanged(EventArgs.Empty);
         }
     }
 
@@ -168,6 +170,11 @@ public class Label : Control
     {
         AdjustSize();
         Invalidate();
+
+        // A live region's whole point is announcing its new text without
+        // needing focus; Off means this label is not one, so nothing to tell.
+        if (_liveSetting != AutomationLiveSetting.Off) AccessibilityObject.RaiseLiveRegionChanged();
+
         base.OnTextChanged(e);
     }
 

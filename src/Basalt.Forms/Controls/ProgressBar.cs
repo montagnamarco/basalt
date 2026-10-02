@@ -7,7 +7,7 @@ namespace System.Windows.Forms;
 /// <summary>A sunken bar that fills with SystemColors.Highlight to show how much of a task is done.</summary>
 [DefaultProperty("Value")]
 [DefaultBindingProperty("Value")]
-public class ProgressBar : Control
+public partial class ProgressBar : Control
 {
     private int _minimum;
     private int _maximum = 100;

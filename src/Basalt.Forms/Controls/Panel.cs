@@ -7,7 +7,7 @@ namespace System.Windows.Forms;
 /// <summary>A container for other controls, with an optional border.</summary>
 [DefaultProperty("BorderStyle")]
 [DefaultEvent("Paint")]
-public class Panel : ScrollableControl
+public partial class Panel : ScrollableControl
 {
     private BorderStyle _borderStyle = BorderStyle.None;
 

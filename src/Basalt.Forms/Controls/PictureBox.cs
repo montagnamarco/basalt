@@ -7,7 +7,7 @@ namespace System.Windows.Forms;
 /// <summary>A frame that shows an Image, placed inside it as SizeMode describes.</summary>
 [DefaultProperty("Image")]
 [DefaultBindingProperty("Image")]
-public class PictureBox : Control, ISupportInitialize
+public partial class PictureBox : Control, ISupportInitialize
 {
     private Image? _image;
     private string? _imageLocation;

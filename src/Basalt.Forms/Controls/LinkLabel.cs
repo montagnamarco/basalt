@@ -84,7 +84,7 @@ public partial class LinkLabel : Label, IButtonControl
     /// <summary>Kept for binary shape only: a LinkLabel is never flat or 3‑D, so changing this paints nothing differently.</summary>
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public FlatStyle FlatStyle
+    public new FlatStyle FlatStyle
     {
         get => _flatStyle;
         set => _flatStyle = value;
@@ -185,7 +185,7 @@ public partial class LinkLabel : Label, IButtonControl
 
     /// <summary>Kept for binary shape only: this implementation always measures and draws through Basalt.Drawing.</summary>
     [RefreshProperties(RefreshProperties.Repaint)]
-    public bool UseCompatibleTextRendering
+    public new bool UseCompatibleTextRendering
     {
         get => _useCompatibleTextRendering;
         set => _useCompatibleTextRendering = value;

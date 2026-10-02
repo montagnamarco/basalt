@@ -10,7 +10,7 @@ namespace System.Windows.Forms;
 /// the pressed and hot states the mouse and Space key drive, and painting
 /// in the classic look.
 /// </summary>
-public abstract class ButtonBase : Control
+public abstract partial class ButtonBase : Control
 {
     private ContentAlignment _textAlign = ContentAlignment.MiddleCenter;
     private FlatStyle _flatStyle = FlatStyle.Standard;
@@ -252,6 +252,13 @@ public abstract class ButtonBase : Control
         Invalidate();
     }
 
+    /// <summary>A click also offers the bound Command a chance to run, before Click's own handlers see it.</summary>
+    protected override void OnClick(EventArgs e)
+    {
+        OnRequestCommandExecute(e);
+        base.OnClick(e);
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
         PaintButton(e.Graphics);
@@ -262,8 +269,9 @@ public abstract class ButtonBase : Control
     private protected virtual void PaintButton(Graphics graphics)
     {
         var bounds = ClientRectangle;
+        var isFlat = _flatStyle is FlatStyle.Flat or FlatStyle.Popup;
 
-        using (var face = new SolidBrush(BackColor))
+        using (var face = new SolidBrush(isFlat ? FlatPaintBackColor : BackColor))
         {
             graphics.FillRectangle(face, bounds);
         }
@@ -274,13 +282,17 @@ public abstract class ButtonBase : Control
             bounds.Inflate(-1, -1);
         }
 
-        if (Pushed)
+        if (isFlat)
+        {
+            // Popup only raises its edge once the mouse is over it or it is pushed; flat always shows it.
+            if (_flatStyle == FlatStyle.Flat || Pushed || _mouseInside)
+            {
+                EdgeThickness(graphics, bounds, FlatPaintBorderColor, FlatPaintBorderSize);
+            }
+        }
+        else if (Pushed)
         {
             Edge(graphics, bounds, SystemColors.ControlDark, SystemColors.ControlDark);
-        }
-        else if (_flatStyle == FlatStyle.Flat)
-        {
-            Edge(graphics, bounds, ForeColor, ForeColor);
         }
         else
         {
@@ -327,6 +339,18 @@ public abstract class ButtonBase : Control
         graphics.FillRectangle(first, bounds.Left, bounds.Top, 1, bounds.Height - 1);
         graphics.FillRectangle(second, bounds.Left, bounds.Bottom - 1, bounds.Width, 1);
         graphics.FillRectangle(second, bounds.Right - 1, bounds.Top, 1, bounds.Height);
+    }
+
+    /// <summary>A flat/popup border of FlatAppearance.BorderSize pixels, one colour on all four sides.</summary>
+    private static void EdgeThickness(Graphics graphics, Rectangle bounds, Color color, int size)
+    {
+        if (size <= 0 || bounds.Width <= 0 || bounds.Height <= 0) return;
+
+        using var brush = new SolidBrush(color);
+        graphics.FillRectangle(brush, bounds.Left, bounds.Top, bounds.Width, size);
+        graphics.FillRectangle(brush, bounds.Left, bounds.Bottom - size, bounds.Width, size);
+        graphics.FillRectangle(brush, bounds.Left, bounds.Top, size, bounds.Height);
+        graphics.FillRectangle(brush, bounds.Right - size, bounds.Top, size, bounds.Height);
     }
 
     /// <summary>The dotted focus rectangle: every other pixel, as Win32 DrawFocusRect.</summary>

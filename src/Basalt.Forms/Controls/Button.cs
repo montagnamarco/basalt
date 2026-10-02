@@ -3,7 +3,7 @@ using System.ComponentModel;
 namespace System.Windows.Forms;
 
 /// <summary>A push button: clicking it raises Click and, with a DialogResult, closes its modal form with that result.</summary>
-public class Button : ButtonBase, IButtonControl
+public partial class Button : ButtonBase, IButtonControl
 {
     private DialogResult _dialogResult;
 

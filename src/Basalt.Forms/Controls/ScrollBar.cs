@@ -17,7 +17,7 @@ namespace System.Windows.Forms;
 /// </remarks>
 [DefaultProperty("Value")]
 [DefaultEvent("Scroll")]
-public abstract class ScrollBar : Control
+public abstract partial class ScrollBar : Control
 {
     private int _minimum;
     private int _maximum = 100;

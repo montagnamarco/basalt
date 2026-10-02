@@ -8,7 +8,7 @@ namespace System.Windows.Forms;
 [DefaultProperty("Checked")]
 [DefaultEvent("CheckedChanged")]
 [DefaultBindingProperty("CheckState")]
-public class CheckBox : ButtonBase
+public partial class CheckBox : ButtonBase
 {
     /// <summary>The classic check box glyph is always 13x13, whatever the control's size.</summary>
     private static readonly Size BoxSize = new(13, 13);
