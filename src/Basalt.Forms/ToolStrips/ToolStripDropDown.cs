@@ -22,14 +22,9 @@ public class ToolStripDropDown : ToolStrip
         GripStyle = ToolStripGripStyle.Hidden;
         Dock = DockStyle.None;
 
-        // Keeping this in step through the public events (not an override of OnItemAdded/OnItemRemoved,
-        // which Microsoft's own ToolStripDropDown does not re-override either).
-        ItemAdded += (_, e) => { if (e.Item is not null) e.Item.SelectedChanged += OnItemSelectedChanged; };
-        ItemRemoved += (_, e) =>
-        {
-            if (e.Item is not null) e.Item.SelectedChanged -= OnItemSelectedChanged;
-            if (_activeItem == e.Item) _activeItem = null;
-        };
+        // Through the public event, not an override of OnItemRemoved, which Microsoft's own
+        // ToolStripDropDown does not re-override either.
+        ItemRemoved += (_, e) => ForgetActiveItem(e.Item);
     }
 
     /// <summary>Whether a press outside the drop-down closes it, as a menu or a combo list does.</summary>
@@ -71,10 +66,10 @@ public class ToolStripDropDown : ToolStrip
     /// menu registers as its popup owner, since the keyboard-owner lookup
     /// only ever checks that one window, never a chain of popups.
     /// </summary>
-    internal Control? RootOwnerWindow => OwnerItem?.Owner is ToolStripDropDown parent ? parent.RootOwnerWindow : OwnerItem?.Owner;
+    internal Control? RootOwnerWindow => OwnerItem?.ParentInternal is ToolStripDropDown parent ? parent.RootOwnerWindow : OwnerItem?.ParentInternal;
 
     /// <summary>Whether this drop-down's owner item itself lives inside another, outer drop-down.</summary>
-    private bool IsNestedSubmenu => OwnerItem?.Owner is ToolStripDropDown;
+    private bool IsNestedSubmenu => OwnerItem?.ParentInternal is ToolStripDropDown;
 
     public event ToolStripDropDownClosedEventHandler? Closed;
 
@@ -84,12 +79,21 @@ public class ToolStripDropDown : ToolStrip
 
     public event CancelEventHandler? Opening;
 
-    private void OnItemSelectedChanged(object? sender, EventArgs e)
+    /// <summary>
+    /// Called by an item this drop-down shows when its selection changes. The
+    /// item reports it rather than this drop-down subscribing on ItemAdded,
+    /// because the overflow drop-down shows items that were never added to it.
+    /// </summary>
+    internal void OnShownItemSelectedChanged(ToolStripItem item)
     {
-        if (sender is not ToolStripItem item) return;
-
         if (item.Selected) _activeItem = item;
         else if (_activeItem == item) _activeItem = null;
+    }
+
+    /// <summary>The item left this drop-down (removed, or taken back by the strip that lent it).</summary>
+    internal void ForgetActiveItem(ToolStripItem? item)
+    {
+        if (_activeItem == item) _activeItem = null;
     }
 
     /// <summary>Highlights the item, as hovering or arrowing to it does; null clears the highlight.</summary>
@@ -222,7 +226,7 @@ public class ToolStripDropDown : ToolStrip
         OnClosing(closing);
         if (closing.Cancel && cancellable) return;
 
-        foreach (ToolStripItem item in Items)
+        foreach (ToolStripItem item in DisplayedItems)
         {
             if (item is ToolStripDropDownItem { HasDropDown: true } dropDownItem && dropDownItem.DropDown.IsOpen)
             {
@@ -242,7 +246,7 @@ public class ToolStripDropDown : ToolStrip
     /// <summary>A press lands in one of this drop-down's own open submenus: it must not be treated as outside.</summary>
     internal override bool IsPopupAncestorOf(Control other)
     {
-        foreach (ToolStripItem item in Items)
+        foreach (ToolStripItem item in DisplayedItems)
         {
             if (item is not ToolStripDropDownItem { HasDropDown: true } dropDownItem) continue;
             if (dropDownItem.DropDown == other || dropDownItem.DropDown.IsPopupAncestorOf(other)) return true;
@@ -334,7 +338,7 @@ public class ToolStripDropDown : ToolStrip
     /// <summary>Walks up the chain of owning items to the MenuStrip item that ultimately opened it, if any.</summary>
     private (MenuStrip? Bar, ToolStripMenuItem? TopItem) FindMenuBarChain()
     {
-        for (var dropDown = this; dropDown?.OwnerItem is ToolStripMenuItem ownerItem; dropDown = ownerItem.Owner as ToolStripDropDown)
+        for (var dropDown = this; dropDown?.OwnerItem is ToolStripMenuItem ownerItem; dropDown = ownerItem.ParentInternal as ToolStripDropDown)
         {
             if (ownerItem.Owner is MenuStrip bar) return (bar, ownerItem);
         }

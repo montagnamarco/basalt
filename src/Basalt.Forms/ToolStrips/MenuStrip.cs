@@ -25,11 +25,18 @@ public class MenuStrip : ToolStrip
         Dock = DockStyle.Top;
         Stretch = true;
         ShowItemToolTips = false;
+        CanOverflow = false;
     }
 
+    // A menu bar does not overflow to a ToolStripOverflowButton: this hides the base default (true),
+    // forwarding to its storage so the base layout (which only ever reads its own property) honours it.
     [DefaultValue(false)]
     [Browsable(false)]
-    public bool CanOverflow { get; set; }
+    public new bool CanOverflow
+    {
+        get => base.CanOverflow;
+        set => base.CanOverflow = value;
+    }
 
     protected override Padding DefaultGripMargin => Padding.Empty;
 

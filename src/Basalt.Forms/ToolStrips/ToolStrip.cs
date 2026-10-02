@@ -12,7 +12,7 @@ namespace System.Windows.Forms;
 /// </summary>
 [DefaultProperty("Items")]
 [DefaultEvent("ItemClicked")]
-public class ToolStrip : ScrollableControl
+public partial class ToolStrip : ScrollableControl
 {
     private ToolStripItemCollection? _itemsField;
 
@@ -296,7 +296,12 @@ public class ToolStrip : ScrollableControl
     {
         if (disposing)
         {
-            for (var i = Items.Count - 1; i >= 0; i--) Items[i].Dispose();
+            // The overflow drop-down only borrows its items: the strip that owns them disposes them.
+            if (!Items.IsReadOnly)
+            {
+                for (var i = Items.Count - 1; i >= 0; i--) Items[i].Dispose();
+            }
+            _overflowButton?.Dispose();
         }
 
         base.Dispose(disposing);
@@ -312,9 +317,11 @@ public class ToolStrip : ScrollableControl
 
     private ToolStripItem? GetItemAtInternal(Point point)
     {
+        if (_overflowActive && OverflowButton.Bounds.Contains(point)) return OverflowButton;
+
         foreach (ToolStripItem item in DisplayedItems)
         {
-            if (item.Available && item.Bounds.Contains(point)) return item;
+            if (IsShownHere(item) && item.Bounds.Contains(point)) return item;
         }
 
         return null;
@@ -323,17 +330,18 @@ public class ToolStrip : ScrollableControl
     /// <summary>The next item in the given arrow direction, wrapping at the ends: minimal keyboard navigation between items.</summary>
     public virtual ToolStripItem GetNextItem(ToolStripItem? start, ArrowDirection direction)
     {
-        var count = Items.Count;
+        var displayed = DisplayedItems;
+        var count = displayed.Count;
         if (count == 0) return null!;
 
         var forward = direction is ArrowDirection.Right or ArrowDirection.Down;
-        var index = start is null ? -1 : Items.IndexOf(start);
+        var index = start is null ? -1 : displayed.IndexOf(start);
 
         for (var step = 1; step <= count; step++)
         {
             index = forward ? (index + 1) % count : (index - 1 + count) % count;
-            var candidate = Items[index];
-            if (candidate.Available && candidate.CanSelect) return candidate;
+            var candidate = displayed[index];
+            if (IsShownHere(candidate) && candidate.CanSelect) return candidate;
         }
 
         return null!;
@@ -530,10 +538,12 @@ public class ToolStrip : ScrollableControl
 
         foreach (ToolStripItem item in DisplayedItems)
         {
-            if (!item.Available || item.Bounds.Width <= 0 || item.Bounds.Height <= 0) continue;
+            if (!IsShownHere(item) || item.Bounds.Width <= 0 || item.Bounds.Height <= 0) continue;
 
             item.PaintInternal(new PaintEventArgs(e.Graphics, item.Bounds));
         }
+
+        if (_overflowActive) OverflowButton.PaintInternal(new PaintEventArgs(e.Graphics, OverflowButton.Bounds));
 
         renderer.DrawToolStripBorder(new ToolStripRenderEventArgs(e.Graphics, this, ClientRectangle, BackColor));
         PaintTrailingDecoration(e);
@@ -575,7 +585,7 @@ public class ToolStrip : ScrollableControl
             var width = 0;
             var height = padding.Vertical + LeadingGripSpace();
 
-            foreach (ToolStripItem item in Items)
+            foreach (ToolStripItem item in DisplayedItems)
             {
                 if (!item.Available) continue;
 
@@ -590,7 +600,7 @@ public class ToolStrip : ScrollableControl
         var totalWidth = padding.Horizontal + LeadingGripSpace();
         var tallest = 0;
 
-        foreach (ToolStripItem item in Items)
+        foreach (ToolStripItem item in DisplayedItems)
         {
             if (!item.Available) continue;
 
@@ -606,9 +616,11 @@ public class ToolStrip : ScrollableControl
 
     private static Size MeasureItem(ToolStripItem item) => item.AutoSize ? item.GetPreferredSize(Size.Empty) : item.Size;
 
-    /// <summary>Arranges every available item in one row (or column), the strip's own layout algorithm.</summary>
+    /// <summary>Arranges every item this strip shows in one row (or column): first settles the overflow, then places what stays.</summary>
     internal void PerformItemLayout()
     {
+        ApplyOverflow();
+
         if (StacksVertically) LayoutVertical();
         else LayoutHorizontal();
     }
@@ -617,88 +629,87 @@ public class ToolStrip : ScrollableControl
     {
         var display = DisplayRectangle;
         var leading = display.Left + LeadingGripSpace();
-        var trailing = display.Right;
+        var trailing = _overflowActive ? display.Right - OverflowButtonThickness : display.Right;
 
-        foreach (ToolStripItem item in Items)
+        var items = DisplayedItems;
+        foreach (ToolStripItem item in items)
         {
-            if (!item.Available || item.Alignment == ToolStripItemAlignment.Right) continue;
+            if (!item.Available) Place(item, Rectangle.Empty);
+        }
 
-            if (!item.Available)
-            {
-                Place(item, Rectangle.Empty);
-                continue;
-            }
+        foreach (ToolStripItem item in items)
+        {
+            if (!LaysOut(item) || item.Alignment == ToolStripItemAlignment.Right) continue;
 
             var size = MeasureItem(item);
             var margin = item.Margin;
             leading += margin.Left;
             var y = display.Top + Math.Max((display.Height - size.Height) / 2, 0);
-            Place(item, new Rectangle(leading, y, size.Width, size.Height));
+            PlaceShown(item, new Rectangle(leading, y, size.Width, size.Height));
             leading += size.Width + margin.Right;
         }
 
-        for (var i = Items.Count - 1; i >= 0; i--)
+        for (var i = items.Count - 1; i >= 0; i--)
         {
-            var item = Items[i];
-            if (!item.Available || item.Alignment != ToolStripItemAlignment.Right) continue;
-
-            if (!item.Available)
-            {
-                Place(item, Rectangle.Empty);
-                continue;
-            }
+            var item = items[i];
+            if (!LaysOut(item) || item.Alignment != ToolStripItemAlignment.Right) continue;
 
             var size = MeasureItem(item);
             var margin = item.Margin;
             trailing -= margin.Right + size.Width;
             var y = display.Top + Math.Max((display.Height - size.Height) / 2, 0);
-            Place(item, new Rectangle(trailing, y, size.Width, size.Height));
+            PlaceShown(item, new Rectangle(trailing, y, size.Width, size.Height));
             trailing -= margin.Left;
         }
+
+        PlaceOverflowButton(display, horizontal: true);
     }
 
     private void LayoutVertical()
     {
         var display = DisplayRectangle;
         var leading = display.Top + LeadingGripSpace();
-        var trailing = display.Bottom;
+        var trailing = _overflowActive ? display.Bottom - OverflowButtonThickness : display.Bottom;
 
-        foreach (ToolStripItem item in Items)
+        var items = DisplayedItems;
+        foreach (ToolStripItem item in items)
         {
-            if (!item.Available || item.Alignment == ToolStripItemAlignment.Right) continue;
+            if (!item.Available) Place(item, Rectangle.Empty);
+        }
 
-            if (!item.Available)
-            {
-                Place(item, Rectangle.Empty);
-                continue;
-            }
+        foreach (ToolStripItem item in items)
+        {
+            if (!LaysOut(item) || item.Alignment == ToolStripItemAlignment.Right) continue;
 
             var size = MeasureItem(item);
             var margin = item.Margin;
             leading += margin.Top;
             var x = display.Left + Math.Max((display.Width - size.Width) / 2, 0);
-            Place(item, new Rectangle(x, leading, size.Width, size.Height));
+            PlaceShown(item, new Rectangle(x, leading, size.Width, size.Height));
             leading += size.Height + margin.Bottom;
         }
 
-        for (var i = Items.Count - 1; i >= 0; i--)
+        for (var i = items.Count - 1; i >= 0; i--)
         {
-            var item = Items[i];
-            if (!item.Available || item.Alignment != ToolStripItemAlignment.Right) continue;
-
-            if (!item.Available)
-            {
-                Place(item, Rectangle.Empty);
-                continue;
-            }
+            var item = items[i];
+            if (!LaysOut(item) || item.Alignment != ToolStripItemAlignment.Right) continue;
 
             var size = MeasureItem(item);
             var margin = item.Margin;
             trailing -= margin.Bottom + size.Height;
             var x = display.Left + Math.Max((display.Width - size.Width) / 2, 0);
-            Place(item, new Rectangle(x, trailing, size.Width, size.Height));
+            PlaceShown(item, new Rectangle(x, trailing, size.Width, size.Height));
             trailing -= margin.Top;
         }
+
+        PlaceOverflowButton(display, horizontal: false);
+    }
+
+    /// <summary>Places an item this strip shows, taking it back from the overflow drop-down if it was lent there.</summary>
+    private void PlaceShown(ToolStripItem item, Rectangle bounds)
+    {
+        item.SetDisplayParentInternal(this);
+        Place(item, bounds);
     }
 
     private static void Place(ToolStripItem item, Rectangle bounds) => ((IArrangedElement)item).SetBounds(bounds, BoundsSpecified.None);

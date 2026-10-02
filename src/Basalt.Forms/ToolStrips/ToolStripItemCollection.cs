@@ -8,6 +8,9 @@ public class ToolStripItemCollection : ArrangedElementCollection
 {
     private readonly ToolStrip _owner;
 
+    /// <summary>A view of items another strip owns (what a strip displays), which must not take them over.</summary>
+    private readonly bool _isView;
+
     public ToolStripItemCollection(ToolStrip owner, ToolStripItem[] value)
     {
         ArgumentNullException.ThrowIfNull(owner);
@@ -17,7 +20,22 @@ public class ToolStripItemCollection : ArrangedElementCollection
         AddRange(value);
     }
 
-    public override bool IsReadOnly => false;
+    private ToolStripItemCollection(ToolStrip owner, IEnumerable<ToolStripItem> shown)
+    {
+        _owner = owner;
+        _isView = true;
+        Items.AddRange(shown);
+    }
+
+    /// <summary>A read-only list of items shown on a strip without changing their owner, as the overflow drop-down shows its strip's items.</summary>
+    internal static ToolStripItemCollection CreateView(ToolStrip owner, IEnumerable<ToolStripItem> shown) => new(owner, shown);
+
+    public override bool IsReadOnly => _isView;
+
+    private void ThrowIfView()
+    {
+        if (_isView) throw new NotSupportedException("The collection is read-only.");
+    }
 
     public virtual ToolStripItem this[int index]
     {
@@ -58,6 +76,7 @@ public class ToolStripItemCollection : ArrangedElementCollection
     public int Add(ToolStripItem value)
     {
         ArgumentNullException.ThrowIfNull(value);
+        ThrowIfView();
 
         value.Owner?.Items.Remove(value);
 
@@ -94,6 +113,7 @@ public class ToolStripItemCollection : ArrangedElementCollection
 
     public virtual void Clear()
     {
+        ThrowIfView();
         foreach (var item in Items.ToArray())
         {
             Remove((ToolStripItem)item);
@@ -138,6 +158,7 @@ public class ToolStripItemCollection : ArrangedElementCollection
 
     public void Insert(int index, ToolStripItem value)
     {
+        ThrowIfView();
         ArgumentNullException.ThrowIfNull(value);
 
         value.Owner?.Items.Remove(value);
@@ -152,6 +173,7 @@ public class ToolStripItemCollection : ArrangedElementCollection
 
     public void Remove(ToolStripItem value)
     {
+        ThrowIfView();
         ArgumentNullException.ThrowIfNull(value);
 
         if (!Items.Remove(value)) return;

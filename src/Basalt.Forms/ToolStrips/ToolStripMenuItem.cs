@@ -99,8 +99,15 @@ public class ToolStripMenuItem : ToolStripDropDownItem
 
     protected override Size DefaultSize => new(32, 22);
 
+    internal override ToolStripItemOverflow DefaultOverflow => ToolStripItemOverflow.Never;
+
+    // Only the designer default differs: the value lives in the base, which the strip's layout reads.
     [DefaultValue(ToolStripItemOverflow.Never)]
-    public ToolStripItemOverflow Overflow { get; set; } = ToolStripItemOverflow.Never;
+    public new ToolStripItemOverflow Overflow
+    {
+        get => base.Overflow;
+        set => base.Overflow = value;
+    }
 
     [DefaultValue(null)]
     [Localizable(true)]
@@ -181,7 +188,7 @@ public class ToolStripMenuItem : ToolStripDropDownItem
             return;
         }
 
-        if (Owner is ToolStripDropDown dropDown && HasDropDownItems)
+        if (ParentInternal is ToolStripDropDown dropDown && HasDropDownItems)
         {
             StartHoverTimer(dropDown);
         }

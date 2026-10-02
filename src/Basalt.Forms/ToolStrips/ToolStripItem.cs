@@ -32,10 +32,15 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
     private Padding _margin;
     private Padding _padding;
     private Size? _specifiedSize;
+    private ToolStripItemOverflow _overflow;
+
+    /// <summary>The strip whose Items hold this item; Parent is the one showing it (its overflow drop-down, when it overflowed).</summary>
+    private ToolStrip? _owner;
 
     protected ToolStripItem()
     {
         _displayStyle = DefaultDisplayStyle;
+        _overflow = DefaultOverflow;
         _margin = DefaultMargin;
         _padding = DefaultPadding;
         _bounds = new Rectangle(Point.Empty, DefaultSize);
@@ -249,6 +254,10 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
     [Browsable(false)]
     public bool IsDisposed { get; private set; }
 
+    /// <summary>Whether this item is currently shown on its owner's <see cref="ToolStrip.OverflowButton"/> drop-down rather than on the strip itself.</summary>
+    [Browsable(false)]
+    public bool IsOnOverflow => Placement == ToolStripItemPlacement.Overflow;
+
     public Padding Margin
     {
         get => _margin;
@@ -269,23 +278,50 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
         set => _name = value;
     }
 
+    /// <summary>
+    /// Whether a <see cref="ToolStrip"/> too narrow (or short) to show every
+    /// item may move this one to its <see cref="ToolStrip.OverflowButton"/>
+    /// drop-down instead of leaving it on the strip. AsNeeded is the default;
+    /// Never keeps it on the strip no matter what, Always keeps it off.
+    /// </summary>
+    /// <summary>The Overflow an item starts with: a menu item never overflows.</summary>
+    internal virtual ToolStripItemOverflow DefaultOverflow => ToolStripItemOverflow.AsNeeded;
+
+    [DefaultValue(ToolStripItemOverflow.AsNeeded)]
+    public ToolStripItemOverflow Overflow
+    {
+        get => _overflow;
+        set
+        {
+            if (!Enum.IsDefined(value)) throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(ToolStripItemOverflow));
+            if (value == _overflow) return;
+
+            _overflow = value;
+            Owner?.DoLayout(this, nameof(Overflow));
+        }
+    }
+
     [Browsable(false)]
     public ToolStrip? Owner
     {
-        get => Parent;
+        get => _owner;
         set
         {
-            if (value == Parent) return;
+            if (value == _owner) return;
 
             // Items.Add/Remove are what really move the item: they keep the
-            // collection and Parent in step, the way setting Owner does in WinForms.
-            Parent?.Items.Remove(this);
+            // collection and the owner in step, the way setting Owner does in WinForms.
+            _owner?.Items.Remove(this);
             value?.Items.Add(this);
         }
     }
 
     [Browsable(false)]
     protected ToolStrip? Parent { get; set; }
+
+    /// <summary>Where the strip's last layout put this item: on the strip itself, on its overflow drop-down, or nowhere (not available).</summary>
+    [Browsable(false)]
+    public ToolStripItemPlacement Placement { get; private set; } = ToolStripItemPlacement.None;
 
     public virtual Padding Padding
     {
@@ -497,13 +533,16 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
         if (disposing && !IsDisposed)
         {
             IsDisposed = true;
-            Parent?.Items.Remove(this);
+            _owner?.Items.Remove(this);
         }
 
         base.Dispose(disposing);
     }
 
-    /// <summary>The strip currently showing the item: its owner, in this round without an overflow.</summary>
+    /// <summary>The strip showing the item, for code that places or invalidates it there; null while it is on no strip.</summary>
+    internal ToolStrip? ParentInternal => Parent;
+
+    /// <summary>The strip currently showing the item: its owner, or the owner's overflow drop-down.</summary>
     public ToolStrip GetCurrentParent() => Parent!;
 
     /// <summary>The size the item would like: the glyph plus a gap plus the measured text, within <see cref="DisplayStyle"/>.</summary>
@@ -544,13 +583,13 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
         }
     }
 
-    public void Invalidate() => Owner?.Invalidate(_bounds, true);
+    public void Invalidate() => Parent?.Invalidate(_bounds, true);
 
     public void Invalidate(Rectangle r)
     {
         var offset = r;
         offset.Offset(_bounds.Location);
-        Owner?.Invalidate(offset, true);
+        Parent?.Invalidate(offset, true);
     }
 
     protected virtual void OnAvailableChanged(EventArgs e) => ((EventHandler?)Events[s_availableEvent])?.Invoke(this, e);
@@ -731,6 +770,7 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
 
         _selected = value;
         Invalidate();
+        (Parent as ToolStripDropDown)?.OnShownItemSelectedChanged(this);
         OnSelectedChanged(EventArgs.Empty);
     }
 
@@ -752,22 +792,36 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
 
     internal void PaintInternal(PaintEventArgs e) => OnPaint(e);
 
-    /// <summary>Called by <see cref="ToolStrip.SetItemParent"/>, the one place that changes <see cref="Parent"/>.</summary>
-    internal void SetParentInternal(ToolStrip? parent)
+    /// <summary>Called by <see cref="ToolStripItemCollection"/> when the item joins or leaves a strip's Items: it is then both owner and parent.</summary>
+    internal void SetParentInternal(ToolStrip? owner)
+    {
+        if (owner == _owner && owner == Parent) return;
+
+        var ownerChanged = owner != _owner;
+        _owner = owner;
+        SetDisplayParentInternal(owner);
+        if (ownerChanged) OnOwnerChanged(EventArgs.Empty);
+        ParentChangedInternal();
+    }
+
+    /// <summary>Moves where the item is shown without changing who owns it: the overflow drop-down borrows it, its strip takes it back.</summary>
+    internal void SetDisplayParentInternal(ToolStrip? parent)
     {
         if (parent == Parent) return;
 
         var old = Parent;
         Parent = parent;
+        (old as ToolStripDropDown)?.ForgetActiveItem(this);
         OnParentChanged(old, parent);
-        OnOwnerChanged(EventArgs.Empty);
-        ParentChangedInternal();
     }
 
     /// <summary>After the item moved to another strip or left its strip: an item with a drop-down closes it.</summary>
     internal virtual void ParentChangedInternal()
     {
     }
+
+    /// <summary>Set by the owning <see cref="ToolStrip"/>'s layout once it decides where this item goes.</summary>
+    internal void SetPlacementInternal(ToolStripItemPlacement placement) => Placement = placement;
 
     Rectangle IArrangedElement.Bounds => Bounds;
 
@@ -779,7 +833,7 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
 
     bool IArrangedElement.ParticipatesInLayout => Available;
 
-    IArrangedElement? IArrangedElement.Container => Parent;
+    IArrangedElement? IArrangedElement.Container => _owner;
 
     ArrangedElementCollection IArrangedElement.Children => EmptyArrangedElementCollection.Instance;
 
@@ -788,5 +842,5 @@ public abstract class ToolStripItem : BindableComponent, IArrangedElement
     private LayoutSettingsStore? _layoutStore;
 
     void IArrangedElement.PerformLayout(IArrangedElement affectedElement, string? propertyName) =>
-        Parent?.DoLayout(affectedElement, propertyName ?? string.Empty);
+        _owner?.DoLayout(affectedElement, propertyName ?? string.Empty);
 }

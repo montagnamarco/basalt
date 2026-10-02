@@ -57,7 +57,7 @@ public abstract class ToolStripDropDownItem : ToolStripItem
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public ToolStripItemCollection DropDownItems => DropDown.Items;
 
-    protected virtual Point DropDownLocation => Owner is null ? Point.Empty : Owner.PointToScreen(new Point(Bounds.Left, Bounds.Bottom));
+    protected virtual Point DropDownLocation => ParentInternal is not { } parent ? Point.Empty : parent.PointToScreen(new Point(Bounds.Left, Bounds.Bottom));
 
     /// <summary>Whether a DropDown exists yet, without creating one just to ask.</summary>
     [Browsable(false)]
@@ -115,7 +115,7 @@ public abstract class ToolStripDropDownItem : ToolStripItem
         OnDropDownClosed(EventArgs.Empty);
 
         // A click anywhere in the chain collapses the whole chain, as Windows closes every level of an opened menu at once.
-        if (e.CloseReason == ToolStripDropDownCloseReason.ItemClicked && Owner is ToolStripDropDown parent)
+        if (e.CloseReason == ToolStripDropDownCloseReason.ItemClicked && ParentInternal is ToolStripDropDown parent)
         {
             parent.Close(ToolStripDropDownCloseReason.ItemClicked);
         }
@@ -130,18 +130,18 @@ public abstract class ToolStripDropDownItem : ToolStripItem
     /// <summary>Shows the drop-down near this item, picking above/below and left/right from the direction and the context.</summary>
     public void ShowDropDown()
     {
-        if (Owner is null) return;
+        if (ParentInternal is not { } shownOn) return;
 
         OnDropDownShow(EventArgs.Empty);
         DropDownOpening?.Invoke(this, EventArgs.Empty);
 
-        var anchor = Owner.RectangleToScreen(Bounds);
+        var anchor = shownOn.RectangleToScreen(Bounds);
         var direction = EffectiveDropDownDirection();
 
         // The keyboard-owner lookup only ever checks the real, original window (FormsInput.KeyTarget
         // starts there, never recursing through a chain of popups), so every level of a nested menu
         // must register as owned by that same window, not by the drop-down one level up.
-        var rootOwner = Owner is ToolStripDropDown ownerDropDown ? ownerDropDown.RootOwnerWindow : Owner;
+        var rootOwner = shownOn is ToolStripDropDown ownerDropDown ? ownerDropDown.RootOwnerWindow : shownOn;
         DropDown.ShowAt(anchor, direction, rootOwner);
     }
 
@@ -164,7 +164,7 @@ public abstract class ToolStripDropDownItem : ToolStripItem
         if (_dropDownDirection != ToolStripDropDownDirection.Default) return _dropDownDirection;
 
         // Inside another drop-down a submenu opens to the side; on a strip (a toolbar, a menu bar) it opens below.
-        return Owner is ToolStripDropDown ? ToolStripDropDownDirection.Right : ToolStripDropDownDirection.BelowLeft;
+        return ParentInternal is ToolStripDropDown ? ToolStripDropDownDirection.Right : ToolStripDropDownDirection.BelowLeft;
     }
 
     protected override void OnBoundsChanged()
