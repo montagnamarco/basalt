@@ -6,13 +6,17 @@ using System.Linq;
 namespace System.Windows.Forms;
 
 /// <summary>
-/// Editing the current cell with a plain TextBox placed over it (Microsoft's
-/// IDataGridViewEditingControl/DataGridViewTextBoxEditingControl pair is left out this round,
-/// so every cell type edits as text regardless of its own EditType), and sorting rows by one
-/// column's value, with SortCompare able to override the comparison pair by pair.
+/// Editing the current cell with a control created from the cell's own EditType - a
+/// DataGridViewTextBoxEditingControl for a text cell, a DataGridViewComboBoxEditingControl for a
+/// combo cell, and so on - one instance kept per control type and reused for every cell edited
+/// with it afterwards, exactly as Microsoft's grid pools its editing controls. Also sorts rows by
+/// one column's value, with SortCompare able to override the comparison pair by pair.
 /// </summary>
 public partial class DataGridView
 {
+    /// <summary>One editing control instance per EditType, kept alive and reused rather than recreated for every cell.</summary>
+    private readonly Dictionary<Type, Control> _editingControlsByType = new();
+
     private bool BeginEditCore(bool selectAll)
     {
         if (_currentCell is not { } cell) return false;
@@ -24,37 +28,74 @@ public partial class DataGridView
         OnCellBeginEdit(cancel);
         if (cancel.Cancel) return false;
 
-        var textBox = new TextBox();
-        textBox.TextChanged += EditingControlTextChanged;
-        textBox.KeyDown += EditingControlKeyDown;
-        Controls.Add(textBox);
-        EditingControl = textBox;
+        var editingControlType = cell.EditType ?? typeof(DataGridViewTextBoxEditingControl);
+        var control = ResolveEditingControl(editingControlType);
+        var editingControl = control as IDataGridViewEditingControl;
+
+        EditingControl = control;
+        Controls.Add(control);
 
         var cellStyle = cell.InheritedStyle;
-        cell.InitializeEditingControl(cell.RowIndex, cell.GetEditedFormattedValue(cell.RowIndex, DataGridViewDataErrorContexts.Formatting), cellStyle);
 
-        PositionEditingControlCore();
-        textBox.BringToFront();
-        textBox.Visible = true;
-        textBox.Focus();
+        // Loading the cell's value into the editor is not an edit: changes the editor reports
+        // until it is ready are ignored, so CurrentCellDirtyStateChanged fires for the user's
+        // first change only.
+        _preparingEditingControl = true;
+        try
+        {
+            if (editingControl is not null)
+            {
+                editingControl.EditingControlDataGridView = this;
+                editingControl.EditingControlRowIndex = cell.RowIndex;
+                editingControl.ApplyCellStyleToEditingControl(cellStyle);
+            }
 
-        if (selectAll) textBox.SelectAll();
-        else textBox.SelectionStart = textBox.Text.Length;
+            cell.InitializeEditingControl(cell.RowIndex, cell.GetEditedFormattedValue(cell.RowIndex, DataGridViewDataErrorContexts.Formatting), cellStyle);
+
+            var showing = new DataGridViewEditingControlShowingEventArgs(control, cellStyle);
+            OnEditingControlShowing(showing);
+            editingControl?.ApplyCellStyleToEditingControl(showing.CellStyle);
+
+            PositionEditingControlCore();
+            control.BringToFront();
+            control.Visible = true;
+            control.KeyDown += EditingControlKeyDown;
+            control.Focus();
+
+            editingControl?.PrepareEditingControlForEdit(selectAll);
+        }
+        finally
+        {
+            _preparingEditingControl = false;
+        }
 
         IsCurrentCellDirty = false;
 
         return true;
     }
 
+    /// <summary>The pooled instance for editingControlType, creating and caching it the first time any cell needs that type.</summary>
+    private Control ResolveEditingControl(Type editingControlType)
+    {
+        if (_editingControlsByType.TryGetValue(editingControlType, out var existing)) return existing;
+
+        var created = (Control)Activator.CreateInstance(editingControlType)!;
+        _editingControlsByType[editingControlType] = created;
+
+        return created;
+    }
+
     private bool EndEditCore(DataGridViewDataErrorContexts context)
     {
-        if (EditingControl is not TextBox textBox || _currentCell is not { } cell) return true;
+        if (EditingControl is not { } control || control is not IDataGridViewEditingControl editingControl || _currentCell is not { } cell) return true;
 
-        var validating = new DataGridViewCellValidatingEventArgs(cell.ColumnIndex, cell.RowIndex, textBox.Text);
+        var formattedValue = editingControl.GetEditingControlFormattedValue(context);
+
+        var validating = new DataGridViewCellValidatingEventArgs(cell.ColumnIndex, cell.RowIndex, formattedValue);
         OnCellValidating(validating);
         if (validating.Cancel) return false;
 
-        cell.Value = cell.ParseFormattedValue(textBox.Text, cell.InheritedStyle, null, null);
+        cell.Value = cell.ParseFormattedValue(formattedValue, cell.InheritedStyle, null, null);
 
         // A bound column writes the parsed value back into the data source here; a DataError
         // handler that cancels it keeps the cell in edit mode, exactly as a refused CellValidating does.
@@ -100,22 +141,27 @@ public partial class DataGridView
         PositionEditingControlCore();
     }
 
+    /// <summary>
+    /// Hides the pooled control again rather than disposing it (the next cell of the same
+    /// EditType reuses the very same instance), and gives the cell a chance to detach anything it
+    /// attached to it (DataGridViewComboBoxCell clears the dropdown list, for one).
+    /// </summary>
     private void RemoveEditingControl()
     {
-        if (EditingControl is not TextBox textBox) return;
+        if (EditingControl is not { } control) return;
 
-        textBox.TextChanged -= EditingControlTextChanged;
-        textBox.KeyDown -= EditingControlKeyDown;
-        Controls.Remove(textBox);
-        textBox.Dispose();
+        control.KeyDown -= EditingControlKeyDown;
+        _currentCell?.DetachEditingControl();
+        Controls.Remove(control);
         EditingControl = null;
         IsCurrentCellDirty = false;
         Focus();
     }
 
     /// <summary>
-    /// The embedded TextBox, not the grid, holds the actual input focus while editing: Enter and
-    /// Escape must be read here and forwarded, since they never reach DataGridView.OnKeyDown.
+    /// The embedded editing control, not the grid, holds the actual input focus while editing:
+    /// Enter and Escape must be read here and forwarded, since they never reach
+    /// DataGridView.OnKeyDown while a child control owns the focus.
     /// </summary>
     private void EditingControlKeyDown(object? sender, KeyEventArgs e)
     {
@@ -133,15 +179,27 @@ public partial class DataGridView
         }
     }
 
-    private void EditingControlTextChanged(object? sender, EventArgs e)
-    {
-        if (IsCurrentCellDirty) return;
+    /// <summary>
+    /// What an editing control calls (through EditingControlDataGridView) to report that its
+    /// value changed since PrepareEditingControlForEdit: raises CurrentCellDirtyStateChanged so a
+    /// host watching it (for an icon, a Save button...) learns the cell is now dirty.
+    /// </summary>
+    /// <summary>True while BeginEdit fills the editing control with the cell's value.</summary>
+    private bool _preparingEditingControl;
 
-        IsCurrentCellDirty = true;
+    public virtual void NotifyCurrentCellDirty(bool dirty)
+    {
+        if (_preparingEditingControl || dirty == IsCurrentCellDirty) return;
+
+        IsCurrentCellDirty = dirty;
         OnCurrentCellDirtyStateChanged(EventArgs.Empty);
     }
 
     protected virtual void OnCurrentCellDirtyStateChanged(EventArgs e) => ((EventHandler?)Events[s_currentCellDirtyStateChangedEvent])?.Invoke(this, e);
+
+    /// <summary>Raised right before the editing control just created is made visible, so a handler can still change its CellStyle or read/alter the control itself.</summary>
+    protected virtual void OnEditingControlShowing(DataGridViewEditingControlShowingEventArgs e) =>
+        ((DataGridViewEditingControlShowingEventHandler?)Events[s_editingControlShowingEvent])?.Invoke(this, e);
 
     public event EventHandler? CurrentCellDirtyStateChanged
     {
@@ -149,7 +207,26 @@ public partial class DataGridView
         remove => Events.RemoveHandler(s_currentCellDirtyStateChangedEvent, value);
     }
 
+    public event DataGridViewEditingControlShowingEventHandler? EditingControlShowing
+    {
+        add => Events.AddHandler(s_editingControlShowingEvent, value);
+        remove => Events.RemoveHandler(s_editingControlShowingEvent, value);
+    }
+
     private static readonly object s_currentCellDirtyStateChangedEvent = new();
+    private static readonly object s_editingControlShowingEvent = new();
+
+    /// <summary>The pooled editing controls belong to the grid alone (they are never left in any cell's own Controls), so the grid disposes them itself.</summary>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var control in _editingControlsByType.Values) control.Dispose();
+            _editingControlsByType.Clear();
+        }
+
+        base.Dispose(disposing);
+    }
 
     private void SortCore(DataGridViewColumn dataGridViewColumn, ListSortDirection direction)
     {

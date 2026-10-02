@@ -126,7 +126,7 @@ public class DataGridViewInputTests
         form.Host!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
 
         Assert.True(grid.IsCurrentCellInEditMode);
-        Assert.IsType<TextBox>(grid.EditingControl);
+        Assert.IsType<DataGridViewTextBoxEditingControl>(grid.EditingControl);
         Assert.Equal("1", ((TextBox)grid.EditingControl!).Text);
 
         form.Close();
