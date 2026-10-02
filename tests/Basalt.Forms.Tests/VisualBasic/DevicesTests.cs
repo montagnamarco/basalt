@@ -17,6 +17,7 @@ namespace Basalt.Forms.Tests.VisualBasic;
 /// Clock, Keyboard, Mouse, ComputerInfo, Audio, Network, ServerComputer, Computer,
 /// and the FileSystem/Clipboard/SpecialDirectories/Registry proxies.
 /// </summary>
+[Collection(SharedStateCollection.Name)]
 public class DevicesTests
 {
     [Fact]

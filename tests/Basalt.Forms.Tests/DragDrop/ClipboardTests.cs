@@ -7,6 +7,7 @@ namespace Basalt.Forms.Tests.DragDrop;
 /// clipboard (PlatformClipboardTests elsewhere covers that path); everything
 /// else is process-local, proved here without touching the OS clipboard.
 /// </summary>
+[Collection(SharedStateCollection.Name)]
 public class ClipboardTests
 {
     [Fact]

@@ -41,7 +41,17 @@ internal static class PlatformClipboard
     private static IClipboard? Clipboard()
     {
         var host = Application.OpenForms.Snapshot().Select(form => form.Host).FirstOrDefault(window => window is not null);
+        if (host is null) return null;
 
-        return host?.Clipboard;
+        try
+        {
+            return host.Clipboard;
+        }
+        catch (InvalidOperationException)
+        {
+            // A platform without a clipboard service (the headless one, a minimal Linux session)
+            // throws instead of answering null: the text then stays in the process, as without a window.
+            return null;
+        }
     }
 }

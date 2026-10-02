@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 namespace Basalt.Forms.Tests.Hosting;
 
 /// <summary>Typing through SendKeys, delivered through the same key messages real input uses.</summary>
+[Collection(SharedStateCollection.Name)]
 public class SendKeysTests
 {
     [AvaloniaFact]

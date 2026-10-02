@@ -9,6 +9,7 @@ using Avalonia.Threading;
 namespace Basalt.Forms.Tests.Controls;
 
 /// <summary>The edit control's rules: typing, selection, the clipboard, undo, and its size.</summary>
+[Collection(SharedStateCollection.Name)]
 public class TextBoxTests
 {
     private static readonly Font Font = new("Microsoft Sans Serif", 8.25f);

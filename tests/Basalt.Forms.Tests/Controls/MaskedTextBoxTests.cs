@@ -8,6 +8,7 @@ using Avalonia.Threading;
 namespace Basalt.Forms.Tests.Controls;
 
 /// <summary>MaskedTextBox: the MaskedTextProvider-driven mask, typing, Backspace/Delete, selection replace, paste and validation.</summary>
+[Collection(SharedStateCollection.Name)]
 public class MaskedTextBoxTests
 {
     private static (Form Form, MaskedTextBox Box) Show(MaskedTextBox box)
