@@ -658,7 +658,6 @@ M protected System.Windows.Forms.NativeWindow::OnThreadException(System.Exceptio
 M protected System.Windows.Forms.NativeWindow::WmDpiChangedAfterParent(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.NativeWindow::WmDpiChangedBeforeParent(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.NativeWindow::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.NotifyIcon::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.OSFeature::.ctor()
 M protected System.Windows.Forms.OwnerDrawPropertyBag::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
 M protected System.Windows.Forms.Panel::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
@@ -2960,46 +2959,6 @@ M public System.Windows.Forms.NodeLabelEditEventHandler::.ctor(System.Object, Sy
 M public System.Windows.Forms.NodeLabelEditEventHandler::BeginInvoke(System.Object, System.Windows.Forms.NodeLabelEditEventArgs, System.AsyncCallback, System.Object) -> System.IAsyncResult virtual
 M public System.Windows.Forms.NodeLabelEditEventHandler::EndInvoke(System.IAsyncResult) -> System.Void virtual
 M public System.Windows.Forms.NodeLabelEditEventHandler::Invoke(System.Object, System.Windows.Forms.NodeLabelEditEventArgs) -> System.Void virtual
-M public System.Windows.Forms.NotifyIcon::.ctor()
-M public System.Windows.Forms.NotifyIcon::.ctor(System.ComponentModel.IContainer)
-M public System.Windows.Forms.NotifyIcon::ShowBalloonTip(System.Int32) -> System.Void
-M public System.Windows.Forms.NotifyIcon::ShowBalloonTip(System.Int32, System.String, System.String, System.Windows.Forms.ToolTipIcon) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_BalloonTipClicked(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_BalloonTipClosed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_BalloonTipShown(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::add_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::get_BalloonTipIcon() -> System.Windows.Forms.ToolTipIcon
-M public System.Windows.Forms.NotifyIcon::get_BalloonTipText() -> System.String
-M public System.Windows.Forms.NotifyIcon::get_BalloonTipTitle() -> System.String
-M public System.Windows.Forms.NotifyIcon::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip
-M public System.Windows.Forms.NotifyIcon::get_Icon() -> System.Drawing.Icon
-M public System.Windows.Forms.NotifyIcon::get_Tag() -> System.Object
-M public System.Windows.Forms.NotifyIcon::get_Text() -> System.String
-M public System.Windows.Forms.NotifyIcon::get_Visible() -> System.Boolean
-M public System.Windows.Forms.NotifyIcon::remove_BalloonTipClicked(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_BalloonTipClosed(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_BalloonTipShown(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_Click(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_DoubleClick(System.EventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_MouseClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_MouseDoubleClick(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_MouseDown(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_MouseMove(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::remove_MouseUp(System.Windows.Forms.MouseEventHandler) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_BalloonTipIcon(System.Windows.Forms.ToolTipIcon) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_BalloonTipText(System.String) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_BalloonTipTitle(System.String) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_Icon(System.Drawing.Icon) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_Tag(System.Object) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_Text(System.String) -> System.Void
-M public System.Windows.Forms.NotifyIcon::set_Visible(System.Boolean) -> System.Void
 M public System.Windows.Forms.NumericUpDown::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.NumericUpDown::add_TextChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.NumericUpDown::get_Padding() -> System.Windows.Forms.Padding
@@ -4891,7 +4850,6 @@ T sealed class System.Windows.Forms.HtmlHistory
 T sealed class System.Windows.Forms.HtmlWindow
 T sealed class System.Windows.Forms.InputLanguage
 T sealed class System.Windows.Forms.ListViewInsertionMark
-T sealed class System.Windows.Forms.NotifyIcon : System.ComponentModel.Component
 T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute
 T sealed class System.Windows.Forms.WindowsFormsSection
 T sealed class System.Windows.Forms.WindowsFormsSynchronizationContext : System.Threading.SynchronizationContext
