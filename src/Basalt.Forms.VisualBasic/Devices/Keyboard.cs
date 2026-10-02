@@ -11,14 +11,12 @@ public class Keyboard
 
     public bool CtrlKeyDown => (Control.ModifierKeys & Keys.Control) == Keys.Control;
 
-    // Basalt.Forms does not track a toggle key's lock state (Control has no IsKeyLocked
-    // yet): reporting "not locked" is the same answer Windows gives on a keyboard
-    // without the key, so it is a safe default rather than a guess at the true state.
-    public bool CapsLock => false;
+    // The lock state as Control.IsKeyLocked follows it from the presses Basalt sees.
+    public bool CapsLock => Control.IsKeyLocked(Keys.CapsLock);
 
-    public bool NumLock => false;
+    public bool NumLock => Control.IsKeyLocked(Keys.NumLock);
 
-    public bool ScrollLock => false;
+    public bool ScrollLock => Control.IsKeyLocked(Keys.Scroll);
 
     /// <summary>SendKeys has no synthesized-input backend in Basalt.Forms yet.</summary>
     public void SendKeys(string keys) => throw new PlatformNotSupportedException(

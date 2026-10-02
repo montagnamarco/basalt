@@ -38,7 +38,6 @@ I System.Windows.Forms.AxHost : System.ComponentModel.ISupportInitialize
 I System.Windows.Forms.AxHost+State : System.IDisposable
 I System.Windows.Forms.AxHost+State : System.Runtime.Serialization.ISerializable
 I System.Windows.Forms.ComboBox+ObjectCollection : System.Collections.Generic.IComparer`1<System.Windows.Forms.ComboBox+ObjectCollection+Entry>
-I System.Windows.Forms.Control : System.ComponentModel.ISynchronizeInvoke
 I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDataObject
 I System.Windows.Forms.FeatureSupport : System.Windows.Forms.IFeatureSupport
 I System.Windows.Forms.HtmlElementCollection : System.Collections.ICollection
@@ -203,38 +202,6 @@ M protected System.Windows.Forms.ContainerControl::get_CanEnableIme() -> System.
 M protected System.Windows.Forms.ContainerControl::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
 M protected System.Windows.Forms.ContextMenu::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys, System.Windows.Forms.Control) -> System.Boolean virtual
 M protected System.Windows.Forms.ContextMenuStrip::SetVisibleCore(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.Control::DefWndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Control::GetAccessibilityObjectById(System.Int32) -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.Control::OnChangeUICues(System.Windows.Forms.UICuesEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnContextMenuChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnDataContextChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnDpiChangedAfterParent(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnDpiChangedBeforeParent(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnImeModeChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnNotifyMessage(System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnParentDataContextChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnPrint(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnRegionChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.Control::RaiseDragEvent(System.Object, System.Windows.Forms.DragEventArgs) -> System.Void
-M protected System.Windows.Forms.Control::ReflectMessage(System.IntPtr, ref System.Windows.Forms.Message) -> System.Boolean static
-M protected System.Windows.Forms.Control::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.Control::ResetMouseEventArgs() -> System.Void
-M protected System.Windows.Forms.Control::RtlTranslateAlignment(System.Drawing.ContentAlignment) -> System.Drawing.ContentAlignment
-M protected System.Windows.Forms.Control::RtlTranslateAlignment(System.Windows.Forms.HorizontalAlignment) -> System.Windows.Forms.HorizontalAlignment
-M protected System.Windows.Forms.Control::RtlTranslateAlignment(System.Windows.Forms.LeftRightAlignment) -> System.Windows.Forms.LeftRightAlignment
-M protected System.Windows.Forms.Control::RtlTranslateContent(System.Drawing.ContentAlignment) -> System.Drawing.ContentAlignment
-M protected System.Windows.Forms.Control::RtlTranslateHorizontal(System.Windows.Forms.HorizontalAlignment) -> System.Windows.Forms.HorizontalAlignment
-M protected System.Windows.Forms.Control::RtlTranslateLeftRight(System.Windows.Forms.LeftRightAlignment) -> System.Windows.Forms.LeftRightAlignment
-M protected System.Windows.Forms.Control::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Control::get_CanEnableIme() -> System.Boolean virtual
-M protected System.Windows.Forms.Control::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.Control::get_ImeModeBase() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.Control::get_PropagatingImeMode() -> System.Windows.Forms.ImeMode static
-M protected System.Windows.Forms.Control::get_RenderRightToLeft() -> System.Boolean
-M protected System.Windows.Forms.Control::get_ShowFocusCues() -> System.Boolean virtual
-M protected System.Windows.Forms.Control::get_ShowKeyboardCues() -> System.Boolean virtual
-M protected System.Windows.Forms.Control::set_ImeModeBase(System.Windows.Forms.ImeMode) -> System.Void virtual
 M protected System.Windows.Forms.Cursor::Finalize() -> System.Void virtual
 M protected System.Windows.Forms.DataGridColumnStyle::CreateHeaderAccessibleObject() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridView::AccessibilityNotifyCurrentCellChanged(System.Drawing.Point) -> System.Void virtual
@@ -1456,63 +1423,8 @@ M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::Sa
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::add_ComComponentNameChanged(System.ComponentModel.Design.ComponentRenameEventHandler) -> System.Void abstract
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::get_InPropertySet() -> System.Boolean abstract
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::remove_ComComponentNameChanged(System.ComponentModel.Design.ComponentRenameEventHandler) -> System.Void abstract
-M public System.Windows.Forms.Control::BeginInvoke(System.Action) -> System.IAsyncResult
-M public System.Windows.Forms.Control::BeginInvoke(System.Delegate) -> System.IAsyncResult
-M public System.Windows.Forms.Control::BeginInvoke(System.Delegate, System.Object[]) -> System.IAsyncResult
-M public System.Windows.Forms.Control::CreateGraphics() -> System.Drawing.Graphics
 M public System.Windows.Forms.Control::DoDragDropAsJson`1(T, System.Windows.Forms.DragDropEffects) -> System.Windows.Forms.DragDropEffects
 M public System.Windows.Forms.Control::DoDragDropAsJson`1(T, System.Windows.Forms.DragDropEffects, System.Drawing.Bitmap, System.Drawing.Point, System.Boolean) -> System.Windows.Forms.DragDropEffects
-M public System.Windows.Forms.Control::EndInvoke(System.IAsyncResult) -> System.Object
-M public System.Windows.Forms.Control::Invoke(System.Action) -> System.Void
-M public System.Windows.Forms.Control::Invoke(System.Delegate) -> System.Object
-M public System.Windows.Forms.Control::Invoke(System.Delegate, System.Object[]) -> System.Object
-M public System.Windows.Forms.Control::InvokeAsync(System.Action, System.Threading.CancellationToken) -> System.Threading.Tasks.Task
-M public System.Windows.Forms.Control::InvokeAsync(System.Func`2<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask>, System.Threading.CancellationToken) -> System.Threading.Tasks.Task
-M public System.Windows.Forms.Control::InvokeAsync`1(System.Func`1<T>, System.Threading.CancellationToken) -> System.Threading.Tasks.Task`1<T>
-M public System.Windows.Forms.Control::InvokeAsync`1(System.Func`2<System.Threading.CancellationToken, System.Threading.Tasks.ValueTask`1<T>>, System.Threading.CancellationToken) -> System.Threading.Tasks.Task`1<T>
-M public System.Windows.Forms.Control::Invoke`1(System.Func`1<T>) -> T
-M public System.Windows.Forms.Control::IsKeyLocked(System.Windows.Forms.Keys) -> System.Boolean static
-M public System.Windows.Forms.Control::LogicalToDeviceUnits(System.Drawing.Size) -> System.Drawing.Size
-M public System.Windows.Forms.Control::LogicalToDeviceUnits(System.Int32) -> System.Int32
-M public System.Windows.Forms.Control::ResetBindings() -> System.Void
-M public System.Windows.Forms.Control::ResetImeMode() -> System.Void
-M public System.Windows.Forms.Control::ScaleBitmapLogicalToDevice(ref System.Drawing.Bitmap) -> System.Void
-M public System.Windows.Forms.Control::add_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_ContextMenuChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_DataContextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_DpiChangedAfterParent(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_DpiChangedBeforeParent(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_RegionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::add_SystemColorsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::get_AutoScrollOffset() -> System.Drawing.Point virtual
-M public System.Windows.Forms.Control::get_CheckForIllegalCrossThreadCalls() -> System.Boolean static
-M public System.Windows.Forms.Control::get_CompanyName() -> System.String
-M public System.Windows.Forms.Control::get_ContextMenu() -> System.Windows.Forms.ContextMenu virtual
-M public System.Windows.Forms.Control::get_DataContext() -> System.Object virtual
-M public System.Windows.Forms.Control::get_DeviceDpi() -> System.Int32
-M public System.Windows.Forms.Control::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.Control::get_InvokeRequired() -> System.Boolean
-M public System.Windows.Forms.Control::get_IsMirrored() -> System.Boolean
-M public System.Windows.Forms.Control::get_ProductName() -> System.String
-M public System.Windows.Forms.Control::get_ProductVersion() -> System.String
-M public System.Windows.Forms.Control::get_Region() -> System.Drawing.Region
-M public System.Windows.Forms.Control::get_WindowTarget() -> System.Windows.Forms.IWindowTarget
-M public System.Windows.Forms.Control::remove_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_ContextMenuChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_DataContextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_DpiChangedAfterParent(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_DpiChangedBeforeParent(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_RegionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::remove_SystemColorsChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Control::set_AutoScrollOffset(System.Drawing.Point) -> System.Void virtual
-M public System.Windows.Forms.Control::set_CheckForIllegalCrossThreadCalls(System.Boolean) -> System.Void static
-M public System.Windows.Forms.Control::set_ContextMenu(System.Windows.Forms.ContextMenu) -> System.Void virtual
-M public System.Windows.Forms.Control::set_DataContext(System.Object) -> System.Void virtual
-M public System.Windows.Forms.Control::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.Control::set_Region(System.Drawing.Region) -> System.Void
-M public System.Windows.Forms.Control::set_WindowTarget(System.Windows.Forms.IWindowTarget) -> System.Void
 M public System.Windows.Forms.DataGridColumnStyle::get_HeaderAccessibleObject() -> System.Windows.Forms.AccessibleObject
 M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::.ctor(System.Windows.Forms.DataGridView)
 M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::Clear() -> System.Void virtual
@@ -2575,8 +2487,6 @@ M public System.Windows.Forms.IFeatureSupport::IsPresent(System.Object) -> Syste
 M public System.Windows.Forms.IFeatureSupport::IsPresent(System.Object, System.Version) -> System.Boolean abstract
 M public System.Windows.Forms.IFileReaderService::OpenFileFromSource(System.String) -> System.IO.Stream abstract
 M public System.Windows.Forms.IMessageFilter::PreFilterMessage(ref System.Windows.Forms.Message) -> System.Boolean abstract
-M public System.Windows.Forms.IWindowTarget::OnHandleChange(System.IntPtr) -> System.Void abstract
-M public System.Windows.Forms.IWindowTarget::OnMessage(ref System.Windows.Forms.Message) -> System.Void abstract
 M public System.Windows.Forms.ImageIndexConverter::.ctor()
 M public System.Windows.Forms.ImageIndexConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
 M public System.Windows.Forms.ImageIndexConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
@@ -4702,7 +4612,6 @@ T interface System.Windows.Forms.IComponentEditorPageSite
 T interface System.Windows.Forms.IFeatureSupport
 T interface System.Windows.Forms.IFileReaderService
 T interface System.Windows.Forms.IMessageFilter
-T interface System.Windows.Forms.IWindowTarget
 T interface System.Windows.Forms.PropertyGridInternal.IRootGridEntry
 T sealed class System.Resources.ResXDataNode
 T sealed class System.Windows.Forms.AxHost+ClsidAttribute : System.Attribute

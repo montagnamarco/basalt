@@ -34,6 +34,19 @@ internal static class FormsInput
 
     public static bool IsKeyHeld(Keys key) => HeldKeys.Contains(key);
 
+    /// <summary>The lock keys switched on by the presses seen so far; the platform does not report their state.</summary>
+    private static readonly HashSet<Keys> ToggledKeys = [];
+
+    public static bool IsKeyToggled(Keys key) => ToggledKeys.Contains(key);
+
+    /// <summary>A press of a lock key switches it, as the keyboard's own state does.</summary>
+    internal static void ToggleLockKey(Keys key)
+    {
+        if (key is not (Keys.Insert or Keys.NumLock or Keys.CapsLock or Keys.Scroll)) return;
+
+        if (!ToggledKeys.Remove(key)) ToggledKeys.Add(key);
+    }
+
     /// <summary>A window gained or lost the keyboard: releases it never saw must not leave keys held.</summary>
     public static void ForgetHeldKeys() => HeldKeys.Clear();
 
@@ -58,6 +71,7 @@ internal static class FormsInput
             }
 
             UpdateHover(window, point);
+            MouseHoverTracker.Moved(window.PointToScreen(point));
             target.RaiseMouseMove(Buttons, location);
         });
     }
@@ -137,6 +151,7 @@ internal static class FormsInput
         {
             var left = s_hovered;
             s_hovered = null;
+            MouseHoverTracker.Left(left);
             if (left is { IsDisposed: false }) left.RaiseMouseLeave();
         });
     }
@@ -181,7 +196,8 @@ internal static class FormsInput
         var keyCode = KeyMapping.ToKeys(e.Key);
         if (keyCode == Keys.None) return false;
 
-        HeldKeys.Add(keyCode);
+        // A key held down repeats its press; only the first one switches a lock key.
+        if (HeldKeys.Add(keyCode)) ToggleLockKey(keyCode);
 
         // During DoDragDrop the drag loop reads the keys (Escape cancels); controls do not see them.
         if (Dragging) return true;
@@ -310,8 +326,10 @@ internal static class FormsInput
         s_hovered = under;
 
         // A control disposed while under the pointer has no leave to report.
+        if (left is not null) MouseHoverTracker.Left(left);
         if (left is { IsDisposed: false }) left.RaiseMouseLeave();
         under.RaiseMouseEnter();
+        MouseHoverTracker.Entered(under, window.PointToScreen(clientPoint));
         RefreshCursor();
     }
 

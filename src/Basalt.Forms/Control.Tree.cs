@@ -94,7 +94,7 @@ public partial class Control
         var point = pt;
         foreach (var child in _controls.Snapshot())
         {
-            if (!child.Bounds.Contains(point)) continue;
+            if (!child.Bounds.Contains(point) || !child.RegionContains(point)) continue;
 
             if ((skipValue & GetChildAtPointSkip.Invisible) != 0 && !child.Visible) continue;
             if ((skipValue & GetChildAtPointSkip.Disabled) != 0 && !child.Enabled) continue;
@@ -118,6 +118,7 @@ public partial class Control
         var oldRightToLeft = RightToLeft;
         var oldEnabled = Enabled;
         var oldVisible = Visible;
+        var oldDataContext = DataContext;
 
         _parent = value;
 
@@ -129,6 +130,7 @@ public partial class Control
         if (oldBackColor != BackColor) OnBackColorChanged(EventArgs.Empty);
         if (oldForeColor != ForeColor) OnForeColorChanged(EventArgs.Empty);
         if (oldRightToLeft != RightToLeft) OnRightToLeftChanged(EventArgs.Empty);
+        if (!Equals(oldDataContext, DataContext)) OnDataContextChanged(EventArgs.Empty);
     }
 
     protected virtual void OnParentChanged(EventArgs e) => ((EventHandler?)Events[s_parentEvent])?.Invoke(this, e);

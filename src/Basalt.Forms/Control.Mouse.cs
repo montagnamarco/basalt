@@ -290,7 +290,7 @@ public partial class Control
     {
         foreach (var child in ChildrenSnapshot())
         {
-            if (!child.DesiredVisibility || !child.Bounds.Contains(clientPoint)) continue;
+            if (!child.DesiredVisibility || !child.Bounds.Contains(clientPoint) || !child.RegionContains(clientPoint)) continue;
 
             var frame = child.NonClient;
             var inChild = new Point(clientPoint.X - child.Left - frame.Left, clientPoint.Y - child.Top - frame.Top);

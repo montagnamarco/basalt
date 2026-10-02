@@ -150,6 +150,8 @@ public partial class Control : Component, IWin32Window, IArrangedElement
     {
         get
         {
+            VerifyHandleThread();
+
             if (!IsHandleCreated) CreateHandle();
 
             return _handle;
@@ -241,6 +243,7 @@ public partial class Control : Component, IWin32Window, IArrangedElement
         _handle = IntPtr.Zero;
         _state &= ~(States.HandleCreated | States.Created);
 
+        FailPendingInvokes();
         OnHandleDestroyedInternal();
     }
 

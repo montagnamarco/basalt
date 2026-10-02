@@ -69,7 +69,8 @@ public partial class Control
 
         if (PreProcessMessage(ref message)) return true;
 
-        return ProcessKeyMessage(ref message);
+        // The message loop dispatches what PreProcessMessage left to the window procedure, which raises the key events.
+        return SendToWindowProcedure(ref message);
     }
 
     /// <summary>

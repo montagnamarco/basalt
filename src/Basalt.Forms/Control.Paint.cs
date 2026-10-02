@@ -321,6 +321,11 @@ public partial class Control
     /// </summary>
     internal void Compose(SKCanvas canvas, bool includeFrame)
     {
+        canvas.Save();
+
+        // The window region is in window coordinates, the origin the canvas has here.
+        if (_region?.Area is { } shape) canvas.ClipPath(shape);
+
         if (includeFrame) ComposeFrame(canvas);
 
         var frame = includeFrame ? NonClient : default;
@@ -343,6 +348,7 @@ public partial class Control
             canvas.Restore();
         }
 
+        canvas.Restore();
         canvas.Restore();
     }
 

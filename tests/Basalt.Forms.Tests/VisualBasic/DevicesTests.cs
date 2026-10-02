@@ -40,16 +40,26 @@ public class DevicesTests
         Assert.Throws<PlatformNotSupportedException>(() => keyboard.SendKeys("abc", true));
     }
 
-    [Fact]
-    public void Keyboard_lock_states_default_to_not_locked()
+    [AvaloniaFact]
+    public void Keyboard_lock_states_follow_the_lock_key_presses()
     {
-        // Basalt.Forms has no Control.IsKeyLocked to ask, so these report the
-        // documented default of "not locked" rather than guess at the real state.
+        var form = new Form { ClientSize = new Size(100, 100) };
+        form.Show();
+        Dispatcher.UIThread.RunJobs();
         var keyboard = new Keyboard();
+        var before = keyboard.CapsLock;
 
-        Assert.False(keyboard.CapsLock);
-        Assert.False(keyboard.NumLock);
-        Assert.False(keyboard.ScrollLock);
+        form.Host!.KeyPressQwerty(PhysicalKey.CapsLock, RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(PhysicalKey.CapsLock, RawInputModifiers.None);
+        var after = keyboard.CapsLock;
+        form.Host!.KeyPressQwerty(PhysicalKey.CapsLock, RawInputModifiers.None);
+        form.Host!.KeyReleaseQwerty(PhysicalKey.CapsLock, RawInputModifiers.None);
+
+        Assert.Equal(!before, after);
+        Assert.Equal(before, keyboard.CapsLock);
+        Assert.Equal(Control.IsKeyLocked(Keys.NumLock), keyboard.NumLock);
+
+        form.Close();
     }
 
     [AvaloniaFact]
