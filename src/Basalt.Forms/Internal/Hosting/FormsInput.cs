@@ -15,6 +15,14 @@ internal static class FormsInput
     /// <summary>The control that holds the mouse capture, if any.</summary>
     public static Control? CapturedControl { get; set; }
 
+    /// <summary>
+    /// Set while Control.DoDragDrop runs its own loop: pointer events still
+    /// update <see cref="Buttons"/> and <see cref="ScreenPosition"/> below, but
+    /// are not dispatched as ordinary mouse messages, since the drag loop (not
+    /// the control under the pointer) decides what they mean.
+    /// </summary>
+    public static bool Dragging { get; set; }
+
     public static MouseButtons Buttons { get; private set; }
 
     public static Point ScreenPosition { get; private set; }
@@ -38,6 +46,7 @@ internal static class FormsInput
         {
             var point = ToClient(canvas, e);
             Track(window, point, e.GetCurrentPoint(canvas).Properties, e.KeyModifiers);
+            if (Dragging) return;
 
             var (target, location) = Target(window, point);
 
@@ -60,6 +69,7 @@ internal static class FormsInput
             var point = ToClient(canvas, e);
             var properties = e.GetCurrentPoint(canvas).Properties;
             Track(window, point, properties, e.KeyModifiers);
+            if (Dragging) return;
 
             var button = ChangedButton(properties.PointerUpdateKind);
             if (button == MouseButtons.None) return;
@@ -72,6 +82,9 @@ internal static class FormsInput
             canvas.Focus();
 
             var (target, location) = Target(window, point);
+
+            // A press inside a form that is not a top-level window (an MDI child) activates it first.
+            if (button == MouseButtons.Left) Form.ActivateChildFormAround(target, window);
 
             // On the frame (a scroll bar), not in the client area: the window handles it, no mouse events.
             if (!target.ClientRectangle.Contains(location) && target != window)
@@ -93,6 +106,7 @@ internal static class FormsInput
             var properties = e.GetCurrentPoint(canvas).Properties;
             var button = ChangedButton(properties.PointerUpdateKind);
             Track(window, point, properties, e.KeyModifiers);
+            if (Dragging) return;
 
             if (button == MouseButtons.None) return;
 
@@ -169,6 +183,9 @@ internal static class FormsInput
 
         HeldKeys.Add(keyCode);
 
+        // During DoDragDrop the drag loop reads the keys (Escape cancels); controls do not see them.
+        if (Dragging) return true;
+
         return Guard(window, () =>
         {
             FormsInputState.SuppressNextCharacter = false;
@@ -198,6 +215,7 @@ internal static class FormsInput
         if (keyCode == Keys.None) return false;
 
         HeldKeys.Remove(keyCode);
+        if (Dragging) return true;
 
         // SuppressKeyPress removes the character of that one key press; a key that typed nothing
         // (Enter on some platforms, a synthesized press) must not leave it waiting for the next text.

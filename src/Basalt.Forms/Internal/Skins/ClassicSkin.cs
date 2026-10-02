@@ -8,9 +8,16 @@ namespace System.Windows.Forms.Internal.Skins;
 /// </summary>
 internal sealed class ClassicSkin : Skin
 {
-    public override void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle, WindowScrollInfo? horizontal, WindowScrollInfo? vertical)
+    public override void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle, WindowScrollInfo? horizontal, WindowScrollInfo? vertical, WindowCaption? caption = null)
     {
         var bounds = new Rectangle(Point.Empty, outerSize);
+
+        // A window frame and title bar: only for a form that is not a top-level window.
+        if (caption is { } title && (style & WindowStyles.Caption) == WindowStyles.Caption)
+        {
+            bounds = DrawWindowFrame(graphics, bounds, style, exStyle, title.Active);
+            bounds = ClassicCaption.Draw(graphics, outerSize, bounds, style, exStyle, title);
+        }
 
         // Outside in, as Windows draws them: border, then the edges inside it.
         if ((style & WindowStyles.Border) != 0 && (style & WindowStyles.Caption) != WindowStyles.Caption)
@@ -37,12 +44,45 @@ internal sealed class ClassicSkin : Skin
     }
 
     /// <summary>
+    /// The outer frame of a window: the raised edge (EDGE_RAISED), then the rest of a sizing frame
+    /// in the active or inactive border colour, or of a dialog frame in the face colour, or a
+    /// single dark line for a plain border. Returns what is inside it.
+    /// </summary>
+    private static Rectangle DrawWindowFrame(Graphics graphics, Rectangle bounds, int style, int exStyle, bool active)
+    {
+        var sizing = (style & WindowStyles.ThickFrame) != 0;
+        var dialog = (style & WindowStyles.DialogFrame) != 0 || (exStyle & WindowStyles.ExDialogModalFrame) != 0;
+
+        if (!sizing && !dialog)
+        {
+            DrawEdge(graphics, bounds, SystemColors.WindowFrame, SystemColors.WindowFrame);
+            bounds.Inflate(-NonClientArea.BorderWidth, -NonClientArea.BorderWidth);
+            return bounds;
+        }
+
+        DrawEdge(graphics, bounds, SystemColors.ControlLight, SystemColors.ControlDarkDark);
+        bounds.Inflate(-1, -1);
+        DrawEdge(graphics, bounds, SystemColors.ControlLightLight, SystemColors.ControlDark);
+        bounds.Inflate(-1, -1);
+
+        var band = (sizing ? NonClientArea.SizingFrameWidth : NonClientArea.FixedFrameWidth) - NonClientArea.EdgeWidth;
+        var bandColor = sizing ? (active ? SystemColors.ActiveBorder : SystemColors.InactiveBorder) : SystemColors.Control;
+        for (var line = 0; line < band; line++)
+        {
+            DrawEdge(graphics, bounds, bandColor, bandColor);
+            bounds.Inflate(-1, -1);
+        }
+
+        return bounds;
+    }
+
+    /// <summary>
     /// One line of a three-dimensional edge, as Win32's DrawEdge lays it: the
     /// top and left in one colour up to the last pixel, the bottom and right
     /// in the other over their whole length, so that colour owns the corners.
     /// Filled as one-pixel rectangles, which have no end-point ambiguity.
     /// </summary>
-    private static void DrawEdge(Graphics graphics, Rectangle bounds, Color topLeft, Color bottomRight)
+    internal static void DrawEdge(Graphics graphics, Rectangle bounds, Color topLeft, Color bottomRight)
     {
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
 

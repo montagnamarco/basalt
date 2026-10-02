@@ -13,6 +13,9 @@ internal abstract class Skin
     /// <summary>The skin in use; the classic Windows 2000 look unless the application chose another.</summary>
     public static Skin Current { get; set; } = new ClassicSkin();
 
-    /// <summary>Draws the frame the window styles describe, in the control's outer coordinates.</summary>
-    public abstract void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle, WindowScrollInfo? horizontal, WindowScrollInfo? vertical);
+    /// <summary>
+    /// Draws the frame the window styles describe, in the control's outer coordinates; with a
+    /// caption, the window frame and title bar of a form that is not a top-level window.
+    /// </summary>
+    public abstract void DrawNonClientFrame(Graphics graphics, Size outerSize, int style, int exStyle, WindowScrollInfo? horizontal, WindowScrollInfo? vertical, WindowCaption? caption = null);
 }

@@ -219,8 +219,12 @@ public partial class Form : ContainerControl
         {
             if (!Enum.IsDefined(value)) throw new InvalidEnumArgumentException(nameof(value), (int)value, typeof(FormWindowState));
 
+            if (value == _windowState) return;
+
+            var previous = _windowState;
             _windowState = value;
             if (_host is not null) _host.WindowState = ToAvalonia(value);
+            if (!GetTopLevel()) ApplyChildWindowState(previous);
         }
     }
 
@@ -237,6 +241,7 @@ public partial class Form : ContainerControl
     {
         base.OnTextChanged(e);
         if (_host is not null) _host.Title = Text;
+        if (!GetTopLevel()) InvalidateFrame();
     }
 
     /// <summary>The result a modal form returns; setting it on a modal form closes it once the current handler returns.</summary>
@@ -449,7 +454,14 @@ public partial class Form : ContainerControl
         {
             var closing = new FormClosingEventArgs(reason, false);
 
-            // Owned forms are asked first, and their own answers count, as Windows asks them.
+            // MDI children, then owned forms, are asked first, and their own answers count, as Windows asks them.
+            foreach (var child in MdiChildren)
+            {
+                var childClosing = new FormClosingEventArgs(CloseReason.MdiFormClosing, false);
+                child.RaiseClosing(childClosing);
+                if (childClosing.Cancel) closing.Cancel = true;
+            }
+
             foreach (var owned in _ownedForms.ToArray())
             {
                 var ownedClosing = new FormClosingEventArgs(CloseReason.FormOwnerClosing, false);
@@ -471,6 +483,7 @@ public partial class Form : ContainerControl
                 return true;
             }
 
+            foreach (var child in MdiChildren) child.CloseFromContainer();
             foreach (var owned in _ownedForms.ToArray()) owned.CloseFromOwner();
 
             RaiseClosed(new FormClosedEventArgs(reason));
@@ -483,6 +496,12 @@ public partial class Form : ContainerControl
         {
             _closing = false;
         }
+    }
+
+    private void CloseFromContainer()
+    {
+        RaiseClosed(new FormClosedEventArgs(CloseReason.MdiFormClosing));
+        Dispose();
     }
 
     private void CloseFromOwner()
@@ -510,12 +529,20 @@ public partial class Form : ContainerControl
     /// <summary>Brings the form's window to the front and gives it the keyboard.</summary>
     public void Activate()
     {
-        if (Visible && _host is not null) _host.Activate();
+        if (!Visible) return;
+
+        if (!GetTopLevel())
+        {
+            ActivateAsChild();
+            return;
+        }
+
+        _host?.Activate();
     }
 
     protected override void SetVisibleCore(bool value)
     {
-        if (value == DesiredVisibility && (!value || _host is { IsVisible: true })) return;
+        if (value == DesiredVisibility && (!value || !GetTopLevel() || _host is { IsVisible: true })) return;
 
         if (!value)
         {
@@ -536,11 +563,20 @@ public partial class Form : ContainerControl
             if (IsDisposed || !IsHandleCreated || _completedCloses != closesBefore) return;
         }
 
-        PlaceWindow();
-        base.SetVisibleCore(true);
-        Application.OpenForms.Add(this);
-
-        ShowHost();
+        // A form inside another control has no native window: it is shown in its parent's canvas.
+        if (GetTopLevel())
+        {
+            PlaceWindow();
+            base.SetVisibleCore(true);
+            Application.OpenForms.Add(this);
+            ShowHost();
+        }
+        else
+        {
+            base.SetVisibleCore(true);
+            Application.OpenForms.Add(this);
+            ActivateAsChild();
+        }
 
         if (!_shownRaised)
         {
@@ -626,7 +662,9 @@ public partial class Form : ContainerControl
         if (IsHandleCreated) return;
 
         AvaloniaPlatform.EnsureStarted();
-        _host ??= new HostWindow(this);
+
+        // Only a top-level form opens a native window; one inside another control draws in its parent's.
+        if (GetTopLevel()) _host ??= new HostWindow(this);
 
         base.CreateHandle();
     }
@@ -659,6 +697,13 @@ public partial class Form : ContainerControl
             Application.OpenForms.Remove(this);
             Owner = null;
             if (ActiveForm == this) ActiveForm = null;
+
+            // An MDI child leaves its container; the next child becomes active.
+            if (_mdiParent is { } container)
+            {
+                _mdiParent = null;
+                container.MdiChildRemoved(this);
+            }
         }
 
         base.Dispose(disposing);
@@ -741,8 +786,9 @@ public partial class Form : ContainerControl
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
         if (base.ProcessCmdKey(ref msg, keyData)) return true;
+        if (ToolStripManager.ProcessShortcut(this, keyData)) return true;
 
-        return ToolStripManager.ProcessShortcut(this, keyData);
+        return ProcessMdiKey(keyData);
     }
 
     /// <summary>Enter presses the accept button and Escape the cancel button; Tab moves among the controls, wrapping.</summary>

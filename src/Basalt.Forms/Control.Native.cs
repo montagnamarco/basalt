@@ -72,6 +72,9 @@ public partial class Control
     /// <summary>The state of the window's own scroll bar, for drawing it; null when the control has none.</summary>
     internal virtual Internal.WindowScrollInfo? GetWindowScroll(bool vertical) => null;
 
+    /// <summary>The title bar to draw in the frame: only a form that is not a top-level window has one here.</summary>
+    internal virtual Internal.Skins.WindowCaption? NonClientCaption => null;
+
     /// <summary>
     /// A press on the window's frame (its scroll bars), in outer coordinates;
     /// true when the control took it and wants the moves until the release.
