@@ -44,6 +44,8 @@ public sealed record DesignableProperty(
     IReadOnlyList<string> AllowedValues,
     string? CurrentValue)
 {
+    public string? DisplayName { get; init; }
+
     /// <summary>
     /// What the property is for, in one line, or null when nothing is known.
     /// </summary>
@@ -58,15 +60,47 @@ public sealed record DesignableProperty(
     /// </summary>
     public string? DefaultValue { get; init; }
 
+    /// <summary>Selected objects have different values; editors must not imply a shared value.</summary>
+    public bool IsMixed { get; init; }
+
+    /// <summary>At least one selected object has an explicit source assignment.</summary>
+    public bool WasSet { get; init; }
+
+    /// <summary>Designer metadata can distinguish an explicit default from a modified value.</summary>
+    public bool? IsModifiedOverride { get; init; }
+
+    /// <summary>Designer metadata can disable Reset independently of source presence.</summary>
+    public bool? CanResetOverride { get; init; }
+
+    /// <summary>The original component category, retained for the Forms property grid.</summary>
+    public string? CategoryName { get; init; }
+
+    /// <summary>Shows a property whose value can be inspected but not assigned.</summary>
+    public bool IsReadOnly { get; init; }
+
+    /// <summary>The top-level property that owns this child value, if any.</summary>
+    public string? ParentName { get; init; }
+
+    public int Depth { get; init; }
+
+    public bool IsExpandable { get; init; }
+
+    public bool IsCollection { get; init; }
+
+    public bool IsComponentReference { get; init; }
+
+    public bool HasCustomEditor { get; init; }
+
     /// <summary>
-    /// Whether the template sets this property rather than leaving it alone.
+    /// Whether the designer should display this property as modified.
     /// </summary>
     /// <remarks>
-    /// A set value is shown in bold and can be reset, as in Visual Studio:
-    /// without the distinction there is no way to tell what the file actually
-    /// says from what the control happens to default to.
+    /// A modified value is shown in bold. Forms metadata can override source
+    /// presence for an explicit assignment equal to the property's default.
     /// </remarks>
-    public bool IsSet => CurrentValue is not null;
+    public bool IsSet => IsModifiedOverride ?? (CurrentValue is not null || WasSet);
+
+    public bool CanReset => CanResetOverride ?? (!IsReadOnly && IsSet);
 }
 
 /// <summary>

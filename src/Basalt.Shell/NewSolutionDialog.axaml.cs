@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Basalt.Core.Model;
+using Basalt.Core.Localization;
 using Basalt.Designer;
 
 namespace Basalt.Shell;
@@ -19,6 +20,8 @@ public partial class NewSolutionDialog : Window
 
         NameBox.TextChanged += (_, _) => UpdatePreview();
         PathBox.TextChanged += (_, _) => UpdatePreview();
+        TemplateList.SelectionChanged += (_, _) => UpdateGuiPanelVisibility();
+        UpdateGuiPanelVisibility();
         UpdatePreview();
 
         // Focused when the dialog opens, so it can be filled in without
@@ -27,13 +30,13 @@ public partial class NewSolutionDialog : Window
     }
 
     /// <summary>
-    /// Suggested folder: "Progetti" in the user's home directory, independent of
+    /// Suggested folder: "Projects" in the user's home directory, independent of
     /// the platform.
     /// </summary>
     private static string DefaultParentDirectory() =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            "Progetti");
+            "Projects");
 
     private void UpdatePreview()
     {
@@ -42,14 +45,14 @@ public partial class NewSolutionDialog : Window
 
         PreviewLabel.Text = string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(parent)
             ? ""
-            : $"Will be created in {Path.Combine(parent, name)}";
+            : Localizer.Get(StringKeys.NewSolutionPreview, Path.Combine(parent, name));
     }
 
     private async void OnBrowse(object? sender, RoutedEventArgs e)
     {
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Scegli la cartella in cui creare la soluzione",
+            Title = Localizer.Get(StringKeys.NewSolutionChooseFolder),
             AllowMultiple = false
         });
 
@@ -66,7 +69,7 @@ public partial class NewSolutionDialog : Window
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            ErrorLabel.Text = "Indicare un nome per la soluzione.";
+            ErrorLabel.Text = Localizer.Get(StringKeys.NewSolutionNameRequired);
             return;
         }
 
@@ -74,27 +77,17 @@ public partial class NewSolutionDialog : Window
         // valid Visual Basic identifier.
         if (!Regex.IsMatch(name, @"^[A-Za-z_][A-Za-z0-9_]*$"))
         {
-            ErrorLabel.Text = "Il nome deve iniziare con una lettera e contenere solo lettere, cifre o trattini bassi.";
+            ErrorLabel.Text = Localizer.Get(StringKeys.NewSolutionInvalidName);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(parent))
         {
-            ErrorLabel.Text = "Indicare la cartella di destinazione.";
+            ErrorLabel.Text = Localizer.Get(StringKeys.NewSolutionLocationRequired);
             return;
         }
 
-        // The template is carried on the item itself rather than derived from
-        // its position, so reordering the list cannot silently change what the
-        // dialog creates.
-        // A heading is not a template. It cannot be reached with the mouse —
-        // a TextBlock in a ListBox is not selectable — but the keyboard walks
-        // through everything, and landing on one would otherwise create
-        // whatever the fallback happens to be.
-        var template = TemplateList.SelectedItem is ListBoxItem { Tag: string tag }
-                    && Enum.TryParse<ProjectTemplate>(tag, out var chosen)
-            ? chosen
-            : ProjectTemplate.AvaloniaApp;
+        var template = SelectedTemplate;
 
         try
         {
@@ -109,4 +102,20 @@ public partial class NewSolutionDialog : Window
     }
 
     private void OnCancel(object? sender, RoutedEventArgs e) => Close(null);
+
+    // The GUI picker only matters for the desktop template, which can be built either on
+    // Avalonia or on WinForms; every other template ignores it, so showing it there would
+    // offer a choice the template generator never looks at.
+    private void UpdateGuiPanelVisibility() => GuiPanel.IsVisible = SelectedBaseTemplate == ProjectTemplate.AvaloniaApp;
+
+    // The template is carried on the item itself rather than derived from its
+    // position, so reordering the list cannot silently change what the dialog
+    // creates. A heading is not a template: the keyboard can land on one, and
+    // then the desktop application is the fallback.
+    private ProjectTemplate SelectedBaseTemplate => TemplateList.SelectedItem is ListBoxItem { Tag: string tag }
+        && Enum.TryParse<ProjectTemplate>(tag, out var chosen) ? chosen : ProjectTemplate.AvaloniaApp;
+
+    internal ProjectTemplate SelectedTemplate => SelectedBaseTemplate == ProjectTemplate.AvaloniaApp
+        && GuiChoice.SelectedItem is ComboBoxItem { Tag: "WinForms" }
+            ? ProjectTemplate.WinFormsApp : SelectedBaseTemplate;
 }

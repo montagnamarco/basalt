@@ -29,15 +29,46 @@ public class ThemeAndDialogTests
     {
         var dialog = new NewSolutionDialog();
         var list = dialog.FindControl<ListBox>("TemplateList")!;
+        var guiChoice = dialog.FindControl<ComboBox>("GuiChoice")!;
 
         var tags = list.Items.OfType<ListBoxItem>()
             .Select(i => i.Tag as string)
             .Where(t => t is not null)
             .ToList();
+        var guiChoiceTags = guiChoice.Items.OfType<ComboBoxItem>().Select(i => i.Tag as string).ToList();
 
-        // Every template the generator supports must be reachable from the UI.
+        // Every template the generator supports must be reachable from the UI: most directly
+        // as a list item's tag, but WinFormsApp is reached by selecting the desktop
+        // (AvaloniaApp) item and then choosing "WinForms" in the GUI picker.
         foreach (var template in Enum.GetNames<Basalt.Designer.ProjectTemplate>())
+        {
+            if (template == nameof(Basalt.Designer.ProjectTemplate.WinFormsApp))
+            {
+                Assert.Contains(nameof(Basalt.Designer.ProjectTemplate.AvaloniaApp), tags);
+                Assert.Contains("WinForms", guiChoiceTags);
+                continue;
+            }
             Assert.Contains(template, tags);
+        }
+    }
+
+    [AvaloniaFact]
+    public void SelectingBlazorWithWinFormsGuiChoiceStillYieldsBlazorAndHidesThePanel()
+    {
+        // The GUI picker only applies to the desktop template; once the user picks a web
+        // template its stale selection ("WinForms" from a previous look at the desktop
+        // template) must not leak into what gets created, and the now-irrelevant panel
+        // must not stay on screen.
+        var dialog = new NewSolutionDialog();
+        var list = dialog.FindControl<ListBox>("TemplateList")!;
+        var guiChoice = dialog.FindControl<ComboBox>("GuiChoice")!;
+        var guiPanel = dialog.FindControl<StackPanel>("GuiPanel")!;
+
+        guiChoice.SelectedItem = guiChoice.Items.OfType<ComboBoxItem>().Single(item => item.Tag as string == "WinForms");
+        list.SelectedItem = list.Items.OfType<ListBoxItem>().Single(item => item.Tag as string == "Blazor");
+
+        Assert.False(guiPanel.IsVisible);
+        Assert.Equal(Basalt.Designer.ProjectTemplate.Blazor, dialog.SelectedTemplate);
     }
 
     [AvaloniaFact]

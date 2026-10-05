@@ -304,6 +304,24 @@
   <data name="Picker_OpenSolution" xml:space="preserve"><value>Open solution or project</value></data>
   <data name="Picker_SolutionFilter" xml:space="preserve"><value>.NET solutions and projects</value></data>
   <data name="Picker_ChooseFolder" xml:space="preserve"><value>Choose the folder for the new solution</value></data>
+  <data name="NewSolution_VisualBasic" xml:space="preserve"><value>VISUAL BASIC .NET</value></data>
+  <data name="NewSolution_Web" xml:space="preserve"><value>VISUAL BASIC ON THE WEB</value></data>
+  <data name="NewSolution_OtherDialects" xml:space="preserve"><value>OTHER DIALECTS</value></data>
+  <data name="NewSolution_Gui" xml:space="preserve"><value>Desktop GUI framework</value></data>
+  <data name="NewSolution_WinForms" xml:space="preserve"><value>WinForms (Basalt, cross-platform)</value></data>
+  <data name="NewSolution_ChooseFolder" xml:space="preserve"><value>Choose the folder for the solution</value></data>
+  <data name="NewSolution_NameRequired" xml:space="preserve"><value>Enter a solution name.</value></data>
+  <data name="NewSolution_InvalidName" xml:space="preserve"><value>The name must start with a letter and contain only letters, digits or underscores.</value></data>
+  <data name="NewSolution_LocationRequired" xml:space="preserve"><value>Enter a destination folder.</value></data>
+  <data name="Template_TestProject" xml:space="preserve"><value>Test Project</value></data>
+  <data name="Template_TestProject_Description" xml:space="preserve"><value>Unit tests with xunit, discovered and run from the test window.</value></data>
+  <data name="Template_WebApp" xml:space="preserve"><value>ASP.NET Core Empty</value></data>
+  <data name="Template_WebApp_Description" xml:space="preserve"><value>Minimal web application serving one page.</value></data>
+  <data name="Template_VisualBasic6" xml:space="preserve"><value>Visual Basic 6</value></data>
+  <data name="Template_VisualBasic6_Description" xml:space="preserve"><value>A .vbp and a .frm compatible with Visual Basic 6.</value></data>
+  <data name="Template_QuickBasic" xml:space="preserve"><value>QuickBASIC</value></data>
+  <data name="Template_QuickBasic_Description" xml:space="preserve"><value>Classic BASIC compiled to a native executable.</value></data>
+  <data name="WinFormsCollection_Unsupported" xml:space="preserve"><value>This collection contains expressions that cannot be edited safely. Edit its initialization in code.</value></data>
   <data name="WinFormsDesigner_ViewCode" xml:space="preserve">
     <value>View code</value>
   </data>
@@ -324,6 +342,60 @@
   <data name="Editor_SmartTagTidyImports" xml:space="preserve"><value>Sort and remove unused Imports</value></data>
   <data name="Status_RunExited" xml:space="preserve"><value>Application exited with code {0}</value></data>
   <data name="Status_AlreadyRunning" xml:space="preserve"><value>The application is already running. Stop it first.</value></data>
+  <data name="WinFormsCollection_ColumnAdditionalInitialization" xml:space="preserve"><value>The column has additional initialization that must be reviewed before changing its type.</value></data>
+  <data name="WinFormsCollection_ColumnAdditionalReferences" xml:space="preserve"><value>The column has additional references that must be reviewed before removal.</value></data>
+  <data name="WinFormsCollection_ColumnHeaderSingleLine" xml:space="preserve"><value>Column headers must fit on one line.</value></data>
+  <data name="WinFormsCollection_ColumnNameAlreadyUsed" xml:space="preserve"><value>The column name is already used by another field.</value></data>
+  <data name="WinFormsCollection_ColumnNamesMustBeUniqueIdentifiers" xml:space="preserve"><value>Column names must be unique Visual Basic identifiers.</value></data>
+  <data name="WinFormsCollection_ColumnReferencedOutsideInitialize" xml:space="preserve"><value>The column is referenced outside InitializeComponent.</value></data>
+  <data name="WinFormsCollection_ColumnTypeUnsupported" xml:space="preserve"><value>The column type is not supported.</value></data>
+  <data name="WinFormsCollection_ItemTextSingleLine" xml:space="preserve"><value>Item text must fit on one line.</value></data>
+  <data name="WinFormsCollection_OriginalColumnNotFound" xml:space="preserve"><value>The original column does not belong to this collection.</value></data>
+  <data name="WinFormsCollection_SplitSharedFieldChangeType" xml:space="preserve"><value>Split a shared field declaration before changing this column type.</value></data>
+  <data name="WinFormsCollection_SplitSharedFieldRemove" xml:space="preserve"><value>Split a shared field declaration before removing this column.</value></data>
+  <data name="WinFormsDesigner_ComponentNotFound" xml:space="preserve"><value>The component does not belong to this form.</value></data>
+  <data name="WinFormsDesigner_ComponentTypeInvalid" xml:space="preserve"><value>The component type is invalid.</value></data>
+  <data name="WinFormsDesigner_ComponentTypeUnsupported" xml:space="preserve"><value>The type is not a supported Forms tray component.</value></data>
+  <data name="WinFormsDesigner_ControlNotFound" xml:space="preserve"><value>The control does not belong to this form.</value></data>
+  <data name="WinFormsDesigner_ControlTypeInvalid" xml:space="preserve"><value>The control type is invalid.</value></data>
+  <data name="WinFormsDesigner_FieldNameAlreadyExists" xml:space="preserve"><value>A field with that name already exists.</value></data>
+  <data name="WinFormsDesigner_HierarchyCycle" xml:space="preserve"><value>The designer contains a cycle in the control hierarchy.</value></data>
+  <data name="WinFormsDesigner_IdentifierRequired" xml:space="preserve"><value>A valid Visual Basic identifier is required.</value></data>
+  <data name="WinFormsDesigner_InvalidExpression" xml:space="preserve"><value>The property value is not a valid Visual Basic expression.</value></data>
+  <data name="WinFormsDesigner_NameAlreadyExists" xml:space="preserve"><value>A control with that name already exists.</value></data>
+  <data name="WinFormsDesigner_NoInitializeComponent" xml:space="preserve"><value>The form has no InitializeComponent method.</value></data>
+  <data name="WinFormsDesigner_RenameAlreadyUsed" xml:space="preserve"><value>Another component already has that name.</value></data>
+  <data name="WinFormsDesigner_RenameMustBeIdentifier" xml:space="preserve"><value>The component name must be a valid Visual Basic identifier.</value></data>
+  <data name="WinFormsDesigner_RootCannotBeCopied" xml:space="preserve"><value>The root form cannot be copied.</value></data>
+  <data name="WinFormsDesigner_RootCannotBeDeleted" xml:space="preserve"><value>The root form cannot be deleted.</value></data>
+  <data name="WinFormsDesigner_SelectAtLeastOneControl" xml:space="preserve"><value>Select at least one control.</value></data>
+  <data name="WinFormsDesigner_SplitSharedFieldDeleteComponent" xml:space="preserve"><value>Split a shared field declaration before deleting this component.</value></data>
+  <data name="WinFormsDesigner_SplitSharedFieldDeleteControl" xml:space="preserve"><value>Split a shared field declaration before deleting this control.</value></data>
+  <data name="WinFormsDesigner_SyntaxErrors" xml:space="preserve"><value>The form designer source contains syntax errors.</value></data>
+  <data name="WinFormsDesigner_TargetFieldMissing" xml:space="preserve"><value>The target form lacks a compatible '{0}' field.</value></data>
+  <data name="WinFormsDesigner_TargetMethodMissing" xml:space="preserve"><value>The target form lacks a method used by the copied control.</value></data>
+  <data name="WinFormsDesigner_UnsupportedInitializationStatement" xml:space="preserve"><value>A selected control has an unsupported initialization statement.</value></data>
+  <data name="WinFormsDesigner_ZOrderMustSharedParent" xml:space="preserve"><value>Selected controls must share a parent.</value></data>
+  <data name="WinFormsDesigner_ZOrderUnsupported" xml:space="preserve"><value>The designer cannot safely edit this control z-order.</value></data>
+  <data name="WinFormsMenu_ConstantInitializationOnly" xml:space="preserve"><value>Only constant menu Add/AddRange initialization is supported.</value></data>
+  <data name="WinFormsMenu_CustomItemType" xml:space="preserve"><value>This menu contains a custom item type.</value></data>
+  <data name="WinFormsMenu_DynamicText" xml:space="preserve"><value>This menu uses a dynamic text expression.</value></data>
+  <data name="WinFormsMenu_InvalidHierarchy" xml:space="preserve"><value>Invalid menu hierarchy.</value></data>
+  <data name="WinFormsMenu_ItemCannotChangeType" xml:space="preserve"><value>An existing menu item cannot change its type.</value></data>
+  <data name="WinFormsMenu_ItemFieldReference" xml:space="preserve"><value>A menu item must be a field reference.</value></data>
+  <data name="WinFormsMenu_ItemNotInMenu" xml:space="preserve"><value>The menu item does not belong to this menu.</value></data>
+  <data name="WinFormsMenu_ItemsSharedOrCyclic" xml:space="preserve"><value>Menu items cannot be shared or cyclic.</value></data>
+  <data name="WinFormsMenu_NameAlreadyDeclared" xml:space="preserve"><value>The menu name is already declared.</value></data>
+  <data name="WinFormsMenu_NamesMustBeUniqueIdentifiers" xml:space="preserve"><value>Menu names must be unique VB identifiers.</value></data>
+  <data name="WinFormsMenu_OneConstantArgument" xml:space="preserve"><value>A menu collection requires one constant argument.</value></data>
+  <data name="WinFormsMenu_PropertyMustBeIdentifier" xml:space="preserve"><value>The property must be a Visual Basic identifier.</value></data>
+  <data name="WinFormsMenu_TextMustFitOnOneLine" xml:space="preserve"><value>Menu text must fit on one line.</value></data>
+  <data name="WinFormsMenu_UnknownParent" xml:space="preserve"><value>Unknown menu parent.</value></data>
+  <data name="WinFormsDesigner_EventDelegateTypeRequired" xml:space="preserve"><value>An event delegate type is required.</value></data>
+  <data name="WinFormsDesigner_EventHandlerSyntaxErrors" xml:space="preserve"><value>The event handler source contains syntax errors.</value></data>
+  <data name="WinFormsDesigner_GenericEventArgumentsUnsupported" xml:space="preserve"><value>Generic event argument types are not supported yet.</value></data>
+  <data name="WinFormsDesigner_HandlerParameterCountMismatch" xml:space="preserve"><value>The existing handler has a different parameter count.</value></data>
+  <data name="WinFormsDesigner_PartialClassNotFound" xml:space="preserve"><value>The form's partial class was not found.</value></data>
   <data name="Editor_OnlyVbHtmlGenerated" xml:space="preserve"><value>Only a .vbhtml template is generated into Visual Basic.</value></data>
   <data name="Editor_SelectStatementsFirst" xml:space="preserve"><value>Select the statements to extract first.</value></data>
   <data name="Editor_SelectExpressionFirst" xml:space="preserve"><value>Select the expression to extract first.</value></data>

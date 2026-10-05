@@ -5,13 +5,19 @@ namespace Basalt.Designer;
 public sealed record NewSolutionResult(
     string SolutionPath,
     string ProjectPath,
-    string? MainWindowXamlPath);
+    string? MainWindowXamlPath)
+{
+    public string? MainFormDesignerPath { get; init; }
+}
 
 /// <summary>Kind of application to generate.</summary>
 public enum ProjectTemplate
 {
     /// <summary>Avalonia application with a main window ready to be designed.</summary>
     AvaloniaApp,
+
+    /// <summary>Windows Forms API application hosted by Basalt on each desktop platform.</summary>
+    WinFormsApp,
 
     /// <summary>Command-line application.</summary>
     ConsoleApp,
@@ -93,7 +99,7 @@ internal static class ProjectTemplateExtensions
 /// official Avalonia templates for VB.NET do not exist, and because this way
 /// the generated structure stays identical across the three platforms.
 /// </summary>
-public static class SolutionTemplates
+public static partial class SolutionTemplates
 {
     public static async Task<NewSolutionResult> CreateAsync(
         string parentDirectory,
@@ -127,12 +133,17 @@ public static class SolutionTemplates
             projectPath, ProjectFile(template), ct).ConfigureAwait(false);
 
         string? mainWindowXaml = null;
+        string? mainFormDesigner = null;
 
         switch (template)
         {
             case ProjectTemplate.AvaloniaApp:
                 mainWindowXaml = await WriteAvaloniaAppAsync(
                     projectDirectory, solutionName, ct).ConfigureAwait(false);
+                break;
+
+            case ProjectTemplate.WinFormsApp:
+                mainFormDesigner = await WriteWinFormsAppAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.ConsoleApp:
@@ -174,7 +185,10 @@ public static class SolutionTemplates
             SolutionFile(solutionName, $"{solutionName}{Path.DirectorySeparatorChar}{Path.GetFileName(projectPath)}"),
             ct).ConfigureAwait(false);
 
-        return new NewSolutionResult(solutionPath, projectPath, mainWindowXaml);
+        return new NewSolutionResult(solutionPath, projectPath, mainWindowXaml)
+        {
+            MainFormDesignerPath = mainFormDesigner,
+        };
     }
 
     /// <summary>
@@ -409,7 +423,7 @@ public static class SolutionTemplates
     {
         var outputType = template switch
         {
-            ProjectTemplate.AvaloniaApp => "WinExe",
+            ProjectTemplate.AvaloniaApp or ProjectTemplate.WinFormsApp => "WinExe",
             ProjectTemplate.ConsoleApp or ProjectTemplate.QuickBasic => "Exe",
             _ => "Library"
         };
@@ -457,7 +471,7 @@ public static class SolutionTemplates
                 <Nullable>enable</Nullable>
                 <RootNamespace></RootNamespace>
               </PropertyGroup>
-            {avaloniaPackages}{testPackages}{VbHtmlSupport(template)}
+            {avaloniaPackages}{testPackages}{VbHtmlSupport(template)}{WinFormsSupport(template)}
             </Project>
             """;
     }

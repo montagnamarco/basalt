@@ -5305,5 +5305,7 @@ public partial class MainWindow : Window
         // the designer instead of an empty solution.
         if (created.MainWindowXamlPath is not null)
             await ViewModel.OpenFileAsync(created.MainWindowXamlPath, inDesigner: true);
+        if (created.MainFormDesignerPath is not null)
+            await ViewModel.OpenFileAsync(created.MainFormDesignerPath, inDesigner: true);
     }
 }
