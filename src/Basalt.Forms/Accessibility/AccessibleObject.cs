@@ -17,7 +17,7 @@ namespace System.Windows.Forms;
 /// only Name, Role, Parent and a handful of others that are not already
 /// driven by the owning control's own state.
 /// </remarks>
-public class AccessibleObject : StandardOleMarshalObject, IReflect
+public partial class AccessibleObject : StandardOleMarshalObject, IReflect
 {
     public AccessibleObject()
     {
@@ -141,6 +141,18 @@ public class AccessibleObject : StandardOleMarshalObject, IReflect
     }
 
     public virtual bool RaiseLiveRegionChanged() => false;
+
+    public bool RaiseAutomationNotification(
+        Automation.AutomationNotificationKind notificationKind,
+        Automation.AutomationNotificationProcessing notificationProcessing,
+        string notificationText)
+    {
+        ArgumentNullException.ThrowIfNull(notificationText);
+
+        // Avalonia exposes control peers, but has no notification event in its
+        // automation provider contract. False reports that nothing was raised.
+        return false;
+    }
 
     public virtual void Select(AccessibleSelection flags)
     {

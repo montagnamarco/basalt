@@ -28,6 +28,15 @@ internal sealed class FormsCanvas : Avalonia.Controls.Control
     /// <summary>The top-level control the canvas shows: a form, or the content of a popup window.</summary>
     public Control Root => _form;
 
+    protected override Avalonia.Automation.Peers.AutomationPeer OnCreateAutomationPeer() => new FormsAutomationPeer(this);
+
+    // These visual owners carry only accessibility. Painting and input stay
+    // on the single canvas, while Avalonia can convert peer bounds to screen
+    // coordinates without giving every peer the canvas's event subscriptions.
+    internal void AttachAutomationOwner(Avalonia.Controls.Control owner) => VisualChildren.Add(owner);
+
+    internal void DetachAutomationOwner(Avalonia.Controls.Control owner) => VisualChildren.Remove(owner);
+
     /// <summary>
     /// Runs on the UI thread: invalid controls are painted (their Paint
     /// handlers run here, as WM_PAINT would), then the frame is handed to the

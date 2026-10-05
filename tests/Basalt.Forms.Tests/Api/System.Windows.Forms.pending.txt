@@ -2,7 +2,6 @@ F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Defa
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::No : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Yes : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
 F public System.Windows.Forms.DockingAttribute::Default : System.Windows.Forms.DockingAttribute static readonly
-I System.Windows.Forms.AccessibleObject : Accessibility.IAccessible
 I System.Windows.Forms.AccessibleObject : Windows.Win32.System.Com.IDispatch+Interface
 I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDataObject
 I System.Windows.Forms.KeysConverter : System.Collections.IComparer
@@ -359,7 +358,6 @@ M protected System.Windows.Forms.UserControl::OnResize(System.EventArgs) -> Syst
 M protected System.Windows.Forms.UserControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.WebBrowser::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.WebBrowserBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M public System.Windows.Forms.AccessibleObject::RaiseAutomationNotification(System.Windows.Forms.Automation.AutomationNotificationKind, System.Windows.Forms.Automation.AutomationNotificationProcessing, System.String) -> System.Boolean
 M public System.Windows.Forms.AmbientProperties::get_Cursor() -> System.Windows.Forms.Cursor
 M public System.Windows.Forms.AmbientProperties::set_Cursor(System.Windows.Forms.Cursor) -> System.Void
 M public System.Windows.Forms.AxHost+AxComponentEditor::.ctor()

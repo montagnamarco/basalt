@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Basalt.Accessibility/Basalt.Accessibility.vbproj" />
     <Project Path="src/Basalt.Core/Basalt.Core.csproj" />
     <Project Path="src/Basalt.Data/Basalt.Data.csproj" />
     <Project Path="samples/Basalt.Sample.Plugin/Basalt.Sample.Plugin.vbproj" />

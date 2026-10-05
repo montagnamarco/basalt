@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Basalt.Accessibility\Basalt.Accessibility.vbproj" />
     <ProjectReference Include="..\Basalt.Drawing\Basalt.Drawing.csproj" />
     <ProjectReference Include="..\Basalt.Forms.Primitives\Basalt.Forms.Primitives.csproj" />
   </ItemGroup>
