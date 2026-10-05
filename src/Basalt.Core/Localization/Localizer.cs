@@ -435,6 +435,9 @@ public static class StringKeys
     public const string EditorSmartTagTidyImports = "Editor_SmartTagTidyImports";
 
     public const string EditorSmartTagsUnsupportedChanges = "Editor_SmartTagsUnsupportedChanges";
+    public const string EditorVbMembers = "Editor_VbMembers";
+    public const string EditorVbNavigationFailed = "Editor_VbNavigationFailed";
+    public const string EditorVbObjects = "Editor_VbObjects";
     public const string NewSolutionChooseFolder = "NewSolution_ChooseFolder";
     public const string NewSolutionInvalidName = "NewSolution_InvalidName";
     public const string NewSolutionLocationRequired = "NewSolution_LocationRequired";

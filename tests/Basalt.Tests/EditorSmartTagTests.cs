@@ -43,6 +43,68 @@ public sealed class EditorSmartTagTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task RealRoslynFixAppearsAsARasterizedBulbAndMenuAction()
+    {
+        const string source = "Public Class Probe\nPublic Sub M()\nDim value As New StringBuilder()\nEnd Sub\nEnd Class";
+        var project = Path.Combine(_directory, "Probe.vbproj");
+        var path = Path.Combine(_directory, "Probe.vb");
+        await File.WriteAllTextAsync(project, "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>");
+        await File.WriteAllTextAsync(path, source);
+        using var vm = new MainWindowViewModel();
+        await vm.OpenSolutionAsync(project);
+        var document = new EditorDocumentViewModel(path, source)
+        {
+            CaretOffset = source.IndexOf("StringBuilder", StringComparison.Ordinal) + 2
+        };
+        vm.OpenDocuments.Add(document);
+        var code = new CodeEditor(document, vm) { AutoFormatWhileTyping = false };
+        var window = new Window { Content = code, Width = 700, Height = 400 };
+        window.Show();
+        try
+        {
+            await WaitUntilAsync(() => code.SmartTagMargin.AvailableLine > 0 && code.SmartTagMargin.IsVisible);
+            window.UpdateLayout();
+            using var bitmap = new RenderTargetBitmap(new PixelSize(18, 400));
+            bitmap.Render(code.SmartTagMargin);
+            var bytes = new byte[18 * 400 * 4];
+            var pin = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            try
+            {
+                bitmap.CopyPixels(new PixelRect(0, 0, 18, 400), pin.AddrOfPinnedObject(), bytes.Length, 18 * 4);
+            }
+            finally
+            {
+                pin.Free();
+            }
+
+            Assert.Contains(Enumerable.Range(0, 18 * 400), pixel =>
+                bytes[pixel * 4] == 255 && bytes[pixel * 4 + 1] == 205 && bytes[pixel * 4 + 2] == 55);
+            var editor = code.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>().Single();
+            Assert.DoesNotContain(code.SmartTagMargin, editor.TextArea.LeftMargins);
+            Assert.Equal(source.IndexOf("StringBuilder", StringComparison.Ordinal), code.SmartTagMargin.AnchorOffset);
+            var view = editor.TextArea.TextView;
+            var expected = view.GetVisualPosition(new AvaloniaEdit.TextViewPosition(
+                editor.Document.GetLocation(code.SmartTagMargin.AnchorOffset)),
+                AvaloniaEdit.Rendering.VisualYPosition.LineBottom) - view.ScrollOffset;
+            var actual = code.SmartTagMargin.TranslatePoint(default, view)!.Value;
+            Assert.InRange(Math.Abs(expected.X - actual.X), 0, 1);
+            Assert.InRange(Math.Abs(expected.Y - actual.Y), 0, 1);
+            var borderPixel = (8 * 18) * 4;
+            Assert.Equal((byte)184, bytes[borderPixel]);
+            Assert.Equal((byte)134, bytes[borderPixel + 1]);
+            Assert.Equal((byte)11, bytes[borderPixel + 2]);
+            await code.ShowSmartTagsAsync();
+            Assert.Contains(code.SmartTagMargin.ContextMenu!.Items.OfType<MenuItem>(),
+                item => item.Header?.ToString()?.Contains("System.Text", StringComparison.Ordinal) == true);
+            Assert.Equal(source, document.Text);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task InlineBulbFollowsScrollingAndHidesOutsideTheTextViewport()
     {
         var source = "Class Probe\n" + new string(' ', 40) + "UnknownType ' " + new string('x', 200) + "\n" +
@@ -221,6 +283,64 @@ public sealed class EditorSmartTagTests : IDisposable
         var refused = await service.PreviewQuickActionAsync(first, structuralAction);
         Assert.False(refused.CanApply);
         Assert.Empty(refused.Changes);
+    }
+
+    [AvaloniaFact]
+    public async Task SelectionChangeAtTheSameCaretInvalidatesDiscoveryAndOffersExtractCommands()
+    {
+        const string source = "Public Class Probe\nPublic Sub M()\nDim value As Integer = 1 + 2\nEnd Sub\nEnd Class";
+        var project = Path.Combine(_directory, "Probe.vbproj");
+        var path = Path.Combine(_directory, "Probe.vb");
+        await File.WriteAllTextAsync(project, "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>");
+        await File.WriteAllTextAsync(path, source);
+        using var vm = new MainWindowViewModel();
+        await vm.OpenSolutionAsync(project);
+        var document = new EditorDocumentViewModel(path, source)
+        {
+            CaretOffset = source.IndexOf("1 + 2", StringComparison.Ordinal) + 5
+        };
+        vm.OpenDocuments.Add(document);
+        CancellationToken firstToken = default;
+        var requested = false;
+        var code = new CodeEditor(document, vm)
+        {
+            AutoFormatWhileTyping = false,
+            SmartTagProvider = (_, _, _, cancellation) =>
+            {
+                if (!requested)
+                {
+                    firstToken = cancellation;
+                    requested = true;
+                }
+                return Task.FromResult<IReadOnlyList<QuickAction>>([]);
+            }
+        };
+        var window = new Window { Content = code, Width = 600, Height = 350 };
+        window.Show();
+        try
+        {
+            await WaitUntilAsync(() => requested);
+            var editor = Assert.Single(code.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>());
+            var caret = editor.CaretOffset;
+            editor.Select(caret - 5, 5);
+            Assert.Equal(caret, editor.CaretOffset);
+            Assert.True(firstToken.IsCancellationRequested);
+            await code.ShowSmartTagsAsync();
+            var items = code.SmartTagMargin.ContextMenu!.Items.OfType<MenuItem>().ToArray();
+            Assert.Contains(items, item => Equals(item.Header, Basalt.Core.Localization.Localizer.Get("Editor_SmartTagExtractVariable")));
+            Assert.Contains(items, item => Equals(item.Header, Basalt.Core.Localization.Localizer.Get("Editor_SmartTagExtractMethod")));
+
+            editor.Select(source.IndexOf("value", StringComparison.Ordinal), 0);
+            await code.ShowSmartTagsAsync();
+            Assert.Contains(code.SmartTagMargin.ContextMenu!.Items.OfType<MenuItem>(),
+                item => Equals(item.Header, Basalt.Core.Localization.Localizer.Get("Editor_SmartTagRename")));
+            Assert.Equal(source, document.Text);
+            Assert.Equal(0, code.SmartTagMargin.AvailableLine);
+        }
+        finally
+        {
+            window.Close();
+        }
     }
 
     [AvaloniaFact]

@@ -134,8 +134,7 @@ public sealed partial class CodeEditor : UserControl
         _editor.TextArea.AddHandler(TextInputEvent, OnTextInputForBrackets, RoutingStrategies.Tunnel);
 
         InstallSmartTags();
-        // Until the navigation layout exists, the smart-tag margin is hosted by this bare overlay (the same one the layout builds).
-        Content = new Grid { Children = { _editor, new Canvas { ClipToBounds = true, Children = { _smartTagMargin } } } };
+        Content = CreateNavigationLayout();
 
         // Roslyn's first formatting call costs a few hundred milliseconds while
         // it builds its caches. Paying that here keeps the first Enter as quick

@@ -26,6 +26,19 @@ public sealed partial class EditorDocumentViewModel : ObservableObject
     /// <summary>The document is open in the visual designer rather than the text editor.</summary>
     public bool OpenInDesigner { get; }
 
+    /// <summary>Requests navigation and focus, including when the caret is already at this position.</summary>
+    internal void RequestCaret(int offset)
+    {
+        if (CaretOffset == offset)
+        {
+            OnPropertyChanged(nameof(CaretOffset));
+        }
+        else
+        {
+            CaretOffset = offset;
+        }
+    }
+
     private string OriginalText { get; set; }
 
     /// <summary>

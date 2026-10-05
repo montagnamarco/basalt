@@ -330,6 +330,15 @@
   </data>
   <data name="StatusBuildStopped" xml:space="preserve"><value>Build stopped.</value></data>
   <data name="DebugRunWithoutAdapter" xml:space="preserve"><value>The debugger is unavailable. Starting the application without debugging.</value></data>
+  <data name="Editor_VbObjects" xml:space="preserve">
+    <value>Classes and objects</value>
+  </data>
+  <data name="Editor_VbMembers" xml:space="preserve">
+    <value>Members and events</value>
+  </data>
+  <data name="Editor_VbNavigationFailed" xml:space="preserve">
+    <value>VB navigation: {0}</value>
+  </data>
   <data name="StatusLaunchTargetChanged" xml:space="preserve"><value>The startup project or configuration changed during the build. Start again to run the selected project.</value></data>
   <data name="Editor_SmartTags" xml:space="preserve"><value>Quick actions and refactorings</value></data>
   <data name="Editor_SmartTagsNone" xml:space="preserve"><value>No quick actions are available here.</value></data>
