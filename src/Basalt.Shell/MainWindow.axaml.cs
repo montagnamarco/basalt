@@ -204,7 +204,7 @@ public partial class MainWindow : Window
                 _solutionExplorer.Reveal(active.FilePath);
         };
         _solutionExplorer.FileOpened += (_, node) => Guarded.Run(
-            () => viewModel.OpenFileAsync(node.Path, inDesigner: node.IsDesignable),
+            () => viewModel.OpenExplorerNodeAsync(node),
             ViewModel.WriteOutput, "ide");
 
         _toolbox = new ToolboxPanel();
@@ -3186,11 +3186,15 @@ public partial class MainWindow : Window
         switch (command)
         {
             case SolutionExplorerPanel.ExplorerCommand.Open when node is not null:
-                await ViewModel.OpenFileAsync(node.Path);
+                await ViewModel.OpenExplorerNodeAsync(node);
                 break;
 
             case SolutionExplorerPanel.ExplorerCommand.OpenInDesigner when node is not null:
-                await ViewModel.OpenFileAsync(node.Path, inDesigner: true);
+                await ViewModel.OpenExplorerDesignerAsync(node);
+                break;
+
+            case SolutionExplorerPanel.ExplorerCommand.ViewCode when node is not null:
+                await ViewModel.OpenExplorerCodeAsync(node);
                 break;
 
             case SolutionExplorerPanel.ExplorerCommand.CopyPath when node is not null:

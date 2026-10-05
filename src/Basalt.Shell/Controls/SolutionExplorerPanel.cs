@@ -13,11 +13,11 @@ namespace Basalt.Shell.Controls;
 /// <summary>File tree of the currently open solution.</summary>
 public sealed class SolutionExplorerPanel : UserControl
 {
-    private readonly TreeView _albero;
+    private readonly TreeView _tree;
 
     public SolutionExplorerPanel(MainWindowViewModel viewModel)
     {
-        _albero = new TreeView
+        _tree = new TreeView
         {
             [!ItemsControl.ItemsSourceProperty] = new Binding("Explorer.Roots"),
             [!TreeView.SelectedItemProperty] = new Binding("Explorer.SelectedNode")
@@ -29,17 +29,27 @@ public sealed class SolutionExplorerPanel : UserControl
                 node => node?.Children ?? [])
         };
 
-        _albero.DoubleTapped += (_, _) =>
+        _tree.DoubleTapped += (_, _) =>
         {
-            if (_albero.SelectedItem is SolutionTreeNode node &&
-                node.IsOpenable)
+            if (_tree.SelectedItem is SolutionTreeNode { IsOpenable: true } node)
             {
                 FileOpened?.Invoke(this, node);
             }
         };
 
+        _tree.SelectionChanged += (_, _) =>
+        {
+            // Selecting a form is the same action as opening its designer.
+            // Other files still require a double-click. Not when the tree
+            // made the selection itself — Refresh, Show All Files, Reveal —
+            // since that is restoring state, not the user asking to open it.
+            if (!viewModel.IsBusy && !viewModel.Explorer.IsProgrammaticSelection
+                && _tree.SelectedItem is SolutionTreeNode { IsForm: true } form)
+                FileOpened?.Invoke(this, form);
+        };
+
         // Alt+Enter on the selection, as everywhere else.
-        _albero.KeyDown += (_, e) =>
+        _tree.KeyDown += (_, e) =>
         {
             if (e.Key != Avalonia.Input.Key.Enter
                 || !e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Alt))
@@ -57,7 +67,7 @@ public sealed class SolutionExplorerPanel : UserControl
 
         Tools = BuildTools(viewModel);
 
-        Content = _albero;
+        Content = _tree;
     }
 
     /// <summary>
@@ -189,30 +199,7 @@ public sealed class SolutionExplorerPanel : UserControl
     public void Reveal(string filePath)
     {
         if (DataContext is not MainWindowViewModel viewModel) return;
-
-        foreach (var root in viewModel.Explorer.Roots)
-            if (Reveal(root, filePath)) return;
-    }
-
-    private static bool Reveal(SolutionTreeNode node, string filePath)
-    {
-        if (string.Equals(node.Path, filePath, StringComparison.Ordinal))
-        {
-            node.IsSelected = true;
-            return true;
-        }
-
-        foreach (var child in node.Children)
-        {
-            if (!Reveal(child, filePath)) continue;
-
-            // Opened on the way back out, so only the branch holding the file
-            // is left open rather than the whole tree.
-            node.IsExpanded = true;
-            return true;
-        }
-
-        return false;
+        viewModel.Explorer.SelectPathQuietly(filePath);
     }
 
     public event EventHandler<SolutionTreeNode>? FileOpened;
@@ -220,7 +207,7 @@ public sealed class SolutionExplorerPanel : UserControl
     /// <summary>What the explorer's context menu can ask for.</summary>
     public enum ExplorerCommand
     {
-        Open, OpenInDesigner, Rename, Delete,
+        Open, OpenInDesigner, ViewCode, Rename, Delete,
         NewFile, NewFolder, RevealInFinder, CopyPath, CopyRelativePath, Refresh,
         Properties
     }
@@ -229,12 +216,12 @@ public sealed class SolutionExplorerPanel : UserControl
     public event EventHandler<(ExplorerCommand Command, SolutionTreeNode? Node)>? CommandChosen;
 
     /// <summary>The node the menu applies to: whatever is selected.</summary>
-    internal SolutionTreeNode? SelectedNode => _albero.SelectedItem as SolutionTreeNode;
+    internal SolutionTreeNode? SelectedNode => _tree.SelectedItem as SolutionTreeNode;
 
-    internal ContextMenu? Menu => _albero.ContextMenu;
+    internal ContextMenu? Menu => _tree.ContextMenu;
 
     /// <summary>The tree, so a test can double-click it for real.</summary>
-    internal TreeView TreeForTests => _albero;
+    internal TreeView TreeForTests => _tree;
 
     /// <summary>
     /// Builds the menu.
@@ -248,17 +235,20 @@ public sealed class SolutionExplorerPanel : UserControl
         bool HasNode() => SelectedNode is not null;
         bool HasFile() => SelectedNode is { IsOpenable: true };
         bool IsDesignable() => SelectedNode is { IsDesignable: true };
+        bool IsForm() => SelectedNode is { IsForm: true };
         bool IsProject() => SelectedNode is { Kind: NodeKind.Project };
 
         void Choose(ExplorerCommand command) =>
             CommandChosen?.Invoke(this, (command, SelectedNode));
 
-        _albero.ContextMenu = ContextMenus.Build(
+        _tree.ContextMenu = ContextMenus.Build(
         [
             new("Open", () => Choose(ExplorerCommand.Open))
                 { IsAvailable = HasFile, Icon = IconKind.Open },
             new("Open in Designer", () => Choose(ExplorerCommand.OpenInDesigner))
                 { IsAvailable = IsDesignable, Icon = IconKind.DesignerFile },
+            new(Localizer.Get(StringKeys.WinFormsDesignerViewCode), () => Choose(ExplorerCommand.ViewCode))
+                { IsAvailable = IsForm, Icon = IconKind.VisualBasicFile },
             MenuAction.Separator,
             new("New File…", () => Choose(ExplorerCommand.NewFile)) { Icon = IconKind.New },
             new("New Folder…", () => Choose(ExplorerCommand.NewFolder))

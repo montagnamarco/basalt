@@ -48,10 +48,16 @@ public sealed partial class SolutionTreeNode : ObservableObject
     public NodeKind Kind { get; }
     public ObservableCollection<SolutionTreeNode> Children { get; } = [];
 
+    /// <summary>The generated companion opened when this form enters the designer.</summary>
+    public string? DesignerPath { get; internal set; }
+
+    public bool IsForm => DesignerPath is not null;
+
     public SourceLanguage Language => SourceLanguageExtensions.FromPath(Path);
 
     /// <summary>An .axaml file can be opened in the visual designer.</summary>
-    public bool IsDesignable => Kind == NodeKind.XamlFile;
+    public bool IsDesignable => DesignerPath is not null || Kind == NodeKind.XamlFile
+        || (Kind == NodeKind.SourceFile && Path.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Whether double-clicking the node opens it in an editor.</summary>
     public bool IsOpenable => Kind is NodeKind.SourceFile

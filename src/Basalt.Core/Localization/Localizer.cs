@@ -152,6 +152,8 @@ public static class StringKeys
     public const string ExplorerCollapseAll = "Explorer_CollapseAll";
     public const string ExplorerSyncWithEditor = "Explorer_SyncWithEditor";
     public const string ExplorerRefresh = "Explorer_Refresh";
+    public const string WinFormsDesignerDesignTabSuffix = "WinFormsDesigner_DesignTabSuffix";
+    public const string WinFormsDesignerViewCode = "WinFormsDesigner_ViewCode";
     public const string ToolToolbox = "Tool_Toolbox";
     public const string ToolProperties = "Tool_Properties";
     public const string ToolProblems = "Tool_Problems";

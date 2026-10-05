@@ -195,9 +195,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         SolutionPath = SolutionPath ?? "",
         OpenFiles = [.. OpenDocuments.Select(d => d.FilePath)],
+        OpenTabs = [.. OpenDocuments.Select(d => new OpenDocumentSession
+        {
+            Path = d.FilePath,
+            InDesigner = d.OpenInDesigner
+        })],
         ActiveFile = ActiveDocument?.FilePath,
+        ActiveInDesigner = ActiveDocument?.OpenInDesigner ?? false,
         InDesigner = [.. OpenDocuments.Where(d => d.OpenInDesigner).Select(d => d.FilePath)],
         ExpandedFolders = [.. ReadExpandedFolders?.Invoke() ?? []],
+        SelectedPath = Explorer.SelectedNode?.Path,
     };
 
     /// <summary>
@@ -223,20 +230,33 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// </remarks>
     public async Task RestoreSessionAsync(SolutionSession session)
     {
-        foreach (var file in session.OpenFiles)
-        {
-            if (!File.Exists(file)) continue;
+        var tabs = session.OpenTabs.Count > 0
+            ? session.OpenTabs
+            : session.OpenFiles.Select(file => new OpenDocumentSession
+            {
+                Path = file,
+                InDesigner = session.InDesigner.Contains(file)
+            });
 
-            await OpenFileAsync(file, session.InDesigner.Contains(file)).ConfigureAwait(true);
+        foreach (var tab in tabs)
+        {
+            if (!File.Exists(tab.Path)) continue;
+
+            await OpenFileAsync(tab.Path, tab.InDesigner).ConfigureAwait(true);
         }
 
         // After the files, so the tree has been rebuilt for whatever they
         // brought with them.
         WriteExpandedFolders?.Invoke(session.ExpandedFolders);
+        if (session.SelectedPath is { Length: > 0 } selected)
+            Explorer.SelectPathQuietly(selected);
 
         if (session.ActiveFile is { Length: > 0 } active
             && OpenDocuments.FirstOrDefault(d =>
-                string.Equals(d.FilePath, active, StringComparison.Ordinal)) is { } document)
+                string.Equals(d.FilePath, active, StringComparison.Ordinal)
+                && d.OpenInDesigner == (session.OpenTabs.Count > 0
+                    ? session.ActiveInDesigner
+                    : session.InDesigner.Contains(active))) is { } document)
         {
             ActivateDocument(document);
         }
@@ -246,12 +266,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public void RememberSession()
     {
         if (SolutionPath is not { Length: > 0 }) return;
+        var session = CaptureSession();
+        SolutionUserSessionStore.Write(session);
+
         if (LoadSettings is null || SaveSettings is null) return;
 
         var settings = LoadSettings();
-
-        settings.Session.Remember(CaptureSession());
-
+        settings.Session.Remember(session);
         SaveSettings(settings);
     }
 
@@ -321,7 +342,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
             // Back to whatever was open last time, which is what makes
             // reopening a project resuming rather than starting again.
-            if (LoadSettings?.Invoke().Session.For(path) is { } remembered)
+            if ((SolutionUserSessionStore.Read(path)
+                 ?? LoadSettings?.Invoke().Session.For(path)) is { } remembered)
                 await RestoreSessionAsync(remembered).ConfigureAwait(true);
 
             StatusMessage = Localizer.Get(StringKeys.StatusOpened, Path.GetFileName(path));

@@ -20,14 +20,29 @@ public sealed class SolutionSession
     /// <summary>The files that were open, in the order of their tabs.</summary>
     public List<string> OpenFiles { get; set; } = [];
 
+    /// <summary>Tabs in order, including distinct code and designer views of one file.</summary>
+    public List<OpenDocumentSession> OpenTabs { get; set; } = [];
+
     /// <summary>Which of them was in front.</summary>
     public string? ActiveFile { get; set; }
+
+    /// <summary>Whether the frontmost tab is its designer view.</summary>
+    public bool ActiveInDesigner { get; set; }
 
     /// <summary>Files that were open in the designer rather than as markup.</summary>
     public List<string> InDesigner { get; set; } = [];
 
     /// <summary>Folders unfolded in the solution explorer.</summary>
     public List<string> ExpandedFolders { get; set; } = [];
+
+    /// <summary>The selected solution explorer file or folder.</summary>
+    public string? SelectedPath { get; set; }
+}
+
+public sealed class OpenDocumentSession
+{
+    public string Path { get; set; } = "";
+    public bool InDesigner { get; set; }
 }
 
 /// <summary>

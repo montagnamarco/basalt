@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Basalt.Core.Model;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.ViewModels;
 
@@ -40,7 +41,20 @@ public sealed partial class EditorDocumentViewModel : ObservableObject
     }
 
     /// <summary>Tab title, with a marker when there are unsaved changes.</summary>
-    public string Title => IsModified ? $"{FileName} •" : FileName;
+    public string Title
+    {
+        get
+        {
+            var name = FileName;
+            if (OpenInDesigner && name.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase))
+            {
+                name = name[..^".Designer.vb".Length] + ".vb "
+                    + Localizer.Get(StringKeys.WinFormsDesignerDesignTabSuffix);
+            }
+
+            return IsModified ? $"{name} •" : name;
+        }
+    }
 
     /// <summary>Tab symbol: distinguishes designer, VB and C#.</summary>
     public string Icon => OpenInDesigner
