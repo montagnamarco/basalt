@@ -321,7 +321,89 @@
   <data name="Template_VisualBasic6_Description" xml:space="preserve"><value>A .vbp and a .frm compatible with Visual Basic 6.</value></data>
   <data name="Template_QuickBasic" xml:space="preserve"><value>QuickBASIC</value></data>
   <data name="Template_QuickBasic_Description" xml:space="preserve"><value>Classic BASIC compiled to a native executable.</value></data>
+  <data name="WinFormsDesigner_Toolbox" xml:space="preserve"><value>Toolbox — double-click to add</value></data>
+  <data name="WinFormsDesigner_Properties" xml:space="preserve"><value>Properties</value></data>
+  <data name="WinFormsDesigner_PreviewProblems" xml:space="preserve"><value>Some expressions cannot be previewed and are preserved: {0}</value></data>
+  <data name="WinFormsDesigner_Error" xml:space="preserve"><value>Designer: {0}</value></data>
+  <data name="WinFormsDesigner_Event" xml:space="preserve"><value>Event</value></data>
+  <data name="WinFormsDesigner_Handler" xml:space="preserve"><value>Handler</value></data>
+  <data name="WinFormsDesigner_EventsHint" xml:space="preserve"><value>Double-click an event to create or open its handler.</value></data>
+  <data name="WinFormsDesigner_Events" xml:space="preserve"><value>Events</value></data>
+  <data name="WinFormsDesigner_CodeUnavailable" xml:space="preserve"><value>Open this form from a solution to edit event handlers.</value></data>
+  <data name="Designer_View" xml:space="preserve"><value>Designer</value></data>
+  <data name="Designer_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Designer_Markup" xml:space="preserve"><value>XAML</value></data>
+  <data name="WinFormsDesigner_CodeChanged" xml:space="preserve"><value>The form code changed after this operation. Undo the later code edits before restoring the deleted control.</value></data>
+  <data name="WinFormsDesigner_UnsupportedExpression" xml:space="preserve"><value>This expression is preserved but cannot be previewed.</value></data>
+  <data name="WinFormsDesigner_Components" xml:space="preserve"><value>Components</value></data>
+  <data name="WinFormsDesigner_TabOrder" xml:space="preserve"><value>Tab Order</value></data>
+  <data name="WinFormsDesigner_AlignLeft" xml:space="preserve"><value>Align Left</value></data>
+  <data name="WinFormsDesigner_AlignCenter" xml:space="preserve"><value>Align Centers</value></data>
+  <data name="WinFormsDesigner_AlignRight" xml:space="preserve"><value>Align Right</value></data>
+  <data name="WinFormsDesigner_AlignTop" xml:space="preserve"><value>Align Top</value></data>
+  <data name="WinFormsDesigner_AlignMiddle" xml:space="preserve"><value>Align Middles</value></data>
+  <data name="WinFormsDesigner_AlignBottom" xml:space="preserve"><value>Align Bottom</value></data>
+  <data name="WinFormsDesigner_DistributeHorizontal" xml:space="preserve"><value>Distribute Horizontally</value></data>
+  <data name="WinFormsDesigner_DistributeVertical" xml:space="preserve"><value>Distribute Vertically</value></data>
+  <data name="WinFormsCollection_ColumnsTitle" xml:space="preserve"><value>Column Collection Editor</value></data>
+  <data name="WinFormsCollection_ItemsTitle" xml:space="preserve"><value>Item Collection Editor</value></data>
+  <data name="WinFormsCollection_Save" xml:space="preserve"><value>OK</value></data>
+  <data name="WinFormsCollection_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="WinFormsCollection_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="WinFormsCollection_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="WinFormsCollection_Up" xml:space="preserve"><value>Move Up</value></data>
+  <data name="WinFormsCollection_Down" xml:space="preserve"><value>Move Down</value></data>
+  <data name="WinFormsCollection_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="WinFormsCollection_Type" xml:space="preserve"><value>Column Type</value></data>
+  <data name="WinFormsCollection_HeaderText" xml:space="preserve"><value>Header Text</value></data>
+  <data name="WinFormsCollection_Text" xml:space="preserve"><value>Text</value></data>
+  <data name="WinFormsCollection_Width" xml:space="preserve"><value>Width</value></data>
+  <data name="WinFormsCollection_InvalidColumn" xml:space="preserve"><value>Enter a unique valid column name and a positive width.</value></data>
+  <data name="WinFormsCollection_NewItem" xml:space="preserve"><value>New item</value></data>
   <data name="WinFormsCollection_Unsupported" xml:space="preserve"><value>This collection contains expressions that cannot be edited safely. Edit its initialization in code.</value></data>
+  <data name="WinFormsDesigner_MixedValues" xml:space="preserve"><value>Multiple values</value></data>
+  <data name="PropertyGrid_SortAlphabetical" xml:space="preserve"><value>Alphabetical</value></data>
+  <data name="PropertyGrid_OpenEditor" xml:space="preserve"><value>Open editor</value></data>
+  <data name="WinFormsDesigner_Objects" xml:space="preserve"><value>Selected object</value></data>
+  <data name="WinFormsDesigner_SelectedObjects" xml:space="preserve"><value>Selected objects</value></data>
+  <data name="WinFormsColorEditor_Title" xml:space="preserve"><value>Color</value></data>
+  <data name="WinFormsColorEditor_Known" xml:space="preserve"><value>Known</value></data>
+  <data name="WinFormsColorEditor_System" xml:space="preserve"><value>System</value></data>
+  <data name="WinFormsColorEditor_Custom" xml:space="preserve"><value>Custom</value></data>
+  <data name="WinFormsColorEditor_Hex" xml:space="preserve"><value>Hex (AARRGGBB)</value></data>
+  <data name="WinFormsColorEditor_Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="WinFormsFontEditor_Title" xml:space="preserve"><value>Font</value></data>
+  <data name="WinFormsFontEditor_Family" xml:space="preserve"><value>Font family</value></data>
+  <data name="WinFormsFontEditor_Size" xml:space="preserve"><value>Size</value></data>
+  <data name="WinFormsFontEditor_Bold" xml:space="preserve"><value>Bold</value></data>
+  <data name="WinFormsFontEditor_Italic" xml:space="preserve"><value>Italic</value></data>
+  <data name="WinFormsFontEditor_Underline" xml:space="preserve"><value>Underline</value></data>
+  <data name="WinFormsFontEditor_Strikeout" xml:space="preserve"><value>Strikeout</value></data>
+  <data name="WinFormsFontEditor_Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="WinFormsEditor_Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="WinFormsEditor_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="WinFormsEditor_InvalidColor" xml:space="preserve"><value>Enter a valid RGB or ARGB hex color.</value></data>
+  <data name="WinFormsEditor_InvalidFont" xml:space="preserve"><value>Enter a valid font family and size.</value></data>
+  <data name="PropertyGrid_None" xml:space="preserve"><value>(None)</value></data>
+  <data name="PropertyGrid_ComponentReference" xml:space="preserve"><value>Select component</value></data>
+  <data name="PropertyGrid_Collection" xml:space="preserve"><value>(Collection)</value></data>
+  <data name="PropertyGrid_Name" xml:space="preserve"><value>(Name)</value></data>
+  <data name="WinFormsDesigner_DeleteSelection" xml:space="preserve"><value>Delete selection</value></data>
+  <data name="WinFormsDesigner_SelectSiblings" xml:space="preserve"><value>Select sibling controls</value></data>
+  <data name="WinFormsDesigner_AlignSelection" xml:space="preserve"><value>Align controls</value></data>
+  <data name="WinFormsDesigner_DistributeSelection" xml:space="preserve"><value>Distribute controls</value></data>
+  <data name="WinFormsDesigner_ShowGrid" xml:space="preserve"><value>Show grid</value></data>
+  <data name="WinFormsDesigner_SnapToGrid" xml:space="preserve"><value>Snap to grid</value></data>
+  <data name="WinFormsDesigner_SnapToControls" xml:space="preserve"><value>Snap to controls</value></data>
+  <data name="WinFormsCollection_InvalidText" xml:space="preserve">
+    <value>Enter text without line breaks.</value>
+  </data>
+  <data name="WinFormsFontEditor_Sample" xml:space="preserve">
+    <value>AaBbYyZz 0123456789</value>
+  </data>
+  <data name="WinFormsCollection_InvalidEntry" xml:space="preserve">
+    <value>Entry {0}: {1}</value>
+  </data>
   <data name="WinFormsDesigner_ViewCode" xml:space="preserve">
     <value>View code</value>
   </data>
@@ -330,6 +412,8 @@
   </data>
   <data name="StatusBuildStopped" xml:space="preserve"><value>Build stopped.</value></data>
   <data name="DebugRunWithoutAdapter" xml:space="preserve"><value>The debugger is unavailable. Starting the application without debugging.</value></data>
+  <data name="ResourceEditor_Value" xml:space="preserve"><value>Value</value></data>
+  <data name="ResourceEditor_Apply" xml:space="preserve"><value>Apply changes</value></data>
   <data name="Editor_VbObjects" xml:space="preserve">
     <value>Classes and objects</value>
   </data>
@@ -339,7 +423,21 @@
   <data name="Editor_VbNavigationFailed" xml:space="preserve">
     <value>VB navigation: {0}</value>
   </data>
+  <data name="MenuEditor_Title" xml:space="preserve"><value>Menu items</value></data>
+  <data name="MenuEditor_Add" xml:space="preserve"><value>Add item</value></data>
+  <data name="MenuEditor_Separator" xml:space="preserve"><value>Add separator</value></data>
+  <data name="MenuEditor_Parent" xml:space="preserve"><value>Parent menu</value></data>
+  <data name="MenuEditor_Up" xml:space="preserve"><value>Move up</value></data>
+  <data name="MenuEditor_Down" xml:space="preserve"><value>Move down</value></data>
+  <data name="MenuEditor_NewItem" xml:space="preserve"><value>New item</value></data>
+  <data name="WinFormsDesigner_ShowRulers" xml:space="preserve"><value>Show rulers</value></data>
   <data name="StatusLaunchTargetChanged" xml:space="preserve"><value>The startup project or configuration changed during the build. Start again to run the selected project.</value></data>
+  <data name="MenuEditor_InvalidMenu" xml:space="preserve"><value>Each menu item needs a unique name, a valid parent and single-line text. Items cannot be nested inside themselves or separators.</value></data>
+  <data name="MenuInline_TypeHere" xml:space="preserve"><value>Type Here</value></data>
+  <data name="MenuInline_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="MenuInline_EditText" xml:space="preserve"><value>Menu text</value></data>
+  <data name="MenuInline_Unsupported" xml:space="preserve"><value>This menu uses an unsupported item expression.</value></data>
+  <data name="MenuInline_OpenSubmenu" xml:space="preserve"><value>Open submenu</value></data>
   <data name="Editor_SmartTags" xml:space="preserve"><value>Quick actions and refactorings</value></data>
   <data name="Editor_SmartTagsNone" xml:space="preserve"><value>No quick actions are available here.</value></data>
   <data name="Editor_SmartTagsChanged" xml:space="preserve"><value>The document changed. Request quick actions again.</value></data>
@@ -350,6 +448,7 @@
   <data name="Editor_SmartTagsUnsupportedChanges" xml:space="preserve"><value>This action changes project structure or non-source files and cannot be applied here.</value></data>
   <data name="Editor_SmartTagTidyImports" xml:space="preserve"><value>Sort and remove unused Imports</value></data>
   <data name="Status_RunExited" xml:space="preserve"><value>Application exited with code {0}</value></data>
+  <data name="WinFormsDesigner_FormCodeNotOpened" xml:space="preserve"><value>The form code document could not be opened.</value></data>
   <data name="Status_AlreadyRunning" xml:space="preserve"><value>The application is already running. Stop it first.</value></data>
   <data name="WinFormsCollection_ColumnAdditionalInitialization" xml:space="preserve"><value>The column has additional initialization that must be reviewed before changing its type.</value></data>
   <data name="WinFormsCollection_ColumnAdditionalReferences" xml:space="preserve"><value>The column has additional references that must be reviewed before removal.</value></data>

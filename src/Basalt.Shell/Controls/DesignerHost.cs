@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Basalt.Shell.ViewModels;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Controls;
 
@@ -15,7 +16,7 @@ namespace Basalt.Shell.Controls;
 /// opening it again from a different menu entry. They are one file, so they
 /// belong in one tab.
 /// </summary>
-public sealed class DesignerHost : UserControl
+public sealed class DesignerHost : UserControl, IDisposable
 {
     private readonly ContentControl _host = new();
     private readonly Func<Control> _designer;
@@ -26,6 +27,7 @@ public sealed class DesignerHost : UserControl
 
     private Control? _designerView;
     private Control? _textView;
+    private bool _disposed;
 
     public DesignerHost(
         EditorDocumentViewModel document, Func<Control> designer, Func<Control> text,
@@ -38,8 +40,9 @@ public sealed class DesignerHost : UserControl
         // Radio buttons for the behaviour — one of two, mutually exclusive —
         // but styled as flat tabs: the native bullet beside an icon and a
         // word reads as a form to fill in rather than a view to switch to.
-        _designerButton = Choice("Designer", IconKind.DesignerFile);
-        _textButton = Choice("XAML", IconKind.XmlFile);
+        _designerButton = Choice(Localizer.Get(StringKeys.DesignerView), IconKind.DesignerFile);
+        _textButton = Choice(Localizer.Get(document.FilePath.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase)
+            ? "Designer_Code" : "Designer_Markup"), IconKind.XmlFile);
 
         _designerButton.IsCheckedChanged += (_, _) =>
         {
@@ -70,6 +73,10 @@ public sealed class DesignerHost : UserControl
         else _textButton.IsChecked = true;
     }
 
+    public event EventHandler? ViewChanged;
+
+    public Control? DesignerView => _designerView;
+
     public EditorDocumentViewModel Document { get; }
 
     /// <summary>Which half is on screen, for the tests and the shell.</summary>
@@ -91,8 +98,13 @@ public sealed class DesignerHost : UserControl
         // tab. Keeping the old drawing then showed a tree that no longer
         // matched the file, and the next thing drawn wrote that stale tree
         // back over what had been typed.
-        if (_designerView is not null && Document.Text != _designerBuiltFrom)
+        if (_disposed) return;
+        if (_designerView is not null && _designerView is not WinFormsDesignerView
+            && Document.Text != _designerBuiltFrom)
+        {
+            (_designerView as IDisposable)?.Dispose();
             _designerView = null;
+        }
 
         if (_designerView is null)
         {
@@ -103,15 +115,29 @@ public sealed class DesignerHost : UserControl
         _host.Content = _designerView;
 
         _designerButton.IsChecked = true;
+        ViewChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Puts the markup on screen.</summary>
     public void ShowText()
     {
+        if (_disposed) return;
         _textView ??= _text();
         _host.Content = _textView;
 
         _textButton.IsChecked = true;
+        ViewChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _host.Content = null;
+        (_designerView as IDisposable)?.Dispose();
+        if (!ReferenceEquals(_designerView, _textView)) (_textView as IDisposable)?.Dispose();
+        _designerView = null;
+        _textView = null;
     }
 
     private static RadioButton Choice(string label, IconKind icon) =>

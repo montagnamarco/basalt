@@ -170,6 +170,7 @@ public partial class MainWindow : Window
         };
 
         DataContext = viewModel;
+        InitializeDocumentViewLifetime();
 
         InstallMenu(viewModel);
         ShowRecentOnWelcome();
@@ -295,6 +296,7 @@ public partial class MainWindow : Window
         _contents[_factory.SolutionExplorer] = _solutionExplorer;
         _contents[_factory.Toolbox] = _toolbox;
         _contents[_factory.Properties] = _properties;
+        InitializeDesignerToolDocks();
         _contents[_factory.Problems] = new ProblemsPanel(viewModel, OpenDiagnostic);
         _contents[_factory.Output] = new OutputPanel(viewModel);
 
@@ -450,6 +452,8 @@ public partial class MainWindow : Window
             // A tab that closed leaves the others where they were, so the
             // ones that appear in its place still need their menus.
             Dispatcher.UIThread.Post(GiveTabsTheirMenus, DispatcherPriority.Loaded);
+            RefreshDesignerToolDocks();
+            Dispatcher.UIThread.Post(RefreshDesignerToolDocks, DispatcherPriority.Loaded);
             return;
         }
 
@@ -497,6 +501,7 @@ public partial class MainWindow : Window
             : content;
 
         _headed[dockable] = headed;
+        if (dockable is IdeDocument) RefreshDesignerToolDocks();
 
         return headed;
     }
@@ -551,6 +556,14 @@ public partial class MainWindow : Window
     /// </summary>
     private Control DesignSurfaceFor(EditorDocumentViewModel document)
     {
+        if (WinFormsDesignerView.IsDesignerPath(document.FilePath))
+        {
+            var forms = new WinFormsDesignerView(document, OpenWinFormsCodeAsync, FindWinFormsCode, GetWinFormsCodeAsync,
+                ViewModel.PreviewWinFormsRenameAsync, dockTools: true);
+            forms.EventsPanelRequested += () => ShowTool(_factory.Events);
+            forms.PropertiesPanelRequested += () => ShowTool(_factory.Properties);
+            return forms;
+        }
         var session = ViewModel.DesignerSessionFor(document);
 
         // A file the designer cannot read: show why. The markup is a click
@@ -648,10 +661,12 @@ public partial class MainWindow : Window
             // Both halves of the same file in one tab, with a way to change
             // which is showing: the markup used to be reachable only by
             // closing the file and opening it again from another menu entry.
-            return new DesignerHost(
+            var host = new DesignerHost(
                 document,
                 () => DesignSurfaceFor(document),
                 () => TextEditorFor(document));
+            host.ViewChanged += (_, _) => RefreshDesignerToolDocks();
+            return host;
         }
 
         return TextEditorFor(document);
@@ -741,7 +756,11 @@ public partial class MainWindow : Window
     /// <summary>Opens or brings to the front the active document in the central area.</summary>
     private void ShowActiveDocument()
     {
-        if (ActingDocument is not { } document) return;
+        if (ActingDocument is not { } document)
+        {
+            RefreshDesignerToolDocks();
+            return;
+        }
         if (_factory.DocumentArea is not { } area) return;
 
         if (!_documents.TryGetValue(document, out var dockable))
@@ -763,6 +782,8 @@ public partial class MainWindow : Window
         // The tab for this document has just been asked for; its menu is put
         // on once the tab itself has been realised.
         Dispatcher.UIThread.Post(GiveTabsTheirMenus, DispatcherPriority.Loaded);
+        RefreshDesignerToolDocks();
+        Dispatcher.UIThread.Post(RefreshDesignerToolDocks, DispatcherPriority.Loaded);
 
         if (document.OpenInDesigner)
         {
@@ -5131,14 +5152,13 @@ public partial class MainWindow : Window
     private static KeyModifiers PlatformCommandModifier =>
         OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
 
-    private void ShowTool(IDockable pannello)
+    private void ShowTool(IDockable tool)
     {
-        var fallback = pannello == _factory.Problems || pannello == _factory.Output
-            ? _factory.BottomArea
-            : null;
-
-        if (fallback is not null) _factory.ShowTool(pannello, fallback);
-        else _factory.SetActiveDockable(pannello);
+        var owner = tool.Owner as IDock ?? DefaultDockForTool(tool);
+        if (owner is not null)
+            _factory.ShowTool(tool, owner);
+        else
+            _factory.SetActiveDockable(tool);
     }
 
     private void OpenNewTerminal()

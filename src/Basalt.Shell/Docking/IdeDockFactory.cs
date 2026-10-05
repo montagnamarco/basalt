@@ -23,6 +23,9 @@ public sealed class IdeDockFactory : Factory
     /// <summary>Bottom pane, where new terminals are created.</summary>
     public ToolDock? BottomArea { get; private set; }
 
+    public ToolDock? ToolboxArea { get; private set; }
+    public ToolDock? DesignerToolsArea { get; private set; }
+
     public SolutionExplorerTool SolutionExplorer { get; } = new();
     public ToolboxTool Toolbox { get; } = new();
     public PropertiesTool Properties { get; } = new();
@@ -75,6 +78,8 @@ public sealed class IdeDockFactory : Factory
             ActiveDockable = Toolbox
         };
 
+        ToolboxArea = toolboxColumn;
+
         // Top right: what is in the solution. Visual Basic 6 called it the
         // Project Explorer and put it here, above the properties.
         var projectPanel = new ToolDock
@@ -99,6 +104,8 @@ public sealed class IdeDockFactory : Factory
             VisibleDockables = CreateList<IDockable>(Properties, Events, Assistant),
             ActiveDockable = Properties
         };
+
+        DesignerToolsArea = propertiesPanel;
 
         var rightColumn = new ProportionalDock
         {

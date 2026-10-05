@@ -56,10 +56,15 @@ public sealed class DockingTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task IPannelliSonoRenderizzatiNellaFinestra()
+    public async Task DesignerPanelsAreRenderedForTheActiveDesigner()
     {
         using var host = new TestWindow();
         var window = host.Window;
+        var designerPath = Path.Combine(_root, "MainWindow.axaml");
+        await File.WriteAllTextAsync(designerPath,
+            "<Window xmlns=\"https://github.com/avaloniaui\"><Button Content=\"Hello\" /></Window>");
+        var model = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        await model.OpenFileAsync(designerPath, inDesigner: true);
         await StabilizzaLayoutAsync(window);
 
         var tipi = window.GetVisualDescendants().OfType<Control>()

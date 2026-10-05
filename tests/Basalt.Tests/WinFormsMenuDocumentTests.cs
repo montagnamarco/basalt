@@ -1,0 +1,117 @@
+using Avalonia.Headless.XUnit;
+using Basalt.Shell.Controls;
+using Basalt.Workspace;
+using Forms = System.Windows.Forms;
+
+namespace Basalt.Tests;
+
+public sealed class WinFormsMenuDocumentTests
+{
+    private const string Source = """
+        Partial Class MainForm
+            Inherits Global.System.Windows.Forms.Form
+            Private Sub InitializeComponent()
+                Me.MenuStrip1 = New Global.System.Windows.Forms.MenuStrip()
+                Me.MenuStrip1.Name = "MenuStrip1"
+                Me.Controls.Add(Me.MenuStrip1)
+                ' Preserve unrelated application initialization.
+            End Sub
+            Friend WithEvents MenuStrip1 As Global.System.Windows.Forms.MenuStrip
+        End Class
+        """;
+
+    [Theory]
+    [InlineData("Public Property ToolStripMenuItem1 As String")]
+    [InlineData("Public Sub ToolStripMenuItem1()\n    End Sub")]
+    public void NewItemsCannotCollideWithExistingMembers(string member)
+    {
+        var source = Source.Replace("End Class", member + "\nEnd Class", StringComparison.Ordinal);
+        var document = new WinFormsMenuDocument(source);
+        Assert.Contains("ToolStripMenuItem1", document.DeclaredNames);
+        Assert.Throws<ArgumentException>(() => document.Set("MenuStrip1",
+            [new("ToolStripMenuItem1", "MenuStrip1", "File")]));
+    }
+
+    [AvaloniaFact]
+    public void MenuStripItemsExposeTheCollectionEditor()
+    {
+        using var menu = new Forms.MenuStrip();
+        var property = Assert.Single(Basalt.Designer.WinFormsPropertyInspector.DescribeDesigner(menu), property => property.Name == "Items");
+        Assert.True(property.IsCollection);
+        Assert.True(property.HasCustomEditor);
+        Assert.False(property.IsReadOnly);
+        using var toolbar = new Forms.ToolStrip();
+        var toolbarItems = Assert.Single(Basalt.Designer.WinFormsPropertyInspector.DescribeDesigner(toolbar), property => property.Name == "Items");
+        Assert.False(toolbarItems.HasCustomEditor);
+    }
+
+    [AvaloniaFact]
+    public async Task MenuTreeRoundTripsAndParticipatesInOneUndo()
+    {
+        using var session = new WinFormsDesignerSession(new(Source));
+        var definitions = new WinFormsMenuItem[]
+        {
+            new("FileMenu", "MenuStrip1", "&File"),
+            new("OpenMenu", "FileMenu", "&Open"),
+            new("Separator1", "FileMenu", "", true),
+            new("ExitMenu", "FileMenu", "E&xit"),
+        };
+        await session.ApplyCollectionAsync(document => new WinFormsMenuDocument(document.Source).Set("MenuStrip1", definitions));
+        Assert.Equal(definitions, new WinFormsMenuDocument(session.Document.Source).Read("MenuStrip1"));
+        Assert.Contains("' Preserve unrelated application initialization.", session.Document.Source);
+        var menu = Assert.IsType<Forms.MenuStrip>(session.FindControl("MenuStrip1"));
+        var file = Assert.IsType<Forms.ToolStripMenuItem>(Assert.Single(menu.Items.Cast<Forms.ToolStripItem>()));
+        Assert.Equal("&File", file.Text);
+        Assert.Equal(3, file.DropDownItems.Count);
+        Assert.Empty(session.PreviewProblems);
+        await session.UndoAsync();
+        Assert.Equal(Source, session.Document.Source);
+        await session.RedoAsync();
+        Assert.Equal(definitions, new WinFormsMenuDocument(session.Document.Source).Read("MenuStrip1"));
+    }
+
+    [Fact]
+    public void RejectsCyclesAndDynamicTextWithoutRewritingSource()
+    {
+        var menu = new WinFormsMenuDocument(Source);
+        Assert.Throws<ArgumentException>(() => menu.Set("MenuStrip1", [new("One", "Two", "1"), new("Two", "One", "2")]));
+        var generated = menu.Set("MenuStrip1", [new("One", "MenuStrip1", "1")]);
+        var dynamic = generated.Replace("Me.One.Text = \"1\"", "Me.One.Text = GetText()", StringComparison.Ordinal);
+        Assert.Throws<NotSupportedException>(() => new WinFormsMenuDocument(dynamic).Read("MenuStrip1"));
+    }
+
+    // Regression for a form whose InitializeComponent initializes one MenuStrip's Items with
+    // something other than a single constant Add or array-literal AddRange (here, a call to a
+    // method rather than an array literal). Previously WinFormsMenuDocument's constructor threw
+    // for this shape, so WinFormsDesignerDocument's constructor threw too and the whole form
+    // failed to open in the designer, even though every other control was perfectly readable.
+    [Fact]
+    public void UnusualMenuItemsInitializationKeepsFormOpenAndOtherControlsReadable()
+    {
+        const string source = """
+            Partial Class MainForm
+                Inherits Global.System.Windows.Forms.Form
+                Private Sub InitializeComponent()
+                    Me.MenuStrip1 = New Global.System.Windows.Forms.MenuStrip()
+                    Me.MenuStrip1.Name = "MenuStrip1"
+                    Me.MenuStrip1.Items.AddRange(BuildItems())
+                    Me.Panel1 = New Global.System.Windows.Forms.Panel()
+                    Me.Controls.Add(Me.MenuStrip1)
+                    Me.Controls.Add(Me.Panel1)
+                End Sub
+                Friend WithEvents MenuStrip1 As Global.System.Windows.Forms.MenuStrip
+                Friend WithEvents Panel1 As Global.System.Windows.Forms.Panel
+                Private Function BuildItems() As Global.System.Windows.Forms.ToolStripItem()
+                    Return New Global.System.Windows.Forms.ToolStripItem() {}
+                End Function
+            End Class
+            """;
+
+        var document = new WinFormsDesignerDocument(source);
+
+        Assert.Contains("Panel1", document.Controls.Select(control => control.Name));
+        Assert.False(document.Menus.IsSupported("MenuStrip1"));
+        Assert.NotNull(document.Menus.UnsupportedReason("MenuStrip1"));
+        Assert.Throws<NotSupportedException>(() => document.Menus.Read("MenuStrip1"));
+    }
+}

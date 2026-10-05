@@ -20,7 +20,7 @@ namespace Basalt.Shell.Controls;
 /// reports changes, so the same control can show a Visual Basic form's
 /// properties one day without being untangled from XAML first.
 /// </remarks>
-public sealed class PropertyGrid : UserControl
+public sealed partial class PropertyGrid : UserControl
 {
     /// <summary>How the properties are ordered.</summary>
     public enum SortOrder
@@ -142,6 +142,7 @@ public sealed class PropertyGrid : UserControl
         Grid.SetRow(description, 2);
 
         Content = layout;
+        InitializeVisualStudioGrid(layout);
     }
 
     /// <summary>What the grid shows.</summary>
@@ -163,10 +164,15 @@ public sealed class PropertyGrid : UserControl
         _sortByCategory.IsChecked == true ? SortOrder.ByCategory : SortOrder.Alphabetical;
 
     /// <summary>The rows currently shown, for tests.</summary>
-    internal IReadOnlyList<Control> Rows => [.. _rows.Children];
+    internal IReadOnlyList<Control> Rows => VisualStudioStyle ? [.. _visualStudioRows.Children] : [.. _rows.Children];
 
     private void Rebuild()
     {
+        if (VisualStudioStyle)
+        {
+            RebuildVisualStudioGrid();
+            return;
+        }
         _rows.Children.Clear();
 
         var filtered = Filtered();
@@ -337,7 +343,8 @@ public sealed class PropertyGrid : UserControl
         // at its natural size it makes its row taller than every other.
         var box = new CheckBox
         {
-            IsChecked = bool.TryParse(property.CurrentValue, out var value) && value,
+            IsThreeState = property.IsMixed,
+            IsChecked = property.IsMixed ? null : bool.TryParse(DisplayedValue(property), out var value) && value,
             Margin = new Thickness(Spacing.Tight, 0),
             MinHeight = 0,
 
@@ -358,7 +365,7 @@ public sealed class PropertyGrid : UserControl
         var combo = new ComboBox
         {
             ItemsSource = property.AllowedValues,
-            SelectedItem = property.CurrentValue,
+            SelectedItem = DisplayedValue(property),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             FontSize = 11,
             MinHeight = 0,
@@ -379,7 +386,8 @@ public sealed class PropertyGrid : UserControl
         // in a property grid is typed far more often than nudged.
         var box = new NumericUpDown
         {
-            Value = decimal.TryParse(property.CurrentValue, out var value) ? value : null,
+            Value = decimal.TryParse(DisplayedValue(property), System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture, out var value) ? value : null,
             FontSize = 11,
             MinHeight = 0,
             Height = Spacing.EditorHeight,
@@ -400,7 +408,8 @@ public sealed class PropertyGrid : UserControl
     {
         var box = new TextBox
         {
-            Text = property.CurrentValue ?? "",
+            Text = DisplayedValue(property) ?? "",
+            PlaceholderText = property.IsMixed ? Localizer.Get(StringKeys.WinFormsDesignerMixedValues) : null,
             FontSize = 11,
             MinHeight = 0,
             Padding = Spacing.RowPadding,
@@ -416,7 +425,7 @@ public sealed class PropertyGrid : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             BorderThickness = new Thickness(1),
             BorderBrush = new SolidColorBrush(Color.FromArgb(60, 128, 128, 128)),
-            Background = ParseBrush(property.CurrentValue),
+            Background = ParseBrush(DisplayedValue(property)),
         };
 
         box.TextChanged += (_, _) => swatch.Background = ParseBrush(box.Text);
@@ -452,7 +461,7 @@ public sealed class PropertyGrid : UserControl
 
     private Control BuildThickness(DesignableProperty property)
     {
-        var parts = (property.CurrentValue ?? "").Split(',', StringSplitOptions.TrimEntries);
+        var parts = (DisplayedValue(property) ?? "").Split(',', StringSplitOptions.TrimEntries);
 
         var boxes = new TextBox[4];
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*") };
@@ -501,7 +510,8 @@ public sealed class PropertyGrid : UserControl
     {
         var box = new TextBox
         {
-            Text = property.CurrentValue ?? "",
+            Text = DisplayedValue(property) ?? "",
+            PlaceholderText = property.IsMixed ? Localizer.Get(StringKeys.WinFormsDesignerMixedValues) : null,
             FontSize = 11,
             MinHeight = 0,
             Padding = Spacing.RowPadding,
@@ -608,9 +618,21 @@ public sealed class PropertyGrid : UserControl
     private static string? Blank(string? text) =>
         string.IsNullOrWhiteSpace(text) ? null : text;
 
+    private static string? DisplayedValue(DesignableProperty property) =>
+        property.IsMixed ? null : property.CurrentValue ?? property.DefaultValue;
+
+    /// <summary>
+    /// Whether committing <paramref name="value"/> would change nothing: a
+    /// mixed selection has no single current value to compare against, and a
+    /// value that already matches what is stored or shown is not an edit.
+    /// </summary>
+    private static bool IsNoOpEdit(DesignableProperty property, string? value) =>
+        !property.IsMixed
+        && (value == property.CurrentValue || (value is not null && value == DisplayedValue(property)));
+
     private void Set(DesignableProperty property, string? value)
     {
-        if (value == property.CurrentValue) return;
+        if (IsNoOpEdit(property, value)) return;
 
         PropertyEdited?.Invoke(property.Name, value);
     }

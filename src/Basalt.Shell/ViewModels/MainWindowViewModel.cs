@@ -450,6 +450,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public DesignerSession? DesignerSessionFor(EditorDocumentViewModel document)
     {
         if (!document.OpenInDesigner) return null;
+        if (document.FilePath.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase)) return null;
 
         // A session built from text the user has since edited by hand is a
         // stale tree, and the next designer edit writes it back over what
@@ -528,21 +529,23 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if (ActiveDocument is null) return;
+        var document = ActiveDocument;
+        if (document is null) return;
 
         // In the designer the source of truth is the XAML document, not the
         // tab's text: it must be realigned before writing to disk. Through the
         // same path as an edit, because this is the one that reaches the file
         // — writing markup here would leave Avalonia XAML in a .frm.
         if (ActiveDesigner is not null)
-            ActiveDocument.Text = WriteBack(ActiveDocument, ActiveDesigner);
+            document.Text = WriteBack(document, ActiveDesigner);
 
-        if (FormatOnSave && !ActiveDocument.OpenInDesigner)
+        if (FormatOnSave && !document.OpenInDesigner)
             await FormatDocumentAsync().ConfigureAwait(true);
 
-        await ActiveDocument.SaveAsync().ConfigureAwait(true);
-        await _languageService.UpdateDocumentAsync(ActiveDocument.FilePath, ActiveDocument.Text).ConfigureAwait(true);
-        StatusMessage = Localizer.Get(StringKeys.StatusSaved, ActiveDocument.FileName);
+        await document.SaveAsync().ConfigureAwait(true);
+        await _languageService.UpdateDocumentAsync(document.FilePath, document.Text).ConfigureAwait(true);
+        await SaveWinFormsCompanionAsync(document).ConfigureAwait(true);
+        StatusMessage = Localizer.Get(StringKeys.StatusSaved, document.FileName);
     }
 
     /// <summary>
@@ -812,10 +815,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public bool FormatOnSave { get; set; } = true;
 
     [RelayCommand]
-    private void Undo() => ActiveDesigner?.Undo();
+    private void Undo()
+    {
+        if (DesignerUndoRequested is { } undo) undo();
+        else ActiveDesigner?.Undo();
+    }
 
     [RelayCommand]
-    private void Redo() => ActiveDesigner?.Redo();
+    private void Redo()
+    {
+        if (DesignerRedoRequested is { } redo) redo();
+        else ActiveDesigner?.Redo();
+    }
 
     /// <summary>Re-indents the caret's line, used by the editor while typing.</summary>
     public Task<TypingFormattingResult> FormatLineAsync(

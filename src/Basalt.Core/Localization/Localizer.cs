@@ -363,6 +363,8 @@ public static class StringKeys
     public const string PickerSolutionFilter = "Picker_SolutionFilter";
     public const string PickerChooseFolder = "Picker_ChooseFolder";
 
+    public const string WinFormsDesignerFormCodeNotOpened = "WinFormsDesigner_FormCodeNotOpened";
+
     // Run and debug status messages that used to be passed to Localizer.Get
     // as string literals, bypassing the compile-time check this class gives
     // every other message.
@@ -434,15 +436,69 @@ public static class StringKeys
     public const string EditorSmartTagExtractMethod = "Editor_SmartTagExtractMethod";
     public const string EditorSmartTagTidyImports = "Editor_SmartTagTidyImports";
 
+    public const string ResourceEditorApply = "ResourceEditor_Apply";
+    public const string ResourceEditorValue = "ResourceEditor_Value";
+    public const string DesignerView = "Designer_View";
     public const string EditorSmartTagsUnsupportedChanges = "Editor_SmartTagsUnsupportedChanges";
     public const string EditorVbMembers = "Editor_VbMembers";
     public const string EditorVbNavigationFailed = "Editor_VbNavigationFailed";
     public const string EditorVbObjects = "Editor_VbObjects";
+    public const string MenuEditorNewItem = "MenuEditor_NewItem";
+    public const string MenuEditorParent = "MenuEditor_Parent";
+    public const string MenuEditorSeparator = "MenuEditor_Separator";
+    public const string MenuEditorTitle = "MenuEditor_Title";
+    public const string MenuInlineBack = "MenuInline_Back";
+    public const string MenuInlineEditText = "MenuInline_EditText";
+    public const string MenuInlineOpenSubmenu = "MenuInline_OpenSubmenu";
+    public const string MenuInlineTypeHere = "MenuInline_TypeHere";
+    public const string MenuInlineUnsupported = "MenuInline_Unsupported";
     public const string NewSolutionChooseFolder = "NewSolution_ChooseFolder";
     public const string NewSolutionInvalidName = "NewSolution_InvalidName";
     public const string NewSolutionLocationRequired = "NewSolution_LocationRequired";
     public const string NewSolutionNameRequired = "NewSolution_NameRequired";
+    public const string PropertyGridCollection = "PropertyGrid_Collection";
+    public const string PropertyGridComponentReference = "PropertyGrid_ComponentReference";
+    public const string PropertyGridName = "PropertyGrid_Name";
+    public const string PropertyGridNone = "PropertyGrid_None";
+    public const string PropertyGridOpenEditor = "PropertyGrid_OpenEditor";
+    public const string WinFormsCollectionInvalidColumn = "WinFormsCollection_InvalidColumn";
+    public const string WinFormsCollectionInvalidEntry = "WinFormsCollection_InvalidEntry";
+    public const string WinFormsCollectionNewItem = "WinFormsCollection_NewItem";
     public const string WinFormsCollectionUnsupported = "WinFormsCollection_Unsupported";
+    public const string WinFormsColorEditorCustom = "WinFormsColorEditor_Custom";
+    public const string WinFormsColorEditorHex = "WinFormsColorEditor_Hex";
+    public const string WinFormsColorEditorKnown = "WinFormsColorEditor_Known";
+    public const string WinFormsColorEditorPreview = "WinFormsColorEditor_Preview";
+    public const string WinFormsColorEditorSystem = "WinFormsColorEditor_System";
+    public const string WinFormsColorEditorTitle = "WinFormsColorEditor_Title";
+    public const string WinFormsDesignerAlignSelection = "WinFormsDesigner_AlignSelection";
+    public const string WinFormsDesignerCodeChanged = "WinFormsDesigner_CodeChanged";
+    public const string WinFormsDesignerCodeUnavailable = "WinFormsDesigner_CodeUnavailable";
+    public const string WinFormsDesignerComponents = "WinFormsDesigner_Components";
+    public const string WinFormsDesignerDistributeSelection = "WinFormsDesigner_DistributeSelection";
+    public const string WinFormsDesignerError = "WinFormsDesigner_Error";
+    public const string WinFormsDesignerEvent = "WinFormsDesigner_Event";
+    public const string WinFormsDesignerEventsHint = "WinFormsDesigner_EventsHint";
+    public const string WinFormsDesignerHandler = "WinFormsDesigner_Handler";
+    public const string WinFormsDesignerMixedValues = "WinFormsDesigner_MixedValues";
+    public const string WinFormsDesignerObjects = "WinFormsDesigner_Objects";
+    public const string WinFormsDesignerPreviewProblems = "WinFormsDesigner_PreviewProblems";
+    public const string WinFormsDesignerSelectedObjects = "WinFormsDesigner_SelectedObjects";
+    public const string WinFormsDesignerTabOrder = "WinFormsDesigner_TabOrder";
+    public const string WinFormsDesignerUnsupportedExpression = "WinFormsDesigner_UnsupportedExpression";
+    public const string WinFormsEditorCancel = "WinFormsEditor_Cancel";
+    public const string WinFormsEditorInvalidColor = "WinFormsEditor_InvalidColor";
+    public const string WinFormsEditorInvalidFont = "WinFormsEditor_InvalidFont";
+    public const string WinFormsEditorOk = "WinFormsEditor_Ok";
+    public const string WinFormsFontEditorBold = "WinFormsFontEditor_Bold";
+    public const string WinFormsFontEditorFamily = "WinFormsFontEditor_Family";
+    public const string WinFormsFontEditorItalic = "WinFormsFontEditor_Italic";
+    public const string WinFormsFontEditorPreview = "WinFormsFontEditor_Preview";
+    public const string WinFormsFontEditorSample = "WinFormsFontEditor_Sample";
+    public const string WinFormsFontEditorSize = "WinFormsFontEditor_Size";
+    public const string WinFormsFontEditorStrikeout = "WinFormsFontEditor_Strikeout";
+    public const string WinFormsFontEditorTitle = "WinFormsFontEditor_Title";
+    public const string WinFormsFontEditorUnderline = "WinFormsFontEditor_Underline";
 
     // Run, debug-start and editor status lines added with the F5 and smart-tag review.
     public const string EditorOnlyVbHtmlGenerated = "Editor_OnlyVbHtmlGenerated";
