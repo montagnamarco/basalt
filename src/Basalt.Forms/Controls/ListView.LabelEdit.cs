@@ -127,7 +127,11 @@ public partial class ListView
     /// </summary>
     protected override void Dispose(bool disposing)
     {
-        if (disposing) DisposeEditBoxCore();
+        if (disposing)
+        {
+            DisposeEditBoxCore();
+            DisposeStateImagesAndTip();
+        }
 
         base.Dispose(disposing);
     }

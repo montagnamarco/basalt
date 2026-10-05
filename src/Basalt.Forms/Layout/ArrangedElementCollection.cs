@@ -9,10 +9,16 @@ namespace System.Windows.Forms.Layout;
 /// </summary>
 public class ArrangedElementCollection : IList
 {
-    private protected readonly List<IArrangedElement> Items = [];
+    private protected readonly List<IArrangedElement> Items;
 
     private protected ArrangedElementCollection()
     {
+        Items = [];
+    }
+
+    internal ArrangedElementCollection(List<IArrangedElement> items)
+    {
+        Items = items;
     }
 
     public virtual int Count => Items.Count;

@@ -17,7 +17,7 @@ namespace System.Windows.Forms;
 /// </remarks>
 [DefaultEvent("SplitterMoved")]
 [DefaultProperty("Dock")]
-public class Splitter : Control
+public partial class Splitter : Control
 {
     private const int DefaultThickness = 3;
 
@@ -116,6 +116,8 @@ public class Splitter : Control
             ApplySplitPosition(target, value);
         }
     }
+
+    public override string ToString() => $"{base.ToString()}, MinExtra: {MinExtra}, MinSize: {MinSize}";
 
     public event SplitterEventHandler? SplitterMoved
     {
@@ -226,6 +228,13 @@ public class Splitter : Control
 
         var splitterScreen = PointToScreen(Point.Empty);
         OnSplitterMoved(new SplitterEventArgs(e.X, e.Y, splitterScreen.X, splitterScreen.Y));
+    }
+
+    internal override void DefaultCaptureLost()
+    {
+        base.DefaultCaptureLost();
+        _dragging = false;
+        _dragTarget = null;
     }
 
     /// <summary>Escape abandons the drag, putting the target back to the size it had when the mouse pressed.</summary>

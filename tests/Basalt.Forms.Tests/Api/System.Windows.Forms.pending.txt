@@ -1,43 +1,7 @@
-F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Default : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
-F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::No : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
-F public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Yes : System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute static readonly
-F public System.Windows.Forms.DockingAttribute::Default : System.Windows.Forms.DockingAttribute static readonly
 I System.Windows.Forms.AccessibleObject : Windows.Win32.System.Com.IDispatch+Interface
 I System.Windows.Forms.DataObject : System.Runtime.InteropServices.ComTypes.IDataObject
-I System.Windows.Forms.KeysConverter : System.Collections.IComparer
-I System.Windows.Forms.ListViewGroup : System.Runtime.Serialization.ISerializable
-I System.Windows.Forms.ListViewItem : System.Runtime.Serialization.ISerializable
-I System.Windows.Forms.OwnerDrawPropertyBag : System.Runtime.Serialization.ISerializable
 I System.Windows.Forms.PropertyGrid : System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser
-I System.Windows.Forms.TreeNode : System.Runtime.Serialization.ISerializable
 M protected System.Windows.Forms.AxHost::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Button::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.Button::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ButtonBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ButtonBase::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.CheckBox::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.CheckedListBox::WmReflectCommand(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.CheckedListBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ColumnHeader::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ComboBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::AdjustFormScrollbars(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::Dispose(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::OnCreateControl() -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::OnMove(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::OnParentChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ContainerControl::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::ScaleMinMaxSize(System.Single, System.Single, System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::UpdateDefaultButton() -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ContainerControl::get_CanEnableIme() -> System.Boolean virtual
-M protected System.Windows.Forms.ContainerControl::get_CreateParams() -> System.Windows.Forms.CreateParams virtual
-M protected System.Windows.Forms.ContextMenu::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys, System.Windows.Forms.Control) -> System.Boolean virtual
-M protected System.Windows.Forms.Cursor::Finalize() -> System.Void virtual
-M protected System.Windows.Forms.DataGridColumnStyle::CreateHeaderAccessibleObject() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.DataGridView::AccessibilityNotifyCurrentCellChanged(System.Drawing.Point) -> System.Void virtual
 M protected System.Windows.Forms.DataGridView::ClearSelection(System.Int32, System.Int32, System.Boolean) -> System.Void
 M protected System.Windows.Forms.DataGridView::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
@@ -167,17 +131,12 @@ M protected System.Windows.Forms.DataGridViewTopLeftHeaderCell::GetErrorIconBoun
 M protected System.Windows.Forms.DataGridViewTopLeftHeaderCell::GetPreferredSize(System.Drawing.Graphics, System.Windows.Forms.DataGridViewCellStyle, System.Int32, System.Drawing.Size) -> System.Drawing.Size virtual
 M protected System.Windows.Forms.DataGridViewTopLeftHeaderCell::Paint(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.Object, System.Object, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewPaintParts) -> System.Void virtual
 M protected System.Windows.Forms.DataGridViewTopLeftHeaderCell::PaintBorder(System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Windows.Forms.DataGridViewCellStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.DateTimePicker::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Design.ComponentEditorPage::set_Component(System.ComponentModel.IComponent) -> System.Void
-M protected System.Windows.Forms.Design.ComponentEditorPage::set_PageSite(System.Windows.Forms.IComponentEditorPageSite) -> System.Void
 M protected System.Windows.Forms.FileDialog::HookProc(System.IntPtr, System.Int32, System.IntPtr, System.IntPtr) -> System.IntPtr virtual
 M protected System.Windows.Forms.FileDialog::get_Instance() -> System.IntPtr virtual
 M protected System.Windows.Forms.FileDialog::get_Options() -> System.Int32
 M protected System.Windows.Forms.Form::AdjustFormScrollbars(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.Form::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.Form::CreateControlsInstance() -> System.Windows.Forms.Control+ControlCollection virtual
-M protected System.Windows.Forms.Form::DefWndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.Form::OnBackgroundImageChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.Form::OnBackgroundImageLayoutChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.Form::OnCreateControl() -> System.Void virtual
@@ -209,153 +168,24 @@ M protected System.Windows.Forms.Form::ProcessMnemonic(System.Char) -> System.Bo
 M protected System.Windows.Forms.Form::ScaleMinMaxSize(System.Single, System.Single, System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.Form::Select(System.Boolean, System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.Form::UpdateDefaultButton() -> System.Void virtual
-M protected System.Windows.Forms.Form::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.Form::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
 M protected System.Windows.Forms.Form::get_MaximizedBounds() -> System.Drawing.Rectangle
 M protected System.Windows.Forms.Form::get_ShowWithoutActivation() -> System.Boolean virtual
 M protected System.Windows.Forms.Form::set_MaximizedBounds(System.Drawing.Rectangle) -> System.Void
-M protected System.Windows.Forms.GroupBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ImageIndexConverter::get_IncludeNoneAsStandardValue() -> System.Boolean virtual
-M protected System.Windows.Forms.ImageKeyConverter::get_IncludeNoneAsStandardValue() -> System.Boolean virtual
-M protected System.Windows.Forms.Label::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Label::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.LinkLabel::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::OnChangeUICues(System.Windows.Forms.UICuesEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::WmReflectCommand(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ListBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ListView::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.ListView::CreateHandle() -> System.Void virtual
-M protected System.Windows.Forms.ListView::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.ListView::OnBackgroundImageChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnFontChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnGotFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnGroupCollapsedStateChanged(System.Windows.Forms.ListViewGroupEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnGroupTaskLinkClick(System.Windows.Forms.ListViewGroupEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnItemDrag(System.Windows.Forms.ItemDragEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnLostFocus(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnMouseHover(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnMouseLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnParentChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ListView::RealizeProperties() -> System.Void
-M protected System.Windows.Forms.ListView::UpdateExtendedStyles() -> System.Void
-M protected System.Windows.Forms.ListView::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ListView::get_DoubleBuffered() -> System.Boolean virtual
-M protected System.Windows.Forms.ListView::set_DoubleBuffered(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.ListViewItem::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
-M protected System.Windows.Forms.ListViewItem::Deserialize(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext) -> System.Void virtual
-M protected System.Windows.Forms.ListViewItem::Serialize(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext) -> System.Void virtual
-M protected System.Windows.Forms.ListViewItemStateImageIndexConverter::get_IncludeNoneAsStandardValue() -> System.Boolean virtual
-M protected System.Windows.Forms.MaskedTextBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.MdiClient::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.MdiClient::ScaleCore(System.Single, System.Single) -> System.Void virtual
-M protected System.Windows.Forms.MdiClient::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.MdiClient::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Menu::ProcessCmdKey(ref System.Windows.Forms.Message, System.Windows.Forms.Keys) -> System.Boolean virtual
 M protected System.Windows.Forms.MenuStrip::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.MenuStrip::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.MonthCalendar::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.NativeWindow::WmDpiChangedAfterParent(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.NativeWindow::WmDpiChangedBeforeParent(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.NativeWindow::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.OwnerDrawPropertyBag::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
-M protected System.Windows.Forms.PictureBox::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.PrintPreviewControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ProgressBar::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.PropertyGrid::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.PropertyGrid::get_ShowFocusCues() -> System.Boolean virtual
-M protected System.Windows.Forms.RadioButton::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.RichTextBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ScrollBar::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ScrollBar::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.ScrollableControl::OnPaddingChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ScrollableControl::OnPaintBackground(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ScrollableControl::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ScrollableControl::OnVisibleChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ScrollableControl::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.ScrollableControl::ScaleCore(System.Single, System.Single) -> System.Void virtual
-M protected System.Windows.Forms.ScrollableControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.SplitContainer::OnKeyDown(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::OnMouseCaptureChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::OnMouseLeave(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::OnMove(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::ProcessTabKey(System.Boolean) -> System.Boolean virtual
-M protected System.Windows.Forms.SplitContainer::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::Select(System.Boolean, System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.SplitContainer::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.Splitter::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.Splitter::SetBoundsCore(System.Int32, System.Int32, System.Int32, System.Int32, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.Splitter::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
 M protected System.Windows.Forms.StatusStrip::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.StatusStrip::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.StatusStrip::OnPaintBackground(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.StatusStrip::OnSpringTableLayoutCore() -> System.Void virtual
 M protected System.Windows.Forms.StatusStrip::SetDisplayedItems() -> System.Void virtual
-M protected System.Windows.Forms.StatusStrip::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TabControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TableLayoutPanel::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TableLayoutPanel::ScaleControl(System.Drawing.SizeF, System.Windows.Forms.BoundsSpecified) -> System.Void virtual
-M protected System.Windows.Forms.TableLayoutPanel::ScaleCore(System.Single, System.Single) -> System.Void virtual
-M protected System.Windows.Forms.TextBox::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TextBoxBase::get_CanEnableIme() -> System.Boolean virtual
-M protected System.Windows.Forms.TextBoxBase::get_ImeModeBase() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.TextBoxBase::set_ImeModeBase(System.Windows.Forms.ImeMode) -> System.Void virtual
-M protected System.Windows.Forms.ToolStrip::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.ToolStrip::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripContainer::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.ToolStripContainer::CreateControlsInstance() -> System.Windows.Forms.Control+ControlCollection virtual
-M protected System.Windows.Forms.ToolStripContainer::OnRightToLeftChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripContainer::OnSizeChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripContentPanel::OnPaintBackground(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripDropDown::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripDropDownMenu::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ToolStripDropDownMenu::OnFontChanged(System.EventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripDropDownMenu::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
 M protected System.Windows.Forms.ToolStripDropDownMenu::OnPaintBackground(System.Windows.Forms.PaintEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripDropDownMenu::SetDisplayedItems() -> System.Void virtual
 M protected System.Windows.Forms.ToolStripDropDownMenu::get_MaxItemSize() -> System.Drawing.Size virtual
-M protected System.Windows.Forms.ToolStripItem::get_ShowKeyboardCues() -> System.Boolean virtual
 M protected System.Windows.Forms.ToolStripOverflow::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
 M protected System.Windows.Forms.ToolStripOverflow::OnLayout(System.Windows.Forms.LayoutEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.ToolStripOverflow::SetDisplayedItems() -> System.Void virtual
-M protected System.Windows.Forms.TrackBar::OnSystemColorsChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TrackBar::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TrackBar::get_DefaultImeMode() -> System.Windows.Forms.ImeMode virtual
-M protected System.Windows.Forms.TreeNode::.ctor(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext)
-M protected System.Windows.Forms.TreeNode::Deserialize(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext) -> System.Void virtual
-M protected System.Windows.Forms.TreeNode::Serialize(System.Runtime.Serialization.SerializationInfo, System.Runtime.Serialization.StreamingContext) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::CreateAccessibilityInstance() -> System.Windows.Forms.AccessibleObject virtual
-M protected System.Windows.Forms.TreeView::CreateHandle() -> System.Void virtual
-M protected System.Windows.Forms.TreeView::Dispose(System.Boolean) -> System.Void virtual
 M protected System.Windows.Forms.TreeView::GetItemRenderStyles(System.Windows.Forms.TreeNode, System.Int32) -> System.Windows.Forms.OwnerDrawPropertyBag
-M protected System.Windows.Forms.TreeView::IsInputKey(System.Windows.Forms.Keys) -> System.Boolean virtual
-M protected System.Windows.Forms.TreeView::OnHandleCreated(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnHandleDestroyed(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnKeyUp(System.Windows.Forms.KeyEventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnMouseHover(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::OnRightToLeftLayoutChanged(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.TreeView::get_DoubleBuffered() -> System.Boolean virtual
-M protected System.Windows.Forms.TreeView::set_DoubleBuffered(System.Boolean) -> System.Void virtual
-M protected System.Windows.Forms.TreeViewImageIndexConverter::get_IncludeNoneAsStandardValue() -> System.Boolean virtual
-M protected System.Windows.Forms.UpDownBase::RescaleConstantsForDpi(System.Int32, System.Int32) -> System.Void virtual
-M protected System.Windows.Forms.UpDownBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
-M protected System.Windows.Forms.UserControl::OnResize(System.EventArgs) -> System.Void virtual
-M protected System.Windows.Forms.UserControl::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.WebBrowser::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M protected System.Windows.Forms.WebBrowserBase::WndProc(ref System.Windows.Forms.Message) -> System.Void virtual
 M public System.Windows.Forms.AmbientProperties::get_Cursor() -> System.Windows.Forms.Cursor
@@ -368,22 +198,7 @@ M public System.Windows.Forms.AxHost::get_ImeMode() -> System.Windows.Forms.ImeM
 M public System.Windows.Forms.AxHost::remove_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
 M public System.Windows.Forms.AxHost::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.AxHost::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.ButtonBase::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ButtonBase::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.ButtonBase::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ButtonBase::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
 M public System.Windows.Forms.Clipboard::SetDataAsJson`1(System.String, T) -> System.Void static
-M public System.Windows.Forms.ColumnHeader::.ctor(System.Int32)
-M public System.Windows.Forms.ColumnHeader::.ctor(System.String)
-M public System.Windows.Forms.ColumnHeader::AutoResize(System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
-M public System.Windows.Forms.ColumnHeader::get_ImageIndex() -> System.Int32
-M public System.Windows.Forms.ColumnHeader::get_ImageKey() -> System.String
-M public System.Windows.Forms.ColumnHeader::get_ImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.ColumnHeader::set_ImageIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.ColumnHeader::set_ImageKey(System.String) -> System.Void
-M public System.Windows.Forms.ColumnHeaderConverter::.ctor()
-M public System.Windows.Forms.ColumnHeaderConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.ColumnHeaderConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
 M public System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant::.ctor()
 M public System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService::ShowPropertyPage(System.String, System.Object, System.Int32, System.Guid, System.IntPtr) -> System.Void abstract
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::DropDownDone() -> System.Void abstract
@@ -396,7 +211,6 @@ M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::ge
 M public System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser::remove_ComComponentNameChanged(System.ComponentModel.Design.ComponentRenameEventHandler) -> System.Void abstract
 M public System.Windows.Forms.Control::DoDragDropAsJson`1(T, System.Windows.Forms.DragDropEffects) -> System.Windows.Forms.DragDropEffects
 M public System.Windows.Forms.Control::DoDragDropAsJson`1(T, System.Windows.Forms.DragDropEffects, System.Drawing.Bitmap, System.Drawing.Point, System.Boolean) -> System.Windows.Forms.DragDropEffects
-M public System.Windows.Forms.DataGridColumnStyle::get_HeaderAccessibleObject() -> System.Windows.Forms.AccessibleObject
 M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::.ctor(System.Windows.Forms.DataGridView)
 M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::Clear() -> System.Void virtual
 M public System.Windows.Forms.DataGridView+DataGridViewControlCollection::CopyTo(System.Windows.Forms.Control[], System.Int32) -> System.Void
@@ -476,12 +290,6 @@ M public System.Windows.Forms.DataGridViewCellPaintingEventArgs::.ctor(System.Wi
 M public System.Windows.Forms.DataGridViewCellStyleConverter::.ctor()
 M public System.Windows.Forms.DataGridViewCellStyleConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.DataGridViewCellStyleConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::.ctor()
-M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::.ctor(System.Boolean)
-M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::Equals(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::GetHashCode() -> System.Int32 virtual
-M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::IsDefaultAttribute() -> System.Boolean virtual
-M public System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute::get_Visible() -> System.Boolean
 M public System.Windows.Forms.DataGridViewRow::AdjustRowHeaderBorderStyle(System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Windows.Forms.DataGridViewAdvancedBorderStyle, System.Boolean, System.Boolean, System.Boolean, System.Boolean) -> System.Windows.Forms.DataGridViewAdvancedBorderStyle virtual
 M public System.Windows.Forms.DataGridViewRow::get_AccessibilityObject() -> System.Windows.Forms.AccessibleObject
 M public System.Windows.Forms.DataGridViewRowPostPaintEventArgs::.ctor(System.Windows.Forms.DataGridView, System.Drawing.Graphics, System.Drawing.Rectangle, System.Drawing.Rectangle, System.Int32, System.Windows.Forms.DataGridViewElementStates, System.String, System.Windows.Forms.DataGridViewCellStyle, System.Boolean, System.Boolean)
@@ -490,12 +298,6 @@ M public System.Windows.Forms.DataGridViewTopLeftHeaderCell::.ctor()
 M public System.Windows.Forms.DataGridViewTopLeftHeaderCell::ToString() -> System.String virtual
 M public System.Windows.Forms.DataObject::SetDataAsJson`1(System.String, T) -> System.Void
 M public System.Windows.Forms.DataObject::SetDataAsJson`1(T) -> System.Void
-M public System.Windows.Forms.DockingAttribute::.ctor()
-M public System.Windows.Forms.DockingAttribute::.ctor(System.Windows.Forms.DockingBehavior)
-M public System.Windows.Forms.DockingAttribute::Equals(System.Object) -> System.Boolean virtual
-M public System.Windows.Forms.DockingAttribute::GetHashCode() -> System.Int32 virtual
-M public System.Windows.Forms.DockingAttribute::IsDefaultAttribute() -> System.Boolean virtual
-M public System.Windows.Forms.DockingAttribute::get_DockingBehavior() -> System.Windows.Forms.DockingBehavior
 M public System.Windows.Forms.FileDialog::get_CustomPlaces() -> System.Windows.Forms.FileDialogCustomPlacesCollection
 M public System.Windows.Forms.FolderBrowserDialog::add_HelpRequest(System.EventHandler) -> System.Void
 M public System.Windows.Forms.FolderBrowserDialog::remove_HelpRequest(System.EventHandler) -> System.Void
@@ -560,50 +362,12 @@ M public System.Windows.Forms.Form::set_FormCaptionTextColor(System.Drawing.Colo
 M public System.Windows.Forms.Form::set_FormCornerPreference(System.Windows.Forms.FormCornerPreference) -> System.Void
 M public System.Windows.Forms.Form::set_FormScreenCaptureMode(System.Windows.Forms.ScreenCaptureMode) -> System.Void
 M public System.Windows.Forms.Form::set_Menu(System.Windows.Forms.MainMenu) -> System.Void
-M public System.Windows.Forms.ImageIndexConverter::.ctor()
-M public System.Windows.Forms.ImageIndexConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.ImageIndexConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.ImageIndexConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
-M public System.Windows.Forms.ImageIndexConverter::GetStandardValuesExclusive(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.ImageIndexConverter::GetStandardValuesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.ImageKeyConverter::.ctor()
-M public System.Windows.Forms.ImageKeyConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.ImageKeyConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.ImageKeyConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.ImageKeyConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
-M public System.Windows.Forms.ImageKeyConverter::GetStandardValuesExclusive(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.ImageKeyConverter::GetStandardValuesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
 M public System.Windows.Forms.ImeContext::Disable(System.IntPtr) -> System.Void static
 M public System.Windows.Forms.ImeContext::Enable(System.IntPtr) -> System.Void static
 M public System.Windows.Forms.ImeContext::GetImeMode(System.IntPtr) -> System.Windows.Forms.ImeMode static
 M public System.Windows.Forms.ImeContext::IsOpen(System.IntPtr) -> System.Boolean static
 M public System.Windows.Forms.ImeContext::SetImeStatus(System.Windows.Forms.ImeMode, System.IntPtr) -> System.Void static
 M public System.Windows.Forms.ImeContext::SetOpenStatus(System.Boolean, System.IntPtr) -> System.Void static
-M public System.Windows.Forms.ImeModeConversion::get_ImeModeConversionBits() -> System.Collections.Generic.Dictionary`2<System.Windows.Forms.ImeMode, System.Windows.Forms.ImeModeConversion> static
-M public System.Windows.Forms.ImeModeConversion::get_IsCurrentConversionTableSupported() -> System.Boolean static
-M public System.Windows.Forms.KeysConverter::.ctor()
-M public System.Windows.Forms.KeysConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.KeysConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.KeysConverter::Compare(System.Object, System.Object) -> System.Int32
-M public System.Windows.Forms.KeysConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.KeysConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.KeysConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
-M public System.Windows.Forms.KeysConverter::GetStandardValuesExclusive(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.KeysConverter::GetStandardValuesSupported(System.ComponentModel.ITypeDescriptorContext) -> System.Boolean virtual
-M public System.Windows.Forms.Label::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Label::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.Label::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Label::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::.ctor()
-M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.LinkConverter::.ctor()
-M public System.Windows.Forms.LinkConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.LinkConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.LinkConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.LinkConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
 M public System.Windows.Forms.ListBindingConverter::.ctor()
 M public System.Windows.Forms.ListBindingConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
 M public System.Windows.Forms.ListBindingConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
@@ -616,269 +380,8 @@ M public System.Windows.Forms.ListBindingHelper::GetListItemProperties(System.Ob
 M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object) -> System.Type static
 M public System.Windows.Forms.ListBindingHelper::GetListItemType(System.Object, System.String) -> System.Type static
 M public System.Windows.Forms.ListBindingHelper::GetListName(System.Object, System.ComponentModel.PropertyDescriptor[]) -> System.String static
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.Int32) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Add(System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.String) -> System.Windows.Forms.ColumnHeader virtual
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String) -> System.Void
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.Int32) -> System.Void
-M public System.Windows.Forms.ListView+ColumnHeaderCollection::Insert(System.Int32, System.String, System.String, System.Int32, System.Windows.Forms.HorizontalAlignment, System.String) -> System.Void
-M public System.Windows.Forms.ListView::ArrangeIcons() -> System.Void
-M public System.Windows.Forms.ListView::ArrangeIcons(System.Windows.Forms.ListViewAlignment) -> System.Void
-M public System.Windows.Forms.ListView::AutoResizeColumn(System.Int32, System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
-M public System.Windows.Forms.ListView::AutoResizeColumns(System.Windows.Forms.ColumnHeaderAutoResizeStyle) -> System.Void
-M public System.Windows.Forms.ListView::RedrawItems(System.Int32, System.Int32, System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_GroupCollapsedStateChanged(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
-M public System.Windows.Forms.ListView::add_GroupTaskLinkClick(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
-M public System.Windows.Forms.ListView::add_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_ItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::get_Alignment() -> System.Windows.Forms.ListViewAlignment
-M public System.Windows.Forms.ListView::get_AutoArrange() -> System.Boolean
-M public System.Windows.Forms.ListView::get_BackColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.ListView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.ListView::get_BackgroundImageTiled() -> System.Boolean
-M public System.Windows.Forms.ListView::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.ListView::get_GroupImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.ListView::get_HotTracking() -> System.Boolean
-M public System.Windows.Forms.ListView::get_HoverSelection() -> System.Boolean
-M public System.Windows.Forms.ListView::get_LabelWrap() -> System.Boolean
-M public System.Windows.Forms.ListView::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.ListView::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.ListView::get_Scrollable() -> System.Boolean
-M public System.Windows.Forms.ListView::get_ShowItemToolTips() -> System.Boolean
-M public System.Windows.Forms.ListView::get_StateImageList() -> System.Windows.Forms.ImageList
-M public System.Windows.Forms.ListView::get_Text() -> System.String virtual
-M public System.Windows.Forms.ListView::get_TileSize() -> System.Drawing.Size
-M public System.Windows.Forms.ListView::get_UseCompatibleStateImageBehavior() -> System.Boolean
-M public System.Windows.Forms.ListView::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_GroupCollapsedStateChanged(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
-M public System.Windows.Forms.ListView::remove_GroupTaskLinkClick(System.EventHandler`1<System.Windows.Forms.ListViewGroupEventArgs>) -> System.Void
-M public System.Windows.Forms.ListView::remove_ItemDrag(System.Windows.Forms.ItemDragEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_ItemMouseHover(System.Windows.Forms.ListViewItemMouseHoverEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ListView::set_Alignment(System.Windows.Forms.ListViewAlignment) -> System.Void
-M public System.Windows.Forms.ListView::set_AutoArrange(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_BackColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.ListView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.ListView::set_BackgroundImageTiled(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.ListView::set_GroupImageList(System.Windows.Forms.ImageList) -> System.Void
-M public System.Windows.Forms.ListView::set_HotTracking(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_HoverSelection(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_LabelWrap(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.ListView::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ListView::set_Scrollable(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_ShowItemToolTips(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListView::set_StateImageList(System.Windows.Forms.ImageList) -> System.Void
-M public System.Windows.Forms.ListView::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.ListView::set_TileSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.ListView::set_UseCompatibleStateImageBehavior(System.Boolean) -> System.Void
-M public System.Windows.Forms.ListViewGroup::get_CollapsedState() -> System.Windows.Forms.ListViewGroupCollapsedState
-M public System.Windows.Forms.ListViewGroup::get_Footer() -> System.String
-M public System.Windows.Forms.ListViewGroup::get_FooterAlignment() -> System.Windows.Forms.HorizontalAlignment
-M public System.Windows.Forms.ListViewGroup::get_Subtitle() -> System.String
-M public System.Windows.Forms.ListViewGroup::get_TaskLink() -> System.String
-M public System.Windows.Forms.ListViewGroup::get_TitleImageIndex() -> System.Int32
-M public System.Windows.Forms.ListViewGroup::get_TitleImageKey() -> System.String
-M public System.Windows.Forms.ListViewGroup::set_CollapsedState(System.Windows.Forms.ListViewGroupCollapsedState) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_Footer(System.String) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_FooterAlignment(System.Windows.Forms.HorizontalAlignment) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_Subtitle(System.String) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_TaskLink(System.String) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_TitleImageIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.ListViewGroup::set_TitleImageKey(System.String) -> System.Void
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::ContainsKey(System.String) -> System.Boolean virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::IndexOfKey(System.String) -> System.Int32 virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::RemoveByKey(System.String) -> System.Void virtual
-M public System.Windows.Forms.ListViewItem+ListViewSubItemCollection::get_IsReadOnly() -> System.Boolean
-M public System.Windows.Forms.ListViewItemConverter::.ctor()
-M public System.Windows.Forms.ListViewItemConverter::CanConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.ListViewItemConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.ListViewItemStateImageIndexConverter::.ctor()
-M public System.Windows.Forms.ListViewItemStateImageIndexConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
-M public System.Windows.Forms.MdiClient::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.MdiClient::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.MdiClient::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.MdiClient::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
 M public System.Windows.Forms.MenuStrip::get_GripStyle() -> System.Windows.Forms.ToolStripGripStyle
 M public System.Windows.Forms.MenuStrip::set_GripStyle(System.Windows.Forms.ToolStripGripStyle) -> System.Void
-M public System.Windows.Forms.MonthCalendar::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.MonthCalendar::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.MonthCalendar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.OpacityConverter::.ctor()
-M public System.Windows.Forms.OpacityConverter::CanConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Type) -> System.Boolean virtual
-M public System.Windows.Forms.OpacityConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.OpacityConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.OwnerDrawPropertyBag::Copy(System.Windows.Forms.OwnerDrawPropertyBag) -> System.Windows.Forms.OwnerDrawPropertyBag static
-M public System.Windows.Forms.OwnerDrawPropertyBag::IsEmpty() -> System.Boolean virtual
-M public System.Windows.Forms.OwnerDrawPropertyBag::get_BackColor() -> System.Drawing.Color
-M public System.Windows.Forms.OwnerDrawPropertyBag::get_Font() -> System.Drawing.Font
-M public System.Windows.Forms.OwnerDrawPropertyBag::get_ForeColor() -> System.Drawing.Color
-M public System.Windows.Forms.OwnerDrawPropertyBag::set_BackColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.OwnerDrawPropertyBag::set_Font(System.Drawing.Font) -> System.Void
-M public System.Windows.Forms.OwnerDrawPropertyBag::set_ForeColor(System.Drawing.Color) -> System.Void
-M public System.Windows.Forms.PictureBox::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PictureBox::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.PictureBox::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PictureBox::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.PrintPreviewDialog::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.PrintPreviewDialog::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.ProgressBar::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ProgressBar::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.ProgressBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ProgressBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.RelatedImageListAttribute::.ctor(System.String)
-M public System.Windows.Forms.RelatedImageListAttribute::get_RelatedImageList() -> System.String
-M public System.Windows.Forms.ScrollBar::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ScrollBar::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.ScrollBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ScrollBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.SplitContainer::add_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::add_ControlAdded(System.Windows.Forms.ControlEventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::add_ControlRemoved(System.Windows.Forms.ControlEventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::get_AutoScroll() -> System.Boolean virtual
-M public System.Windows.Forms.SplitContainer::get_AutoScrollMargin() -> System.Drawing.Size
-M public System.Windows.Forms.SplitContainer::get_AutoScrollMinSize() -> System.Drawing.Size
-M public System.Windows.Forms.SplitContainer::get_AutoScrollOffset() -> System.Drawing.Point virtual
-M public System.Windows.Forms.SplitContainer::get_AutoScrollPosition() -> System.Drawing.Point
-M public System.Windows.Forms.SplitContainer::get_AutoSize() -> System.Boolean virtual
-M public System.Windows.Forms.SplitContainer::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.SplitContainer::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.SplitContainer::get_BindingContext() -> System.Windows.Forms.BindingContext virtual
-M public System.Windows.Forms.SplitContainer::get_Controls() -> System.Windows.Forms.Control+ControlCollection
-M public System.Windows.Forms.SplitContainer::get_Dock() -> System.Windows.Forms.DockStyle
-M public System.Windows.Forms.SplitContainer::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.SplitContainer::get_TabStop() -> System.Boolean
-M public System.Windows.Forms.SplitContainer::get_Text() -> System.String virtual
-M public System.Windows.Forms.SplitContainer::remove_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::remove_ControlAdded(System.Windows.Forms.ControlEventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::remove_ControlRemoved(System.Windows.Forms.ControlEventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitContainer::set_AutoScroll(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.SplitContainer::set_AutoScrollMargin(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.SplitContainer::set_AutoScrollMinSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.SplitContainer::set_AutoScrollOffset(System.Drawing.Point) -> System.Void virtual
-M public System.Windows.Forms.SplitContainer::set_AutoScrollPosition(System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.SplitContainer::set_AutoSize(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.SplitContainer::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.SplitContainer::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.SplitContainer::set_BindingContext(System.Windows.Forms.BindingContext) -> System.Void virtual
-M public System.Windows.Forms.SplitContainer::set_Dock(System.Windows.Forms.DockStyle) -> System.Void
-M public System.Windows.Forms.SplitContainer::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.SplitContainer::set_TabStop(System.Boolean) -> System.Void
-M public System.Windows.Forms.SplitContainer::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.Splitter::ToString() -> System.String virtual
-M public System.Windows.Forms.Splitter::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_Enter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_Leave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::get_AllowDrop() -> System.Boolean virtual
-M public System.Windows.Forms.Splitter::get_Anchor() -> System.Windows.Forms.AnchorStyles virtual
-M public System.Windows.Forms.Splitter::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.Splitter::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.Splitter::get_Dock() -> System.Windows.Forms.DockStyle virtual
-M public System.Windows.Forms.Splitter::get_Font() -> System.Drawing.Font virtual
-M public System.Windows.Forms.Splitter::get_ForeColor() -> System.Drawing.Color virtual
-M public System.Windows.Forms.Splitter::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.Splitter::get_TabStop() -> System.Boolean
-M public System.Windows.Forms.Splitter::get_Text() -> System.String virtual
-M public System.Windows.Forms.Splitter::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_Enter(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_FontChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_ForeColorChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_KeyDown(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_KeyPress(System.Windows.Forms.KeyPressEventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_KeyUp(System.Windows.Forms.KeyEventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_Leave(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.Splitter::set_AllowDrop(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.Splitter::set_Anchor(System.Windows.Forms.AnchorStyles) -> System.Void virtual
-M public System.Windows.Forms.Splitter::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.Splitter::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.Splitter::set_Dock(System.Windows.Forms.DockStyle) -> System.Void virtual
-M public System.Windows.Forms.Splitter::set_Font(System.Drawing.Font) -> System.Void virtual
-M public System.Windows.Forms.Splitter::set_ForeColor(System.Drawing.Color) -> System.Void virtual
-M public System.Windows.Forms.Splitter::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.Splitter::set_TabStop(System.Boolean) -> System.Void
-M public System.Windows.Forms.Splitter::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.SplitterPanel::add_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::add_DockChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::add_LocationChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::add_TabIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::add_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::add_VisibleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::get_Anchor() -> System.Windows.Forms.AnchorStyles
-M public System.Windows.Forms.SplitterPanel::get_AutoSize() -> System.Boolean
-M public System.Windows.Forms.SplitterPanel::get_AutoSizeMode() -> System.Windows.Forms.AutoSizeMode virtual
-M public System.Windows.Forms.SplitterPanel::get_BorderStyle() -> System.Windows.Forms.BorderStyle
-M public System.Windows.Forms.SplitterPanel::get_Dock() -> System.Windows.Forms.DockStyle
-M public System.Windows.Forms.SplitterPanel::get_DockPadding() -> System.Windows.Forms.ScrollableControl+DockPaddingEdges
-M public System.Windows.Forms.SplitterPanel::get_Height() -> System.Int32
-M public System.Windows.Forms.SplitterPanel::get_Location() -> System.Drawing.Point
-M public System.Windows.Forms.SplitterPanel::get_MaximumSize() -> System.Drawing.Size
-M public System.Windows.Forms.SplitterPanel::get_MinimumSize() -> System.Drawing.Size
-M public System.Windows.Forms.SplitterPanel::get_Name() -> System.String
-M public System.Windows.Forms.SplitterPanel::get_Parent() -> System.Windows.Forms.Control
-M public System.Windows.Forms.SplitterPanel::get_Size() -> System.Drawing.Size
-M public System.Windows.Forms.SplitterPanel::get_TabIndex() -> System.Int32
-M public System.Windows.Forms.SplitterPanel::get_TabStop() -> System.Boolean
-M public System.Windows.Forms.SplitterPanel::get_Visible() -> System.Boolean
-M public System.Windows.Forms.SplitterPanel::get_Width() -> System.Int32
-M public System.Windows.Forms.SplitterPanel::remove_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::remove_DockChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::remove_LocationChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::remove_TabIndexChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::remove_TabStopChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::remove_VisibleChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Anchor(System.Windows.Forms.AnchorStyles) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_AutoSize(System.Boolean) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_AutoSizeMode(System.Windows.Forms.AutoSizeMode) -> System.Void virtual
-M public System.Windows.Forms.SplitterPanel::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Dock(System.Windows.Forms.DockStyle) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Height(System.Int32) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Location(System.Drawing.Point) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_MaximumSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_MinimumSize(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Name(System.String) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Parent(System.Windows.Forms.Control) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Size(System.Drawing.Size) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_TabIndex(System.Int32) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_TabStop(System.Boolean) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Visible(System.Boolean) -> System.Void
-M public System.Windows.Forms.SplitterPanel::set_Width(System.Int32) -> System.Void
-M public System.Windows.Forms.StatusBar::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.StatusBar::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.StatusBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.StatusBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
 M public System.Windows.Forms.StatusStrip::add_PaddingChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.StatusStrip::get_Dock() -> System.Windows.Forms.DockStyle virtual
 M public System.Windows.Forms.StatusStrip::get_GripStyle() -> System.Windows.Forms.ToolStripGripStyle
@@ -889,17 +392,11 @@ M public System.Windows.Forms.StatusStrip::set_Dock(System.Windows.Forms.DockSty
 M public System.Windows.Forms.StatusStrip::set_GripStyle(System.Windows.Forms.ToolStripGripStyle) -> System.Void
 M public System.Windows.Forms.StatusStrip::set_LayoutStyle(System.Windows.Forms.ToolStripLayoutStyle) -> System.Void
 M public System.Windows.Forms.StatusStrip::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.TableLayoutPanel::get_BorderStyle() -> System.Windows.Forms.BorderStyle
-M public System.Windows.Forms.TableLayoutPanel::set_BorderStyle(System.Windows.Forms.BorderStyle) -> System.Void
 M public System.Windows.Forms.ThreadExceptionDialog::.ctor(System.Exception)
 M public System.Windows.Forms.ThreadExceptionDialog::add_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ThreadExceptionDialog::get_AutoSize() -> System.Boolean virtual
 M public System.Windows.Forms.ThreadExceptionDialog::remove_AutoSizeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.ThreadExceptionDialog::set_AutoSize(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.ToolBar::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolBar::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.ToolBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
 M public System.Windows.Forms.ToolStripComboBox::get_AutoCompleteCustomSource() -> System.Windows.Forms.AutoCompleteStringCollection
 M public System.Windows.Forms.ToolStripComboBox::get_AutoCompleteMode() -> System.Windows.Forms.AutoCompleteMode
 M public System.Windows.Forms.ToolStripComboBox::get_AutoCompleteSource() -> System.Windows.Forms.AutoCompleteSource
@@ -985,14 +482,6 @@ M public System.Windows.Forms.ToolStripContentPanel::set_MinimumSize(System.Draw
 M public System.Windows.Forms.ToolStripContentPanel::set_Name(System.String) -> System.Void
 M public System.Windows.Forms.ToolStripContentPanel::set_TabIndex(System.Int32) -> System.Void
 M public System.Windows.Forms.ToolStripContentPanel::set_TabStop(System.Boolean) -> System.Void
-M public System.Windows.Forms.ToolStripDropDown::add_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripDropDown::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripDropDown::add_RegionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripDropDown::get_Region() -> System.Drawing.Region
-M public System.Windows.Forms.ToolStripDropDown::remove_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripDropDown::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripDropDown::remove_RegionChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.ToolStripDropDown::set_Region(System.Drawing.Region) -> System.Void
 M public System.Windows.Forms.ToolStripDropDownMenu::get_LayoutEngine() -> System.Windows.Forms.Layout.LayoutEngine virtual
 M public System.Windows.Forms.ToolStripDropDownMenu::get_LayoutStyle() -> System.Windows.Forms.ToolStripLayoutStyle
 M public System.Windows.Forms.ToolStripDropDownMenu::set_LayoutStyle(System.Windows.Forms.ToolStripLayoutStyle) -> System.Void
@@ -1017,53 +506,6 @@ M public System.Windows.Forms.ToolStripTextBox::get_AutoCompleteSource() -> Syst
 M public System.Windows.Forms.ToolStripTextBox::set_AutoCompleteCustomSource(System.Windows.Forms.AutoCompleteStringCollection) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_AutoCompleteMode(System.Windows.Forms.AutoCompleteMode) -> System.Void
 M public System.Windows.Forms.ToolStripTextBox::set_AutoCompleteSource(System.Windows.Forms.AutoCompleteSource) -> System.Void
-M public System.Windows.Forms.TrackBar::add_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TrackBar::get_ImeMode() -> System.Windows.Forms.ImeMode
-M public System.Windows.Forms.TrackBar::remove_ImeModeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TrackBar::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.TreeNode::FromHandle(System.Windows.Forms.TreeView, System.IntPtr) -> System.Windows.Forms.TreeNode static
-M public System.Windows.Forms.TreeNode::get_ContextMenuStrip() -> System.Windows.Forms.ContextMenuStrip virtual
-M public System.Windows.Forms.TreeNode::get_Handle() -> System.IntPtr
-M public System.Windows.Forms.TreeNode::set_ContextMenuStrip(System.Windows.Forms.ContextMenuStrip) -> System.Void virtual
-M public System.Windows.Forms.TreeView::add_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::get_BackgroundImage() -> System.Drawing.Image virtual
-M public System.Windows.Forms.TreeView::get_BackgroundImageLayout() -> System.Windows.Forms.ImageLayout virtual
-M public System.Windows.Forms.TreeView::get_Padding() -> System.Windows.Forms.Padding
-M public System.Windows.Forms.TreeView::get_RightToLeftLayout() -> System.Boolean virtual
-M public System.Windows.Forms.TreeView::get_Text() -> System.String virtual
-M public System.Windows.Forms.TreeView::remove_BackgroundImageChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_BackgroundImageLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_PaddingChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_Paint(System.Windows.Forms.PaintEventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_RightToLeftLayoutChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.TreeView::set_BackgroundImage(System.Drawing.Image) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_BackgroundImageLayout(System.Windows.Forms.ImageLayout) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_Padding(System.Windows.Forms.Padding) -> System.Void
-M public System.Windows.Forms.TreeView::set_RightToLeftLayout(System.Boolean) -> System.Void virtual
-M public System.Windows.Forms.TreeView::set_Text(System.String) -> System.Void virtual
-M public System.Windows.Forms.TreeViewImageIndexConverter::.ctor()
-M public System.Windows.Forms.TreeViewImageIndexConverter::ConvertFrom(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object) -> System.Object virtual
-M public System.Windows.Forms.TreeViewImageIndexConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.TreeViewImageIndexConverter::GetStandardValues(System.ComponentModel.ITypeDescriptorContext) -> System.ComponentModel.TypeConverter+StandardValuesCollection virtual
-M public System.Windows.Forms.TreeViewImageKeyConverter::.ctor()
-M public System.Windows.Forms.TreeViewImageKeyConverter::ConvertTo(System.ComponentModel.ITypeDescriptorContext, System.Globalization.CultureInfo, System.Object, System.Type) -> System.Object virtual
-M public System.Windows.Forms.UpDownBase::get_DockPadding() -> System.Windows.Forms.ScrollableControl+DockPaddingEdges
-M public System.Windows.Forms.UserControl::ValidateChildren() -> System.Boolean virtual
-M public System.Windows.Forms.UserControl::ValidateChildren(System.Windows.Forms.ValidationConstraints) -> System.Boolean virtual
-M public System.Windows.Forms.UserControl::add_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.UserControl::add_AutoValidateChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.UserControl::add_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.UserControl::get_AutoValidate() -> System.Windows.Forms.AutoValidate virtual
-M public System.Windows.Forms.UserControl::remove_AutoSizeChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.UserControl::remove_AutoValidateChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.UserControl::remove_TextChanged(System.EventHandler) -> System.Void
-M public System.Windows.Forms.UserControl::set_AutoValidate(System.Windows.Forms.AutoValidate) -> System.Void virtual
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::DrawBackground(System.Drawing.IDeviceContext, System.Drawing.Rectangle) -> System.Void
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::DrawBackground(System.Drawing.IDeviceContext, System.Drawing.Rectangle, System.Drawing.Rectangle) -> System.Void
 M public System.Windows.Forms.VisualStyles.VisualStyleRenderer::DrawEdge(System.Drawing.IDeviceContext, System.Drawing.Rectangle, System.Windows.Forms.VisualStyles.Edges, System.Windows.Forms.VisualStyles.EdgeStyle, System.Windows.Forms.VisualStyles.EdgeEffects) -> System.Drawing.Rectangle
@@ -1107,35 +549,15 @@ M public System.Windows.Forms.WebBrowserBase::get_ImeMode() -> System.Windows.Fo
 M public System.Windows.Forms.WebBrowserBase::remove_ChangeUICues(System.Windows.Forms.UICuesEventHandler) -> System.Void
 M public System.Windows.Forms.WebBrowserBase::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.WebBrowserBase::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.WindowsFormsSection::.ctor()
-M public System.Windows.Forms.WindowsFormsSection::get_JitDebugging() -> System.Boolean
-M public System.Windows.Forms.WindowsFormsSection::set_JitDebugging(System.Boolean) -> System.Void
 T class System.Windows.Forms.AxHost+AxComponentEditor : System.Windows.Forms.Design.WindowsFormsComponentEditor
-T class System.Windows.Forms.ColumnHeaderConverter : System.ComponentModel.ExpandableObjectConverter
 T class System.Windows.Forms.ComponentModel.Com2Interop.Com2Variant
 T class System.Windows.Forms.DataGridView+DataGridViewControlCollection : System.Windows.Forms.Control+ControlCollection
 T class System.Windows.Forms.DataGridViewCellStyleConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.DataGridViewTopLeftHeaderCell : System.Windows.Forms.DataGridViewColumnHeaderCell
 T class System.Windows.Forms.Form+ControlCollection : System.Windows.Forms.Control+ControlCollection
-T class System.Windows.Forms.ImageIndexConverter : System.ComponentModel.Int32Converter
-T class System.Windows.Forms.ImageKeyConverter : System.ComponentModel.StringConverter
-T class System.Windows.Forms.KeysConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.Layout.TableLayoutSettingsTypeConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.LinkConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.ListBindingConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.ListViewItemConverter : System.ComponentModel.ExpandableObjectConverter
-T class System.Windows.Forms.ListViewItemStateImageIndexConverter : System.Windows.Forms.ImageIndexConverter
-T class System.Windows.Forms.OpacityConverter : System.ComponentModel.TypeConverter
-T class System.Windows.Forms.OwnerDrawPropertyBag : System.MarshalByRefObject
 T class System.Windows.Forms.ThreadExceptionDialog : System.Windows.Forms.Form
 T class System.Windows.Forms.ToolStripPanel+ToolStripPanelRowCollection : System.Windows.Forms.Layout.ArrangedElementCollection
-T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter
-T class System.Windows.Forms.TreeViewImageKeyConverter : System.Windows.Forms.ImageKeyConverter
 T interface System.Windows.Forms.ComponentModel.Com2Interop.ICom2PropertyPageDisplayService
 T interface System.Windows.Forms.ComponentModel.Com2Interop.IComPropertyBrowser
-T sealed class System.Windows.Forms.DataGridViewColumnDesignTimeVisibleAttribute : System.Attribute
-T sealed class System.Windows.Forms.DockingAttribute : System.Attribute
-T sealed class System.Windows.Forms.RelatedImageListAttribute : System.Attribute
-T sealed class System.Windows.Forms.WindowsFormsSection
 T static class System.Windows.Forms.ImeContext
-T struct System.Windows.Forms.ImeModeConversion

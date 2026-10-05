@@ -9,9 +9,13 @@ namespace System.Windows.Forms;
 /// styles, growth, and each control's cell. It reads and writes the panel it
 /// belongs to; assigning it to another panel copies the table across.
 /// </summary>
+[TypeConverter(typeof(TableLayoutSettingsTypeConverter))]
 public sealed class TableLayoutSettings : LayoutSettings, ISerializable
 {
     private readonly TableLayoutPanel _owner;
+    private readonly Dictionary<string, CellSettings> _serializedCells = new(StringComparer.Ordinal);
+
+    internal readonly record struct CellSettings(int Column, int Row, int ColumnSpan, int RowSpan);
 
     internal TableLayoutSettings(TableLayoutPanel owner)
     {
@@ -19,6 +23,20 @@ public sealed class TableLayoutSettings : LayoutSettings, ISerializable
     }
 
     internal TableLayoutPanel Owner => _owner;
+
+    internal IEnumerable<KeyValuePair<string, CellSettings>> NamedCells()
+    {
+        foreach (var cell in _serializedCells) yield return cell;
+
+        foreach (Control control in _owner.Controls)
+        {
+            if (string.IsNullOrEmpty(control.Name) || _serializedCells.ContainsKey(control.Name)) continue;
+            yield return new KeyValuePair<string, CellSettings>(control.Name,
+                new CellSettings(GetColumn(control), GetRow(control), GetColumnSpan(control), GetRowSpan(control)));
+        }
+    }
+
+    internal void RememberCell(string name, CellSettings cell) => _serializedCells[name] = cell;
 
     public override LayoutEngine LayoutEngine => _owner.LayoutEngine;
 
@@ -83,6 +101,8 @@ public sealed class TableLayoutSettings : LayoutSettings, ISerializable
     {
         if (source._owner == _owner) return;
 
+        var cells = source.NamedCells().ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
         _owner.SuspendLayout();
 
         try
@@ -96,6 +116,15 @@ public sealed class TableLayoutSettings : LayoutSettings, ISerializable
 
             RowStyles.Clear();
             foreach (RowStyle style in source.RowStyles) RowStyles.Add(new RowStyle(style.SizeType, style.Height));
+
+            foreach (Control control in _owner.Controls)
+            {
+                if (string.IsNullOrEmpty(control.Name) || !cells.TryGetValue(control.Name, out var cell)) continue;
+                SetColumn(control, cell.Column);
+                SetRow(control, cell.Row);
+                SetColumnSpan(control, cell.ColumnSpan);
+                SetRowSpan(control, cell.RowSpan);
+            }
         }
         finally
         {

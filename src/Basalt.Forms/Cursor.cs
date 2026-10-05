@@ -142,6 +142,13 @@ public sealed class Cursor : IDisposable, ISerializable
             Image?.Dispose();
             Image = null;
         }
+
+        GC.SuppressFinalize(this);
+    }
+
+    ~Cursor()
+    {
+        if (_owned) Image?.Dispose();
     }
 
     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) =>

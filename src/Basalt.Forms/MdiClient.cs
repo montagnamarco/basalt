@@ -11,7 +11,7 @@ namespace System.Windows.Forms;
 /// </summary>
 [ToolboxItem(false)]
 [DesignTimeVisible(false)]
-public sealed class MdiClient : Control
+public sealed partial class MdiClient : Control
 {
     /// <summary>The children in the order they were added: what MdiChildren reports, whatever the z-order.</summary>
     private readonly List<Form> _children = [];

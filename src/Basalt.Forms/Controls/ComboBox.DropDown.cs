@@ -221,6 +221,7 @@ public partial class ComboBox
             var listBounds = Rectangle.FromLTRB(client.Left, EditBounds.Bottom, client.Right, client.Bottom);
             PaintDropDownItems(graphics, listBounds);
         }
+
     }
 
     /// <summary>Commits an item as the user's own action (a click, Enter, or an arrow key), raising SelectionChangeCommitted.</summary>

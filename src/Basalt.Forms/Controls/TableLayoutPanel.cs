@@ -6,7 +6,7 @@ namespace System.Windows.Forms;
 
 /// <summary>A panel that arranges its children in a grid of columns and rows.</summary>
 [DefaultProperty("ColumnCount")]
-public class TableLayoutPanel : Panel, IExtenderProvider
+public partial class TableLayoutPanel : Panel, IExtenderProvider
 {
     private TableLayoutColumnStyleCollection? _columnStyles;
     private TableLayoutRowStyleCollection? _rowStyles;
@@ -24,6 +24,13 @@ public class TableLayoutPanel : Panel, IExtenderProvider
 
     public TableLayoutPanel()
     {
+    }
+
+    [DefaultValue(BorderStyle.None)]
+    public new BorderStyle BorderStyle
+    {
+        get => base.BorderStyle;
+        set => base.BorderStyle = value;
     }
 
     [Browsable(false)]

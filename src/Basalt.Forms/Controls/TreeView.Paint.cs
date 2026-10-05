@@ -109,7 +109,8 @@ public partial class TreeView
         var centerX = plusMinus.Left + plusMinus.Width / 2;
 
         graphics.DrawLine(pen, centerX, row.Top, centerX, row.Bottom);
-        graphics.DrawLine(pen, centerX, centerY, plusMinus.Left - 1, centerY);
+        graphics.DrawLine(pen, centerX, centerY,
+            _rightToLeftLayout ? plusMinus.Right : plusMinus.Left - 1, centerY);
     }
 
     private static DashStyle DashStyleOf() => DashStyle.Dot;
@@ -160,7 +161,8 @@ public partial class TreeView
 
         if (DrawMode == TreeViewDrawMode.OwnerDrawText && !RaiseDrawNode(graphics, node, label)) return;
 
-        var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.NoPadding;
+        var flags = TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding |
+            (_rightToLeftLayout ? TextFormatFlags.Right : TextFormatFlags.Left);
         TextRenderer.DrawText(graphics, node.Text, node.NodeFont ?? Font, label, foreColor, flags);
 
         if (HotTracking && node == _hoverNode)

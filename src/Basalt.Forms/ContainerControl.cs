@@ -9,7 +9,7 @@ namespace System.Windows.Forms;
 /// active control, moves through its children with Tab, and scales them
 /// when its font differs from the one they were designed with.
 /// </summary>
-public class ContainerControl : ScrollableControl, IContainerControl
+public partial class ContainerControl : ScrollableControl, IContainerControl
 {
     private Control? _activeControl;
     private SizeF _autoScaleDimensions = SizeF.Empty;
@@ -76,7 +76,9 @@ public class ContainerControl : ScrollableControl, IContainerControl
         }
 
         _activeControl = control;
-        if (GetContainerControl() is ContainerControl outer && outer.ActiveControl != this && outer.Contains(this)) outer._activeControl = this;
+        for (var current = this; current.GetContainerControl() is ContainerControl outer && outer.Contains(current); current = outer)
+            outer._activeControl = current;
+        UpdateDefaultButton();
 
         return true;
     }
@@ -96,6 +98,7 @@ public class ContainerControl : ScrollableControl, IContainerControl
         if (value is null)
         {
             _activeControl = null;
+            UpdateDefaultButton();
             return;
         }
 
@@ -107,8 +110,14 @@ public class ContainerControl : ScrollableControl, IContainerControl
     /// <summary>Forgets an active control that is leaving this container.</summary>
     internal void ForgetActive(Control removed)
     {
-        if (_activeControl is { } active && (active == removed || removed.Contains(active))) _activeControl = null;
+        if (_activeControl is { } active && (active == removed || removed.Contains(active)))
+        {
+            _activeControl = null;
+            UpdateDefaultButton();
+        }
     }
+
+    protected virtual void UpdateDefaultButton() => ((ContainerControl?)FindForm())?.UpdateDefaultButton();
 
     /// <summary>Tab and Shift+Tab move through the children; arrows move among them when nothing else wants them.</summary>
     protected override bool ProcessDialogKey(Keys keyData)

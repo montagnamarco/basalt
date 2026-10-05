@@ -6,8 +6,6 @@ using System.Drawing;
 
 namespace System.Windows.Forms;
 
-// ProcessCmdKey is left out: see Menu.cs for why (needs the still-missing
-// System.Windows.Forms.Message type).
 [DefaultEvent("Popup")]
 [Obsolete("`ContextMenu` is provided for binary compatibility with .NET Framework and is not intended to be used directly from your code. Use `ContextMenuStrip` instead.", false, DiagnosticId = "WFDEV006", UrlFormat = "https://aka.ms/winforms-warnings/{0}")]
 [EditorBrowsable(EditorBrowsableState.Never)]
@@ -41,6 +39,8 @@ public class ContextMenu : Menu
     protected virtual void OnCollapse(EventArgs e) => throw new PlatformNotSupportedException();
 
     protected virtual void OnPopup(EventArgs e) => throw new PlatformNotSupportedException();
+
+    protected internal virtual bool ProcessCmdKey(ref Message msg, Keys keyData, Control control) => base.ProcessCmdKey(ref msg, keyData);
 
     public void Show(Control control, Point pos) => throw new PlatformNotSupportedException();
 

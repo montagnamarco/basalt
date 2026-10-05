@@ -5,10 +5,6 @@ using System.ComponentModel;
 
 namespace System.Windows.Forms;
 
-// ProcessCmdKey is left out: Microsoft's signature needs
-// System.Windows.Forms.Message, which has no reference sheet and no
-// declaration anywhere in the tree (checked the whole declarations folder).
-// See the worktree report.
 [Obsolete("`Menu` is provided for binary compatibility with .NET Framework and is not intended to be used directly from your code. Use `ToolStripDropDown` and `ToolStripDropDownMenu` instead.", false, DiagnosticId = "WFDEV006", UrlFormat = "https://aka.ms/winforms-warnings/{0}")]
 [EditorBrowsable(EditorBrowsableState.Never)]
 [Browsable(false)]
@@ -44,6 +40,8 @@ public abstract partial class Menu : Component
     protected void CloneMenu(Menu menuSrc) => throw new PlatformNotSupportedException();
 
     protected virtual IntPtr CreateMenuHandle() => throw new PlatformNotSupportedException();
+
+    protected internal virtual bool ProcessCmdKey(ref Message msg, Keys keyData) => throw new PlatformNotSupportedException("Legacy menus are not supported. Use ToolStrip menus.");
 
     public MenuItem FindMenuItem(int type, IntPtr value) => throw new PlatformNotSupportedException();
 

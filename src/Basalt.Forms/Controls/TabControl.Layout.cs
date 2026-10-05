@@ -13,6 +13,8 @@ namespace System.Windows.Forms;
 /// </summary>
 public partial class TabControl
 {
+    private int _hotTabIndex = -1;
+
     /// <summary>The height one row of tabs takes: a fixed ItemSize height, or the font's line plus the vertical padding.</summary>
     private int RowHeight()
     {
@@ -48,10 +50,8 @@ public partial class TabControl
 
     /// <summary>
     /// Every tab's rectangle, in client coordinates and at its unraised
-    /// size, packed left to right and wrapped into further rows when
-    /// Multiline is set and a row would otherwise overflow the client width.
-    /// The whole strip starts <see cref="SelectedTabRaise"/> pixels down, so
-    /// the selected tab has somewhere to bulge into above row zero.
+    /// size. Horizontal strips pack along X; vertical strips pack along Y.
+    /// A selected tab grows toward the outer edge of its strip.
     /// </summary>
     private Rectangle[] LayOutTabs(out int rowCount)
     {
@@ -62,22 +62,35 @@ public partial class TabControl
         if (pages.Length == 0) return rects;
 
         var rowHeight = RowHeight();
-        var availableWidth = Math.Max(ClientSize.Width, 1);
-        var x = 0;
+        var vertical = _alignment is TabAlignment.Left or TabAlignment.Right;
+        var availableLength = Math.Max(vertical ? ClientSize.Height : ClientSize.Width, 1);
+        var offset = 0;
         var row = 0;
 
         for (var i = 0; i < pages.Length; i++)
         {
-            var width = TabWidth(pages[i]);
+            var length = TabWidth(pages[i]);
 
-            if (_multiline && x > 0 && x + width > availableWidth)
+            if (_multiline && offset > 0 && offset + length > availableLength)
             {
                 row++;
-                x = 0;
+                offset = 0;
             }
 
-            rects[i] = new Rectangle(x, SelectedTabRaise + row * rowHeight, width, rowHeight);
-            x += width;
+            rects[i] = _alignment switch
+            {
+                TabAlignment.Bottom => new Rectangle(offset,
+                    ClientRectangle.Bottom - SelectedTabRaise - (row + 1) * rowHeight,
+                    length, rowHeight),
+                TabAlignment.Left => new Rectangle(SelectedTabRaise + row * rowHeight,
+                    offset, rowHeight, length),
+                TabAlignment.Right => new Rectangle(
+                    ClientRectangle.Right - SelectedTabRaise - (row + 1) * rowHeight,
+                    offset, rowHeight, length),
+                _ => new Rectangle(offset, SelectedTabRaise + row * rowHeight,
+                    length, rowHeight)
+            };
+            offset += length;
         }
 
         rowCount = row + 1;

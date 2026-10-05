@@ -12,7 +12,7 @@ public partial class ListView
     private Size LargeIconSize => _largeImageList?.ImageSize ?? new Size(32, 32);
 
     /// <summary>The height of one Details/List row: tall enough for the small icon and the text, never under 16 pixels.</summary>
-    private int ItemRowHeight => Math.Max(Math.Max(SmallIconSize.Height, FontHeight) + 4, 16);
+    private int ItemRowHeight => Math.Max(Math.Max(Math.Max(SmallIconSize.Height, _stateImageList?.ImageSize.Height ?? 0), FontHeight) + 4, 16);
 
     /// <summary>The height of the column-header strip; zero outside Details, or when HeaderStyle hides it.</summary>
     private int HeaderHeight => _view == View.Details && _headerStyle != ColumnHeaderStyle.None ? Math.Max(FontHeight + 8, 18) : 0;
@@ -62,6 +62,8 @@ public partial class ListView
             {
                 bands.Add((group, new Rectangle(0, y, width, rowHeight)));
                 y += rowHeight;
+
+                if (group.CollapsedState == ListViewGroupCollapsedState.Collapsed) continue;
 
                 for (var i = 0; i < _items.Count; i++)
                 {
@@ -124,15 +126,29 @@ public partial class ListView
         var cellSize = IconCellSize(large);
         var columnsPerRow = Math.Max(ContentRectangle.Width / Math.Max(cellSize.Width, 1), 1);
 
+        if (!_autoArrange)
+        {
+            var width = 0;
+            var height = 0;
+            for (var i = 0; i < _items.Count; i++)
+            {
+                rects[i] = new Rectangle(_items[i].Position, cellSize);
+                width = Math.Max(width, rects[i].Right);
+                height = Math.Max(height, rects[i].Bottom);
+            }
+            return (rects, new Size(width, height));
+        }
+
         for (var i = 0; i < _items.Count; i++)
         {
-            var row = i / columnsPerRow;
-            var column = i % columnsPerRow;
+            var rowsPerColumn = Math.Max(ContentRectangle.Height / Math.Max(cellSize.Height, 1), 1);
+            var row = _alignment == ListViewAlignment.Left ? i % rowsPerColumn : i / columnsPerRow;
+            var column = _alignment == ListViewAlignment.Left ? i / rowsPerColumn : i % columnsPerRow;
             rects[i] = new Rectangle(column * cellSize.Width, row * cellSize.Height, cellSize.Width, cellSize.Height);
         }
 
-        var rows = _items.Count == 0 ? 0 : (_items.Count + columnsPerRow - 1) / columnsPerRow;
-        return (rects, new Size(columnsPerRow * cellSize.Width, rows * cellSize.Height));
+        return (rects, new Size(rects.Length == 0 ? 0 : rects.Max(rect => rect.Right),
+            rects.Length == 0 ? 0 : rects.Max(rect => rect.Bottom)));
     }
 
     private Size IconCellSize(bool large)
@@ -141,6 +157,7 @@ public partial class ListView
         var widestLabel = 0;
         foreach (var item in _items) widestLabel = Math.Max(widestLabel, TextRenderer.MeasureText(item.Text, item.Font).Width);
 
+        if (_view == View.Tile && _tileSize != Size.Empty) return _tileSize;
         return large
             ? new Size(Math.Clamp(Math.Max(icon.Width + 16, widestLabel + 8), 60, 160), icon.Height + FontHeight + 10)
             : new Size(Math.Clamp(icon.Width + 8 + widestLabel, 90, 260), Math.Max(icon.Height, FontHeight) + 6);
@@ -221,6 +238,7 @@ public partial class ListView
     private Rectangle ItemPortionBounds(int index, ItemBoundsPortion portion)
     {
         var content = ItemContentBounds(index);
+        if (content.IsEmpty) return Rectangle.Empty;
 
         if (_view == View.Details)
         {
@@ -272,9 +290,9 @@ public partial class ListView
         return new Rectangle(x, 0, _columns[columnIndex].Width, HeaderHeight);
     }
 
-    private bool NeedsVerticalScrollBar => ScrollsVertically && CurrentContentSize().Height > ContentRectangle.Height;
+    private bool NeedsVerticalScrollBar => _scrollable && ScrollsVertically && CurrentContentSize().Height > ContentRectangle.Height;
 
-    private bool NeedsHorizontalScrollBar => ScrollsHorizontally && CurrentContentSize().Width > ContentRectangle.Width;
+    private bool NeedsHorizontalScrollBar => _scrollable && ScrollsHorizontally && CurrentContentSize().Width > ContentRectangle.Width;
 
     private int ClampScrollY(int value)
     {
@@ -291,6 +309,7 @@ public partial class ListView
     /// <summary>Scrolls the minimum amount so the content-space rectangle is inside the visible viewport.</summary>
     private void ScrollIntoView(Rectangle content)
     {
+        if (!_scrollable || content.IsEmpty) return;
         var viewport = ContentRectangle;
 
         if (ScrollsVertically)

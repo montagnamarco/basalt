@@ -7,11 +7,9 @@ using System.Drawing;
 
 namespace System.Windows.Forms;
 
-// HeaderAccessibleObject, CreateHeaderAccessibleObject and the nested
-// DataGridColumnHeaderAccessibleObject class are left out: Microsoft's
-// signature needs System.Windows.Forms.AccessibleObject, which does not
-// exist anywhere in src/Basalt.Forms yet (checked: no declaration, no
-// reference sheet consumer). See the worktree report.
+// Legacy DataGrid has no portable implementation: the constructors and members
+// retain their established PlatformNotSupportedException contract. The
+// accessibility declarations below preserve API shape for compiled consumers.
 [Obsolete("`DataGrid` is provided for binary compatibility with .NET Framework and is not intended to be used directly from your code. Use `DataGridView` instead.", false, DiagnosticId = "WFDEV006", UrlFormat = "https://aka.ms/winforms-warnings/{0}")]
 [EditorBrowsable(EditorBrowsableState.Never)]
 [Browsable(false)]
@@ -39,6 +37,10 @@ public abstract class DataGridColumnStyle : Component, IDataGridColumnStyleEditi
         get => throw new PlatformNotSupportedException();
         set => throw new PlatformNotSupportedException();
     }
+
+    public AccessibleObject HeaderAccessibleObject => CreateHeaderAccessibleObject();
+
+    protected virtual AccessibleObject CreateHeaderAccessibleObject() => throw new PlatformNotSupportedException();
 
     public string MappingName
     {

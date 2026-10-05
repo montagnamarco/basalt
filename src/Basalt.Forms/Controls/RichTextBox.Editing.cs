@@ -629,7 +629,8 @@ public partial class RichTextBox
     private static void DrawStrikeout(Graphics graphics, RichLayout.Piece piece, float left, float top, float lineHeight, Brush brush)
     {
         var y = top + lineHeight / 2f;
-        graphics.DrawLine(new Pen(brush is SolidBrush solid ? solid.Color : SystemColors.WindowText), left, y, left + piece.Width, y);
+        using var pen = new Pen(brush is SolidBrush solid ? solid.Color : SystemColors.WindowText);
+        graphics.DrawLine(pen, left, y, left + piece.Width, y);
     }
 
     private void PaintSelectionOnLine(Graphics graphics, RichLayout.Line line, float left, float top, int selectionStart, int selectionEnd)

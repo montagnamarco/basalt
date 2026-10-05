@@ -95,6 +95,8 @@ public partial class TreeView
         var arguments = new TreeNodeMouseClickEventArgs(node, e.Button, e.Clicks, e.X, e.Y);
         if (e.Clicks >= 2) OnNodeMouseDoubleClick(arguments);
         else OnNodeMouseClick(arguments);
+
+        if (e.Button == MouseButtons.Right) node.ContextMenuStrip?.Show(this, e.Location);
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -129,12 +131,14 @@ public partial class TreeView
                 break;
 
             case Keys.Left:
-                CollapseOrSelectParent();
+                if (_rightToLeftLayout) ExpandOrSelectFirstChild();
+                else CollapseOrSelectParent();
                 e.Handled = true;
                 break;
 
             case Keys.Right:
-                ExpandOrSelectFirstChild();
+                if (_rightToLeftLayout) CollapseOrSelectParent();
+                else ExpandOrSelectFirstChild();
                 e.Handled = true;
                 break;
 

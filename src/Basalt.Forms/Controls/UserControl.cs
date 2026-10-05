@@ -8,7 +8,7 @@ namespace System.Windows.Forms;
 /// <summary>A container of controls meant to be reused as one piece, with its own Load event and border.</summary>
 [DesignerCategory("UserControl")]
 [DefaultEvent("Load")]
-public class UserControl : ContainerControl
+public partial class UserControl : ContainerControl
 {
     private BorderStyle _borderStyle = BorderStyle.None;
     private bool _loaded;

@@ -15,6 +15,8 @@ public partial class TreeView
     private bool _showNodeToolTips;
 
     [DefaultValue("")]
+    [TypeConverter(typeof(TreeViewImageKeyConverter))]
+    [RelatedImageList(nameof(ImageList))]
     public string ImageKey
     {
         get => _imageKey;
@@ -29,6 +31,8 @@ public partial class TreeView
     }
 
     [DefaultValue("")]
+    [TypeConverter(typeof(TreeViewImageKeyConverter))]
+    [RelatedImageList(nameof(ImageList))]
     public string SelectedImageKey
     {
         get => _selectedImageKey;

@@ -7,7 +7,7 @@ namespace System.Windows.Forms;
 /// container places it and reacts to its own events, so a SplitterPanel does
 /// nothing a Panel would not.
 /// </summary>
-public sealed class SplitterPanel : Panel
+public sealed partial class SplitterPanel : Panel
 {
     public SplitterPanel(SplitContainer owner)
     {

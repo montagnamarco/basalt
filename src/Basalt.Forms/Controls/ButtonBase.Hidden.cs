@@ -13,6 +13,18 @@ namespace System.Windows.Forms;
 /// </summary>
 public abstract partial class ButtonBase
 {
+    public new ImeMode ImeMode
+    {
+        get => base.ImeMode;
+        set => base.ImeMode = value;
+    }
+
+    public new event EventHandler? ImeModeChanged
+    {
+        add => base.ImeModeChanged += value;
+        remove => base.ImeModeChanged -= value;
+    }
+
     private Image? _image;
     private ImageList? _imageList;
     private int _imageIndex = -1;
@@ -20,7 +32,8 @@ public abstract partial class ButtonBase
     private ContentAlignment _imageAlign = ContentAlignment.MiddleCenter;
     private TextImageRelation _textImageRelation = TextImageRelation.Overlay;
     private bool _useCompatibleTextRendering;
-    private bool _useVisualStyleBackColor;
+    private bool _useVisualStyleBackColor = true;
+    private bool _visualStyleBackColorSet;
 
     protected override AccessibleObject CreateAccessibilityInstance() => new ButtonBaseAccessibleObject(this);
 
@@ -84,8 +97,8 @@ public abstract partial class ButtonBase
     [DefaultValue(false)]
     public bool AutoEllipsis { get; set; }
 
-    [Browsable(false)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
+    [Browsable(true)]
+    [EditorBrowsable(EditorBrowsableState.Always)]
     public override Color BackColor
     {
         get => base.BackColor;
@@ -207,4 +220,13 @@ public abstract partial class ButtonBase
             Invalidate();
         }
     }
+
+    private void ResetUseVisualStyleBackColor()
+    {
+        _visualStyleBackColorSet = false;
+        _useVisualStyleBackColor = true;
+        Invalidate();
+    }
+
+    private bool ShouldSerializeUseVisualStyleBackColor() => _visualStyleBackColorSet;
 }

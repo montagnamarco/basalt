@@ -28,7 +28,11 @@ public abstract class ComponentEditorPage : Panel
     {
     }
 
-    protected IComponent Component => _component ?? throw new InvalidOperationException("ComponentEditorPage.Component is not set until SetComponent has been called.");
+    protected IComponent Component
+    {
+        get => _component ?? throw new InvalidOperationException("ComponentEditorPage.Component is not set until SetComponent has been called.");
+        set => SetComponent(value);
+    }
 
     protected override CreateParams CreateParams => base.CreateParams;
 
@@ -50,7 +54,11 @@ public abstract class ComponentEditorPage : Panel
         set => _loading = value;
     }
 
-    protected IComponentEditorPageSite PageSite => _pageSite ?? throw new InvalidOperationException("ComponentEditorPage.PageSite is not set until SetSite has been called.");
+    protected IComponentEditorPageSite PageSite
+    {
+        get => _pageSite ?? throw new InvalidOperationException("ComponentEditorPage.PageSite is not set until SetSite has been called.");
+        set => SetSite(value);
+    }
 
     protected void EnterLoadingMode() => _loading++;
 

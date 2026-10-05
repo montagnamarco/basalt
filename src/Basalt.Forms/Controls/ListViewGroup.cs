@@ -1,9 +1,11 @@
 using System.ComponentModel;
+using System.Runtime.Serialization;
 
 namespace System.Windows.Forms;
 
 /// <summary>A header a ListView's Items in <see cref="View.Details"/> can be clustered under, when <see cref="ListView.ShowGroups"/> is set.</summary>
-public sealed class ListViewGroup
+[Serializable]
+public sealed partial class ListViewGroup : ISerializable
 {
     private string _header = string.Empty;
     private HorizontalAlignment _headerAlignment = HorizontalAlignment.Left;

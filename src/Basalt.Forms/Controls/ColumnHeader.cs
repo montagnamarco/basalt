@@ -3,11 +3,14 @@ using System.ComponentModel;
 namespace System.Windows.Forms;
 
 /// <summary>One column of a <see cref="ListView"/> in <see cref="View.Details"/>: its caption, width and alignment.</summary>
+[TypeConverter(typeof(ColumnHeaderConverter))]
 public class ColumnHeader : Component, ICloneable
 {
     private string _text = string.Empty;
     private int _width = 60;
     private HorizontalAlignment _textAlign = HorizontalAlignment.Left;
+    private int _imageIndex = -1;
+    private string _imageKey = string.Empty;
 
     /// <summary>The ListView this column belongs to, set by ColumnHeaderCollection when the column is added or removed.</summary>
     private ListView? _listView;
@@ -15,6 +18,44 @@ public class ColumnHeader : Component, ICloneable
     public ColumnHeader()
     {
     }
+
+    public ColumnHeader(int imageIndex) => ImageIndex = imageIndex;
+
+    public ColumnHeader(string imageKey) => ImageKey = imageKey;
+
+    [DefaultValue(-1)]
+    [TypeConverter(typeof(ImageIndexConverter))]
+    [RelatedImageList(nameof(ImageList))]
+    public int ImageIndex
+    {
+        get => _imageIndex;
+        set
+        {
+            if (value < -1) throw new ArgumentOutOfRangeException(nameof(value));
+            _imageIndex = value;
+            if (value >= 0) _imageKey = string.Empty;
+            _listView?.InvalidateHeader();
+        }
+    }
+
+    [DefaultValue("")]
+    [TypeConverter(typeof(ImageKeyConverter))]
+    [RelatedImageList(nameof(ImageList))]
+    public string ImageKey
+    {
+        get => _imageKey;
+        set
+        {
+            _imageKey = value ?? string.Empty;
+            if (_imageKey.Length > 0) _imageIndex = -1;
+            _listView?.InvalidateHeader();
+        }
+    }
+
+    [Browsable(false)]
+    public ImageList? ImageList => _listView?.SmallImageList;
+
+    public void AutoResize(ColumnHeaderAutoResizeStyle headerAutoResize) => _listView?.AutoResizeColumn(Index, headerAutoResize);
 
     [DefaultValue(-1)]
     public int DisplayIndex
@@ -86,6 +127,8 @@ public class ColumnHeader : Component, ICloneable
             TextAlign = _textAlign,
             Name = Name,
             Tag = Tag,
+            ImageIndex = _imageIndex,
+            ImageKey = _imageKey,
         };
 
         return clone;
@@ -93,6 +136,12 @@ public class ColumnHeader : Component, ICloneable
 
     /// <summary>Attaches or detaches this column from a ListView; called only by ColumnHeaderCollection.</summary>
     internal void SetListView(ListView? listView) => _listView = listView;
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _listView?.Columns.Remove(this);
+        base.Dispose(disposing);
+    }
 
     public override string ToString() => $"ColumnHeader: Text: {_text}";
 }

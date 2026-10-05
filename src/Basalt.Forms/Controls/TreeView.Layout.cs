@@ -188,6 +188,17 @@ public partial class TreeView
         var textSize = TextRenderer.MeasureText(node.Text, node.NodeFont ?? Font);
         var label = new Rectangle(contentX, row.Top, textSize.Width + 4, row.Height);
 
+        if (_rightToLeftLayout)
+        {
+            var width = ClientSize.Width;
+            static Rectangle Mirror(Rectangle rect, int clientWidth) => rect.IsEmpty ? rect :
+                new Rectangle(clientWidth - rect.Right, rect.Y, rect.Width, rect.Height);
+            glyph = Mirror(glyph, width);
+            checkBox = Mirror(checkBox, width);
+            image = Mirror(image, width);
+            label = Mirror(label, width);
+        }
+
         return new NodeRowLayout(row, glyph, checkBox, image, label);
     }
 

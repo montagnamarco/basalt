@@ -18,6 +18,8 @@ public partial class TreeNode
     private string _toolTipText = string.Empty;
 
     [DefaultValue("")]
+    [TypeConverter(typeof(TreeViewImageKeyConverter))]
+    [RelatedImageList(nameof(TreeView.ImageList))]
     public string ImageKey
     {
         get => _imageKey;
@@ -45,6 +47,8 @@ public partial class TreeNode
     }
 
     [DefaultValue("")]
+    [TypeConverter(typeof(TreeViewImageKeyConverter))]
+    [RelatedImageList(nameof(TreeView.ImageList))]
     public string SelectedImageKey
     {
         get => _selectedImageKey;

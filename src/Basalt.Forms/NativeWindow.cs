@@ -11,7 +11,7 @@ namespace System.Windows.Forms;
 /// delivers WndProc, which stays unimplemented (skipped, with WndProc and
 /// DefWndProc, until Control's own message dispatch lands).
 /// </summary>
-public class NativeWindow : MarshalByRefObject, IWin32Window
+public partial class NativeWindow : MarshalByRefObject, IWin32Window
 {
     private IntPtr _handle;
 
@@ -70,8 +70,8 @@ public class NativeWindow : MarshalByRefObject, IWin32Window
     /// <summary>An exception from a message handler goes where Application.OnThreadException sends every other one.</summary>
     protected virtual void OnThreadException(Exception e) => Application.OnThreadException(e);
 
-    // WndProc is skipped along with DefWndProc's real dispatch: there is no message queue here (see
-    // Message.cs) to deliver to it, and Control's own WndProc is not ported yet either.
+    // There is no native message queue to call WndProc. A subclass can invoke
+    // the hook explicitly when it dispatches one of Basalt's managed messages.
 
     ~NativeWindow() => ReleaseHandle();
 }

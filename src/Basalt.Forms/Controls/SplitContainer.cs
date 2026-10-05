@@ -14,7 +14,7 @@ namespace System.Windows.Forms;
 /// against in this renderer.
 /// </remarks>
 [DefaultEvent("SplitterMoved")]
-public class SplitContainer : ContainerControl, ISupportInitialize
+public partial class SplitContainer : ContainerControl, ISupportInitialize
 {
     private Orientation _orientation = Orientation.Vertical;
     private int _splitterDistance = 50;
@@ -423,6 +423,15 @@ public class SplitContainer : ContainerControl, ISupportInitialize
         Capture = false;
 
         OnSplitterMoved(new SplitterEventArgs(e.X, e.Y, _splitterBounds.X, _splitterBounds.Y));
+    }
+
+    protected override void OnMouseCaptureChanged(EventArgs e)
+    {
+        base.OnMouseCaptureChanged(e);
+
+        // Another control may take capture during a drag. MouseUp will then
+        // reach that control, so stop applying movement to this splitter.
+        if (!Capture) _dragging = false;
     }
 
     /// <summary>Tab moves between the two panels and on; the arrow keys move the splitter when it, not a child, has the focus.</summary>

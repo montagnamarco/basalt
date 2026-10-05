@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.Runtime.Serialization;
 
 namespace System.Windows.Forms;
 
@@ -15,7 +16,8 @@ namespace System.Windows.Forms;
 /// </remarks>
 [TypeConverter(typeof(TreeNodeConverter))]
 [DefaultProperty("Text")]
-public partial class TreeNode : MarshalByRefObject, ICloneable
+[Serializable]
+public partial class TreeNode : MarshalByRefObject, ICloneable, ISerializable
 {
     private string _text;
     private bool _expanded;
@@ -135,6 +137,8 @@ public partial class TreeNode : MarshalByRefObject, ICloneable
     }
 
     [DefaultValue(-1)]
+    [TypeConverter(typeof(TreeViewImageIndexConverter))]
+    [RelatedImageList(nameof(TreeView.ImageList))]
     public int ImageIndex
     {
         get => _imageIndex;
@@ -218,6 +222,8 @@ public partial class TreeNode : MarshalByRefObject, ICloneable
     public TreeNode? PrevVisibleNode => TreeView?.PreviousInExpandedOrder(this);
 
     [DefaultValue(-1)]
+    [TypeConverter(typeof(TreeViewImageIndexConverter))]
+    [RelatedImageList(nameof(TreeView.ImageList))]
     public int SelectedImageIndex
     {
         get => _selectedImageIndex;
@@ -270,6 +276,12 @@ public partial class TreeNode : MarshalByRefObject, ICloneable
             Checked = _checked,
             BackColor = _backColor,
             ForeColor = _foreColor,
+            ImageKey = _imageKey,
+            SelectedImageKey = _selectedImageKey,
+            StateImageIndex = _stateImageIndex,
+            StateImageKey = _stateImageKey,
+            NodeFont = _nodeFont,
+            ToolTipText = _toolTipText,
         };
 
         foreach (TreeNode child in Nodes) clone.Nodes.Add((TreeNode)child.Clone());

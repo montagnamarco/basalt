@@ -1,12 +1,15 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Drawing;
+using System.Runtime.Serialization;
 
 namespace System.Windows.Forms;
 
 /// <summary>One row of a <see cref="ListView"/>: its label, icon, check state and the sub-items shown in the other columns.</summary>
 [DefaultProperty("Text")]
-public class ListViewItem : ICloneable
+[TypeConverter(typeof(ListViewItemConverter))]
+[Serializable]
+public partial class ListViewItem : ICloneable, ISerializable
 {
     private readonly ListViewSubItemCollection _subItems;
 
@@ -222,6 +225,8 @@ public class ListViewItem : ICloneable
     }
 
     [DefaultValue(-1)]
+    [TypeConverter(typeof(ImageIndexConverter))]
+    [RelatedImageList(nameof(ImageList))]
     public int ImageIndex
     {
         get => _imageIndex;
@@ -235,6 +240,8 @@ public class ListViewItem : ICloneable
     }
 
     [DefaultValue("")]
+    [TypeConverter(typeof(ImageKeyConverter))]
+    [RelatedImageList(nameof(ImageList))]
     public string ImageKey
     {
         get => _imageKey;
@@ -300,6 +307,8 @@ public class ListViewItem : ICloneable
 
     /// <summary>The index into StateImageList this item's checkbox-like state glyph draws from; -1 for none.</summary>
     [DefaultValue(-1)]
+    [TypeConverter(typeof(ListViewItemStateImageIndexConverter))]
+    [RelatedImageList("ListView.StateImageList")]
     public int StateImageIndex
     {
         get => _stateImageIndex;
@@ -427,6 +436,7 @@ public class ListViewItem : ICloneable
     }
 
     [DefaultProperty("Text")]
+    [Serializable]
     public class ListViewSubItem
     {
         private string _text = string.Empty;
@@ -503,6 +513,15 @@ public class ListViewItem : ICloneable
 
         /// <summary>The item this sub-item belongs to; null only for a sub-item not yet added to any item's collection.</summary>
         internal ListViewItem? Owner { get; set; }
+
+        internal ListViewSubItem CloneFor(ListViewItem owner) => new(owner, _text)
+        {
+            _foreColor = _foreColor,
+            _backColor = _backColor,
+            _font = _font,
+            Name = Name,
+            Tag = Tag,
+        };
 
         public void ResetStyle()
         {
@@ -588,6 +607,19 @@ public class ListViewItem : ICloneable
         }
 
         public bool Contains(ListViewSubItem? subItem) => subItem is not null && _subItems.Contains(subItem);
+
+        public virtual bool ContainsKey(string? key) => IndexOfKey(key) >= 0;
+
+        public virtual int IndexOfKey(string? key) => string.IsNullOrEmpty(key) ? -1 :
+            _subItems.FindIndex(item => string.Equals(item.Name, key, StringComparison.OrdinalIgnoreCase));
+
+        public virtual void RemoveByKey(string? key)
+        {
+            var index = IndexOfKey(key);
+            if (index >= 0) RemoveAt(index);
+        }
+
+        public bool IsReadOnly => false;
 
         public IEnumerator GetEnumerator() => _subItems.GetEnumerator();
 

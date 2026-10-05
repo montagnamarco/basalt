@@ -431,6 +431,32 @@ public partial class ListView
             return column;
         }
 
+        public virtual ColumnHeader Add(string? key, string? text, int width, HorizontalAlignment textAlign, int imageIndex)
+        {
+            var column = new ColumnHeader(imageIndex)
+            {
+                Name = key,
+                Text = text ?? string.Empty,
+                Width = width,
+                TextAlign = textAlign,
+            };
+            Add(column);
+            return column;
+        }
+
+        public virtual ColumnHeader Add(string? key, string? text, int width, HorizontalAlignment textAlign, string? imageKey)
+        {
+            var column = new ColumnHeader(imageKey ?? string.Empty)
+            {
+                Name = key,
+                Text = text ?? string.Empty,
+                Width = width,
+                TextAlign = textAlign,
+            };
+            Add(column);
+            return column;
+        }
+
         public virtual void AddRange(params ColumnHeader[] values)
         {
             ArgumentNullException.ThrowIfNull(values);
@@ -475,6 +501,29 @@ public partial class ListView
         public void Insert(int index, string? text) => Insert(index, text, 60, HorizontalAlignment.Left);
 
         public void Insert(int index, string? text, int width) => Insert(index, text, width, HorizontalAlignment.Left);
+
+        public void Insert(int index, string? key, string? text) => Insert(index, key, text, 60);
+
+        public void Insert(int index, string? key, string? text, int width) =>
+            Insert(index, new ColumnHeader { Name = key, Text = text ?? string.Empty, Width = width });
+
+        public void Insert(int index, string? key, string? text, int width, HorizontalAlignment textAlign, int imageIndex) =>
+            Insert(index, new ColumnHeader(imageIndex)
+            {
+                Name = key,
+                Text = text ?? string.Empty,
+                Width = width,
+                TextAlign = textAlign,
+            });
+
+        public void Insert(int index, string? key, string? text, int width, HorizontalAlignment textAlign, string? imageKey) =>
+            Insert(index, new ColumnHeader(imageKey ?? string.Empty)
+            {
+                Name = key,
+                Text = text ?? string.Empty,
+                Width = width,
+                TextAlign = textAlign,
+            });
 
         public virtual void Remove(ColumnHeader column)
         {

@@ -39,6 +39,7 @@ public partial class TreeView : Control
     private bool _sorted;
     private IComparer? _treeViewNodeSorter;
     private Color _lineColor = Color.Black;
+    private bool _lineColorExplicit;
     private TreeNode? _topNode;
     private int _updateCount;
     private bool _vScrollVisible;
@@ -105,6 +106,8 @@ public partial class TreeView : Control
     }
 
     [DefaultValue(-1)]
+    [TypeConverter(typeof(TreeViewImageIndexConverter))]
+    [RelatedImageList(nameof(ImageList))]
     public int ImageIndex
     {
         get => _imageIndex;
@@ -167,8 +170,9 @@ public partial class TreeView : Control
         get => _lineColor;
         set
         {
-            if (_lineColor == value) return;
+            if (_lineColorExplicit && _lineColor == value) return;
 
+            _lineColorExplicit = true;
             _lineColor = value;
             Invalidate();
         }
@@ -200,6 +204,8 @@ public partial class TreeView : Control
     }
 
     [DefaultValue(-1)]
+    [TypeConverter(typeof(TreeViewImageIndexConverter))]
+    [RelatedImageList(nameof(ImageList))]
     public int SelectedImageIndex
     {
         get => _selectedImageIndex;
