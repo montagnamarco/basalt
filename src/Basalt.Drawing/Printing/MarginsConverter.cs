@@ -46,12 +46,15 @@ public class MarginsConverter : ExpandableObjectConverter
             return string.Join(separator, margins.Left, margins.Right, margins.Top, margins.Bottom);
         }
 
-        if (destinationType == typeof(InstanceDescriptor) && value is Margins)
+        if (destinationType == typeof(InstanceDescriptor) && value is Margins marginsForDescriptor)
         {
-            // Nobody in this codebase replays an InstanceDescriptor through
-            // CodeDOM; this branch exists only so CanConvertTo's promise holds,
-            // and has not been exercised against a real designer.
-            throw new NotImplementedException("Basalt.Drawing does not generate InstanceDescriptor code for Margins.");
+            var constructor = typeof(Margins).GetConstructor([typeof(int), typeof(int), typeof(int), typeof(int)])!;
+            return new InstanceDescriptor(constructor, new object[] {
+                marginsForDescriptor.Left,
+                marginsForDescriptor.Right,
+                marginsForDescriptor.Top,
+                marginsForDescriptor.Bottom,
+            });
         }
 
         return base.ConvertTo(context, culture, value, destinationType);

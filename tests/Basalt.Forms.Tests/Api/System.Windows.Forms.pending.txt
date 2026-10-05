@@ -732,13 +732,6 @@ M public System.Windows.Forms.PictureBox::add_ImeModeChanged(System.EventHandler
 M public System.Windows.Forms.PictureBox::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.PictureBox::remove_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PictureBox::set_ImeMode(System.Windows.Forms.ImeMode) -> System.Void
-M public System.Windows.Forms.PrintControllerWithStatusDialog::.ctor(System.Drawing.Printing.PrintController)
-M public System.Windows.Forms.PrintControllerWithStatusDialog::.ctor(System.Drawing.Printing.PrintController, System.String)
-M public System.Windows.Forms.PrintControllerWithStatusDialog::OnEndPage(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintPageEventArgs) -> System.Void virtual
-M public System.Windows.Forms.PrintControllerWithStatusDialog::OnEndPrint(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
-M public System.Windows.Forms.PrintControllerWithStatusDialog::OnStartPage(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintPageEventArgs) -> System.Drawing.Graphics virtual
-M public System.Windows.Forms.PrintControllerWithStatusDialog::OnStartPrint(System.Drawing.Printing.PrintDocument, System.Drawing.Printing.PrintEventArgs) -> System.Void virtual
-M public System.Windows.Forms.PrintControllerWithStatusDialog::get_IsPreview() -> System.Boolean virtual
 M public System.Windows.Forms.PrintPreviewDialog::add_ImeModeChanged(System.EventHandler) -> System.Void
 M public System.Windows.Forms.PrintPreviewDialog::get_ImeMode() -> System.Windows.Forms.ImeMode
 M public System.Windows.Forms.PrintPreviewDialog::remove_ImeModeChanged(System.EventHandler) -> System.Void
@@ -1136,7 +1129,6 @@ T class System.Windows.Forms.ListViewItemConverter : System.ComponentModel.Expan
 T class System.Windows.Forms.ListViewItemStateImageIndexConverter : System.Windows.Forms.ImageIndexConverter
 T class System.Windows.Forms.OpacityConverter : System.ComponentModel.TypeConverter
 T class System.Windows.Forms.OwnerDrawPropertyBag : System.MarshalByRefObject
-T class System.Windows.Forms.PrintControllerWithStatusDialog : System.Drawing.Printing.PrintController
 T class System.Windows.Forms.ThreadExceptionDialog : System.Windows.Forms.Form
 T class System.Windows.Forms.ToolStripPanel+ToolStripPanelRowCollection : System.Windows.Forms.Layout.ArrangedElementCollection
 T class System.Windows.Forms.TreeViewImageIndexConverter : System.Windows.Forms.ImageIndexConverter

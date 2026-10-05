@@ -11,7 +11,7 @@ namespace System.Windows.Forms;
 /// <see cref="StartPage"/>, over a grey workspace background.
 /// </summary>
 [DefaultProperty("Document")]
-public class PrintPreviewControl : Control
+public partial class PrintPreviewControl : Control
 {
     // The gap, in screen pixels and never scaled by Zoom, left around and
     // between pages: Windows draws a fixed margin regardless of zoom level.

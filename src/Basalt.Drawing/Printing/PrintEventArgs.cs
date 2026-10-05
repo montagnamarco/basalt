@@ -10,8 +10,8 @@ public class PrintEventArgs : CancelEventArgs
     }
 
     // Only a PrintDocument knows, at the point it raises BeginPrint/EndPrint,
-    // whether this run goes to a file, a preview or (never, here) a real
-    // printer; a caller constructing its own PrintEventArgs always gets the
+    // whether this run goes to a file, a preview or a real printer; a caller
+    // constructing its own PrintEventArgs always gets the
     // GDI+ default of PrintToPrinter.
     internal PrintEventArgs(PrintAction action)
     {

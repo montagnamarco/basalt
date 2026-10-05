@@ -3,10 +3,8 @@ using System.Drawing.Imaging;
 namespace System.Drawing.Printing;
 
 /// <summary>
-/// Which printer a PrintDocument targets and how. There is no real printer
-/// to discover on this platform: InstalledPrinters is always empty, and any
-/// PrinterName that is not the empty string ("no printer selected") fails
-/// IsValid, the same way GDI+ fails it for a name no driver recognises.
+/// Which printer a PrintDocument targets and how. Printer discovery uses the
+/// platform spooler, while print job submission is handled by the controller.
 /// </summary>
 public partial class PrinterSettings : ICloneable
 {
@@ -22,11 +20,22 @@ public partial class PrinterSettings : ICloneable
     private int _maximumPage = 9999;
     private PrintRange _printRange = PrintRange.AllPages;
 
+    // Discovery and capabilities round-trip to a native spooler process or
+    // P/Invoke call; both snapshots are cached per PrinterSettings instance
+    // (not shared) until PrinterName changes, so a printer installed later is
+    // only seen by a new instance or after reselecting a printer, and that
+    // reading several properties in a row (as callers routinely do) costs
+    // one discovery, not one per property.
+    private readonly object _discoveryLock = new();
+    private SystemPrinterDiscovery.Snapshot? _discoverySnapshot;
+    private PrinterCapabilities? _capabilities;
+    private string? _capabilitiesPrinterName;
+
     public PrinterSettings()
     {
     }
 
-    public bool CanDuplex => false;
+    public bool CanDuplex => Capabilities.CanDuplex ?? false;
 
     public bool Collate
     {
@@ -54,29 +63,34 @@ public partial class PrinterSettings : ICloneable
         set => _fromPage = value;
     }
 
-    /// <summary>Always empty: there is no printer spooler to enumerate here.</summary>
-    public static StringCollection InstalledPrinters => new([]);
+    public static StringCollection InstalledPrinters => new(SystemPrinterDiscovery.Discover().Names);
 
     /// <summary>
-    /// "" means no printer is selected at all, rather than Windows' usual
-    /// meaning of "whichever printer the system default is": there is no
-    /// system default to fall back to on this platform.
+    /// An unset name selects the system default if one is configured.
     /// </summary>
-    public bool IsDefaultPrinter => string.IsNullOrEmpty(PrinterName);
+    public bool IsDefaultPrinter
+    {
+        get
+        {
+            var defaultName = DiscoverySnapshot.DefaultName;
+            return defaultName is not null && (_printerName.Length == 0 || string.Equals(_printerName, defaultName, StringComparison.Ordinal));
+        }
+    }
 
     public bool IsPlotter => false;
 
-    /// <summary>A printer is valid only if it is both named and installed, and none ever is.</summary>
+    /// <summary>A printer is valid when the selected name is installed.</summary>
     public bool IsValid
     {
         get
         {
-            if (PrinterName.Length == 0) return false;
+            var snapshot = DiscoverySnapshot;
+            var name = _printerName.Length == 0 ? snapshot.DefaultName : _printerName;
+            if (name is null) return false;
 
-            var installed = InstalledPrinters;
-            for (var i = 0; i < installed.Count; i++)
+            for (var i = 0; i < snapshot.Names.Length; i++)
             {
-                if (string.Equals(installed[i], PrinterName, StringComparison.Ordinal)) return true;
+                if (string.Equals(snapshot.Names[i], name, StringComparison.Ordinal)) return true;
             }
 
             return false;
@@ -100,14 +114,12 @@ public partial class PrinterSettings : ICloneable
         set => _minimumPage = value;
     }
 
-    /// <summary>
-    /// Letter and A4, the two sizes most test documents assume; a real
-    /// driver would list many more and this has not been compared with one.
-    /// </summary>
-    public PaperSizeCollection PaperSizes => new([
-        new PaperSize("Letter", 850, 1100) { RawKind = (int)PaperKind.Letter },
-        new PaperSize("A4", 827, 1169) { RawKind = (int)PaperKind.A4 },
-    ]);
+    public PaperSizeCollection PaperSizes => new(PrinterName.Length == 0
+        ? [
+            new PaperSize("Letter", 850, 1100) { RawKind = (int)PaperKind.Letter },
+            new PaperSize("A4", 827, 1169) { RawKind = (int)PaperKind.A4 },
+        ]
+        : Capabilities.PaperSizes);
 
     public PaperSourceCollection PaperSources => new([
         new PaperSource { RawKind = (int)PaperSourceKind.AutomaticFeed, SourceName = "Automatic" },
@@ -133,21 +145,72 @@ public partial class PrinterSettings : ICloneable
 
     public string PrinterName
     {
-        get => _printerName;
-        set => _printerName = value ?? throw new ArgumentNullException(nameof(value));
+        get => _printerName.Length == 0 ? DiscoverySnapshot.DefaultName ?? string.Empty : _printerName;
+        set
+        {
+            _printerName = value ?? throw new ArgumentNullException(nameof(value));
+            InvalidateDiscoveryCache();
+        }
     }
 
-    /// <summary>A single 300 dpi entry: there is no driver to list the real set.</summary>
-    public PrinterResolutionCollection PrinterResolutions => new([
-        new PrinterResolution { Kind = PrinterResolutionKind.Custom, X = 300, Y = 300 },
-    ]);
+    public PrinterResolutionCollection PrinterResolutions => new(PrinterName.Length == 0
+        ? [new PrinterResolution { Kind = PrinterResolutionKind.Custom, X = 300, Y = 300 }]
+        : Capabilities.Resolutions);
 
-    public bool SupportsColor => true;
+    public bool SupportsColor => PrinterName.Length == 0 || Capabilities.SupportsColor == true;
 
     public int ToPage
     {
         get => _toPage;
         set => _toPage = value;
+    }
+
+    /// <summary>
+    /// The list of installed printers and the system default, fetched at
+    /// most once per selected printer name.
+    /// </summary>
+    private SystemPrinterDiscovery.Snapshot DiscoverySnapshot
+    {
+        get
+        {
+            lock (_discoveryLock)
+            {
+                return _discoverySnapshot ??= SystemPrinterDiscovery.Discover();
+            }
+        }
+    }
+
+    /// <summary>
+    /// The selected printer's capabilities, fetched at most once per
+    /// selected printer name and re-fetched only if the resolved name
+    /// (explicit, or the system default when none is set) changes.
+    /// </summary>
+    private PrinterCapabilities Capabilities
+    {
+        get
+        {
+            var name = PrinterName;
+            lock (_discoveryLock)
+            {
+                if (_capabilities is not null && string.Equals(_capabilitiesPrinterName, name, StringComparison.Ordinal))
+                    return _capabilities;
+
+                var discovered = PrinterCapabilities.Discover(name);
+                _capabilities = discovered;
+                _capabilitiesPrinterName = name;
+                return discovered;
+            }
+        }
+    }
+
+    private void InvalidateDiscoveryCache()
+    {
+        lock (_discoveryLock)
+        {
+            _discoverySnapshot = null;
+            _capabilities = null;
+            _capabilitiesPrinterName = null;
+        }
     }
 
     public object Clone()

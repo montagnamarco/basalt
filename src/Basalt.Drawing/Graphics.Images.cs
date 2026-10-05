@@ -258,7 +258,9 @@ public sealed partial class Graphics
             _canvas.SetMatrix(WorldTranslationToDevice().ToSkia());
 
             using var pixels = cachedBitmap.Pixels.PeekPixels();
-            using var picture = SKImage.FromPixels(pixels);
+            // The source cache may be disposed before a control's recorded
+            // drawing is replayed, so the picture owns its pixels.
+            using var picture = SKImage.FromPixelCopy(pixels);
             _canvas.DrawImage(picture, x, y);
         }
         finally
@@ -323,7 +325,10 @@ public sealed partial class Graphics
         };
 
         using var pixels = image.Pixels.PeekPixels();
-        using var picture = SKImage.FromPixels(pixels);
+        // A control records drawing commands and replays them after its Paint
+        // callback returns. The source bitmap may be disposed before replay,
+        // so the recorded image must own a copy of its pixels.
+        using var picture = SKImage.FromPixelCopy(pixels);
         var sampling = SamplingFor(mapping);
 
         using var aligned = AlignToPixels();
@@ -373,9 +378,10 @@ public sealed partial class Graphics
             ColorFilter = filter,
         };
 
-        // No copy: the pixels are read here and now, before anything can change them.
+        // Control painting records this command for later replay; the source
+        // bitmap may be disposed as soon as DrawImage returns.
         using var pixels = bitmap.PeekPixels();
-        using var picture = SKImage.FromPixels(pixels);
+        using var picture = SKImage.FromPixelCopy(pixels);
 
         var sampling = SamplingFor(mapping);
 

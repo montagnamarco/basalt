@@ -1,3 +1,4 @@
+using System.ComponentModel.Design.Serialization;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
@@ -9,6 +10,7 @@ namespace Basalt.Drawing.Tests;
 /// Printing with no printer: to a PDF file, or to page images for a preview,
 /// in GDI+'s printer unit, the hundredth of an inch.
 /// </summary>
+[Collection(PrinterDiscoveryCollection.Name)]
 public class PrintingTests
 {
     [Fact]
@@ -72,6 +74,79 @@ public class PrintingTests
         finally
         {
             File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public void A_controller_that_fails_during_start_receives_the_cleanup_hook()
+    {
+        using var document = new PrintDocument();
+        var controller = new FailingStartController();
+        document.PrintController = controller;
+
+        Assert.Throws<InvalidOperationException>(() => document.Print());
+
+        Assert.True(controller.CleanedUp);
+        Assert.True(controller.CancelledAtEnd);
+    }
+
+    [Fact]
+    public void A_pdf_creation_failure_closes_the_output_stream()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"basalt-print-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            using var document = new PrintDocument();
+            document.PrinterSettings.PrintToFile = true;
+            document.PrinterSettings.PrintFileName = file;
+            document.PrintController = new StandardPrintController(
+                _ => throw new InvalidOperationException("PDF creation failed"),
+                static pdf => pdf.Close());
+
+            Assert.Throws<InvalidOperationException>(() => document.Print());
+            using var exclusive = File.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public void A_pdf_close_failure_still_closes_the_output_stream()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"basalt-print-{Guid.NewGuid():N}.pdf");
+        try
+        {
+            using var document = new PrintDocument();
+            document.PrinterSettings.PrintToFile = true;
+            document.PrinterSettings.PrintFileName = file;
+            document.PrintController = new StandardPrintController(
+                static stream => SkiaSharp.SKDocument.CreatePdf(stream),
+                _ => throw new InvalidOperationException("PDF close failed"));
+            document.PrintPage += (_, e) => e.Graphics.FillRectangle(Brushes.Black, 0, 0, 10, 10);
+
+            Assert.Throws<InvalidOperationException>(() => document.Print());
+            using var exclusive = File.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
+    private sealed class FailingStartController : PrintController
+    {
+        public bool CleanedUp { get; private set; }
+        public bool CancelledAtEnd { get; private set; }
+
+        public override void OnStartPrint(PrintDocument document, PrintEventArgs e) =>
+            throw new InvalidOperationException("Controller startup failed");
+
+        public override void OnEndPrint(PrintDocument document, PrintEventArgs e)
+        {
+            CleanedUp = true;
+            CancelledAtEnd = e.Cancel;
         }
     }
 
@@ -177,6 +252,19 @@ public class PrintingTests
         var back = (Margins)converter.ConvertFrom(null, CultureInfo.InvariantCulture, text)!;
 
         Assert.Equal(margins, back);
+    }
+
+    [Fact]
+    public void Margins_descriptor_recreates_all_four_edges()
+    {
+        var converter = new MarginsConverter();
+        var margins = new Margins(10, 20, 30, 40);
+
+        var descriptor = (InstanceDescriptor)converter.ConvertTo(margins, typeof(InstanceDescriptor))!;
+        var recreated = (Margins)descriptor.Invoke()!;
+
+        Assert.Equal(margins, recreated);
+        Assert.True(descriptor.IsComplete);
     }
 
     private static int CountPages(string pdf)

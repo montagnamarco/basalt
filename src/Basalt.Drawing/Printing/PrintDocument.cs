@@ -80,7 +80,26 @@ public class PrintDocument : Component
 
         var printEventArgs = new PrintEventArgs(action);
 
-        controller.OnStartPrint(this, printEventArgs);
+        try
+        {
+            controller.OnStartPrint(this, printEventArgs);
+        }
+        catch
+        {
+            // A controller may have acquired a stream or native job before
+            // reporting a startup failure. Give it the same cleanup hook.
+            printEventArgs.Cancel = true;
+            try
+            {
+                controller.OnEndPrint(this, printEventArgs);
+            }
+            catch
+            {
+                // Preserve the startup error; cleanup is best effort here.
+            }
+
+            throw;
+        }
 
         // The end of the job runs whatever a handler throws, so that the file
         // being printed to is closed and the controller lets go of its pages.
@@ -90,14 +109,24 @@ public class PrintDocument : Component
 
             if (!printEventArgs.Cancel)
             {
-                RunPages(controller);
+                printEventArgs.Cancel = RunPages(controller);
             }
+        }
+        catch
+        {
+            printEventArgs.Cancel = true;
+            throw;
         }
         finally
         {
             try
             {
                 OnEndPrint(printEventArgs);
+            }
+            catch
+            {
+                printEventArgs.Cancel = true;
+                throw;
             }
             finally
             {
@@ -106,7 +135,7 @@ public class PrintDocument : Component
         }
     }
 
-    private void RunPages(PrintController controller)
+    private bool RunPages(PrintController controller)
     {
         while (true)
         {
@@ -114,7 +143,7 @@ public class PrintDocument : Component
             var queryArgs = new QueryPageSettingsEventArgs(pageSettings);
 
             OnQueryPageSettings(queryArgs);
-            if (queryArgs.Cancel) return;
+            if (queryArgs.Cancel) return true;
 
             var pageBounds = queryArgs.PageSettings.Bounds;
             var margins = queryArgs.PageSettings.Margins;
@@ -143,7 +172,8 @@ public class PrintDocument : Component
                 controller.OnEndPage(this, pageEventArgs);
             }
 
-            if (pageEventArgs.Cancel || !pageEventArgs.HasMorePages) return;
+            if (pageEventArgs.Cancel) return true;
+            if (!pageEventArgs.HasMorePages) return false;
         }
     }
 }

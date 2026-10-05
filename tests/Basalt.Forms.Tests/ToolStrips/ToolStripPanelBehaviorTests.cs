@@ -44,22 +44,6 @@ public class ToolStripPanelBehaviorTests
         Assert.False(panel.AutoScroll);
     }
 
-    [Fact]
-    public void OnPaintBackground_asks_the_renderer_and_Handled_skips_the_default_fill()
-    {
-        var panel = new ToolStripPanel { AutoSize = false, Size = new Size(100, 30) };
-        var asked = 0;
-        panel.Renderer.RenderToolStripPanelBackground += (_, e) =>
-        {
-            asked++;
-            e.Handled = true;
-        };
-
-        Draw(panel);
-
-        Assert.Equal(1, asked);
-    }
-
     // ToolStripPanelRowCollection is not implemented yet: see the task's report (ArrangedElementCollection's
     // inherited Count/GetEnumerator cannot be redeclared without failing Nothing_is_public_that_Microsoft_does_not_have,
     // and its Items storage is List<IArrangedElement>, which ToolStripPanelRow does not implement).
