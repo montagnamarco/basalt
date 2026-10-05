@@ -1,0 +1,23 @@
+<Project>
+  <!-- Passed as CustomAfterMicrosoftCommonTargets.
+       The Basalt projects are built the way they always are: with none of the
+       properties that retarget the user's project. Only these references drop them;
+       a reference to another Windows desktop project of the user must keep them. -->
+  <ItemGroup Condition="'$(_BasaltWindowsDesktop)' == 'true'">
+    <ProjectReference Include="$(_BasaltSourceRootSlash)Basalt.Forms/Basalt.Forms.csproj;$(_BasaltSourceRootSlash)Basalt.Forms.VisualBasic/Basalt.Forms.VisualBasic.csproj;$(_BasaltSourceRootSlash)Basalt.Drawing/Basalt.Drawing.csproj;$(_BasaltSourceRootSlash)Basalt.Forms.Primitives/Basalt.Forms.Primitives.csproj;$(_BasaltSourceRootSlash)Basalt.Windows.Extensions/Basalt.Windows.Extensions.csproj;$(_BasaltSourceRootSlash)Basalt.Accessibility/Basalt.Accessibility.vbproj"
+                      GlobalPropertiesToRemove="UseWindowsForms;BaseIntermediateOutputPath;BaseOutputPath;BasaltSourceRoot;DirectoryBuildPropsPath;BeforeMicrosoftNETSdkTargets;CustomAfterMicrosoftCommonTargets" />
+  </ItemGroup>
+
+  <!-- Basalt.Drawing provides System.Drawing; the Windows-only System.Drawing.Common
+       that packages such as Microsoft.Windows.Compatibility bring would make every
+       System.Drawing type ambiguous. -->
+  <Target Name="_BasaltRemoveWindowsDrawing" AfterTargets="ResolvePackageAssets"
+          Condition="'$(_BasaltWindowsDesktop)' == 'true'">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Reference.NuGetPackageId)' == 'System.Drawing.Common'" />
+      <ResolvedCompileFileDefinitions Remove="@(ResolvedCompileFileDefinitions)" Condition="'%(ResolvedCompileFileDefinitions.NuGetPackageId)' == 'System.Drawing.Common'" />
+      <RuntimeCopyLocalItems Remove="@(RuntimeCopyLocalItems)" Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'System.Drawing.Common'" />
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)" Condition="'%(RuntimeTargetsCopyLocalItems.NuGetPackageId)' == 'System.Drawing.Common'" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -15,13 +15,16 @@ namespace Basalt.Workspace.Testing;
 /// </summary>
 public sealed class DotnetTestService : ITestService
 {
+    /// <summary>The session that retargets Windows desktop projects, shared with the build.</summary>
+    public WindowsDesktopCompatibilitySession Compatibility { get; set; } = new();
+
     public event EventHandler<string>? OutputReceived;
 
     public async Task<IReadOnlyList<TestCase>> DiscoverAsync(
         string projectPath, CancellationToken ct = default)
     {
         var (_, output) = await RunDotnetAsync(
-            ["test", projectPath, "--list-tests", "--nologo"], ct).ConfigureAwait(false);
+            projectPath, ["test", projectPath, "--list-tests", "--nologo"], ct).ConfigureAwait(false);
 
         return [.. ParseDiscovered(output).Select(name => new TestCase(name, projectPath))];
     }
@@ -92,7 +95,7 @@ public sealed class DotnetTestService : ITestService
 
         try
         {
-            await RunDotnetAsync(arguments, ct).ConfigureAwait(false);
+            await RunDotnetAsync(projectPath, arguments, ct).ConfigureAwait(false);
 
             var report = Path.Combine(reportDirectory, "results.trx");
 
@@ -215,7 +218,7 @@ public sealed class DotnetTestService : ITestService
         string.Join("|", fullyQualifiedNames.Select(name => $"FullyQualifiedName={name}"));
 
     private async Task<(int ExitCode, string Output)> RunDotnetAsync(
-        IReadOnlyList<string> arguments, CancellationToken ct)
+        string projectPath, IReadOnlyList<string> arguments, CancellationToken ct)
     {
         var startInfo = new ProcessStartInfo("dotnet")
         {
@@ -226,6 +229,12 @@ public sealed class DotnetTestService : ITestService
         };
 
         foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+
+        // "dotnet test" restores and builds, so it needs the properties the
+        // IDE's own build used, or it would rebuild the project the way
+        // Windows does and fail off Windows.
+        foreach (var argument in await Compatibility.GetArgumentsAsync(projectPath, ct).ConfigureAwait(false))
+            startInfo.ArgumentList.Add(argument);
 
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("The dotnet CLI could not be started.");

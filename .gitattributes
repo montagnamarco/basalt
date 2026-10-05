@@ -2,3 +2,7 @@
 # command: a Windows checkout with CRLF could not run build/pack.sh even from
 # Git Bash.
 *.sh text eol=lf
+
+# Visual Studio sample projects used as test inputs: byte-for-byte, so the tests
+# can prove Basalt leaves them untouched (CRLF and BOM included).
+tests/Basalt.Tests/Fixtures/VisualStudio/** -text

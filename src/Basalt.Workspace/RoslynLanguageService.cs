@@ -32,6 +32,13 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     private readonly SemaphoreSlim _gate = new(1, 1);
     private MSBuildWorkspace? _workspace;
 
+    /// <summary>
+    /// Opening a solution here makes it the solution of the session, in the
+    /// same step as the workspace switches; share it with the build, run and
+    /// test services.
+    /// </summary>
+    public WindowsDesktopCompatibilitySession Compatibility { get; set; } = new();
+
     public Solution? CurrentSolution => _workspace?.CurrentSolution;
 
     /// <summary>Warnings reported by MSBuild while loading the solution.</summary>
@@ -43,11 +50,26 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     {
         MsBuildEnvironment.EnsureInitialized();
 
+        // Read in the background before taking the gate. The session is only
+        // switched to this solution under the gate, together with the workspace.
+        var retargeting = await Compatibility.ResolveAsync(solutionOrProjectPath, ct).ConfigureAwait(false);
+        // MSBuildWorkspace takes global properties as MSBuild-escaped text, as
+        // the command line does ("%41" in a path would otherwise arrive as "A").
+        var properties = retargeting.Properties.ToDictionary(
+            p => p.Key, p => WindowsDesktopProjectCompatibility.Escape(p.Value));
+
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             _workspace?.Dispose();
-            _workspace = MSBuildWorkspace.Create(CreateHostServices());
+            // Visual Studio Windows desktop projects are loaded the way the
+            // build sees them (net10.0 plus Basalt.Forms), or IntelliSense
+            // would describe a framework that is not what runs.
+            _workspace = MSBuildWorkspace.Create(properties, CreateHostServices());
+            // Same gate, same moment as the workspace: a concurrent or
+            // cancelled open cannot leave build, run and test on another
+            // solution than the one IntelliSense describes.
+            Compatibility.Open(solutionOrProjectPath);
 
             // A load failure on a single project must not prevent the others
             // from opening: they are collected and surfaced.

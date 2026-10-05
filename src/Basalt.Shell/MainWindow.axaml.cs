@@ -1988,7 +1988,7 @@ public partial class MainWindow : Window
         }
 
         _debugTarget = Path.GetFileName(assembly);
-        if (ViewModel.RunWithoutDebuggerIfUnavailable(startupProject!, configuration))
+        if (await ViewModel.RunWithoutDebuggerIfUnavailableAsync(startupProject!, configuration))
         {
             _debugTarget = null;
             ShowDebugState();
@@ -3693,6 +3693,8 @@ public partial class MainWindow : Window
             },
             ViewModel.WriteOutput, "ide");
 
+        // The same retargeting the build used: "dotnet test" builds too.
+        _testService.Compatibility = ViewModel.Compatibility;
         _testService.OutputReceived += (_, text) => ViewModel.WriteOutput(text);
 
         _contents[_factory.Tests] = _tests;

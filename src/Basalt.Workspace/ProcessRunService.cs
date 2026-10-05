@@ -14,6 +14,12 @@ public sealed class ProcessRunService : IDisposable
     /// a rebuild on run.</summary>
     public IReadOnlyList<string> LastArguments { get; private set; } = [];
 
+    /// <summary>
+    /// Used by <see cref="StartAsync"/> to look where the build wrote, with the
+    /// same session the build used.
+    /// </summary>
+    public WindowsDesktopCompatibilitySession Compatibility { get; set; } = new();
+
     public event EventHandler<string>? OutputReceived;
     public event EventHandler<int>? Exited;
 
@@ -26,8 +32,14 @@ public sealed class ProcessRunService : IDisposable
     /// (environment variables, arguments, applicationUrl), and without it
     /// web and Blazor apps start in Production. The caller builds first, so
     /// "--no-build" keeps run from compiling a second time.
+    ///
+    /// <paramref name="compatibilityArguments"/> are the MSBuild properties the
+    /// build used (<see cref="WindowsDesktopCompatibilitySession.GetArgumentsAsync"/>).
+    /// They are passed in, already read, so that starting never waits on the
+    /// disk: this method runs on the interface thread.
     /// </summary>
-    public void Start(string projectPath, string configuration = "Debug")
+    public void Start(string projectPath, string configuration = "Debug",
+        IReadOnlyList<string>? compatibilityArguments = null)
     {
         if (IsRunning)
             throw new InvalidOperationException("The application is already running.");
@@ -41,8 +53,12 @@ public sealed class ProcessRunService : IDisposable
             CreateNoWindow = true
         };
 
-        foreach (var argument in new[] { "run", "--project", projectPath, "-c", configuration, "--no-build" })
-            startInfo.ArgumentList.Add(argument);
+        // The build put its output in bin/basalt; without the same properties
+        // "dotnet run" would look in bin/Debug and find nothing, or a
+        // Windows-only framework it cannot run.
+        var arguments = new List<string> { "run", "--project", projectPath, "-c", configuration, "--no-build" };
+        if (compatibilityArguments is not null) arguments.AddRange(compatibilityArguments);
+        foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
 
         LastArguments = [.. startInfo.ArgumentList];
 
@@ -54,6 +70,16 @@ public sealed class ProcessRunService : IDisposable
         _process.Start();
         _process.BeginOutputReadLine();
         _process.BeginErrorReadLine();
+    }
+
+    /// <summary>
+    /// <see cref="Start"/> with the properties of <see cref="Compatibility"/>,
+    /// read off the calling thread first.
+    /// </summary>
+    public async Task StartAsync(string projectPath, string configuration = "Debug", CancellationToken ct = default)
+    {
+        var arguments = await Compatibility.GetArgumentsAsync(projectPath, ct).ConfigureAwait(false);
+        Start(projectPath, configuration, arguments);
     }
 
     public void Stop()

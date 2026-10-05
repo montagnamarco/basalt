@@ -1,0 +1,30 @@
+<Project>
+  <!--
+    Passed as BeforeMicrosoftNETSdkTargets: evaluated after the project body (so
+    UseWindowsForms and the target framework(s) are known) and before the SDK
+    decides whether this is a cross-targeting build (IsCrossTargetingBuild, from a
+    non-empty TargetFrameworks) and infers the framework and platform. A later hook
+    such as BeforeTargetFrameworkInferenceTargets is never reached by the outer build
+    of a multi-targeted project, which then restores net48 against Basalt.Forms.
+  -->
+  <PropertyGroup Condition="'$(_BasaltOutsideSourceRoot)' == 'true'">
+    <_BasaltWindowsDesktop Condition="'$(UseWindowsForms)' == 'true'">true</_BasaltWindowsDesktop>
+    <_BasaltWindowsDesktop Condition="'$(_BasaltWindowsDesktop)' == '' and $(TargetFramework.IndexOf('-windows', System.StringComparison.OrdinalIgnoreCase)) &gt;= 0">true</_BasaltWindowsDesktop>
+    <_BasaltWindowsDesktop Condition="'$(_BasaltWindowsDesktop)' == '' and $(TargetFrameworks.IndexOf('-windows', System.StringComparison.OrdinalIgnoreCase)) &gt;= 0">true</_BasaltWindowsDesktop>
+  </PropertyGroup>
+
+  <!-- Any netN.M-windows[version] framework becomes plain net10.0, which Basalt.Forms targets. -->
+  <PropertyGroup Condition="'$(_BasaltWindowsDesktop)' == 'true'">
+    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks></TargetFrameworks>
+    <UseWindowsForms>false</UseWindowsForms>
+    <UseWPF>false</UseWPF>
+    <!-- Basalt.Forms brings Avalonia's build targets along. A project with an
+         ApplicationIcon then has an "Avalonia resource" and Avalonia post-processes
+         its assembly right after the compiler wrote it: that raced the compiler
+         server for the file ("being used by another process") on a cold build.
+         A WinForms project has no XAML to compile. -->
+    <EnableAvaloniaXamlCompilation>false</EnableAvaloniaXamlCompilation>
+    <AvaloniaIncludeApplicationIconAsWindowIcon>false</AvaloniaIncludeApplicationIconAsWindowIcon>
+  </PropertyGroup>
+</Project>

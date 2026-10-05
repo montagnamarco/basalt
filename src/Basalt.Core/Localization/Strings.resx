@@ -530,4 +530,5 @@
   <data name="Debug_NoProject" xml:space="preserve"><value>No project to debug: open a solution, or choose a startup project in the toolbar.</value></data>
   <data name="Debug_BuildFailed" xml:space="preserve"><value>The build failed with {0} error(s); nothing was produced to debug.</value></data>
   <data name="Debug_NoAssembly" xml:space="preserve"><value>The build succeeded but no assembly was found under bin. Is '{0}' a library with no entry point?</value></data>
+  <data name="Build_WindowsDesktopSourcesMissing" xml:space="preserve"><value>This solution has a Windows Forms project, which the .NET SDK refuses to build on this system. Basalt can build it on Basalt.Forms instead, but the Basalt.Forms sources were not found, so the build will fail with NETSDK1100. Set the {0} environment variable to the folder that contains Basalt.Forms (the "src" folder of the Basalt repository) and open the solution again.</value></data>
 </root>

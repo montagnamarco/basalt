@@ -30,14 +30,28 @@ public sealed partial class MsBuildBuildService : IBuildService
 
     public event EventHandler<string>? OutputReceived;
 
+    /// <summary>
+    /// Where the properties that retarget a Visual Studio Windows desktop
+    /// project onto Basalt.Forms come from. Share one session with the
+    /// language service, the run and the test services so that all of them see
+    /// the same answer for the opened solution.
+    /// </summary>
+    public WindowsDesktopCompatibilitySession Compatibility { get; set; } = new();
+
+    // Restore must see the same properties as the build or it writes
+    // project.assets.json for the original framework.
     // MSBuild workers can inherit the redirected output pipes. A reused worker
     // can keep those pipes open after the dotnet command exits, which leaves
     // WaitForExitAsync waiting for EOF even though the build has finished.
-    public Task<BuildResult> BuildAsync(string projectPath, string configuration = "Debug", CancellationToken ct = default)
-        => RunAsync(projectPath, ["build", projectPath, "-c", configuration, "--nologo", "-v", "normal", "-nr:false"], ct);
+    public async Task<BuildResult> BuildAsync(string projectPath, string configuration = "Debug", CancellationToken ct = default)
+        => await RunAsync(projectPath,
+            ["build", projectPath, "-c", configuration, "--nologo", "-v", "normal", "-nr:false",
+             .. await Compatibility.GetArgumentsAsync(projectPath, ct).ConfigureAwait(false)], ct).ConfigureAwait(false);
 
-    public Task<BuildResult> RestoreAsync(string projectPath, CancellationToken ct = default)
-        => RunAsync(projectPath, ["restore", projectPath, "--nologo", "-nr:false"], ct);
+    public async Task<BuildResult> RestoreAsync(string projectPath, CancellationToken ct = default)
+        => await RunAsync(projectPath,
+            ["restore", projectPath, "--nologo", "-nr:false",
+             .. await Compatibility.GetArgumentsAsync(projectPath, ct).ConfigureAwait(false)], ct).ConfigureAwait(false);
 
     private async Task<BuildResult> RunAsync(string projectPath, string[] arguments, CancellationToken ct)
     {

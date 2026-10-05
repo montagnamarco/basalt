@@ -1,4 +1,5 @@
 using System.Security;
+using Basalt.Core.Platform;
 
 namespace Basalt.Designer;
 
@@ -7,7 +8,7 @@ public static partial class SolutionTemplates
     private static string WinFormsSupport(ProjectTemplate template)
     {
         if (template != ProjectTemplate.WinFormsApp) return "";
-        var sourceRoot = FindFormsSourceRoot();
+        var sourceRoot = BasaltSourceRoot.Find();
         return $"""
 
               <PropertyGroup>
@@ -29,20 +30,6 @@ public static partial class SolutionTemplates
                 </Compile>
               </ItemGroup>
             """;
-    }
-
-    private static string FindFormsSourceRoot()
-    {
-        var configured = Environment.GetEnvironmentVariable("BASALT_FORMS_PATH");
-        if (!string.IsNullOrWhiteSpace(configured)) return configured;
-        var directory = AppContext.BaseDirectory;
-        while (directory is not null)
-        {
-            if (File.Exists(Path.Combine(directory, "src", "Basalt.Forms", "Basalt.Forms.csproj")))
-                return Path.Combine(directory, "src");
-            directory = Path.GetDirectoryName(directory);
-        }
-        throw new DirectoryNotFoundException("Set BASALT_FORMS_PATH to the folder containing the Basalt.Forms source project.");
     }
 
     private static async Task<string> WriteWinFormsAppAsync(string directory, string name, CancellationToken ct)

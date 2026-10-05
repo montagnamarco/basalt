@@ -525,4 +525,7 @@ public static class StringKeys
     public const string DebugNoProject = "Debug_NoProject";
     public const string DebugBuildFailed = "Debug_BuildFailed";
     public const string DebugNoAssembly = "Debug_NoAssembly";
+
+    // Visual Studio Windows desktop projects retargeted onto Basalt.Forms.
+    public const string BuildWindowsDesktopSourcesMissing = "Build_WindowsDesktopSourcesMissing";
 }

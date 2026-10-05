@@ -22,6 +22,18 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
 
+  <!--
+    Visual Studio sample projects, input for the Windows desktop compatibility
+    tests. They are data, not part of this assembly: the tests copy them to a
+    temporary folder and build them with MSBuild, so none of them may be
+    compiled, embedded or copied to the output here.
+  -->
+  <ItemGroup>
+    <Compile Remove="Fixtures\**" />
+    <EmbeddedResource Remove="Fixtures\**" />
+    <None Remove="Fixtures\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>

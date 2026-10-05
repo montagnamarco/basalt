@@ -1,0 +1,40 @@
+<Project>
+  <!--
+    Passed to MSBuild as DirectoryBuildPropsPath by WindowsDesktopProjectCompatibility
+    (macOS and Linux only), together with BasaltSourceRoot. It is evaluated before the
+    project body, so it is where the output folders are decided.
+
+    It replaces MSBuild's own Directory.Build.props lookup, so the project's nearest
+    Directory.Build.props is imported here first.
+  -->
+  <PropertyGroup>
+    <_BasaltOriginalDirectoryBuildProps>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'Directory.Build.props'))</_BasaltOriginalDirectoryBuildProps>
+  </PropertyGroup>
+  <Import Project="$(_BasaltOriginalDirectoryBuildProps)/Directory.Build.props" Condition="'$(_BasaltOriginalDirectoryBuildProps)' != ''" />
+
+  <PropertyGroup Condition="'$(BasaltSourceRoot)' != ''">
+    <_BasaltSourceRootSlash>$([MSBuild]::EnsureTrailingSlash('$(BasaltSourceRoot)'))</_BasaltSourceRootSlash>
+  </PropertyGroup>
+
+  <!-- Whether a project is inside the Basalt source tree. Case is ignored on Windows and
+       macOS, whose usual file systems ignore it, and matters on Linux (the same rule as
+       WindowsDesktopProjectCompatibility.IsUnder). -->
+  <PropertyGroup Condition="'$(_BasaltSourceRootSlash)' != ''">
+    <_BasaltInsideSourceRoot Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(MSBuildProjectFullPath.StartsWith('$(_BasaltSourceRootSlash)', System.StringComparison.Ordinal))</_BasaltInsideSourceRoot>
+    <_BasaltInsideSourceRoot Condition="!$([MSBuild]::IsOSPlatform('Linux'))">$(MSBuildProjectFullPath.StartsWith('$(_BasaltSourceRootSlash)', System.StringComparison.OrdinalIgnoreCase))</_BasaltInsideSourceRoot>
+  </PropertyGroup>
+
+  <!-- Every project outside the Basalt source tree: the Basalt projects keep their normal bin and obj. -->
+  <PropertyGroup Condition="'$(_BasaltSourceRootSlash)' != '' and '$(_BasaltInsideSourceRoot)' != 'true'">
+    <_BasaltOutsideSourceRoot>true</_BasaltOutsideSourceRoot>
+    <!-- Kept apart so a Windows build of the same folder (real WinForms) neither
+         reuses nor overwrites what the retargeted build produced. -->
+    <BaseIntermediateOutputPath>obj/basalt/</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin/basalt/</BaseOutputPath>
+    <!-- The SDK only excludes the (moved) bin/basalt and obj/basalt from the default
+         globs. A folder that was built before, by Visual Studio or by Basalt without
+         the retargeting, still holds obj/Debug/*/*.AssemblyInfo.vb, which would be
+         compiled a second time (BC30663: the attribute is applied more than once). -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

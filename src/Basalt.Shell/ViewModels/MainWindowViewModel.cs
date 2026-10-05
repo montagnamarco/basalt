@@ -42,7 +42,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isRunning;
 
     /// <summary>
-    /// Counts the runs started through <see cref="RunBuiltProject"/>.
+    /// Counts the runs started through <see cref="RunBuiltProjectAsync"/>.
     ///
     /// "dotnet run" exits on a threadpool thread some time after Stop asks it
     /// to, and by then the user may already have started the next run. The
@@ -56,6 +56,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public MainWindowViewModel()
     {
+        ShareCompatibilitySession();
         Languages = LanguageCatalog.CreateDefault(_languageService, _formattingService);
 
         _buildService.OutputReceived += (_, line) => AppendOutput(line);
@@ -341,9 +342,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             RunnableProjects = FindRunnableProjects(path);
             StartupProject = FindStartupProject(path);
 
+            // Also makes this the solution Windows desktop projects are
+            // retargeted for (see Compatibility).
             await _languageService.OpenSolutionAsync(path).ConfigureAwait(true);
 
             foreach (var warning in _languageService.LoadWarnings) AppendOutput($"[warning] {warning}");
+            await ReportMissingWindowsDesktopSourcesAsync(path).ConfigureAwait(true);
 
             await DetectRepositoryAsync(path).ConfigureAwait(true);
 
@@ -617,6 +621,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             UseShellExecute = false,
             CreateNoWindow = true
         };
+
+        await AddCompatibilityArgumentsAsync(start).ConfigureAwait(true);
 
         using var process = System.Diagnostics.Process.Start(start);
 

@@ -42,6 +42,12 @@ public sealed partial class MainWindowViewModel
             // looked like the designer having lost the work.
             await SaveAllAsync().ConfigureAwait(true);
 
+            // The build starts by clearing the output, so the explanation
+            // given when the solution was opened is repeated here, where the
+            // SDK's own NETSDK1100 is about to appear.
+            if ((await Compatibility.GetAsync(projectPath, operation.Token).ConfigureAwait(true)).SourcesMissing)
+                AppendOutput(MissingWindowsDesktopSourcesMessage);
+
             StatusMessage = Localizer.Get(StringKeys.StatusBuilding);
             var result = await _buildService
                 .BuildAsync(projectPath, configuration, operation.Token)
@@ -61,7 +67,7 @@ public sealed partial class MainWindowViewModel
             // Whether the startup project or configuration changed while this
             // build was running is decided here, so a caller that only needs
             // "built and still the target" can rely on this return value.
-            // RunBuiltProject asks once more because it can be reached
+            // RunBuiltProjectAsync asks once more because it can be reached
             // without a build of its own.
             return result.Succeeded && LaunchTargetIsCurrent(projectPath, configuration);
         }
@@ -143,7 +149,7 @@ public sealed partial class MainWindowViewModel
         // started from a rebuild nobody saw the errors of.
         if (!await BuildProjectAsync().ConfigureAwait(true)) return;
 
-        RunBuiltProject(projectPath, configuration);
+        await RunBuiltProjectAsync(projectPath, configuration).ConfigureAwait(true);
     }
 
     /// <summary>
@@ -163,9 +169,26 @@ public sealed partial class MainWindowViewModel
         return true;
     }
 
-    internal void RunBuiltProject(string? expectedProject = null, string? expectedConfiguration = null)
+    internal async Task RunBuiltProjectAsync(string? expectedProject = null, string? expectedConfiguration = null)
     {
         if (StartupProject is null) return;
+
+        // Read first, off the interface thread, and before anything below is
+        // looked at: everything after this await is one uninterrupted block
+        // on the interface thread, so the launch target checked is the one
+        // that starts. A failed reading is reported here and retried by the
+        // next run.
+        IReadOnlyList<string> compatibilityArguments;
+        try
+        {
+            compatibilityArguments = await Compatibility.GetArgumentsAsync(StartupProject).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusStartFailed, ex.Message);
+            AppendOutput(StatusMessage);
+            return;
+        }
 
         if (!LaunchTargetIsCurrent(expectedProject ?? StartupProject, expectedConfiguration ?? Configuration)) return;
 
@@ -191,7 +214,8 @@ public sealed partial class MainWindowViewModel
             // "dotnet run --no-build": the build above is what runs, and
             // launchSettings.json (environment, arguments, URLs) still
             // applies, which launching the dll directly would drop.
-            _runService.Start(StartupProject, configuration: expectedConfiguration ?? Configuration);
+            _runService.Start(StartupProject, configuration: expectedConfiguration ?? Configuration,
+                compatibilityArguments);
 
             IsRunning = true;
             StatusMessage = Localizer.Get(StringKeys.StatusRunning);
@@ -213,18 +237,18 @@ public sealed partial class MainWindowViewModel
     /// adapter on the machine — only has to update its own debug-state UI
     /// rather than repeat the adapter check itself.
     /// </summary>
-    internal bool RunWithoutDebuggerIfUnavailable(string startupProject, string configuration)
+    internal async Task<bool> RunWithoutDebuggerIfUnavailableAsync(string startupProject, string configuration)
     {
         if (Basalt.Workspace.Debugging.DebugAdapterLocator.Find() is not null) return false;
 
         WriteOutput(Localizer.Get(StringKeys.DebugRunWithoutAdapter));
-        RunBuiltProject(startupProject, configuration);
+        await RunBuiltProjectAsync(startupProject, configuration).ConfigureAwait(true);
         return true;
     }
 
     /// <summary>
     /// Bumps the run generation and wires its exit handler exactly as
-    /// <see cref="RunBuiltProject"/> does once the process starts, but
+    /// <see cref="RunBuiltProjectAsync"/> does once the process starts, but
     /// without launching one. Exit-race tests simulate several generations
     /// this way instead of racing real process timing.
     /// </summary>

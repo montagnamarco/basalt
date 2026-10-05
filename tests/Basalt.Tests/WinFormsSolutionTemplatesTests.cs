@@ -7,6 +7,8 @@ using Basalt.Workspace;
 
 namespace Basalt.Tests;
 
+// Builds a project that references Basalt.Forms in place.
+[Collection(WindowsDesktopCollection.Name)]
 public sealed class WinFormsSolutionTemplatesTests
 {
     [AvaloniaFact]

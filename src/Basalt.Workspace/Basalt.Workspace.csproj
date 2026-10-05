@@ -40,6 +40,17 @@
     <Compile Include="..\Basalt.Razor.Vb.Generator\TagHelperDiscovery.cs" Link="Web\TagHelperDiscovery.cs" />
   </ItemGroup>
 
+  <!--
+    MSBuild files that retarget Visual Studio Windows desktop projects onto
+    Basalt.Forms (see WindowsDesktopProjectCompatibility). They are read from
+    disk by MSBuild, so they travel with every application that references
+    this project.
+  -->
+  <ItemGroup>
+    <Content Include="WindowsDesktop\*.props;WindowsDesktop\*.targets"
+             CopyToOutputDirectory="PreserveNewest" Link="WindowsDesktop\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
