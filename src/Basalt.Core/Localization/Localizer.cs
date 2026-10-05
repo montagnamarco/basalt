@@ -337,6 +337,7 @@ public static class StringKeys
     public const string StatusNoDefinition = "Status_NoDefinition";
     public const string StatusNoSymbolHere = "Status_NoSymbolHere";
     public const string StatusApplicationExited = "Status_ApplicationExited";
+    public const string StatusRunExited = "Status_RunExited";
 
     public const string ValidationNameRequired = "Validation_NameRequired";
     public const string ValidationInvalidIdentifier = "Validation_InvalidIdentifier";
@@ -362,6 +363,14 @@ public static class StringKeys
     public const string PickerSolutionFilter = "Picker_SolutionFilter";
     public const string PickerChooseFolder = "Picker_ChooseFolder";
 
+    // Run and debug status messages that used to be passed to Localizer.Get
+    // as string literals, bypassing the compile-time check this class gives
+    // every other message.
+    public const string StatusBuildStopped = "StatusBuildStopped";
+    public const string DebugRunWithoutAdapter = "DebugRunWithoutAdapter";
+    public const string StatusLaunchTargetChanged = "StatusLaunchTargetChanged";
+    public const string StatusAlreadyRunning = "Status_AlreadyRunning";
+
     public const string EditorSmartTags = "Editor_SmartTags";
     public const string EditorSmartTagsNone = "Editor_SmartTagsNone";
     public const string EditorSmartTagsChanged = "Editor_SmartTagsChanged";
@@ -379,4 +388,11 @@ public static class StringKeys
     public const string EditorSelectExpressionFirst = "Editor_SelectExpressionFirst";
     public const string EditorChangeNotWritten = "Editor_ChangeNotWritten";
     public const string EditorSmartTagsNoDocumentArea = "Editor_SmartTagsNoDocumentArea";
+    public const string StatusNoBuildOutput = "Status_NoBuildOutput";
+    public const string DebugStarting = "Debug_Starting";
+    public const string DebugBuilding = "Debug_Building";
+    public const string DebugBannerStarting = "Debug_BannerStarting";
+    public const string DebugNoProject = "Debug_NoProject";
+    public const string DebugBuildFailed = "Debug_BuildFailed";
+    public const string DebugNoAssembly = "Debug_NoAssembly";
 }

@@ -1,0 +1,269 @@
+using Basalt.Core.Localization;
+using Basalt.Core.Model;
+using CommunityToolkit.Mvvm.Input;
+
+namespace Basalt.Shell.ViewModels;
+
+public sealed partial class MainWindowViewModel
+{
+    private string? _builtAssemblyPath;
+
+    [RelayCommand]
+    private async Task BuildAsync()
+    {
+        await BuildProjectAsync().ConfigureAwait(true);
+    }
+
+    private async Task<bool> BuildProjectAsync()
+    {
+        var projectPath = StartupProject;
+        var configuration = Configuration;
+        if (projectPath is null)
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
+            return false;
+        }
+
+        _builtAssemblyPath = null;
+        IsBusy = true;
+        BuildOutput.Clear();
+        Diagnostics.Clear();
+        StatusMessage = Localizer.Get(StringKeys.StatusBuilding);
+
+        // Tracked so the status bar can offer to stop it: a build that has
+        // gone wrong is one the user wants to end, not wait out.
+        var operation = Operations.Start(Localizer.Get(StringKeys.StatusBuilding));
+
+        try
+        {
+            // The compiler reads the disk, not the editors. Without this a
+            // control drawn in the designer and never saved was simply not in
+            // the build: the window came up empty and nothing said why, which
+            // looked like the designer having lost the work.
+            await SaveAllAsync().ConfigureAwait(true);
+
+            StatusMessage = Localizer.Get(StringKeys.StatusBuilding);
+            var result = await _buildService
+                .BuildAsync(projectPath, configuration, operation.Token)
+                .ConfigureAwait(true);
+
+            _builtAssemblyPath = result.Succeeded ? result.OutputAssemblyPath : null;
+
+            foreach (var diagnostic in result.Diagnostics) Diagnostics.Add(diagnostic);
+
+            var errors = result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error);
+            var warnings = result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
+
+            StatusMessage = result.Succeeded
+                ? Localizer.Get(StringKeys.StatusBuildSucceeded, result.Duration.TotalSeconds, warnings)
+                : Localizer.Get(StringKeys.StatusBuildFailed, errors, warnings);
+
+            // Whether the startup project or configuration changed while this
+            // build was running is decided here, so a caller that only needs
+            // "built and still the target" can rely on this return value.
+            // RunBuiltProject asks once more because it can be reached
+            // without a build of its own.
+            return result.Succeeded && LaunchTargetIsCurrent(projectPath, configuration);
+        }
+        catch (OperationCanceledException)
+        {
+            // Asked for, so it is reported as stopped rather than as a
+            // failure the user has to look into.
+            StatusMessage = Localizer.Get(StringKeys.StatusBuildStopped);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusBuildInterrupted, ex.Message);
+            return false;
+        }
+        finally
+        {
+            Operations.Finish(operation);
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Builds the startup project and reports the assembly to debug.
+    ///
+    /// Returns null when the build failed or produced nothing to run, so the
+    /// caller does not start a debugger against a stale assembly.
+    /// </summary>
+    public async Task<string?> BuildForDebuggingAsync()
+    {
+        if (StartupProject is null)
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
+            return null;
+        }
+
+        // BuildProjectAsync already checked the launch target is still the
+        // one this call asked to build before returning true: checking again
+        // here would be the second of three checks for one race.
+        if (!await BuildProjectAsync().ConfigureAwait(true)) return null;
+
+        return _builtAssemblyPath is { } assembly && File.Exists(assembly) ? assembly : null;
+    }
+
+    /// <summary>
+    /// Which configuration is built and run.
+    ///
+    /// The toolbar offers Debug and Release and stores the choice; nothing
+    /// read it, so Release built Debug and then looked for the result in the
+    /// Debug folder — right by accident, and wrong the moment anything asked
+    /// for the other one.
+    /// </summary>
+    public string Configuration { get; set; } = "Debug";
+
+    /// <summary>The folder the debugged program should run in.</summary>
+    public string? StartupDirectory => StartupProject is null
+        ? null
+        : Path.GetDirectoryName(Path.GetFullPath(StartupProject));
+
+    [RelayCommand]
+    private async Task RunAsync()
+    {
+        var projectPath = StartupProject;
+        var configuration = Configuration;
+        if (StartupProject is null)
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
+            return;
+        }
+
+        // Asked before building, not after: a build of a program that is
+        // still running fails on Windows (the output is locked) and clears
+        // the Problems list, only for the answer to be "already running".
+        if (ReportIfAlreadyRunning()) return;
+
+        // Built before running: launching the build's own output, rather
+        // than asking "dotnet run" to build again, means a build that failed
+        // — or one whose target changed mid-build — never gets a process
+        // started from a rebuild nobody saw the errors of.
+        if (!await BuildProjectAsync().ConfigureAwait(true)) return;
+
+        RunBuiltProject(projectPath, configuration);
+    }
+
+    /// <summary>
+    /// Says so and returns true when the application is already running.
+    ///
+    /// The single "already running" check, made before anything builds.
+    /// Silence used to read as nothing having happened at all: F5 or the
+    /// Play button appeared to do nothing instead of saying why. A run that
+    /// slips in during a build is still refused: ProcessRunService.Start
+    /// throws, and the failure is reported.
+    /// </summary>
+    internal bool ReportIfAlreadyRunning()
+    {
+        if (!_runService.IsRunning) return false;
+
+        StatusMessage = Localizer.Get(StringKeys.StatusAlreadyRunning);
+        return true;
+    }
+
+    internal void RunBuiltProject(string? expectedProject = null, string? expectedConfiguration = null)
+    {
+        if (StartupProject is null) return;
+
+        if (!LaunchTargetIsCurrent(expectedProject ?? StartupProject, expectedConfiguration ?? Configuration)) return;
+
+        if (_builtAssemblyPath is not { } assembly || !File.Exists(assembly))
+        {
+            // The caller always builds first; this only happens when that
+            // build produced no assembly at all, which it already reported.
+            StatusMessage = Localizer.Get(StringKeys.StatusStartFailed, Localizer.Get(StringKeys.StatusNoBuildOutput));
+            return;
+        }
+
+        // Tagged with the generation that starts it, and attached before the
+        // process starts: Process.Exited arrives on a threadpool thread and a
+        // process that dies immediately could otherwise exit unheard. It also
+        // arrives well after Stop asks the process to end, by when another
+        // run may be the one anybody cares about.
+        var generation = ++_runGeneration;
+        var exited = MakeExitedHandler(generation);
+        _runService.Exited += exited;
+
+        try
+        {
+            // "dotnet run --no-build": the build above is what runs, and
+            // launchSettings.json (environment, arguments, URLs) still
+            // applies, which launching the dll directly would drop.
+            _runService.Start(StartupProject, configuration: expectedConfiguration ?? Configuration);
+
+            IsRunning = true;
+            StatusMessage = Localizer.Get(StringKeys.StatusRunning);
+        }
+        catch (Exception ex)
+        {
+            _runService.Exited -= exited;
+            StatusMessage = Localizer.Get(StringKeys.StatusStartFailed, ex.Message);
+            AppendOutput(StatusMessage);
+        }
+    }
+
+    /// <summary>
+    /// Runs the build's own output directly when no debug adapter is
+    /// installed, instead of starting a debug session that has nothing to
+    /// attach to.
+    ///
+    /// Returns true when it ran this way, so the one caller — F5 with no
+    /// adapter on the machine — only has to update its own debug-state UI
+    /// rather than repeat the adapter check itself.
+    /// </summary>
+    internal bool RunWithoutDebuggerIfUnavailable(string startupProject, string configuration)
+    {
+        if (Basalt.Workspace.Debugging.DebugAdapterLocator.Find() is not null) return false;
+
+        WriteOutput(Localizer.Get(StringKeys.DebugRunWithoutAdapter));
+        RunBuiltProject(startupProject, configuration);
+        return true;
+    }
+
+    /// <summary>
+    /// Bumps the run generation and wires its exit handler exactly as
+    /// <see cref="RunBuiltProject"/> does once the process starts, but
+    /// without launching one. Exit-race tests simulate several generations
+    /// this way instead of racing real process timing.
+    /// </summary>
+    internal int StartRunGenerationForTests()
+    {
+        var generation = ++_runGeneration;
+        _runService.Exited += MakeExitedHandler(generation);
+        IsRunning = true;
+        StatusMessage = Localizer.Get(StringKeys.StatusRunning);
+        return generation;
+    }
+
+    private EventHandler<int> MakeExitedHandler(int generation)
+    {
+        EventHandler<int>? handler = null;
+        handler = (_, code) =>
+        {
+            _runService.Exited -= handler;
+            OnRunExited(code, generation);
+        };
+        return handler;
+    }
+
+    internal bool LaunchTargetIsCurrent(string projectPath, string configuration)
+    {
+        if (StartupProject == projectPath && Configuration == configuration) return true;
+        StatusMessage = Localizer.Get(StringKeys.StatusLaunchTargetChanged);
+        return false;
+    }
+
+    [RelayCommand]
+    private void StopRun()
+    {
+        // The generation being stopped, so its exit — which arrives later,
+        // asynchronously — is recognised as expected rather than reported as
+        // a crash.
+        _stoppedRunGeneration = _runGeneration;
+        _runService.Stop();
+        IsRunning = false;
+        StatusMessage = Localizer.Get(StringKeys.StatusStopped);
+    }
+}

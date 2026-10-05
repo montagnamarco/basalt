@@ -30,11 +30,14 @@ public sealed partial class MsBuildBuildService : IBuildService
 
     public event EventHandler<string>? OutputReceived;
 
+    // MSBuild workers can inherit the redirected output pipes. A reused worker
+    // can keep those pipes open after the dotnet command exits, which leaves
+    // WaitForExitAsync waiting for EOF even though the build has finished.
     public Task<BuildResult> BuildAsync(string projectPath, string configuration = "Debug", CancellationToken ct = default)
-        => RunAsync(projectPath, ["build", projectPath, "-c", configuration, "--nologo", "-v", "normal"], ct);
+        => RunAsync(projectPath, ["build", projectPath, "-c", configuration, "--nologo", "-v", "normal", "-nr:false"], ct);
 
     public Task<BuildResult> RestoreAsync(string projectPath, CancellationToken ct = default)
-        => RunAsync(projectPath, ["restore", projectPath, "--nologo"], ct);
+        => RunAsync(projectPath, ["restore", projectPath, "--nologo", "-nr:false"], ct);
 
     private async Task<BuildResult> RunAsync(string projectPath, string[] arguments, CancellationToken ct)
     {

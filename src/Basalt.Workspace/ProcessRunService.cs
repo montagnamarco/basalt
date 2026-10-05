@@ -9,10 +9,24 @@ public sealed class ProcessRunService : IDisposable
 
     public bool IsRunning => _process is { HasExited: false };
 
+    /// <summary>The arguments the most recent <see cref="Start"/> passed to
+    /// "dotnet", for tests that must tell "run the build's output" apart from
+    /// a rebuild on run.</summary>
+    public IReadOnlyList<string> LastArguments { get; private set; } = [];
+
     public event EventHandler<string>? OutputReceived;
     public event EventHandler<int>? Exited;
 
-    /// <summary>Starts the project with "dotnet run" in the project directory.</summary>
+    /// <summary>
+    /// Starts the project with "dotnet run --no-build" in the project
+    /// directory.
+    ///
+    /// Launching through "dotnet run" rather than "dotnet &lt;dll&gt;" is
+    /// deliberate: only "dotnet run" applies Properties/launchSettings.json
+    /// (environment variables, arguments, applicationUrl), and without it
+    /// web and Blazor apps start in Production. The caller builds first, so
+    /// "--no-build" keeps run from compiling a second time.
+    /// </summary>
     public void Start(string projectPath, string configuration = "Debug")
     {
         if (IsRunning)
@@ -29,6 +43,8 @@ public sealed class ProcessRunService : IDisposable
 
         foreach (var argument in new[] { "run", "--project", projectPath, "-c", configuration, "--no-build" })
             startInfo.ArgumentList.Add(argument);
+
+        LastArguments = [.. startInfo.ArgumentList];
 
         _process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
         _process.OutputDataReceived += (_, e) => Emit(e.Data);

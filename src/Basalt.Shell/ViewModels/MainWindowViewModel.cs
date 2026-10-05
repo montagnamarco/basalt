@@ -41,6 +41,19 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string? _currentBranch;
     [ObservableProperty] private bool _isRunning;
 
+    /// <summary>
+    /// Counts the runs started through <see cref="RunBuiltProject"/>.
+    ///
+    /// "dotnet run" exits on a threadpool thread some time after Stop asks it
+    /// to, and by then the user may already have started the next run. The
+    /// generation that exited is attached to the handler at Start, so a late
+    /// exit can be told apart from the one everybody currently cares about.
+    /// </summary>
+    private int _runGeneration;
+
+    /// <summary>The generation Stop most recently asked to end, or none.</summary>
+    private int _stoppedRunGeneration = -1;
+
     public MainWindowViewModel()
     {
         Languages = LanguageCatalog.CreateDefault(_languageService, _formattingService);
@@ -49,12 +62,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         Diagnostics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ErrorSummary));
         OpenDocuments.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsWelcomeVisible));
         _runService.OutputReceived += (_, line) => AppendOutput(line);
-        // Process.Exited is raised on a threadpool thread. Setting a property
-        // from there raises PropertyChanged on that thread too, and the
-        // handlers are controls: reading DataContext threw and took the whole
-        // IDE down whenever a run ended. AppendOutput already knew to move
-        // itself; the property beside it did not.
-        _runService.Exited += (_, code) => OnRunExited(code);
     }
 
     /// <summary>
@@ -624,177 +631,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             : Localizer.Get(StringKeys.StatusCleanFailed);
     }
 
-    [RelayCommand]
-    private async Task BuildAsync()
-    {
-        if (StartupProject is null)
-        {
-            StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
-            return;
-        }
-
-        // The compiler reads the disk, not the editors. Without this a
-        // control drawn in the designer and never saved was simply not in
-        // the build: the window came up empty and nothing said why, which
-        // looked like the designer having lost the work.
-        await SaveAllAsync().ConfigureAwait(true);
-
-        IsBusy = true;
-        BuildOutput.Clear();
-        Diagnostics.Clear();
-        StatusMessage = Localizer.Get(StringKeys.StatusBuilding);
-
-        // Tracked so the status bar can offer to stop it: a build that has
-        // gone wrong is one the user wants to end, not wait out.
-        var operation = Operations.Start(Localizer.Get(StringKeys.StatusBuilding));
-
-        try
-        {
-            var result = await _buildService
-                .BuildAsync(StartupProject, Configuration, operation.Token)
-                .ConfigureAwait(true);
-
-            foreach (var diagnostic in result.Diagnostics) Diagnostics.Add(diagnostic);
-
-            var errors = result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error);
-            var warnings = result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning);
-
-            StatusMessage = result.Succeeded
-                ? Localizer.Get(StringKeys.StatusBuildSucceeded, result.Duration.TotalSeconds, warnings)
-                : Localizer.Get(StringKeys.StatusBuildFailed, errors, warnings);
-        }
-        catch (OperationCanceledException)
-        {
-            // Asked for, so it is reported as stopped rather than as a
-            // failure the user has to look into.
-            StatusMessage = "Build stopped.";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = Localizer.Get(StringKeys.StatusBuildInterrupted, ex.Message);
-        }
-        finally
-        {
-            Operations.Finish(operation);
-            IsBusy = false;
-        }
-    }
-
-    /// <summary>
-    /// Builds the startup project and reports the assembly to debug.
-    ///
-    /// Returns null when the build failed or produced nothing to run, so the
-    /// caller does not start a debugger against a stale assembly.
-    /// </summary>
-    public async Task<string?> BuildForDebuggingAsync()
-    {
-        if (StartupProject is null)
-        {
-            StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
-            return null;
-        }
-
-        await BuildAsync().ConfigureAwait(true);
-
-        if (Diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error)) return null;
-
-        return FindOutputAssembly(StartupProject);
-    }
-
-    /// <summary>
-    /// Which configuration is built and run.
-    ///
-    /// The toolbar offers Debug and Release and stores the choice; nothing
-    /// read it, so Release built Debug and then looked for the result in the
-    /// Debug folder — right by accident, and wrong the moment anything asked
-    /// for the other one.
-    /// </summary>
-    public string Configuration { get; set; } = "Debug";
-
-    /// <summary>
-    /// Finds the assembly a project just built.
-    ///
-    /// The path is read from the file system rather than from the project
-    /// file, because the target framework folder is decided by the build, a
-    /// project may target more than one, and the assembly name need not match
-    /// the project's.
-    /// </summary>
-    private string? FindOutputAssembly(string projectPath)
-    {
-        var directory = Path.GetDirectoryName(Path.GetFullPath(projectPath));
-        if (directory is null) return null;
-
-        var output = Path.Combine(directory, "bin", Configuration);
-
-        // The chosen configuration first; the other one only as a fallback,
-        // because a stale assembly from the wrong configuration is worse than
-        // saying nothing was found.
-        if (!Directory.Exists(output)) return null;
-
-        var name = Path.GetFileNameWithoutExtension(projectPath);
-
-        // Newest first: with several target frameworks built, the one just
-        // produced is the one to debug.
-        var byName = Directory
-            .EnumerateFiles(output, $"{name}.dll", SearchOption.AllDirectories)
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .FirstOrDefault();
-
-        if (byName is not null) return byName;
-
-        // AssemblyName can differ from the project's file name. The newest
-        // .dll that is not a dependency copied in beside it.
-        return Directory
-            .EnumerateFiles(output, "*.dll", SearchOption.AllDirectories)
-            .Where(HasEntryPointBeside)
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .FirstOrDefault();
-    }
-
-    /// <summary>
-    /// Whether a .dll is the project's own output rather than a dependency.
-    ///
-    /// The build writes a .runtimeconfig.json beside the assembly it produced
-    /// and beside no other.
-    /// </summary>
-    private static bool HasEntryPointBeside(string assembly) =>
-        File.Exists(Path.ChangeExtension(assembly, ".runtimeconfig.json"));
-
-    /// <summary>The folder the debugged program should run in.</summary>
-    public string? StartupDirectory => StartupProject is null
-        ? null
-        : Path.GetDirectoryName(Path.GetFullPath(StartupProject));
-
-    [RelayCommand]
-    private async Task RunAsync()
-    {
-        if (StartupProject is null) return;
-
-        // We build before running: "--no-build" prevents dotnet run from
-        // silently rebuilding and hiding the errors from the user.
-        await BuildAsync().ConfigureAwait(true);
-        if (Diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error)) return;
-
-        try
-        {
-            _runService.Start(StartupProject, Configuration);
-            IsRunning = true;
-            StatusMessage = Localizer.Get(StringKeys.StatusRunning);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = Localizer.Get(StringKeys.StatusStartFailed, ex.Message);
-        }
-    }
-
-    [RelayCommand]
-    private void StopRun()
-    {
-        _runService.Stop();
-        IsRunning = false;
-        StatusMessage = Localizer.Get(StringKeys.StatusStopped);
-    }
-
     /// <summary>Works out what a quick action would change.</summary>
     public Task<Basalt.Workspace.Refactoring.RefactoringPreview> PreviewQuickActionAsync(
         string filePath, Basalt.Workspace.QuickAction action) =>
@@ -1184,18 +1020,40 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// </summary>
     public void WriteOutput(string line) => AppendOutput(line);
 
-    /// <summary>Puts the IDE back to "nothing running", wherever the news came from.</summary>
-    private void OnRunExited(int code) => OnUiThread(() =>
+    /// <summary>
+    /// Puts the IDE back to "nothing running", wherever the news came from.
+    ///
+    /// Process.Exited is raised on a threadpool thread some time after the
+    /// process actually dies, so this ignores two kinds of late news: a
+    /// generation Stop already reported as stopped, and a generation that is
+    /// no longer the one running — either one would overwrite "Application
+    /// stopped", or a status a newer run has since set, with a stale exit
+    /// code that nobody asked about.
+    /// </summary>
+    private void OnRunExited(int code, int generation) => OnUiThread(() =>
     {
+        if (generation != _runGeneration || generation == _stoppedRunGeneration) return;
+
         IsRunning = false;
+        StatusMessage = Localizer.Get(StringKeys.StatusRunExited, code);
         AppendOutput(Localizer.Get(StringKeys.StatusApplicationExited, code));
     });
 
     /// <summary>Reports a finished run, as the process does. For tests.</summary>
-    internal void ReportRunExitedForTests(int code) => OnRunExited(code);
+    internal void ReportRunExitedForTests(int code) => OnRunExited(code, _runGeneration);
+
+    /// <summary>
+    /// Reports a finished run tagged with a specific generation, so a test
+    /// can simulate the exit of a run that is no longer the current one
+    /// arriving after a newer run has already started.
+    /// </summary>
+    internal void ReportRunExitedForTests(int code, int generation) => OnRunExited(code, generation);
 
     /// <summary>Says a program is running, for tests that need it to stop.</summary>
     internal void SetRunningForTests(bool running) => IsRunning = running;
+
+    /// <summary>The "dotnet" arguments the last run launched with. For tests.</summary>
+    internal IReadOnlyList<string> LastLaunchArgumentsForTests => _runService.LastArguments;
 
     /// <summary>
     /// Runs something on the interface thread.

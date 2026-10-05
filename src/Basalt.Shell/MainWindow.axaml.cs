@@ -1922,7 +1922,7 @@ public partial class MainWindow : Window
             await ViewModel.ActiveDocument.SaveAsync();
 
             _debugTarget = Path.GetFileName(path);
-            ViewModel.WriteOutput($"[debug] Starting {_debugTarget}.");
+            ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugStarting, _debugTarget)}");
             ShowStartingBanner();
 
             await _debug.StartAsync(path, Path.GetDirectoryName(path));
@@ -1930,11 +1930,26 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Before anything builds: with the program already running from an
+        // earlier F5 (no debug adapter installed) a build would only fail on
+        // the locked output, or clear the Problems list for nothing.
+        if (ViewModel.ReportIfAlreadyRunning())
+        {
+            ViewModel.WriteOutput($"[debug] {ViewModel.StatusMessage}");
+            return;
+        }
+
         // Said before the build, not after: a build takes seconds, and until
         // it ends this is the only sign that the key was even received.
-        ViewModel.WriteOutput("[debug] Building before debugging…");
+        ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugBuilding)}");
         ShowStartingBanner();
 
+        var startupProject = ViewModel.StartupProject;
+        var configuration = ViewModel.Configuration;
+
+        // BuildForDebuggingAsync already checks the launch target is still
+        // the one asked for before returning an assembly; a second check
+        // here would be the same race checked twice.
         var assembly = await ViewModel.BuildForDebuggingAsync();
 
         if (assembly is null)
@@ -1949,7 +1964,13 @@ public partial class MainWindow : Window
         }
 
         _debugTarget = Path.GetFileName(assembly);
-        ViewModel.WriteOutput($"[debug] Starting {_debugTarget}.");
+        if (ViewModel.RunWithoutDebuggerIfUnavailable(startupProject!, configuration))
+        {
+            _debugTarget = null;
+            ShowDebugState();
+            return;
+        }
+        ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugStarting, _debugTarget)}");
         ShowStartingBanner();
 
         await _debug.StartAsync(assembly, ViewModel.StartupDirectory);
@@ -1970,7 +1991,7 @@ public partial class MainWindow : Window
     private void ShowStartingBanner()
     {
         DebugBanner.IsVisible = true;
-        DebugBannerText.Text = "Debugging — starting";
+        DebugBannerText.Text = Localizer.Get(StringKeys.DebugBannerStarting);
         DebugBannerDetail.Text = _debugTarget ?? "";
     }
 
@@ -1985,9 +2006,7 @@ public partial class MainWindow : Window
     {
         if (ViewModel.StartupProject is null)
         {
-            ViewModel.WriteOutput(
-                "[debug] No project to debug: open a solution, or choose a "
-              + "startup project in the toolbar.");
+            ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugNoProject)}");
             return;
         }
 
@@ -1997,9 +2016,7 @@ public partial class MainWindow : Window
 
         if (errors.Count > 0)
         {
-            ViewModel.WriteOutput(
-                $"[debug] The build failed with {errors.Count} error(s); "
-              + "nothing was produced to debug.");
+            ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugBuildFailed, errors.Count)}");
 
             // The first one by name: it is usually the one to fix.
             ViewModel.WriteOutput($"[debug] {errors[0].Message}");
@@ -2011,9 +2028,7 @@ public partial class MainWindow : Window
         }
 
         ViewModel.WriteOutput(
-            $"[debug] The build succeeded but no assembly was found under "
-          + $"bin. Is '{Path.GetFileName(ViewModel.StartupProject)}' a library "
-          + "with no entry point?");
+            $"[debug] {Localizer.Get(StringKeys.DebugNoAssembly, Path.GetFileName(ViewModel.StartupProject))}");
     }
 
     /// <summary>

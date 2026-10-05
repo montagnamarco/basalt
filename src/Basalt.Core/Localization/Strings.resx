@@ -310,6 +310,9 @@
   <data name="WinFormsDesigner_DesignTabSuffix" xml:space="preserve">
     <value>[Design]</value>
   </data>
+  <data name="StatusBuildStopped" xml:space="preserve"><value>Build stopped.</value></data>
+  <data name="DebugRunWithoutAdapter" xml:space="preserve"><value>The debugger is unavailable. Starting the application without debugging.</value></data>
+  <data name="StatusLaunchTargetChanged" xml:space="preserve"><value>The startup project or configuration changed during the build. Start again to run the selected project.</value></data>
   <data name="Editor_SmartTags" xml:space="preserve"><value>Quick actions and refactorings</value></data>
   <data name="Editor_SmartTagsNone" xml:space="preserve"><value>No quick actions are available here.</value></data>
   <data name="Editor_SmartTagsChanged" xml:space="preserve"><value>The document changed. Request quick actions again.</value></data>
@@ -319,9 +322,18 @@
   <data name="Editor_SmartTagExtractMethod" xml:space="preserve"><value>Extract method…</value></data>
   <data name="Editor_SmartTagsUnsupportedChanges" xml:space="preserve"><value>This action changes project structure or non-source files and cannot be applied here.</value></data>
   <data name="Editor_SmartTagTidyImports" xml:space="preserve"><value>Sort and remove unused Imports</value></data>
+  <data name="Status_RunExited" xml:space="preserve"><value>Application exited with code {0}</value></data>
+  <data name="Status_AlreadyRunning" xml:space="preserve"><value>The application is already running. Stop it first.</value></data>
   <data name="Editor_OnlyVbHtmlGenerated" xml:space="preserve"><value>Only a .vbhtml template is generated into Visual Basic.</value></data>
   <data name="Editor_SelectStatementsFirst" xml:space="preserve"><value>Select the statements to extract first.</value></data>
   <data name="Editor_SelectExpressionFirst" xml:space="preserve"><value>Select the expression to extract first.</value></data>
   <data name="Editor_ChangeNotWritten" xml:space="preserve"><value>The change could not be written.</value></data>
   <data name="Editor_SmartTagsNoDocumentArea" xml:space="preserve"><value>The changed documents were opened in memory but there is no document area to show them in. Save or reopen them to see the edit.</value></data>
+  <data name="Status_NoBuildOutput" xml:space="preserve"><value>no build output to run</value></data>
+  <data name="Debug_Starting" xml:space="preserve"><value>Starting {0}.</value></data>
+  <data name="Debug_Building" xml:space="preserve"><value>Building before debugging…</value></data>
+  <data name="Debug_BannerStarting" xml:space="preserve"><value>Debugging — starting</value></data>
+  <data name="Debug_NoProject" xml:space="preserve"><value>No project to debug: open a solution, or choose a startup project in the toolbar.</value></data>
+  <data name="Debug_BuildFailed" xml:space="preserve"><value>The build failed with {0} error(s); nothing was produced to debug.</value></data>
+  <data name="Debug_NoAssembly" xml:space="preserve"><value>The build succeeded but no assembly was found under bin. Is '{0}' a library with no entry point?</value></data>
 </root>
