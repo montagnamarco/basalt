@@ -27,6 +27,21 @@ public partial class Control : IDropTarget
     public DragDropEffects DoDragDrop(object data, DragDropEffects allowedEffects) =>
         DoDragDrop(data, allowedEffects, dragImage: null, cursorOffset: Point.Empty, useDefaultDragImage: false);
 
+    public DragDropEffects DoDragDropAsJson<T>(T data, DragDropEffects allowedEffects) =>
+        DoDragDropAsJson(data, allowedEffects, null, Point.Empty, false);
+
+    public DragDropEffects DoDragDropAsJson<T>(T data, DragDropEffects allowedEffects,
+        Bitmap? dragImage, Point cursorOffset, bool useDefaultDragImage)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        if (typeof(T) == typeof(DataObject))
+            throw new InvalidOperationException("Use DataObject.SetDataAsJson to add JSON data before starting a drag.");
+
+        var wrapped = new DataObject();
+        wrapped.SetDataAsJson(data);
+        return DoDragDrop(wrapped, allowedEffects, dragImage, cursorOffset, useDefaultDragImage);
+    }
+
     public DragDropEffects DoDragDrop(object data, DragDropEffects allowedEffects, Bitmap? dragImage, Point cursorOffset, bool useDefaultDragImage)
     {
         ArgumentNullException.ThrowIfNull(data);

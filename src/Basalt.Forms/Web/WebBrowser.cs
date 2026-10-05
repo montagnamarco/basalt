@@ -1,24 +1,19 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Text;
+using Avalonia.Controls;
 using Avalonia.Threading;
 
 namespace System.Windows.Forms;
 
 /// <summary>
-/// A browser that always shows a blank page. Windows' WebBrowser hosts
-/// Internet Explorer's ActiveX control, which fetches and renders real
-/// HTML; Basalt has no HTML engine, so this keeps everything a real
-/// WebBrowser keeps - the navigation history, Navigating/Navigated/
-/// DocumentCompleted in the same order, CanGoBack/CanGoForward tracking the
-/// history, the asynchronous delivery through the UI message loop a real
-/// COM event would also arrive through - and paints the one thing it
-/// actually has: an empty page, the colour of a window.
+/// Hosts the platform browser through Avalonia when the WinForms control is
+/// attached to a visual host. Its in-memory navigation model also supports
+/// controls used before a visual host exists.
 /// </summary>
-public class WebBrowser : WebBrowserBase
+public partial class WebBrowser : WebBrowserBase
 {
-    private const string NoDocument =
-        "There is no HTML engine behind this control, so there is no Document to return; DocumentText and DocumentStream hold the content instead.";
+    private const string IeOnly = "This Internet Explorer or ActiveX feature has no equivalent in the native WebView.";
 
     private enum NavigationKind
     {
@@ -42,7 +37,64 @@ public class WebBrowser : WebBrowserBase
     private bool _webBrowserShortcutsEnabled = true;
     private bool _scriptErrorsSuppressed;
     private bool _scrollBarsEnabled = true;
-    private object? _objectForScripting;
+    private NativeWebView? _nativeView;
+    private Uri? _requestedUrl;
+    private bool _ignoreNativeCompletion;
+    private bool _nativeCanGoBack;
+    private bool _nativeCanGoForward;
+    private long _nativeRequestToken;
+    private long _domGeneration;
+    private HtmlDocument? _domDocument;
+    private bool _domReady;
+
+    internal long DomGeneration => _domGeneration;
+    internal TimeSpan DomScriptTimeout { get; set; } = TimeSpan.FromSeconds(5);
+    internal Func<string, Task<string?>>? DomScriptEvaluator { get; set; }
+
+    internal Task<string?> EvaluateDomScript(string script) =>
+        DomScriptEvaluator is { } evaluator ? evaluator(script) : _nativeView!.InvokeScript(script);
+
+    internal void CompleteDomDocumentForTests(Func<string, Task<string?>> evaluator)
+    {
+        DomScriptEvaluator = evaluator;
+        _domGeneration++;
+        _domReady = true;
+        _domDocument = new HtmlDocument(new NativeDomBridge(this, _domGeneration));
+    }
+
+    private void InvalidateDomDocument()
+    {
+        _domGeneration++;
+        _domReady = false;
+        _domDocument = null;
+    }
+
+    /// <summary>The browser surface mounted by the FormsCanvas overlay.</summary>
+    internal Avalonia.Controls.Control NativeView => _nativeView ?? CreateNativeView();
+
+    // The engine normally destroys its platform view when its Avalonia visual
+    // leaves a window. A control-tree move must retain it until the new canvas
+    // has attached the same visual, preserving the page and navigation state.
+    internal IDisposable? BeginNativeReparenting() => _nativeView?.BeginReparenting(false);
+
+    private NativeWebView CreateNativeView()
+    {
+        var view = new NativeWebView();
+        view.NavigationStarted += NativeNavigationStarted;
+        view.NavigationCompleted += NativeNavigationCompleted;
+        view.NewWindowRequested += NativeNewWindowRequested;
+        view.AdapterCreated += NativeAdapterCreated;
+        _nativeView = view;
+
+        // A URL or HTML assigned before the visual host existed now gets a
+        // real engine load. Cancel the queued headless completion first.
+        _navigationToken++;
+        if (_documentText.Length > 0) view.NavigateToString(_documentText, new Uri("about:blank"));
+        else if (_requestedUrl is { } pending) view.Source = pending;
+        else if (_url is { } current) view.Source = current;
+
+        return view;
+    }
 
     private static readonly object s_canGoBackChangedEvent = new();
     private static readonly object s_canGoForwardChangedEvent = new();
@@ -60,11 +112,8 @@ public class WebBrowser : WebBrowserBase
     {
         SetStyle(ControlStyles.ResizeRedraw, true);
 
-        // The one thing a real WebBrowser shows before (or instead of) real
-        // content: the window-coloured background its ActiveX surface
-        // paints. Control already fills with BackColor before OnPaint runs,
-        // so there is no need to override OnPaint - WebBrowser does not, in
-        // the real assembly either - just to start with that colour.
+        // Control fills the window-coloured background until the native
+        // browser surface is attached by the hosting canvas.
         BackColor = SystemColors.Window;
     }
 
@@ -87,14 +136,14 @@ public class WebBrowser : WebBrowserBase
     }
 
     [Browsable(false)]
-    public bool CanGoBack => _historyIndex > 0;
+    public bool CanGoBack => _nativeView?.CanGoBack ?? _historyIndex > 0;
 
     [Browsable(false)]
-    public bool CanGoForward => _historyIndex >= 0 && _historyIndex < _history.Count - 1;
+    public bool CanGoForward => _nativeView?.CanGoForward ?? (_historyIndex >= 0 && _historyIndex < _history.Count - 1);
 
-    /// <summary>Always null: there is no HTML DOM for a document to wrap.</summary>
+    /// <summary>The loaded native document, when the WebView engine is ready.</summary>
     [Browsable(false)]
-    public HtmlDocument? Document => null;
+    public HtmlDocument? Document => _domReady ? _domDocument : null;
 
     [Browsable(false)]
     public Stream? DocumentStream
@@ -104,12 +153,12 @@ public class WebBrowser : WebBrowserBase
         {
             if (value is null)
             {
-                _documentText = string.Empty;
+                DocumentText = string.Empty;
                 return;
             }
 
             using var reader = new StreamReader(value, leaveOpen: true);
-            _documentText = reader.ReadToEnd();
+            DocumentText = reader.ReadToEnd();
         }
     }
 
@@ -193,7 +242,13 @@ public class WebBrowser : WebBrowserBase
     public string DocumentText
     {
         get => _documentText;
-        set => _documentText = value ?? string.Empty;
+        set
+        {
+            InvalidateDomDocument();
+            _documentText = value ?? string.Empty;
+            _requestedUrl = null;
+            _nativeView?.NavigateToString(_documentText, new Uri("about:blank"));
+        }
     }
 
     [Browsable(false)]
@@ -211,8 +266,7 @@ public class WebBrowser : WebBrowserBase
     public bool IsBusy => _isBusy;
 
     /// <summary>
-    /// Whether the ocx's moniker reports it is working offline. There is no
-    /// ocx and no network moniker here, so this never reports offline.
+    /// The native WebView exposes no browser-wide offline mode flag.
     /// </summary>
     [Browsable(false)]
     public bool IsOffline => false;
@@ -229,8 +283,11 @@ public class WebBrowser : WebBrowserBase
     [DefaultValue(null)]
     public object? ObjectForScripting
     {
-        get => _objectForScripting;
-        set => _objectForScripting = value;
+        get => null;
+        set
+        {
+            if (value is not null) throw new PlatformNotSupportedException(IeOnly);
+        }
     }
 
     [Localizable(true)]
@@ -259,7 +316,7 @@ public class WebBrowser : WebBrowserBase
         set => _scrollBarsEnabled = value;
     }
 
-    /// <summary>No status bar text off Windows: there is no page load to report progress on.</summary>
+    /// <summary>The native view does not expose an equivalent status string.</summary>
     public virtual string StatusText => string.Empty;
 
     [Browsable(false)]
@@ -304,10 +361,24 @@ public class WebBrowser : WebBrowserBase
     {
     }
 
-    protected override void Dispose(bool disposing) => base.Dispose(disposing);
+    protected override void Dispose(bool disposing)
+    {
+        InvalidateDomDocument();
+        if (disposing && _nativeView is { } view)
+        {
+            view.NavigationStarted -= NativeNavigationStarted;
+            view.NavigationCompleted -= NativeNavigationCompleted;
+            view.NewWindowRequested -= NativeNewWindowRequested;
+            view.AdapterCreated -= NativeAdapterCreated;
+            _nativeView = null;
+        }
+
+        base.Dispose(disposing);
+    }
 
     public bool GoBack()
     {
+        if (_nativeView is { } view) return view.GoBack();
         if (!CanGoBack) return false;
 
         BeginNavigate(_history[_historyIndex - 1], null, NavigationKind.Back);
@@ -316,21 +387,26 @@ public class WebBrowser : WebBrowserBase
 
     public bool GoForward()
     {
+        if (_nativeView is { } view) return view.GoForward();
         if (!CanGoForward) return false;
 
         BeginNavigate(_history[_historyIndex + 1], null, NavigationKind.Forward);
         return true;
     }
 
-    /// <summary>No configured home page off Windows; navigates to the same blank page Basalt always shows.</summary>
-    public void GoHome() => Navigate(new Uri("about:home"));
+    /// <summary>No platform-wide home page is exposed by the native engine.</summary>
+    public void GoHome() => Navigate(new Uri("about:blank"));
 
-    /// <summary>No configured search provider off Windows; navigates to the same blank page Basalt always shows.</summary>
-    public void GoSearch() => Navigate(new Uri("about:search"));
+    /// <summary>No platform-wide search provider is exposed by the native engine.</summary>
+    public void GoSearch() => Navigate(new Uri("about:blank"));
 
     public void Navigate(string urlString) => Navigate(ResolveUrl(urlString), null, null, null);
 
-    public void Navigate(string urlString, bool newWindow) => Navigate(urlString);
+    public void Navigate(string urlString, bool newWindow)
+    {
+        if (newWindow) throw new PlatformNotSupportedException(IeOnly);
+        Navigate(urlString);
+    }
 
     public void Navigate(string urlString, string? targetFrameName) => Navigate(ResolveUrl(urlString), targetFrameName, null, null);
 
@@ -339,13 +415,19 @@ public class WebBrowser : WebBrowserBase
 
     public void Navigate(Uri url) => Navigate(url, null, null, null);
 
-    public void Navigate(Uri url, bool newWindow) => Navigate(url);
+    public void Navigate(Uri url, bool newWindow)
+    {
+        if (newWindow) throw new PlatformNotSupportedException(IeOnly);
+        Navigate(url);
+    }
 
     public void Navigate(Uri url, string? targetFrameName) => Navigate(url, targetFrameName, null, null);
 
     public void Navigate(Uri url, string? targetFrameName, byte[]? postData, string? additionalHeaders)
     {
         ArgumentNullException.ThrowIfNull(url);
+        if (!string.IsNullOrEmpty(targetFrameName) || postData is { Length: > 0 } || !string.IsNullOrEmpty(additionalHeaders))
+            throw new PlatformNotSupportedException(IeOnly);
         BeginNavigate(url, targetFrameName, NavigationKind.New);
     }
 
@@ -390,38 +472,54 @@ public class WebBrowser : WebBrowserBase
     public override void Refresh()
     {
         base.Refresh();
+        if (_nativeView is { } view)
+        {
+            view.Refresh();
+            return;
+        }
         if (_url is { } current) BeginNavigate(current, null, NavigationKind.Refresh);
     }
 
     public void Refresh(WebBrowserRefreshOption opt) => Refresh();
 
-    /// <summary>No print pipeline off Windows: there is no document to lay pages out from.</summary>
+    /// <summary>Page setup is part of IE's print dialog, not the native WebView API.</summary>
     public void ShowPageSetupDialog()
     {
+        throw new PlatformNotSupportedException(IeOnly);
     }
 
-    /// <summary>No print pipeline off Windows: there is no document to print.</summary>
+    /// <summary>Opens the native browser's print interface when hosted.</summary>
     public void ShowPrintDialog()
     {
+        _nativeView?.ShowPrintUI();
     }
 
-    /// <summary>No print pipeline off Windows: there is no document to preview.</summary>
+    /// <summary>The native WebView exposes print UI but no IE preview dialog.</summary>
     public void ShowPrintPreviewDialog()
     {
+        throw new PlatformNotSupportedException(IeOnly);
     }
 
-    /// <summary>No ActiveX object off Windows to show the properties of.</summary>
+    /// <summary>IE's ActiveX properties dialog has no native WebView equivalent.</summary>
     public void ShowPropertiesDialog()
     {
+        throw new PlatformNotSupportedException(IeOnly);
     }
 
-    /// <summary>No document off Windows to save.</summary>
+    /// <summary>IE's Save As dialog has no native WebView equivalent.</summary>
     public void ShowSaveAsDialog()
     {
+        throw new PlatformNotSupportedException(IeOnly);
     }
 
     public void Stop()
     {
+        if (_nativeView is { } view)
+        {
+            _nativeRequestToken++;
+            view.Stop();
+            _ignoreNativeCompletion = true;
+        }
         if (!_isBusy) return;
 
         // Invalidates whatever CompleteNavigation is already posted for the
@@ -439,7 +537,19 @@ public class WebBrowser : WebBrowserBase
         // A real browser still lets the very first navigation through even
         // when it will later be told not to leave that page; AllowNavigation
         // only holds once there is somewhere to stay on.
-        if (!_allowNavigation && _history.Count > 0) return;
+        if (!_allowNavigation && (_nativeView is not null ? _url is not null : _history.Count > 0)) return;
+
+        _requestedUrl = url;
+        if (_nativeView is { } view)
+        {
+            InvalidateDomDocument();
+            _nativeRequestToken++;
+            _documentText = string.Empty;
+            _isBusy = true;
+            _readyState = WebBrowserReadyState.Loading;
+            view.Source = url;
+            return;
+        }
 
         _isBusy = true;
         _readyState = WebBrowserReadyState.Loading;
@@ -457,6 +567,105 @@ public class WebBrowser : WebBrowserBase
         // same Navigating/Navigated/DocumentCompleted order a real control
         // would deliver, on the thread that owns this control.
         Dispatcher.UIThread.Post(() => CompleteNavigation(url, targetFrameName, kind, token));
+    }
+
+    private void NativeNavigationStarted(object? sender, WebViewNavigationStartingEventArgs e)
+    {
+        if (_nativeView is null) return;
+
+        _ignoreNativeCompletion = false;
+        var requestToken = _nativeRequestToken;
+        var url = _requestedUrl ?? _nativeView.Source ?? new Uri("about:blank");
+        if (!_allowNavigation && _url is not null)
+        {
+            e.Cancel = true;
+            _requestedUrl = null;
+            return;
+        }
+
+        var navigating = new WebBrowserNavigatingEventArgs(url, null);
+        OnNavigating(navigating);
+        if (requestToken != _nativeRequestToken)
+        {
+            e.Cancel = true;
+            return;
+        }
+        if (navigating.Cancel)
+        {
+            e.Cancel = true;
+            _requestedUrl = null;
+            _isBusy = false;
+            _readyState = _url is null ? WebBrowserReadyState.Uninitialized : WebBrowserReadyState.Complete;
+            return;
+        }
+
+        InvalidateDomDocument();
+        _isBusy = true;
+        _readyState = WebBrowserReadyState.Loading;
+    }
+
+    private void NativeAdapterCreated(object? sender, WebViewAdapterEventArgs e)
+    {
+        if (_nativeView is { } view && _documentText.Length > 0)
+            view.NavigateToString(_documentText, new Uri("about:blank"));
+    }
+
+    private void NativeNavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
+    {
+        if (_nativeView is null || _ignoreNativeCompletion) return;
+
+        _isBusy = false;
+        _readyState = e.IsSuccess ? WebBrowserReadyState.Complete : WebBrowserReadyState.Uninitialized;
+        if (!e.IsSuccess) return;
+
+        var url = _nativeView.Source ?? _requestedUrl ?? new Uri("about:blank");
+        _url = url;
+        _requestedUrl = null;
+        _domReady = true;
+        _domDocument = new HtmlDocument(new NativeDomBridge(this, _domGeneration));
+        OnNavigated(new WebBrowserNavigatedEventArgs(url));
+        OnDocumentCompleted(new WebBrowserDocumentCompletedEventArgs(url));
+        UpdateNativeHistoryState();
+        _ = ReadNativeDocumentTitleAsync(_nativeView, url);
+    }
+
+    private void NativeNewWindowRequested(object? sender, WebViewNewWindowRequestedEventArgs e)
+    {
+        var requested = new CancelEventArgs();
+        OnNewWindow(requested);
+        e.Handled = requested.Cancel;
+    }
+
+    private void UpdateNativeHistoryState()
+    {
+        if (_nativeView is null) return;
+
+        var canGoBack = _nativeView.CanGoBack;
+        var canGoForward = _nativeView.CanGoForward;
+        if (canGoBack != _nativeCanGoBack) OnCanGoBackChanged(EventArgs.Empty);
+        if (canGoForward != _nativeCanGoForward) OnCanGoForwardChanged(EventArgs.Empty);
+        _nativeCanGoBack = canGoBack;
+        _nativeCanGoForward = canGoForward;
+    }
+
+    private async Task ReadNativeDocumentTitleAsync(NativeWebView view, Uri pageUrl)
+    {
+        try
+        {
+            var title = await view.InvokeScript("document.title");
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (IsDisposed || !ReferenceEquals(_nativeView, view) || _url != pageUrl || title == _documentTitle) return;
+
+                _documentTitle = title ?? string.Empty;
+                OnDocumentTitleChanged(EventArgs.Empty);
+            });
+        }
+        catch (Exception)
+        {
+            // Some platform adapters do not expose script evaluation until
+            // their page is fully initialized; navigation itself still worked.
+        }
     }
 
     private void CompleteNavigation(Uri url, string? targetFrameName, NavigationKind kind, long token)
@@ -507,6 +716,7 @@ public class WebBrowser : WebBrowserBase
         }
 
         _url = url;
+        _requestedUrl = null;
         var titleChanged = _documentTitle != url.ToString();
         _documentTitle = url.ToString();
         _readyState = WebBrowserReadyState.Complete;

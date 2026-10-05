@@ -223,32 +223,60 @@ public partial class Control
                 return;
             }
 
-            value._parent?.Controls.Remove(value);
-
-            Items.Add(value);
-
-            // A control added without a tab index of its own goes after the others.
-            if (value._tabIndex == -1) value._tabIndex = NextTabIndex(value);
-
-            Owner.SuspendLayout();
-
+            var oldCanvas = value.TopLevelControl?.Canvas;
+            var nativeScopes = value._parent is null ? null : BeginNativeReparenting(value);
             try
             {
-                value.AssignParent(Owner);
+                value._parent?.Controls.Remove(value);
+                // Detach from the old visual tree while the engine's reparenting
+                // scope is active, before the destination canvas attaches it.
+                if (nativeScopes is not null) oldCanvas?.RequestFrame();
 
-                // Added to a control that is on screen: it gets its handle now, as its window would be created.
-                if (Owner.Created && value.Visible) value.CreateControl();
+                Items.Add(value);
 
-                value.InitLayout();
+                // A control added without a tab index of its own goes after the others.
+                if (value._tabIndex == -1) value._tabIndex = NextTabIndex(value);
+
+                Owner.SuspendLayout();
+                try
+                {
+                    value.AssignParent(Owner);
+
+                    // Added to a control that is on screen: it gets its handle now, as its window would be created.
+                    if (Owner.Created && value.Visible) value.CreateControl();
+
+                    value.InitLayout();
+                }
+                finally
+                {
+                    Owner.ResumeLayout(false);
+                }
+
+                Owner.DoLayout(value, PropertyNames.Parent);
+                Owner.OnControlAdded(new ControlEventArgs(value));
+                Owner.Invalidate(value.Bounds, true);
+                if (nativeScopes is not null) Owner.TopLevelControl?.Canvas?.RequestFrame();
             }
             finally
             {
-                Owner.ResumeLayout(false);
+                if (nativeScopes is not null)
+                    for (var i = nativeScopes.Count - 1; i >= 0; i--) nativeScopes[i].Dispose();
             }
+        }
 
-            Owner.DoLayout(value, PropertyNames.Parent);
-            Owner.OnControlAdded(new ControlEventArgs(value));
-            Owner.Invalidate(value.Bounds, true);
+        private static List<IDisposable>? BeginNativeReparenting(Control control)
+        {
+            List<IDisposable>? scopes = null;
+            Begin(control);
+            return scopes;
+
+            void Begin(Control descendant)
+            {
+                if (descendant is WebBrowser browser && browser.BeginNativeReparenting() is { } scope)
+                    (scopes ??= []).Add(scope);
+
+                foreach (Control child in descendant.Controls) Begin(child);
+            }
         }
 
         private protected override int AddFromList(object? control)

@@ -11,7 +11,7 @@ namespace System.Windows.Forms;
 /// </summary>
 [DefaultEvent("FileOk")]
 [DefaultProperty("FileName")]
-public abstract class FileDialog : CommonDialog
+public abstract partial class FileDialog : CommonDialog
 {
     protected static readonly object EventFileOk = new();
 
@@ -147,6 +147,7 @@ public abstract class FileDialog : CommonDialog
         ShowPinnedPlaces = true;
         SupportMultiDottedExtensions = false;
         ValidateNames = true;
+        CustomPlaces.Clear();
     }
 
     public override string ToString() => $"{base.ToString()}: FileName: {FileName}";

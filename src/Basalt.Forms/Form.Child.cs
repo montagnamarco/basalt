@@ -118,6 +118,10 @@ public partial class Form
             _framePressed = hit;
             InvalidateFrame();
         }
+        else
+        {
+            OnResizeBegin(EventArgs.Empty);
+        }
 
         return true;
     }
@@ -155,6 +159,7 @@ public partial class Form
         _frameTracking = CaptionHitArea.None;
         _framePressed = CaptionHitArea.None;
         if (IsCaptionButton(tracking)) InvalidateFrame();
+        else if (tracking != CaptionHitArea.None) OnResizeEnd(EventArgs.Empty);
 
         // A button acts only when released over it.
         if (released == tracking) PerformCaptionButton(tracking);
@@ -168,9 +173,11 @@ public partial class Form
 
         if (_frameTracking == CaptionHitArea.None) return;
 
+        var resizing = !IsCaptionButton(_frameTracking);
         _frameTracking = CaptionHitArea.None;
         _framePressed = CaptionHitArea.None;
         InvalidateFrame();
+        if (resizing) OnResizeEnd(EventArgs.Empty);
     }
 
     private void PerformCaptionButton(CaptionHitArea button)

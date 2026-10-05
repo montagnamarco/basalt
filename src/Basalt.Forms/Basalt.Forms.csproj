@@ -28,6 +28,10 @@
     <!-- The platform layer only: windows, input, clipboard, screens. Every control is drawn by us. -->
     <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="$(AvaloniaWebViewVersion)" />
+    <!-- Generated applications need this reader for typed .resx values. -->
+    <PackageReference Include="System.Resources.Extensions" Version="$(SystemResourcesExtensionsVersion)" />
+    <PackageReference Include="System.IO.Ports" Version="$(SystemIoPortsVersion)" />
   </ItemGroup>
 
   <ItemGroup>

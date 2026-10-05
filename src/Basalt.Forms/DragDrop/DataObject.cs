@@ -10,11 +10,10 @@ namespace System.Windows.Forms;
 /// format lives as the live .NET object it was given: nothing is serialized,
 /// so a format is only readable back as the type it was stored with (or a
 /// compatible one through the small set of conversions below) within this
-/// process. <see cref="System.Runtime.InteropServices.ComTypes.IDataObject"/>
-/// is not implemented: it exists on Windows for OLE's native drag and drop,
-/// which this platform-independent control tree does not have.
+/// process. Native OLE IDataObject calls are exposed for signature compatibility
+/// but reject use because this platform-independent control tree has no OLE store.
 /// </summary>
-public class DataObject : IDataObject, ITypedDataObject
+public partial class DataObject : IDataObject, ITypedDataObject, System.Runtime.InteropServices.ComTypes.IDataObject
 {
     // Ordinal: format names are compared exactly, as Windows clipboard formats are.
     private readonly Dictionary<string, object?> _data = new(StringComparer.Ordinal);
@@ -31,11 +30,11 @@ public class DataObject : IDataObject, ITypedDataObject
     {
         ArgumentNullException.ThrowIfNull(format);
 
-        if (_data.TryGetValue(format, out var exact)) return exact!;
+        if (_data.TryGetValue(format, out var exact)) return exact is IJsonPayload json ? json.Deserialize()! : exact!;
 
         if (autoConvert)
         {
-            foreach (var alias in TextAliases(format))
+            foreach (var alias in MappedFormats(format))
             {
                 if (_data.TryGetValue(alias, out var value)) return value!;
             }
@@ -46,13 +45,26 @@ public class DataObject : IDataObject, ITypedDataObject
 
     public virtual object GetData(string format) => GetData(format, autoConvert: true);
 
-    public virtual object GetData(Type format) => GetData(FormatNameForType(format), autoConvert: true);
+    public virtual object GetData(Type format)
+    {
+        ArgumentNullException.ThrowIfNull(format);
+        return GetData(format.FullName ?? format.Name, autoConvert: true);
+    }
 
-    public virtual bool GetDataPresent(string format, bool autoConvert) => GetData(format, autoConvert) is not null;
+    public virtual bool GetDataPresent(string format, bool autoConvert)
+    {
+        ArgumentNullException.ThrowIfNull(format);
+        if (_data.ContainsKey(format)) return true;
+        return autoConvert && MappedFormats(format).Any(_data.ContainsKey);
+    }
 
     public virtual bool GetDataPresent(string format) => GetDataPresent(format, autoConvert: true);
 
-    public virtual bool GetDataPresent(Type format) => GetDataPresent(FormatNameForType(format), autoConvert: true);
+    public virtual bool GetDataPresent(Type format)
+    {
+        ArgumentNullException.ThrowIfNull(format);
+        return GetDataPresent(format.FullName ?? format.Name, autoConvert: true);
+    }
 
     public virtual string[] GetFormats(bool autoConvert)
     {
@@ -79,22 +91,25 @@ public class DataObject : IDataObject, ITypedDataObject
 
         _data[format] = data;
 
-        // Text, UnicodeText and OemText are the same string under three names: setting one satisfies all three.
-        if (autoConvert && data is string text && TextFormats.Contains(format))
+        // Text/UnicodeText/OemText/"System.String" are the same string under four names, and
+        // Bitmap/"System.Drawing.Bitmap" are the same image under two: setting one satisfies all.
+        if (autoConvert && IsMappedPayload(format, data))
         {
-            foreach (var alias in TextFormats) _data[alias] = text;
+            foreach (var alias in MappedFormats(format)) _data[alias] = data;
         }
     }
 
     public virtual void SetData(string format, object? data) => SetData(format, autoConvert: true, data);
 
-    public virtual void SetData(Type format, object? data) => SetData(FormatNameForType(format), autoConvert: true, data);
+    public virtual void SetData(Type format, object? data) => SetData(format.FullName ?? format.Name, autoConvert: true, data);
 
     public virtual void SetData(object? data)
     {
         if (data is null) return;
 
-        SetData(FormatNameForType(data.GetType()), autoConvert: true, data);
+        // WinForms stores an untagged object under its own runtime type name, exactly as
+        // SetData(Type, object) would with that type: the two overloads agree on the key.
+        SetData(data.GetType().FullName ?? data.GetType().Name, autoConvert: true, data);
     }
 
     public virtual bool ContainsText() => GetDataPresent(DataFormats.UnicodeText);
@@ -158,7 +173,7 @@ public class DataObject : IDataObject, ITypedDataObject
         SetAudio(buffer.ToArray());
     }
 
-    public bool TryGetData<T>(out T data) => TryGetData(FormatNameForType(typeof(T)), autoConvert: true, out data);
+    public bool TryGetData<T>(out T data) => TryGetData(typeof(T).FullName ?? typeof(T).Name, autoConvert: true, out data);
 
     public bool TryGetData<T>(string format, out T data) => TryGetData(format, autoConvert: true, out data);
 
@@ -169,13 +184,40 @@ public class DataObject : IDataObject, ITypedDataObject
         TryGetDataCore(format, resolver, autoConvert, out data);
 
     /// <summary>
-    /// Every format here is already the live object it was stored as, never a
-    /// serialized payload, so there is nothing for <paramref name="resolver"/>
-    /// to resolve; it is accepted for signature compatibility and ignored.
+    /// The JSON format records its generic type when written. The resolver is
+    /// accepted for signature compatibility; this local store never activates
+    /// a type supplied by clipboard data.
     /// </summary>
     protected virtual bool TryGetDataCore<T>(string format, Func<Reflection.Metadata.TypeName, Type>? resolver, bool autoConvert, out T data)
     {
-        if (GetData(format, autoConvert) is T typed)
+        if (_data.TryGetValue(format, out var stored) && TryGetStoredData(stored, out data))
+            return true;
+
+        if (autoConvert)
+        {
+            foreach (var alias in MappedFormats(format))
+            {
+                if (_data.TryGetValue(alias, out stored) && TryGetStoredData(stored, out data))
+                    return true;
+            }
+        }
+
+        data = default!;
+        return false;
+    }
+
+    private static bool TryGetStoredData<T>(object? stored, out T data)
+    {
+        if (stored is JsonPayload<T> json)
+        {
+            data = json.DeserializeTyped()!;
+            return true;
+        }
+
+        if (stored is ImportedJsonPayload imported)
+            return imported.TryDeserialize(out data);
+
+        if (stored is not IJsonPayload && stored is T typed)
         {
             data = typed;
             return true;
@@ -207,5 +249,25 @@ public class DataObject : IDataObject, ITypedDataObject
 
     private static readonly string[] TextFormats = [DataFormats.Text, DataFormats.UnicodeText, DataFormats.OemText];
 
-    private static string[] TextAliases(string format) => TextFormats.Contains(format, StringComparer.Ordinal) ? TextFormats : [];
+    // A string travels under its own type name and the three classic text format
+    // names interchangeably; a bitmap travels under its own type name and "Bitmap".
+    // These are the groups System.Windows.Forms.DataFormats.GetMappedFormats returns.
+    private static readonly string StringFormatName = typeof(string).FullName!;
+    private static readonly string BitmapFormatName = typeof(Bitmap).FullName!;
+    private static readonly string[] StringGroup = [StringFormatName, .. TextFormats];
+    private static readonly string[] BitmapGroup = [BitmapFormatName, DataFormats.Bitmap];
+
+    private static string[] MappedFormats(string format) =>
+        StringGroup.Contains(format, StringComparer.Ordinal) ? StringGroup :
+        BitmapGroup.Contains(format, StringComparer.Ordinal) ? BitmapGroup :
+        [];
+
+    /// <summary>
+    /// Whether <paramref name="data"/> is the kind of payload <paramref name="format"/>'s
+    /// mapped-format group exists for, so setting one alias of a group never stamps a
+    /// mismatched value (e.g. an int) across the whole group.
+    /// </summary>
+    private static bool IsMappedPayload(string format, object? data) =>
+        (StringGroup.Contains(format, StringComparer.Ordinal) && data is string)
+        || (BitmapGroup.Contains(format, StringComparer.Ordinal) && data is Image);
 }

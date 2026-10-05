@@ -3,31 +3,38 @@ using System.Drawing;
 namespace System.Windows.Forms;
 
 /// <summary>
-/// WinForms wraps one node of Internet Explorer's DOM in an HtmlElement.
-/// Basalt has no HTML engine and so no DOM: nothing in this assembly ever
-/// calls the constructor below, matching WinForms itself, where HtmlElement
-/// has no public constructor either - the only way to get one is through a
-/// WebBrowser's Document, which here always returns null. Every member
-/// still exists, for source compatibility, and refuses the moment code
-/// reaches past the null checks that would normally stop it first.
+/// A node in the current native WebView document. IE COM objects and DOM
+/// event sinks remain unavailable.
 /// </summary>
 public sealed class HtmlElement
 {
-    private const string NoDom = "There is no HTML DOM behind this control: HtmlElement has nothing to wrap.";
+    private const string NoDom = "This Internet Explorer element feature is not available in the native WebView.";
+    private readonly NativeDomBridge? _bridge;
+    private readonly int _id;
+    private readonly HtmlDocument? _document;
+    private NativeDomBridge Bridge => _bridge ?? throw new PlatformNotSupportedException(NoDom);
+    private string Node => Bridge.Node(_id);
 
     internal HtmlElement()
     {
     }
 
-    public HtmlElementCollection All => throw new PlatformNotSupportedException(NoDom);
+    internal HtmlElement(NativeDomBridge bridge, int id, HtmlDocument document)
+    {
+        _bridge = bridge;
+        _id = id;
+        _document = document;
+    }
+
+    public HtmlElementCollection All => new(Bridge, Document, $"{Node}.querySelectorAll('*')");
 
     public bool CanHaveChildren => throw new PlatformNotSupportedException(NoDom);
 
-    public HtmlElementCollection Children => throw new PlatformNotSupportedException(NoDom);
+    public HtmlElementCollection Children => new(Bridge, Document, $"{Node}.children");
 
     public Rectangle ClientRectangle => throw new PlatformNotSupportedException(NoDom);
 
-    public HtmlDocument Document => throw new PlatformNotSupportedException(NoDom);
+    public HtmlDocument Document => _document ?? throw new PlatformNotSupportedException(NoDom);
 
     public object DomElement => throw new PlatformNotSupportedException(NoDom);
 
@@ -41,20 +48,20 @@ public sealed class HtmlElement
 
     public string Id
     {
-        get => throw new PlatformNotSupportedException(NoDom);
-        set => throw new PlatformNotSupportedException(NoDom);
+        get => Bridge.String($"{Node}.id") ?? string.Empty;
+        set => Bridge.Evaluate($"({Node}.id={NativeDomBridge.Literal(value)})");
     }
 
     public string InnerHtml
     {
-        get => throw new PlatformNotSupportedException(NoDom);
-        set => throw new PlatformNotSupportedException(NoDom);
+        get => Bridge.String($"{Node}.innerHTML") ?? string.Empty;
+        set => Bridge.Evaluate($"({Node}.innerHTML={NativeDomBridge.Literal(value)})");
     }
 
     public string InnerText
     {
-        get => throw new PlatformNotSupportedException(NoDom);
-        set => throw new PlatformNotSupportedException(NoDom);
+        get => Bridge.String($"{Node}.innerText") ?? string.Empty;
+        set => Bridge.Evaluate($"({Node}.innerText={NativeDomBridge.Literal(value)})");
     }
 
     public string Name
@@ -71,8 +78,8 @@ public sealed class HtmlElement
 
     public string OuterHtml
     {
-        get => throw new PlatformNotSupportedException(NoDom);
-        set => throw new PlatformNotSupportedException(NoDom);
+        get => Bridge.String($"{Node}.outerHTML") ?? string.Empty;
+        set => Bridge.Evaluate($"({Node}.outerHTML={NativeDomBridge.Literal(value)})");
     }
 
     public string OuterText
@@ -109,7 +116,7 @@ public sealed class HtmlElement
         set => throw new PlatformNotSupportedException(NoDom);
     }
 
-    public string TagName => throw new PlatformNotSupportedException(NoDom);
+    public string TagName => Bridge.String($"{Node}.tagName") ?? string.Empty;
 
     public HtmlElement AppendChild(HtmlElement newElement) => throw new PlatformNotSupportedException(NoDom);
 
@@ -117,15 +124,17 @@ public sealed class HtmlElement
 
     public void DetachEventHandler(string eventName, EventHandler eventHandler) => throw new PlatformNotSupportedException(NoDom);
 
-    public override bool Equals(object? obj) => throw new PlatformNotSupportedException(NoDom);
+    public override bool Equals(object? obj) => ReferenceEquals(this, obj);
 
     public void Focus() => throw new PlatformNotSupportedException(NoDom);
 
-    public string? GetAttribute(string attributeName) => throw new PlatformNotSupportedException(NoDom);
+    public string? GetAttribute(string attributeName) =>
+        Bridge.String($"{Node}.getAttribute({NativeDomBridge.Literal(attributeName)})");
 
-    public HtmlElementCollection GetElementsByTagName(string tagName) => throw new PlatformNotSupportedException(NoDom);
+    public HtmlElementCollection GetElementsByTagName(string tagName) =>
+        new(Bridge, Document, $"{Node}.getElementsByTagName({NativeDomBridge.Literal(tagName)})");
 
-    public override int GetHashCode() => throw new PlatformNotSupportedException(NoDom);
+    public override int GetHashCode() => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this);
 
     public HtmlElement InsertAdjacentElement(HtmlElementInsertionOrientation orientation, HtmlElement insertedElement) =>
         throw new PlatformNotSupportedException(NoDom);
@@ -140,11 +149,12 @@ public sealed class HtmlElement
 
     public void ScrollIntoView(bool alignWithTop) => throw new PlatformNotSupportedException(NoDom);
 
-    public void SetAttribute(string attributeName, string value) => throw new PlatformNotSupportedException(NoDom);
+    public void SetAttribute(string attributeName, string value) =>
+        Bridge.Evaluate($"(()=>{{{Node}.setAttribute({NativeDomBridge.Literal(attributeName)},{NativeDomBridge.Literal(value)});return null}})()");
 
-    public static bool operator ==(HtmlElement? left, HtmlElement? right) => throw new PlatformNotSupportedException(NoDom);
+    public static bool operator ==(HtmlElement? left, HtmlElement? right) => ReferenceEquals(left, right);
 
-    public static bool operator !=(HtmlElement? left, HtmlElement? right) => throw new PlatformNotSupportedException(NoDom);
+    public static bool operator !=(HtmlElement? left, HtmlElement? right) => !ReferenceEquals(left, right);
 
     public event HtmlElementEventHandler? Click
     {

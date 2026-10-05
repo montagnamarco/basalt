@@ -3,17 +3,13 @@ using System.Drawing;
 namespace System.Windows.Forms;
 
 /// <summary>
-/// WinForms wraps Internet Explorer's DOM Window in an HtmlWindow. Basalt
-/// has no HTML engine and so no DOM window: nothing in this assembly calls
-/// the constructor below, matching WinForms, where HtmlWindow has no public
-/// one either - the only way to reach one is through an HtmlDocument,
-/// which here never exists. Every member still exists, for source
-/// compatibility, and refuses the moment code reaches past the null checks
-/// that would normally stop it first.
+/// Compatibility surface for Internet Explorer's DOM Window. The native
+/// WebView has an HTML engine, but window and frame operations still have no
+/// synchronous wrapper here.
 /// </summary>
 public sealed class HtmlWindow
 {
-    private const string NoDom = "There is no HTML DOM behind this control: HtmlWindow has nothing to wrap.";
+    private const string NoDom = "This Internet Explorer window feature is not available in the native WebView.";
 
     internal HtmlWindow()
     {

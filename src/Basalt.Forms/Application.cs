@@ -156,14 +156,14 @@ public sealed partial class Application
         Console.Error.WriteLine($"Unhandled exception in a Windows Forms event handler: {t}");
     }
 
-    /// <summary>Visual styles are not used: controls take their classic look from the skin.</summary>
-    public static void EnableVisualStyles()
-    {
-    }
+    /// <summary>Enables portable managed visual styles for controls created by the application.</summary>
+    public static void EnableVisualStyles() => PortableVisualStylesRequested = true;
 
-    public static bool RenderWithVisualStyles => false;
+    internal static bool PortableVisualStylesRequested { get; set; }
 
-    public static bool UseVisualStyles => false;
+    public static bool RenderWithVisualStyles => PortableVisualStylesRequested;
+
+    public static bool UseVisualStyles => PortableVisualStylesRequested;
 
     public static void SetCompatibleTextRenderingDefault(bool defaultValue) => UseCompatibleTextRendering = defaultValue;
 

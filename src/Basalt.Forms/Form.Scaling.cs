@@ -189,12 +189,11 @@ public partial class Form
 
         if (newDpi == oldDpi) return;
 
-        var ratio = (float)newDpi / oldDpi;
-        var suggested = new Rectangle(Left, Top, (int)Math.Round(Width * ratio), (int)Math.Round(Height * ratio));
+        // The host already scales the canvas. Bounds and fonts stay in 96-DPI
+        // logical units; multiplying them again would scale the form twice.
+        var suggested = Bounds;
         var e = new DpiChangedEventArgs(oldDpi, newDpi, suggested);
 
         OnDpiChanged(e);
-
-        if (!e.Cancel && AutoScaleMode == AutoScaleMode.Dpi) Scale(new SizeF(ratio, ratio));
     }
 }

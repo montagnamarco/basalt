@@ -227,6 +227,7 @@ public partial class Form : ContainerControl
             _windowState = value;
             if (_host is not null) _host.WindowState = ToAvalonia(value);
             if (!GetTopLevel()) ApplyChildWindowState(previous);
+            ApplyMaximizedBounds();
         }
     }
 
@@ -306,9 +307,8 @@ public partial class Form : ContainerControl
         {
             if (value == _acceptButton) return;
 
-            _acceptButton?.NotifyDefault(false);
             _acceptButton = value;
-            _acceptButton?.NotifyDefault(true);
+            UpdateDefaultButton();
         }
     }
 
@@ -328,6 +328,8 @@ public partial class Form : ContainerControl
         {
             if (value == GetTopLevel()) return;
             if (value && Parent is not null) throw new ArgumentException("Top-level control cannot be added to a control.", nameof(value));
+            if (value && (!_formBorderColor.IsEmpty || !_formCaptionBackColor.IsEmpty || !_formCaptionTextColor.IsEmpty))
+                throw new PlatformNotSupportedException("Reset custom embedded frame colors before switching to a native top-level window.");
 
             SetTopLevel(value);
         }
@@ -598,6 +600,7 @@ public partial class Form : ContainerControl
     {
         var host = _host!;
         host.Title = Text;
+        host.ShowActivated = !ShowWithoutActivation;
         host.ShowInTaskbar = _showInTaskbar;
         host.Topmost = _topMost;
         host.Opacity = _opacity;
@@ -616,7 +619,7 @@ public partial class Form : ContainerControl
         }
 
         // The canvas takes Avalonia's keyboard focus, so keys reach the form's own routing.
-        host.Canvas.Focus();
+        if (!ShowWithoutActivation) host.Canvas.Focus();
         RequestPaint();
     }
 
@@ -675,6 +678,7 @@ public partial class Form : ContainerControl
         {
             _host = new HostWindow(this);
             InitializeHostScaling(_host.DesktopScaling);
+            ApplyMaximizedBounds();
         }
 
         base.CreateHandle();
@@ -809,7 +813,7 @@ public partial class Form : ContainerControl
         {
             switch (keyData & Keys.KeyCode)
             {
-                case Keys.Enter when AcceptButton is { } accept:
+                case Keys.Enter when (_defaultButton ?? AcceptButton) is { } accept:
                     accept.PerformClick();
                     return true;
 

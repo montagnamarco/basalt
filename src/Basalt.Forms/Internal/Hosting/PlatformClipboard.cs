@@ -1,57 +1,91 @@
+using Avalonia.Input;
 using Avalonia.Input.Platform;
-using Avalonia.Threading;
 
 namespace System.Windows.Forms.Internal.Hosting;
 
-/// <summary>
-/// The system clipboard, synchronously, as WinForms code expects it:
-/// Avalonia's clipboard is asynchronous, so the call waits while the
-/// dispatcher keeps running. Without a window to reach the clipboard
-/// through, the text stays in the process.
-/// </summary>
+/// <summary>Bridges WinForms' synchronous clipboard calls to Avalonia's data transfer.</summary>
 internal static class PlatformClipboard
 {
-    private static string? s_inProcessText;
+    private static DataObject s_fallback = new();
+    private static IAsyncDataTransfer? s_ownedTransfer;
+    private static IClipboardAccess? s_testClipboard;
+
+    internal static int Revision { get; private set; }
+
+    internal static void UseClipboardForTests(IClipboardAccess? clipboard)
+    {
+        s_testClipboard = clipboard;
+        s_ownedTransfer = null;
+        s_fallback = new DataObject();
+        Revision++;
+    }
 
     public static void SetText(string text)
     {
-        s_inProcessText = text;
-
-        if (Clipboard() is { } clipboard) SynchronousWait.For(clipboard.SetTextAsync(text));
+        var data = new DataObject();
+        data.SetText(text);
+        SetData(data);
     }
 
-    public static string? GetText()
-    {
-        if (Clipboard() is { } clipboard)
-        {
-            var text = SynchronousWait.For(clipboard.TryGetTextAsync());
-            if (text is not null) return text;
-        }
+    public static string? GetText() => ReadData()?.GetText() ?? s_fallback.GetText();
 
-        return s_inProcessText;
+    public static void SetData(DataObject data)
+    {
+        s_fallback = data;
+        Revision++;
+
+        if (Clipboard() is not { } clipboard) return;
+
+        var host = Application.OpenForms.Snapshot().Select(form => form.Host).FirstOrDefault(window => window is not null);
+        var transfer = ClipboardDataTransfer.Export(data, host?.StorageProvider);
+        SynchronousWait.For(clipboard.SetDataAsync(transfer));
+        s_ownedTransfer = transfer;
+    }
+
+    /// <returns>The current clipboard data. An owned transfer preserves its live managed values.</returns>
+    public static DataObject? ReadData()
+    {
+        if (Clipboard() is not { } clipboard) return s_fallback;
+
+        var owned = SynchronousWait.For(clipboard.TryGetInProcessDataAsync());
+        if (owned is not null && ReferenceEquals(owned, s_ownedTransfer)) return s_fallback;
+
+        using var transfer = SynchronousWait.For(clipboard.TryGetDataAsync());
+        return transfer is null ? new DataObject() : ClipboardDataTransfer.Import(transfer);
     }
 
     public static void Clear()
     {
-        s_inProcessText = null;
-
+        s_fallback = new DataObject();
+        s_ownedTransfer = null;
+        Revision++;
         if (Clipboard() is { } clipboard) SynchronousWait.For(clipboard.ClearAsync());
     }
 
-    private static IClipboard? Clipboard()
+    private static IClipboardAccess? Clipboard()
     {
+        if (s_testClipboard is not null) return s_testClipboard;
+
         var host = Application.OpenForms.Snapshot().Select(form => form.Host).FirstOrDefault(window => window is not null);
         if (host is null) return null;
 
-        try
-        {
-            return host.Clipboard;
-        }
-        catch (InvalidOperationException)
-        {
-            // A platform without a clipboard service (the headless one, a minimal Linux session)
-            // throws instead of answering null: the text then stays in the process, as without a window.
-            return null;
-        }
+        try { return host.Clipboard is { } clipboard ? new AvaloniaClipboardAccess(clipboard) : null; }
+        catch (InvalidOperationException) { return null; }
     }
+
+    private sealed class AvaloniaClipboardAccess(IClipboard clipboard) : IClipboardAccess
+    {
+        public Task SetDataAsync(IAsyncDataTransfer? data) => clipboard.SetDataAsync(data);
+        public Task<IAsyncDataTransfer?> TryGetDataAsync() => clipboard.TryGetDataAsync();
+        public Task<IAsyncDataTransfer?> TryGetInProcessDataAsync() => clipboard.TryGetInProcessDataAsync();
+        public Task ClearAsync() => clipboard.ClearAsync();
+    }
+}
+
+internal interface IClipboardAccess
+{
+    Task SetDataAsync(IAsyncDataTransfer? data);
+    Task<IAsyncDataTransfer?> TryGetDataAsync();
+    Task<IAsyncDataTransfer?> TryGetInProcessDataAsync();
+    Task ClearAsync();
 }

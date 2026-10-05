@@ -12,15 +12,18 @@ namespace System.Windows.Forms.Internal.Hosting;
 /// <summary>
 /// The one Avalonia element of a form's window. It paints the form's
 /// recorded controls and passes every pointer and key event to the form's
-/// own input routing; no Avalonia control ever sits inside a form.
+/// own input routing. Native browser surfaces and accessibility owners are
+/// hosted as children while ordinary controls remain drawn on this canvas.
 /// </summary>
 internal sealed class FormsCanvas : Avalonia.Controls.Control
 {
     private readonly Control _form;
+    private readonly FormsNativeViews _nativeViews;
 
     public FormsCanvas(Control form)
     {
         _form = form;
+        _nativeViews = new FormsNativeViews(this);
         Focusable = true;
         ClipToBounds = true;
     }
@@ -36,6 +39,22 @@ internal sealed class FormsCanvas : Avalonia.Controls.Control
     internal void AttachAutomationOwner(Avalonia.Controls.Control owner) => VisualChildren.Add(owner);
 
     internal void DetachAutomationOwner(Avalonia.Controls.Control owner) => VisualChildren.Remove(owner);
+
+    internal void AttachNativeView(Avalonia.Controls.Control view) => VisualChildren.Add(view);
+
+    internal void DetachNativeView(Avalonia.Controls.Control view) => VisualChildren.Remove(view);
+
+    internal void ReorderNativeView(Avalonia.Controls.Control view, int index)
+    {
+        var current = VisualChildren.IndexOf(view);
+        if (current >= 0 && current != index) VisualChildren.Move(current, index);
+    }
+
+    internal void RequestFrame()
+    {
+        _nativeViews.Synchronize();
+        InvalidateVisual();
+    }
 
     /// <summary>
     /// Runs on the UI thread: invalid controls are painted (their Paint

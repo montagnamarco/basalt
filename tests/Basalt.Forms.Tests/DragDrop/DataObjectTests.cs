@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace Basalt.Forms.Tests.DragDrop;
@@ -6,6 +7,15 @@ namespace Basalt.Forms.Tests.DragDrop;
 /// <summary>DataObject: the carrier clipboard and drag-and-drop share for their payloads.</summary>
 public class DataObjectTests
 {
+    [Fact]
+    public void A_null_type_format_is_refused_like_WinForms()
+    {
+        var data = new DataObject();
+
+        Assert.Throws<ArgumentNullException>(() => data.GetData((Type)null!));
+        Assert.Throws<ArgumentNullException>(() => data.GetDataPresent((Type)null!));
+    }
+
     [Fact]
     public void A_format_set_by_name_comes_back_by_the_same_name()
     {
@@ -148,5 +158,53 @@ public class DataObjectTests
         Assert.Equal(1, DataFormats.GetFormat(DataFormats.Text).Id);
         Assert.Equal(13, DataFormats.GetFormat(DataFormats.UnicodeText).Id);
         Assert.Equal(15, DataFormats.GetFormat(DataFormats.FileDrop).Id);
+    }
+
+    // SetData(object), SetData(Type, object), GetData(Type) and GetDataPresent(Type) must agree
+    // on where an untagged value lives: WinForms stores it under its own runtime type name, with
+    // a string also readable as the classic text formats and a bitmap also readable as "Bitmap".
+
+    [Fact]
+    public void SetData_with_a_bare_string_is_found_by_its_type_and_by_the_classic_text_formats()
+    {
+        var data = new DataObject();
+        data.SetData("hi");
+
+        Assert.True(data.GetDataPresent(typeof(string)));
+        Assert.Equal("hi", data.GetData(typeof(string)));
+        Assert.True(data.GetDataPresent(DataFormats.UnicodeText));
+        Assert.Equal("hi", data.GetData(DataFormats.UnicodeText));
+        Assert.True(data.GetDataPresent(DataFormats.Text));
+        Assert.True(data.TryGetData<string>(out var found));
+        Assert.Equal("hi", found);
+    }
+
+    [Fact]
+    public void SetData_with_a_bare_bitmap_is_found_by_its_type_and_by_the_Bitmap_format()
+    {
+        using var bitmap = new Bitmap(2, 2);
+        var data = new DataObject();
+        data.SetData(bitmap);
+
+        Assert.True(data.GetDataPresent(typeof(Bitmap)));
+        Assert.Same(bitmap, data.GetData(typeof(Bitmap)));
+        Assert.True(data.GetDataPresent(DataFormats.Bitmap));
+        Assert.Same(bitmap, data.GetData(DataFormats.Bitmap));
+        Assert.True(data.TryGetData<Bitmap>(out var found));
+        Assert.Same(bitmap, found);
+    }
+
+    [Fact]
+    public void SetData_with_a_bare_StringCollection_is_found_by_its_own_type()
+    {
+        var files = new StringCollection();
+        files.AddRange(["one.txt", "two.txt"]);
+        var data = new DataObject();
+        data.SetData(files);
+
+        Assert.True(data.GetDataPresent(typeof(StringCollection)));
+        Assert.Same(files, data.GetData(typeof(StringCollection)));
+        Assert.True(data.TryGetData<StringCollection>(out var found));
+        Assert.Same(files, found);
     }
 }

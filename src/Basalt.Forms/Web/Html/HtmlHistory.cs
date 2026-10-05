@@ -1,17 +1,13 @@
 namespace System.Windows.Forms;
 
 /// <summary>
-/// WinForms wraps Internet Explorer's DOM History in an HtmlHistory.
-/// Basalt has no HTML engine and so no navigation history to wrap at the
-/// DOM level - WebBrowser keeps its own, in <see cref="WebBrowser"/>
-/// itself. Nothing in this assembly calls the constructor below, matching
-/// WinForms, where this type has no public one either. Every member still
-/// exists, for source compatibility, and refuses the moment code reaches
-/// past the null checks that would normally stop it first.
+/// Compatibility surface for Internet Explorer's DOM History. The native
+/// WebView has browser history through <see cref="WebBrowser"/>, while this
+/// DOM-level wrapper is not implemented.
 /// </summary>
 public sealed class HtmlHistory : IDisposable
 {
-    private const string NoDom = "There is no HTML DOM behind this control: HtmlHistory has nothing to wrap.";
+    private const string NoDom = "This Internet Explorer history feature is not available in the native WebView.";
 
     internal HtmlHistory()
     {

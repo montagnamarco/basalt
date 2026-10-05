@@ -13,6 +13,12 @@ public sealed class FolderBrowserDialog : CommonDialog
     private string _initialDirectory = string.Empty;
     private string _description = string.Empty;
 
+    public new event EventHandler? HelpRequest
+    {
+        add => base.HelpRequest += value;
+        remove => base.HelpRequest -= value;
+    }
+
     [DefaultValue(true)]
     public bool AddToRecent { get; set; } = true;
 

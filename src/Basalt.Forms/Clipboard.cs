@@ -6,10 +6,8 @@ using System.Windows.Forms.Internal.Hosting;
 namespace System.Windows.Forms;
 
 /// <summary>
-/// The system clipboard. Text goes through the platform clipboard, so another
-/// process can read it; every other format lives only in this process, as a
-/// <see cref="DataObject"/>, because this platform has no OS-level clipboard
-/// for bitmaps, file lists or custom formats to put it on.
+/// The system clipboard, with native representations for transferable data and
+/// an in-process DataObject for live managed values.
 /// </summary>
 public static class Clipboard
 {
@@ -57,6 +55,13 @@ public static class Clipboard
         SetDataObject(wrapped);
     }
 
+    public static void SetDataAsJson<T>(string format, T data)
+    {
+        var wrapped = new DataObject();
+        wrapped.SetDataAsJson(format, data);
+        SetDataObject(wrapped, copy: true);
+    }
+
     public static IDataObject GetDataObject() => CurrentData();
 
     public static void SetDataObject(object data) => SetDataObject(data, copy: false);
@@ -66,11 +71,7 @@ public static class Clipboard
         ArgumentNullException.ThrowIfNull(data);
 
         s_data = data as DataObject ?? new DataObject(data);
-
-        // The platform clipboard only carries text; every other format stays process-local. Data
-        // without text still replaces what was there, or old text would come back on the next read.
-        if (s_data.ContainsText()) PlatformClipboard.SetText(s_data.GetText());
-        else PlatformClipboard.Clear();
+        PlatformClipboard.SetData(s_data);
     }
 
     /// <summary>The retries exist on Windows for clipboard contention between processes; nothing to retry here.</summary>
@@ -130,16 +131,12 @@ public static class Clipboard
     }
 
     /// <summary>
-    /// The process-local data, with its text formats refreshed from whatever
-    /// is on the platform clipboard now. A merge, not a replace: a control
-    /// that copies through <see cref="PlatformClipboard"/> directly (TextBoxBase
-    /// and the other text controls bypass this class for their own copy and
-    /// paste) must not erase a format <see cref="SetDataObject"/> put here.
+    /// Once another writer replaces the clipboard, discard the old local formats.
+    /// Text controls may also write through PlatformClipboard directly.
     /// </summary>
     private static DataObject CurrentData()
     {
-        var text = PlatformClipboard.GetText();
-        if (!string.IsNullOrEmpty(text) && s_data.GetText() != text) s_data.SetText(text);
+        s_data = PlatformClipboard.ReadData() ?? new DataObject();
 
         return s_data;
     }
