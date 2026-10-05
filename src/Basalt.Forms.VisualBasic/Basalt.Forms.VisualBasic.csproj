@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Basalt.Forms\Basalt.Forms.csproj" />
+    <ProjectReference Include="..\Basalt.Windows.Extensions\Basalt.Windows.Extensions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

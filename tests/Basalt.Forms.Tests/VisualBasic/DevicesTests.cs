@@ -112,22 +112,21 @@ public class DevicesTests
     }
 
     [Fact]
-    public void Audio_Play_has_no_device_API_so_every_overload_throws()
+    public void Audio_Play_wait_mode_reports_invalid_sources()
     {
         var audio = new Audio();
 
-        Assert.Throws<PlatformNotSupportedException>(() => audio.Play("sound.wav"));
-        Assert.Throws<PlatformNotSupportedException>(() => audio.Play("sound.wav", AudioPlayMode.Background));
-        Assert.Throws<PlatformNotSupportedException>(() => audio.Play(new byte[] { 1, 2, 3 }, AudioPlayMode.Background));
-        Assert.Throws<PlatformNotSupportedException>(() => audio.Play(new MemoryStream(), AudioPlayMode.Background));
+        Assert.Throws<FileNotFoundException>(() => audio.Play(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".wav"), AudioPlayMode.WaitToComplete));
+        Assert.Throws<InvalidOperationException>(() => audio.Play(new byte[] { 1, 2, 3 }, AudioPlayMode.WaitToComplete));
+        Assert.Throws<InvalidOperationException>(() => audio.Play(new MemoryStream(), AudioPlayMode.WaitToComplete));
     }
 
     [Fact]
-    public void Audio_Stop_does_nothing_because_nothing_is_ever_playing()
+    public void Audio_Stop_is_safe_without_active_playback()
     {
         var audio = new Audio();
 
-        // Must not throw: Stop is valid even though Play never succeeds.
+        // Stop is valid even before the first playback request.
         audio.Stop();
     }
 

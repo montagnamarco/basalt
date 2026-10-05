@@ -4,28 +4,68 @@ namespace Microsoft.VisualBasic.Devices;
 /// Sound playback, as My.Computer.Audio exposes it to a VB application.
 /// </summary>
 /// <remarks>
-/// Basalt has no audio device API (no equivalent of winmm's PlaySound):
-/// every Play overload throws PlatformNotSupportedException with a message
-/// that says so, rather than silently doing nothing. Stop is the one member
-/// that still makes sense when nothing can ever be playing: it does nothing,
-/// exactly as Microsoft's Stop does once a Play call already returned.
-/// PlaySystemSound(System.Media.SystemSound) is left out: that type ships in
-/// the System.Windows.Extensions package, which this project does not reference.
+/// WAV playback uses the platform backend supplied by Basalt.Windows.Extensions.
+/// Streams remain owned by the caller; SoundPlayer loads them before playback.
 /// </remarks>
 public class Audio
 {
-    private const string NoAudioDevice = "Audio.Play is not supported: Basalt has no audio device API to play sound through.";
+    private System.Media.SoundPlayer? _player;
 
-    public void Play(string location) => throw new PlatformNotSupportedException(NoAudioDevice);
+    internal System.Media.SoundPlayer? ActivePlayerForTest => _player;
 
-    public void Play(string location, AudioPlayMode playMode) => throw new PlatformNotSupportedException(NoAudioDevice);
+    public void Play(string location) => Play(location, AudioPlayMode.Background);
 
-    public void Play(byte[] data, AudioPlayMode playMode) => throw new PlatformNotSupportedException(NoAudioDevice);
+    public void Play(string location, AudioPlayMode playMode)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+        Start(new System.Media.SoundPlayer(location), playMode);
+    }
 
-    public void Play(Stream stream, AudioPlayMode playMode) => throw new PlatformNotSupportedException(NoAudioDevice);
+    public void Play(byte[] data, AudioPlayMode playMode)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        // Background playback may still be loading after this method returns.
+        // Keep an independent copy so the caller may reuse or change its array.
+        var ownedStream = new MemoryStream((byte[])data.Clone(), writable: false);
+        Start(new System.Media.SoundPlayer(ownedStream), playMode, ownedStream);
+    }
 
-    /// <summary>Nothing is ever playing, so there is nothing to stop.</summary>
+    public void Play(Stream stream, AudioPlayMode playMode)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        Start(new System.Media.SoundPlayer(stream), playMode);
+    }
+
+    public void PlaySystemSound(System.Media.SystemSound systemSound)
+    {
+        ArgumentNullException.ThrowIfNull(systemSound);
+        systemSound.Play();
+    }
+
     public void Stop()
     {
+        if (_player is not null) _player.Stop();
+        else System.Media.AudioPlayback.Stop();
+    }
+
+    private void Start(System.Media.SoundPlayer player, AudioPlayMode mode, Stream? ownedStream = null)
+    {
+        if (!Enum.IsDefined(mode))
+        {
+            player.Dispose();
+            ownedStream?.Dispose();
+            throw new ArgumentException("The audio play mode is invalid.", nameof(mode));
+        }
+        if (ownedStream is not null)
+            player.LoadCompleted += (_, _) => ownedStream.Dispose();
+        _player?.Stop();
+        _player?.Dispose();
+        _player = player;
+        switch (mode)
+        {
+            case AudioPlayMode.WaitToComplete: player.PlaySync(); break;
+            case AudioPlayMode.Background: player.Play(); break;
+            case AudioPlayMode.BackgroundLoop: player.PlayLooping(); break;
+        }
     }
 }
