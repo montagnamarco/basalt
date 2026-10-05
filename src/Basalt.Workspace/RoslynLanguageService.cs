@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Text;
+using Basalt.Core.Localization;
 using Basalt.Core.Model;
 using Basalt.Core.Services;
 using Basalt.Extensibility;
@@ -26,7 +27,7 @@ namespace Basalt.Workspace;
 /// from the project that owns each document, so the completion, diagnostic
 /// and navigation operations need no per-language branches.
 /// </summary>
-public sealed class RoslynLanguageService : ILanguageService, IDisposable
+public sealed partial class RoslynLanguageService : ILanguageService, IDisposable
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private MSBuildWorkspace? _workspace;
@@ -905,19 +906,45 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
                 action.Title, "That action does not change any files.");
         }
 
+        var originalSolution = action.OriginalSolution ?? document.Project.Solution;
         var changes = new List<Refactoring.FileChangePreview>();
 
-        foreach (var projectChange in applied.ChangedSolution
-                     .GetChanges(document.Project.Solution).GetProjectChanges())
+        var solutionChanges = applied.ChangedSolution.GetChanges(originalSolution);
+        var projectChanges = solutionChanges.GetProjectChanges().ToArray();
+        if (solutionChanges.GetAddedProjects().Any() || solutionChanges.GetRemovedProjects().Any()
+            || projectChanges.Any(change => change.GetAddedDocuments().Any()
+                || change.GetRemovedDocuments().Any()
+                || change.GetAddedAdditionalDocuments().Any()
+                || change.GetRemovedAdditionalDocuments().Any()
+                || change.GetChangedAdditionalDocuments().Any()
+                || change.GetAddedAnalyzerConfigDocuments().Any()
+                || change.GetRemovedAnalyzerConfigDocuments().Any()
+                || change.GetChangedAnalyzerConfigDocuments().Any()
+                || !change.OldProject.MetadataReferences.SequenceEqual(change.NewProject.MetadataReferences)
+                || !change.OldProject.ProjectReferences.SequenceEqual(change.NewProject.ProjectReferences)
+                || !change.OldProject.AnalyzerReferences.SequenceEqual(change.NewProject.AnalyzerReferences)
+                || !Equals(change.OldProject.CompilationOptions, change.NewProject.CompilationOptions)
+                || !Equals(change.OldProject.ParseOptions, change.NewProject.ParseOptions)))
+        {
+            return Refactoring.RefactoringPreview.Refused(action.Title,
+                Localizer.Get(StringKeys.EditorSmartTagsUnsupportedChanges));
+        }
+
+        foreach (var projectChange in projectChanges)
         {
             foreach (var documentId in projectChange.GetChangedDocuments())
             {
                 ct.ThrowIfCancellationRequested();
 
-                var before = document.Project.Solution.GetDocument(documentId);
+                var before = originalSolution.GetDocument(documentId);
                 var after = applied.ChangedSolution.GetDocument(documentId);
 
-                if (before?.FilePath is not { Length: > 0 } path || after is null) continue;
+                if (before?.FilePath is not { Length: > 0 } path || after is null
+                    || after.FilePath != path)
+                {
+                    return Refactoring.RefactoringPreview.Refused(action.Title,
+                        Localizer.Get(StringKeys.EditorSmartTagsUnsupportedChanges));
+                }
 
                 var originalText = await before.GetTextAsync(ct).ConfigureAwait(false);
                 var newText = await after.GetTextAsync(ct).ConfigureAwait(false);
@@ -1293,55 +1320,6 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
     /// namespace" and "remove the unused import" behave as they do in Visual
     /// Studio rather than being reimplemented approximately here.
     /// </summary>
-    public async Task<IReadOnlyList<QuickAction>> GetQuickActionsAsync(
-        string filePath, int position, CancellationToken ct = default)
-    {
-        var document = GetDocument(filePath);
-        if (document is null) return [];
-
-        var text = await document.GetTextAsync(ct).ConfigureAwait(false);
-        var caret = Math.Clamp(position, 0, text.Length);
-
-        var diagnostics = await GetDiagnosticsAtAsync(document, caret, ct).ConfigureAwait(false);
-        if (diagnostics.Count == 0) return [];
-
-        var actions = new List<QuickAction>();
-
-        foreach (var provider in _codeFixProviders.Value)
-        {
-            var fixable = diagnostics
-                .Where(d => provider.FixableDiagnosticIds.Contains(d.Id))
-                .ToList();
-
-            if (fixable.Count == 0) continue;
-
-            foreach (var diagnostic in fixable)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                try
-                {
-                    var context = new CodeFixContext(
-                        document,
-                        diagnostic,
-                        (action, _) => actions.Add(new QuickAction(action.Title, action)),
-                        ct);
-
-                    await provider.RegisterCodeFixesAsync(context).ConfigureAwait(false);
-                }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    // A provider that fails should not deny the user the fixes
-                    // the others are offering.
-                }
-            }
-        }
-
-        // Two providers can offer the same fix for overlapping diagnostics.
-        return [.. actions
-            .GroupBy(a => a.Title, StringComparer.Ordinal)
-            .Select(group => group.First())];
-    }
 
     /// <summary>
     /// The edits that write the members the Implements or Inherits line
@@ -1390,9 +1368,19 @@ public sealed class RoslynLanguageService : ILanguageService, IDisposable
         var model = await document.GetSemanticModelAsync(ct).ConfigureAwait(false);
         if (model is null) return [];
 
+        var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+        var token = root?.FindToken(Math.Max(0, position - 1));
+        var memberAccess = token?.Parent?.FirstAncestorOrSelf<Microsoft.CodeAnalysis.VisualBasic.Syntax.MemberAccessExpressionSyntax>();
+        var receiver = memberAccess is not null && memberAccess.SpanStart <= position && position <= memberAccess.Span.End
+            ? memberAccess.Expression?.Span
+            : null;
+
+        // During member completion the caret is after the dot, while an unknown
+        // receiver's diagnostic covers only its name. Include that receiver,
+        // without picking unrelated errors elsewhere on the same line.
         return [.. model.GetDiagnostics(cancellationToken: ct)
-            .Where(d => d.Location.SourceSpan.Start <= position
-                     && position <= d.Location.SourceSpan.End)];
+            .Where(d => d.Location.SourceSpan.Start <= position && position <= d.Location.SourceSpan.End
+                || receiver is { } span && span.Contains(d.Location.SourceSpan))];
     }
 
     /// <summary>

@@ -21,7 +21,7 @@ namespace Basalt.Shell.Controls;
 /// Text editor with syntax highlighting and completion provided by Roslyn,
 /// working for both C# and VB.NET.
 /// </summary>
-public sealed class CodeEditor : UserControl
+public sealed partial class CodeEditor : UserControl
 {
     private readonly TextEditor _editor;
     private readonly EditorDocumentViewModel _document;
@@ -133,7 +133,9 @@ public sealed class CodeEditor : UserControl
         // can be written as a single edit the user undoes in one step.
         _editor.TextArea.AddHandler(TextInputEvent, OnTextInputForBrackets, RoutingStrategies.Tunnel);
 
-        Content = _editor;
+        InstallSmartTags();
+        // Until the navigation layout exists, the smart-tag margin is hosted by this bare overlay (the same one the layout builds).
+        Content = new Grid { Children = { _editor, new Canvas { ClipToBounds = true, Children = { _smartTagMargin } } } };
 
         // Roslyn's first formatting call costs a few hundred milliseconds while
         // it builds its caches. Paying that here keeps the first Enter as quick

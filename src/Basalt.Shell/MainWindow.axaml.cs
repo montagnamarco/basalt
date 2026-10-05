@@ -665,7 +665,8 @@ public partial class MainWindow : Window
     /// </summary>
     private CodeEditor TextEditorFor(EditorDocumentViewModel document)
     {
-var editor = new CodeEditor(document, ViewModel);
+        var editor = new CodeEditor(document, ViewModel);
+        WireSmartTags(editor);
 
         // The settings the user already chose apply to this editor too, not
         // only to the ones open when they chose them.
@@ -1177,34 +1178,8 @@ var editor = new CodeEditor(document, ViewModel);
     /// The same review step as a rename: a fix that adds an import changes the
     /// file just as surely, and the user should see what it will do.
     /// </summary>
-    private async Task ShowQuickActionsAsync()
-    {
-        if (CurrentEditor() is not { } editor) return;
-        if (ActingDocument is not { } document) return;
-
-        // The workspace holds the file as last saved; a fix worked out from
-        // that would apply to text the user has since changed.
-        await ViewModel.SyncActiveDocumentAsync();
-
-        var actions = await ViewModel.GetQuickActionsAsync(document.FilePath, editor.CaretOffset);
-
-        if (actions.Count == 0)
-        {
-            ViewModel.WriteOutput("[editor] Nothing to fix here.");
-            return;
-        }
-
-        var chosen = await AskForChoiceAsync(
-            "Quick Actions", "Apply:", [.. actions.Select(a => a.Title)]);
-
-        if (chosen is not { Length: > 0 }) return;
-
-        var action = actions.First(a => a.Title == chosen);
-
-        var preview = await ViewModel.PreviewQuickActionAsync(document.FilePath, action);
-
-        await ApplyRefactoringWithPreviewAsync(preview);
-    }
+    private Task ShowQuickActionsAsync() => CurrentCodeEditor() is { } editor
+        ? editor.ShowSmartTagsAsync() : Task.CompletedTask;
 
     /// <summary>
     /// Sorts the file's imports and drops the ones nothing uses.
@@ -1296,7 +1271,7 @@ var editor = new CodeEditor(document, ViewModel);
 
         if (editor.SelectionLength <= 0)
         {
-            ViewModel.WriteOutput("[editor] Select the expression to extract first.");
+            ViewModel.WriteOutput($"[editor] {Localizer.Get(StringKeys.EditorSelectExpressionFirst)}");
             return;
         }
 
@@ -1452,7 +1427,7 @@ var editor = new CodeEditor(document, ViewModel);
         if (!document.FilePath.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase))
         {
             ViewModel.WriteOutput(
-                "[editor] Only a .vbhtml template is generated into Visual Basic.");
+                $"[editor] {Localizer.Get(StringKeys.EditorOnlyVbHtmlGenerated)}");
             return;
         }
 
@@ -1511,6 +1486,12 @@ var editor = new CodeEditor(document, ViewModel);
             return;
         }
 
+        if (_smartTagRefactoringCurrent is { } current)
+        {
+            await ApplySmartTagPreviewAsync(preview, current);
+            return;
+        }
+
         var dialog = new RefactoringPreviewDialog(preview);
 
         await dialog.ShowDialog(this);
@@ -1519,7 +1500,7 @@ var editor = new CodeEditor(document, ViewModel);
 
         if (!await MainWindowViewModel.ApplyRefactoringAsync(preview))
         {
-            ViewModel.WriteOutput("[editor] The change could not be written.");
+            ViewModel.WriteOutput($"[editor] {Localizer.Get(StringKeys.EditorChangeNotWritten)}");
             return;
         }
 
@@ -1539,7 +1520,7 @@ var editor = new CodeEditor(document, ViewModel);
 
         if (editor.SelectionLength <= 0)
         {
-            ViewModel.WriteOutput("[editor] Select the statements to extract first.");
+            ViewModel.WriteOutput($"[editor] {Localizer.Get(StringKeys.EditorSelectStatementsFirst)}");
             return;
         }
 
@@ -1552,8 +1533,8 @@ var editor = new CodeEditor(document, ViewModel);
 
         if (name is not { Length: > 0 }) return;
 
-        var preview = await ViewModel.PreviewExtractMethodAsync(
-            document.FilePath, start, length, name);
+        var preview = await PreviewOffUiThreadAsync(
+            () => ViewModel.PreviewExtractMethodAsync(document.FilePath, start, length, name));
 
         await ApplyRefactoringWithPreviewAsync(preview);
     }
@@ -1572,7 +1553,7 @@ var editor = new CodeEditor(document, ViewModel);
 
         if (editor.SelectionLength <= 0)
         {
-            ViewModel.WriteOutput("[editor] Select the expression to extract first.");
+            ViewModel.WriteOutput($"[editor] {Localizer.Get(StringKeys.EditorSelectExpressionFirst)}");
             return;
         }
 
@@ -1585,8 +1566,8 @@ var editor = new CodeEditor(document, ViewModel);
 
         if (name is not { Length: > 0 }) return;
 
-        var preview = await ViewModel.PreviewExtractVariableAsync(
-            document.FilePath, start, length, name);
+        var preview = await PreviewOffUiThreadAsync(
+            () => ViewModel.PreviewExtractVariableAsync(document.FilePath, start, length, name));
 
         await ApplyRefactoringWithPreviewAsync(preview);
     }
@@ -1619,8 +1600,15 @@ var editor = new CodeEditor(document, ViewModel);
         // text.
         await ViewModel.SyncActiveDocumentAsync();
 
-        var preview = await ViewModel.PreviewRenameAsync(
-            document.FilePath, editor.CaretOffset, newName);
+        var renameOffset = editor.CaretOffset;
+        var preview = await PreviewOffUiThreadAsync(
+            () => ViewModel.PreviewRenameAsync(document.FilePath, renameOffset, newName));
+
+        if (_smartTagRefactoringCurrent is { } current)
+        {
+            await ApplySmartTagPreviewAsync(preview, current);
+            return;
+        }
 
         var dialog = new RefactoringPreviewDialog(preview);
 

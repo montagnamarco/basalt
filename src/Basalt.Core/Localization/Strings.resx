@@ -304,4 +304,18 @@
   <data name="Picker_OpenSolution" xml:space="preserve"><value>Open solution or project</value></data>
   <data name="Picker_SolutionFilter" xml:space="preserve"><value>.NET solutions and projects</value></data>
   <data name="Picker_ChooseFolder" xml:space="preserve"><value>Choose the folder for the new solution</value></data>
+  <data name="Editor_SmartTags" xml:space="preserve"><value>Quick actions and refactorings</value></data>
+  <data name="Editor_SmartTagsNone" xml:space="preserve"><value>No quick actions are available here.</value></data>
+  <data name="Editor_SmartTagsChanged" xml:space="preserve"><value>The document changed. Request quick actions again.</value></data>
+  <data name="Editor_SmartTagsFailed" xml:space="preserve"><value>Could not load quick actions: {0}</value></data>
+  <data name="Editor_SmartTagRename" xml:space="preserve"><value>Rename symbol…</value></data>
+  <data name="Editor_SmartTagExtractVariable" xml:space="preserve"><value>Extract variable…</value></data>
+  <data name="Editor_SmartTagExtractMethod" xml:space="preserve"><value>Extract method…</value></data>
+  <data name="Editor_SmartTagsUnsupportedChanges" xml:space="preserve"><value>This action changes project structure or non-source files and cannot be applied here.</value></data>
+  <data name="Editor_SmartTagTidyImports" xml:space="preserve"><value>Sort and remove unused Imports</value></data>
+  <data name="Editor_OnlyVbHtmlGenerated" xml:space="preserve"><value>Only a .vbhtml template is generated into Visual Basic.</value></data>
+  <data name="Editor_SelectStatementsFirst" xml:space="preserve"><value>Select the statements to extract first.</value></data>
+  <data name="Editor_SelectExpressionFirst" xml:space="preserve"><value>Select the expression to extract first.</value></data>
+  <data name="Editor_ChangeNotWritten" xml:space="preserve"><value>The change could not be written.</value></data>
+  <data name="Editor_SmartTagsNoDocumentArea" xml:space="preserve"><value>The changed documents were opened in memory but there is no document area to show them in. Save or reopen them to see the edit.</value></data>
 </root>

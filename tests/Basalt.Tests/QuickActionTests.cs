@@ -47,6 +47,61 @@ public sealed class QuickActionTests : IDisposable
         return service;
     }
 
+    [Theory]
+    [InlineData("MessageBox.")]
+    [InlineData("messagebox.")]
+    [InlineData("MessageBox.Show")]
+    public async Task OffersFormsImportAfterAnIncompleteMessageBoxMemberAccess(string expression)
+    {
+        var code = $"Public Class Probe\nPublic Sub M()\n{expression}\nEnd Sub\nEnd Class";
+        var path = CreateProject(SourceLanguage.VisualBasic, code);
+        var project = Path.Combine(_root, "Probe.vbproj");
+        var xml = System.Xml.Linq.XDocument.Load(project);
+        xml.Root!.Add(new System.Xml.Linq.XElement("ItemGroup",
+            new System.Xml.Linq.XElement("Reference", new System.Xml.Linq.XAttribute("Include", "System.Windows.Forms"),
+                new System.Xml.Linq.XElement("HintPath", typeof(System.Windows.Forms.MessageBox).Assembly.Location))));
+        xml.Save(project);
+        using var service = await OpenAsync(SourceLanguage.VisualBasic);
+        var actions = await service.GetQuickActionsAsync(path, code.IndexOf(expression, StringComparison.Ordinal) + expression.LastIndexOf('.') + 1);
+        var previews = await Task.WhenAll(actions.Select(action => service.PreviewQuickActionAsync(path, action)));
+        Assert.Contains(previews, preview => preview.CanApply && preview.Changes.Any(change =>
+            change.NewText.Contains("Imports System.Windows.Forms", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task ImportActionFixesAnUnsavedTypeWithoutChangingTheWorkspace()
+    {
+        const string original = "Public Class Probe\nEnd Class";
+        const string edited = "Option Strict On\nPublic Class Probe\nPublic Sub M()\nDim value As New StringBuilder()\nEnd Sub\nEnd Class";
+        var path = CreateProject(SourceLanguage.VisualBasic, original);
+        using var service = await OpenAsync(SourceLanguage.VisualBasic);
+        var actions = await service.GetQuickActionsAsync(path, edited,
+            edited.IndexOf("StringBuilder", StringComparison.Ordinal) + 2);
+        var previews = await Task.WhenAll(actions.Select(action => service.PreviewQuickActionAsync(path, action)));
+        var import = Assert.Single(previews, preview => preview.CanApply &&
+            preview.Changes.Any(change => change.NewText.Contains("Imports System.Text", StringComparison.Ordinal)));
+        Assert.Contains("Option Strict On", import.Changes[0].NewText);
+        Assert.Contains("New StringBuilder()", import.Changes[0].NewText);
+        Assert.Equal(edited, import.Changes[0].OriginalText);
+        Assert.Equal(original, await File.ReadAllTextAsync(path));
+    }
+
+    [Fact]
+    public async Task TidyImportsIsOfferedWithoutADiagnosticAtTheCaret()
+    {
+        const string code = "Imports System.Text\nImports System.IO\nPublic Class Probe\nPrivate value As StringBuilder\nEnd Class";
+        var path = CreateProject(SourceLanguage.VisualBasic, code);
+        using var service = await OpenAsync(SourceLanguage.VisualBasic);
+        var actions = await service.GetQuickActionsAsync(path, code.IndexOf("Probe", StringComparison.Ordinal));
+        var action = Assert.Single(actions, candidate => candidate.Title ==
+            Basalt.Core.Localization.Localizer.Get("Editor_SmartTagTidyImports"));
+        var preview = await service.PreviewQuickActionAsync(path, action);
+        Assert.True(preview.CanApply);
+        Assert.Contains("Imports System.Text", preview.Changes[0].NewText);
+        Assert.DoesNotContain("Imports System.IO", preview.Changes[0].NewText);
+        Assert.Equal(code, await File.ReadAllTextAsync(path));
+    }
+
     [Fact]
     public async Task FindsRoslynsOwnFixProviders()
     {

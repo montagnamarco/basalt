@@ -773,11 +773,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         StatusMessage = Localizer.Get(StringKeys.StatusStopped);
     }
 
-    /// <summary>The fixes offered for the problems at a position.</summary>
-    public Task<IReadOnlyList<Basalt.Workspace.QuickAction>> GetQuickActionsAsync(
-        string filePath, int position) =>
-        _languageService.GetQuickActionsAsync(filePath, position);
-
     /// <summary>Works out what a quick action would change.</summary>
     public Task<Basalt.Workspace.Refactoring.RefactoringPreview> PreviewQuickActionAsync(
         string filePath, Basalt.Workspace.QuickAction action) =>

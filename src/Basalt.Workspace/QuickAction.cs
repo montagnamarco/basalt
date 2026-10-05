@@ -9,4 +9,9 @@ namespace Basalt.Workspace;
 /// straight away: computing the change is expensive, and most of the actions
 /// offered are never chosen.
 /// </summary>
-public sealed record QuickAction(string Title, CodeAction Action);
+public sealed record QuickAction(string Title, CodeAction Action)
+{
+    public Microsoft.CodeAnalysis.Text.TextSpan? ApplicableSpan { get; init; }
+
+    internal Microsoft.CodeAnalysis.Solution? OriginalSolution { get; init; }
+}

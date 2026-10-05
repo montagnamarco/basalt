@@ -359,4 +359,22 @@ public static class StringKeys
     public const string PickerOpenSolution = "Picker_OpenSolution";
     public const string PickerSolutionFilter = "Picker_SolutionFilter";
     public const string PickerChooseFolder = "Picker_ChooseFolder";
+
+    public const string EditorSmartTags = "Editor_SmartTags";
+    public const string EditorSmartTagsNone = "Editor_SmartTagsNone";
+    public const string EditorSmartTagsChanged = "Editor_SmartTagsChanged";
+    public const string EditorSmartTagsFailed = "Editor_SmartTagsFailed";
+    public const string EditorSmartTagRename = "Editor_SmartTagRename";
+    public const string EditorSmartTagExtractVariable = "Editor_SmartTagExtractVariable";
+    public const string EditorSmartTagExtractMethod = "Editor_SmartTagExtractMethod";
+    public const string EditorSmartTagTidyImports = "Editor_SmartTagTidyImports";
+
+    public const string EditorSmartTagsUnsupportedChanges = "Editor_SmartTagsUnsupportedChanges";
+
+    // Run, debug-start and editor status lines added with the F5 and smart-tag review.
+    public const string EditorOnlyVbHtmlGenerated = "Editor_OnlyVbHtmlGenerated";
+    public const string EditorSelectStatementsFirst = "Editor_SelectStatementsFirst";
+    public const string EditorSelectExpressionFirst = "Editor_SelectExpressionFirst";
+    public const string EditorChangeNotWritten = "Editor_ChangeNotWritten";
+    public const string EditorSmartTagsNoDocumentArea = "Editor_SmartTagsNoDocumentArea";
 }
