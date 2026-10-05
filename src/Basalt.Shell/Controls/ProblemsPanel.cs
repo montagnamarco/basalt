@@ -18,7 +18,7 @@ public sealed class ProblemsPanel : UserControl
         {
             [!DataGrid.ItemsSourceProperty] = new Binding(nameof(MainWindowViewModel.Diagnostics)),
             IsReadOnly = true,
-            FontSize = 11,
+            FontSize = PanelMetrics.FontSize,
             RowHeight = 24,
             GridLinesVisibility = DataGridGridLinesVisibility.Horizontal
         };
@@ -51,13 +51,7 @@ public sealed class ProblemsPanel : UserControl
 
         // An empty grid reads as a panel that failed to load. Saying there
         // is nothing wrong is information; a blank box is not.
-        _empty = new TextBlock
-        {
-            Text = Localizer.Get(StringKeys.ProblemsEmpty),
-            Opacity = 0.6,
-            FontSize = 12,
-            Margin = new Thickness(12, 8, 8, 8)
-        };
+        _empty = new EmptyState(Localizer.Get(StringKeys.ProblemsEmpty), IconKind.Problems);
 
         _grid = grid;
 
@@ -69,7 +63,7 @@ public sealed class ProblemsPanel : UserControl
     }
 
     private readonly DataGrid _grid;
-    private readonly TextBlock _empty;
+    private readonly EmptyState _empty;
 
     /// <summary>The grid when there is something to show, the message when not.</summary>
     private void ShowWhicheverFits() =>

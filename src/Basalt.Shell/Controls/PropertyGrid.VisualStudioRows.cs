@@ -16,10 +16,12 @@ public sealed partial class PropertyGrid
         {
             Text = property.DisplayName ?? property.Name,
             Foreground = property.IsReadOnly ? VisualStudioPalette.ReadOnlyForegroundBrush : VisualStudioPalette.ForegroundBrush,
-            FontSize = 11,
+            FontSize = WinFormsPropertyGridPalette.FontSize,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(4 + property.Depth * 12, 0, 2, 0),
             TextTrimming = TextTrimming.CharacterEllipsis,
+            // Long names such as AccessibleDefaultActionDescription are cut by the column.
+            [ToolTip.TipProperty] = property.DisplayName ?? property.Name,
         };
         var labelContent = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         labelContent.Children.Add(labelText);
@@ -34,12 +36,25 @@ public sealed partial class PropertyGrid
                 MinHeight = 0,
                 Padding = new Thickness(0),
                 BorderThickness = new Thickness(0),
-                Background = Brushes.Transparent,
-                Foreground = VisualStudioPalette.ForegroundBrush,
+                FontSize = WinFormsPropertyGridPalette.FontSize,
             };
+            VisualStudioPalette.StyleButton(expand, Brushes.Transparent);
             expand.Click += (_, _) => ToggleVisualStudioExpansion(property);
             labelContent.Children.Add(expand);
         }
+        // A dashed rectangle in the selection text colour: the selection fill
+        // alone cannot tell a keyboard-focused row from one that merely stays selected.
+        var focusMark = new Avalonia.Controls.Shapes.Rectangle
+        {
+            Stroke = VisualStudioPalette.SelectionForegroundBrush,
+            StrokeThickness = 1,
+            StrokeDashArray = [1, 2],
+            Margin = new Thickness(1),
+            IsHitTestVisible = false,
+            IsVisible = false,
+        };
+        Grid.SetColumnSpan(focusMark, 2);
+        labelContent.Children.Add(focusMark);
         var label = new Border
         {
             Child = labelContent,
@@ -49,6 +64,7 @@ public sealed partial class PropertyGrid
         var separator = new GridSplitter
         {
             Width = 3,
+            // The theme's panel border: visible, never louder than the text.
             Background = VisualStudioPalette.GridLineBrush,
             ResizeDirection = GridResizeDirection.Columns,
         };
@@ -67,14 +83,14 @@ public sealed partial class PropertyGrid
         var row = new Border
         {
             Name = "PropertyGridRow",
-            Height = 21,
+            Height = WinFormsPropertyGridPalette.RowHeight,
             BorderThickness = new Thickness(0, 0, 0, 1),
             BorderBrush = VisualStudioPalette.GridLineBrush,
             Child = columns,
             Focusable = true,
             Background = VisualStudioPalette.BackgroundBrush,
         };
-        var entry = new VisualStudioEntry(property, row, label, labelText, editor);
+        var entry = new VisualStudioEntry(property, row, label, labelText, editor, focusMark);
         _visualStudioEntries.Add(entry);
         columns.ColumnDefinitions[0].PropertyChanged += (_, change) =>
         {
@@ -127,13 +143,7 @@ public sealed partial class PropertyGrid
         var propertyKey = VisualStudioPropertyKey(entry.Property);
         var changedSelection = _visualStudioSelectedName != propertyKey;
         _visualStudioSelectedName = propertyKey;
-        foreach (var other in _visualStudioEntries)
-        {
-            var selected = ReferenceEquals(other, entry);
-            other.Label.Background = selected ? VisualStudioPalette.SelectionBackgroundBrush : Brushes.Transparent;
-            other.LabelText.Foreground = selected ? VisualStudioPalette.SelectionForegroundBrush
-                : other.Property.IsReadOnly ? VisualStudioPalette.ReadOnlyForegroundBrush : VisualStudioPalette.ForegroundBrush;
-        }
+        ApplyVisualStudioSelection();
         _visualStudioName.Text = entry.Property.DisplayName ?? entry.Property.Name;
         _visualStudioDescription.Text = entry.Property.Description ?? "";
         if (focus)

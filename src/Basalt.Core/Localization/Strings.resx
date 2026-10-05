@@ -285,6 +285,11 @@
   <data name="Explorer_CollapseAll" xml:space="preserve"><value>Collapse all</value></data>
   <data name="Explorer_SyncWithEditor" xml:space="preserve"><value>Sync with the open document</value></data>
   <data name="Explorer_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Diff_NoChanges" xml:space="preserve"><value>No changes.</value></data>
+  <data name="Outline_Empty" xml:space="preserve"><value>No symbols.</value></data>
+  <data name="CallStack_Empty" xml:space="preserve"><value>Not stopped.</value></data>
+  <data name="Variables_Empty" xml:space="preserve"><value>No variables.</value></data>
+  <data name="Breakpoints_Empty" xml:space="preserve"><value>No breakpoints.</value></data>
   <data name="Problems_Empty" xml:space="preserve"><value>No errors or warnings.</value></data>
   <data name="Output_Empty" xml:space="preserve"><value>Nothing has been built yet.</value></data>
   <data name="Properties_NoSelection" xml:space="preserve"><value>No element selected.</value></data>

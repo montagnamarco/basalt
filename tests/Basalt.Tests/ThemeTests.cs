@@ -32,7 +32,8 @@ public sealed class ThemeTests
         "FocusBorder", "InputBackground", "InputBorder",
         "ButtonBackground", "ButtonForeground",
         "ButtonSecondaryBackground", "ButtonSecondaryForeground",
-        "ErrorForeground", "WarningForeground", "DescriptionForeground", "ScrollbarSlider"
+        "ErrorForeground", "WarningForeground", "DescriptionForeground", "ScrollbarSlider",
+        "ChromeForeground", "ChromeSecondaryForeground", "SuccessForeground"
     ];
 
     /// <summary>Every theme a user can pick, other than following the system.</summary>

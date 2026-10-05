@@ -101,7 +101,7 @@ public sealed class AiChatPanel : UserControl
     {
         _status = new TextBlock
         {
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Opacity = 0.7,
             Margin = new Thickness(8, 4)
         };
@@ -118,7 +118,7 @@ public sealed class AiChatPanel : UserControl
         {
             ItemsSource = new[] { "Ask", "Explain", "Fix the error", "Generate tests", "Document" },
             SelectedIndex = 0,
-            FontSize = 11,
+            FontSize = PanelMetrics.FontSize,
             Width = 130
         };
 
@@ -140,10 +140,10 @@ public sealed class AiChatPanel : UserControl
             RequestSend();
         };
 
-        _send = new Button { Content = "Send", FontSize = 11 };
+        _send = new Button { Content = "Send" };
         _send.Click += (_, _) => RequestSend();
 
-        var clear = new Button { Content = "Clear", FontSize = 11 };
+        var clear = new Button { Content = "Clear" };
         clear.Click += (_, _) => Clear();
 
         var controls = new StackPanel
@@ -293,7 +293,7 @@ public sealed class AiChatPanel : UserControl
         {
             Text = entry.IsUser ? "You" : "Assistant",
             FontWeight = FontWeight.SemiBold,
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Opacity = 0.7
         });
 
@@ -334,7 +334,7 @@ public sealed class AiChatPanel : UserControl
         var apply = new Button
         {
             Content = "Apply",
-            FontSize = 11,
+            FontSize = PanelMetrics.FontSize,
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new Thickness(0, 2, 0, 0)
         };

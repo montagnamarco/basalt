@@ -11,8 +11,6 @@ namespace Basalt.Shell.Controls;
 
 public sealed partial class PropertyGrid
 {
-    internal static readonly Color VisualStudioLineColor = WinFormsPropertyGridPalette.Light.GridLineColor;
-    internal static readonly Color VisualStudioSelectionColor = WinFormsPropertyGridPalette.Light.SelectionBackgroundColor;
     private readonly StackPanel _visualStudioRows = new();
     private readonly List<VisualStudioEntry> _visualStudioEntries = [];
     private readonly HashSet<string> _expandedProperties = new(StringComparer.Ordinal);
@@ -23,7 +21,7 @@ public sealed partial class PropertyGrid
     };
     private readonly TextBlock _visualStudioDescription = new()
     {
-        FontSize = 11,
+        FontSize = WinFormsPropertyGridPalette.FontSize,
         TextWrapping = TextWrapping.Wrap
     };
     private Control _standardLayout = null!;
@@ -31,7 +29,8 @@ public sealed partial class PropertyGrid
     private StackPanel _visualStudioToolbar = null!;
     private bool _visualStudioStyle;
     private int _visualStudioEditorGeneration;
-    private WinFormsPropertyGridPalette VisualStudioPalette => WinFormsPropertyGridPalette.For(ActualThemeVariant);
+    private WinFormsPropertyGridPalette? _visualStudioPalette;
+    private WinFormsPropertyGridPalette VisualStudioPalette => _visualStudioPalette ??= WinFormsPropertyGridPalette.For(this);
     private bool _eventsMode;
     private ToggleButton _visualStudioCategories = null!;
     private ToggleButton _visualStudioAlphabetical = null!;
@@ -69,7 +68,7 @@ public sealed partial class PropertyGrid
     }
     private string? _visualStudioSelectedName;
 
-    private sealed record VisualStudioEntry(DesignableProperty Property, Border Row, Border Label, TextBlock LabelText, Control Editor);
+    private sealed record VisualStudioEntry(DesignableProperty Property, Border Row, Border Label, TextBlock LabelText, Control Editor, Control FocusMark);
 
     public bool VisualStudioStyle
     {
@@ -116,7 +115,7 @@ public sealed partial class PropertyGrid
             Name = name,
             Content = VisualStudioIcon(geometry),
             Width = 25,
-            Height = 24,
+            Height = WinFormsPropertyGridPalette.RowHeight + 2,
             CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(0),
             Padding = new Thickness(Spacing.Tight),
@@ -167,6 +166,7 @@ public sealed partial class PropertyGrid
             Name = "PropertyGridDescription",
             BorderThickness = new Thickness(0, 1, 0, 0),
             BorderBrush = VisualStudioPalette.GridLineBrush,
+            Background = VisualStudioPalette.CategoryBackgroundBrush,
             MinHeight = 65,
             Padding = new Thickness(Spacing.Small, Spacing.Tight),
             Child = new StackPanel
@@ -188,14 +188,22 @@ public sealed partial class PropertyGrid
         };
         Grid.SetRow(scroll, 1);
         Grid.SetRow(description, 2);
-        ActualThemeVariantChanged += (_, _) => RefreshVisualStudioTheme();
+        ActualThemeVariantChanged += (_, _) => OnVisualStudioThemeChanged();
+        AttachedToVisualTree += (_, _) => OnVisualStudioThemeChanged();
+        PropertyChanged += (_, change) =>
+        {
+            if (change.Property == IsKeyboardFocusWithinProperty)
+                ApplyVisualStudioSelection();
+        };
+        foreach (var button in _visualStudioToolbar.Children.OfType<ToggleButton>())
+            button.IsCheckedChanged += (_, _) => UpdateVisualStudioThemeChrome();
         UpdateVisualStudioThemeChrome();
     }
 
     private static Control VisualStudioIcon(string geometry) => new Avalonia.Controls.Shapes.Path
     {
         Data = Geometry.Parse(geometry),
-        Stroke = Brushes.Black,
+        Stroke = Brushes.Transparent,
         StrokeThickness = 1,
         Width = 14,
         Height = 14,
@@ -227,19 +235,18 @@ public sealed partial class PropertyGrid
                 {
                     Name = "PropertyGridCategory",
                     Content = (expanded ? "−  " : "+  ") + categoryName,
-                    Height = 21,
+                    Height = WinFormsPropertyGridPalette.RowHeight,
                     MinHeight = 0,
                     Padding = new Thickness(4, 0),
                     CornerRadius = new CornerRadius(0),
-                    Background = VisualStudioPalette.CategoryBackgroundBrush,
-                    Foreground = VisualStudioPalette.ForegroundBrush,
                     FontWeight = FontWeight.Bold,
-                    FontSize = 11,
+                    FontSize = WinFormsPropertyGridPalette.FontSize,
                     BorderThickness = new Thickness(0, 0, 0, 1),
                     BorderBrush = VisualStudioPalette.GridLineBrush,
                     HorizontalContentAlignment = HorizontalAlignment.Left,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                 };
+                VisualStudioPalette.StyleButton(heading, VisualStudioPalette.CategoryBackgroundBrush);
                 heading.Click += (_, _) =>
                 {
                     if (!_visualStudioCollapsedCategories.Remove(categoryName)) _visualStudioCollapsedCategories.Add(categoryName);
@@ -254,7 +261,9 @@ public sealed partial class PropertyGrid
             _visualStudioRows.Children.Add(new TextBlock
             {
                 Text = Localizer.Get(_properties.Count == 0 ? StringKeys.PropertiesNoSelection : StringKeys.PropertiesNoMatch),
-                Margin = new Thickness(Spacing.Tight),
+                Margin = new Thickness(Spacing.Normal, Spacing.Normal),
+                FontSize = WinFormsPropertyGridPalette.FontSize,
+                Foreground = VisualStudioPalette.ReadOnlyForegroundBrush,
             });
         var selected = _visualStudioEntries.FirstOrDefault(entry => VisualStudioPropertyKey(entry.Property) == _visualStudioSelectedName);
         if (selected is not null) SelectVisualStudioProperty(selected, false);

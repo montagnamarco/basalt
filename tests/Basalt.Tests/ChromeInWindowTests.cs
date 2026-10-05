@@ -86,15 +86,8 @@ public class ChromeInWindowTests
     {
         // An unresolved brush is what shows as black on black; the dark theme
         // is the one nobody looks at until it is wrong.
+        using var theme = new ThemeScope(variant == "Dark" ? ThemeVariant.Dark : ThemeVariant.Light);
         using var host = new TestWindow();
-        await host.SettleAsync();
-
-        if (Application.Current is { } application)
-        {
-            application.RequestedThemeVariant =
-                variant == "Dark" ? ThemeVariant.Dark : ThemeVariant.Light;
-        }
-
         await host.SettleAsync();
 
         string[] brushes =
@@ -117,11 +110,11 @@ public class ChromeInWindowTests
     {
         // Both resolving is not enough: a dark theme that resolves to the
         // light palette is still the light theme.
+        using var theme = new ThemeScope(ThemeVariant.Light);
         using var host = new TestWindow();
         await host.SettleAsync();
 
-        if (Application.Current is not { } application) return;
-
+        var application = Application.Current!;
         application.RequestedThemeVariant = ThemeVariant.Light;
         await host.SettleAsync();
         var light = host.Window.FindResource("EditorBackgroundBrush")?.ToString();

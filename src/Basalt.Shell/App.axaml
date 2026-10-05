@@ -9,10 +9,9 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <!--
-                  Preset ufficiale di Dock che allinea i pannelli ancorabili
-                  all'aspetto di VS Code chiaro.
+                  No Dock preset: Theme.axaml defines the Dock* brushes over
+                  the IDE's own tokens, so the chrome follows every theme.
                 -->
-                <ResourceInclude Source="avares://Dock.Avalonia.Themes.Fluent/Presets/Ide/VsCodeLight.axaml" />
                 <ResourceInclude Source="avares://Basalt.Shell/Theme.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
@@ -28,8 +27,8 @@
         -->
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <!--
-          Temi dei pannelli ancorabili. Il preset VsCodeLight è fornito dal
-          pacchetto stesso e allinea i pannelli all'aspetto di VS Code chiaro.
+          Dock's own control templates. No colour preset goes with them: the
+          Dock* brushes come from Theme.axaml, so the chrome follows the theme.
         -->
         <StyleInclude Source="avares://Dock.Avalonia.Themes.Fluent/DockFluentTheme.axaml" />
 

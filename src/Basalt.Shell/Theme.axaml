@@ -45,6 +45,9 @@
     <Color x:Key="ErrorForeground">#C42B1C</Color>
     <Color x:Key="WarningForeground">#9A6700</Color>
     <Color x:Key="DescriptionForeground">#5A5A5A</Color>
+    <Color x:Key="SuccessForeground">#1A7F37</Color>
+    <Color x:Key="ChromeForeground">#1F1F1F</Color>
+    <Color x:Key="ChromeSecondaryForeground">#5A5A5A</Color>
     <Color x:Key="ScrollbarSlider">#A6A6A6</Color>
     </ResourceDictionary>
 
@@ -85,6 +88,9 @@
     <Color x:Key="ErrorForeground">#F85149</Color>
     <Color x:Key="WarningForeground">#D29922</Color>
     <Color x:Key="DescriptionForeground">#A6A6A6</Color>
+    <Color x:Key="SuccessForeground">#3FB950</Color>
+    <Color x:Key="ChromeForeground">#D4D4D4</Color>
+    <Color x:Key="ChromeSecondaryForeground">#A6A6A6</Color>
     <Color x:Key="ScrollbarSlider">#4F4F4F</Color>
     </ResourceDictionary>
 
@@ -121,6 +127,9 @@
     <Color x:Key="ErrorForeground">#A31515</Color>
     <Color x:Key="WarningForeground">#8A6D00</Color>
     <Color x:Key="DescriptionForeground">#555555</Color>
+    <Color x:Key="SuccessForeground">#1A7F37</Color>
+    <Color x:Key="ChromeForeground">#000000</Color>
+    <Color x:Key="ChromeSecondaryForeground">#555555</Color>
     <Color x:Key="ScrollbarSlider">#C2C3C9</Color>
     </ResourceDictionary>
 
@@ -157,6 +166,9 @@
     <Color x:Key="ErrorForeground">#B50000</Color>
     <Color x:Key="WarningForeground">#6B4E00</Color>
     <Color x:Key="DescriptionForeground">#000000</Color>
+    <Color x:Key="SuccessForeground">#006400</Color>
+    <Color x:Key="ChromeForeground">#000000</Color>
+    <Color x:Key="ChromeSecondaryForeground">#000000</Color>
     <Color x:Key="ScrollbarSlider">#000000</Color>
     </ResourceDictionary>
 
@@ -193,6 +205,9 @@
     <Color x:Key="ErrorForeground">#FF6B6B</Color>
     <Color x:Key="WarningForeground">#FFD700</Color>
     <Color x:Key="DescriptionForeground">#FFFFFF</Color>
+    <Color x:Key="SuccessForeground">#3FF23F</Color>
+    <Color x:Key="ChromeForeground">#FFFFFF</Color>
+    <Color x:Key="ChromeSecondaryForeground">#FFFFFF</Color>
     <Color x:Key="ScrollbarSlider">#FFFFFF</Color>
     </ResourceDictionary>
 
@@ -229,6 +244,9 @@
     <Color x:Key="ErrorForeground">#DC322F</Color>
     <Color x:Key="WarningForeground">#B58900</Color>
     <Color x:Key="DescriptionForeground">#657B83</Color>
+    <Color x:Key="SuccessForeground">#6B7A00</Color>
+    <Color x:Key="ChromeForeground">#073642</Color>
+    <Color x:Key="ChromeSecondaryForeground">#50656B</Color>
     <Color x:Key="ScrollbarSlider">#93A1A1</Color>
     </ResourceDictionary>
 
@@ -265,6 +283,9 @@
     <Color x:Key="ErrorForeground">#DC322F</Color>
     <Color x:Key="WarningForeground">#B58900</Color>
     <Color x:Key="DescriptionForeground">#839496</Color>
+    <Color x:Key="SuccessForeground">#859900</Color>
+    <Color x:Key="ChromeForeground">#EEE8D5</Color>
+    <Color x:Key="ChromeSecondaryForeground">#9FB0B0</Color>
     <Color x:Key="ScrollbarSlider">#586E75</Color>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
@@ -295,6 +316,94 @@
   <SolidColorBrush x:Key="ButtonSecondaryForegroundBrush" Color="{DynamicResource ButtonSecondaryForeground}" />
   <SolidColorBrush x:Key="ErrorForegroundBrush" Color="{DynamicResource ErrorForeground}" />
   <SolidColorBrush x:Key="WarningForegroundBrush" Color="{DynamicResource WarningForeground}" />
+  <SolidColorBrush x:Key="SuccessForegroundBrush" Color="{DynamicResource SuccessForeground}" />
   <SolidColorBrush x:Key="DescriptionForegroundBrush" Color="{DynamicResource DescriptionForeground}" />
+  <!--
+    The text of the chrome (title bars, tabs). Separate from the editor's and
+    the description's because those are chosen against the editor's surface:
+    Solarized Light's reads 4.4:1 on its side bar, under what text needs.
+  -->
+  <SolidColorBrush x:Key="ChromeForegroundBrush" Color="{DynamicResource ChromeForeground}" />
+  <SolidColorBrush x:Key="ChromeSecondaryForegroundBrush" Color="{DynamicResource ChromeSecondaryForeground}" />
+
+
+  <!--
+    Typography and sizes shared by the panels. Code-built panels read the same
+    numbers from Controls/PanelMetrics.cs; a test keeps the two in step.
+  -->
+  <x:Double x:Key="PanelFontSize">12</x:Double>
+  <x:Double x:Key="PanelSecondaryFontSize">11</x:Double>
+  <x:Double x:Key="PanelRowHeight">22</x:Double>
+
+
+  <!--
+    Fluent's list and tree rows read their hover and selection colours from
+    these keys. Pointing them at the IDE's tokens gives every list and tree the
+    theme's own hover and selection without restyling a template: before, a
+    row was Fluent's accent-tinted grey whatever the theme, and ListHover and
+    ListActiveSelection were read by almost nothing.
+  -->
+  <SolidColorBrush x:Key="ListBoxItemBackgroundPointerOver" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="ListBoxItemBackgroundPressed" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="ListBoxItemBackgroundSelected" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="ListBoxItemBackgroundSelectedPointerOver" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="ListBoxItemBackgroundSelectedPressed" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="ListBoxItemForegroundSelected" Color="{DynamicResource EditorForeground}" />
+  <SolidColorBrush x:Key="ListBoxItemForegroundSelectedPointerOver" Color="{DynamicResource EditorForeground}" />
+  <SolidColorBrush x:Key="ListBoxItemForegroundSelectedPressed" Color="{DynamicResource EditorForeground}" />
+  <SolidColorBrush x:Key="TreeViewItemBackgroundPointerOver" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="TreeViewItemBackgroundPressed" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="TreeViewItemForegroundSelected" Color="{DynamicResource EditorForeground}" />
+  <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPointerOver" Color="{DynamicResource EditorForeground}" />
+  <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPressed" Color="{DynamicResource EditorForeground}" />
+
+  <!-- Brushes for tokens that were colours only. -->
+  <SolidColorBrush x:Key="ActivityBarBackgroundBrush" Color="{DynamicResource ActivityBarBackground}" />
+  <SolidColorBrush x:Key="ListActiveSelectionBackgroundBrush" Color="{DynamicResource ListActiveSelectionBackground}" />
+  <SolidColorBrush x:Key="ListActiveSelectionForegroundBrush" Color="{DynamicResource ListActiveSelectionForeground}" />
+  <SolidColorBrush x:Key="ListInactiveSelectionBackgroundBrush" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="FocusBorderBrush" Color="{DynamicResource FocusBorder}" />
+  <SolidColorBrush x:Key="ScrollbarSliderBrush" Color="{DynamicResource ScrollbarSlider}" />
+
+  <!--
+    Dock's chrome, taken from the IDE's own tokens.
+
+    The Dock theme package ships presets (VsCodeLight, VsCodeDark) that are
+    plain brushes with fixed colours; including one left every tool panel
+    pale in the dark themes. These are the same keys the package reads, but
+    each is a brush over an IDE colour, so the chrome follows the theme the
+    moment the variant changes. A test checks that every key the presets
+    define is defined here.
+  -->
+  <SolidColorBrush x:Key="DockSurfaceWorkbenchBrush" Color="{DynamicResource SideBarBackground}" />
+  <SolidColorBrush x:Key="DockSurfaceSidebarBrush" Color="{DynamicResource SideBarBackground}" />
+  <SolidColorBrush x:Key="DockSurfaceEditorBrush" Color="{DynamicResource EditorBackground}" />
+  <SolidColorBrush x:Key="DockSurfacePanelBrush" Color="{DynamicResource SideBarBackground}" />
+  <SolidColorBrush x:Key="DockSurfaceHeaderBrush" Color="{DynamicResource TitleBarBackground}" />
+  <SolidColorBrush x:Key="DockSurfaceHeaderActiveBrush" Color="{DynamicResource TitleBarBackground}" />
+  <SolidColorBrush x:Key="DockBorderSubtleBrush" Color="{DynamicResource PanelBorder}" />
+  <SolidColorBrush x:Key="DockBorderStrongBrush" Color="{DynamicResource SideBarBorder}" />
+  <SolidColorBrush x:Key="DockSeparatorBrush" Color="{DynamicResource PanelBorder}" />
+  <SolidColorBrush x:Key="DockSplitterIdleBrush" Color="{DynamicResource PanelBorder}" />
+  <SolidColorBrush x:Key="DockSplitterHoverBrush" Color="{DynamicResource FocusBorder}" />
+  <SolidColorBrush x:Key="DockSplitterDragBrush" Color="{DynamicResource FocusBorder}" />
+  <SolidColorBrush x:Key="DockTabBackgroundBrush" Color="Transparent" />
+  <SolidColorBrush x:Key="DockTabHoverBackgroundBrush" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="DockTabActiveBackgroundBrush" Color="{DynamicResource TabActiveBackground}" />
+  <SolidColorBrush x:Key="DockTabActiveIndicatorBrush" Color="{DynamicResource TabActiveBorderTop}" />
+  <SolidColorBrush x:Key="DockTabForegroundBrush" Color="{DynamicResource ChromeSecondaryForeground}" />
+  <SolidColorBrush x:Key="DockTabSelectedForegroundBrush" Color="{DynamicResource ChromeForeground}" />
+  <SolidColorBrush x:Key="DockTabActiveForegroundBrush" Color="{DynamicResource ChromeForeground}" />
+  <SolidColorBrush x:Key="DockTabCloseHoverBackgroundBrush" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="DockTargetIndicatorBrush" Color="{DynamicResource FocusBorder}" Opacity="0.4" />
+  <SolidColorBrush x:Key="DockChromeButtonForegroundBrush" Color="{DynamicResource ChromeSecondaryForeground}" />
+  <SolidColorBrush x:Key="DockChromeButtonHoverBackgroundBrush" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="DockChromeButtonPressedBackgroundBrush" Color="{DynamicResource ListInactiveSelectionBackground}" />
+  <SolidColorBrush x:Key="DockChromeButtonDangerHoverBrush" Color="{DynamicResource ListHoverBackground}" />
+  <SolidColorBrush x:Key="DockChromeGripBrush" Color="Transparent" />
+  <CornerRadius x:Key="DockCornerRadiusSmall">0</CornerRadius>
 
 </ResourceDictionary>

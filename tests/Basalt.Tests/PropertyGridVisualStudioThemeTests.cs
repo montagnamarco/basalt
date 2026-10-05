@@ -31,7 +31,7 @@ public class PropertyGridVisualStudioThemeTests
             var row = Row(grid, "Font");
             row.Focus();
             Dispatcher.UIThread.RunJobs();
-            var palette = dark ? WinFormsPropertyGridPalette.Dark : WinFormsPropertyGridPalette.Light;
+            var palette = WinFormsPropertyGridPalette.For(grid);
             Assert.Equal(dark ? ThemeVariant.Dark : ThemeVariant.Light, grid.ActualThemeVariant);
             AssertPixel(window, new Point(330, 130), palette.BackgroundColor);
             AssertPixel(window, row.TranslatePoint(new Point(90, 8), window)!.Value, palette.SelectionBackgroundColor);
@@ -89,7 +89,7 @@ public class PropertyGridVisualStudioThemeTests
             Assert.Equal(0, edits);
             Assert.Equal(original, document.Text);
             Assert.False(document.IsModified);
-            AssertPixel(window, new Point(330, 150), WinFormsPropertyGridPalette.Dark.BackgroundColor);
+            AssertPixel(window, new Point(330, 150), WinFormsPropertyGridPalette.For(grid).BackgroundColor);
 
             window.RequestedThemeVariant = ThemeVariant.Light;
             Dispatcher.UIThread.RunJobs();
@@ -98,7 +98,7 @@ public class PropertyGridVisualStudioThemeTests
             Assert.Equal("Uncommitted draft", Row(grid, "Size").GetVisualDescendants().OfType<TextBox>().Single().Text);
             Assert.Equal(0, edits);
             Assert.Equal(original, document.Text);
-            AssertPixel(window, new Point(330, 150), WinFormsPropertyGridPalette.Light.BackgroundColor);
+            AssertPixel(window, new Point(330, 150), WinFormsPropertyGridPalette.For(grid).BackgroundColor);
         }
         finally
         {

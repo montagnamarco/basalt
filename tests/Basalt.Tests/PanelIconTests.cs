@@ -56,32 +56,52 @@ public class PanelIconTests
     }
 
     [AvaloniaFact]
-    public void ThePanelWearsItsIconWithoutRepeatingItsName()
+    public void ThePanelAddsNoRowOfItsOwnWhenItHasNoActions()
     {
+        // Dock's title bar carries the name; a second bar carrying only an
+        // icon stacked a third bar over the content of every panel.
         var inner = new TextBlock { Text = "content" };
 
-        var header = new PanelHeader("Problems", IconKind.Problems, inner);
+        var header = new PanelHeader("Problems", inner);
 
-        // Shown in a window: an unattached control has no visual tree.
         var window = new Window { Content = header, Width = 300, Height = 200 };
 
         window.Show();
         window.UpdateLayout();
 
-        var icons = header.GetVisualDescendants().OfType<IconView>().ToList();
+        // The content sits directly in the header: no icon, no name, no row.
+        Assert.Same(inner, header.Content);
+        Assert.Empty(header.GetVisualDescendants().OfType<IconView>());
 
-        Assert.Contains(icons, i => i.Kind == IconKind.Problems);
-
-        // No name: Dock's own tab carries it, and repeating it read as
-        // "Problems" twice, one line above the other.
-        var labels = header.GetVisualDescendants().OfType<TextBlock>()
-            .Select(t => t.Text ?? "")
-            .ToList();
-
+        var labels = header.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text ?? "").ToList();
         Assert.DoesNotContain("Problems", labels);
+        Assert.Contains("content", labels);
 
-        // And what it is a header for is still there.
-        Assert.Contains(inner, header.GetVisualDescendants().OfType<TextBlock>());
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ThePanelAddsOneCompactRowWhenItHasActions()
+    {
+        var inner = new TextBlock { Text = "content" };
+        var actions = new Button { Content = "go" };
+
+        var header = new PanelHeader("Explorer", inner, actions);
+
+        var window = new Window { Content = header, Width = 300, Height = 200 };
+
+        window.Show();
+        window.UpdateLayout();
+
+        Assert.Same(actions, header.Tools);
+
+        // One row, of toolbar height: the actions' own height plus padding.
+        var row = actions.GetVisualAncestors().OfType<Border>().First();
+        Assert.Equal(actions.Bounds.Height + Spacing.Hairline * 2 + 1, row.Bounds.Height);
+        Assert.Equal(0, row.Bounds.Top);
+
+        // The content starts where the row ends: nothing else is stacked between.
+        Assert.Equal(row.Bounds.Bottom, inner.Bounds.Top);
 
         window.Close();
     }

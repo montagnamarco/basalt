@@ -89,21 +89,21 @@ public sealed class TestExplorerPanel : UserControl
         _summary = new TextBlock
         {
             Text = "No tests discovered.",
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Opacity = 0.75,
             VerticalAlignment = VerticalAlignment.Center
         };
 
-        _runAll = new Button { Content = "Run All", FontSize = 11 };
+        _runAll = new Button { Content = "Run All" };
         _runAll.Click += (_, _) => RunRequested?.Invoke(this, RunScope.All);
 
-        _runFailed = new Button { Content = "Run Failed", FontSize = 11, IsEnabled = false };
+        _runFailed = new Button { Content = "Run Failed", IsEnabled = false };
         _runFailed.Click += (_, _) => RunRequested?.Invoke(this, RunScope.Failed);
 
-        var runSelected = new Button { Content = "Run Selected", FontSize = 11 };
+        var runSelected = new Button { Content = "Run Selected" };
         runSelected.Click += (_, _) => RunRequested?.Invoke(this, RunScope.Selected);
 
-        var debugSelected = new Button { Content = "Debug", FontSize = 11 };
+        var debugSelected = new Button { Content = "Debug" };
         debugSelected.Click += (_, _) => DebugRequested?.Invoke(this, EventArgs.Empty);
 
         var buttons = new StackPanel
@@ -143,7 +143,7 @@ public sealed class TestExplorerPanel : UserControl
             IsReadOnly = true,
             AcceptsReturn = true,
             FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Height = 120,
             IsVisible = false
         };

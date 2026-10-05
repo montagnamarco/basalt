@@ -17,12 +17,12 @@ public sealed class WinFormsEventPanel : UserControl
     private readonly TextBlock _handlerHeader;
     private readonly TextBlock _descriptionName = new()
     {
-        FontWeight = FontWeight.SemiBold,
-        FontSize = 11,
+        FontWeight = FontWeight.Bold,
+        FontSize = WinFormsPropertyGridPalette.FontSize,
     };
     private readonly TextBlock _descriptionText = new()
     {
-        FontSize = 11,
+        FontSize = WinFormsPropertyGridPalette.FontSize,
         TextWrapping = TextWrapping.Wrap,
     };
     private readonly Border _description;
@@ -60,26 +60,29 @@ public sealed class WinFormsEventPanel : UserControl
             Text = Localizer.Get(StringKeys.WinFormsDesignerEventsHint),
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(Spacing.Normal, Spacing.Tight),
-            FontSize = 11,
+            FontSize = WinFormsPropertyGridPalette.FontSize,
         };
         _header = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*"),
+            // The property grid's default name column: Event and Handler line up with Name and Value.
+            ColumnDefinitions = new ColumnDefinitions("120,3,*"),
             Margin = new Thickness(Spacing.Normal, Spacing.Tight),
         };
         _eventHeader = new TextBlock
         {
             Text = Localizer.Get(StringKeys.WinFormsDesignerEvent),
             FontWeight = FontWeight.SemiBold,
+            FontSize = WinFormsPropertyGridPalette.FontSize,
         };
         _header.Children.Add(_eventHeader);
         _handlerHeader = new TextBlock
         {
             Text = Localizer.Get(StringKeys.WinFormsDesignerHandler),
             FontWeight = FontWeight.SemiBold,
+            FontSize = WinFormsPropertyGridPalette.FontSize,
         };
         _header.Children.Add(_handlerHeader);
-        Grid.SetColumn(_handlerHeader, 1);
+        Grid.SetColumn(_handlerHeader, 2);
         var layout = new DockPanel();
         layout.Children.Add(_hint);
         layout.Children.Add(_header);
@@ -89,8 +92,7 @@ public sealed class WinFormsEventPanel : UserControl
         {
             Name = "EventDescription",
             BorderThickness = new Thickness(0, 1, 0, 0),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(60, 128, 128, 128)),
-            MinHeight = 54,
+            MinHeight = 65,
             Padding = new Thickness(Spacing.Normal, Spacing.Tight),
             Child = new StackPanel
             {
@@ -107,6 +109,13 @@ public sealed class WinFormsEventPanel : UserControl
         layout.Children.Add(_scroll);
         Content = layout;
         ActualThemeVariantChanged += (_, _) => ApplyPalette();
+        AttachedToVisualTree += (_, _) => ApplyPalette();
+        PropertyChanged += (_, change) =>
+        {
+            // Focus only changes which row wears the selection fill.
+            if (change.Property == IsKeyboardFocusWithinProperty)
+                ApplySelection();
+        };
         ApplyPalette();
     }
 
@@ -132,8 +141,17 @@ public sealed class WinFormsEventPanel : UserControl
         _descriptionText.Text = "";
         _description.IsVisible = _visualStudioStyle;
         _hint.IsVisible = !_visualStudioStyle;
+        _header.IsVisible = _control is not null;
         if (_control is null)
         {
+            _rows.Children.Add(new TextBlock
+            {
+                Name = "EventsEmptyState",
+                Text = Localizer.Get(StringKeys.EventsNothingSelected),
+                FontSize = WinFormsPropertyGridPalette.FontSize,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(Spacing.Normal, Spacing.Normal),
+            });
             ApplyPalette();
             return;
         }
@@ -171,26 +189,26 @@ public sealed class WinFormsEventPanel : UserControl
 
     private Control BuildCategory(string category)
     {
+        var palette = Palette();
         var button = new Button
         {
             Name = "EventCategory_" + category,
-            Background = WinFormsPropertyGridPalette.Light.CategoryBackgroundBrush,
             BorderThickness = new Thickness(0, 0, 0, 1),
-            BorderBrush = WinFormsPropertyGridPalette.Light.GridLineBrush,
+            BorderBrush = palette.GridLineBrush,
             CornerRadius = new CornerRadius(0),
-            Height = 21,
+            Height = WinFormsPropertyGridPalette.RowHeight,
             MinHeight = 0,
             Padding = new Thickness(4, 0),
-            Foreground = WinFormsPropertyGridPalette.Light.ForegroundBrush,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Left,
             Content = new TextBlock
             {
                 Text = (_collapsedCategories.Contains(category) ? "+  " : "−  ") + category,
-                FontSize = 11,
-                FontWeight = FontWeight.SemiBold,
+                FontSize = WinFormsPropertyGridPalette.FontSize,
+                FontWeight = FontWeight.Bold,
             },
         };
+        palette.StyleButton(button, palette.CategoryBackgroundBrush);
         button.Click += (_, _) =>
         {
             if (!_collapsedCategories.Remove(category))
@@ -207,9 +225,9 @@ public sealed class WinFormsEventPanel : UserControl
     {
         var row = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*"),
+            ColumnDefinitions = new ColumnDefinitions(_visualStudioStyle ? "120,3,*" : "*,*"),
             Margin = _visualStudioStyle ? new Thickness(0) : new Thickness(Spacing.Normal, 1),
-            MinHeight = _visualStudioStyle ? 22 : 0,
+            MinHeight = _visualStudioStyle ? WinFormsPropertyGridPalette.RowHeight : 0,
             Background = Brushes.Transparent,
         };
         var label = new TextBlock
@@ -217,17 +235,20 @@ public sealed class WinFormsEventPanel : UserControl
             Text = descriptor.Name,
             FontWeight = descriptor.IsDefault ? FontWeight.SemiBold : FontWeight.Normal,
             VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 11,
+            FontSize = WinFormsPropertyGridPalette.FontSize,
+            TextTrimming = TextTrimming.CharacterEllipsis,
             Margin = _visualStudioStyle ? new Thickness(Spacing.Normal, 0, 2, 0) : new Thickness(0),
             [ToolTip.TipProperty] = descriptor.Description ?? descriptor.EventType.Name,
         };
         var editor = new TextBox
         {
             Text = descriptor.HandlerName ?? "",
-            FontSize = 11,
+            FontSize = WinFormsPropertyGridPalette.FontSize,
             MinHeight = 0,
-            Height = Spacing.EditorHeight,
-            Padding = Spacing.RowPadding,
+            Height = _visualStudioStyle ? 20 : Spacing.EditorHeight,
+            Padding = _visualStudioStyle ? new Thickness(2, 0) : Spacing.RowPadding,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            BorderThickness = _visualStudioStyle ? new Thickness(0) : new Thickness(1),
             [ToolTip.TipProperty] = descriptor.EventType.Name,
         };
         string? committed = descriptor.HandlerName;
@@ -294,7 +315,28 @@ public sealed class WinFormsEventPanel : UserControl
 
         row.Children.Add(label);
         row.Children.Add(editor);
-        Grid.SetColumn(editor, 1);
+        if (_visualStudioStyle)
+        {
+            // The same split and hairlines as the property grid beside it.
+            var splitter = new Border { Name = "EventSplitter" };
+            var line = new Border
+            {
+                Name = "EventRowLine",
+                Height = 1,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                IsHitTestVisible = false,
+            };
+            Grid.SetColumn(splitter, 1);
+            Grid.SetColumnSpan(line, 3);
+            row.Children.Add(splitter);
+            row.Children.Add(line);
+            Grid.SetColumn(editor, 2);
+        }
+        else
+        {
+            Grid.SetColumn(editor, 1);
+        }
+
         return row;
     }
 
@@ -303,44 +345,79 @@ public sealed class WinFormsEventPanel : UserControl
         _selectedRow = row;
         _descriptionName.Text = descriptor.Name;
         _descriptionText.Text = descriptor.Description ?? descriptor.EventType.Name;
-        ApplyPalette();
+        ApplySelection();
     }
 
-    private void ApplyPalette()
-    {
-        var palette = WinFormsPropertyGridPalette.For(ActualThemeVariant);
-        Background = palette.BackgroundBrush;
-        _scroll.Background = palette.BackgroundBrush;
-        _header.Background = palette.BackgroundBrush;
-        _hint.Foreground = palette.ForegroundBrush;
-        _eventHeader.Foreground = palette.ForegroundBrush;
-        _handlerHeader.Foreground = palette.ForegroundBrush;
-        _description.Background = palette.BackgroundBrush;
-        _description.BorderBrush = palette.GridLineBrush;
-        _descriptionName.Foreground = palette.ForegroundBrush;
-        _descriptionText.Foreground = palette.ForegroundBrush;
+    // Built once per theme: a fresh palette was made on every focus change and
+    // every row click, each one 13 brushes and a rewrite of every row's colours.
+    private WinFormsPropertyGridPalette? _palette;
 
-        foreach (var category in _rows.Children.OfType<Button>())
-        {
-            category.Background = palette.CategoryBackgroundBrush;
-            category.BorderBrush = palette.GridLineBrush;
-            category.Foreground = palette.ForegroundBrush;
-        }
+    private WinFormsPropertyGridPalette Palette()
+    {
+        var fresh = WinFormsPropertyGridPalette.For(this);
+        if (_palette is null || !_palette.SameAs(fresh)) _palette = fresh;
+        return _palette;
+    }
+
+    /// <summary>The selected row's fill and label: the one thing focus and clicks change.</summary>
+    private void ApplySelection()
+    {
+        var palette = _palette ?? Palette();
+        var focused = IsKeyboardFocusWithin;
 
         foreach (var row in _rows.Children.OfType<Grid>())
         {
             var selected = ReferenceEquals(row, _selectedRow);
-            row.Background = selected ? palette.SelectionBackgroundBrush : palette.BackgroundBrush;
+            row.Background = !selected ? palette.BackgroundBrush
+                : focused ? palette.SelectionBackgroundBrush : palette.InactiveSelectionBackgroundBrush;
             if (row.Children.OfType<TextBlock>().FirstOrDefault() is { } label)
+                label.Foreground = selected && focused ? palette.SelectionForegroundBrush : palette.ForegroundBrush;
+        }
+    }
+
+    /// <summary>Everything the theme colours: on a theme change, on attach and after a rebuild.</summary>
+    private void ApplyPalette()
+    {
+        var palette = Palette();
+        palette.InstallOn(this);
+        Background = palette.BackgroundBrush;
+        _scroll.Background = palette.BackgroundBrush;
+        _header.Background = palette.CategoryBackgroundBrush;
+        _hint.Foreground = palette.ForegroundBrush;
+        _eventHeader.Foreground = palette.ForegroundBrush;
+        _handlerHeader.Foreground = palette.ForegroundBrush;
+        _description.Background = palette.CategoryBackgroundBrush;
+        _description.BorderBrush = palette.GridLineBrush;
+        _descriptionName.Foreground = palette.ForegroundBrush;
+        _descriptionText.Foreground = palette.ReadOnlyForegroundBrush;
+
+        foreach (var empty in _rows.Children.OfType<TextBlock>())
+        {
+            empty.Foreground = palette.ReadOnlyForegroundBrush;
+        }
+
+        foreach (var category in _rows.Children.OfType<Button>())
+        {
+            palette.StyleButton(category, palette.CategoryBackgroundBrush);
+            category.BorderBrush = palette.GridLineBrush;
+        }
+
+        foreach (var row in _rows.Children.OfType<Grid>())
+        {
+            foreach (var line in row.Children.OfType<Border>())
             {
-                label.Foreground = selected ? palette.SelectionForegroundBrush : palette.ForegroundBrush;
+                line.Background = palette.GridLineBrush;
             }
 
             if (row.Children.OfType<TextBox>().FirstOrDefault() is { } editor)
             {
-                editor.Background = palette.BackgroundBrush;
+                // The handler cell stays on the grid surface while its row is selected,
+                // exactly as the property grid's value column does.
+                editor.Background = _visualStudioStyle ? palette.BackgroundBrush : palette.InputBackgroundBrush;
                 editor.Foreground = palette.ForegroundBrush;
             }
         }
+
+        ApplySelection();
     }
 }

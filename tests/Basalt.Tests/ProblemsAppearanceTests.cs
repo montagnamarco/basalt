@@ -20,7 +20,7 @@ public sealed class ProblemsAppearanceTests
         vm.Diagnostics.Add(new("BC1", "Error", DiagnosticSeverity.Error, "Form.vb", 1, 1));
         var panel = new ProblemsPanel(vm, _ => { });
         var grid = Assert.IsType<DataGrid>(panel.Content);
-        Assert.Equal(11, grid.FontSize);
+        Assert.Equal(PanelMetrics.FontSize, grid.FontSize);
         Assert.Equal(24, grid.RowHeight);
         Assert.IsType<DataGridTemplateColumn>(grid.Columns[0]);
     }

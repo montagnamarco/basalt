@@ -1,60 +1,54 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
-using Avalonia.Media;
 
 namespace Basalt.Shell.Controls;
 
 /// <summary>
-/// A panel with its name and icon above it.
+/// What sits between Dock's title bar and a panel's content: nothing, or one
+/// compact row of the panel's actions.
 ///
-/// Dock's Tool carries a title and nothing else — there is no icon in its
-/// model and none in its controls — so a panel that wants one draws it
-/// itself. Without this every panel looked alike until its title was read.
+/// It used to be a row of its own on every panel, an icon with no text under
+/// a title bar that already carried the name and, below that, the panel's own
+/// toolbar: three stacked bars before the first line of content. Dock's title
+/// bar now says which panel this is and the row is drawn only when the panel
+/// has actions to put in it, in the theme's border colour.
 /// </summary>
 public sealed class PanelHeader : UserControl
 {
-    public PanelHeader(string title, IconKind icon, Control content, Control? tools = null)
+    public PanelHeader(string title, Control content, Control? tools = null)
     {
         Title = title;
-        Icon = icon;
         Panel = content;
+        Tools = tools;
 
-        // No title: Dock's own tab already carries it, and repeating it read
-        // as "Solution Explorer" twice, one above the other.
-
-        var row = new DockPanel { Margin = new Thickness(8, 4, 4, 4) };
-
-        if (tools is not null)
+        // No actions, no row: the content goes straight under the title bar.
+        if (tools is null)
         {
-            DockPanel.SetDock(tools, Avalonia.Controls.Dock.Right);
-            row.Children.Add(tools);
+            Content = content;
+            return;
         }
 
-        row.Children.Add(new IconView
-        {
-            Kind = icon,
-            IconSize = 13,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Left
-        });
+        tools.HorizontalAlignment = HorizontalAlignment.Right;
 
-        var header = new Border
+        var row = new Border
         {
-            Child = row,
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0x18, 0x80, 0x80, 0x80))
+            Child = tools,
+            Padding = new Thickness(Spacing.Tight, Spacing.Hairline),
+            BorderThickness = new Thickness(0, 0, 0, 1)
         };
 
-        DockPanel.SetDock(header, Avalonia.Controls.Dock.Top);
+        row.Themed(Border.BorderBrushProperty, "PanelBorderBrush");
+        DockPanel.SetDock(row, Avalonia.Controls.Dock.Top);
 
-        Content = new DockPanel { Children = { header, content } };
+        Content = new DockPanel { Children = { row, content } };
     }
 
     public string Title { get; }
 
-    public IconKind Icon { get; }
-
     /// <summary>What the header is above.</summary>
     public Control Panel { get; }
+
+    /// <summary>The panel's actions, when it has any: the one row this draws.</summary>
+    public Control? Tools { get; }
 }

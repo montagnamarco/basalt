@@ -494,10 +494,10 @@ public partial class MainWindow : Window
 
         if (content is null) return null;
 
-        // A document is named by its own tab; a panel is not, and Dock has no
-        // icon in its model, so the panel wears its own header.
-        var headed = dockable is IdeTool { Icon: not IconKind.None } tool
-            ? new PanelHeader(tool.Title ?? "", tool.Icon, content, ToolsOf(content))
+        // A document is named by its own tab and Dock's title bar names a
+        // panel; the header only adds the panel's row of actions.
+        var headed = dockable is IdeTool tool
+            ? new PanelHeader(tool.Title ?? "", content, ToolsOf(content))
             : content;
 
         _headed[dockable] = headed;

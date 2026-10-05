@@ -312,7 +312,7 @@ public sealed class SolutionExplorerPanel : UserControl
         row.Children.Add(new TextBlock
         {
             Text = node?.Name,
-            FontSize = 13,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center
         });
         return row;

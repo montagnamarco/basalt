@@ -345,6 +345,11 @@ public static class StringKeys
 
     public const string ProblemsEmpty = "Problems_Empty";
     public const string OutputEmpty = "Output_Empty";
+    public const string DiffNoChanges = "Diff_NoChanges";
+    public const string OutlineEmpty = "Outline_Empty";
+    public const string CallStackEmpty = "CallStack_Empty";
+    public const string VariablesEmpty = "Variables_Empty";
+    public const string BreakpointsEmpty = "Breakpoints_Empty";
 
     public const string PropertiesNoSelection = "Properties_NoSelection";
     public const string PropertiesUnknownType = "Properties_UnknownType";

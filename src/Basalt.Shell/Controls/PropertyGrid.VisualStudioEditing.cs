@@ -20,10 +20,12 @@ public sealed partial class PropertyGrid
             {
                 Text = DisplayedValue(property),
                 Foreground = property.IsReadOnly ? VisualStudioPalette.ReadOnlyForegroundBrush : VisualStudioPalette.ForegroundBrush,
-                FontSize = 11,
+                FontSize = WinFormsPropertyGridPalette.FontSize,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(2, 0),
                 TextTrimming = TextTrimming.CharacterEllipsis,
+                FontWeight = property.IsSet ? FontWeight.Bold : FontWeight.Normal,
+                [ToolTip.TipProperty] = DisplayedValue(property),
             };
         }
         else if (property.EditorKind is PropertyEditorKind.Boolean or PropertyEditorKind.Enumeration)
@@ -42,7 +44,7 @@ public sealed partial class PropertyGrid
                 BorderThickness = new Thickness(0),
                 Background = Brushes.Transparent,
                 Foreground = VisualStudioPalette.ForegroundBrush,
-                FontSize = 11,
+                FontSize = WinFormsPropertyGridPalette.FontSize,
                 FontWeight = property.IsSet ? FontWeight.Bold : FontWeight.Normal,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
@@ -63,11 +65,15 @@ public sealed partial class PropertyGrid
                 BorderThickness = new Thickness(0),
                 Background = Brushes.Transparent,
                 Foreground = VisualStudioPalette.ForegroundBrush,
-                FontSize = 11,
+                FontSize = WinFormsPropertyGridPalette.FontSize,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 FontWeight = property.IsSet ? FontWeight.Bold : FontWeight.Normal,
                 PlaceholderText = property.IsMixed ? Localizer.Get(StringKeys.WinFormsDesignerMixedValues) : null,
             };
+            // The box clips rather than ellipsizes, so the full value stays one hover away.
+            void ShowFullValue() => ToolTip.SetTip(box, string.IsNullOrEmpty(box.Text) ? null : box.Text);
+            box.TextChanged += (_, _) => ShowFullValue();
+            ShowFullValue();
             void Commit()
             {
                 // Rebuilding for a theme or property refresh retires the old editor.
@@ -106,6 +112,8 @@ public sealed partial class PropertyGrid
             CornerRadius = new CornerRadius(0),
             [ToolTip.TipProperty] = Localizer.Get(StringKeys.PropertyGridOpenEditor),
         };
+        VisualStudioPalette.StyleButton(ellipsis, VisualStudioPalette.ButtonBackgroundBrush,
+            VisualStudioPalette.ButtonForegroundBrush);
         ellipsis.Click += (_, _) => PropertyEditorRequested?.Invoke(property);
         var container = new Grid
         {

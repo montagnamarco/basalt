@@ -26,13 +26,7 @@ public sealed class OutputPanel : UserControl
 
         // Before the first build there is nothing to show, and an empty panel
         // gives no hint whether the build ran and said nothing or never ran.
-        _empty = new TextBlock
-        {
-            Text = Localizer.Get(StringKeys.OutputEmpty),
-            Opacity = 0.6,
-            FontSize = 12,
-            Margin = new Avalonia.Thickness(12, 8, 8, 8)
-        };
+        _empty = new EmptyState(Localizer.Get(StringKeys.OutputEmpty), IconKind.Output);
 
         _output = new ScrollViewer { Content = list };
 
@@ -44,7 +38,7 @@ public sealed class OutputPanel : UserControl
     }
 
     private readonly ScrollViewer _output;
-    private readonly TextBlock _empty;
+    private readonly EmptyState _empty;
 
     /// <summary>The output when there is some, the message when not.</summary>
     private void ShowWhicheverFits() =>

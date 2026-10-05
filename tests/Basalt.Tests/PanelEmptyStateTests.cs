@@ -1,3 +1,5 @@
+using Avalonia;
+using Avalonia.VisualTree;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
@@ -112,5 +114,69 @@ public class PanelEmptyStateTests
         panel.Show(null);
 
         Assert.Contains("No element", TextIn(panel), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [AvaloniaFact]
+    public void EveryEmptyPanelUsesTheSharedControl()
+    {
+        // The panels that used to carry a copy of a faded TextBlock each.
+        var viewModel = new MainWindowViewModel();
+
+        Assert.IsType<EmptyState>(new ProblemsPanel(viewModel, _ => { }).Content);
+        Assert.IsType<EmptyState>(new OutputPanel(viewModel).Content);
+        Assert.IsType<EmptyState>(new OutlinePanel().Content);
+        Assert.IsType<EmptyState>(new CallStackPanel().Content);
+        Assert.IsType<EmptyState>(new VariablesPanel().Content);
+        Assert.IsType<EmptyState>(new BreakpointsPanel().Content);
+    }
+
+    [AvaloniaTheory]
+    [InlineData("Light")]
+    [InlineData("Dark")]
+    public void TheEmptyStateIsDrawnCentredInTheThemesSecondaryColour(string name)
+    {
+        var variant = name == "Dark" ? Avalonia.Styling.ThemeVariant.Dark : Avalonia.Styling.ThemeVariant.Light;
+        // The application's variant, not the window's: the Dock* brushes are
+        // application resources and resolve their colours against it.
+        using var theme = new ThemeScope(variant);
+        var state = new EmptyState("Nothing here yet.", IconKind.Information);
+        var window = new Window { Content = state, Width = 400, Height = 300 };
+
+        // The surface a panel's content sits on in the IDE.
+        window.Bind(Window.BackgroundProperty, window.GetResourceObservable("DockSurfacePanelBrush"));
+        window.Show();
+        window.UpdateLayout();
+
+        try
+        {
+            window.TryFindResource("DescriptionForeground", window.ActualThemeVariant, out var desc);
+            var description = (Avalonia.Media.Color)desc!;
+            var raster = Raster.Of(window);
+
+            // What the window actually painted behind the message, read from
+            // the raster rather than assumed from a token.
+            var background = raster.At(2, 2);
+            window.TryFindResource("SideBarBackground", window.ActualThemeVariant, out var surface);
+            Assert.True(Raster.Near(background, (Avalonia.Media.Color)surface!),
+                $"{name}: the surface behind the message is {background}, not the panel surface.");
+
+            var text = state.GetVisualDescendants().OfType<TextBlock>().Single();
+            var area = Raster.BoundsIn(text, window);
+
+            // Drawn at all, and readable on what is behind it.
+            Assert.True(raster.BestContrastAgainst(area, background) >= 4.5,
+                $"{name}: the message is not readable on the window's background.");
+
+            // Drawn in the theme's secondary colour, not a faded copy of the
+            // primary one: a fully covered pixel of a glyph is that colour.
+            Assert.True(raster.Contains(area, description, 8),
+                $"{name}: no pixel of the message is the theme's secondary colour {description}.");
+            Assert.True(Raster.Contrast(description, background) >= 4.5);
+
+            // Centred: the message's middle is the window's middle.
+            var middle = area.X + area.Width / 2.0;
+            Assert.InRange(middle, 200 - 4, 200 + 4);
+        }
+        finally { window.Close(); }
     }
 }

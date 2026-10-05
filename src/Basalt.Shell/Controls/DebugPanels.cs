@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Basalt.Core.Localization;
 using Basalt.Core.Services;
 
 namespace Basalt.Shell.Controls;
@@ -16,18 +17,12 @@ namespace Basalt.Shell.Controls;
 public sealed class CallStackPanel : UserControl
 {
     private readonly ListBox _list;
-    private readonly TextBlock _empty;
+    private readonly EmptyState _empty;
     private IReadOnlyList<StackFrame> _frames = [];
 
     public CallStackPanel()
     {
-        _empty = new TextBlock
-        {
-            Text = "Not stopped.",
-            Opacity = 0.6,
-            FontSize = 12,
-            Margin = new Thickness(12, 8, 8, 8)
-        };
+        _empty = new EmptyState(Localizer.Get(StringKeys.CallStackEmpty), IconKind.Debug);
 
         _list = new ListBox
         {
@@ -137,18 +132,12 @@ public sealed class VariableNode
 public sealed class VariablesPanel : UserControl
 {
     private readonly TreeView _tree;
-    private readonly TextBlock _empty;
+    private readonly EmptyState _empty;
     private IReadOnlyList<VariableNode> _nodes = [];
 
     public VariablesPanel()
     {
-        _empty = new TextBlock
-        {
-            Text = "No variables.",
-            Opacity = 0.6,
-            FontSize = 12,
-            Margin = new Thickness(12, 8, 8, 8)
-        };
+        _empty = new EmptyState(Localizer.Get(StringKeys.VariablesEmpty), IconKind.Properties);
 
         _tree = new TreeView
         {
@@ -188,18 +177,12 @@ public sealed class VariablesPanel : UserControl
 public sealed class BreakpointsPanel : UserControl
 {
     private readonly ItemsControl _list;
-    private readonly TextBlock _empty;
+    private readonly EmptyState _empty;
     private readonly List<Breakpoint> _breakpoints = [];
 
     public BreakpointsPanel()
     {
-        _empty = new TextBlock
-        {
-            Text = "No breakpoints.",
-            Opacity = 0.6,
-            FontSize = 12,
-            Margin = new Thickness(12, 8, 8, 8)
-        };
+        _empty = new EmptyState(Localizer.Get(StringKeys.BreakpointsEmpty), IconKind.Breakpoint);
 
         _list = new ItemsControl
         {

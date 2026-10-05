@@ -92,23 +92,39 @@ public class DockChromeTests
     }
 
     [AvaloniaFact]
-    public async Task ThePanelShowsItsOwnIconWithoutRepeatingItsName()
+    public async Task OnlyAPanelWithActionsGetsARowUnderItsTitleBar()
     {
-        // Dock's tab already carries the name; the header repeating it read
-        // as "Solution Explorer" twice, one line above the other.
-        using var host = new TestWindow();
+        // The row is the panel's toolbar, drawn only when there are actions;
+        // the name is Dock's, so the row must not repeat it.
+        using var host = new TestWindow(WriteSolution());
         await host.SettleAsync();
 
-        var header = host.Window.GetVisualDescendants().OfType<PanelHeader>().First();
+        var headers = host.Window.GetVisualDescendants().OfType<PanelHeader>().ToList();
 
-        Assert.NotEmpty(header.GetVisualDescendants().OfType<IconView>());
+        Assert.NotEmpty(headers);
 
-        var titles = header.GetVisualDescendants()
-            .OfType<TextBlock>()
-            .Select(t => t.Text ?? "")
-            .Where(t => t.Contains("Explorer", StringComparison.Ordinal))
-            .ToList();
+        foreach (var header in headers)
+        {
+            Assert.Equal(header.Tools is not null, header.Content != header.Panel);
 
-        Assert.Empty(titles);
+            var titles = header.GetVisualDescendants()
+                .OfType<TextBlock>()
+                .Select(t => t.Text ?? "")
+                .Where(t => t.Contains("Explorer", StringComparison.Ordinal))
+                .ToList();
+
+            Assert.Empty(titles);
+        }
+    }
+
+    private static string WriteSolution()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "basalt-chrome-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        File.WriteAllText(Path.Combine(root, "App.vbproj"),
+            "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Library</OutputType>"
+            + "<TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>");
+        File.WriteAllText(Path.Combine(root, "Module1.vb"), "Module Module1\nEnd Module\n");
+        return Path.Combine(root, "App.vbproj");
     }
 }

@@ -74,12 +74,12 @@
   </Style>
 
   <Style Selector="TreeViewItem">
-    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="MinHeight" Value="{DynamicResource PanelRowHeight}" />
     <Setter Property="Padding" Value="2,0" />
   </Style>
 
   <Style Selector="ListBoxItem">
-    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="MinHeight" Value="{DynamicResource PanelRowHeight}" />
     <Setter Property="Padding" Value="8,2" />
     <Setter Property="CornerRadius" Value="0" />
   </Style>
@@ -285,6 +285,150 @@
 
   <Style Selector="RadioButton.viewSwitch:checked /template/ Border#PART_Body">
     <Setter Property="BorderBrush" Value="{DynamicResource ButtonBackgroundBrush}" />
+  </Style>
+
+
+  <!--
+    Dock's chrome: the title bar of a tool panel, its tab strip and the
+    splitters between panels.
+
+    The colours come from the Dock* brushes in Theme.axaml, which are brushes
+    over the IDE's tokens, so none of this is repeated per theme. What is set
+    here is the shape: one compact height, a quiet title that turns to the
+    foreground colour with an accent line under it when the panel has focus,
+    and tabs that say which one is selected without a coloured fill, which
+    in the dark themes was a light blue block with unreadable text.
+  -->
+  <Style Selector="dock|ToolChromeControl /template/ Border#PART_Border">
+    <Setter Property="Background" Value="{DynamicResource DockSurfaceHeaderBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <!--
+    Dock paints the grip over the border with the panel surface, which hid the
+    title bar brush: they only matched because the themes give both the same
+    colour. Transparent lets the bar show the colour the theme names for it.
+  -->
+  <Style Selector="dock|ToolChromeControl /template/ Grid#PART_Grip">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style Selector="dock|ToolChromeControl:active /template/ Border#PART_Border">
+    <Setter Property="Background" Value="{DynamicResource DockSurfaceHeaderActiveBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TabActiveBorderTopBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="dock|ToolChromeControl /template/ TextBlock#PART_Title">
+    <Setter Property="FontSize" Value="{DynamicResource PanelFontSize}" />
+    <Setter Property="Foreground" Value="{DynamicResource ChromeSecondaryForegroundBrush}" />
+  </Style>
+
+  <Style Selector="dock|ToolChromeControl:active /template/ TextBlock#PART_Title">
+    <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!--
+    Tabs share the strip's width instead of being cut at its edge, and the
+    scroll viewer stops measuring them at infinity so that sharing can happen.
+  -->
+  <Style Selector="dock|ToolTabStrip">
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <controls:ShrinkingTabPanel />
+      </ItemsPanelTemplate>
+    </Setter>
+  </Style>
+
+  <Style Selector="dock|ToolTabStrip /template/ ScrollViewer#PART_ScrollViewer">
+    <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+  </Style>
+
+  <Style Selector="dock|ToolTabStripItem">
+    <Setter Property="BorderThickness" Value="0,2,0,0" />
+    <Setter Property="Padding" Value="3,0" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="FontSize" Value="{DynamicResource PanelFontSize}" />
+    <Setter Property="Foreground" Value="{DynamicResource DockTabForegroundBrush}" />
+    <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Title}" />
+  </Style>
+
+  <Style Selector="dock|ToolTabStripItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource DockTabHoverBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="dock|ToolTabStripItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource DockTabSelectedForegroundBrush}" />
+    <Setter Property="Background" Value="{DynamicResource DockTabActiveBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DockTabActiveIndicatorBrush}" />
+    <Setter Property="BorderThickness" Value="0,2,0,0" />
+  </Style>
+
+  <!-- A label too long for its share ends in an ellipsis; the tooltip has the whole of it. -->
+  <Style Selector="dock|ToolTabStripItem /template/ ContentPresenter#PART_HeaderPresenter TextBlock">
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+
+
+  <!--
+    Keyboard focus and selection on rows and toolbar buttons.
+
+    The row that has focus gets the theme's focus colour as an outline drawn
+    in the adorner layer, so it never moves the layout, and appears only for
+    keyboard navigation. A selected row is filled with the active selection
+    colour while its list has focus and with the quieter inactive one when it
+    does not, so the user can see where the keyboard is.
+  -->
+  <Style Selector="Button, ToggleButton, ListBoxItem, TreeViewItem, CheckBox, RadioButton, ComboBox, TabItem">
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border BorderThickness="1"
+                BorderBrush="{DynamicResource FocusBorderBrush}"
+                IsHitTestVisible="False" />
+      </FocusAdornerTemplate>
+    </Setter>
+  </Style>
+
+  <!--
+    Hover, selection and focused selection, stated as styles as well as
+    resources: Fluent's ListBoxItem reads its selected fill from a system
+    accent brush rather than from the keys overridden in Theme.axaml, so the
+    resources alone left every selected row Fluent's blue in every theme.
+  -->
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ListHoverBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ListInactiveSelectionBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorForegroundBrush}" />
+  </Style>
+
+  <Style Selector="ListBox:focus-within ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ListActiveSelectionBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource ListActiveSelectionForegroundBrush}" />
+  </Style>
+
+  <Style Selector="TreeViewItem /template/ Border#PART_LayoutRoot:pointerover">
+    <Setter Property="Background" Value="{DynamicResource ListHoverBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource ListInactiveSelectionBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="TreeView:focus-within TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+    <Setter Property="Background" Value="{DynamicResource ListActiveSelectionBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="TreeViewItem:selected /template/ ContentPresenter#PART_HeaderPresenter">
+    <Setter Property="Foreground" Value="{DynamicResource EditorForegroundBrush}" />
+  </Style>
+
+  <Style Selector="TreeView:focus-within TreeViewItem:selected /template/ ContentPresenter#PART_HeaderPresenter">
+    <Setter Property="Foreground" Value="{DynamicResource ListActiveSelectionForegroundBrush}" />
   </Style>
 
 </Styles>

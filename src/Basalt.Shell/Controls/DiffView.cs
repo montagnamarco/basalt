@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Media;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Controls;
 
@@ -32,17 +33,11 @@ public sealed class DiffView : UserControl
         new SolidColorBrush(Color.FromRgb(0x57, 0x5F, 0x6D));
 
     private readonly ItemsControl _lines;
-    private readonly TextBlock _empty;
+    private readonly EmptyState _empty;
 
     public DiffView()
     {
-        _empty = new TextBlock
-        {
-            Text = "No changes.",
-            Opacity = 0.6,
-            FontSize = 12,
-            Margin = new Thickness(12, 8, 8, 8)
-        };
+        _empty = new EmptyState(Localizer.Get(StringKeys.DiffNoChanges), IconKind.Diff);
 
         _lines = new ItemsControl
         {

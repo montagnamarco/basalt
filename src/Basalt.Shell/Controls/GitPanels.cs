@@ -63,6 +63,19 @@ public sealed record ChangeRow(FileChange Change)
     /// scanning the list is looking for the red one, and reads the letter only
     /// once they have found the row.
     /// </remarks>
+    public string BrushKey => Change.Kind switch
+    {
+        FileChangeKind.Added => "SuccessForegroundBrush",
+        FileChangeKind.Modified => "WarningForegroundBrush",
+        FileChangeKind.Deleted or FileChangeKind.Conflicted => "ErrorForegroundBrush",
+        FileChangeKind.Renamed => "FocusBorderBrush",
+        _ => "DescriptionForegroundBrush"
+    };
+
+    /// <summary>
+    /// The same colours as fixed values: what the letter falls back to when
+    /// the control is not in a window yet, and what the tests compare.
+    /// </summary>
     public Color Colour => Change.Kind switch
     {
         FileChangeKind.Added => Color.FromRgb(0x2E, 0xA0, 0x43),
@@ -124,7 +137,7 @@ public sealed class GitChangesPanel : UserControl
         // anything waiting to come down.
         _upstream = new TextBlock
         {
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Opacity = 0.7,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -162,7 +175,7 @@ public sealed class GitChangesPanel : UserControl
 
         _summaryLength = new TextBlock
         {
-            FontSize = 10,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Opacity = 0.55,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Right
@@ -171,7 +184,7 @@ public sealed class GitChangesPanel : UserControl
         _amend = new CheckBox
         {
             Content = "Amend the last commit",
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -263,11 +276,8 @@ public sealed class GitChangesPanel : UserControl
     private readonly Control _unstagedHeader;
 
     /// <summary>Says there is nothing to commit, when there is nothing.</summary>
-    private readonly TextBlock _nothing = new()
+    private readonly EmptyState _nothing = new(Localizer.Get(StringKeys.GitNothingToCommit), IconKind.Commit)
     {
-        FontSize = 12,
-        Opacity = 0.6,
-        Margin = new Thickness(Spacing.Normal, Spacing.Normal),
         IsVisible = false,
     };
 
@@ -445,7 +455,7 @@ public sealed class GitChangesPanel : UserControl
                 new TextBlock
                 {
                     Text = text,
-                    FontSize = 11,
+                    FontSize = PanelMetrics.SecondaryFontSize,
                     FontWeight = FontWeight.SemiBold,
                     Opacity = 0.75,
                     VerticalAlignment = VerticalAlignment.Center
@@ -469,7 +479,7 @@ public sealed class GitChangesPanel : UserControl
     /// <summary>How many files, in a pill beside the heading.</summary>
     private static TextBlock CountLabel() => new()
     {
-        FontSize = 10,
+        FontSize = PanelMetrics.SecondaryFontSize,
         Opacity = 0.6,
         VerticalAlignment = VerticalAlignment.Center,
         FontFamily = Monospace
@@ -486,7 +496,7 @@ public sealed class GitChangesPanel : UserControl
     /// </remarks>
     private static Button LinkButton(string text) => new()
     {
-        Content = new TextBlock { Text = text, FontSize = 10 },
+        Content = new TextBlock { Text = text, FontSize = PanelMetrics.SecondaryFontSize },
         Background = Brushes.Transparent,
         BorderThickness = new Thickness(0),
         Padding = new Thickness(Spacing.Tight, 0),
@@ -536,12 +546,12 @@ public sealed class GitChangesPanel : UserControl
         {
             Text = row.Marker,
             FontFamily = Monospace,
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             FontWeight = FontWeight.Bold,
             Foreground = new SolidColorBrush(row.Colour),
             Width = 12,
             VerticalAlignment = VerticalAlignment.Center
-        };
+        }.Themed(TextBlock.ForegroundProperty, row.BrushKey);
 
         var name = new TextBlock
         {
@@ -556,7 +566,7 @@ public sealed class GitChangesPanel : UserControl
         var folder = new TextBlock
         {
             Text = row.Folder,
-            FontSize = 10,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Opacity = 0.5,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
@@ -614,7 +624,7 @@ public sealed class GitChangesPanel : UserControl
         var nothingAtAll = staged.Count == 0 && unstaged.Count == 0;
 
         _nothing.IsVisible = nothingAtAll;
-        _nothing.Text = Localizer.Get(StringKeys.GitNothingToCommit);
+        _nothing.Message = Localizer.Get(StringKeys.GitNothingToCommit);
 
         // The headings go with them. Leaving "Staged" and "Changes" above the
         // message keeps exactly the emptiness the message is there to
@@ -810,7 +820,7 @@ public sealed class GitHistoryPanel : UserControl
                 CornerRadius = new CornerRadius(3),
                 Padding = new Thickness(4, 0, 4, 0),
                 VerticalAlignment = VerticalAlignment.Center,
-                Child = new TextBlock { Text = name, FontSize = 10 }
+                Child = new TextBlock { Text = name, FontSize = PanelMetrics.SecondaryFontSize }
             });
         }
 
@@ -824,7 +834,7 @@ public sealed class GitHistoryPanel : UserControl
         text.Children.Add(new TextBlock
         {
             Text = $"{row.Commit.Author}   {row.Commit.When:yyyy-MM-dd}",
-            FontSize = 11,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Opacity = 0.6,
             VerticalAlignment = VerticalAlignment.Center
         });

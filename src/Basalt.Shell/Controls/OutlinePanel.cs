@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Basalt.Core.Localization;
 using Basalt.Extensibility;
 
 namespace Basalt.Shell.Controls;
@@ -17,18 +18,12 @@ namespace Basalt.Shell.Controls;
 public sealed class OutlinePanel : UserControl
 {
     private readonly TreeView _tree;
-    private readonly TextBlock _empty;
+    private readonly EmptyState _empty;
     private IReadOnlyList<DocumentSymbol> _symbols = [];
 
     public OutlinePanel()
     {
-        _empty = new TextBlock
-        {
-            Text = "No symbols.",
-            Opacity = 0.6,
-            FontSize = 12,
-            Margin = new Thickness(12, 8, 8, 8)
-        };
+        _empty = new EmptyState(Localizer.Get(StringKeys.OutlineEmpty), IconKind.Outline);
 
         _tree = new TreeView
         {
@@ -133,7 +128,7 @@ public sealed class OutlinePanel : UserControl
         row.Children.Add(new TextBlock
         {
             Text = symbol.Name,
-            FontSize = 13,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center
         });
 
@@ -141,7 +136,7 @@ public sealed class OutlinePanel : UserControl
             row.Children.Add(new TextBlock
             {
                 Text = detail,
-                FontSize = 11,
+                FontSize = PanelMetrics.SecondaryFontSize,
                 Opacity = 0.6,
                 VerticalAlignment = VerticalAlignment.Center
             });

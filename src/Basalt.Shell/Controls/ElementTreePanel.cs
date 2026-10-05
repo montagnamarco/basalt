@@ -297,11 +297,13 @@ public sealed class ElementTreePanel : UserControl
 
         var into = DesignerSession.CanHoldChildren(node.Element);
 
-        marker.Background = into
-            ? new SolidColorBrush(Color.FromArgb(50, 30, 144, 255))
-            : Brushes.Transparent;
+        // The theme's focus colour, tinted when the drop goes inside the
+        // element: a fixed DodgerBlue was invisible against the blue of a
+        // selected row in some themes and garish in others.
+        if (into) marker.Themed(Border.BackgroundProperty, "ListInactiveSelectionBackgroundBrush");
+        else marker.Background = Brushes.Transparent;
 
-        marker.BorderBrush = Brushes.DodgerBlue;
+        marker.Themed(Border.BorderBrushProperty, "FocusBorderBrush");
         marker.BorderThickness = into
             ? new Thickness(1)
             : new Thickness(0, 0, 0, 2);

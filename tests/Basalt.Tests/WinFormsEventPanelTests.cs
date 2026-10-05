@@ -92,7 +92,7 @@ public class WinFormsEventPanelTests
         var panel = new WinFormsEventPanel { VisualStudioStyle = true };
         var requests = new List<(string Event, string? Handler)>();
         panel.Show(new CategorizedEvents(), null, (name, handler) => requests.Add((name, handler)));
-        var window = new Window { Content = panel, Width = 420, Height = 360 };
+        var window = new Window { Content = panel, Width = 420, Height = 360, RequestedThemeVariant = ThemeVariant.Light };
         window.Show();
         try
         {
@@ -100,7 +100,7 @@ public class WinFormsEventPanelTests
             var category = panel.GetVisualDescendants().OfType<Button>()
                 .Single(button => button.Name == "EventCategory_Action");
             Assert.Equal(2, panel.GetVisualDescendants().OfType<TextBox>().Count());
-            AssertCategoryPixel(window, category, 238);
+            AssertCategoryPixel(window, category, 248);
 
             var changed = panel.GetVisualDescendants().OfType<TextBox>().First();
             changed.Focus();
@@ -113,7 +113,7 @@ public class WinFormsEventPanelTests
             Dispatcher.UIThread.RunJobs();
             Assert.Same(changed, panel.GetVisualDescendants().OfType<TextBox>().First());
             Assert.Equal("OnChanged", changed.Text);
-            AssertCategoryPixel(window, category, 61);
+            AssertCategoryPixel(window, category, 24);
             changed.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
             Assert.Contains(("Changed", "OnChanged"), requests);
             category.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));

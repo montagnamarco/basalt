@@ -31,8 +31,13 @@ public sealed partial class WinFormsPropertyPanel
         set => _grid.ExternalEventsRequested = value;
     }
 
+    private void ApplyObjectSelectorTheme() => WinFormsPropertyGridPalette.For(this).StyleSelector(_objects);
+
     private void InitializeObjectSelector()
     {
+        ActualThemeVariantChanged += (_, _) => ApplyObjectSelectorTheme();
+        AttachedToVisualTree += (_, _) => ApplyObjectSelectorTheme();
+        ApplyObjectSelectorTheme();
         AutomationProperties.SetName(_objects, Localizer.Get(StringKeys.WinFormsDesignerObjects));
         _objects.SelectionChanged += (_, _) =>
         {
