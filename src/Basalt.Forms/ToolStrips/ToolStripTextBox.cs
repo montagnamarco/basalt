@@ -38,6 +38,28 @@ public class ToolStripTextBox : ToolStripControlHost
         set => TextBox.AcceptsTab = value;
     }
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public AutoCompleteStringCollection AutoCompleteCustomSource
+    {
+        get => TextBox.AutoCompleteCustomSource;
+        set => TextBox.AutoCompleteCustomSource = value;
+    }
+
+    [DefaultValue(AutoCompleteMode.None)]
+    public AutoCompleteMode AutoCompleteMode
+    {
+        get => TextBox.AutoCompleteMode;
+        set => TextBox.AutoCompleteMode = value;
+    }
+
+    [DefaultValue(AutoCompleteSource.None)]
+    public AutoCompleteSource AutoCompleteSource
+    {
+        get => TextBox.AutoCompleteSource;
+        set => TextBox.AutoCompleteSource = value;
+    }
+
     [DefaultValue(BorderStyle.Fixed3D)]
     public BorderStyle BorderStyle
     {

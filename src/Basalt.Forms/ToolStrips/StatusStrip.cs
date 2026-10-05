@@ -49,7 +49,11 @@ public partial class StatusStrip : ToolStrip
 
     /// <summary>Whether the bar stretches to fill its container's width, as a status bar always does.</summary>
     [DefaultValue(true)]
-    public new bool Stretch { get; set; } = true;
+    public new bool Stretch
+    {
+        get => base.Stretch;
+        set => base.Stretch = value;
+    }
 
     /// <summary>The square in the bottom trailing corner the grip (or, when hidden, nothing) occupies.</summary>
     [Browsable(false)]
@@ -85,7 +89,7 @@ public partial class StatusStrip : ToolStrip
     protected override void OnLayout(LayoutEventArgs levent)
     {
         base.OnLayout(levent);
-        ApplySpringLayout();
+        OnSpringTableLayoutCore();
     }
 
     private void ApplySpringLayout()
@@ -109,7 +113,8 @@ public partial class StatusStrip : ToolStrip
         if (springLabels is null) return;
 
         var display = DisplayRectangle;
-        var trailingLimit = _sizingGrip ? display.Right - SizeGripBounds.Width : display.Right;
+        // DefaultPadding already reserves the grip's trailing 16 pixels.
+        var trailingLimit = display.Right;
         var extra = Math.Max(trailingLimit - display.Left - usedWidth, 0);
         var share = extra / springLabels.Count;
         var shift = 0;

@@ -23,7 +23,7 @@ public partial class PropertyGrid
     {
         var bounds = ToolbarBounds;
 
-        using (var face = new SolidBrush(SystemColors.Control))
+        using (var face = new SolidBrush(BackColor))
         {
             graphics.FillRectangle(face, bounds);
         }

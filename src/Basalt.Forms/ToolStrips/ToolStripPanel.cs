@@ -13,7 +13,7 @@ namespace System.Windows.Forms;
 [Designer("System.Windows.Forms.Design.ToolStripPanelDesigner, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
 public partial class ToolStripPanel : ContainerControl
 {
-    private readonly List<ToolStripPanelRow> _rows = [];
+    private readonly ToolStripPanelRowCollection _rows;
     private Orientation _orientation = Orientation.Horizontal;
     private Padding _rowMargin = new(0, 0, 0, 3);
     private ToolStripRenderer? _renderer;
@@ -27,6 +27,7 @@ public partial class ToolStripPanel : ContainerControl
 
     public ToolStripPanel()
     {
+        _rows = new ToolStripPanelRowCollection(this);
         AutoSize = true;
         Dock = DockStyle.Top;
     }
@@ -56,7 +57,7 @@ public partial class ToolStripPanel : ContainerControl
             if (value == _orientation) return;
 
             _orientation = value;
-            foreach (var row in _rows) row.NotifyOrientationChanged();
+            foreach (var row in _rows.RowsInOrder) row.NotifyOrientationChanged();
             PerformLayout();
         }
     }
@@ -128,7 +129,7 @@ public partial class ToolStripPanel : ContainerControl
         if (row < 0) throw new ArgumentOutOfRangeException(nameof(row), row, "Row index must not be negative.");
 
         // Drop the strip from wherever it already was first, so creating the target row below never finds (and removes) it empty.
-        foreach (var existing in _rows) existing.RemoveControlInternal(toolStripToDrag);
+        foreach (var existing in _rows.RowsInOrder) existing.RemoveControlInternal(toolStripToDrag);
         DropEmptyRows();
 
         while (row >= _rows.Count) CreateRow();
@@ -149,7 +150,7 @@ public partial class ToolStripPanel : ContainerControl
     /// <summary>The row whose band contains the point, or the nearest one along the cross axis if none does.</summary>
     public ToolStripPanelRow PointToRow(Point clientLocation)
     {
-        foreach (var row in _rows)
+        foreach (var row in _rows.RowsInOrder)
         {
             if (row.Bounds.Contains(clientLocation)) return row;
         }
@@ -176,9 +177,12 @@ public partial class ToolStripPanel : ContainerControl
 
     private void DropEmptyRows()
     {
-        for (var i = _rows.Count - 1; i >= 0; i--)
+        // Removing a row performs layout, and layout callbacks may change the
+        // collection again. Walk a snapshot so later rows remain addressable.
+        var rows = _rows.ToArray();
+        for (var i = rows.Length - 1; i >= 0; i--)
         {
-            if (_rows[i].IsEmpty) _rows.RemoveAt(i);
+            if (rows[i].IsEmpty) _rows.Remove(rows[i]);
         }
     }
 
@@ -200,7 +204,7 @@ public partial class ToolStripPanel : ContainerControl
 
         if (e.Control is null) return;
 
-        foreach (var row in _rows) row.RemoveControlInternal(e.Control);
+        foreach (var row in _rows.RowsInOrder) row.RemoveControlInternal(e.Control);
         DropEmptyRows();
 
         DoLayout(e.Control, PropertyNames.Parent);
@@ -221,7 +225,7 @@ public partial class ToolStripPanel : ContainerControl
         var display = DisplayRectangle;
         var cursor = Orientation == Orientation.Horizontal ? display.Top : display.Left;
 
-        foreach (var row in _rows)
+        foreach (var row in _rows.RowsInOrder)
         {
             var thickness = RowThickness(row);
 
@@ -272,7 +276,7 @@ public partial class ToolStripPanel : ContainerControl
         var length = 0;
         var cross = 0;
 
-        foreach (var row in _rows)
+        foreach (var row in _rows.RowsInOrder)
         {
             var thickness = RowThickness(row);
             length += thickness;

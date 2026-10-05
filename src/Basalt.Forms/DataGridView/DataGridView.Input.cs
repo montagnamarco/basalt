@@ -292,11 +292,11 @@ public partial class DataGridView
         if (column.SortMode == DataGridViewColumnSortMode.Automatic)
         {
             var direction = SortedColumn == column && SortOrder == SortOrder.Ascending
-                ? ComponentModel.ListSortDirection.Descending
-                : ComponentModel.ListSortDirection.Ascending;
+                ? global::System.ComponentModel.ListSortDirection.Descending
+                : global::System.ComponentModel.ListSortDirection.Ascending;
 
             Sort(column, direction);
-            column.HeaderCell.SortGlyphDirection = direction == ComponentModel.ListSortDirection.Ascending ? SortOrder.Ascending : SortOrder.Descending;
+            column.HeaderCell.SortGlyphDirection = direction == global::System.ComponentModel.ListSortDirection.Ascending ? SortOrder.Ascending : SortOrder.Descending;
         }
 
         var replacing = !extend && !toggle;

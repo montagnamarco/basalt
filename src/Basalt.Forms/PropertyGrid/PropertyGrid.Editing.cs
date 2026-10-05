@@ -284,16 +284,27 @@ public partial class PropertyGrid
         }
     }
 
-    private void CommitValue(PropertyGridEntry entry, object? newValue)
+    private bool CommitValue(PropertyGridEntry entry, object? newValue)
     {
         var oldValue = entry.Value;
-        if (Equals(oldValue, newValue)) return;
+        if (Equals(oldValue, newValue)) return true;
 
         // A setter that refuses the value leaves the property as it was, with no event.
-        if (!entry.TryApplyValue(newValue)) return;
+        _inPropertySet = true;
+        try
+        {
+            if (!entry.TryApplyValue(newValue)) return false;
+        }
+        finally
+        {
+            _inPropertySet = false;
+        }
 
         Invalidate();
         OnPropertyValueChanged(new PropertyValueChangedEventArgs(entry, oldValue));
+        if (entry.PropertyDescriptor?.Name == "Name" && entry.Components.Length == 1)
+            ComComponentNameChanged?.Invoke(this, new System.ComponentModel.Design.ComponentRenameEventArgs(entry.Components[0], oldValue as string, newValue as string));
+        return true;
     }
 
     internal void CancelEdit() => EndEdit();

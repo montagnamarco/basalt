@@ -19,8 +19,8 @@ public partial class ToolStripPanel
     {
         if (disposing)
         {
-            foreach (var row in _rows) row.Dispose();
-            _rows.Clear();
+            foreach (var row in _rows.ToArray()) row.Dispose();
+            _rows.ClearForDispose();
         }
 
         base.Dispose(disposing);

@@ -324,11 +324,20 @@ public abstract partial class ToolStripItem : BindableComponent, IArrangedElemen
     [Browsable(false)]
     public ToolStripItemPlacement Placement { get; private set; } = ToolStripItemPlacement.None;
 
+    internal bool PaddingExplicitlySet { get; private set; }
+
+    internal void SetDefaultPadding(Padding value)
+    {
+        _padding = value;
+        Owner?.DoLayout(this, nameof(Padding));
+    }
+
     public virtual Padding Padding
     {
         get => _padding;
         set
         {
+            PaddingExplicitlySet = true;
             if (value == _padding) return;
 
             _padding = value;

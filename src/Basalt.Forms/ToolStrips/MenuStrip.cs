@@ -38,6 +38,16 @@ public partial class MenuStrip : ToolStrip
         set => base.CanOverflow = value;
     }
 
+    [DefaultValue(ToolStripGripStyle.Hidden)]
+    [Browsable(false)]
+    public new ToolStripGripStyle GripStyle
+    {
+        get => base.GripStyle;
+        set => base.GripStyle = value;
+    }
+
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
+
     protected override Padding DefaultGripMargin => Padding.Empty;
 
     protected override Padding DefaultPadding => new(7, 2, 0, 2);

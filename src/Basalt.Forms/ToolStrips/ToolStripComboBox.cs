@@ -31,6 +31,28 @@ public class ToolStripComboBox : ToolStripControlHost
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ComboBox ComboBox => (ComboBox)Control;
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public AutoCompleteStringCollection AutoCompleteCustomSource
+    {
+        get => ComboBox.AutoCompleteCustomSource;
+        set => ComboBox.AutoCompleteCustomSource = value;
+    }
+
+    [DefaultValue(AutoCompleteMode.None)]
+    public AutoCompleteMode AutoCompleteMode
+    {
+        get => ComboBox.AutoCompleteMode;
+        set => ComboBox.AutoCompleteMode = value;
+    }
+
+    [DefaultValue(AutoCompleteSource.None)]
+    public AutoCompleteSource AutoCompleteSource
+    {
+        get => ComboBox.AutoCompleteSource;
+        set => ComboBox.AutoCompleteSource = value;
+    }
+
     protected override Padding DefaultMargin => new(1, 0, 1, 0);
 
     // Control is still null the first time the base ToolStripItem() constructor reads this.
@@ -54,6 +76,13 @@ public class ToolStripComboBox : ToolStripControlHost
     {
         get => ComboBox.DropDownWidth;
         set => ComboBox.DropDownWidth = value;
+    }
+
+    [DefaultValue(FlatStyle.Standard)]
+    public FlatStyle FlatStyle
+    {
+        get => ComboBox.FlatStyle;
+        set => ComboBox.FlatStyle = value;
     }
 
     [Browsable(false)]

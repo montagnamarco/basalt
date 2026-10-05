@@ -10,13 +10,15 @@ namespace System.Windows.Forms;
 /// put in it stack along the row's own axis; the panel stacks the rows
 /// themselves along the other one.
 /// </summary>
-public class ToolStripPanelRow : Component
+public class ToolStripPanelRow : Component, IArrangedElement
 {
     private readonly ToolStripPanel _panel;
     private readonly List<Control> _controls = [];
     private Rectangle _bounds;
     private Padding _margin;
     private Padding _padding;
+    private readonly RowControlCollection _children = new();
+    private readonly LayoutSettingsStore _layoutStore = new();
 
     public ToolStripPanelRow(ToolStripPanel parent)
     {
@@ -25,6 +27,8 @@ public class ToolStripPanelRow : Component
         _panel = parent;
         _margin = DefaultMargin;
         _padding = DefaultPadding;
+        _layoutStore.Margin = _margin;
+        _layoutStore.Padding = _padding;
     }
 
     public Rectangle Bounds => _bounds;
@@ -53,6 +57,7 @@ public class ToolStripPanelRow : Component
             if (value == _margin) return;
 
             _margin = value;
+            _layoutStore.Margin = value;
             _panel.PerformLayout();
         }
     }
@@ -67,6 +72,7 @@ public class ToolStripPanelRow : Component
             if (value == _padding) return;
 
             _padding = value;
+            _layoutStore.Padding = value;
             _panel.PerformLayout();
         }
     }
@@ -78,7 +84,11 @@ public class ToolStripPanelRow : Component
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) _controls.Clear();
+        if (disposing)
+        {
+            _controls.Clear();
+            _children.Clear();
+        }
 
         base.Dispose(disposing);
     }
@@ -119,6 +129,7 @@ public class ToolStripPanelRow : Component
     internal void AddControlInternal(Control control)
     {
         _controls.Add(control);
+        _children.Add(control);
         OnControlAdded(control, _controls.Count - 1);
     }
 
@@ -128,10 +139,53 @@ public class ToolStripPanelRow : Component
         if (index < 0) return false;
 
         _controls.RemoveAt(index);
+        _children.Remove(control);
         OnControlRemoved(control, index);
 
         return true;
     }
 
     internal bool IsEmpty => _controls.Count == 0;
+
+    void IArrangedElement.SetBounds(Rectangle bounds, BoundsSpecified specified)
+    {
+        if (specified != BoundsSpecified.None) _layoutStore.SpecifiedBounds = bounds;
+        SetBoundsInternal(bounds);
+    }
+
+    Size IArrangedElement.GetPreferredSize(Size proposedSize)
+    {
+        var length = 0;
+        var thickness = 0;
+
+        foreach (var control in _controls)
+        {
+            var size = control.AutoSize ? control.GetPreferredSize(proposedSize) : control.Size;
+            length += Orientation == Orientation.Horizontal ? size.Width : size.Height;
+            thickness = Math.Max(thickness, Orientation == Orientation.Horizontal ? size.Height : size.Width);
+        }
+
+        return Orientation == Orientation.Horizontal
+            ? new Size(length + Padding.Horizontal, thickness + Padding.Vertical)
+            : new Size(thickness + Padding.Horizontal, length + Padding.Vertical);
+    }
+
+    bool IArrangedElement.ParticipatesInLayout => _panel.Rows.Contains(this);
+
+    IArrangedElement IArrangedElement.Container => _panel;
+
+    ArrangedElementCollection IArrangedElement.Children => _children;
+
+    LayoutSettingsStore IArrangedElement.LayoutStore => _layoutStore;
+
+    void IArrangedElement.PerformLayout(IArrangedElement affectedElement, string? propertyName) => _panel.PerformLayout();
+
+    private sealed class RowControlCollection : ArrangedElementCollection
+    {
+        internal void Add(Control control) => Items.Add(control);
+
+        internal void Remove(Control control) => Items.Remove(control);
+
+        internal void Clear() => Items.Clear();
+    }
 }

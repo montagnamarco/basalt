@@ -49,6 +49,57 @@ public class HostedItemsTests
     }
 
     [AvaloniaFact]
+    public void ToolStripTextBox_autocomplete_reaches_the_hosted_edit_control()
+    {
+        var item = new ToolStripTextBox
+        {
+            AutoCompleteMode = AutoCompleteMode.Append,
+            AutoCompleteSource = AutoCompleteSource.CustomSource,
+        };
+        item.AutoCompleteCustomSource.Add("apple");
+        var strip = new ToolStrip(item);
+        var form = new Form { ClientSize = new Size(300, 60) };
+        form.Controls.Add(strip);
+        form.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        item.Focus();
+        form.Host!.KeyTextInput("app");
+
+        Assert.Same(item.AutoCompleteCustomSource, item.TextBox.AutoCompleteCustomSource);
+        Assert.Equal("apple", item.Text);
+        Assert.Equal(3, item.TextBox.SelectionStart);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
+    public void ToolStripComboBox_autocomplete_and_flat_style_reach_the_hosted_combo()
+    {
+        var item = new ToolStripComboBox
+        {
+            AutoCompleteMode = AutoCompleteMode.Append,
+            AutoCompleteSource = AutoCompleteSource.ListItems,
+            FlatStyle = FlatStyle.Flat,
+        };
+        item.Items.Add("apple");
+        var strip = new ToolStrip(item);
+        var form = new Form { ClientSize = new Size(300, 60) };
+        form.Controls.Add(strip);
+        form.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        item.Focus();
+        form.Host!.KeyTextInput("app");
+
+        Assert.Equal(FlatStyle.Flat, item.ComboBox.FlatStyle);
+        Assert.Equal("apple", item.Text);
+        Assert.Equal(3, item.ComboBox.SelectionStart);
+
+        form.Close();
+    }
+
+    [AvaloniaFact]
     public void Typing_into_a_shown_ToolStripTextBox_changes_its_Text()
     {
         var item = new ToolStripTextBox { Font = Font };

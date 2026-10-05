@@ -92,9 +92,6 @@ public class ToolStripMenuItem : ToolStripDropDownItem
 
     protected override Padding DefaultMargin => Padding.Empty;
 
-    // Owner is always null when this first runs (the item is constructed before it is added to a
-    // strip), so this cannot branch on MenuStrip vs. a drop-down: one padding, generous enough on the
-    // trailing edge for a short shortcut or a submenu arrow, serves both approximately.
     protected override Padding DefaultPadding => new(ImageMarginWidth, 3, 28, 3);
 
     protected override Size DefaultSize => new(32, 22);
@@ -224,6 +221,11 @@ public class ToolStripMenuItem : ToolStripDropDownItem
 
     protected override void OnOwnerChanged(EventArgs e)
     {
+        // A menu bar needs compact labels; popup rows reserve check and shortcut columns.
+        if (!PaddingExplicitlySet)
+        {
+            SetDefaultPadding(Owner is MenuStrip ? new Padding(4, 3, 4, 3) : DefaultPadding);
+        }
         base.OnOwnerChanged(e);
         StopHoverTimer();
     }

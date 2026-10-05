@@ -784,7 +784,20 @@ internal sealed class ToolStripLayoutEngine : LayoutEngine
         if (strip.AutoSize)
         {
             var preferred = strip.GetPreferredSize(Size.Empty);
-            if (preferred != strip.Size) strip.Size = preferred;
+            if (strip.Parent is not null)
+            {
+                preferred = strip.Dock switch
+                {
+                    DockStyle.Top or DockStyle.Bottom => new Size(strip.Width, preferred.Height),
+                    DockStyle.Left or DockStyle.Right => new Size(preferred.Width, strip.Height),
+                    DockStyle.Fill => strip.Size,
+                    _ => preferred
+                };
+            }
+            if (preferred != strip.Size)
+            {
+                strip.Size = preferred;
+            }
         }
 
         strip.PerformItemLayout();

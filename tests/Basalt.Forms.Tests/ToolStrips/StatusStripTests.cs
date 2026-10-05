@@ -30,6 +30,22 @@ public class StatusStripTests
     }
 
     [Fact]
+    public void Stretch_uses_the_same_value_through_StatusStrip_and_ToolStrip()
+    {
+        var strip = new StatusStrip();
+        ToolStrip baseStrip = strip;
+
+        Assert.True(strip.Stretch);
+        Assert.True(baseStrip.Stretch);
+
+        strip.Stretch = false;
+        Assert.False(baseStrip.Stretch);
+
+        baseStrip.Stretch = true;
+        Assert.True(strip.Stretch);
+    }
+
+    [Fact]
     public void The_sizing_grip_paints_in_the_trailing_bottom_corner_and_can_be_turned_off()
     {
         var strip = new StatusStrip { Font = Font, AutoSize = false, Size = new Size(200, 22), BackColor = Color.White };
@@ -71,6 +87,22 @@ public class StatusStripTests
         // sibling (Right) is pushed along by exactly the width the spring label gained.
         Assert.True(spring.Bounds.Width > 50);
         Assert.Equal(spring.Bounds.Right, right.Bounds.Left);
+    }
+
+    [Fact]
+    public void Spring_uses_the_space_up_to_the_grip_padding_once()
+    {
+        var strip = new StatusStrip { Font = Font, AutoSize = false, Size = new Size(300, 22) };
+        var spring = new ToolStripStatusLabel("Ready")
+        {
+            AutoSize = false, Size = new Size(50, 20), Margin = Padding.Empty, Spring = true,
+        };
+        strip.Items.Add(spring);
+
+        strip.PerformLayout();
+
+        Assert.Equal(strip.DisplayRectangle.Right, spring.Bounds.Right);
+        Assert.Equal(strip.SizeGripBounds.Left, spring.Bounds.Right);
     }
 
     [Fact]

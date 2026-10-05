@@ -58,15 +58,15 @@ public abstract class BindingManagerBase
 
     public abstract void EndCurrentEdit();
 
-    public virtual ComponentModel.PropertyDescriptorCollection GetItemProperties() =>
-        Current is null ? ComponentModel.PropertyDescriptorCollection.Empty : ComponentModel.TypeDescriptor.GetProperties(Current);
+    public virtual global::System.ComponentModel.PropertyDescriptorCollection GetItemProperties() =>
+        Current is null ? global::System.ComponentModel.PropertyDescriptorCollection.Empty : global::System.ComponentModel.TypeDescriptor.GetProperties(Current);
 
-    protected virtual ComponentModel.PropertyDescriptorCollection GetItemProperties(Collections.ArrayList dataSources, Collections.ArrayList listAccessors) =>
+    protected virtual global::System.ComponentModel.PropertyDescriptorCollection GetItemProperties(Collections.ArrayList dataSources, Collections.ArrayList listAccessors) =>
         GetItemProperties();
 
-    protected virtual ComponentModel.PropertyDescriptorCollection GetItemProperties(
+    protected virtual global::System.ComponentModel.PropertyDescriptorCollection GetItemProperties(
         Type listType, int offset, Collections.ArrayList dataSources, Collections.ArrayList listAccessors) =>
-        ComponentModel.TypeDescriptor.GetProperties(listType);
+        global::System.ComponentModel.TypeDescriptor.GetProperties(listType);
 
     protected abstract string GetListName(Collections.ArrayList? listAccessors);
 
