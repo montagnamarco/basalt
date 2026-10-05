@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
@@ -13,7 +14,10 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderToolStripBackground(e);
 
-        using var brush = new SolidBrush(e.BackColor.IsEmpty ? SystemColors.Control : e.BackColor);
+        var color = e.ToolStrip.PortableVisualStylesEnabled && !e.ToolStrip.HasExplicitAppearanceBackColor
+            ? PortableVisualStyles.Palette(e.ToolStrip.PortableVisualStylePlatform).Face
+            : e.BackColor.IsEmpty ? SystemColors.Control : e.BackColor;
+        using var brush = new SolidBrush(color);
         e.Graphics.FillRectangle(brush, e.AffectedBounds);
     }
 
@@ -23,7 +27,10 @@ public class ToolStripSystemRenderer : ToolStripRenderer
 
         // A single dark line along the edge the strip meets the rest of the form, as the classic toolbar has.
         var bounds = e.ToolStrip.ClientRectangle;
-        using var pen = new Pen(SystemColors.ControlDark);
+        var border = e.ToolStrip.PortableVisualStylesEnabled
+            ? PortableVisualStyles.Palette(e.ToolStrip.PortableVisualStylePlatform).Border
+            : SystemColors.ControlDark;
+        using var pen = new Pen(border);
 
         if (e.ToolStrip.Dock == DockStyle.Bottom) e.Graphics.DrawLine(pen, bounds.Left, bounds.Top, bounds.Right, bounds.Top);
         else e.Graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
@@ -33,6 +40,13 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderGrip(e);
 
+        if (e.ToolStrip.PortableVisualStylesEnabled)
+        {
+            ToolStripPortablePainting.PaintGrip(e.Graphics, e.GripBounds, e.ToolStrip,
+                e.GripDisplayStyle == ToolStripGripDisplayStyle.Vertical);
+            return;
+        }
+
         ToolStripClassicPainting.DrawGripDots(e.Graphics, e.GripBounds, e.GripDisplayStyle);
     }
 
@@ -40,12 +54,22 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderSeparator(e);
 
+        if (ToolStripPortablePainting.PaintSeparator(e.Graphics, e.Item, e.Vertical))
+        {
+            return;
+        }
+
         ToolStripClassicPainting.DrawEtchedSeparator(e.Graphics, e.Item.Bounds, e.Vertical);
     }
 
     protected override void OnRenderButtonBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderButtonBackground(e);
+
+        if (ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
 
         if (e.Item is not ToolStripButton button) return;
 
@@ -56,6 +80,11 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderDropDownButtonBackground(e);
 
+        if (ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
+
         ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, e.Item.Pressed, e.Item.Selected, e.Item.Enabled);
     }
 
@@ -63,12 +92,22 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderSplitButtonBackground(e);
 
+        if (ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
+
         ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, e.Item.Pressed, e.Item.Selected, e.Item.Enabled);
     }
 
     protected override void OnRenderOverflowButtonBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderOverflowButtonBackground(e);
+
+        if (ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
 
         ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, e.Item.Pressed, e.Item.Selected, e.Item.Enabled);
     }
@@ -83,6 +122,11 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderItemBackground(e);
 
+        if (ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
+
         if (!e.Item.Selected && !e.Item.Pressed) return;
 
         ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, e.Item.Pressed, e.Item.Selected, e.Item.Enabled);
@@ -92,7 +136,15 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderMenuItemBackground(e);
 
-        if (e.Item.Selected) ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, pressed: false, selected: true, e.Item.Enabled);
+        if (ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
+
+        if (e.Item.Selected)
+        {
+            ToolStripClassicPainting.DrawButtonFace(e.Graphics, e.Item.Bounds, pressed: false, selected: true, e.Item.Enabled);
+        }
     }
 
     protected override void OnRenderLabelBackground(ToolStripItemRenderEventArgs e)
@@ -110,6 +162,12 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderToolStripStatusLabelBackground(e);
 
+        if (e.ToolStrip is { PortableVisualStylesEnabled: true } strip && !e.Item.HasExplicitPortableBackColor)
+        {
+            ToolStripPortablePainting.PaintBackground(e.Graphics, e.Item.Bounds, strip);
+            return;
+        }
+
         using var brush = new SolidBrush(e.Item.BackColor);
         e.Graphics.FillRectangle(brush, e.Item.Bounds);
     }
@@ -121,7 +179,64 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderImageMargin(e);
 
+        if (e.ToolStrip.PortableVisualStylesEnabled)
+        {
+            ToolStripPortablePainting.PaintBackground(e.Graphics, e.AffectedBounds, e.ToolStrip);
+            return;
+        }
+
         using var brush = new SolidBrush(SystemColors.Control);
         e.Graphics.FillRectangle(brush, e.AffectedBounds);
     }
+    internal void PaintSystemArrow(ToolStripArrowRenderEventArgs e)
+    {
+        var bounds = e.ArrowRectangle;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
+        var color = e.ArrowColor;
+        var enabled = e.Item?.Enabled ?? true;
+        if (e.Item is { Owner: { PortableVisualStylesEnabled: true } strip } item)
+        {
+            var palette = PortableVisualStyles.Palette(strip.PortableVisualStylePlatform);
+            if (color.IsEmpty)
+            {
+                color = enabled ? palette.Text : palette.DisabledText;
+            }
+            else if (!enabled && color == item.ForeColor
+                && !item.HasExplicitPortableForeColor && !strip.HasExplicitAppearanceForeColor)
+            {
+                color = palette.DisabledText;
+            }
+        }
+        else if (color.IsEmpty)
+        {
+            color = enabled ? SystemColors.ControlText : SystemColors.GrayText;
+        }
+
+        var centerX = bounds.Left + bounds.Width / 2;
+        var centerY = bounds.Top + bounds.Height / 2;
+        var half = Math.Max(Math.Min(bounds.Width, bounds.Height) / 2, 1);
+        Point[] points = e.Direction switch
+        {
+            ArrowDirection.Up => [new Point(centerX - half, centerY + half), new Point(centerX + half, centerY + half), new Point(centerX, centerY - half)],
+            ArrowDirection.Down => [new Point(centerX - half, centerY - half), new Point(centerX + half, centerY - half), new Point(centerX, centerY + half)],
+            ArrowDirection.Left => [new Point(centerX + half, centerY - half), new Point(centerX + half, centerY + half), new Point(centerX - half, centerY)],
+            _ => [new Point(centerX - half, centerY - half), new Point(centerX - half, centerY + half), new Point(centerX + half, centerY)]
+        };
+        var state = e.Graphics.Save();
+        try
+        {
+            e.Graphics.IntersectClip(bounds);
+            using var brush = new SolidBrush(color);
+            e.Graphics.FillPolygon(brush, points);
+        }
+        finally
+        {
+            e.Graphics.Restore(state);
+        }
+    }
+
 }

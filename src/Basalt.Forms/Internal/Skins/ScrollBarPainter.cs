@@ -8,7 +8,7 @@ namespace System.Windows.Forms.Internal.Skins;
 /// a window's own scroll bars too, which have no control of their own to
 /// paint from.
 /// </summary>
-internal static class ScrollBarPainter
+internal static partial class ScrollBarPainter
 {
     /// <summary>Which part, if any, is pressed and so drawn sunken.</summary>
     internal enum PressedPart

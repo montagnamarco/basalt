@@ -196,6 +196,12 @@ public partial class ProgressBar : Control
 
     internal override void DefaultPaint(PaintEventArgs e)
     {
+        if (PortableVisualStylesEnabled)
+        {
+            PaintPortableProgress(e.Graphics);
+            return;
+        }
+
         var graphics = e.Graphics;
         var bounds = ClientRectangle;
 

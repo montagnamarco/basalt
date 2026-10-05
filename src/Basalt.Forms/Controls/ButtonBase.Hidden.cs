@@ -207,15 +207,15 @@ public abstract partial class ButtonBase
         set => _useCompatibleTextRendering = value;
     }
 
-    /// <summary>Whether BackColor paints through the current visual style instead of as a flat fill; we have one look (the classic one), so this only remembers the setting.</summary>
-    [DefaultValue(false)]
+    /// <summary>Requests the visual-style background; explicit application colours remain authoritative.</summary>
     public bool UseVisualStyleBackColor
     {
-        get => _useVisualStyleBackColor;
+        get => (_visualStyleBackColorSet || !HasExplicitAppearanceBackColor) && _useVisualStyleBackColor;
         set
         {
-            if (_useVisualStyleBackColor == value) return;
+            if (_visualStyleBackColorSet && _useVisualStyleBackColor == value) return;
 
+            _visualStyleBackColorSet = true;
             _useVisualStyleBackColor = value;
             Invalidate();
         }

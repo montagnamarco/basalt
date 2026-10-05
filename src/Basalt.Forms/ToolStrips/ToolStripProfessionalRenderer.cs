@@ -10,9 +10,12 @@ namespace System.Windows.Forms;
 /// </summary>
 public class ToolStripProfessionalRenderer : ToolStripRenderer
 {
+    private readonly bool _usePortablePalette;
+
     public ToolStripProfessionalRenderer()
         : this(new ProfessionalColorTable())
     {
+        _usePortablePalette = true;
     }
 
     public ToolStripProfessionalRenderer(ProfessionalColorTable professionalColorTable)
@@ -30,6 +33,12 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     {
         base.OnRenderToolStripBackground(e);
 
+        if (_usePortablePalette && e.ToolStrip.PortableVisualStylesEnabled)
+        {
+            ToolStripPortablePainting.PaintBackground(e.Graphics, e.AffectedBounds, e.ToolStrip);
+            return;
+        }
+
         FillVerticalGradient(e.Graphics, e.AffectedBounds, ColorTable.ToolStripGradientBegin, ColorTable.ToolStripGradientEnd);
     }
 
@@ -38,13 +47,23 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
         base.OnRenderToolStripBorder(e);
 
         var bounds = e.ToolStrip.ClientRectangle;
-        using var pen = new Pen(ColorTable.ToolStripBorder);
+        var border = _usePortablePalette && e.ToolStrip.PortableVisualStylesEnabled
+            ? Internal.Rendering.PortableVisualStyles.Palette(e.ToolStrip.PortableVisualStylePlatform).Border
+            : ColorTable.ToolStripBorder;
+        using var pen = new Pen(border);
         e.Graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
     }
 
     protected override void OnRenderGrip(ToolStripGripRenderEventArgs e)
     {
         base.OnRenderGrip(e);
+
+        if (_usePortablePalette && e.ToolStrip.PortableVisualStylesEnabled)
+        {
+            ToolStripPortablePainting.PaintGrip(e.Graphics, e.GripBounds, e.ToolStrip,
+                e.GripDisplayStyle == ToolStripGripDisplayStyle.Vertical);
+            return;
+        }
 
         using var light = new SolidBrush(ColorTable.GripLight);
         using var dark = new SolidBrush(ColorTable.GripDark);
@@ -54,6 +73,11 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
     {
         base.OnRenderSeparator(e);
+
+        if (_usePortablePalette && ToolStripPortablePainting.PaintSeparator(e.Graphics, e.Item, e.Vertical))
+        {
+            return;
+        }
 
         using var dark = new Pen(ColorTable.SeparatorDark);
         using var light = new Pen(ColorTable.SeparatorLight);
@@ -77,6 +101,11 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     {
         base.OnRenderButtonBackground(e);
 
+        if (_usePortablePalette && ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
+
         if (e.Item is ToolStripButton { Checked: true } button && !button.Pressed && !button.Selected)
         {
             FillGradientButton(e.Graphics, e.Item.Bounds, ColorTable.ButtonCheckedGradientBegin, ColorTable.ButtonCheckedGradientMiddle, ColorTable.ButtonCheckedGradientEnd, ColorTable.ButtonCheckedHighlightBorder);
@@ -89,12 +118,22 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     protected override void OnRenderDropDownButtonBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderDropDownButtonBackground(e);
+
+        if (_usePortablePalette && ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
         DrawInteractiveBackground(e.Graphics, e.Item);
     }
 
     protected override void OnRenderSplitButtonBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderSplitButtonBackground(e);
+
+        if (_usePortablePalette && ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
         DrawInteractiveBackground(e.Graphics, e.Item);
     }
 
@@ -102,12 +141,22 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     {
         base.OnRenderOverflowButtonBackground(e);
 
+        if (_usePortablePalette && ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
+
         FillVerticalGradient(e.Graphics, e.Item.Bounds, ColorTable.OverflowButtonGradientBegin, ColorTable.OverflowButtonGradientEnd);
     }
 
     protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderMenuItemBackground(e);
+
+        if (_usePortablePalette && ToolStripPortablePainting.PaintItem(e.Graphics, e.Item))
+        {
+            return;
+        }
 
         if (!e.Item.Selected) return;
 
@@ -124,6 +173,11 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
     {
         base.OnRenderItemCheck(e);
+
+        if (_usePortablePalette && e.ToolStrip is { PortableVisualStylesEnabled: true })
+        {
+            return;
+        }
 
         var bounds = e.ImageRectangle;
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
@@ -144,11 +198,31 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     protected override void OnRenderLabelBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderLabelBackground(e);
+        if (_usePortablePalette && e.ToolStrip is { PortableVisualStylesEnabled: true }
+            && e.Item.HasExplicitPortableBackColor)
+        {
+            using var background = new SolidBrush(e.Item.BackColor);
+            e.Graphics.FillRectangle(background, e.Item.Bounds);
+        }
     }
 
     protected override void OnRenderToolStripStatusLabelBackground(ToolStripItemRenderEventArgs e)
     {
         base.OnRenderToolStripStatusLabelBackground(e);
+
+        if (_usePortablePalette && e.Item?.Owner is { PortableVisualStylesEnabled: true } strip)
+        {
+            if (e.Item.HasExplicitPortableBackColor)
+            {
+                using var brush = new SolidBrush(e.Item.BackColor);
+                e.Graphics.FillRectangle(brush, e.Item.Bounds);
+            }
+            else
+            {
+                ToolStripPortablePainting.PaintBackground(e.Graphics, e.Item.Bounds, strip);
+            }
+            return;
+        }
 
         FillVerticalGradient(e.Graphics, e.Item.Bounds, ColorTable.StatusStripGradientBegin, ColorTable.StatusStripGradientEnd);
     }
@@ -156,6 +230,12 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
     protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)
     {
         base.OnRenderImageMargin(e);
+
+        if (_usePortablePalette && e.ToolStrip.PortableVisualStylesEnabled)
+        {
+            ToolStripPortablePainting.PaintBackground(e.Graphics, e.AffectedBounds, e.ToolStrip);
+            return;
+        }
 
         FillVerticalGradient(e.Graphics, e.AffectedBounds, ColorTable.ImageMarginGradientBegin, ColorTable.ImageMarginGradientEnd);
     }
@@ -169,6 +249,10 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
 
         var bounds = e.ToolStripPanel.ClientRectangle;
         FillVerticalGradient(e.Graphics, bounds, ColorTable.ToolStripPanelGradientBegin, ColorTable.ToolStripPanelGradientEnd);
+
+        // As in WinForms: the renderer owns the background once it painted it,
+        // otherwise the panel's BackColor fill runs afterwards and covers the gradient.
+        e.Handled = true;
     }
 
     /// <summary>The form's own content area in the middle of a ToolStripContainer: plain, as Office leaves it.</summary>
@@ -180,6 +264,9 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
 
         using var brush = new SolidBrush(ColorTable.ToolStripContentPanelGradientEnd);
         e.Graphics.FillRectangle(brush, e.ToolStripContentPanel.ClientRectangle);
+
+        // Same contract as the panel band: painted here, so the base BackColor fill must not follow.
+        e.Handled = true;
     }
 
     protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
@@ -201,7 +288,20 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
             _ => [new Point(cx - half, cy - half), new Point(cx - half, cy + half), new Point(cx + half, cy)],
         };
 
-        using var brush = new SolidBrush(e.ArrowColor.IsEmpty ? SystemColors.ControlText : e.ArrowColor);
+        var arrowColor = e.ArrowColor;
+        if (arrowColor.IsEmpty)
+        {
+            if (_usePortablePalette && e.Item?.Owner is { PortableVisualStylesEnabled: true } strip)
+            {
+                var palette = Internal.Rendering.PortableVisualStyles.Palette(strip.PortableVisualStylePlatform);
+                arrowColor = e.Item?.Enabled == true ? palette.Text : palette.DisabledText;
+            }
+            else
+            {
+                arrowColor = SystemColors.ControlText;
+            }
+        }
+        using var brush = new SolidBrush(arrowColor);
         e.Graphics.FillPolygon(brush, points);
     }
 

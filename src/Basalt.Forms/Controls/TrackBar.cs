@@ -304,10 +304,24 @@ public partial class TrackBar : Control, ISupportInitialize
     private Rectangle ChannelBounds()
     {
         var area = TrackArea();
+        if (!UsePortableRoundThumb)
+        {
+            return _orientation == Orientation.Horizontal
+                ? Rectangle.FromLTRB(area.Left + ThumbLength / 2, area.Top,
+                    area.Right - ThumbLength / 2, area.Bottom)
+                : Rectangle.FromLTRB(area.Left, area.Top + ThumbLength / 2,
+                    area.Right, area.Bottom - ThumbLength / 2);
+        }
+
+        var diameter = RoundThumbDiameter(area);
+        var horizontalInset = Math.Min(diameter / 2, Math.Max(area.Width / 2, 0));
+        var verticalInset = Math.Min(diameter / 2, Math.Max(area.Height / 2, 0));
 
         return _orientation == Orientation.Horizontal
-            ? Rectangle.FromLTRB(area.Left + ThumbLength / 2, area.Top, area.Right - ThumbLength / 2, area.Bottom)
-            : Rectangle.FromLTRB(area.Left, area.Top + ThumbLength / 2, area.Right, area.Bottom - ThumbLength / 2);
+            ? Rectangle.FromLTRB(area.Left + horizontalInset, area.Top,
+                area.Right - horizontalInset, area.Bottom)
+            : Rectangle.FromLTRB(area.Left, area.Top + verticalInset,
+                area.Right, area.Bottom - verticalInset);
     }
 
     private double FractionOf(int value)
@@ -324,6 +338,23 @@ public partial class TrackBar : Control, ISupportInitialize
         var area = TrackArea();
         var channel = ChannelBounds();
         var fraction = FractionOf(_value);
+
+        if (UsePortableRoundThumb)
+        {
+            var diameter = RoundThumbDiameter(area);
+            if (diameter <= 0) return Rectangle.Empty;
+
+            if (_orientation == Orientation.Horizontal)
+            {
+                var roundCenter = channel.Left + (int)Math.Round(fraction * channel.Width);
+                return new Rectangle(roundCenter - diameter / 2,
+                    area.Top + (area.Height - diameter) / 2, diameter, diameter);
+            }
+
+            var roundCenterY = channel.Top + (int)Math.Round(fraction * channel.Height);
+            return new Rectangle(area.Left + (area.Width - diameter) / 2,
+                roundCenterY - diameter / 2, diameter, diameter);
+        }
 
         if (_orientation == Orientation.Horizontal)
         {
@@ -374,7 +405,14 @@ public partial class TrackBar : Control, ISupportInitialize
             ? new Rectangle(channel.Left, channel.Top + channel.Height / 2 - 2, channel.Width, 4)
             : new Rectangle(channel.Left + channel.Width / 2 - 2, channel.Top, 4, channel.Height);
 
-        ControlPaint.DrawBorder3D(graphics, groove, Border3DStyle.Sunken);
+        if (PortableVisualStylesEnabled)
+        {
+            PaintPortableTrack(graphics, groove);
+        }
+        else
+        {
+            ControlPaint.DrawBorder3D(graphics, groove, Border3DStyle.Sunken);
+        }
     }
 
     private void DrawTicks(Graphics graphics, Rectangle area, Rectangle channel)
@@ -384,7 +422,8 @@ public partial class TrackBar : Control, ISupportInitialize
         var range = _maximum - _minimum;
         if (range <= 0) return;
 
-        using var pen = new Pen(SystemColors.ControlDark);
+        using var pen = new Pen(PortableVisualStylesEnabled
+            ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform).Border : SystemColors.ControlDark);
 
         for (var tickValue = _minimum; tickValue <= _maximum; tickValue += _tickFrequency)
         {
@@ -409,7 +448,14 @@ public partial class TrackBar : Control, ISupportInitialize
 
     private void DrawThumb(Graphics graphics, Rectangle thumb)
     {
-        ControlPaint.DrawButton(graphics, thumb, Enabled ? ButtonState.Normal : ButtonState.Inactive);
+        if (PortableVisualStylesEnabled)
+        {
+            PaintPortableThumb(graphics, thumb);
+        }
+        else
+        {
+            ControlPaint.DrawButton(graphics, thumb, Enabled ? ButtonState.Normal : ButtonState.Inactive);
+        }
     }
 
     public override string ToString() => $"{base.ToString()}, Minimum: {Minimum}, Maximum: {Maximum}, Value: {Value}";

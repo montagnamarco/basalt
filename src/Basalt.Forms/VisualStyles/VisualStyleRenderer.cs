@@ -6,11 +6,10 @@ namespace System.Windows.Forms.VisualStyles;
 /// type only reproduces the documented failure mode: constructing a renderer
 /// without an active theme throws, exactly as WinForms does when visual
 /// styles are unsupported or the application opted out of them. The instance
-/// members Microsoft exposes to draw through an active theme (DrawBackground,
-/// GetColor, SetParameters...) are therefore unreachable here and are left
-/// out rather than shipped as dead, untested code.
+/// members preserve the public contract and reject drawing while no theme
+/// backend is active, using the same failure as construction.
 /// </summary>
-public sealed class VisualStyleRenderer
+public sealed partial class VisualStyleRenderer
 {
     public VisualStyleRenderer(VisualStyleElement element)
     {

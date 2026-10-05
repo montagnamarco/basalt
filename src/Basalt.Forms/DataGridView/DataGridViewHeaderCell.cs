@@ -98,7 +98,10 @@ public class DataGridViewHeaderCell : DataGridViewCell
         DataGridViewAdvancedBorderStyle advancedBorderStyle,
         DataGridViewPaintParts paintParts)
     {
-        ControlPaint.DrawButton(graphics, cellBounds, ButtonState);
+        if (DataGridView is not { } grid || !grid.PaintPortableHeader(graphics, cellBounds, cellStyle, ButtonState, paintParts))
+        {
+            ControlPaint.DrawButton(graphics, cellBounds, ButtonState);
+        }
 
         if (formattedValue is null) return;
 

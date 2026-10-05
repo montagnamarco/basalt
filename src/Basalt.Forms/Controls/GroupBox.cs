@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Windows.Forms.Internal.Rendering;
 using System.Windows.Forms.Layout;
 
 namespace System.Windows.Forms;
@@ -161,8 +162,20 @@ public partial class GroupBox : Control
         var frameTop = textSize.Height / 2;
         var frame = new Rectangle(0, frameTop, ClientSize.Width, Math.Max(ClientSize.Height - frameTop, 0));
 
-        // The classic Windows 2000 look draws every GroupBox with the same etched frame, whatever FlatStyle asks for.
-        ControlPaint.DrawBorder3D(graphics, frame, Border3DStyle.Etched);
+        var portable = PortableVisualStylesEnabled
+            && _flatStyle is not (FlatStyle.Flat or FlatStyle.Popup)
+            && !HasExplicitAppearanceBackColor;
+        var palette = portable ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+
+        if (palette is null)
+        {
+            ControlPaint.DrawBorder3D(graphics, frame, Border3DStyle.Etched);
+        }
+        else if (frame.Width > 0 && frame.Height > 0)
+        {
+            using var border = new Pen(Enabled ? palette.Border : palette.DisabledText);
+            graphics.DrawRectangle(border, frame.X, frame.Y, frame.Width - 1, frame.Height - 1);
+        }
 
         if (!string.IsNullOrEmpty(text))
         {
@@ -172,7 +185,8 @@ public partial class GroupBox : Control
             using var backBrush = new SolidBrush(BackColor.A == 255 ? BackColor : SystemColors.Control);
             graphics.FillRectangle(backBrush, textBounds);
 
-            var color = Enabled ? ForeColor : SystemColors.GrayText;
+            var color = !Enabled ? palette?.DisabledText ?? SystemColors.GrayText
+                : palette is not null && !HasExplicitAppearanceForeColor ? palette.Text : ForeColor;
             TextRenderer.DrawText(graphics, text, Font, textBounds, color, TextFormatFlags.Default);
         }
 

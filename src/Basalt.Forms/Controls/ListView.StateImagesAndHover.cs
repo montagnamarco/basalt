@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
@@ -100,7 +101,15 @@ public partial class ListView
         else if (_checkBoxes)
         {
             var box = new Rectangle(x + 2, rowY + (rowHeight - CheckBoxSize) / 2, CheckBoxSize, CheckBoxSize);
-            ControlPaint.DrawCheckBox(graphics, box, item.Checked ? ButtonState.Checked : ButtonState.Normal);
+            if (PortableVisualStylesEnabled)
+            {
+                PortableVisualStyles.PaintGlyph(graphics, box, CollectionVisualAppearance.Palette(this),
+                    radio: false, selected: item.Checked, mixed: false, pressed: false, enabled: Enabled);
+            }
+            else
+            {
+                ControlPaint.DrawCheckBox(graphics, box, item.Checked ? ButtonState.Checked : ButtonState.Normal);
+            }
         }
     }
 

@@ -28,7 +28,7 @@ public partial class PropertyGrid
             graphics.FillRectangle(face, bounds);
         }
 
-        using var bottomLine = new Pen(SystemColors.ControlDark);
+        using var bottomLine = new Pen(ViewBorderColor);
         graphics.DrawLine(bottomLine, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
 
         var categorized = _propertySort is PropertySort.Categorized or PropertySort.CategorizedAlphabetical;
@@ -38,16 +38,25 @@ public partial class PropertyGrid
 
     private void PaintToolbarButton(Graphics graphics, Rectangle bounds, bool pressed, Action<Graphics, Rectangle> drawGlyph)
     {
-        if (pressed) ControlPaint.DrawBorder3D(graphics, bounds, Border3DStyle.SunkenOuter);
+        if (PortableVisualStylesEnabled)
+        {
+            Internal.Rendering.PortableVisualStyles.PaintButton(graphics, bounds,
+                Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform), PortableVisualStylePlatform,
+                hot: false, pressed, Enabled, isDefault: false);
+        }
+        else if (pressed)
+        {
+            ControlPaint.DrawBorder3D(graphics, bounds, Border3DStyle.SunkenOuter);
+        }
 
         var inset = new Rectangle(bounds.X + 4, bounds.Y + 4, bounds.Width - 8, bounds.Height - 8);
         drawGlyph(graphics, inset);
     }
 
     /// <summary>Two short groups of lines, standing for properties gathered under separate categories.</summary>
-    private static void DrawCategorizedGlyph(Graphics graphics, Rectangle bounds)
+    private void DrawCategorizedGlyph(Graphics graphics, Rectangle bounds)
     {
-        using var pen = new Pen(SystemColors.ControlText);
+        using var pen = new Pen(ToolbarGlyphColor);
 
         var step = Math.Max(bounds.Height / 5, 1);
         var y = bounds.Top;
@@ -68,9 +77,9 @@ public partial class PropertyGrid
     }
 
     /// <summary>Evenly spaced lines, standing for one flat alphabetical list.</summary>
-    private static void DrawAlphabeticalGlyph(Graphics graphics, Rectangle bounds)
+    private void DrawAlphabeticalGlyph(Graphics graphics, Rectangle bounds)
     {
-        using var pen = new Pen(SystemColors.ControlText);
+        using var pen = new Pen(ToolbarGlyphColor);
 
         var step = Math.Max(bounds.Height / 4, 1);
         for (var y = bounds.Top; y < bounds.Bottom; y += step)
@@ -78,6 +87,10 @@ public partial class PropertyGrid
             graphics.DrawLine(pen, bounds.Left, y, bounds.Right, y);
         }
     }
+
+    private Color ToolbarGlyphColor => PortableVisualStylesEnabled
+        ? Enabled ? ViewForeColor : DisabledItemForeColor
+        : SystemColors.ControlText;
 
     private bool HandleToolbarClick(Point location)
     {

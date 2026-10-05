@@ -391,7 +391,9 @@ public partial class ComboBox : ListControl
         Invalidate();
     }
 
-    private Color EffectiveBackColor => Enabled ? (ShouldSerializeBackColor() ? BackColor : SystemColors.Window) : SystemColors.Control;
+    private Color EffectiveBackColor => CollectionVisualAppearance.Field(this,
+        Enabled ? (ShouldSerializeBackColor() ? BackColor : SystemColors.Window) : SystemColors.Control);
 
-    private Color EffectiveForeColor => Enabled ? (ShouldSerializeForeColor() ? ForeColor : SystemColors.WindowText) : SystemColors.GrayText;
+    private Color EffectiveForeColor => CollectionVisualAppearance.Text(this,
+        Enabled ? (ShouldSerializeForeColor() ? ForeColor : SystemColors.WindowText) : SystemColors.GrayText);
 }

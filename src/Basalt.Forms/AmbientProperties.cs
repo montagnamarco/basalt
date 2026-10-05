@@ -10,4 +10,6 @@ public sealed class AmbientProperties
     public Color ForeColor { get; set; }
 
     public Font? Font { get; set; }
+
+    public Cursor? Cursor { get; set; }
 }

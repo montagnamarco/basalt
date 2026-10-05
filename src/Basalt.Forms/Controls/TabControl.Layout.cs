@@ -2,6 +2,7 @@ using System.Windows.Forms.Layout;
 using System.Collections;
 using System.ComponentModel;
 using System.Drawing;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
@@ -125,20 +126,34 @@ public partial class TabControl
     internal override void DefaultPaint(PaintEventArgs e)
     {
         var graphics = e.Graphics;
+        var portable = PortableVisualStylesEnabled
+            && _appearance == TabAppearance.Normal
+            && !HasExplicitAppearanceBackColor;
+        var palette = portable ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
 
-        using var backBrush = new SolidBrush(SystemColors.Control);
+        using var backBrush = new SolidBrush(palette?.Face ?? BackColor);
         graphics.FillRectangle(backBrush, ClientRectangle);
 
         var pageFrame = PageFrameRectangle();
-        ControlPaint.DrawBorder3D(graphics, pageFrame, Border3DStyle.Raised);
-
-        // Left, right and bottom strips are a stretch goal: only the default, top-aligned strip draws its tabs here.
-        if (_alignment != TabAlignment.Top) return;
+        if (palette is null)
+        {
+            ControlPaint.DrawBorder3D(graphics, pageFrame, Border3DStyle.Raised);
+        }
+        else if (pageFrame.Width > 0 && pageFrame.Height > 0)
+        {
+            using var pageBrush = new SolidBrush(palette.Surface);
+            using var border = new Pen(palette.Border);
+            graphics.FillRectangle(pageBrush, pageFrame);
+            graphics.DrawRectangle(border, pageFrame.X, pageFrame.Y, pageFrame.Width - 1, pageFrame.Height - 1);
+        }
 
         var rects = LayOutTabs(out _);
         var pages = TabPagesSnapshot();
 
-        for (var i = 0; i < pages.Length; i++) DrawTab(graphics, pages[i], rects[i], i, i == _selectedIndex, pageFrame);
+        for (var i = 0; i < pages.Length; i++)
+        {
+            DrawTab(graphics, pages[i], rects[i], i, i == _selectedIndex, pageFrame, palette);
+        }
     }
 
     /// <summary>
@@ -146,32 +161,105 @@ public partial class TabControl
     /// cref="SelectedTabRaise"/> and joined to the page when it is the
     /// selected one, with its caption centred inside.
     /// </summary>
-    private void DrawTab(Graphics graphics, TabPage page, Rectangle rect, int index, bool selected, Rectangle pageFrame)
+    private void DrawTab(Graphics graphics, TabPage page, Rectangle rect, int index, bool selected,
+        Rectangle pageFrame, PortableVisualStylePalette? palette)
     {
-        var tabRect = selected
-            ? new Rectangle(rect.X, rect.Y - SelectedTabRaise, rect.Width, rect.Height + SelectedTabRaise)
-            : rect;
+        var tabRect = selected ? RaiseSelectedTab(rect) : rect;
 
         if (RaiseDrawItem(graphics, tabRect, index, selected)) return;
 
-        using var faceBrush = new SolidBrush(SystemColors.Control);
+        if (palette is not null)
+        {
+            var faceColor = selected ? palette.Surface : Enabled && index == _hotTabIndex && _hotTrack
+                ? palette.HotFace : palette.Face;
+            using var face = new SolidBrush(faceColor);
+            using var border = new Pen(palette.Border);
+            graphics.FillRectangle(face, tabRect);
+            graphics.DrawRectangle(border, tabRect.X, tabRect.Y, tabRect.Width - 1, tabRect.Height - 1);
+
+            if (selected)
+            {
+                JoinTabToPage(graphics, faceColor, tabRect, pageFrame);
+            }
+
+            var portableText = !Enabled ? palette.DisabledText
+                : HasExplicitAppearanceForeColor ? ForeColor : palette.Text;
+            DrawTabCaption(graphics, page.Text, tabRect, portableText);
+            return;
+        }
+
+        using var faceBrush = new SolidBrush(BackColor);
         graphics.FillRectangle(faceBrush, tabRect);
         ControlPaint.DrawBorder3D(graphics, tabRect, Border3DStyle.Raised);
 
         if (selected)
         {
-            // Erases the page's top border directly under the selected tab, so the two look like one piece.
-            var joinRect = new Rectangle(
-                tabRect.Left + PageBorderThickness,
-                pageFrame.Top - 1,
-                Math.Max(tabRect.Width - PageBorderThickness * 2, 0),
-                PageBorderThickness + 1);
-
-            graphics.FillRectangle(faceBrush, joinRect);
+            JoinTabToPage(graphics, BackColor, tabRect, pageFrame);
         }
 
         var textColor = Enabled ? ForeColor : SystemColors.GrayText;
-        TextRenderer.DrawText(graphics, page.Text, Font, tabRect, textColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+        DrawTabCaption(graphics, page.Text, tabRect, textColor);
+    }
+
+    private Rectangle RaiseSelectedTab(Rectangle rect) => _alignment switch
+    {
+        TabAlignment.Bottom => new Rectangle(rect.X, rect.Y, rect.Width, rect.Height + SelectedTabRaise),
+        TabAlignment.Left => new Rectangle(rect.X - SelectedTabRaise, rect.Y,
+            rect.Width + SelectedTabRaise, rect.Height),
+        TabAlignment.Right => new Rectangle(rect.X, rect.Y,
+            rect.Width + SelectedTabRaise, rect.Height),
+        _ => new Rectangle(rect.X, rect.Y - SelectedTabRaise,
+            rect.Width, rect.Height + SelectedTabRaise)
+    };
+
+    private void JoinTabToPage(Graphics graphics, Color color, Rectangle tab, Rectangle page)
+    {
+        Rectangle join = _alignment switch
+        {
+            TabAlignment.Bottom => new Rectangle(tab.Left + PageBorderThickness, page.Bottom - 1,
+                Math.Max(tab.Width - PageBorderThickness * 2, 0), PageBorderThickness + 1),
+            TabAlignment.Left => new Rectangle(page.Left - 1, tab.Top + PageBorderThickness,
+                PageBorderThickness + 1, Math.Max(tab.Height - PageBorderThickness * 2, 0)),
+            TabAlignment.Right => new Rectangle(page.Right - 1, tab.Top + PageBorderThickness,
+                PageBorderThickness + 1, Math.Max(tab.Height - PageBorderThickness * 2, 0)),
+            _ => new Rectangle(tab.Left + PageBorderThickness, page.Top - 1,
+                Math.Max(tab.Width - PageBorderThickness * 2, 0), PageBorderThickness + 1)
+        };
+
+        if (join.Width <= 0 || join.Height <= 0) return;
+        using var brush = new SolidBrush(color);
+        graphics.FillRectangle(brush, join);
+    }
+
+    private void DrawTabCaption(Graphics graphics, string text, Rectangle bounds, Color color)
+    {
+        if (_alignment is not (TabAlignment.Left or TabAlignment.Right))
+        {
+            TextRenderer.DrawText(graphics, text, Font, bounds, color,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+            return;
+        }
+
+        var state = graphics.Save();
+        try
+        {
+            graphics.TranslateTransform(bounds.Left + bounds.Width / 2f, bounds.Top + bounds.Height / 2f);
+            graphics.RotateTransform(_alignment == TabAlignment.Left ? -90 : 90);
+            var rotated = new RectangleF(-bounds.Height / 2f, -bounds.Width / 2f,
+                bounds.Height, bounds.Width);
+            using var brush = new SolidBrush(color);
+            using var format = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center,
+                FormatFlags = StringFormatFlags.NoWrap
+            };
+            graphics.DrawString(text, Font, brush, rotated, format);
+        }
+        finally
+        {
+            graphics.Restore(state);
+        }
     }
 
     /// <summary>A press on the strip, before OnMouseDown: takes the focus, as a native control does, and selects the hit tab.</summary>
@@ -187,6 +275,33 @@ public partial class TabControl
 
             SelectedIndex = i;
             break;
+        }
+    }
+
+    internal override void DefaultMouseMove(MouseEventArgs e)
+    {
+        if (!Enabled || !_hotTrack || !PortableVisualStylesEnabled) return;
+
+        var nextHotTab = -1;
+        var rects = LayOutTabs(out _);
+        for (var i = 0; i < rects.Length; i++)
+        {
+            if (!rects[i].Contains(e.Location)) continue;
+            nextHotTab = i;
+            break;
+        }
+
+        if (nextHotTab == _hotTabIndex) return;
+        _hotTabIndex = nextHotTab;
+        Invalidate();
+    }
+
+    private void ClearHotTabOnMouseLeave(object? sender, EventArgs e)
+    {
+        if (_hotTabIndex >= 0)
+        {
+            _hotTabIndex = -1;
+            Invalidate();
         }
     }
 

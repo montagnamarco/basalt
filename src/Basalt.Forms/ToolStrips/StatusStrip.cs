@@ -141,7 +141,14 @@ public partial class StatusStrip : ToolStrip
     {
         if (!_sizingGrip) return;
 
+        if (PortableVisualStylesEnabled)
+        {
+            ToolStripPortablePainting.PaintSizeGrip(e.Graphics, SizeGripBounds, this);
+        }
+        else
+        {
+            ControlPaint.DrawSizeGrip(e.Graphics, BackColor, SizeGripBounds);
+        }
         Renderer.DrawStatusStripSizingGrip(new ToolStripRenderEventArgs(e.Graphics, this, SizeGripBounds, BackColor));
-        ControlPaint.DrawSizeGrip(e.Graphics, BackColor, SizeGripBounds);
     }
 }

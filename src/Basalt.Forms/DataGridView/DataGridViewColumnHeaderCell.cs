@@ -37,8 +37,8 @@ public class DataGridViewColumnHeaderCell : DataGridViewHeaderCell
         if (HasStyle) resolved.ApplyStyle(Style);
 
         if (resolved.Font is null) resolved.Font = DataGridView?.Font;
-        if (resolved.BackColor.IsEmpty) resolved.BackColor = SystemColors.Control;
-        if (resolved.ForeColor.IsEmpty) resolved.ForeColor = SystemColors.ControlText;
+        if (resolved.BackColor.IsEmpty) resolved.BackColor = DataGridView?.PortableHeaderBackColor ?? SystemColors.Control;
+        if (resolved.ForeColor.IsEmpty) resolved.ForeColor = DataGridView?.PortableHeaderTextColor ?? SystemColors.ControlText;
         if (resolved.Alignment == DataGridViewContentAlignment.NotSet) resolved.Alignment = DataGridViewContentAlignment.MiddleLeft;
 
         return resolved;
@@ -70,7 +70,11 @@ public class DataGridViewColumnHeaderCell : DataGridViewHeaderCell
 
         if (SortGlyphDirection == SortOrder.None) return;
 
-        ControlPaint.DrawButton(graphics, new Rectangle(textBounds.Right, cellBounds.Y, glyphWidth, cellBounds.Height), ButtonState.Normal);
+        var glyphBounds = new Rectangle(textBounds.Right, cellBounds.Y, glyphWidth, cellBounds.Height);
+        if (DataGridView?.PaintPortableHeader(graphics, glyphBounds, cellStyle, ButtonState.Normal, paintParts) != true)
+        {
+            ControlPaint.DrawButton(graphics, glyphBounds, ButtonState.Normal);
+        }
         PaintSortGlyph(graphics, new Rectangle(textBounds.Right + 2, cellBounds.Y + cellBounds.Height / 2 - 2, glyphWidth - 4, 4), cellStyle.ForeColor);
     }
 

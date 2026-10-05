@@ -17,7 +17,10 @@ internal readonly record struct WindowCaption(
     bool Maximized,
     bool Minimized,
     CaptionHitArea Pressed,
-    Icon? Icon = null);
+    Icon? Icon = null,
+    Color BorderColor = default,
+    Color BackColor = default,
+    Color TextColor = default);
 
 /// <summary>Where on a frame a point falls: what a press there does.</summary>
 internal enum CaptionHitArea

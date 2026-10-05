@@ -19,14 +19,19 @@ public partial class DateTimePicker
     /// <summary>Pushes the Calendar* properties onto the drop-down's MonthCalendar; harmless, and cheap, before it is shown.</summary>
     private void ApplyCalendarAppearance()
     {
-        if (_dropDownHolder is not { Calendar: var calendar }) return;
+        var holder = _dropDownHolder;
+        if (holder is null) return;
+
+        holder.VisualStylesOverride = PortableVisualStylesEnabled;
+        holder.VisualStylePlatformOverride = PortableVisualStylePlatform;
+        var calendar = holder.Calendar;
 
         calendar.Font = CalendarFont;
-        calendar.ForeColor = CalendarForeColor;
-        calendar.BackColor = CalendarMonthBackground;
-        calendar.TitleBackColor = CalendarTitleBackColor;
-        calendar.TitleForeColor = CalendarTitleForeColor;
-        calendar.TrailingForeColor = CalendarTrailingForeColor;
+        if (_calendarForeColor is { } foreColor) calendar.ForeColor = foreColor;
+        if (_calendarMonthBackground is { } background) calendar.BackColor = background;
+        if (_calendarTitleBackColor is { } titleBackground) calendar.TitleBackColor = titleBackground;
+        if (_calendarTitleForeColor is { } titleForeground) calendar.TitleForeColor = titleForeground;
+        if (_calendarTrailingForeColor is { } trailingForeground) calendar.TrailingForeColor = trailingForeground;
     }
 
     private void ToggleDropDown()
@@ -86,6 +91,8 @@ public partial class DateTimePicker
         {
             _owner = owner;
             SetTopLevel(true);
+            VisualStylesOverride = owner.PortableVisualStylesEnabled;
+            VisualStylePlatformOverride = owner.PortableVisualStylePlatform;
 
             Calendar = new MonthCalendar();
             Calendar.DateSelected += (_, _) => _owner.CloseDropDown(commit: true);

@@ -15,7 +15,7 @@ internal sealed class ClassicSkin : Skin
         // A window frame and title bar: only for a form that is not a top-level window.
         if (caption is { } title && (style & WindowStyles.Caption) == WindowStyles.Caption)
         {
-            bounds = DrawWindowFrame(graphics, bounds, style, exStyle, title.Active);
+            bounds = DrawWindowFrame(graphics, bounds, style, exStyle, title.Active, title.BorderColor);
             bounds = ClassicCaption.Draw(graphics, outerSize, bounds, style, exStyle, title);
         }
 
@@ -48,10 +48,21 @@ internal sealed class ClassicSkin : Skin
     /// in the active or inactive border colour, or of a dialog frame in the face colour, or a
     /// single dark line for a plain border. Returns what is inside it.
     /// </summary>
-    private static Rectangle DrawWindowFrame(Graphics graphics, Rectangle bounds, int style, int exStyle, bool active)
+    private static Rectangle DrawWindowFrame(Graphics graphics, Rectangle bounds, int style, int exStyle, bool active, Color customColor)
     {
         var sizing = (style & WindowStyles.ThickFrame) != 0;
         var dialog = (style & WindowStyles.DialogFrame) != 0 || (exStyle & WindowStyles.ExDialogModalFrame) != 0;
+
+        if (!customColor.IsEmpty)
+        {
+            var width = sizing ? NonClientArea.SizingFrameWidth : dialog ? NonClientArea.FixedFrameWidth : NonClientArea.BorderWidth;
+            for (var line = 0; line < width; line++)
+            {
+                DrawEdge(graphics, bounds, customColor, customColor);
+                bounds.Inflate(-1, -1);
+            }
+            return bounds;
+        }
 
         if (!sizing && !dialog)
         {

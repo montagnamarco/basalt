@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms.Internal;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
@@ -302,6 +303,17 @@ public abstract partial class UpDownBase : ContainerControl
 
     protected override void OnPaint(PaintEventArgs e)
     {
+        if (PortableVisualStylesEnabled && !HasExplicitAppearanceBackColor)
+        {
+            var palette = PortableVisualStyles.Palette(PortableVisualStylePlatform);
+            PaintPortableSpinButton(e.Graphics, UpButtonBounds(), pointingUp: true,
+                _pressedButton == SpinButton.Up, palette);
+            PaintPortableSpinButton(e.Graphics, DownButtonBounds(), pointingUp: false,
+                _pressedButton == SpinButton.Down, palette);
+            base.OnPaint(e);
+            return;
+        }
+
         var upState = ButtonState.Normal;
         var downState = ButtonState.Normal;
 
@@ -320,6 +332,32 @@ public abstract partial class UpDownBase : ContainerControl
         ControlPaint.DrawScrollButton(e.Graphics, DownButtonBounds(), ScrollButton.Down, downState);
 
         base.OnPaint(e);
+    }
+
+    private void PaintPortableSpinButton(Graphics graphics, Rectangle bounds, bool pointingUp,
+        bool pressed, PortableVisualStylePalette palette)
+    {
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+
+        var faceColor = Enabled && pressed ? palette.PressedFace : palette.Face;
+        using var face = new SolidBrush(faceColor);
+        using var border = new Pen(palette.Border);
+        graphics.FillRectangle(face, bounds);
+        graphics.DrawRectangle(border, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
+
+        // The fixed-size arrow must not extend into the adjacent button when
+        // a host constrains the control to just a few pixels.
+        if (bounds.Width < 8 || bounds.Height < 8) return;
+
+        var centerX = bounds.Left + bounds.Width / 2;
+        var centerY = bounds.Top + bounds.Height / 2 + (pressed ? 1 : 0);
+        var points = pointingUp
+            ? new[] { new Point(centerX - 3, centerY + 1), new Point(centerX + 3, centerY + 1), new Point(centerX, centerY - 2) }
+            : new[] { new Point(centerX - 3, centerY - 1), new Point(centerX + 3, centerY - 1), new Point(centerX, centerY + 2) };
+        var arrowColor = !Enabled ? palette.DisabledText
+            : HasExplicitAppearanceForeColor ? ForeColor : palette.Text;
+        using var arrow = new SolidBrush(arrowColor);
+        graphics.FillPolygon(arrow, points);
     }
 
     protected override void OnMouseDown(MouseEventArgs e)

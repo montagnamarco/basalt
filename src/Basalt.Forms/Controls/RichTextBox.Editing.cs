@@ -528,8 +528,16 @@ public partial class RichTextBox
     {
         get
         {
-            if (ShouldSerializeBackColor()) return BackColor;
+            if (ShouldSerializeBackColor() || (PortableVisualStylesEnabled && HasExplicitAppearanceBackColor))
+            {
+                return BackColor;
+            }
 
+            if (PortableVisualStylesEnabled)
+            {
+                var palette = Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform);
+                return Enabled && !ReadOnly ? palette.Field : palette.Surface;
+            }
             return Enabled && !ReadOnly ? SystemColors.Window : SystemColors.Control;
         }
     }
@@ -575,7 +583,8 @@ public partial class RichTextBox
                     graphics.FillRectangle(highlight, pieceLeft, top, piece.Width, line.Height);
                 }
 
-                using var brush = new SolidBrush(Enabled ? piece.Format.Color : SystemColors.GrayText);
+                using var brush = new SolidBrush(Enabled ? piece.Format.Color : PortableVisualStylesEnabled
+                    ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform).DisabledText : SystemColors.GrayText);
                 graphics.DrawString(piece.Text, font, brush, pieceLeft, offsetTop, TypographicFormat);
 
                 if (piece.Format.Underline) DrawUnderline(graphics, piece, pieceLeft, top, line.Height, brush);
@@ -616,14 +625,16 @@ public partial class RichTextBox
         var format = line.Pieces.Count > 0 ? line.Pieces[0].Format : _document.DefaultFormat;
         var font = fonts.Get(format, _zoomFactor);
 
-        using var brush = new SolidBrush(Enabled ? format.Color : SystemColors.GrayText);
+        using var brush = new SolidBrush(Enabled ? format.Color : PortableVisualStylesEnabled
+            ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform).DisabledText : SystemColors.GrayText);
         graphics.DrawString("•", font, brush, left - 14, top, TypographicFormat);
     }
 
     private static void DrawUnderline(Graphics graphics, RichLayout.Piece piece, float left, float top, float lineHeight, Brush brush)
     {
         var y = top + lineHeight - 2;
-        graphics.DrawLine(new Pen(brush is SolidBrush solid ? solid.Color : SystemColors.WindowText), left, y, left + piece.Width, y);
+        using var pen = new Pen(brush is SolidBrush solid ? solid.Color : SystemColors.WindowText);
+        graphics.DrawLine(pen, left, y, left + piece.Width, y);
     }
 
     private static void DrawStrikeout(Graphics graphics, RichLayout.Piece piece, float left, float top, float lineHeight, Brush brush)
@@ -643,8 +654,10 @@ public partial class RichTextBox
         var x2 = left + line.X(to) - line.Indent;
 
         var highlightArea = RectangleF.FromLTRB(x1, top, x2, top + line.Height);
-        var highlightBrush = Focused ? SystemColors.Highlight : SystemColors.Control;
-        var textBrush = Focused ? SystemColors.HighlightText : SystemColors.WindowText;
+        var palette = PortableVisualStylesEnabled
+            ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+        var highlightBrush = Focused ? palette?.Selection ?? SystemColors.Highlight : palette?.HotFace ?? SystemColors.Control;
+        var textBrush = Focused ? palette?.SelectedText ?? SystemColors.HighlightText : palette?.Text ?? SystemColors.WindowText;
 
         using var back = new SolidBrush(highlightBrush);
         graphics.FillRectangle(back, highlightArea);

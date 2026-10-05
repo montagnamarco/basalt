@@ -213,8 +213,15 @@ public partial class ComboBox
 
         if (_dropDownStyle != ComboBoxStyle.Simple)
         {
-            var buttonState = !Enabled ? ButtonState.Inactive : _droppedDown ? ButtonState.Pushed : ButtonState.Normal;
-            ControlPaint.DrawComboButton(graphics, ButtonBounds, buttonState);
+            if (PortableVisualStylesEnabled)
+            {
+                PaintPortableButton(graphics);
+            }
+            else
+            {
+                var buttonState = !Enabled ? ButtonState.Inactive : _droppedDown ? ButtonState.Pushed : ButtonState.Normal;
+                ControlPaint.DrawComboButton(graphics, ButtonBounds, buttonState);
+            }
         }
         else
         {
@@ -335,7 +342,10 @@ public partial class ComboBox
 
     private void PaintDropDownItems(Graphics graphics, Rectangle bounds)
     {
-        using (var back = new SolidBrush(SystemColors.Window)) graphics.FillRectangle(back, bounds);
+        using (var back = new SolidBrush(PortableVisualStylesEnabled ? EffectiveBackColor : SystemColors.Window))
+        {
+            graphics.FillRectangle(back, bounds);
+        }
 
         if (_items.Count == 0) return;
 
@@ -357,12 +367,17 @@ public partial class ComboBox
     private void PaintDropDownItem(Graphics graphics, int index, Rectangle bounds)
     {
         var highlighted = index == _dropDownHighlight;
-        var foreColor = highlighted ? SystemColors.HighlightText : EffectiveForeColor;
-        var backColor = highlighted ? SystemColors.Highlight : SystemColors.Window;
+        var foreColor = highlighted ? CollectionVisualAppearance.SelectionText(this, Focused) : EffectiveForeColor;
+        var backColor = highlighted ? CollectionVisualAppearance.SelectionField(this, Focused)
+            : PortableVisualStylesEnabled ? EffectiveBackColor : SystemColors.Window;
 
         if (_drawMode != DrawMode.Normal)
         {
             var state = highlighted ? DrawItemState.Selected : DrawItemState.None;
+            if (!Enabled)
+            {
+                state |= DrawItemState.Disabled;
+            }
 
             using var args = new DrawItemEventArgs(graphics, Font, bounds, index, state, foreColor, backColor);
             OnDrawItem(args);

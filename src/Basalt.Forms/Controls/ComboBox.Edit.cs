@@ -191,8 +191,8 @@ public partial class ComboBox
         if (!IsEditable)
         {
             var highlighted = Focused;
-            var readOnlyForeColor = highlighted ? SystemColors.HighlightText : EffectiveForeColor;
-            var readOnlyBackColor = highlighted ? SystemColors.Highlight : EffectiveBackColor;
+            var readOnlyForeColor = highlighted ? CollectionVisualAppearance.SelectionText(this, Focused) : EffectiveForeColor;
+            var readOnlyBackColor = highlighted ? CollectionVisualAppearance.SelectionField(this, Focused) : EffectiveBackColor;
 
             using (var brush = new SolidBrush(readOnlyBackColor)) graphics.FillRectangle(brush, bounds);
 
@@ -226,13 +226,13 @@ public partial class ComboBox
             var x1 = left + line.X(SelectionStart);
             var x2 = left + line.X(SelectionStart + SelectionLength);
 
-            using var selectionBrush = new SolidBrush(SystemColors.Highlight);
+            using var selectionBrush = new SolidBrush(CollectionVisualAppearance.SelectionField(this, Focused));
             var highlight = RectangleF.FromLTRB(x1, top, x2, top + _view.LineHeight);
             graphics.FillRectangle(selectionBrush, highlight);
 
             var clipState = graphics.Save();
             graphics.IntersectClip(highlight);
-            using var selectedTextBrush = new SolidBrush(SystemColors.HighlightText);
+            using var selectedTextBrush = new SolidBrush(CollectionVisualAppearance.SelectionText(this, Focused));
             graphics.DrawString(_editor.Text, Font, selectedTextBrush, left, top, format);
             graphics.Restore(clipState);
         }
@@ -242,7 +242,7 @@ public partial class ComboBox
             var line = _view.Lines.Count > 0 ? _view.Lines[0] : new TextView.Line(0, 0, [0f]);
             var x = (int)Math.Round(left + line.X(_editor.Caret));
 
-            using var caretBrush = new SolidBrush(SystemColors.WindowText);
+            using var caretBrush = new SolidBrush(PortableVisualStylesEnabled ? EffectiveForeColor : SystemColors.WindowText);
             graphics.FillRectangle(caretBrush, x, (int)top, 1, _view.LineHeight);
         }
 

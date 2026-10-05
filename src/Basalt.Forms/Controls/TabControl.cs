@@ -46,6 +46,7 @@ public partial class TabControl : Control
         // Native in WinForms: DefaultPaint and DefaultMouseDown draw and hit-test the strip, not OnPaint/OnMouseDown.
         SetStyle(ControlStyles.UserPaint, false);
         SetStyle(ControlStyles.Selectable, true);
+        MouseLeave += ClearHotTabOnMouseLeave;
     }
 
     protected override Size DefaultSize => new(200, 100);
@@ -96,7 +97,14 @@ public partial class TabControl : Control
     public bool HotTrack
     {
         get => _hotTrack;
-        set => _hotTrack = value;
+        set
+        {
+            if (value == _hotTrack) return;
+
+            _hotTrack = value;
+            if (!value) _hotTabIndex = -1;
+            Invalidate();
+        }
     }
 
     [DefaultValue(null)]

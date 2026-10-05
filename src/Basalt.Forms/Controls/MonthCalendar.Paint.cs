@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Globalization;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
@@ -10,6 +11,8 @@ namespace System.Windows.Forms;
 /// </summary>
 public partial class MonthCalendar
 {
+    private bool UsePortableCalendarAppearance => PortableVisualStylesEnabled && !HasExplicitAppearanceBackColor;
+
     private const int OuterMargin = 4;
 
     /// <summary>The sizes everything else in the grid is measured from, at the current font.</summary>
@@ -179,27 +182,48 @@ public partial class MonthCalendar
 
     private void PaintTitleBar(Graphics graphics, DisplayLayout layout)
     {
-        using (var back = new SolidBrush(_titleBackColor))
+        var palette = UsePortableCalendarAppearance
+            ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+        var titleBackColor = palette is not null && !_titleBackColorExplicit ? palette.Face : _titleBackColor;
+        var titleForeColor = palette is not null && !_titleForeColorExplicit ? palette.Text : _titleForeColor;
+
+        using (var back = new SolidBrush(titleBackColor))
         {
             graphics.FillRectangle(back, layout.TitleBar);
         }
 
+        if (palette is not null)
+        {
+            using var border = new Pen(palette.Border);
+            graphics.DrawLine(border, layout.TitleBar.Left, layout.TitleBar.Bottom - 1,
+                layout.TitleBar.Right - 1, layout.TitleBar.Bottom - 1);
+        }
+
         // The navigation arrows are flat glyphs on the caption band, not raised
         // buttons: a 3D bevel in the control's face colour would not sit on it.
-        DrawTitleArrow(graphics, layout.PrevButton, pointingRight: false, _pressedArrow == ArrowButton.Prev);
-        DrawTitleArrow(graphics, layout.NextButton, pointingRight: true, _pressedArrow == ArrowButton.Next);
+        DrawTitleArrow(graphics, layout.PrevButton, pointingRight: false,
+            _pressedArrow == ArrowButton.Prev, titleForeColor, palette);
+        DrawTitleArrow(graphics, layout.NextButton, pointingRight: true,
+            _pressedArrow == ArrowButton.Next, titleForeColor, palette);
 
         var monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(_currentMonth.Month);
         var text = $"{monthName} {_currentMonth.Year}";
         var textArea = Rectangle.Union(layout.TitleMonthText, layout.TitleYearText);
 
         using var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-        using var brush = new SolidBrush(_titleForeColor);
+        using var brush = new SolidBrush(titleForeColor);
         graphics.DrawString(text, Font, brush, (RectangleF)textArea, format);
     }
 
-    private void DrawTitleArrow(Graphics graphics, Rectangle area, bool pointingRight, bool pressed)
+    private void DrawTitleArrow(Graphics graphics, Rectangle area, bool pointingRight, bool pressed,
+        Color arrowColor, PortableVisualStylePalette? palette)
     {
+        if (pressed && palette is not null)
+        {
+            using var pressedFace = new SolidBrush(palette.PressedFace);
+            graphics.FillRectangle(pressedFace, area);
+        }
+
         if (pressed) area.Offset(1, 1);
 
         var cx = area.Left + area.Width / 2;
@@ -210,7 +234,7 @@ public partial class MonthCalendar
             ? [new Point(cx - half, cy - half), new Point(cx - half, cy + half), new Point(cx + half, cy)]
             : [new Point(cx + half, cy - half), new Point(cx + half, cy + half), new Point(cx - half, cy)];
 
-        using var brush = new SolidBrush(_titleForeColor);
+        using var brush = new SolidBrush(Enabled ? arrowColor : palette?.DisabledText ?? arrowColor);
         graphics.FillPolygon(brush, points);
     }
 
@@ -222,7 +246,11 @@ public partial class MonthCalendar
         }
 
         using var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-        using var brush = new SolidBrush(ForeColor);
+        var palette = UsePortableCalendarAppearance
+            ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+        var textColor = !Enabled ? palette?.DisabledText ?? SystemColors.GrayText
+            : palette is not null && !HasExplicitAppearanceForeColor ? palette.Text : ForeColor;
+        using var brush = new SolidBrush(textColor);
 
         var culture = CultureInfo.CurrentCulture;
         var firstDow = ResolvedFirstDayOfWeek();
@@ -237,6 +265,8 @@ public partial class MonthCalendar
 
     private void PaintGrid(Graphics graphics, DisplayLayout layout)
     {
+        var palette = UsePortableCalendarAppearance
+            ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
         using (var back = new SolidBrush(BackColor))
         {
             graphics.FillRectangle(back, layout.Grid);
@@ -256,20 +286,35 @@ public partial class MonthCalendar
             {
                 if (Focused)
                 {
-                    using var highlight = new SolidBrush(SystemColors.Highlight);
+                    using var highlight = new SolidBrush(palette?.Selection ?? SystemColors.Highlight);
                     graphics.FillRectangle(highlight, cell);
                 }
                 else
                 {
-                    using var outline = new Pen(SystemColors.Highlight);
+                    using var outline = new Pen(palette?.Selection ?? SystemColors.Highlight);
                     graphics.DrawRectangle(outline, cell.Left, cell.Top, cell.Width - 1, cell.Height - 1);
                 }
             }
 
-            var color = selected && Focused
-                ? SystemColors.HighlightText
-                : !inCurrentMonth ? _trailingForeColor
-                : Enabled ? ForeColor : SystemColors.GrayText;
+            Color color;
+            if (selected && Focused)
+            {
+                color = palette?.SelectedText ?? SystemColors.HighlightText;
+            }
+            else if (!inCurrentMonth)
+            {
+                color = palette is not null && !_trailingForeColorExplicit
+                    ? palette.DisabledText : _trailingForeColor;
+            }
+            else if (!Enabled)
+            {
+                color = palette?.DisabledText ?? SystemColors.GrayText;
+            }
+            else
+            {
+                color = palette is not null && !HasExplicitAppearanceForeColor
+                    ? palette.Text : ForeColor;
+            }
 
             var font = IsBoldDate(date) ? boldFont : Font;
 
@@ -282,15 +327,25 @@ public partial class MonthCalendar
             {
                 var circle = new Rectangle(cell.Left + 2, cell.Top + 1, cell.Width - 4, cell.Height - 3);
 
-                // Windows circles today in a fixed red regardless of the active
-                // theme's colours, so this is deliberately not a SystemColor.
-                graphics.DrawEllipse(Pens.Red, circle);
+                // The classic calendar uses red for today; portable profiles
+                // use the same accent as the selected date.
+                if (palette is null)
+                {
+                    graphics.DrawEllipse(Pens.Red, circle);
+                }
+                else
+                {
+                    using var todayBorder = new Pen(palette.Accent);
+                    graphics.DrawEllipse(todayBorder, circle);
+                }
             }
         }
     }
 
     private void PaintFooter(Graphics graphics, DisplayLayout layout)
     {
+        var palette = UsePortableCalendarAppearance
+            ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
         using (var back = new SolidBrush(BackColor))
         {
             graphics.FillRectangle(back, layout.Footer);
@@ -298,13 +353,23 @@ public partial class MonthCalendar
 
         var bulletSize = Math.Min(layout.Footer.Height - 6, 10);
         var bulletRect = new Rectangle(layout.Footer.Left + 4, layout.Footer.Top + (layout.Footer.Height - bulletSize) / 2, bulletSize, bulletSize);
-        graphics.DrawEllipse(Pens.Red, bulletRect);
+        if (palette is null)
+        {
+            graphics.DrawEllipse(Pens.Red, bulletRect);
+        }
+        else
+        {
+            using var todayBorder = new Pen(palette.Accent);
+            graphics.DrawEllipse(todayBorder, bulletRect);
+        }
 
         var text = $"Today: {_todayDate.ToShortDateString()}";
         var textArea = Rectangle.FromLTRB(bulletRect.Right + 6, layout.Footer.Top, layout.Footer.Right, layout.Footer.Bottom);
 
         using var format = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
-        using var brush = new SolidBrush(Enabled ? ForeColor : SystemColors.GrayText);
+        var textColor = !Enabled ? palette?.DisabledText ?? SystemColors.GrayText
+            : palette is not null && !HasExplicitAppearanceForeColor ? palette.Text : ForeColor;
+        using var brush = new SolidBrush(textColor);
         graphics.DrawString(text, Font, brush, (RectangleF)textArea, format);
     }
 

@@ -200,7 +200,13 @@ public partial class CheckBox : ButtonBase
         if (!Enabled) state |= ButtonState.Inactive;
         if (InputPressed) state |= ButtonState.Pushed;
 
-        if (_checkState == CheckState.Indeterminate)
+        if (PortableVisualStylesEnabled && FlatStyle is not (FlatStyle.Flat or FlatStyle.Popup))
+        {
+            Internal.Rendering.PortableVisualStyles.PaintGlyph(graphics, layout.Glyph,
+                Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform),
+                radio: false, Checked, _checkState == CheckState.Indeterminate, InputPressed, Enabled);
+        }
+        else if (_checkState == CheckState.Indeterminate)
         {
             ControlPaint.DrawMixedCheckBox(graphics, layout.Glyph, state | ButtonState.Checked);
         }

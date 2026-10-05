@@ -116,7 +116,7 @@ public partial class Control
     }
 
     /// <summary>The window this control is the top of was told something needs painting.</summary>
-    internal virtual void RequestPaint() => Canvas?.InvalidateVisual();
+    internal virtual void RequestPaint() => Canvas?.RequestFrame();
 
     public event PaintEventHandler? Paint
     {
@@ -359,6 +359,7 @@ public partial class Control
 
         using var graphics = Graphics.FromCanvas(canvas);
         Skin.Current.DrawNonClientFrame(graphics, Size, parameters.Style, parameters.ExStyle, GetWindowScroll(vertical: false), GetWindowScroll(vertical: true), NonClientCaption);
+        PaintPortableNonClient(graphics, parameters.Style, parameters.ExStyle);
     }
 
     /// <summary>Draws the control, frame and children included, into the bitmap at the target bounds.</summary>

@@ -820,6 +820,12 @@ public abstract partial class TextBoxBase : Control
         {
             if (ShouldSerializeBackColor()) return BackColor;
 
+            if (PortableVisualStylesEnabled)
+            {
+                var palette = Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform);
+                return Enabled && !_readOnly ? palette.Field : palette.Surface;
+            }
+
             return Enabled && !_readOnly ? SystemColors.Window : SystemColors.Control;
         }
     }
@@ -852,10 +858,13 @@ public abstract partial class TextBoxBase : Control
     private void PaintLines(Graphics graphics, Rectangle area)
     {
         var display = DisplayPasswordChar == '\0' ? _editor.Text : new string(DisplayPasswordChar, _editor.Length);
-        var foreColor = Enabled ? (ShouldSerializeForeColor() ? ForeColor : SystemColors.WindowText) : SystemColors.GrayText;
+        var palette = PortableVisualStylesEnabled
+            ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+        var foreColor = Enabled ? (HasExplicitAppearanceForeColor ? ForeColor : palette?.Text ?? SystemColors.WindowText)
+            : palette?.DisabledText ?? SystemColors.GrayText;
         var showSelection = SelectionLength > 0 && (Focused || !_hideSelection);
-        var selectionBack = Focused ? SystemColors.Highlight : SystemColors.Control;
-        var selectionFore = Focused ? SystemColors.HighlightText : SystemColors.WindowText;
+        var selectionBack = Focused ? palette?.Selection ?? SystemColors.Highlight : palette?.HotFace ?? SystemColors.Control;
+        var selectionFore = Focused ? palette?.SelectedText ?? SystemColors.HighlightText : palette?.Text ?? SystemColors.WindowText;
 
         using var format = (StringFormat)StringFormat.GenericTypographic.Clone();
         format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces | StringFormatFlags.NoWrap | StringFormatFlags.NoClip;
@@ -908,7 +917,7 @@ public abstract partial class TextBoxBase : Control
             var x = (int)Math.Round(area.Left - _scrollX + AlignmentOffset(line.Width, area.Width) + caret.X);
             var y = (int)Math.Round(area.Top + caret.Y - _scrollY);
 
-            using var caretBrush = new SolidBrush(SystemColors.WindowText);
+            using var caretBrush = new SolidBrush(palette?.Text ?? SystemColors.WindowText);
             graphics.FillRectangle(caretBrush, x, y, 1, _view.LineHeight);
         }
     }

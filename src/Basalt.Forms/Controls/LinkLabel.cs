@@ -32,6 +32,10 @@ public partial class LinkLabel : Label, IButtonControl
     private LinkArea _linkArea = new(0, -1);
     private Link? _autoLink;
 
+    private bool _portableLinkColorExplicit;
+    private bool _portableActiveLinkColorExplicit;
+    private bool _portableDisabledLinkColorExplicit;
+
     private Color _linkColor = Color.FromArgb(0, 0, 255);
     private Color _activeLinkColor = Color.Red;
     private Color _visitedLinkColor = Color.FromArgb(128, 0, 128);
@@ -62,7 +66,8 @@ public partial class LinkLabel : Label, IButtonControl
         get => _activeLinkColor;
         set
         {
-            if (value == _activeLinkColor) return;
+            if (value == _activeLinkColor && _portableActiveLinkColorExplicit) return;
+            _portableActiveLinkColorExplicit = true;
 
             _activeLinkColor = value;
             Invalidate();
@@ -74,7 +79,8 @@ public partial class LinkLabel : Label, IButtonControl
         get => _disabledLinkColor;
         set
         {
-            if (value == _disabledLinkColor) return;
+            if (value == _disabledLinkColor && _portableDisabledLinkColorExplicit) return;
+            _portableDisabledLinkColorExplicit = true;
 
             _disabledLinkColor = value;
             Invalidate();
@@ -123,7 +129,8 @@ public partial class LinkLabel : Label, IButtonControl
         get => _linkColor;
         set
         {
-            if (value == _linkColor) return;
+            if (value == _linkColor && _portableLinkColorExplicit) return;
+            _portableLinkColorExplicit = true;
 
             _linkColor = value;
             Invalidate();
@@ -390,7 +397,9 @@ public partial class LinkLabel : Label, IButtonControl
         var graphics = e.Graphics;
         var bounds = TextBounds();
         var flags = TextFlags();
-        var baseColor = Enabled ? ForeColor : SystemColors.GrayText;
+        var baseColor = Enabled ? ForeColor : PortableVisualStylesEnabled
+            ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform).DisabledText
+            : SystemColors.GrayText;
 
         TextRenderer.DrawText(graphics, Text, Font, bounds, baseColor, flags);
 
@@ -454,11 +463,19 @@ public partial class LinkLabel : Label, IButtonControl
 
     private Color ResolveLinkColor(Link link)
     {
-        if (!Enabled || !link.Enabled) return DisabledLinkColor;
-        if (ReferenceEquals(link, _mouseActiveLink)) return ActiveLinkColor;
+        var palette = PortableVisualStylesEnabled
+            ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+        if (!Enabled || !link.Enabled)
+        {
+            return palette is not null && !_portableDisabledLinkColorExplicit ? palette.DisabledText : DisabledLinkColor;
+        }
+        if (ReferenceEquals(link, _mouseActiveLink))
+        {
+            return palette is not null && !_portableActiveLinkColorExplicit ? palette.Accent : ActiveLinkColor;
+        }
         if (link.Visited) return VisitedLinkColor;
 
-        return LinkColor;
+        return palette is not null && !_portableLinkColorExplicit ? palette.Accent : LinkColor;
     }
 
     private bool ShouldUnderline(Link link, int index)

@@ -22,7 +22,9 @@ public partial class Control
         {
             if (!_backColor.IsEmpty) return _backColor;
 
-            return _parent is not null && ShouldInheritParentBackColor() ? _parent.BackColor : DefaultBackColor;
+            return _parent is not null && ShouldInheritParentBackColor() ? _parent.BackColor
+                : PortableVisualStylesEnabled ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform).Surface
+                : DefaultBackColor;
         }
         set
         {
@@ -50,7 +52,8 @@ public partial class Control
         {
             if (!_foreColor.IsEmpty) return _foreColor;
 
-            return _parent?.ForeColor ?? DefaultForeColor;
+            return _parent?.ForeColor ?? (PortableVisualStylesEnabled
+                ? Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform).Text : DefaultForeColor);
         }
         set
         {
@@ -73,7 +76,10 @@ public partial class Control
             if (_font is not null) return _font;
             if (_parent is not null) return _parent.Font;
 
-            return AmbientFont() ?? DefaultFont;
+            return AmbientFont() ?? Application.DefaultFontOverride
+                ?? (PortableVisualStylesEnabled
+                    ? Internal.Rendering.PortableVisualStyles.DefaultFont(PortableVisualStylePlatform)
+                    : SystemFonts.DefaultFont);
         }
         set
         {
@@ -137,11 +143,14 @@ public partial class Control
 
     /// <summary>
     /// The font of controls that set none: the application's, set with
-    /// Application.SetDefaultFont, else Microsoft Sans Serif 8.25 points, the
-    /// font of Windows 2000 and of .NET Framework forms (a stand-in with the
-    /// same metrics on systems without it).
+    /// Application.SetDefaultFont, else the portable platform font when visual
+    /// styles are enabled, else the classic Microsoft Sans Serif default.
+    /// The existing font resolver supplies an installed fallback when needed.
     /// </summary>
-    public static Font DefaultFont => Application.DefaultFontOverride ?? SystemFonts.DefaultFont;
+    public static Font DefaultFont => Application.DefaultFontOverride
+        ?? (Application.UseVisualStyles
+            ? Internal.Rendering.PortableVisualStyles.DefaultFont(Internal.Rendering.PortableVisualStyles.CurrentPlatform)
+            : SystemFonts.DefaultFont);
 
     protected virtual void OnBackColorChanged(EventArgs e)
     {
@@ -414,7 +423,9 @@ public partial class Control
     {
         if (IsDisposingInHierarchy()) return;
 
-        if (GetStyle(ControlStyles.UserPaint)) Invalidate();
+        // Native-style controls are also painted into our managed canvas.
+        // Their cached picture must change when their enabled state changes.
+        Invalidate();
 
         ((EventHandler?)Events[s_enabledEvent])?.Invoke(this, e);
 

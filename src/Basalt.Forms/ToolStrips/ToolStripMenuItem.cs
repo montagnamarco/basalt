@@ -371,10 +371,11 @@ public class ToolStripMenuItem : ToolStripDropDownItem
         var textRight = contentRight - arrowWidth - shortcutWidth;
         var textRect = new Rectangle(textLeft, contentTop, Math.Max(textRight - textLeft, 0), contentHeight);
 
-        var textColor = owner is MenuStrip && Selected ? SystemColors.HighlightText : ForeColor;
+        // Professional menu selection uses a pale fill, so white highlight text disappears.
+        var textColor = ForeColor;
         var format = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | (onMenuBar ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left);
 
-        if (Enabled)
+        if (Enabled || Owner is { PortableVisualStylesEnabled: true })
         {
             renderer.DrawItemText(new ToolStripItemTextRenderEventArgs(e.Graphics, this, Text, textRect, textColor, Font, format));
         }

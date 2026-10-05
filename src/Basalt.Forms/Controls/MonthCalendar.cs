@@ -56,6 +56,9 @@ public partial class MonthCalendar : Control
     private Color _titleBackColor = SystemColors.ActiveCaption;
     private Color _titleForeColor = SystemColors.ActiveCaptionText;
     private Color _trailingForeColor = SystemColors.GrayText;
+    private bool _titleBackColorExplicit;
+    private bool _titleForeColorExplicit;
+    private bool _trailingForeColorExplicit;
 
     public MonthCalendar()
     {
@@ -130,8 +133,8 @@ public partial class MonthCalendar : Control
         get => _titleBackColor;
         set
         {
-            if (value == _titleBackColor) return;
-
+            if (value == _titleBackColor && _titleBackColorExplicit) return;
+            _titleBackColorExplicit = true;
             _titleBackColor = value;
             Invalidate();
         }
@@ -142,8 +145,8 @@ public partial class MonthCalendar : Control
         get => _titleForeColor;
         set
         {
-            if (value == _titleForeColor) return;
-
+            if (value == _titleForeColor && _titleForeColorExplicit) return;
+            _titleForeColorExplicit = true;
             _titleForeColor = value;
             Invalidate();
         }
@@ -154,8 +157,8 @@ public partial class MonthCalendar : Control
         get => _trailingForeColor;
         set
         {
-            if (value == _trailingForeColor) return;
-
+            if (value == _trailingForeColor && _trailingForeColorExplicit) return;
+            _trailingForeColorExplicit = true;
             _trailingForeColor = value;
             Invalidate();
         }

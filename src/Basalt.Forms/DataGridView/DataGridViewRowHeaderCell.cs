@@ -33,8 +33,8 @@ public class DataGridViewRowHeaderCell : DataGridViewHeaderCell
         if (HasStyle) resolved.ApplyStyle(Style);
 
         if (resolved.Font is null) resolved.Font = DataGridView?.Font;
-        if (resolved.BackColor.IsEmpty) resolved.BackColor = SystemColors.Control;
-        if (resolved.ForeColor.IsEmpty) resolved.ForeColor = SystemColors.ControlText;
+        if (resolved.BackColor.IsEmpty) resolved.BackColor = DataGridView?.PortableHeaderBackColor ?? SystemColors.Control;
+        if (resolved.ForeColor.IsEmpty) resolved.ForeColor = DataGridView?.PortableHeaderTextColor ?? SystemColors.ControlText;
 
         return resolved;
     }
@@ -57,7 +57,15 @@ public class DataGridViewRowHeaderCell : DataGridViewHeaderCell
         DataGridViewAdvancedBorderStyle advancedBorderStyle,
         DataGridViewPaintParts paintParts)
     {
-        ControlPaint.DrawButton(graphics, cellBounds, ButtonState);
+        var portableHeader = DataGridView?.PaintPortableHeader(graphics, cellBounds, cellStyle, ButtonState, paintParts) == true;
+        if (!portableHeader)
+        {
+            ControlPaint.DrawButton(graphics, cellBounds, ButtonState);
+            if ((paintParts & DataGridViewPaintParts.Border) != 0)
+            {
+                PaintHeaderBorders(graphics, cellBounds, advancedBorderStyle);
+            }
+        }
 
         if (DataGridView is not { } grid || rowIndex != grid.CurrentCellAddress.Y) return;
 

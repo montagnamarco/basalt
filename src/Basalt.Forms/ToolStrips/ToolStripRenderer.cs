@@ -3,9 +3,9 @@ using System.Drawing;
 namespace System.Windows.Forms;
 
 /// <summary>
-/// Paints a <see cref="ToolStrip"/> and its items. The base class only
-/// raises the matching Render* event; <see cref="ToolStripSystemRenderer"/>
-/// and <see cref="ToolStripProfessionalRenderer"/> do the actual drawing.
+/// Paints a <see cref="ToolStrip"/> and its items. Public Draw methods call
+/// the virtual painter before notifying Render* subscribers, so custom
+/// event painting remains above the renderer's default pixels.
 /// </summary>
 public abstract partial class ToolStripRenderer
 {
@@ -83,41 +83,113 @@ public abstract partial class ToolStripRenderer
         return bitmap;
     }
 
-    public void DrawArrow(ToolStripArrowRenderEventArgs e) => OnRenderArrow(e);
+    public void DrawArrow(ToolStripArrowRenderEventArgs e)
+    {
+        OnRenderArrow(e);
+        RenderArrow?.Invoke(this, e);
+    }
 
-    public void DrawButtonBackground(ToolStripItemRenderEventArgs e) => OnRenderButtonBackground(e);
+    public void DrawButtonBackground(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderButtonBackground(e);
+        RenderButtonBackground?.Invoke(this, e);
+    }
 
-    public void DrawDropDownButtonBackground(ToolStripItemRenderEventArgs e) => OnRenderDropDownButtonBackground(e);
+    public void DrawDropDownButtonBackground(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderDropDownButtonBackground(e);
+        RenderDropDownButtonBackground?.Invoke(this, e);
+    }
 
-    public void DrawGrip(ToolStripGripRenderEventArgs e) => OnRenderGrip(e);
+    public void DrawGrip(ToolStripGripRenderEventArgs e)
+    {
+        OnRenderGrip(e);
+        RenderGrip?.Invoke(this, e);
+    }
 
-    public void DrawImageMargin(ToolStripRenderEventArgs e) => OnRenderImageMargin(e);
+    public void DrawImageMargin(ToolStripRenderEventArgs e)
+    {
+        OnRenderImageMargin(e);
+        RenderImageMargin?.Invoke(this, e);
+    }
 
-    public void DrawItemBackground(ToolStripItemRenderEventArgs e) => OnRenderItemBackground(e);
+    public void DrawItemBackground(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderItemBackground(e);
+        RenderItemBackground?.Invoke(this, e);
+    }
 
-    public void DrawItemCheck(ToolStripItemImageRenderEventArgs e) => OnRenderItemCheck(e);
+    public void DrawItemCheck(ToolStripItemImageRenderEventArgs e)
+    {
+        OnRenderItemCheck(e);
+        RenderItemCheck?.Invoke(this, e);
+    }
 
-    public void DrawItemImage(ToolStripItemImageRenderEventArgs e) => OnRenderItemImage(e);
+    public void DrawItemImage(ToolStripItemImageRenderEventArgs e)
+    {
+        OnRenderItemImage(e);
+        RenderItemImage?.Invoke(this, e);
+    }
 
-    public void DrawItemText(ToolStripItemTextRenderEventArgs e) => OnRenderItemText(e);
+    public void DrawItemText(ToolStripItemTextRenderEventArgs e)
+    {
+        OnRenderItemText(e);
+        RenderItemText?.Invoke(this, e);
+    }
 
-    public void DrawLabelBackground(ToolStripItemRenderEventArgs e) => OnRenderLabelBackground(e);
+    public void DrawLabelBackground(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderLabelBackground(e);
+        RenderLabelBackground?.Invoke(this, e);
+    }
 
-    public void DrawMenuItemBackground(ToolStripItemRenderEventArgs e) => OnRenderMenuItemBackground(e);
+    public void DrawMenuItemBackground(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderMenuItemBackground(e);
+        RenderMenuItemBackground?.Invoke(this, e);
+    }
 
-    public void DrawOverflowButtonBackground(ToolStripItemRenderEventArgs e) => OnRenderOverflowButtonBackground(e);
+    public void DrawOverflowButtonBackground(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderOverflowButtonBackground(e);
+        RenderOverflowButtonBackground?.Invoke(this, e);
+    }
 
-    public void DrawSeparator(ToolStripSeparatorRenderEventArgs e) => OnRenderSeparator(e);
+    public void DrawSeparator(ToolStripSeparatorRenderEventArgs e)
+    {
+        OnRenderSeparator(e);
+        RenderSeparator?.Invoke(this, e);
+    }
 
-    public void DrawSplitButton(ToolStripItemRenderEventArgs e) => OnRenderSplitButtonBackground(e);
+    public void DrawSplitButton(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderSplitButtonBackground(e);
+        RenderSplitButtonBackground?.Invoke(this, e);
+    }
 
-    public void DrawStatusStripSizingGrip(ToolStripRenderEventArgs e) => OnRenderStatusStripSizingGrip(e);
+    public void DrawStatusStripSizingGrip(ToolStripRenderEventArgs e)
+    {
+        OnRenderStatusStripSizingGrip(e);
+        RenderStatusStripSizingGrip?.Invoke(this, e);
+    }
 
-    public void DrawToolStripBackground(ToolStripRenderEventArgs e) => OnRenderToolStripBackground(e);
+    public void DrawToolStripBackground(ToolStripRenderEventArgs e)
+    {
+        OnRenderToolStripBackground(e);
+        RenderToolStripBackground?.Invoke(this, e);
+    }
 
-    public void DrawToolStripBorder(ToolStripRenderEventArgs e) => OnRenderToolStripBorder(e);
+    public void DrawToolStripBorder(ToolStripRenderEventArgs e)
+    {
+        OnRenderToolStripBorder(e);
+        RenderToolStripBorder?.Invoke(this, e);
+    }
 
-    public void DrawToolStripStatusLabelBackground(ToolStripItemRenderEventArgs e) => OnRenderToolStripStatusLabelBackground(e);
+    public void DrawToolStripStatusLabelBackground(ToolStripItemRenderEventArgs e)
+    {
+        OnRenderToolStripStatusLabelBackground(e);
+        RenderToolStripStatusLabelBackground?.Invoke(this, e);
+    }
 
     protected virtual void Initialize(ToolStrip toolStrip)
     {
@@ -130,25 +202,51 @@ public abstract partial class ToolStripRenderer
     {
     }
 
-    protected virtual void OnRenderArrow(ToolStripArrowRenderEventArgs e) => RenderArrow?.Invoke(this, e);
+    protected virtual void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+    {
+        if (this is ToolStripSystemRenderer systemRenderer)
+        {
+            systemRenderer.PaintSystemArrow(e);
+        }
+    }
 
-    protected virtual void OnRenderButtonBackground(ToolStripItemRenderEventArgs e) => RenderButtonBackground?.Invoke(this, e);
+    protected virtual void OnRenderButtonBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderDropDownButtonBackground(ToolStripItemRenderEventArgs e) => RenderDropDownButtonBackground?.Invoke(this, e);
+    protected virtual void OnRenderDropDownButtonBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderGrip(ToolStripGripRenderEventArgs e) => RenderGrip?.Invoke(this, e);
+    protected virtual void OnRenderGrip(ToolStripGripRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderImageMargin(ToolStripRenderEventArgs e) => RenderImageMargin?.Invoke(this, e);
+    protected virtual void OnRenderImageMargin(ToolStripRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderItemBackground(ToolStripItemRenderEventArgs e) => RenderItemBackground?.Invoke(this, e);
+    protected virtual void OnRenderItemBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
     /// <summary>The classic default: a sunken square in the image margin, with a check mark glyph inside.</summary>
     protected virtual void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
     {
-        RenderItemCheck?.Invoke(this, e);
-
         var bounds = e.ImageRectangle;
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
+
+        if (e.ToolStrip is { PortableVisualStylesEnabled: true } strip)
+        {
+            var palette = Internal.Rendering.PortableVisualStyles.Palette(strip.PortableVisualStylePlatform);
+            using var portableFace = new SolidBrush(e.Item.HasExplicitPortableBackColor ? e.Item.BackColor : palette.PressedFace);
+            e.Graphics.FillRectangle(portableFace, bounds);
+            using var border = new Pen(palette.Border);
+            e.Graphics.DrawRectangle(border, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
+            ControlPaint.DrawMenuGlyph(e.Graphics, Rectangle.Inflate(bounds, -2, -2), MenuGlyph.Checkmark,
+                e.Item.Enabled ? palette.Text : palette.DisabledText, Color.Empty);
+            return;
+        }
 
         using var face = new SolidBrush(SystemColors.ControlLight);
         e.Graphics.FillRectangle(face, bounds);
@@ -159,41 +257,71 @@ public abstract partial class ToolStripRenderer
     /// <summary>The item's own image, drawn at the rectangle the layout (or an item's own paint) worked out.</summary>
     protected virtual void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
     {
-        RenderItemImage?.Invoke(this, e);
-
-        if (e.Image is null || e.ImageRectangle.Width <= 0 || e.ImageRectangle.Height <= 0) return;
-
-        if (e.Item.Enabled) e.Graphics.DrawImage(e.Image, e.ImageRectangle);
-        else ControlPaint.DrawImageDisabled(e.Graphics, e.Image, e.ImageRectangle.Left, e.ImageRectangle.Top, SystemColors.Control);
+        if (e.Image is not null && e.ImageRectangle.Width > 0 && e.ImageRectangle.Height > 0)
+        {
+            if (e.Item.Enabled)
+            {
+                e.Graphics.DrawImage(e.Image, e.ImageRectangle);
+            }
+            else
+            {
+                ControlPaint.DrawImageDisabled(e.Graphics, e.Image, e.ImageRectangle.Left, e.ImageRectangle.Top, SystemColors.Control);
+            }
+        }
     }
 
     /// <summary>The item's own caption, in its own colour and font.</summary>
     protected virtual void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
     {
-        RenderItemText?.Invoke(this, e);
+        if (e.ToolStrip is { PortableVisualStylesEnabled: true } strip
+            && !e.Item.HasExplicitPortableForeColor && !strip.HasExplicitAppearanceForeColor
+            && (e.TextColor == e.Item.ForeColor || !e.Item.Enabled && e.TextColor == SystemColors.GrayText))
+        {
+            var palette = Internal.Rendering.PortableVisualStyles.Palette(strip.PortableVisualStylePlatform);
+            e.TextColor = e.Item.Enabled ? palette.Text : palette.DisabledText;
+        }
 
-        if (string.IsNullOrEmpty(e.Text) || e.TextRectangle.Width <= 0 || e.TextRectangle.Height <= 0) return;
-
-        TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont ?? e.Item.Font, e.TextRectangle, e.TextColor, e.TextFormat);
+        if (!string.IsNullOrEmpty(e.Text) && e.TextRectangle.Width > 0 && e.TextRectangle.Height > 0)
+        {
+            TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont ?? e.Item.Font, e.TextRectangle, e.TextColor, e.TextFormat);
+        }
     }
 
-    protected virtual void OnRenderLabelBackground(ToolStripItemRenderEventArgs e) => RenderLabelBackground?.Invoke(this, e);
+    protected virtual void OnRenderLabelBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e) => RenderMenuItemBackground?.Invoke(this, e);
+    protected virtual void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderOverflowButtonBackground(ToolStripItemRenderEventArgs e) => RenderOverflowButtonBackground?.Invoke(this, e);
+    protected virtual void OnRenderOverflowButtonBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e) => RenderSeparator?.Invoke(this, e);
+    protected virtual void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderSplitButtonBackground(ToolStripItemRenderEventArgs e) => RenderSplitButtonBackground?.Invoke(this, e);
+    protected virtual void OnRenderSplitButtonBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderStatusStripSizingGrip(ToolStripRenderEventArgs e) => RenderStatusStripSizingGrip?.Invoke(this, e);
+    protected virtual void OnRenderStatusStripSizingGrip(ToolStripRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderToolStripBackground(ToolStripRenderEventArgs e) => RenderToolStripBackground?.Invoke(this, e);
+    protected virtual void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderToolStripBorder(ToolStripRenderEventArgs e) => RenderToolStripBorder?.Invoke(this, e);
+    protected virtual void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+    {
+    }
 
-    protected virtual void OnRenderToolStripStatusLabelBackground(ToolStripItemRenderEventArgs e) => RenderToolStripStatusLabelBackground?.Invoke(this, e);
+    protected virtual void OnRenderToolStripStatusLabelBackground(ToolStripItemRenderEventArgs e)
+    {
+    }
 
     /// <summary>No-op in this project: there is one DPI-independent classic theme, so there is nothing to rescale.</summary>
     protected static void ScaleArrowOffsetsIfNeeded()

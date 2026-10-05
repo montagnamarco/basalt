@@ -1,12 +1,16 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
 public partial class TreeView
 {
     /// <summary>Window white (or the control colour when disabled) unless a colour was set.</summary>
-    private Color EffectiveBackColor => Enabled ? BackColor : SystemColors.Control;
+    private Color EffectiveBackColor => CollectionVisualAppearance.Field(this,
+        Enabled ? BackColor : SystemColors.Control);
+
+    private Color EffectiveForeColor => CollectionVisualAppearance.Text(this, ForeColor);
 
     /// <summary>The native control's painting: the background, the lines, the glyphs and every visible row's label.</summary>
     internal override void DefaultPaint(PaintEventArgs e)
@@ -57,6 +61,12 @@ public partial class TreeView
             if (!RaiseDrawNode(graphics, node, layout.Row)) return;
         }
 
+        if (_fullRowSelect && node.IsSelected && (Focused || !_hideSelection))
+        {
+            using var selectionBrush = new SolidBrush(SelectionBackColor);
+            graphics.FillRectangle(selectionBrush, layout.Row);
+        }
+
         if (ShowLines) PaintLines(graphics, node, layout.Row, layout.PlusMinus);
         if (ShowPlusMinus && node.Nodes.Count > 0 && (node.Level > 0 || ShowRootLines)) PaintPlusMinus(graphics, layout.PlusMinus, node.IsExpanded);
 
@@ -81,7 +91,15 @@ public partial class TreeView
             return;
         }
 
-        ControlPaint.DrawCheckBox(graphics, bounds, node.Checked ? ButtonState.Checked : ButtonState.Normal);
+        if (PortableVisualStylesEnabled)
+        {
+            PortableVisualStyles.PaintGlyph(graphics, bounds, CollectionVisualAppearance.Palette(this),
+                radio: false, selected: node.Checked, mixed: false, pressed: false, enabled: Enabled);
+        }
+        else
+        {
+            ControlPaint.DrawCheckBox(graphics, bounds, node.Checked ? ButtonState.Checked : ButtonState.Normal);
+        }
     }
 
     /// <summary>The node's own picture when it has one, else the tree view's default.</summary>
@@ -103,7 +121,9 @@ public partial class TreeView
     {
         if (node.Level == 0 && !ShowRootLines) return;
 
-        using var pen = new Pen(_lineColor) { DashStyle = DashStyleOf() };
+        var lineColor = PortableVisualStylesEnabled && !_lineColorExplicit
+            ? CollectionVisualAppearance.Palette(this).Border : _lineColor;
+        using var pen = new Pen(lineColor) { DashStyle = DashStyleOf() };
 
         var centerY = row.Top + row.Height / 2;
         var centerX = plusMinus.Left + plusMinus.Width / 2;
@@ -117,9 +137,11 @@ public partial class TreeView
 
     private void PaintPlusMinus(Graphics graphics, Rectangle bounds, bool expanded)
     {
-        using var border = new Pen(SystemColors.ControlDark);
-        using var fill = new SolidBrush(SystemColors.Window);
-        using var sign = new Pen(SystemColors.WindowText);
+        var palette = PortableVisualStylesEnabled ? CollectionVisualAppearance.Palette(this) : null;
+        using var border = new Pen(palette?.Border ?? SystemColors.ControlDark);
+        using var fill = new SolidBrush(palette?.Field ?? SystemColors.Window);
+        using var sign = new Pen(Enabled ? palette?.Text ?? SystemColors.WindowText
+            : palette?.DisabledText ?? SystemColors.WindowText);
 
         graphics.FillRectangle(fill, bounds);
         graphics.DrawRectangle(border, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
@@ -135,14 +157,14 @@ public partial class TreeView
         var selected = node.IsSelected;
         var showHighlight = selected && (Focused || !_hideSelection);
 
-        var backColor = showHighlight ? (Focused ? SystemColors.Highlight : SystemColors.Control) : EffectiveBackColor;
-        var foreColor = showHighlight
-            ? (Focused ? SystemColors.HighlightText : SystemColors.WindowText)
-            : (node.ForeColor.IsEmpty ? ForeColor : node.ForeColor);
+        var backColor = showHighlight ? SelectionBackColor : EffectiveBackColor;
+        var foreColor = showHighlight ? SelectionForeColor
+            : !Enabled && PortableVisualStylesEnabled ? CollectionVisualAppearance.Palette(this).DisabledText
+            : node.ForeColor.IsEmpty ? EffectiveForeColor : node.ForeColor;
 
         var highlight = _fullRowSelect ? row : label;
 
-        if (showHighlight)
+        if (showHighlight && !_fullRowSelect)
         {
             using var highlightBrush = new SolidBrush(backColor);
             graphics.FillRectangle(highlightBrush, highlight);

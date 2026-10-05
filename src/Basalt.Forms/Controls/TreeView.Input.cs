@@ -25,16 +25,20 @@ public partial class TreeView
         }
     }
 
-    /// <summary>Window white normally, unless a colour was set: a native control's background does not come from its parent.</summary>
+    /// <summary>Classic trees use window colors; styled previews retain explicit ambient colors.</summary>
     public override Color BackColor
     {
-        get => ShouldSerializeBackColor() ? base.BackColor : SystemColors.Window;
+        get => ShouldSerializeBackColor() ||
+            (PortableVisualStylesEnabled && Parent?.HasExplicitAppearanceBackColor == true)
+            ? base.BackColor : SystemColors.Window;
         set => base.BackColor = value;
     }
 
     public override Color ForeColor
     {
-        get => ShouldSerializeForeColor() ? base.ForeColor : SystemColors.WindowText;
+        get => ShouldSerializeForeColor() ||
+            (PortableVisualStylesEnabled && Parent?.HasExplicitAppearanceForeColor == true)
+            ? base.ForeColor : SystemColors.WindowText;
         set => base.ForeColor = value;
     }
 

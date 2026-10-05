@@ -19,6 +19,7 @@ internal static class ClassicCaption
         var toolWindow = (exStyle & WindowStyles.ExToolWindow) != 0;
         var start = caption.Active ? SystemColors.ActiveCaption : SystemColors.InactiveCaption;
         var end = caption.Active ? SystemColors.GradientActiveCaption : SystemColors.GradientInactiveCaption;
+        if (!caption.BackColor.IsEmpty) start = end = caption.BackColor;
 
         using (var brush = new LinearGradientBrush(new Rectangle(bar.X, bar.Y, Math.Max(bar.Width, 1), bar.Height), start, end, LinearGradientMode.Horizontal))
         {
@@ -101,6 +102,7 @@ internal static class ClassicCaption
         var bounds = Rectangle.FromLTRB(left, bar.Top, Math.Max(right, left), bar.Bottom);
         var font = toolWindow ? SystemFonts.SmallCaptionFont : SystemFonts.CaptionFont;
         var color = caption.Active ? SystemColors.ActiveCaptionText : SystemColors.InactiveCaptionText;
+        if (!caption.TextColor.IsEmpty) color = caption.TextColor;
         const TextFormatFlags flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
 
         TextRenderer.DrawText(graphics, caption.Text, font, bounds, color, flags);

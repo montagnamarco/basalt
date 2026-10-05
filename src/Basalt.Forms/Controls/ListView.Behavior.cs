@@ -25,11 +25,12 @@ public partial class ListView
     private int _reorderingColumn = -1;
     private int _columnPressX;
 
-    private Color EffectiveBackColor => ShouldSerializeBackColor() ? BackColor : SystemColors.Window;
+    private Color EffectiveBackColor => CollectionVisualAppearance.Field(this,
+        ShouldSerializeBackColor() ? BackColor : SystemColors.Window);
 
-    private Color EffectiveForeColor => Enabled
+    private Color EffectiveForeColor => CollectionVisualAppearance.Text(this, Enabled
         ? (ShouldSerializeForeColor() ? ForeColor : SystemColors.WindowText)
-        : SystemColors.GrayText;
+        : SystemColors.GrayText);
 
     // --- Painting -------------------------------------------------------------
 
@@ -78,7 +79,15 @@ public partial class ListView
 
         if (x < ClientRectangle.Width)
         {
-            ControlPaint.DrawButton(graphics, new Rectangle(x, 0, ClientRectangle.Width - x, HeaderHeight), ButtonState.Normal);
+            var filler = new Rectangle(x, 0, ClientRectangle.Width - x, HeaderHeight);
+            if (PortableVisualStylesEnabled)
+            {
+                PaintPortableHeaderFace(graphics, filler);
+            }
+            else
+            {
+                ControlPaint.DrawButton(graphics, filler, ButtonState.Normal);
+            }
         }
     }
 
@@ -86,9 +95,30 @@ public partial class ListView
     {
         if (TryOwnerDrawColumnHeader(graphics, column, rect)) return;
 
-        ControlPaint.DrawButton(graphics, rect, ButtonState.Normal);
+        if (PortableVisualStylesEnabled)
+        {
+            PaintPortableHeaderFace(graphics, rect);
+        }
+        else
+        {
+            ControlPaint.DrawButton(graphics, rect, ButtonState.Normal);
+        }
 
-        var textRect = new Rectangle(rect.X + 3, rect.Y, Math.Max(rect.Width - 6, 0), rect.Height);
+        var textX = rect.X + 3;
+        var imageList = column.ImageList;
+        if (imageList is not null)
+        {
+            var imageIndex = column.ImageKey.Length > 0
+                ? imageList.Images.IndexOfKey(column.ImageKey)
+                : column.ImageIndex;
+            if (imageIndex >= 0 && imageIndex < imageList.Images.Count)
+            {
+                imageList.Draw(graphics, textX, rect.Y + Math.Max((rect.Height - imageList.ImageSize.Height) / 2, 0), imageIndex);
+                textX += imageList.ImageSize.Width + 3;
+            }
+        }
+
+        var textRect = new Rectangle(textX, rect.Y, Math.Max(rect.Right - textX - 3, 0), rect.Height);
         var flags = TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis
             | (column.TextAlign switch
             {
@@ -112,13 +142,64 @@ public partial class ListView
             var client = ToClient(bandRect);
             if (client.Bottom <= ContentRectangle.Top || client.Top >= ContentRectangle.Bottom) continue;
 
-            var textRect = new Rectangle(client.X + 4, client.Y, Math.Max(client.Width - 8, 0), client.Height);
+            var titleX = client.X + (group.CollapsedState == ListViewGroupCollapsedState.Default ? 4 : 18);
+            if (_groupImageList is { } images)
+            {
+                var index = group.TitleImageKey.Length > 0
+                    ? images.Images.IndexOfKey(group.TitleImageKey) : group.TitleImageIndex;
+                if (index >= 0 && index < images.Images.Count)
+                {
+                    images.Draw(graphics, titleX, client.Y + Math.Max((client.Height - images.ImageSize.Height) / 2, 0), index);
+                    titleX += images.ImageSize.Width + 3;
+                }
+            }
+            if (group.CollapsedState != ListViewGroupCollapsedState.Default)
+            {
+                var glyph = group.CollapsedState == ListViewGroupCollapsedState.Collapsed ? "+" : "−";
+                TextRenderer.DrawText(graphics, glyph, Font,
+                    new Rectangle(client.X + 3, client.Y, 13, client.Height), EffectiveForeColor,
+                    TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter);
+            }
+
+            var textRect = new Rectangle(titleX, client.Y, Math.Max(client.Right - titleX - 4, 0), client.Height);
             TextRenderer.DrawText(graphics, group.Header, Font, textRect, EffectiveForeColor,
                 TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
 
-            using var line = new Pen(SystemColors.ControlDark);
+            if (group.TaskLink.Length > 0)
+            {
+                var taskRect = TaskLinkBounds(group, client);
+                TextRenderer.DrawText(graphics, group.TaskLink, Font, taskRect,
+                    PortableVisualStylesEnabled ? CollectionVisualAppearance.Palette(this).Accent : SystemColors.HotTrack,
+                    TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+            }
+
+            using var line = new Pen(PortableVisualStylesEnabled
+                ? CollectionVisualAppearance.Palette(this).Border : SystemColors.ControlDark);
             graphics.DrawLine(line, client.X, client.Bottom - 1, client.Right, client.Bottom - 1);
         }
+    }
+
+    private Rectangle TaskLinkBounds(ListViewGroup group, Rectangle band)
+    {
+        var width = TextRenderer.MeasureText(group.TaskLink, Font).Width + 8;
+        return new Rectangle(Math.Max(band.Right - width - 4, band.X), band.Y, Math.Min(width, band.Width), band.Height);
+    }
+
+    private bool HandleGroupBandClick(Point point)
+    {
+        if (_view != View.Details || !_showGroups || _groups.Count == 0) return false;
+        foreach (var (group, band) in ComputeDetailsLayout().GroupBands)
+        {
+            var client = ToClient(band);
+            if (!client.Contains(point)) continue;
+            if (group.TaskLink.Length > 0 && TaskLinkBounds(group, client).Contains(point))
+                OnGroupTaskLinkClick(new ListViewGroupEventArgs(Groups.IndexOf(group)));
+            else if (group.CollapsedState != ListViewGroupCollapsedState.Default)
+                group.CollapsedState = group.CollapsedState == ListViewGroupCollapsedState.Collapsed
+                    ? ListViewGroupCollapsedState.Expanded : ListViewGroupCollapsedState.Collapsed;
+            return true;
+        }
+        return false;
     }
 
     private void PaintDetailsItems(Graphics graphics, Rectangle[] itemRects)
@@ -151,29 +232,26 @@ public partial class ListView
 
         if (highlighted)
         {
-            using var brush = new SolidBrush(SystemColors.Highlight);
+            using var brush = new SolidBrush(SelectionBackColor);
             graphics.FillRectangle(brush, highlightRect);
         }
 
         var x = row.X;
-        var checkboxWidth = _checkBoxes ? CheckBoxSize + 4 : 0;
-
-        if (_checkBoxes)
+        var checkboxWidth = StateGlyphWidth(item);
+        if (checkboxWidth > 0)
         {
-            var box = new Rectangle(x + 2, row.Y + (row.Height - CheckBoxSize) / 2, CheckBoxSize, CheckBoxSize);
-            var state = item.Checked ? ButtonState.Checked : ButtonState.Normal;
-            ControlPaint.DrawCheckBox(graphics, box, state);
+            DrawStateGlyph(graphics, item, x, row.Y, row.Height);
             x += checkboxWidth;
         }
 
         var columnCount = Math.Max(_columns.Count, 1);
         for (var c = 0; c < columnCount && c < item.SubItems.Count; c++)
         {
-            var columnWidth = c < _columns.Count ? _columns[c].Width : row.Width - checkboxWidth;
+            var columnWidth = c < _columns.Count ? _columns[c].Width : row.Width;
             var cell = new Rectangle(x, row.Y, Math.Max(columnWidth - (c == 0 ? checkboxWidth : 0), 0), row.Height);
             var subItem = item.SubItems[c];
 
-            var foreColor = highlighted ? SystemColors.HighlightText : subItem.ForeColor;
+            var foreColor = highlighted ? SelectionForeColor : ItemTextColor(subItem);
             var textRect = cell;
 
             if (c == 0)
@@ -191,10 +269,12 @@ public partial class ListView
                 textRect = new Rectangle(cell.X + 2, cell.Y, Math.Max(cell.Width - 4, 0), cell.Height);
             }
 
-            TextRenderer.DrawText(graphics, subItem.Text, subItem.Font ?? Font, textRect, foreColor,
+            var textFont = subItem.Font ?? Font;
+            using var hotFont = c == 0 ? HotFont(item, textFont) : null;
+            TextRenderer.DrawText(graphics, subItem.Text, hotFont ?? textFont, textRect, foreColor,
                 TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
 
-            x += columnWidth;
+            x += cell.Width;
         }
 
         if (focused) ControlPaint.DrawFocusRectangle(graphics, highlightRect, EffectiveForeColor, EffectiveBackColor);
@@ -214,11 +294,11 @@ public partial class ListView
             if (!TryOwnerDrawSubItem(graphics, item, c, cell))
             {
                 var subItem = item.SubItems[c];
-                TextRenderer.DrawText(graphics, subItem.Text, subItem.Font ?? Font, cell, subItem.ForeColor,
+                TextRenderer.DrawText(graphics, subItem.Text, subItem.Font ?? Font, cell, ItemTextColor(subItem),
                     TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
             }
 
-            x += columnWidth;
+            x += cell.Width;
         }
     }
 
@@ -229,7 +309,8 @@ public partial class ListView
     /// </summary>
     private void PaintGridLines(Graphics graphics, Rectangle[] itemRects)
     {
-        using var brush = new SolidBrush(SystemColors.ControlLight);
+        using var brush = new SolidBrush(PortableVisualStylesEnabled
+            ? CollectionVisualAppearance.Palette(this).Border : SystemColors.ControlLight);
         var viewport = ContentRectangle;
 
         var x = -_scrollX;
@@ -272,16 +353,27 @@ public partial class ListView
         var iconRect = ToClient(iconContent);
         var labelRect = ToClient(labelContent);
 
-        var foreColor = highlighted ? SystemColors.HighlightText : EffectiveForeColor;
+        var foreColor = highlighted ? SelectionForeColor : EffectiveForeColor;
 
         if (highlighted)
         {
-            using var brush = new SolidBrush(SystemColors.Highlight);
+            using var brush = new SolidBrush(SelectionBackColor);
             graphics.FillRectangle(brush, labelRect);
         }
 
         var large = _view == View.LargeIcon;
         var imageList = large ? _largeImageList : _smallImageList;
+        var stateWidth = StateGlyphWidth(item);
+        if (stateWidth > 0)
+        {
+            DrawStateGlyph(graphics, item, cell.X, cell.Y, cell.Height);
+            if (!large)
+            {
+                iconRect.Offset(stateWidth, 0);
+                labelRect.X += stateWidth;
+                labelRect.Width = Math.Max(0, labelRect.Width - stateWidth);
+            }
+        }
         if (imageList is not null && item.ImageIndex >= 0 && item.ImageIndex < imageList.Images.Count)
         {
             var size = large ? LargeIconSize : SmallIconSize;
@@ -289,9 +381,11 @@ public partial class ListView
         }
 
         var flags = TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter
-            | (large ? TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak : TextFormatFlags.Left | TextFormatFlags.SingleLine);
+            | (large ? TextFormatFlags.HorizontalCenter | (_labelWrap ? TextFormatFlags.WordBreak : TextFormatFlags.SingleLine)
+                : TextFormatFlags.Left | TextFormatFlags.SingleLine);
 
-        TextRenderer.DrawText(graphics, item.Text, item.Font, labelRect, foreColor, flags);
+        using var hotFont = HotFont(item, item.Font);
+        TextRenderer.DrawText(graphics, item.Text, hotFont ?? item.Font, labelRect, foreColor, flags);
 
         if (focused) ControlPaint.DrawFocusRectangle(graphics, labelRect, EffectiveForeColor, EffectiveBackColor);
     }
@@ -327,18 +421,24 @@ public partial class ListView
 
         if (highlighted)
         {
-            using var brush = new SolidBrush(SystemColors.Highlight);
+            using var brush = new SolidBrush(SelectionBackColor);
             graphics.FillRectangle(brush, highlightRect);
         }
 
-        var foreColor = highlighted ? SystemColors.HighlightText : EffectiveForeColor;
+        var foreColor = highlighted ? SelectionForeColor : EffectiveForeColor;
         var x = row.X;
+        var stateWidth = StateGlyphWidth(item);
+        if (stateWidth > 0)
+        {
+            DrawStateGlyph(graphics, item, x, row.Y, row.Height);
+            x += stateWidth;
+        }
         var columnCount = Math.Max(_columns.Count, 1);
 
         for (var c = 0; c < columnCount && c < item.SubItems.Count; c++)
         {
             var columnWidth = c < _columns.Count ? _columns[c].Width : row.Width;
-            var cell = new Rectangle(x, row.Y, columnWidth, row.Height);
+            var cell = new Rectangle(x, row.Y, Math.Max(columnWidth - (c == 0 ? stateWidth : 0), 0), row.Height);
             var subItem = item.SubItems[c];
             var textRect = cell;
 
@@ -357,10 +457,13 @@ public partial class ListView
                 textRect = new Rectangle(cell.X + 2, cell.Y, Math.Max(cell.Width - 4, 0), cell.Height);
             }
 
-            TextRenderer.DrawText(graphics, subItem.Text, subItem.Font ?? Font, textRect, highlighted ? foreColor : subItem.ForeColor,
+            var textFont = subItem.Font ?? Font;
+            using var hotFont = c == 0 ? HotFont(item, textFont, index) : null;
+            TextRenderer.DrawText(graphics, subItem.Text, hotFont ?? textFont, textRect,
+                highlighted ? foreColor : ItemTextColor(subItem),
                 TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
 
-            x += columnWidth;
+            x += cell.Width;
         }
     }
 
@@ -368,23 +471,26 @@ public partial class ListView
     private void PaintVirtualListItem(Graphics graphics, ListViewItem item, int index, Rectangle row)
     {
         var highlighted = IsVirtualIndexSelected(index) && (!_hideSelection || Focused);
-        var foreColor = highlighted ? SystemColors.HighlightText : EffectiveForeColor;
+        var foreColor = highlighted ? SelectionForeColor : EffectiveForeColor;
 
         if (highlighted)
         {
-            using var brush = new SolidBrush(SystemColors.Highlight);
+            using var brush = new SolidBrush(SelectionBackColor);
             graphics.FillRectangle(brush, row);
         }
 
         var iconSize = SmallIconSize;
-        var iconRect = new Rectangle(row.X + 2, row.Y + (row.Height - iconSize.Height) / 2, iconSize.Width, iconSize.Height);
+        var stateWidth = StateGlyphWidth(item);
+        if (stateWidth > 0) DrawStateGlyph(graphics, item, row.X, row.Y, row.Height);
+        var iconRect = new Rectangle(row.X + 2 + stateWidth, row.Y + (row.Height - iconSize.Height) / 2, iconSize.Width, iconSize.Height);
         if (_smallImageList is not null && item.ImageIndex >= 0 && item.ImageIndex < _smallImageList.Images.Count)
         {
             _smallImageList.Draw(graphics, iconRect.X, iconRect.Y, item.ImageIndex);
         }
 
         var labelRect = new Rectangle(iconRect.Right + 4, row.Y, Math.Max(row.Width - iconRect.Width - 6, 0), row.Height);
-        TextRenderer.DrawText(graphics, item.Text, item.Font, labelRect, foreColor,
+        using var hotFont = HotFont(item, item.Font, index);
+        TextRenderer.DrawText(graphics, item.Text, hotFont ?? item.Font, labelRect, foreColor,
             TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
     }
 
@@ -407,6 +513,8 @@ public partial class ListView
             return;
         }
 
+        if (HandleGroupBandClick(e.Location)) return;
+
         if (IsVirtualLayoutView)
         {
             var virtualIndex = VirtualIndexAt(e.Y);
@@ -423,9 +531,13 @@ public partial class ListView
         var hit = HitTestCore(e.X, e.Y);
         if (hit.Item is null)
         {
+            _dragCandidate = null;
             if ((ModifierKeys & (Keys.Control | Keys.Shift)) == 0) ClearSelection();
             return;
         }
+
+        _dragCandidate = hit.Item;
+        _dragOrigin = e.Location;
 
         if (_checkBoxes && IsCheckBoxHit(hit.Item, e.Location))
         {
@@ -445,6 +557,13 @@ public partial class ListView
 
     internal override void DefaultMouseMove(MouseEventArgs e)
     {
+        if (_dragCandidate is { } item &&
+            (Math.Abs(e.X - _dragOrigin.X) >= 4 || Math.Abs(e.Y - _dragOrigin.Y) >= 4))
+        {
+            _dragCandidate = null;
+            OnItemDrag(new ItemDragEventArgs(MouseButtons.Left, item));
+        }
+
         if (_resizingColumn >= 0)
         {
             var delta = e.X - _resizeStartX;
@@ -461,10 +580,13 @@ public partial class ListView
         {
             _reorderingColumn = _pendingColumnClick;
         }
+
+        TrackItemPointer(e);
     }
 
     internal override void DefaultMouseUp(MouseEventArgs e)
     {
+        _dragCandidate = null;
         if (_resizingColumn >= 0)
         {
             _resizingColumn = -1;
@@ -498,6 +620,7 @@ public partial class ListView
 
     internal override void DefaultCaptureLost()
     {
+        _dragCandidate = null;
         _resizingColumn = -1;
         _pendingColumnClick = -1;
         _reorderingColumn = -1;
@@ -551,9 +674,10 @@ public partial class ListView
         if (index < 0) return false;
 
         var row = ToClient(ItemContentBounds(index));
-        if (_view is not (View.Details or View.List)) return false;
+        if (_view == View.Tile) return false;
 
-        var box = new Rectangle(row.X + 2, row.Y + (row.Height - CheckBoxSize) / 2, CheckBoxSize, CheckBoxSize);
+        var size = _stateImageList?.ImageSize ?? new Size(CheckBoxSize, CheckBoxSize);
+        var box = new Rectangle(row.X + 2, row.Y + (row.Height - size.Height) / 2, size.Width, size.Height);
         return box.Contains(location);
     }
 

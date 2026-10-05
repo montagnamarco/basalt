@@ -218,7 +218,16 @@ public partial class RadioButton : ButtonBase
         if (InputPressed) state |= ButtonState.Pushed;
         if (Checked) state |= ButtonState.Checked;
 
-        ControlPaint.DrawRadioButton(graphics, layout.Glyph, state);
+        if (PortableVisualStylesEnabled && FlatStyle is not (FlatStyle.Flat or FlatStyle.Popup))
+        {
+            Internal.Rendering.PortableVisualStyles.PaintGlyph(graphics, layout.Glyph,
+                Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform),
+                radio: true, Checked, mixed: false, InputPressed, Enabled);
+        }
+        else
+        {
+            ControlPaint.DrawRadioButton(graphics, layout.Glyph, state);
+        }
 
         var flags = ContentAlignments.ToTextFormat(TextAlign) | TextFormatFlags.WordBreak;
         if (!UseMnemonic) flags |= TextFormatFlags.NoPrefix;

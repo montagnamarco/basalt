@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
@@ -11,16 +12,34 @@ namespace System.Windows.Forms;
 /// </summary>
 public partial class DateTimePicker
 {
-    private Color EffectiveBackColor => Enabled ? (ShouldSerializeBackColor() ? BackColor : SystemColors.Window) : SystemColors.Control;
+    private bool UsePortablePickerAppearance => PortableVisualStylesEnabled && !HasExplicitAppearanceBackColor;
+
+    private Color EffectiveBackColor
+    {
+        get
+        {
+            if (!UsePortablePickerAppearance)
+            {
+                return Enabled ? (ShouldSerializeBackColor() ? BackColor : SystemColors.Window) : SystemColors.Control;
+            }
+
+            var palette = PortableVisualStyles.Palette(PortableVisualStylePlatform);
+            return Enabled ? palette.Field : palette.Face;
+        }
+    }
 
     private Color EffectiveForeColor
     {
         get
         {
-            if (!Enabled) return SystemColors.GrayText;
-            if (_showCheckBox && !_checked) return SystemColors.GrayText;
+            var palette = UsePortablePickerAppearance
+                ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+            if (!Enabled || _showCheckBox && !_checked)
+            {
+                return palette?.DisabledText ?? SystemColors.GrayText;
+            }
 
-            return ShouldSerializeForeColor() ? ForeColor : SystemColors.WindowText;
+            return HasExplicitAppearanceForeColor ? ForeColor : palette?.Text ?? SystemColors.WindowText;
         }
     }
 
@@ -44,6 +63,14 @@ public partial class DateTimePicker
 
     private void PaintCheckBox(Graphics graphics)
     {
+        if (UsePortablePickerAppearance)
+        {
+            PortableVisualStyles.PaintGlyph(graphics, CheckBoxBounds(),
+                PortableVisualStyles.Palette(PortableVisualStylePlatform), radio: false,
+                selected: _checked, mixed: false, pressed: false, enabled: Enabled);
+            return;
+        }
+
         var state = ButtonState.Normal;
         if (_checked) state |= ButtonState.Checked;
         if (!Enabled) state |= ButtonState.Inactive;
@@ -68,9 +95,13 @@ public partial class DateTimePicker
 
             if (isSelected)
             {
-                using var highlight = new SolidBrush(SystemColors.Highlight);
+                var palette = UsePortablePickerAppearance
+                    ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+                using var highlight = new SolidBrush(palette?.Selection ?? SystemColors.Highlight);
                 graphics.FillRectangle(highlight, bounds);
-                TextRenderer.DrawText(graphics, field.Text, Font, bounds, SystemColors.HighlightText, TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter);
+                TextRenderer.DrawText(graphics, field.Text, Font, bounds,
+                    palette?.SelectedText ?? SystemColors.HighlightText,
+                    TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter);
             }
             else
             {
@@ -81,6 +112,12 @@ public partial class DateTimePicker
 
     private void PaintDropDownButton(Graphics graphics)
     {
+        if (UsePortablePickerAppearance)
+        {
+            PaintPortablePickerButton(graphics, ButtonBounds(), _buttonPressed || _dropped, 0);
+            return;
+        }
+
         var state = ButtonState.Normal;
         if (!Enabled) state = ButtonState.Inactive;
         else if (_buttonPressed || _dropped) state = ButtonState.Pushed;
@@ -90,10 +127,41 @@ public partial class DateTimePicker
 
     private void PaintSpinButtons(Graphics graphics)
     {
+        if (UsePortablePickerAppearance)
+        {
+            PaintPortablePickerButton(graphics, UpButtonBounds(), _upPressed, -1);
+            PaintPortablePickerButton(graphics, DownButtonBounds(), _downPressed, 1);
+            return;
+        }
+
         var upState = Enabled ? (_upPressed ? ButtonState.Pushed : ButtonState.Normal) : ButtonState.Inactive;
         var downState = Enabled ? (_downPressed ? ButtonState.Pushed : ButtonState.Normal) : ButtonState.Inactive;
 
         ControlPaint.DrawScrollButton(graphics, UpButtonBounds(), ScrollButton.Up, upState);
         ControlPaint.DrawScrollButton(graphics, DownButtonBounds(), ScrollButton.Down, downState);
+    }
+
+    private void PaintPortablePickerButton(Graphics graphics, Rectangle bounds, bool pressed, int arrowDirection)
+    {
+        bounds = Rectangle.Intersect(bounds, ClientRectangle);
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+
+        var palette = PortableVisualStyles.Palette(PortableVisualStylePlatform);
+        using var background = new SolidBrush(Enabled && pressed ? palette.PressedFace : palette.Face);
+        using var border = new Pen(palette.Border);
+        graphics.FillRectangle(background, bounds);
+        graphics.DrawRectangle(border, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
+
+        if (bounds.Width < 8 || bounds.Height < 8) return;
+
+        var centerX = bounds.Left + bounds.Width / 2;
+        var centerY = bounds.Top + bounds.Height / 2 + (pressed ? 1 : 0);
+        var points = arrowDirection < 0
+            ? new[] { new Point(centerX - 3, centerY + 1), new Point(centerX + 3, centerY + 1), new Point(centerX, centerY - 2) }
+            : new[] { new Point(centerX - 3, centerY - 1), new Point(centerX + 3, centerY - 1), new Point(centerX, centerY + 2) };
+        var arrowColor = !Enabled ? palette.DisabledText
+            : HasExplicitAppearanceForeColor ? ForeColor : palette.Text;
+        using var arrow = new SolidBrush(arrowColor);
+        graphics.FillPolygon(arrow, points);
     }
 }

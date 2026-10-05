@@ -340,7 +340,7 @@ public abstract partial class DataGridViewCell : DataGridViewElement, ICloneable
         var resolved = inheritedCellStyle ?? new DataGridViewCellStyle();
         var grid = DataGridView;
 
-        if (grid is not null) resolved.ApplyStyle(grid.DefaultCellStyle);
+        if (grid is not null) resolved.ApplyStyle(grid.GetPortableDefaultCellStyle());
         if (OwningColumn is { } column && column.HasDefaultCellStyle) resolved.ApplyStyle(column.DefaultCellStyle);
 
         if (grid is not null)
@@ -566,7 +566,7 @@ public abstract partial class DataGridViewCell : DataGridViewElement, ICloneable
 
     protected virtual void PaintBorder(Graphics graphics, Rectangle clipBounds, Rectangle bounds, DataGridViewCellStyle cellStyle, DataGridViewAdvancedBorderStyle advancedBorderStyle)
     {
-        using var pen = new Pen(SystemColors.ControlDark);
+        using var pen = new Pen(DataGridView?.PortableGridLineColor ?? SystemColors.ControlDark);
 
         if (advancedBorderStyle.Right != DataGridViewAdvancedCellBorderStyle.None) graphics.DrawLine(pen, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
         if (advancedBorderStyle.Bottom != DataGridViewAdvancedCellBorderStyle.None) graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right - 1, bounds.Bottom - 1);

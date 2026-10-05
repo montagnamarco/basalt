@@ -224,7 +224,10 @@ public partial class DataGridViewComboBoxCell : DataGridViewCell
         if (showsButton && (paintParts & DataGridViewPaintParts.ContentBackground) != 0)
         {
             var state = (ReadOnly || (DataGridView?.ReadOnly ?? false)) ? ButtonState.Inactive : ButtonState.Normal;
-            ControlPaint.DrawComboButton(graphics, buttonBounds, state);
+            if (DataGridView?.PaintPortableCellButton(graphics, buttonBounds, cellStyle, state, arrow: true) != true)
+            {
+                ControlPaint.DrawComboButton(graphics, buttonBounds, state);
+            }
         }
     }
 

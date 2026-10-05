@@ -46,18 +46,6 @@ public partial class PropertyGrid : ContainerControl
         SetStyle(ControlStyles.UserMouse | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);
         SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, false);
 
-        LineColor = SystemColors.InactiveBorder;
-        CategoryForeColor = SystemColors.ControlText;
-        CategorySplitterColor = SystemColors.Control;
-        DisabledItemForeColor = SystemColors.GrayText;
-        HelpBackColor = SystemColors.Control;
-        HelpBorderColor = SystemColors.ControlDark;
-        HelpForeColor = SystemColors.ControlText;
-        SelectedItemWithFocusBackColor = SystemColors.Highlight;
-        SelectedItemWithFocusForeColor = SystemColors.HighlightText;
-        ViewBackColor = SystemColors.Window;
-        ViewBorderColor = SystemColors.ControlDark;
-        ViewForeColor = SystemColors.WindowText;
 
         InitializeLayoutState();
     }
@@ -201,30 +189,6 @@ public partial class PropertyGrid : ContainerControl
         get => _useCompatibleTextRendering;
         set => _useCompatibleTextRendering = value;
     }
-
-    public Color LineColor { get; set; }
-
-    public Color CategoryForeColor { get; set; }
-
-    public Color CategorySplitterColor { get; set; }
-
-    public Color DisabledItemForeColor { get; set; }
-
-    public Color HelpBackColor { get; set; }
-
-    public Color HelpBorderColor { get; set; }
-
-    public Color HelpForeColor { get; set; }
-
-    public Color SelectedItemWithFocusBackColor { get; set; }
-
-    public Color SelectedItemWithFocusForeColor { get; set; }
-
-    public Color ViewBackColor { get; set; }
-
-    public Color ViewBorderColor { get; set; }
-
-    public Color ViewForeColor { get; set; }
 
     /// <summary>Rebuilds the item tree from the current selection and redraws; drops the in-place editor first.</summary>
     public override void Refresh()

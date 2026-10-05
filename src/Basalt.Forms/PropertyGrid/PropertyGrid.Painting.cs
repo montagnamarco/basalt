@@ -69,7 +69,8 @@ public partial class PropertyGrid
         else
         {
             var margin = MarginBounds(rowIndex);
-            using (var marginBrush = new SolidBrush(SystemColors.Control))
+            var marginColor = PortableVisualStylesEnabled ? BackColor : SystemColors.Control;
+            using (var marginBrush = new SolidBrush(marginColor))
             {
                 graphics.FillRectangle(marginBrush, margin);
             }
@@ -125,11 +126,11 @@ public partial class PropertyGrid
         return value.ToString() ?? string.Empty;
     }
 
-    private static void PaintPlusMinus(Graphics graphics, Rectangle bounds, bool expanded)
+    private void PaintPlusMinus(Graphics graphics, Rectangle bounds, bool expanded)
     {
-        using var border = new Pen(SystemColors.ControlDark);
-        using var fill = new SolidBrush(SystemColors.Window);
-        using var sign = new Pen(SystemColors.WindowText);
+        using var border = new Pen(ViewBorderColor);
+        using var fill = new SolidBrush(ViewBackColor);
+        using var sign = new Pen(Enabled ? ViewForeColor : DisabledItemForeColor);
 
         graphics.FillRectangle(fill, bounds);
         graphics.DrawRectangle(border, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);

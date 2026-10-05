@@ -93,7 +93,14 @@ public partial class DataGridViewButtonCell : DataGridViewCell
         if ((paintParts & DataGridViewPaintParts.ContentBackground) != 0)
         {
             var state = (ReadOnly || (DataGridView?.ReadOnly ?? false)) ? ButtonState.Inactive : _pressed ? ButtonState.Pushed : ButtonState.Normal;
-            ControlPaint.DrawButton(graphics, cellBounds, state);
+            var buttonBounds = selected && DataGridView is { PortableVisualStylesEnabled: true }
+                && cellBounds.Width > 4 && cellBounds.Height > 4
+                ? Rectangle.Inflate(cellBounds, -2, -2)
+                : cellBounds;
+            if (DataGridView?.PaintPortableCellButton(graphics, buttonBounds, cellStyle, state, arrow: false) != true)
+            {
+                ControlPaint.DrawButton(graphics, cellBounds, state);
+            }
         }
 
         if ((paintParts & DataGridViewPaintParts.ContentForeground) != 0 && formattedValue is { } text)

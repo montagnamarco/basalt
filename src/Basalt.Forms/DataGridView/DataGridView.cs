@@ -180,6 +180,7 @@ public partial class DataGridView : Control, ISupportInitialize
         get => _backgroundColor;
         set
         {
+            _portableBackgroundColorExplicit = true;
             if (value == _backgroundColor) return;
 
             _backgroundColor = value;
@@ -303,6 +304,7 @@ public partial class DataGridView : Control, ISupportInitialize
         get => _gridColor;
         set
         {
+            _portableGridColorExplicit = true;
             if (value == _gridColor) return;
 
             _gridColor = value;

@@ -40,7 +40,7 @@ public partial class Form
         ? null
         : new WindowCaption(Text, IsActiveChild, ControlBox, MinimizeBox, MaximizeBox,
             _windowState == FormWindowState.Maximized, _windowState == FormWindowState.Minimized, _framePressed,
-            ShowIcon ? _icon : null);
+            ShowIcon ? _icon : null, _formBorderColor, _formCaptionBackColor, _formCaptionTextColor);
 
     /// <summary>The frame and title bar are drawn with the child: redraw them.</summary>
     internal void InvalidateFrame() => Invalidate();

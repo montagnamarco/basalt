@@ -147,14 +147,16 @@ public partial class DataGridViewCheckBoxCell : DataGridViewCell, IDataGridViewE
 
         if ((paintParts & DataGridViewPaintParts.ContentForeground) == 0) return;
 
-        var glyphBounds = new Rectangle(
-            cellBounds.X + (cellBounds.Width - GlyphSize) / 2,
-            cellBounds.Y + (cellBounds.Height - GlyphSize) / 2,
-            GlyphSize,
-            GlyphSize);
+        var glyphBounds = GetGlyphBounds(cellBounds);
 
         var state = ToCheckState(value);
-        var buttonState = (ReadOnly || (DataGridView?.ReadOnly ?? false)) ? ButtonState.Inactive : ButtonState.Normal;
+        var buttonState = (ReadOnly || (DataGridView?.ReadOnly ?? false)) ? ButtonState.Inactive
+            : _pressed ? ButtonState.Pushed : ButtonState.Normal;
+
+        if (DataGridView?.PaintPortableCellCheck(graphics, glyphBounds, cellStyle, state, buttonState) == true)
+        {
+            return;
+        }
 
         switch (state)
         {

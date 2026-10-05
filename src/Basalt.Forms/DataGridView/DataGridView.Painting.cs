@@ -63,7 +63,7 @@ public partial class DataGridView
 
     protected virtual void PaintBackground(Graphics graphics, Rectangle clipBounds, Rectangle gridBounds)
     {
-        using var brush = new SolidBrush(BackgroundColor);
+        using var brush = new SolidBrush(PortableGridBackgroundColor);
         graphics.FillRectangle(brush, gridBounds);
     }
 

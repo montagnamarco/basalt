@@ -404,7 +404,15 @@ public abstract partial class ScrollBar : Control
 
     internal override void DefaultPaint(PaintEventArgs e)
     {
-        ScrollBarPainter.Draw(e.Graphics, Direction, ClientRectangle, ThumbBounds(), _pressedPart, Enabled);
+        if (PortableVisualStylesEnabled)
+        {
+            ScrollBarPainter.DrawPortable(e.Graphics, Direction, ClientRectangle, ThumbBounds(), _pressedPart, Enabled,
+                Internal.Rendering.PortableVisualStyles.Palette(PortableVisualStylePlatform), PortableVisualStylePlatform);
+        }
+        else
+        {
+            ScrollBarPainter.Draw(e.Graphics, Direction, ClientRectangle, ThumbBounds(), _pressedPart, Enabled);
+        }
     }
 
     public override string ToString() => $"{base.ToString()}, Minimum: {Minimum}, Maximum: {Maximum}, Value: {Value}";

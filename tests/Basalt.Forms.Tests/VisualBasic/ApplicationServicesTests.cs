@@ -12,8 +12,13 @@ namespace Basalt.Forms.Tests.VisualBasic;
 /// Run blocks, so each test closes its forms from posted work, with a fallback
 /// that closes everything after a few seconds so a bug fails instead of hanging.
 /// </summary>
-public class ApplicationServicesTests
+[Collection(ApplicationVisualStyleCollection.Name)]
+public class ApplicationServicesTests : IDisposable
 {
+    private readonly bool _originalVisualStyles = Application.PortableVisualStylesRequested;
+
+    public void Dispose() => Application.PortableVisualStylesRequested = _originalVisualStyles;
+
     private sealed class RecordingApp : WindowsFormsApplicationBase
     {
         public List<string> Steps { get; } = [];

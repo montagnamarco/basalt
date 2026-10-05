@@ -270,8 +270,15 @@ public abstract partial class ButtonBase : Control
     {
         var bounds = ClientRectangle;
         var isFlat = _flatStyle is FlatStyle.Flat or FlatStyle.Popup;
+        if (!isFlat && PortableVisualStylesEnabled && UseVisualStyleBackColor && !HasExplicitAppearanceBackColor)
+        {
+            PaintPortableButton(graphics, bounds);
+            return;
+        }
 
-        using (var face = new SolidBrush(isFlat ? FlatPaintBackColor : BackColor))
+        var classicFace = PortableVisualStylesEnabled && !UseVisualStyleBackColor && !HasExplicitAppearanceBackColor
+            ? SystemColors.Control : BackColor;
+        using (var face = new SolidBrush(isFlat ? FlatPaintBackColor : classicFace))
         {
             graphics.FillRectangle(face, bounds);
         }

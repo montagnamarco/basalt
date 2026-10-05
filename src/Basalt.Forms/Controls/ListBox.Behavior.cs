@@ -337,11 +337,12 @@ public partial class ListBox
 
     // --- Colours -------------------------------------------------------------
 
-    private Color EffectiveBackColor => ShouldSerializeBackColor() ? BackColor : SystemColors.Window;
+    private Color EffectiveBackColor => CollectionVisualAppearance.Field(this,
+        ShouldSerializeBackColor() ? BackColor : SystemColors.Window);
 
-    private Color EffectiveForeColor => Enabled
+    private Color EffectiveForeColor => CollectionVisualAppearance.Text(this, Enabled
         ? (ShouldSerializeForeColor() ? ForeColor : SystemColors.WindowText)
-        : SystemColors.GrayText;
+        : SystemColors.GrayText);
 
     // --- Search ---------------------------------------------------------------
 
@@ -444,8 +445,8 @@ public partial class ListBox
         var selected = _selectedIndices.Contains(index);
         var focused = Focused && index == _focusedIndex;
 
-        var foreColor = selected ? SystemColors.HighlightText : EffectiveForeColor;
-        var backColor = selected ? SystemColors.Highlight : EffectiveBackColor;
+        var foreColor = selected ? CollectionVisualAppearance.SelectionText(this, focused) : EffectiveForeColor;
+        var backColor = selected ? CollectionVisualAppearance.SelectionField(this, focused) : EffectiveBackColor;
 
         if (_drawMode != DrawMode.Normal)
         {

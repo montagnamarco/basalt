@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Windows.Forms.Internal.Rendering;
 
 namespace System.Windows.Forms;
 
@@ -32,11 +33,12 @@ public partial class CheckedListBox
     /// </summary>
     private int _currentIndex = -1;
 
-    private Color EffectiveBackColor => ShouldSerializeBackColor() ? BackColor : SystemColors.Window;
+    private Color EffectiveBackColor => CollectionVisualAppearance.Field(this,
+        ShouldSerializeBackColor() ? BackColor : SystemColors.Window);
 
-    private Color EffectiveForeColor => Enabled
+    private Color EffectiveForeColor => CollectionVisualAppearance.Text(this, Enabled
         ? (ShouldSerializeForeColor() ? ForeColor : SystemColors.WindowText)
-        : SystemColors.GrayText;
+        : SystemColors.GrayText);
 
     // --- Mouse -----------------------------------------------------------
 
@@ -147,8 +149,8 @@ public partial class CheckedListBox
         var selected = SelectionMode == SelectionMode.One && GetSelected(index);
         var current = SelectionMode == SelectionMode.One ? index == SelectedIndex : index == _currentIndex;
 
-        var foreColor = selected ? SystemColors.HighlightText : EffectiveForeColor;
-        var backColor = selected ? SystemColors.Highlight : EffectiveBackColor;
+        var foreColor = selected ? CollectionVisualAppearance.SelectionText(this, Focused) : EffectiveForeColor;
+        var backColor = selected ? CollectionVisualAppearance.SelectionField(this, Focused) : EffectiveBackColor;
 
         using (var brush = new SolidBrush(backColor)) graphics.FillRectangle(brush, bounds);
 
@@ -167,11 +169,21 @@ public partial class CheckedListBox
 
     private void PaintCheckBox(Graphics graphics, Rectangle checkBox, int index)
     {
+        var checkState = GetItemCheckState(index);
+        if (PortableVisualStylesEnabled)
+        {
+            PortableVisualStyles.PaintGlyph(graphics, checkBox,
+                CollectionVisualAppearance.Palette(this), radio: false,
+                selected: checkState == CheckState.Checked,
+                mixed: checkState == CheckState.Indeterminate,
+                pressed: false, enabled: Enabled);
+            return;
+        }
+
         var state = ButtonState.Normal;
         if (!Enabled) state |= ButtonState.Inactive;
         if (!ThreeDCheckBoxes) state |= ButtonState.Flat;
 
-        var checkState = GetItemCheckState(index);
         if (checkState == CheckState.Indeterminate)
         {
             ControlPaint.DrawMixedCheckBox(graphics, checkBox, state | ButtonState.Checked);
