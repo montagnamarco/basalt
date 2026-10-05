@@ -2,6 +2,8 @@ using Basalt.Core.Localization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.Controls.Templates;
+using Avalonia.Media;
 using Basalt.Core.Model;
 using Basalt.Shell.ViewModels;
 
@@ -10,17 +12,29 @@ namespace Basalt.Shell.Controls;
 /// <summary>List of errors and warnings, with jump-to-source support.</summary>
 public sealed class ProblemsPanel : UserControl
 {
-    public ProblemsPanel(MainWindowViewModel viewModel, Action<IdeDiagnostic> apri)
+    public ProblemsPanel(MainWindowViewModel viewModel, Action<IdeDiagnostic> open)
     {
         var grid = new DataGrid
         {
             [!DataGrid.ItemsSourceProperty] = new Binding(nameof(MainWindowViewModel.Diagnostics)),
             IsReadOnly = true,
+            FontSize = 11,
+            RowHeight = 24,
             GridLinesVisibility = DataGridGridLinesVisibility.Horizontal
         };
 
-        grid.Columns.Add(new DataGridTextColumn
-        { Header = Localizer.Get(StringKeys.ColumnSeverity), Binding = new Binding(nameof(IdeDiagnostic.Severity)), Width = new DataGridLength(90) });
+        grid.Columns.Add(new DataGridTemplateColumn
+        {
+            Header = Localizer.Get(StringKeys.ColumnSeverity),
+            Width = new DataGridLength(36),
+            CellTemplate = new FuncDataTemplate<IdeDiagnostic>((diagnostic, _) =>
+                DiagnosticAppearance.CreateIcon(diagnostic?.Severity ?? DiagnosticSeverity.Info))
+        });
+        grid.LoadingRow += (_, args) =>
+        {
+            if (args.Row.DataContext is IdeDiagnostic diagnostic)
+                args.Row.Background = DiagnosticAppearance.Background(diagnostic.Severity);
+        };
         grid.Columns.Add(new DataGridTextColumn
         { Header = Localizer.Get(StringKeys.ColumnCode), Binding = new Binding(nameof(IdeDiagnostic.Id)), Width = new DataGridLength(90) });
         grid.Columns.Add(new DataGridTextColumn
@@ -32,7 +46,7 @@ public sealed class ProblemsPanel : UserControl
 
         grid.DoubleTapped += (_, _) =>
         {
-            if (grid.SelectedItem is IdeDiagnostic diagnostic) apri(diagnostic);
+            if (grid.SelectedItem is IdeDiagnostic diagnostic) open(diagnostic);
         };
 
         // An empty grid reads as a panel that failed to load. Saying there

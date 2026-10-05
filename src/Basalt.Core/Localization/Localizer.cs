@@ -270,6 +270,11 @@ public static class StringKeys
     public const string ColumnFile = "Column_File";
     public const string ColumnLine = "Column_Line";
 
+    public const string SeverityError = "Severity_Error";
+    public const string SeverityWarning = "Severity_Warning";
+    public const string SeverityInfo = "Severity_Info";
+    public const string SeverityHidden = "Severity_Hidden";
+
     public const string WelcomeSubtitle = "Welcome_Subtitle";
 
     public const string NewSolutionTitle = "NewSolution_Title";

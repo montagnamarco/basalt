@@ -188,6 +188,10 @@
   <data name="Column_Description" xml:space="preserve"><value>Description</value></data>
   <data name="Column_File" xml:space="preserve"><value>File</value></data>
   <data name="Column_Line" xml:space="preserve"><value>Line</value></data>
+  <data name="Severity_Error" xml:space="preserve"><value>Error</value></data>
+  <data name="Severity_Warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="Severity_Info" xml:space="preserve"><value>Info</value></data>
+  <data name="Severity_Hidden" xml:space="preserve"><value>Hidden</value></data>
 
   <!-- Welcome screen -->
   <data name="Welcome_Subtitle" xml:space="preserve"><value>C# and VB.NET, with an Avalonia designer</value></data>
