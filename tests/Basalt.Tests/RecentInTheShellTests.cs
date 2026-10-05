@@ -11,13 +11,28 @@ namespace Basalt.Tests;
 /// Recent solutions where they can be seen: in the File menu, and on the
 /// screen that greets you.
 /// </summary>
+[Collection(SettingsFileCollection.Name)]
 public sealed class RecentInTheShellTests : IDisposable
 {
     private readonly string _root =
         Directory.CreateTempSubdirectory("basalt-recentui-").FullName;
 
+    private readonly string? _previousSettings =
+        Environment.GetEnvironmentVariable("BASALT_SETTINGS");
+
+    /// <summary>
+    /// A settings file of this class's own, so these tests start from an
+    /// empty recent list whatever ran before them. Tests that open solutions
+    /// elsewhere write to the one file the whole run shares, and the empty
+    /// list checked here then held their temp App.vbproj.
+    /// </summary>
+    public RecentInTheShellTests() =>
+        Environment.SetEnvironmentVariable("BASALT_SETTINGS", Path.Combine(_root, "settings.json"));
+
     public void Dispose()
     {
+        Environment.SetEnvironmentVariable("BASALT_SETTINGS", _previousSettings);
+
         try { Directory.Delete(_root, true); } catch { }
     }
 

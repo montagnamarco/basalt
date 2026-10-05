@@ -13,6 +13,7 @@ namespace Basalt.Tests;
 /// for — glyphs the size of a wall, oversized inputs, a control drawn outside
 /// its border — passed the numeric assertions that were meant to catch it.
 /// </remarks>
+[Collection(SettingsFileCollection.Name)]
 public sealed class ShellAppearanceTests : IDisposable
 {
     private readonly string _settings = Path.Combine(

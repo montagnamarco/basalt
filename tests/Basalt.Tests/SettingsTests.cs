@@ -3,6 +3,7 @@ using Basalt.Core.Settings;
 namespace Basalt.Tests;
 
 /// <summary>Reading and writing what the IDE remembers between sessions.</summary>
+[Collection(SettingsFileCollection.Name)]
 public sealed class SettingsStoreTests : IDisposable
 {
     private readonly string _root = Path.Combine(
