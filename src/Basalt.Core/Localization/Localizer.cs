@@ -436,8 +436,20 @@ public static class StringKeys
     public const string EditorSmartTagExtractMethod = "Editor_SmartTagExtractMethod";
     public const string EditorSmartTagTidyImports = "Editor_SmartTagTidyImports";
 
+    public const string ResourceEditorAdd = "ResourceEditor_Add";
     public const string ResourceEditorApply = "ResourceEditor_Apply";
+    public const string ResourceEditorXml = "ResourceEditor_Xml";
+    public const string ResourceEditorBack = "ResourceEditor_Back";
+    public const string ResourceEditorName = "ResourceEditor_Name";
+    public const string ResourceEditorType = "ResourceEditor_Type";
     public const string ResourceEditorValue = "ResourceEditor_Value";
+    public const string ResourceEditorComment = "ResourceEditor_Comment";
+    public const string ResourceEditorInvalid = "ResourceEditor_Invalid";
+    public const string ResourceEditorReadOnly = "ResourceEditor_ReadOnly";
+    public const string ResourceEditorDuplicateName = "ResourceEditor_DuplicateName";
+    public const string ResourceEditorInvalidValue = "ResourceEditor_InvalidValue";
+    public const string ResourceEditorUnsupportedScalar = "ResourceEditor_UnsupportedScalar";
+    public const string ResourceEditorEditFailed = "ResourceEditor_EditFailed";
     public const string DesignerView = "Designer_View";
     public const string EditorSmartTagsUnsupportedChanges = "Editor_SmartTagsUnsupportedChanges";
     public const string EditorVbMembers = "Editor_VbMembers";

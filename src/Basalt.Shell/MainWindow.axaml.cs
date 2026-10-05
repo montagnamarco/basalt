@@ -656,6 +656,9 @@ public partial class MainWindow : Window
 
     private Control CreateDocumentView(EditorDocumentViewModel document)
     {
+        if (Path.GetExtension(document.FilePath).Equals(".resx", StringComparison.OrdinalIgnoreCase))
+            return new ResourceEditor(document, () => TextEditorFor(document));
+
         if (document.OpenInDesigner)
         {
             // Both halves of the same file in one tab, with a way to change

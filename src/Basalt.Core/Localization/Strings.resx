@@ -361,6 +361,8 @@
   <data name="WinFormsCollection_InvalidColumn" xml:space="preserve"><value>Enter a unique valid column name and a positive width.</value></data>
   <data name="WinFormsCollection_NewItem" xml:space="preserve"><value>New item</value></data>
   <data name="WinFormsCollection_Unsupported" xml:space="preserve"><value>This collection contains expressions that cannot be edited safely. Edit its initialization in code.</value></data>
+  <data name="WinFormsCollection_EditColumns" xml:space="preserve"><value>Edit Columns…</value></data>
+  <data name="WinFormsCollection_EditItems" xml:space="preserve"><value>Edit Items…</value></data>
   <data name="WinFormsDesigner_MixedValues" xml:space="preserve"><value>Multiple values</value></data>
   <data name="PropertyGrid_SortAlphabetical" xml:space="preserve"><value>Alphabetical</value></data>
   <data name="PropertyGrid_OpenEditor" xml:space="preserve"><value>Open editor</value></data>
@@ -412,8 +414,19 @@
   </data>
   <data name="StatusBuildStopped" xml:space="preserve"><value>Build stopped.</value></data>
   <data name="DebugRunWithoutAdapter" xml:space="preserve"><value>The debugger is unavailable. Starting the application without debugging.</value></data>
+  <data name="ResourceEditor_Name" xml:space="preserve"><value>Name</value></data>
   <data name="ResourceEditor_Value" xml:space="preserve"><value>Value</value></data>
+  <data name="ResourceEditor_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="ResourceEditor_Comment" xml:space="preserve"><value>Comment</value></data>
   <data name="ResourceEditor_Apply" xml:space="preserve"><value>Apply changes</value></data>
+  <data name="ResourceEditor_Invalid" xml:space="preserve"><value>Cannot read resources: {0}</value></data>
+  <data name="ResourceEditor_EditFailed" xml:space="preserve"><value>Cannot update resource: {0}</value></data>
+  <data name="ResourceEditor_DuplicateName" xml:space="preserve"><value>A resource with this name already exists.</value></data>
+  <data name="ResourceEditor_InvalidValue" xml:space="preserve"><value>The value does not match the selected resource type.</value></data>
+  <data name="ResourceEditor_UnsupportedScalar" xml:space="preserve"><value>Select a supported resource type.</value></data>
+  <data name="ResourceEditor_ReadOnly" xml:space="preserve"><value>This resource value is shown without loading its object. Edit its XML to change the value.</value></data>
+  <data name="ResourceEditor_Xml" xml:space="preserve"><value>View XML</value></data>
+  <data name="ResourceEditor_Back" xml:space="preserve"><value>Back to resources</value></data>
   <data name="Editor_VbObjects" xml:space="preserve">
     <value>Classes and objects</value>
   </data>
@@ -430,6 +443,7 @@
   <data name="MenuEditor_Up" xml:space="preserve"><value>Move up</value></data>
   <data name="MenuEditor_Down" xml:space="preserve"><value>Move down</value></data>
   <data name="MenuEditor_NewItem" xml:space="preserve"><value>New item</value></data>
+  <data name="ResourceEditor_Add" xml:space="preserve"><value>Add resource</value></data>
   <data name="WinFormsDesigner_ShowRulers" xml:space="preserve"><value>Show rulers</value></data>
   <data name="StatusLaunchTargetChanged" xml:space="preserve"><value>The startup project or configuration changed during the build. Start again to run the selected project.</value></data>
   <data name="MenuEditor_InvalidMenu" xml:space="preserve"><value>Each menu item needs a unique name, a valid parent and single-line text. Items cannot be nested inside themselves or separators.</value></data>
