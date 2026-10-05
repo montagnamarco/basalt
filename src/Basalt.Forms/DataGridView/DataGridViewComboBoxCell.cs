@@ -12,6 +12,7 @@ namespace System.Windows.Forms;
 /// </summary>
 public partial class DataGridViewComboBoxCell : DataGridViewCell
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     /// <summary>The classic drop-down button is always this wide, matching ComboBox's own.</summary>
     private const int ButtonWidth = 16;
 
@@ -106,9 +107,18 @@ public partial class DataGridViewComboBoxCell : DataGridViewCell
         if (DataGridView?.EditingControl is ComboBox comboBox) comboBox.Visible = false;
     }
 
-    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
+    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex)
+    {
+        if (DataGridView is not { } grid || ColumnIndex < 0 || rowIndex < 0) return Rectangle.Empty;
 
-    protected override Rectangle GetErrorIconBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
+        var bounds = new Rectangle(Point.Empty, GetSize(rowIndex));
+        if (DisplayStyle != DataGridViewComboBoxDisplayStyle.Nothing &&
+            (!DisplayStyleForCurrentCellOnly || _current)) return bounds;
+
+        return FormattedValue is null ? Rectangle.Empty : GetTextContentBounds(bounds, cellStyle, grid.AdvancedCellBorderStyle);
+    }
+
+    protected override Rectangle GetErrorIconBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => GetStandardErrorIconBounds(cellStyle, rowIndex);
 
     protected override object? GetFormattedValue(
         object? value,
@@ -128,7 +138,13 @@ public partial class DataGridViewComboBoxCell : DataGridViewCell
         return value.ToString();
     }
 
-    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize) => new(-1, -1);
+    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize)
+    {
+        var text = FormattedValue?.ToString() ?? string.Empty;
+        var measured = TextRenderer.MeasureText(text, cellStyle.Font ?? DataGridView?.Font);
+        return new Size(measured.Width + ButtonWidth + cellStyle.Padding.Horizontal + 4,
+            Math.Max(measured.Height, ButtonWidth) + cellStyle.Padding.Vertical + 2);
+    }
 
     public override void InitializeEditingControl(int rowIndex, object? initialFormattedValue, DataGridViewCellStyle dataGridViewCellStyle)
     {

@@ -30,4 +30,8 @@ public class DataGridViewElement
     protected void RaiseCellContentDoubleClick(DataGridViewCellEventArgs e) => _dataGridView?.RaiseCellContentDoubleClickCore(e);
 
     protected void RaiseCellValueChanged(DataGridViewCellEventArgs e) => _dataGridView?.RaiseCellValueChangedCore(e);
+
+    protected void RaiseDataError(DataGridViewDataErrorEventArgs e) => _dataGridView?.RaiseElementDataErrorCore(e);
+
+    protected void RaiseMouseWheel(MouseEventArgs e) => _dataGridView?.RaiseElementMouseWheelCore(e);
 }

@@ -6,7 +6,7 @@ namespace System.Windows.Forms;
 /// One row of the grid: its Cells, one per column, its own height, and the few places where a
 /// row is treated specially (IsNewRow, for the AllowUserToAddRows placeholder at the bottom).
 /// </summary>
-public class DataGridViewRow : DataGridViewBand
+public partial class DataGridViewRow : DataGridViewBand
 {
     private DataGridViewCellCollection? _cells;
     private DataGridViewRowHeaderCell? _headerCell;
@@ -222,6 +222,37 @@ public class DataGridViewRow : DataGridViewBand
     }
 
     protected virtual DataGridViewCellCollection CreateCellsInstance() => new(this);
+
+    /// <summary>Copies the configured header edges and adds the outer grid edges when requested.</summary>
+    public virtual DataGridViewAdvancedBorderStyle AdjustRowHeaderBorderStyle(
+        DataGridViewAdvancedBorderStyle dataGridViewAdvancedBorderStyleInput,
+        DataGridViewAdvancedBorderStyle dataGridViewAdvancedBorderStylePlaceholder,
+        bool singleVerticalBorderAdded,
+        bool singleHorizontalBorderAdded,
+        bool isFirstDisplayedRow,
+        bool isLastVisibleRow)
+    {
+        ArgumentNullException.ThrowIfNull(dataGridViewAdvancedBorderStyleInput);
+        ArgumentNullException.ThrowIfNull(dataGridViewAdvancedBorderStylePlaceholder);
+
+        dataGridViewAdvancedBorderStylePlaceholder.Left = dataGridViewAdvancedBorderStyleInput.Left;
+        dataGridViewAdvancedBorderStylePlaceholder.Top = dataGridViewAdvancedBorderStyleInput.Top;
+        dataGridViewAdvancedBorderStylePlaceholder.Right = dataGridViewAdvancedBorderStyleInput.Right;
+        dataGridViewAdvancedBorderStylePlaceholder.Bottom = dataGridViewAdvancedBorderStyleInput.Bottom;
+
+        if (singleVerticalBorderAdded && dataGridViewAdvancedBorderStylePlaceholder.Left == DataGridViewAdvancedCellBorderStyle.None)
+            dataGridViewAdvancedBorderStylePlaceholder.Left = DataGridViewAdvancedCellBorderStyle.Single;
+
+        if (singleHorizontalBorderAdded)
+        {
+            if (isFirstDisplayedRow && dataGridViewAdvancedBorderStylePlaceholder.Top == DataGridViewAdvancedCellBorderStyle.None)
+                dataGridViewAdvancedBorderStylePlaceholder.Top = DataGridViewAdvancedCellBorderStyle.Single;
+            if (isLastVisibleRow && dataGridViewAdvancedBorderStylePlaceholder.Bottom == DataGridViewAdvancedCellBorderStyle.None)
+                dataGridViewAdvancedBorderStylePlaceholder.Bottom = DataGridViewAdvancedCellBorderStyle.Single;
+        }
+
+        return dataGridViewAdvancedBorderStylePlaceholder;
+    }
 
     /// <summary>The row's own text while VirtualMode is off, or - once it is on - whatever RowErrorTextNeeded supplies this time, asked again on every call.</summary>
     public string GetErrorText(int rowIndex) => DataGridView?.GetRowErrorTextCore(this, _errorText) ?? _errorText;

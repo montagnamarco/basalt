@@ -160,10 +160,12 @@ public class DataGridViewInputTests
 
         grid.Columns[0].Width += 40;
 
-        // Height is the TextBox's own PreferredHeight (it is FixedHeight/AutoSize by itself,
-        // unrelated to this cell-following fix), so only Location and Width are checked here.
+        // The editor lives inside EditingPanel; screen coordinates prove both parent offsets.
+        // Its own height still follows TextBox.PreferredHeight rather than the cell height.
         var expected = grid.GetCellDisplayRectangle(0, 0, cutOverflow: false);
-        Assert.Equal(expected.Location, textBox.Location);
+        Assert.Same(grid.EditingPanel, textBox.Parent);
+        Assert.Equal(expected, grid.EditingPanel.Bounds);
+        Assert.Equal(grid.PointToScreen(expected.Location), textBox.PointToScreen(Point.Empty));
         Assert.Equal(expected.Width, textBox.Width);
 
         form.Close();
@@ -177,13 +179,16 @@ public class DataGridViewInputTests
         grid.CurrentCell = grid.Rows[0].Cells[1];
         grid.BeginEdit(true);
         var textBox = (TextBox)grid.EditingControl!;
-        var before = textBox.Location;
+        var before = textBox.PointToScreen(Point.Empty);
 
         grid.Columns[0].Width += 40;
 
         var expected = grid.GetCellDisplayRectangle(1, 0, cutOverflow: false);
-        Assert.NotEqual(before, textBox.Location);
-        Assert.Equal(expected.Location, textBox.Location);
+        Assert.NotEqual(before, textBox.PointToScreen(Point.Empty));
+        Assert.Same(grid.EditingPanel, textBox.Parent);
+        Assert.Equal(expected, grid.EditingPanel.Bounds);
+        Assert.Equal(grid.PointToScreen(expected.Location), textBox.PointToScreen(Point.Empty));
+        Assert.Equal(expected.Width, textBox.Width);
 
         form.Close();
     }

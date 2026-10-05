@@ -8,8 +8,9 @@ namespace System.Windows.Forms;
 /// no separate edit mode, matching IDataGridViewEditingCell's immediate-commit contract), and it
 /// paints with ControlPaint.DrawCheckBox/DrawMixedCheckBox rather than text.
 /// </summary>
-public class DataGridViewCheckBoxCell : DataGridViewCell, IDataGridViewEditingCell
+public partial class DataGridViewCheckBoxCell : DataGridViewCell, IDataGridViewEditingCell
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     /// <summary>The glyph ControlPaint draws is always 13x13; centred in the cell like Microsoft's own.</summary>
     private const int GlyphSize = 13;
 
@@ -77,16 +78,31 @@ public class DataGridViewCheckBoxCell : DataGridViewCell, IDataGridViewEditingCe
         TypeConverter? formattedValueTypeConverter,
         DataGridViewDataErrorContexts context) => ToCheckState(value);
 
+    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex)
+    {
+        if (DataGridView is null || ColumnIndex < 0 || rowIndex < 0) return Rectangle.Empty;
+
+        return GetGlyphBounds(new Rectangle(Point.Empty, GetSize(rowIndex)));
+    }
+
+    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize) =>
+        new(GlyphSize + cellStyle.Padding.Horizontal + 4, GlyphSize + cellStyle.Padding.Vertical + 4);
+
     public virtual object GetEditingCellFormattedValue(DataGridViewDataErrorContexts context) => ToCheckState(Value);
 
     /// <summary>A click on the glyph itself (not merely anywhere in the cell) toggles - the grid raises this only inside GetContentBounds.</summary>
-    protected override void OnContentClick(DataGridViewCellEventArgs e) => Toggle();
+    protected override void OnContentClick(DataGridViewCellEventArgs e)
+    {
+        _lastContentClickArgs = e;
+        Toggle();
+    }
 
     /// <summary>Space toggles the current cell, on key-up as Microsoft's own check box column does (not on key-down, which would fire twice while the key auto-repeats).</summary>
     protected override void OnKeyUp(KeyEventArgs e, int rowIndex)
     {
         if (e.KeyCode != Keys.Space) return;
 
+        SetPressed(false);
         Toggle();
         e.Handled = true;
     }
@@ -157,6 +173,11 @@ public class DataGridViewCheckBoxCell : DataGridViewCell, IDataGridViewEditingCe
     }
 
     public override string ToString() => $"DataGridViewCheckBoxCell {{ ColumnIndex={ColumnIndex}, RowIndex={RowIndex} }}";
+
+    private static Rectangle GetGlyphBounds(Rectangle cellBounds) => new(
+        cellBounds.X + (cellBounds.Width - GlyphSize) / 2,
+        cellBounds.Y + (cellBounds.Height - GlyphSize) / 2,
+        GlyphSize, GlyphSize);
 
     /// <summary>Reads the raw Value against TrueValue/FalseValue/IndeterminateValue when set, else treats it as a plain bool/CheckState/null.</summary>
     private CheckState ToCheckState(object? value)

@@ -8,8 +8,9 @@ namespace System.Windows.Forms;
 /// straight from the grid's hit-testing, not through a grid event this cell subscribes to - track
 /// whether the mouse is currently down over it, to paint the pushed state.
 /// </summary>
-public class DataGridViewButtonCell : DataGridViewCell
+public partial class DataGridViewButtonCell : DataGridViewCell
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     private bool _pressed;
 
     public DataGridViewButtonCell()
@@ -42,6 +43,19 @@ public class DataGridViewButtonCell : DataGridViewCell
     protected override object? GetValue(int rowIndex) =>
         UseColumnTextForButtonValue && OwningColumn is DataGridViewButtonColumn { Text: { Length: > 0 } text } ? text : base.GetValue(rowIndex);
 
+    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) =>
+        DataGridView is not null && ColumnIndex >= 0 && rowIndex >= 0
+            ? new Rectangle(Point.Empty, GetSize(rowIndex))
+            : Rectangle.Empty;
+
+    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize)
+    {
+        var text = FormattedValue?.ToString() ?? string.Empty;
+        var measured = TextRenderer.MeasureText(text, cellStyle.Font ?? DataGridView?.Font);
+        return new Size(Math.Max(18, measured.Width + 8 + cellStyle.Padding.Horizontal),
+            Math.Max(18, measured.Height + 6 + cellStyle.Padding.Vertical));
+    }
+
     protected override void OnMouseDown(DataGridViewCellMouseEventArgs e)
     {
         _pressed = true;
@@ -69,9 +83,9 @@ public class DataGridViewButtonCell : DataGridViewCell
         DataGridViewAdvancedBorderStyle advancedBorderStyle,
         DataGridViewPaintParts paintParts)
     {
+        var selected = (cellState & DataGridViewElementStates.Selected) != 0;
         if ((paintParts & DataGridViewPaintParts.Background) != 0)
         {
-            var selected = (cellState & DataGridViewElementStates.Selected) != 0;
             using var back = new SolidBrush(selected ? cellStyle.SelectionBackColor : cellStyle.BackColor);
             graphics.FillRectangle(back, cellBounds);
         }

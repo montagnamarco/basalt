@@ -252,5 +252,10 @@ public partial class DataGridView
         return args.ParsingApplied ? args.Value : null;
     }
 
-    internal Rectangle GetCellContentBoundsCore(DataGridViewCell cell, int rowIndex) => GetCellDisplayRectangle(cell.ColumnIndex, rowIndex, cutOverflow: true);
+    internal Rectangle GetCellContentBoundsCore(DataGridViewCell cell, int rowIndex)
+    {
+        using var bitmap = new Bitmap(1, 1);
+        using var graphics = Graphics.FromImage(bitmap);
+        return cell.GetContentBoundsCore(graphics, cell.GetInheritedStyle(null, rowIndex, includeColors: true), rowIndex);
+    }
 }

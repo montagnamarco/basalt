@@ -5,6 +5,7 @@ namespace System.Windows.Forms;
 /// <summary>A column's own header cell: the raised button that shows HeaderText and, when the column is sorted, a glyph.</summary>
 public class DataGridViewColumnHeaderCell : DataGridViewHeaderCell
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     public DataGridViewColumnHeaderCell()
     {
     }
@@ -20,6 +21,10 @@ public class DataGridViewColumnHeaderCell : DataGridViewHeaderCell
     }
 
     protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
+
+    protected override object? GetClipboardContent(int rowIndex, bool firstCell, bool lastCell,
+        bool inFirstRow, bool inLastRow, string format) =>
+        FormatClipboardText(OwningColumn?.HeaderText ?? string.Empty, firstCell, lastCell, inLastRow, format);
 
     /// <summary>This cell's own menu, or its column's, or the grid's - the column header has a column to fall back on that a plain header cell does not.</summary>
     public override ContextMenuStrip? GetInheritedContextMenuStrip(int rowIndex) => ContextMenuStrip ?? OwningColumn?.ContextMenuStrip ?? DataGridView?.ContextMenuStrip;
@@ -61,6 +66,7 @@ public class DataGridViewColumnHeaderCell : DataGridViewHeaderCell
         var textBounds = cellBounds with { Width = Math.Max(cellBounds.Width - glyphWidth, 0) };
 
         base.Paint(graphics, clipBounds, textBounds, rowIndex, dataGridViewElementState, value, formattedValue, errorText, cellStyle, advancedBorderStyle, paintParts);
+        if ((paintParts & DataGridViewPaintParts.Border) != 0) PaintBorder(graphics, clipBounds, cellBounds, cellStyle, advancedBorderStyle);
 
         if (SortGlyphDirection == SortOrder.None) return;
 

@@ -8,7 +8,7 @@ namespace System.Windows.Forms;
 /// column and grid, and paints and formats itself through virtual members a derived cell type
 /// (CheckBox, ComboBox, Button...) overrides without touching the grid itself.
 /// </summary>
-public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDisposable
+public abstract partial class DataGridViewCell : DataGridViewElement, ICloneable, IDisposable
 {
     private DataGridViewCellStyle? _style;
     private object? _value;
@@ -41,7 +41,7 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
         }
     }
 
-    /// <summary>Where the formatted value is drawn, in client coordinates; empty while unattached to a grid.</summary>
+    /// <summary>Where the formatted value is drawn, in cell-local coordinates; empty while unattached to a grid.</summary>
     public Rectangle ContentBounds => DataGridView is null ? Rectangle.Empty : GetContentBounds(RowIndex);
 
     public virtual object? DefaultNewRowValue => null;
@@ -58,7 +58,16 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
     public object? EditedFormattedValue => GetEditedFormattedValue(RowIndex, DataGridViewDataErrorContexts.Formatting);
 
-    public Rectangle ErrorIconBounds => DataGridView is null ? Rectangle.Empty : GetErrorIconBounds(null!, InheritedStyle, RowIndex);
+    public Rectangle ErrorIconBounds
+    {
+        get
+        {
+            if (DataGridView is null) return Rectangle.Empty;
+            using var bitmap = new Bitmap(1, 1);
+            using var graphics = Graphics.FromImage(bitmap);
+            return GetErrorIconBounds(graphics, InheritedStyle, RowIndex);
+        }
+    }
 
     public string ErrorText
     {
@@ -117,8 +126,19 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
     /// </summary>
     private void RefreshDataGridViewFromOwners() => SetDataGridView(_owningRow?.DataGridView ?? _owningColumn?.DataGridView);
 
-    /// <summary>The size the cell would like, which this round simplifies to its current Size rather than measuring content.</summary>
-    public Size PreferredSize => Size;
+    /// <summary>The size requested by the cell's content, or its current size when that cell does not measure content.</summary>
+    public Size PreferredSize
+    {
+        get
+        {
+            if (DataGridView is null) return Size;
+
+            using var bitmap = new Bitmap(1, 1);
+            using var graphics = Graphics.FromImage(bitmap);
+            var preferred = GetPreferredSize(graphics, InheritedStyle, RowIndex, Size.Empty);
+            return preferred.Width < 0 || preferred.Height < 0 ? Size : preferred;
+        }
+    }
 
     public virtual bool ReadOnly { get; set; }
 
@@ -223,6 +243,8 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
         GC.SuppressFinalize(this);
     }
 
+    ~DataGridViewCell() => Dispose(false);
+
     /// <summary>Called when the editing control is about to be removed, for a cell type that needs to detach its own state from it.</summary>
     public virtual void DetachEditingControl()
     {
@@ -240,9 +262,34 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
     protected virtual Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
 
+    internal Rectangle GetContentBoundsCore(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) =>
+        GetContentBounds(graphics, cellStyle, rowIndex);
+
     public object? GetEditedFormattedValue(int rowIndex, DataGridViewDataErrorContexts context) => GetFormattedValueCore(context);
 
     protected virtual Rectangle GetErrorIconBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
+
+    internal Rectangle GetStandardErrorIconBounds(DataGridViewCellStyle cellStyle, int rowIndex)
+    {
+        ArgumentNullException.ThrowIfNull(cellStyle);
+        if (DataGridView is not { } grid || rowIndex < 0 || rowIndex >= grid.Rows.Count
+            || string.IsNullOrEmpty(GetErrorText(rowIndex))
+            || (ColumnIndex >= 0 ? !grid.ShowCellErrors : !grid.ShowRowErrors)) return Rectangle.Empty;
+        var bounds = new Rectangle(Point.Empty, GetSize(rowIndex));
+        var borderStyle = ColumnIndex < 0
+            ? grid.GetRowHeaderBorderStyleCore(rowIndex)
+            : grid.AdvancedCellBorderStyle;
+        return GetErrorGlyphBounds(GetTextContentBounds(bounds, cellStyle, borderStyle));
+    }
+
+    private Rectangle GetErrorGlyphBounds(Rectangle content)
+    {
+        const int size = 12;
+        const int margin = 3;
+        if (content.Width < size + margin * 2 || content.Height < size + margin * 2) return Rectangle.Empty;
+        var left = DataGridView?.RightToLeft == RightToLeft.Yes ? content.Left + margin : content.Right - margin - size;
+        return new Rectangle(left, content.Top + (content.Height - size) / 2, size, size);
+    }
 
     protected virtual string GetErrorText(int rowIndex) => _errorText;
 
@@ -469,8 +516,17 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
         object? formattedValue,
         DataGridViewCellStyle cellStyle,
         DataGridViewAdvancedBorderStyle advancedBorderStyle,
-        DataGridViewPaintParts paintParts) =>
-        Paint(graphics, clipBounds, cellBounds, rowIndex, cellState, value, formattedValue, ErrorText.Length == 0 ? null : ErrorText, cellStyle, advancedBorderStyle, paintParts);
+        DataGridViewPaintParts paintParts,
+        string? errorText = null)
+    {
+        var resolvedError = errorText ?? (ErrorText.Length == 0 ? null : ErrorText);
+        Paint(graphics, clipBounds, cellBounds, rowIndex, cellState, value, formattedValue,
+            resolvedError, cellStyle, advancedBorderStyle, paintParts);
+        // Paint after the concrete cell's content so stretched images cannot hide the error.
+        if ((paintParts & DataGridViewPaintParts.ErrorIcon) != 0 && rowIndex >= 0
+            && (ColumnIndex >= 0 ? DataGridView?.ShowCellErrors : DataGridView?.ShowRowErrors) == true)
+            PaintErrorIcon(graphics, clipBounds, GetTextContentBounds(cellBounds, cellStyle, advancedBorderStyle), resolvedError);
+    }
 
     /// <summary>Paints the border, the selection/background, the formatted value and the error icon, each gated by paintParts.</summary>
     protected virtual void Paint(
@@ -501,8 +557,7 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
         if ((paintParts & DataGridViewPaintParts.ContentForeground) != 0 && formattedValue is not null)
         {
-            var textBounds = BorderInset(cellBounds, advancedBorderStyle);
-            textBounds.Inflate(-cellStyle.Padding.Horizontal / 2, -cellStyle.Padding.Vertical / 2);
+            var textBounds = GetTextContentBounds(cellBounds, cellStyle, advancedBorderStyle);
 
             var flags = TextAlignmentFlags(cellStyle.Alignment);
             TextRenderer.DrawText(graphics, formattedValue.ToString(), cellStyle.Font ?? DataGridView?.Font, textBounds, selected ? cellStyle.SelectionForeColor : cellStyle.ForeColor, flags);
@@ -515,6 +570,13 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
         if (advancedBorderStyle.Right != DataGridViewAdvancedCellBorderStyle.None) graphics.DrawLine(pen, bounds.Right - 1, bounds.Top, bounds.Right - 1, bounds.Bottom - 1);
         if (advancedBorderStyle.Bottom != DataGridViewAdvancedCellBorderStyle.None) graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right - 1, bounds.Bottom - 1);
+    }
+
+    internal static Rectangle GetTextContentBounds(Rectangle bounds, DataGridViewCellStyle cellStyle, DataGridViewAdvancedBorderStyle borderStyle)
+    {
+        var content = BorderInset(bounds, borderStyle);
+        content.Inflate(-cellStyle.Padding.Horizontal / 2, -cellStyle.Padding.Vertical / 2);
+        return content;
     }
 
     private static Rectangle BorderInset(Rectangle bounds, DataGridViewAdvancedBorderStyle style)
@@ -549,6 +611,17 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
     protected virtual void PaintErrorIcon(Graphics graphics, Rectangle clipBounds, Rectangle cellValueBounds, string? errorText)
     {
+        ArgumentNullException.ThrowIfNull(graphics);
+        if (DataGridView is null || string.IsNullOrEmpty(errorText)) return;
+        var bounds = GetErrorGlyphBounds(cellValueBounds);
+        if (bounds.IsEmpty || !clipBounds.IntersectsWith(bounds)) return;
+        var state = graphics.Save();
+        try
+        {
+            graphics.SetClip(clipBounds, System.Drawing.Drawing2D.CombineMode.Intersect);
+            graphics.DrawIcon(SystemIcons.Error, bounds);
+        }
+        finally { graphics.Restore(state); }
     }
 
     /// <summary>Converts a formatted (edited) value back to the type Value holds; the default simply trusts the editor's own type.</summary>
@@ -598,10 +671,13 @@ public abstract class DataGridViewCell : DataGridViewElement, ICloneable, IDispo
 
     public override string ToString() => $"{GetType().Name} {{ ColumnIndex={ColumnIndex}, RowIndex={RowIndex} }}";
 
-    /// <summary>Sets the value and, when it really changed, raises CellValueChanged on the owning grid.</summary>
+    /// <summary>Sets the value and repaints the cell when it changes, including for callers that update it outside an editing control.</summary>
     internal void SetValueCore(int rowIndex, object? value)
     {
-        if (SetValue(rowIndex, value)) RaiseCellValueChanged(new DataGridViewCellEventArgs(ColumnIndex, rowIndex));
+        if (!SetValue(rowIndex, value)) return;
+
+        RaiseCellValueChanged(new DataGridViewCellEventArgs(ColumnIndex, rowIndex));
+        DataGridView?.InvalidateCellCore(this);
     }
 
     private object? GetFormattedValueCore(DataGridViewDataErrorContexts context)

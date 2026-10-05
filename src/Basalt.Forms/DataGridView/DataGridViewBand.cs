@@ -106,6 +106,8 @@ public class DataGridViewBand : DataGridViewElement, ICloneable, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    ~DataGridViewBand() => Dispose(false);
+
     protected virtual void Dispose(bool disposing)
     {
     }

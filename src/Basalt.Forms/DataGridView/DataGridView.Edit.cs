@@ -17,61 +17,82 @@ public partial class DataGridView
     /// <summary>One editing control instance per EditType, kept alive and reused rather than recreated for every cell.</summary>
     private readonly Dictionary<Type, Control> _editingControlsByType = new();
 
+    private bool _beginningEdit;
+
+    private bool CurrentCellIsAttached(DataGridViewCell cell) => !IsDisposed && !Disposing &&
+        ReferenceEquals(_currentCell, cell) && ReferenceEquals(cell.DataGridView, this) && cell.RowIndex >= 0 && cell.ColumnIndex >= 0;
+
+    private bool EditingCellIsAttached(DataGridViewCell cell, Control control) =>
+        CurrentCellIsAttached(cell) && ReferenceEquals(EditingControl, control) && !control.IsDisposed;
+
     private bool BeginEditCore(bool selectAll)
     {
-        if (_currentCell is not { } cell) return false;
+        if (_beginningEdit || _currentCell is not { } cell || !CurrentCellIsAttached(cell)) return false;
         if (EditingControl is not null) return true;
-        if (ReadOnly || cell.ReadOnly) return false;
-        if (!cell.UsesTextEditorInternal) return false;
+        if (ReadOnly || cell.ReadOnly || !cell.UsesTextEditorInternal) return false;
 
-        var cancel = new DataGridViewCellCancelEventArgs(cell.ColumnIndex, cell.RowIndex);
-        OnCellBeginEdit(cancel);
-        if (cancel.Cancel) return false;
-
-        var editingControlType = cell.EditType ?? typeof(DataGridViewTextBoxEditingControl);
-        var control = ResolveEditingControl(editingControlType);
-        var editingControl = control as IDataGridViewEditingControl;
-
-        EditingControl = control;
-        Controls.Add(control);
-
-        var cellStyle = cell.InheritedStyle;
-
-        // Loading the cell's value into the editor is not an edit: changes the editor reports
-        // until it is ready are ignored, so CurrentCellDirtyStateChanged fires for the user's
-        // first change only.
-        _preparingEditingControl = true;
+        _beginningEdit = true;
+        Control? control = null;
         try
         {
+            var cancel = new DataGridViewCellCancelEventArgs(cell.ColumnIndex, cell.RowIndex);
+            OnCellBeginEdit(cancel);
+            if (cancel.Cancel || !CurrentCellIsAttached(cell)) return false;
+
+            control = ResolveEditingControl(cell.EditType ?? typeof(DataGridViewTextBoxEditingControl));
+            var editingControl = control as IDataGridViewEditingControl;
+            EditingControl = control;
+            Controls.Add(EditingPanel);
+            EditingPanel.Controls.Add(control);
+            EditingPanel.Visible = true;
+            var cellStyle = cell.InheritedStyle;
+
+            // Preparing the pooled editor is not a user edit. Callbacks may remove its cell,
+            // cancel editing or dispose the grid, so each return boundary checks ownership.
+            _preparingEditingControl = true;
             if (editingControl is not null)
             {
                 editingControl.EditingControlDataGridView = this;
                 editingControl.EditingControlRowIndex = cell.RowIndex;
                 editingControl.ApplyCellStyleToEditingControl(cellStyle);
             }
-
-            cell.InitializeEditingControl(cell.RowIndex, cell.GetEditedFormattedValue(cell.RowIndex, DataGridViewDataErrorContexts.Formatting), cellStyle);
+            if (!EditingCellIsAttached(cell, control)) return false;
+            var value = cell.GetEditedFormattedValue(cell.RowIndex, DataGridViewDataErrorContexts.Formatting);
+            if (!EditingCellIsAttached(cell, control)) return false;
+            cell.InitializeEditingControl(cell.RowIndex, value, cellStyle);
+            if (!EditingCellIsAttached(cell, control)) return false;
 
             var showing = new DataGridViewEditingControlShowingEventArgs(control, cellStyle);
             OnEditingControlShowing(showing);
+            if (!EditingCellIsAttached(cell, control)) return false;
             editingControl?.ApplyCellStyleToEditingControl(showing.CellStyle);
+            if (!EditingCellIsAttached(cell, control)) return false;
 
             PositionEditingControlCore();
+            if (!EditingCellIsAttached(cell, control)) return false;
+            EditingPanel.BringToFront();
             control.BringToFront();
             control.Visible = true;
             control.KeyDown += EditingControlKeyDown;
             control.Focus();
-
+            if (!EditingCellIsAttached(cell, control)) return false;
             editingControl?.PrepareEditingControlForEdit(selectAll);
+            if (!EditingCellIsAttached(cell, control)) return false;
+            IsCurrentCellDirty = false;
+            return true;
+        }
+        catch
+        {
+            if (control is not null && ReferenceEquals(EditingControl, control) && !IsDisposed) RemoveEditingControl();
+            throw;
         }
         finally
         {
             _preparingEditingControl = false;
+            _beginningEdit = false;
+            if (control is not null && ReferenceEquals(EditingControl, control) && !EditingCellIsAttached(cell, control) && !IsDisposed)
+                RemoveEditingControl();
         }
-
-        IsCurrentCellDirty = false;
-
-        return true;
     }
 
     /// <summary>The pooled instance for editingControlType, creating and caching it the first time any cell needs that type.</summary>
@@ -87,19 +108,8 @@ public partial class DataGridView
 
     private bool EndEditCore(DataGridViewDataErrorContexts context)
     {
-        if (EditingControl is not { } control || control is not IDataGridViewEditingControl editingControl || _currentCell is not { } cell) return true;
-
-        var formattedValue = editingControl.GetEditingControlFormattedValue(context);
-
-        var validating = new DataGridViewCellValidatingEventArgs(cell.ColumnIndex, cell.RowIndex, formattedValue);
-        OnCellValidating(validating);
-        if (validating.Cancel) return false;
-
-        cell.Value = cell.ParseFormattedValue(formattedValue, cell.InheritedStyle, null, null);
-
-        // A bound column writes the parsed value back into the data source here; a DataError
-        // handler that cancels it keeps the cell in edit mode, exactly as a refused CellValidating does.
-        if (!PushCellValueToDataSource(cell)) return false;
+        if (EditingControl is null || _currentCell is not { } cell) return true;
+        if (!CommitCurrentCellValue(context)) return false;
 
         RemoveEditingControl();
 
@@ -107,6 +117,48 @@ public partial class DataGridView
         OnCellEndEdit(new DataGridViewCellEventArgs(cell.ColumnIndex, cell.RowIndex));
 
         return true;
+    }
+
+    /// <summary>Commits the editor's value while leaving the editor in place, as CommitEdit requires.</summary>
+    private bool _committingCell;
+
+    private bool CommitCurrentCellValue(DataGridViewDataErrorContexts context)
+    {
+        if (_committingCell) return false;
+        _committingCell = true;
+        try { return CommitCurrentCellValueCore(context); }
+        finally { _committingCell = false; }
+    }
+
+    private bool CommitCurrentCellValueCore(DataGridViewDataErrorContexts context)
+    {
+        if (EditingControl is not IDataGridViewEditingControl editingControl || _currentCell is not { } cell) return true;
+        var control = EditingControl;
+
+        var formattedValue = editingControl.GetEditingControlFormattedValue(context);
+        if (!EditingCellIsAttached(cell, control)) return false;
+        var validating = new DataGridViewCellValidatingEventArgs(cell.ColumnIndex, cell.RowIndex, formattedValue);
+        OnCellValidating(validating);
+        if (validating.Cancel || !EditingCellIsAttached(cell, control)) return false;
+
+        var previousValue = cell.Value;
+        var parsedValue = cell.ParseFormattedValue(formattedValue, cell.InheritedStyle, null, null);
+        if (!EditingCellIsAttached(cell, control)) return false;
+        cell.Value = parsedValue;
+        if (!EditingCellIsAttached(cell, control)) return false;
+
+        // A refused bound write must leave the original cell value available while the editor
+        // remains open for correction, just as a refused CellValidating does.
+        if (!PushCellValueToDataSource(cell))
+        {
+            if (EditingCellIsAttached(cell, control)) cell.Value = previousValue;
+            return false;
+        }
+
+        if (!EditingCellIsAttached(cell, control)) return false;
+        editingControl.EditingControlValueChanged = false;
+        NotifyCurrentCellDirty(false);
+        return EditingCellIsAttached(cell, control);
     }
 
     private bool CancelEditCore()
@@ -129,10 +181,15 @@ public partial class DataGridView
     /// </summary>
     private void PositionEditingControlCore()
     {
-        if (EditingControl is null || _currentCell is not { } cell) return;
+        if (EditingControl is not { } control || _currentCell is not { } cell || !EditingCellIsAttached(cell, control)) return;
 
         var bounds = GetCellDisplayRectangle(cell.ColumnIndex, cell.RowIndex, cutOverflow: false);
+        var panelBounds = cell.PositionEditingPanel(bounds, GetCellDisplayRectangle(cell.ColumnIndex, cell.RowIndex, true), cell.InheritedStyle, false, false, false, false);
+        if (!EditingCellIsAttached(cell, control)) return;
+        EditingPanel.Bounds = panelBounds;
         cell.PositionEditingControl(true, true, bounds, bounds, cell.InheritedStyle, false, false, false, false);
+        if (!EditingCellIsAttached(cell, control)) return;
+        control.Location = new System.Drawing.Point(control.Left - EditingPanel.Left, control.Top - EditingPanel.Top);
     }
 
     /// <summary>Scrolling is not implemented this round (DataGridView.Layout.cs), so only the grid's own resize and column/row size changes need to reposition the editor.</summary>
@@ -153,10 +210,11 @@ public partial class DataGridView
 
         control.KeyDown -= EditingControlKeyDown;
         _currentCell?.DetachEditingControl();
-        Controls.Remove(control);
+        EditingPanel.Controls.Remove(control);
+        EditingPanel.Visible = false;
         EditingControl = null;
         IsCurrentCellDirty = false;
-        Focus();
+        if (!IsDisposed && !Disposing) Focus();
     }
 
     /// <summary>
@@ -222,8 +280,11 @@ public partial class DataGridView
     {
         if (disposing)
         {
-            foreach (var control in _editingControlsByType.Values) control.Dispose();
+            var editors = _editingControlsByType.Values.ToArray();
             _editingControlsByType.Clear();
+            foreach (var control in editors) control.Dispose();
+            _cellToolTip?.Dispose();
+            _editingPanel?.Dispose();
         }
 
         base.Dispose(disposing);

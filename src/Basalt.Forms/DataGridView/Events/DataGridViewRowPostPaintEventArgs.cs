@@ -12,7 +12,7 @@ public class DataGridViewRowPostPaintEventArgs : EventArgs
     private readonly System.Windows.Forms.DataGridView _dataGridView;
     private readonly int _rowIndex;
 
-    internal DataGridViewRowPostPaintEventArgs(
+    public DataGridViewRowPostPaintEventArgs(
         System.Windows.Forms.DataGridView dataGridView,
         Graphics graphics,
         Rectangle clipBounds,

@@ -11,6 +11,7 @@ namespace System.Windows.Forms;
 /// </summary>
 public class DataGridViewTextBoxEditingControl : TextBox, IDataGridViewEditingControl
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     public DataGridViewTextBoxEditingControl()
     {
         BorderStyle = BorderStyle.None;

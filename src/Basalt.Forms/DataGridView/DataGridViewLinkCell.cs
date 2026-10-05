@@ -9,8 +9,9 @@ namespace System.Windows.Forms;
 /// automatically from OnMouseUp, the same place Microsoft's own link cell does it - it does not
 /// override OnContentClick, unlike DataGridViewCheckBoxCell).
 /// </summary>
-public class DataGridViewLinkCell : DataGridViewCell
+public partial class DataGridViewLinkCell : DataGridViewCell
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     private bool _pressed;
 
     public DataGridViewLinkCell()
@@ -59,9 +60,24 @@ public class DataGridViewLinkCell : DataGridViewCell
     protected override object? GetValue(int rowIndex) =>
         UseColumnTextForLinkValue && OwningColumn is DataGridViewLinkColumn { Text: { Length: > 0 } text } ? text : base.GetValue(rowIndex);
 
+    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) =>
+        FormattedValue is not null && DataGridView is not null && ColumnIndex >= 0 && rowIndex >= 0
+            ? new Rectangle(Point.Empty, GetSize(rowIndex))
+            : Rectangle.Empty;
+
+    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize)
+    {
+        var text = FormattedValue?.ToString() ?? string.Empty;
+        var measured = TextRenderer.MeasureText(text, cellStyle.Font ?? DataGridView?.Font);
+        return new Size(measured.Width + 4 + cellStyle.Padding.Horizontal,
+            measured.Height + 2 + cellStyle.Padding.Vertical);
+    }
+
     protected override void OnMouseDown(DataGridViewCellMouseEventArgs e)
     {
-        _pressed = true;
+        // A direct cell hook invocation has no originating MouseEventArgs and reports None;
+        // it still represents the same press that the grid normally sends with Left.
+        _pressed = e.Button is (MouseButtons.Left or MouseButtons.None) && ContentBounds.Contains(e.X, e.Y);
         DataGridView?.InvalidateCellCore(this);
     }
 
@@ -70,7 +86,7 @@ public class DataGridViewLinkCell : DataGridViewCell
         if (!_pressed) return;
 
         _pressed = false;
-        if (TrackVisitedState) LinkVisited = true;
+        if (TrackVisitedState && ContentBounds.Contains(e.X, e.Y)) LinkVisited = true;
         DataGridView?.InvalidateCellCore(this);
     }
 
@@ -99,7 +115,9 @@ public class DataGridViewLinkCell : DataGridViewCell
             var color = _pressed ? ActiveLinkColor : LinkVisited ? VisitedLinkColor : LinkColor;
             var flags = TextAlignmentFlags(cellStyle.Alignment);
             var baseFont = cellStyle.Font ?? DataGridView?.Font;
-            using var underlined = baseFont is null ? null : new Font(baseFont, baseFont.Style | FontStyle.Underline);
+            var underline = LinkBehavior is LinkBehavior.SystemDefault or LinkBehavior.AlwaysUnderline
+                || LinkBehavior == LinkBehavior.HoverUnderline && _hovered;
+            using var underlined = baseFont is null || !underline ? null : new Font(baseFont, baseFont.Style | FontStyle.Underline);
 
             TextRenderer.DrawText(graphics, text.ToString(), underlined ?? baseFont, cellBounds, color, flags);
         }

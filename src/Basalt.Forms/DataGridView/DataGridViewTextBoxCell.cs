@@ -9,6 +9,7 @@ namespace System.Windows.Forms;
 /// </summary>
 public class DataGridViewTextBoxCell : DataGridViewCell
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     public DataGridViewTextBoxCell()
     {
     }
@@ -26,11 +27,23 @@ public class DataGridViewTextBoxCell : DataGridViewCell
         if (DataGridView?.EditingControl is TextBox textBox) textBox.Visible = false;
     }
 
-    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
+    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex)
+    {
+        if (FormattedValue is null || DataGridView is not { } grid || ColumnIndex < 0 || rowIndex < 0) return Rectangle.Empty;
 
-    protected override Rectangle GetErrorIconBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => Rectangle.Empty;
+        var bounds = new Rectangle(Point.Empty, GetSize(rowIndex));
+        return GetTextContentBounds(bounds, cellStyle, grid.AdvancedCellBorderStyle);
+    }
 
-    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize) => new(-1, -1);
+    protected override Rectangle GetErrorIconBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex) => GetStandardErrorIconBounds(cellStyle, rowIndex);
+
+    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize)
+    {
+        var text = FormattedValue?.ToString() ?? string.Empty;
+        var measured = TextRenderer.MeasureText(text, cellStyle.Font ?? DataGridView?.Font);
+        return new Size(measured.Width + cellStyle.Padding.Horizontal + 4,
+            measured.Height + cellStyle.Padding.Vertical + 2);
+    }
 
     public override void InitializeEditingControl(int rowIndex, object? initialFormattedValue, DataGridViewCellStyle dataGridViewCellStyle)
     {

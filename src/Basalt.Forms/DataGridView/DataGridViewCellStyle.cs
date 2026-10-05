@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing;
 
 namespace System.Windows.Forms;
@@ -7,6 +8,7 @@ namespace System.Windows.Forms;
 /// grid's DefaultCellStyle, its column's, its row's, and finally the cell's own Style, each
 /// layer filling in only what the layer below left unset.
 /// </summary>
+[TypeConverter(typeof(DataGridViewCellStyleConverter))]
 public class DataGridViewCellStyle : ICloneable
 {
     private object? _nullValue = string.Empty;
@@ -34,11 +36,41 @@ public class DataGridViewCellStyle : ICloneable
         SelectionForeColor = dataGridViewCellStyle.SelectionForeColor;
         Tag = dataGridViewCellStyle.Tag;
         WrapMode = dataGridViewCellStyle.WrapMode;
+        HasExplicitBackColor = dataGridViewCellStyle.HasExplicitBackColor;
+        HasExplicitForeColor = dataGridViewCellStyle.HasExplicitForeColor;
+        HasExplicitSelectionBackColor = dataGridViewCellStyle.HasExplicitSelectionBackColor;
+        HasExplicitSelectionForeColor = dataGridViewCellStyle.HasExplicitSelectionForeColor;
+    }
+
+    internal void MarkColorsAsDefaults()
+    {
+        HasExplicitBackColor = false;
+        HasExplicitForeColor = false;
+        HasExplicitSelectionBackColor = false;
+        HasExplicitSelectionForeColor = false;
     }
 
     public DataGridViewContentAlignment Alignment { get; set; } = DataGridViewContentAlignment.NotSet;
 
-    public Color BackColor { get; set; }
+    private Color _backColor;
+    private Color _foreColor;
+    private Color _selectionBackColor;
+    private Color _selectionForeColor;
+
+    internal bool HasExplicitBackColor { get; private set; }
+    internal bool HasExplicitForeColor { get; private set; }
+    internal bool HasExplicitSelectionBackColor { get; private set; }
+    internal bool HasExplicitSelectionForeColor { get; private set; }
+
+    public Color BackColor
+    {
+        get => _backColor;
+        set
+        {
+            _backColor = value;
+            HasExplicitBackColor = !value.IsEmpty;
+        }
+    }
 
     public object? DataSourceNullValue
     {
@@ -48,7 +80,15 @@ public class DataGridViewCellStyle : ICloneable
 
     public Font? Font { get; set; }
 
-    public Color ForeColor { get; set; }
+    public Color ForeColor
+    {
+        get => _foreColor;
+        set
+        {
+            _foreColor = value;
+            HasExplicitForeColor = !value.IsEmpty;
+        }
+    }
 
     public string Format { get; set; } = string.Empty;
 
@@ -72,9 +112,25 @@ public class DataGridViewCellStyle : ICloneable
 
     public Padding Padding { get; set; }
 
-    public Color SelectionBackColor { get; set; }
+    public Color SelectionBackColor
+    {
+        get => _selectionBackColor;
+        set
+        {
+            _selectionBackColor = value;
+            HasExplicitSelectionBackColor = !value.IsEmpty;
+        }
+    }
 
-    public Color SelectionForeColor { get; set; }
+    public Color SelectionForeColor
+    {
+        get => _selectionForeColor;
+        set
+        {
+            _selectionForeColor = value;
+            HasExplicitSelectionForeColor = !value.IsEmpty;
+        }
+    }
 
     public object? Tag { get; set; }
 

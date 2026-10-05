@@ -66,7 +66,10 @@ public partial class DataGridView : Control, ISupportInitialize
 
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Advanced)]
-    public DataGridViewAdvancedBorderStyle AdvancedCellBorderStyle { get; } = new();
+    public DataGridViewAdvancedBorderStyle AdvancedCellBorderStyle { get; } = new()
+    {
+        All = DataGridViewAdvancedCellBorderStyle.Single
+    };
 
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Advanced)]
@@ -456,7 +459,7 @@ public partial class DataGridView : Control, ISupportInitialize
 
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public DataGridViewHeaderCell TopLeftHeaderCell { get; set; } = new();
+    public DataGridViewHeaderCell TopLeftHeaderCell { get; set; } = new DataGridViewTopLeftHeaderCell();
 
     public event EventHandler? AllowUserToAddRowsChanged
     {
@@ -805,14 +808,19 @@ public partial class DataGridView : Control, ISupportInitialize
     {
     }
 
-    private static DataGridViewCellStyle DefaultDefaultCellStyle() => new()
+    private static DataGridViewCellStyle DefaultDefaultCellStyle()
     {
-        BackColor = SystemColors.Window,
-        ForeColor = SystemColors.ControlText,
-        SelectionBackColor = SystemColors.Highlight,
-        SelectionForeColor = SystemColors.HighlightText,
-        Alignment = DataGridViewContentAlignment.MiddleLeft,
-    };
+        var style = new DataGridViewCellStyle
+        {
+            BackColor = SystemColors.Window,
+            ForeColor = SystemColors.ControlText,
+            SelectionBackColor = SystemColors.Highlight,
+            SelectionForeColor = SystemColors.HighlightText,
+            Alignment = DataGridViewContentAlignment.MiddleLeft,
+        };
+        style.MarkColorsAsDefaults();
+        return style;
+    }
 
     private IEnumerable<DataGridViewCell> EnumerateSelectedCells()
     {

@@ -8,7 +8,7 @@ public class DataGridViewLayoutQueriesTests
 {
     private static System.Windows.Forms.DataGridView ThreeByThreeGrid()
     {
-        var grid = new System.Windows.Forms.DataGridView { Size = new Size(140, 90) };
+        var grid = new System.Windows.Forms.DataGridView { Size = new Size(140, 90), ScrollBars = ScrollBars.None };
         grid.Columns.Add("A", "A");
         grid.Columns.Add("B", "B");
         grid.Columns.Add("C", "C");
@@ -64,6 +64,18 @@ public class DataGridViewLayoutQueriesTests
         // rows already fit and there is no partial row left over.
         Assert.Equal(3, grid.DisplayedRowCount(false));
         Assert.Equal(3, grid.DisplayedRowCount(true));
+    }
+
+    [Fact]
+    public void DisplayedRowCount_excludes_the_horizontal_scrollbar_from_the_viewport()
+    {
+        using var grid = ThreeByThreeGrid();
+        grid.ScrollBars = ScrollBars.Both;
+        grid.Height = 60;
+        grid.PerformLayout();
+        Assert.True(grid.DisplayRectangle.Height < 22);
+        Assert.Equal(0, grid.DisplayedRowCount(false));
+        Assert.Equal(1, grid.DisplayedRowCount(true));
     }
 
     [Fact]

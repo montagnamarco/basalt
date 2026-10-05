@@ -15,7 +15,7 @@ public class DataGridViewRowPrePaintEventArgs : HandledEventArgs
     private readonly System.Windows.Forms.DataGridView _dataGridView;
     private readonly int _rowIndex;
 
-    internal DataGridViewRowPrePaintEventArgs(
+    public DataGridViewRowPrePaintEventArgs(
         System.Windows.Forms.DataGridView dataGridView,
         Graphics graphics,
         Rectangle clipBounds,

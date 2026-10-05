@@ -8,6 +8,7 @@ namespace System.Windows.Forms;
 /// </summary>
 public class DataGridViewComboBoxEditingControl : ComboBox, IDataGridViewEditingControl
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     public DataGridViewComboBoxEditingControl()
     {
         DropDownStyle = ComboBoxStyle.DropDownList;

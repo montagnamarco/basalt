@@ -50,7 +50,13 @@ public partial class DataGridView
         if (RowHeadersVisible && ColumnHeadersVisible) PaintTopLeftCorner(graphics);
         if (ColumnHeadersVisible) PaintColumnHeaders(graphics);
 
-        PaintRows(graphics, e.ClipRectangle);
+        var saved = graphics.Save();
+        try
+        {
+            graphics.IntersectClip(new Rectangle(0, OriginY, DisplayRectangle.Right, DisplayRectangle.Height));
+            PaintRows(graphics, Rectangle.Intersect(e.ClipRectangle, new Rectangle(0, OriginY, DisplayRectangle.Right, DisplayRectangle.Height)));
+        }
+        finally { graphics.Restore(saved); }
 
         base.OnPaint(e);
     }
@@ -70,23 +76,23 @@ public partial class DataGridView
 
     private void PaintColumnHeaders(Graphics graphics)
     {
-        foreach (var column in ColumnsInDisplayOrder())
+        var displayed = ColumnsInDisplayOrder().Where(column => column.Visible && GetCellDisplayRectangle(column.Index, -1, true).Width > 0).ToArray();
+        foreach (var column in displayed)
         {
-            if (!column.Visible) continue;
-
-            var bounds = GetCellDisplayRectangle(column.Index, -1, cutOverflow: true);
+            var bounds = GetCellDisplayRectangle(column.Index, -1, cutOverflow: false);
             if (bounds.Width <= 0) continue;
 
-            PaintHeaderCell(graphics, column.HeaderCell, bounds, rowIndex: -1, DataGridViewPaintParts.All);
+            var border = AdjustColumnHeaderBorderStyle(AdvancedColumnHeadersBorderStyle, new DataGridViewAdvancedBorderStyle(), column == displayed[0], column == displayed[^1]);
+            PaintHeaderCell(graphics, column.HeaderCell, bounds, rowIndex: -1, DataGridViewPaintParts.All, border);
         }
     }
 
-    private void PaintHeaderCell(Graphics graphics, DataGridViewHeaderCell headerCell, Rectangle bounds, int rowIndex, DataGridViewPaintParts paintParts)
+    private void PaintHeaderCell(Graphics graphics, DataGridViewHeaderCell headerCell, Rectangle bounds, int rowIndex, DataGridViewPaintParts paintParts, DataGridViewAdvancedBorderStyle? borderStyle = null)
     {
         var cellStyle = headerCell.GetInheritedStyle(null, rowIndex, includeColors: true);
         var formatted = HeaderCellText(headerCell);
 
-        InvokeCellPaint(headerCell, graphics, bounds, rowIndex, DataGridViewElementStates.Visible, null, formatted, cellStyle, paintParts);
+        InvokeCellPaint(headerCell, graphics, bounds, rowIndex, DataGridViewElementStates.Visible, null, formatted, cellStyle, paintParts, borderStyle);
     }
 
     private static object? HeaderCellText(DataGridViewHeaderCell headerCell) => headerCell switch
@@ -121,24 +127,33 @@ public partial class DataGridView
         var errorText = row.ErrorText.Length == 0 ? null : row.ErrorText;
         var inheritedStyle = row.InheritedStyle;
 
-        var preArgs = new DataGridViewRowPrePaintEventArgs(this, graphics, clip, rowBounds, rowIndex, state, errorText, inheritedStyle, isFirstDisplayedRow, isLastVisibleRow);
-        OnRowPrePaint(preArgs);
-
-        if (!preArgs.Handled)
+        var viewportTop = OriginY + (row.Frozen ? 0 : FrozenRowsHeight);
+        var viewport = new Rectangle(0, viewportTop, DisplayRectangle.Right, Math.Max(0, DisplayRectangle.Bottom - viewportTop));
+        clip = Rectangle.Intersect(clip, Rectangle.Intersect(rowBounds, viewport));
+        if (clip.Height <= 0 || clip.Width <= 0) return;
+        var saved = graphics.Save();
+        try
         {
-            if (RowHeadersVisible) PaintRowHeaderCore(graphics, rowIndex, GetCellDisplayRectangle(-1, rowIndex, cutOverflow: true), DataGridViewPaintParts.All);
-            PaintRowCellsCore(graphics, rowIndex, clip, DataGridViewPaintParts.All);
-        }
+            graphics.IntersectClip(clip);
+            var preArgs = new DataGridViewRowPrePaintEventArgs(this, graphics, clip, rowBounds, rowIndex, state, errorText, inheritedStyle, isFirstDisplayedRow, isLastVisibleRow);
+            OnRowPrePaint(preArgs);
 
-        var postArgs = new DataGridViewRowPostPaintEventArgs(this, graphics, clip, rowBounds, rowIndex, state, errorText, inheritedStyle, isFirstDisplayedRow, isLastVisibleRow);
-        OnRowPostPaint(postArgs);
+            if (!preArgs.Handled)
+            {
+                row.PaintCore(graphics, clip, rowBounds, rowIndex, state, isFirstDisplayedRow, isLastVisibleRow);
+            }
+
+            var postArgs = new DataGridViewRowPostPaintEventArgs(this, graphics, clip, rowBounds, rowIndex, state, errorText, inheritedStyle, isFirstDisplayedRow, isLastVisibleRow);
+            OnRowPostPaint(postArgs);
+        }
+        finally { graphics.Restore(saved); }
     }
 
     private int FirstVisibleRowIndex()
     {
         for (var index = 0; index < Rows.Count; index++)
         {
-            if (Rows[index].Visible) return index;
+            if (Rows[index].Visible && DisplayedRowHeight(index) > 0) return index;
         }
 
         return -1;
@@ -148,15 +163,28 @@ public partial class DataGridView
     {
         for (var index = Rows.Count - 1; index >= 0; index--)
         {
-            if (Rows[index].Visible) return index;
+            if (Rows[index].Visible && DisplayedRowHeight(index) > 0) return index;
         }
 
         return -1;
     }
 
     /// <summary>Paints row's header cell, called both from the normal row flow and from RowPrePaint/RowPostPaint's own PaintHeader helper.</summary>
-    internal void PaintRowHeaderCore(Graphics graphics, int rowIndex, Rectangle bounds, DataGridViewPaintParts paintParts) =>
-        PaintHeaderCell(graphics, Rows[rowIndex].HeaderCell, bounds, rowIndex, paintParts);
+    internal void PaintRowHeaderCore(Graphics graphics, int rowIndex, Rectangle bounds, DataGridViewPaintParts paintParts)
+    {
+        var row = Rows[rowIndex];
+        var borderStyle = GetRowHeaderBorderStyleCore(rowIndex);
+        PaintHeaderCell(graphics, row.HeaderCell, bounds, rowIndex, paintParts, borderStyle);
+    }
+
+    internal DataGridViewAdvancedBorderStyle GetRowHeaderBorderStyleCore(int rowIndex) =>
+        Rows[rowIndex].AdjustRowHeaderBorderStyle(
+            AdvancedRowHeadersBorderStyle,
+            new DataGridViewAdvancedBorderStyle(),
+            singleVerticalBorderAdded: AdvancedCellBorderStyle.All == DataGridViewAdvancedCellBorderStyle.Single,
+            singleHorizontalBorderAdded: AdvancedCellBorderStyle.All == DataGridViewAdvancedCellBorderStyle.Single,
+            isFirstDisplayedRow: rowIndex == FirstVisibleRowIndex(),
+            isLastVisibleRow: rowIndex == LastVisibleRowIndex());
 
     /// <summary>Paints every visible, clip-intersecting cell of one row, called both from the normal row flow and from RowPrePaint/RowPostPaint's own PaintCells helper.</summary>
     internal void PaintRowCellsCore(Graphics graphics, int rowIndex, Rectangle clipBounds, DataGridViewPaintParts paintParts)
@@ -167,7 +195,7 @@ public partial class DataGridView
         {
             if (!column.Visible) continue;
 
-            var cellBounds = GetCellDisplayRectangle(column.Index, rowIndex, cutOverflow: true);
+            var cellBounds = GetCellDisplayRectangle(column.Index, rowIndex, cutOverflow: false);
             if (cellBounds.Width <= 0 || cellBounds.Height <= 0) continue;
             if (!cellBounds.IntersectsWith(clipBounds)) continue;
 
@@ -197,7 +225,7 @@ public partial class DataGridView
     /// Resolves the alternating-row background, raises CellPainting (a handler that sets Handled
     /// skips the cell's own default painting below), then calls the cell's own virtual Paint.
     /// </summary>
-    private void InvokeCellPaint(DataGridViewCell cell, Graphics graphics, Rectangle bounds, int rowIndex, DataGridViewElementStates state, object? value, object? formattedValue, DataGridViewCellStyle cellStyle, DataGridViewPaintParts paintParts)
+    private void InvokeCellPaint(DataGridViewCell cell, Graphics graphics, Rectangle bounds, int rowIndex, DataGridViewElementStates state, object? value, object? formattedValue, DataGridViewCellStyle cellStyle, DataGridViewPaintParts paintParts, DataGridViewAdvancedBorderStyle? borderStyle = null)
     {
         if (rowIndex >= 0 && rowIndex % 2 == 1 && HasAlternatingRowsDefaultCellStyle && !AlternatingRowsDefaultCellStyle.BackColor.IsEmpty && cellStyle.BackColor == DefaultCellStyle.BackColor)
         {
@@ -206,11 +234,18 @@ public partial class DataGridView
         }
 
         var errorText = GetCellErrorTextCore(cell, rowIndex);
-        var args = new DataGridViewCellPaintingEventArgs(this, cell, graphics, bounds, bounds, rowIndex, cell.ColumnIndex, state, value, formattedValue, errorText, cellStyle, AdvancedCellBorderStyle, paintParts);
-        OnCellPainting(args);
-        if (args.Handled) return;
-
-        cell.PaintCore(graphics, bounds, bounds, rowIndex, state, value, formattedValue, cellStyle, AdvancedCellBorderStyle, paintParts);
+        var effectiveBorderStyle = borderStyle ?? AdvancedCellBorderStyle;
+        var clip = Rectangle.Intersect(bounds, GetCellDisplayRectangle(cell.ColumnIndex, rowIndex, true));
+        if (clip.Width <= 0 || clip.Height <= 0) return;
+        var saved = graphics.Save();
+        try
+        {
+            graphics.IntersectClip(clip);
+            var args = new DataGridViewCellPaintingEventArgs(this, cell, graphics, clip, bounds, rowIndex, cell.ColumnIndex, state, value, formattedValue, errorText, cellStyle, effectiveBorderStyle, paintParts);
+            OnCellPainting(args);
+            if (!args.Handled) cell.PaintCore(graphics, clip, bounds, rowIndex, state, value, formattedValue, cellStyle, effectiveBorderStyle, paintParts);
+        }
+        finally { graphics.Restore(saved); }
     }
 
     /// <summary>Whether cell is selected by any of the three ways a grid tracks selection: by itself, by its row, or by its column.</summary>

@@ -4,8 +4,9 @@ using System.Drawing;
 namespace System.Windows.Forms;
 
 /// <summary>A cell whose value is an Image (or, with valueIsIcon, an Icon), drawn per ImageLayout instead of as text.</summary>
-public class DataGridViewImageCell : DataGridViewCell
+public partial class DataGridViewImageCell : DataGridViewCell
 {
+    protected override AccessibleObject CreateAccessibilityInstance() => base.CreateAccessibilityInstance();
     public DataGridViewImageCell()
     {
     }
@@ -69,6 +70,23 @@ public class DataGridViewImageCell : DataGridViewCell
         TypeConverter? formattedValueTypeConverter,
         DataGridViewDataErrorContexts context) => value;
 
+    protected override Rectangle GetContentBounds(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex)
+    {
+        if (DataGridView is null || ColumnIndex < 0 || rowIndex < 0) return Rectangle.Empty;
+
+        var imageSize = GetImageSize(FormattedValue);
+        return imageSize.IsEmpty
+            ? Rectangle.Empty
+            : GetImageBounds(new Rectangle(Point.Empty, GetSize(rowIndex)), imageSize);
+    }
+
+    protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize)
+    {
+        var imageSize = GetImageSize(FormattedValue);
+        return new Size(imageSize.Width + cellStyle.Padding.Horizontal + 4,
+            imageSize.Height + cellStyle.Padding.Vertical + 4);
+    }
+
     protected override void Paint(
         Graphics graphics,
         Rectangle clipBounds,
@@ -104,33 +122,39 @@ public class DataGridViewImageCell : DataGridViewCell
         if ((paintParts & DataGridViewPaintParts.Border) != 0) PaintBorder(graphics, clipBounds, cellBounds, cellStyle, advancedBorderStyle);
     }
 
-    private void DrawImage(Graphics graphics, Image image, Rectangle cellBounds)
+    private static Size GetImageSize(object? value) => value switch
+    {
+        Image image => image.Size,
+        Icon icon => icon.Size,
+        _ => Size.Empty,
+    };
+
+    private Rectangle GetImageBounds(Rectangle cellBounds, Size imageSize)
     {
         var layout = ImageLayout == DataGridViewImageCellLayout.NotSet ? DataGridViewImageCellLayout.Normal : ImageLayout;
 
-        switch (layout)
+        return layout switch
         {
-            case DataGridViewImageCellLayout.Stretch:
-                graphics.DrawImage(image, cellBounds);
-                break;
+            DataGridViewImageCellLayout.Stretch => cellBounds,
+            DataGridViewImageCellLayout.Zoom => ZoomBounds(cellBounds, imageSize),
+            _ => new Rectangle(cellBounds.X + (cellBounds.Width - imageSize.Width) / 2,
+                cellBounds.Y + (cellBounds.Height - imageSize.Height) / 2, imageSize.Width, imageSize.Height),
+        };
+    }
 
-            case DataGridViewImageCellLayout.Zoom:
-            {
-                var scale = Math.Min((float)cellBounds.Width / image.Width, (float)cellBounds.Height / image.Height);
-                var width = (int)(image.Width * scale);
-                var height = (int)(image.Height * scale);
-                var bounds = new Rectangle(cellBounds.X + (cellBounds.Width - width) / 2, cellBounds.Y + (cellBounds.Height - height) / 2, width, height);
-                graphics.DrawImage(image, bounds);
-                break;
-            }
+    private static Rectangle ZoomBounds(Rectangle cellBounds, Size imageSize)
+    {
+        var scale = Math.Min((float)cellBounds.Width / imageSize.Width, (float)cellBounds.Height / imageSize.Height);
+        var width = (int)(imageSize.Width * scale);
+        var height = (int)(imageSize.Height * scale);
+        return new Rectangle(cellBounds.X + (cellBounds.Width - width) / 2,
+            cellBounds.Y + (cellBounds.Height - height) / 2, width, height);
+    }
 
-            default:
-            {
-                var bounds = new Rectangle(cellBounds.X + (cellBounds.Width - image.Width) / 2, cellBounds.Y + (cellBounds.Height - image.Height) / 2, image.Width, image.Height);
-                graphics.DrawImage(image, bounds);
-                break;
-            }
-        }
+    private void DrawImage(Graphics graphics, Image image, Rectangle cellBounds)
+    {
+        var bounds = GetImageBounds(cellBounds, image.Size);
+        if (bounds.Width > 0 && bounds.Height > 0) graphics.DrawImage(image, bounds);
     }
 
     public override string ToString() => $"DataGridViewImageCell {{ ColumnIndex={ColumnIndex}, RowIndex={RowIndex} }}";

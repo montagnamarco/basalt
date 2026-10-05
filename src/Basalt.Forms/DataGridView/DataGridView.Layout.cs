@@ -6,8 +6,7 @@ namespace System.Windows.Forms;
 
 /// <summary>
 /// Where each header and cell sits in client coordinates, and HitTest built on the same math.
-/// Scrolling is left out this round: a grid taller or wider than its client area simply clips
-/// the rows/columns that do not fit, rather than showing scroll bars.
+/// Scrolling and hit testing share the same viewport coordinates.
 /// </summary>
 public partial class DataGridView
 {
@@ -20,7 +19,7 @@ public partial class DataGridView
 
     private int ColumnLeft(DataGridViewColumn target)
     {
-        var x = OriginX;
+        var x = OriginX - (target.Frozen ? 0 : _horizontalScrollingOffset);
         foreach (var column in ColumnsInDisplayOrder())
         {
             if (column == target) return x;
@@ -32,7 +31,7 @@ public partial class DataGridView
 
     private int RowTop(int rowIndex)
     {
-        var y = OriginY;
+        var y = OriginY - (Rows[rowIndex].Frozen ? 0 : _verticalScrollingOffset);
         for (var index = 0; index < rowIndex && index < Rows.Count; index++)
         {
             if (Rows[index].Visible) y += Rows[index].Height;
@@ -62,65 +61,47 @@ public partial class DataGridView
             bounds = new Rectangle(ColumnLeft(Columns[columnIndex]), RowTop(rowIndex), Columns[columnIndex].Width, Rows[rowIndex].Height);
         }
 
-        return cutOverflow ? Rectangle.Intersect(bounds, ClientRectangle) : bounds;
+        var viewport = columnIndex < 0 && rowIndex < 0 ? new Rectangle(0, 0, OriginX, OriginY)
+            : columnIndex < 0 ? new Rectangle(0, OriginY, OriginX, DisplayRectangle.Height)
+            : rowIndex < 0 ? new Rectangle(OriginX, 0, DisplayRectangle.Width, OriginY)
+            : DisplayRectangle;
+        if (columnIndex >= 0 && !Columns[columnIndex].Frozen)
+        {
+            viewport.X += FrozenColumnsWidth;
+            viewport.Width = Math.Max(0, viewport.Width - FrozenColumnsWidth);
+        }
+        if (rowIndex >= 0 && !Rows[rowIndex].Frozen)
+        {
+            viewport.Y += FrozenRowsHeight;
+            viewport.Height = Math.Max(0, viewport.Height - FrozenRowsHeight);
+        }
+        return cutOverflow ? Rectangle.Intersect(bounds, viewport) : bounds;
     }
 
     public Rectangle GetColumnDisplayRectangle(int columnIndex, bool cutOverflow) => GetCellDisplayRectangle(columnIndex, -1, cutOverflow);
 
     public Rectangle GetRowDisplayRectangle(int rowIndex, bool cutOverflow) => GetCellDisplayRectangle(-1, rowIndex, cutOverflow);
 
-    /// <summary>
-    /// How many rows fit top to bottom in the client area below the column headers, starting at
-    /// row 0 (there is no scrolling this round, so row 0 is always the first displayed row):
-    /// includePartialRow counts a row that only partly fits, otherwise only whole rows count.
-    /// </summary>
-    public int DisplayedRowCount(bool includePartialRow)
+    private int DisplayedRowHeight(int rowIndex)
     {
-        var available = ClientSize.Height - OriginY;
-        var count = 0;
-        var used = 0;
-
-        for (var index = 0; index < Rows.Count; index++)
-        {
-            if (!Rows[index].Visible) continue;
-
-            var height = Rows[index].Height;
-            if (used + height > available)
-            {
-                if (includePartialRow && used < available) count++;
-                break;
-            }
-
-            used += height;
-            count++;
-        }
-
-        return count;
+        var row = Rows[rowIndex];
+        var top = RowTop(rowIndex);
+        var viewportTop = OriginY + (row.Frozen ? 0 : FrozenRowsHeight);
+        return Math.Max(0, Math.Min(top + row.Height, DisplayRectangle.Bottom) - Math.Max(top, viewportTop));
     }
 
-    /// <summary>How many columns fit left to right in the client area to the right of the row headers, starting at column 0 (there is no scrolling this round).</summary>
-    public int DisplayedColumnCount(bool includePartialColumn)
+    private int DisplayedColumnWidth(DataGridViewColumn column)
     {
-        var available = ClientSize.Width - OriginX;
-        var count = 0;
-        var used = 0;
-
-        foreach (var column in ColumnsInDisplayOrder())
-        {
-            if (!column.Visible) continue;
-
-            if (used + column.Width > available)
-            {
-                if (includePartialColumn && used < available) count++;
-                break;
-            }
-
-            used += column.Width;
-            count++;
-        }
-
-        return count;
+        var left = ColumnLeft(column);
+        var viewportLeft = OriginX + (column.Frozen ? 0 : FrozenColumnsWidth);
+        return Math.Max(0, Math.Min(left + column.Width, DisplayRectangle.Right) - Math.Max(left, viewportLeft));
     }
+
+    public int DisplayedRowCount(bool includePartialRow) => Rows.Cast<DataGridViewRow>().Count(row =>
+        row.Visible && (includePartialRow ? DisplayedRowHeight(row.Index) > 0 : DisplayedRowHeight(row.Index) == row.Height));
+
+    public int DisplayedColumnCount(bool includePartialColumn) => ColumnsInDisplayOrder().Count(column =>
+        column.Visible && (includePartialColumn ? DisplayedColumnWidth(column) > 0 : DisplayedColumnWidth(column) == column.Width));
 
     public void InvalidateCell(DataGridViewCell dataGridViewCell)
     {
@@ -173,13 +154,11 @@ public partial class DataGridView
     /// <summary>The visible column whose span contains x, in display order; -1 past the last one.</summary>
     private int ColumnAt(int x)
     {
-        var left = OriginX;
         foreach (var column in ColumnsInDisplayOrder())
         {
             if (!column.Visible) continue;
+            var left = ColumnLeft(column);
             if (x >= left && x < left + column.Width) return column.Index;
-
-            left += column.Width;
         }
 
         return -1;
@@ -188,15 +167,14 @@ public partial class DataGridView
     /// <summary>The visible row whose span contains y; -1 past the last one.</summary>
     private int RowAt(int y)
     {
-        var top = OriginY;
         for (var index = 0; index < Rows.Count; index++)
         {
             if (!Rows[index].Visible) continue;
 
+            var top = RowTop(index);
             var height = Rows[index].Height;
             if (y >= top && y < top + height) return index;
 
-            top += height;
         }
 
         return -1;

@@ -65,8 +65,9 @@ public class DataGridViewCellTypesTests
         var contentClicks = 0;
         grid.CellContentClick += (_, _) => contentClicks++;
 
-        var bounds = grid.GetCellDisplayRectangle(0, 0, cutOverflow: false);
-        Click(form, grid, new Point(bounds.X + 3, bounds.Y + 3));
+        var glyph = grid.Rows[0].Cells[0].ContentBounds;
+        var bounds = grid.GetCellDisplayRectangle(0, 0, false);
+        Click(form, grid, new Point(bounds.X + glyph.X + glyph.Width / 2, bounds.Y + glyph.Y + glyph.Height / 2));
 
         Assert.Equal(1, contentClicks);
         Assert.Equal(true, grid.Rows[0].Cells[0].Value);
@@ -106,8 +107,9 @@ public class DataGridViewCellTypesTests
         grid.CellContentClick += (_, _) => contentClicks++;
         grid.CellContentDoubleClick += (_, _) => contentDoubleClicks++;
 
-        var bounds = grid.GetCellDisplayRectangle(0, 0, cutOverflow: false);
-        var point = new Point(bounds.X + 3, bounds.Y + 3);
+        var glyph = grid.Rows[0].Cells[0].ContentBounds;
+        var bounds = grid.GetCellDisplayRectangle(0, 0, false);
+        var point = new Point(bounds.X + glyph.X + glyph.Width / 2, bounds.Y + glyph.Y + glyph.Height / 2);
         Click(form, grid, point);
         Click(form, grid, point);
 
@@ -247,10 +249,12 @@ public class DataGridViewCellTypesTests
         var clicks = 0;
         grid.CellContentClick += (_, _) => clicks++;
 
-        var boundsA = grid.GetCellDisplayRectangle(0, 0, cutOverflow: false);
-        var boundsB = grid.GetCellDisplayRectangle(1, 0, cutOverflow: false);
-        var pointA = new Avalonia.Point(grid.Left + boundsA.X + 3, grid.Top + boundsA.Y + 3);
-        var pointB = new Avalonia.Point(grid.Left + boundsB.X + 3, grid.Top + boundsB.Y + 3);
+        var glyphA = grid.Rows[0].Cells[0].ContentBounds;
+        var glyphB = grid.Rows[0].Cells[1].ContentBounds;
+        var boundsA = grid.GetCellDisplayRectangle(0, 0, false);
+        var boundsB = grid.GetCellDisplayRectangle(1, 0, false);
+        var pointA = new Avalonia.Point(grid.Left + boundsA.X + glyphA.X + glyphA.Width / 2, grid.Top + boundsA.Y + glyphA.Y + glyphA.Height / 2);
+        var pointB = new Avalonia.Point(grid.Left + boundsB.X + glyphB.X + glyphB.Width / 2, grid.Top + boundsB.Y + glyphB.Y + glyphB.Height / 2);
 
         form.Host!.MouseDown(pointA, MouseButton.Left);
         Assert.Equal(0, clicks); // not raised on mouse-down

@@ -33,6 +33,7 @@ public partial class DataGridView
         {
             Keys.Up or Keys.Down or Keys.Left or Keys.Right or Keys.Home or Keys.End or Keys.PageUp or Keys.PageDown => true,
             Keys.Enter or Keys.Escape or Keys.F2 => true,
+            Keys.Tab => !StandardTab,
             _ => base.IsInputKey(keyData),
         };
     }
@@ -143,6 +144,7 @@ public partial class DataGridView
             }
 
             _hoverCell = cell;
+            UpdateCellToolTip(cell);
             _hoverColumnIndex = hit.ColumnIndex;
             _hoverRowIndex = hit.RowIndex;
 
@@ -164,6 +166,7 @@ public partial class DataGridView
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
+        UpdateCellToolTip(null);
 
         if (_hoverCell is not null)
         {
@@ -192,7 +195,7 @@ public partial class DataGridView
         cell.OnClickCore(cellArgs);
         OnCellClick(cellArgs);
 
-        var onContent = cell.GetContentBounds(hit.RowIndex).Contains(e.X, e.Y);
+        var onContent = cell.GetContentBounds(hit.RowIndex).Contains(mouseArgs.X, mouseArgs.Y);
         if (onContent)
         {
             cell.OnContentClickCore(cellArgs);
@@ -228,62 +231,18 @@ public partial class DataGridView
         _currentCell?.OnKeyDownCore(e, _currentCell.RowIndex);
         if (e.Handled) return;
 
-        switch (e.KeyCode)
+        if (e.KeyData == (Keys.Control | Keys.C) && ClipboardCopyMode != DataGridViewClipboardCopyMode.Disable)
         {
-            case Keys.Up:
-                MoveCurrentCell(0, -1, e.Shift);
-                break;
-
-            case Keys.Down:
-                MoveCurrentCell(0, 1, e.Shift);
-                break;
-
-            case Keys.Left:
-                MoveCurrentCell(-1, 0, e.Shift);
-                break;
-
-            case Keys.Right:
-                MoveCurrentCell(1, 0, e.Shift);
-                break;
-
-            case Keys.Home when e.Control:
-                MoveCurrentCellTo(0, 0, e.Shift);
-                break;
-
-            case Keys.Home:
-                MoveCurrentCellTo(0, CurrentCellAddress.Y, e.Shift);
-                break;
-
-            case Keys.End:
-                MoveCurrentCellTo(Columns.Count - 1, CurrentCellAddress.Y, e.Shift);
-                break;
-
-            case Keys.PageUp:
-                MoveCurrentCell(0, -10, e.Shift);
-                break;
-
-            case Keys.PageDown:
-                MoveCurrentCell(0, 10, e.Shift);
-                break;
-
-            case Keys.F2:
-                BeginEdit(selectAll: false);
-                break;
-
-            case Keys.Enter:
-                if (IsCurrentCellInEditMode) EndEdit();
-                else MoveCurrentCell(0, 1, extend: false);
-                break;
-
-            case Keys.Escape:
-                if (IsCurrentCellInEditMode) CancelEdit();
-                break;
-
-            default:
-                return;
+            if (GetClipboardContent() is { } content) Clipboard.SetDataObject(content);
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            return;
         }
 
-        e.Handled = true;
+        var previousDispatch = _cellKeyWasDispatched;
+        _cellKeyWasDispatched = true;
+        try { e.Handled = ProcessDataGridViewKey(e); }
+        finally { _cellKeyWasDispatched = previousDispatch; }
     }
 
     protected override void OnKeyUp(KeyEventArgs e)
@@ -352,10 +311,14 @@ public partial class DataGridView
 
     private void MoveCurrentCell(int deltaColumns, int deltaRows, bool extend)
     {
-        var x = CurrentCellAddress.X < 0 ? 0 : Math.Clamp(CurrentCellAddress.X + deltaColumns, 0, Math.Max(Columns.Count - 1, 0));
-        var y = CurrentCellAddress.Y < 0 ? 0 : Math.Clamp(CurrentCellAddress.Y + deltaRows, 0, Math.Max(Rows.Count - 1, 0));
-
-        MoveCurrentCellTo(x, y, extend);
+        var columns = ColumnsInDisplayOrder().Where(column => column.Visible).ToArray();
+        var rows = Rows.Cast<DataGridViewRow>().Where(row => row.Visible).ToArray();
+        if (columns.Length == 0 || rows.Length == 0) return;
+        var columnIndex = Array.FindIndex(columns, column => column.Index == CurrentCellAddress.X);
+        var rowIndex = Array.FindIndex(rows, row => row.Index == CurrentCellAddress.Y);
+        var targetColumn = columns[Math.Clamp(columnIndex < 0 ? 0 : columnIndex + deltaColumns, 0, columns.Length - 1)];
+        var targetRow = rows[Math.Clamp(rowIndex < 0 ? 0 : rowIndex + deltaRows, 0, rows.Length - 1)];
+        MoveCurrentCellTo(targetColumn.Index, targetRow.Index, extend);
     }
 
     private void MoveCurrentCellTo(int columnIndex, int rowIndex, bool extend)
