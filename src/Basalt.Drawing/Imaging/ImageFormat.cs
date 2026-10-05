@@ -1,8 +1,10 @@
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
 namespace System.Drawing.Imaging;
 
 /// <summary>A file format of an image, identified as GDI+ identifies it.</summary>
+[TypeConverter(typeof(ImageFormatConverter))]
 public sealed class ImageFormat
 {
     public ImageFormat(Guid guid) => Guid = guid;

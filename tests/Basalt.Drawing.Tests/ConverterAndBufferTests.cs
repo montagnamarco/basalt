@@ -62,6 +62,53 @@ public class ConverterAndBufferTests
     }
 
     /// <summary>
+    /// A .resx compiled with preserialized resources stores icons and images as
+    /// bytes, and the runtime reader turns them back through
+    /// TypeDescriptor.GetConverter(type), so the converter must be declared on
+    /// the type itself, as System.Drawing declares it.
+    /// </summary>
+    [Theory]
+    [InlineData(typeof(Icon), typeof(IconConverter))]
+    [InlineData(typeof(Image), typeof(ImageConverter))]
+    [InlineData(typeof(Bitmap), typeof(ImageConverter))]
+    [InlineData(typeof(ImageFormat), typeof(ImageFormatConverter))]
+    [InlineData(typeof(System.Drawing.Printing.Margins), typeof(System.Drawing.Printing.MarginsConverter))]
+    public void Resource_types_declare_the_converter_the_resource_reader_asks_for(Type type, Type converter)
+    {
+        Assert.IsType(converter, TypeDescriptor.GetConverter(type));
+    }
+
+    [Fact]
+    public void Resource_bytes_become_an_icon_and_a_bitmap_through_their_type_converters()
+    {
+        using var original = new Bitmap(16, 16);
+        var pngBytes = (byte[])new ImageConverter().ConvertTo(null, null, original, typeof(byte[]))!;
+
+        using var bitmap = (Bitmap)TypeDescriptor.GetConverter(typeof(Bitmap)).ConvertFrom(pngBytes)!;
+        Assert.Equal(16, bitmap.Width);
+
+        using var icon = (Icon)TypeDescriptor.GetConverter(typeof(Icon)).ConvertFrom(IconFileWithOnePng(pngBytes, 16))!;
+        Assert.Equal(16, icon.Width);
+    }
+
+    // An .ico file holding one PNG image: the 6-byte ICONDIR, one 16-byte
+    // ICONDIRENTRY, then the image itself at offset 22.
+    private static byte[] IconFileWithOnePng(byte[] png, byte size)
+    {
+        var file = new byte[22 + png.Length];
+        BinaryPrimitives.WriteUInt16LittleEndian(file.AsSpan(2), 1);
+        BinaryPrimitives.WriteUInt16LittleEndian(file.AsSpan(4), 1);
+        file[6] = size;
+        file[7] = size;
+        BinaryPrimitives.WriteUInt16LittleEndian(file.AsSpan(10), 1);
+        BinaryPrimitives.WriteUInt16LittleEndian(file.AsSpan(12), 32);
+        BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(14), (uint)png.Length);
+        BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(18), 22);
+        png.CopyTo(file, 22);
+        return file;
+    }
+
+    /// <summary>
     /// A Visual Studio .resx that pre-dates PNG serialisation wraps the real
     /// image bytes in an old OLE header; ImageConverter must find the PNG
     /// signature wherever it actually starts instead of at offset 0.

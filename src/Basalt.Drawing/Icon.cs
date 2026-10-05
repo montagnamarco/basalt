@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Runtime.Serialization;
 using SkiaSharp;
@@ -10,6 +11,7 @@ namespace System.Drawing;
 /// a new Icon made from this one at another size chooses again from all of its
 /// images rather than resizing the one already chosen.
 /// </remarks>
+[TypeConverter(typeof(IconConverter))]
 public sealed class Icon : MarshalByRefObject, ICloneable, IDisposable, ISerializable
 {
     private readonly byte[] _data;

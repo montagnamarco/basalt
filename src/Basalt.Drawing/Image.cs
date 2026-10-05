@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Runtime.Serialization;
 using SkiaSharp;
@@ -5,6 +6,7 @@ using SkiaSharp;
 namespace System.Drawing;
 
 /// <summary>A picture made of pixels.</summary>
+[TypeConverter(typeof(ImageConverter))]
 public abstract class Image : MarshalByRefObject, ICloneable, IDisposable, ISerializable
 {
     /// <summary>Whether <see cref="GetThumbnailImage"/> should keep making a thumbnail.</summary>

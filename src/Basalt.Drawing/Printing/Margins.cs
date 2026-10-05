@@ -1,6 +1,8 @@
+using System.ComponentModel;
 namespace System.Drawing.Printing;
 
 /// <summary>The four edges of a page a PrintDocument leaves blank, in hundredths of an inch.</summary>
+[TypeConverter(typeof(MarginsConverter))]
 public class Margins : ICloneable
 {
     private int _left;
