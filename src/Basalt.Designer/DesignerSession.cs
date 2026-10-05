@@ -99,6 +99,26 @@ public sealed class DesignerSession
         ApplyAsOne("Move", DesignerGeometry.Move(Selection, dx, dy));
     }
 
+    /// <summary>Moves the selected controls together in one undo step.</summary>
+    public void MoveSelected(double dx, double dy)
+    {
+        if (_selection.Count == 0 || (dx == 0 && dy == 0)) return;
+
+        // If a container and one of its children are both selected, moving
+        // the container already moves the child on screen.
+        var selected = _selection.ToHashSet();
+        var edits = new List<IDesignerEdit>();
+
+        foreach (var element in _selection)
+        {
+            if (element.Ancestors().Any(selected.Contains)) continue;
+
+            edits.AddRange(DesignerGeometry.Move(element, dx, dy));
+        }
+
+        ApplyAsOne("Move", edits);
+    }
+
     /// <summary>
     /// Moves the selection to where it was dragged, in its container's terms.
     /// </summary>

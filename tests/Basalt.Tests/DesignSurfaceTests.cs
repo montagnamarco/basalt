@@ -387,6 +387,60 @@ public sealed class DesignSurfaceTests
     }
 
     [AvaloniaFact]
+    public void DraggingASelectedGroupMovesBothControlsAsOneUndo()
+    {
+        var (window, _, session) = Open(TwoControls);
+        var buttons = session.Document.Root.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .ToArray();
+
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(190, 132), MouseButton.Left, RawInputModifiers.Shift);
+        window.MouseUp(OnForm(190, 132), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        var from = OnForm(60, 42);
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from + new Vector(15, 10), RawInputModifiers.Alt);
+        window.MouseUp(from + new Vector(15, 10), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(2, session.SelectedElements.Count);
+        Assert.Equal(["35", "165"], buttons.Select(button => button.Attribute("Canvas.Left")?.Value));
+        Assert.Equal(["40", "130"], buttons.Select(button => button.Attribute("Canvas.Top")?.Value));
+
+        session.Undo();
+
+        Assert.Equal(["20", "150"], buttons.Select(button => button.Attribute("Canvas.Left")?.Value));
+        Assert.Equal(["30", "120"], buttons.Select(button => button.Attribute("Canvas.Top")?.Value));
+    }
+
+    [AvaloniaFact]
+    public void ArrowKeyNudgesEverySelectedControlAsOneUndo()
+    {
+        var (window, _, session) = Open(TwoControls);
+        var buttons = session.Document.Root.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .ToArray();
+
+        window.MouseDown(OnForm(60, 42), MouseButton.Left);
+        window.MouseUp(OnForm(60, 42), MouseButton.Left);
+        window.MouseDown(OnForm(190, 132), MouseButton.Left, RawInputModifiers.Shift);
+        window.MouseUp(OnForm(190, 132), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["21", "151"], buttons.Select(button => button.Attribute("Canvas.Left")?.Value));
+
+        session.Undo();
+
+        Assert.Equal(["20", "150"], buttons.Select(button => button.Attribute("Canvas.Left")?.Value));
+    }
+
+    [AvaloniaFact]
     public void AligningMovesTheOthersToTheLastPicked()
     {
         var (window, surface, session) = Open(TwoControls);

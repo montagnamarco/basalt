@@ -38,6 +38,9 @@ public sealed class DesignSurface : ContentControl
         public required Point Origin { get; init; }
         public required Rect Bounds { get; init; }
 
+        /// <summary>The control clicked, if a click should narrow a group.</summary>
+        public XElement? PressedElement { get; init; }
+
         /// <summary>Which handle was grabbed, or none when the body was.</summary>
         public Handle? Handle { get; init; }
 
@@ -869,7 +872,8 @@ public sealed class DesignSurface : ContentControl
         // used to differ only by the layout centring the preview, so this
         // was wrong by a few pixels and nobody noticed; with the rulers it
         // is wrong by eighteen more and the handles cannot be grabbed.
-        if (SelectionBounds() is { } bounds
+        if (_session.SelectedElements.Count == 1
+            && SelectionBounds() is { } bounds
             && HandleAt(bounds, e.GetPosition(this), HandleSize) is { } handle)
         {
             _drag = new Drag { Origin = at, Bounds = bounds, Handle = handle };
@@ -890,7 +894,7 @@ public sealed class DesignSurface : ContentControl
         // several controls get aligned to one another.
         if (element is not null && e.KeyModifiers.HasFlag(KeyModifiers.Shift))
             _session.ToggleSelection(element);
-        else
+        else if (element is null || !_session.SelectedElements.Any(selected => ReferenceEquals(selected, element)))
             _session.Select(element);
 
         SelectionChanged?.Invoke(this, _session.Selection);
@@ -904,9 +908,14 @@ public sealed class DesignSurface : ContentControl
             _bandTo = at;
             e.Pointer.Capture(this);
         }
-        else if (SelectionBounds() is { } selected)
+        else if (SelectedDragBounds() is { } selected)
         {
-            _drag = new Drag { Origin = at, Bounds = selected };
+            _drag = new Drag
+            {
+                Origin = at,
+                Bounds = selected,
+                PressedElement = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? null : element,
+            };
             e.Pointer.Capture(this);
         }
 
@@ -992,7 +1001,8 @@ public sealed class DesignSurface : ContentControl
 
         foreach (var (control, element) in _controlToElement)
         {
-            if (ReferenceEquals(element, _session?.Selection)) continue;
+            if (_session?.SelectedElements.Any(selected => ReferenceEquals(selected, element)) == true)
+                continue;
 
             // The root is the surface itself: aligning to its edges is what
             // makes a control sit flush with the window.
@@ -1031,6 +1041,12 @@ public sealed class DesignSurface : ContentControl
         e.Pointer.Capture(null);
 
         if (drag.Started) Commit(drag);
+        else if (drag.PressedElement is { } pressed && _session is not null)
+        {
+            // A click narrows a multi-selection; a drag keeps the group.
+            _session.Select(pressed);
+            SelectionChanged?.Invoke(this, pressed);
+        }
 
         DrawSelectionAdorner();
         e.Handled = true;
@@ -1043,6 +1059,12 @@ public sealed class DesignSurface : ContentControl
 
         if (drag.Handle is null)
         {
+            if (_session.SelectedElements.Count > 1)
+            {
+                _session.MoveSelected(drag.Delta.X, drag.Delta.Y);
+                return;
+            }
+
             // Dragged, so the control goes where it was dropped, said the way
             // its container lays out: in a Grid that is another cell, not a
             // Margin measured from the first one.
@@ -1190,7 +1212,7 @@ public sealed class DesignSurface : ContentControl
             return;
         }
 
-        _session.MoveSelection(dx, dy);
+        _session.MoveSelected(dx, dy);
         e.Handled = true;
     }
 
@@ -1504,6 +1526,10 @@ public sealed class DesignSurface : ContentControl
             if (ReferenceEquals(element, _session?.Selection)) continue;
 
             if (BoundsOf(element) is { } other)
+            {
+                if (_drag is { Started: true, Handle: null } groupDrag)
+                    other = other.Translate(groupDrag.Delta);
+
                 _adorners.Children.Add(new Border
                 {
                     BorderBrush = Brushes.DodgerBlue,
@@ -1515,6 +1541,7 @@ public sealed class DesignSurface : ContentControl
                     [Canvas.LeftProperty] = other.X,
                     [Canvas.TopProperty] = other.Y,
                 });
+            }
         }
 
         if (SelectionBounds() is not { } bounds) return;
@@ -1738,6 +1765,13 @@ public sealed class DesignSurface : ContentControl
     /// <summary>Where the primary selection sits, in surface coordinates.</summary>
     private Rect? SelectionBounds() =>
         _session?.Selection is { } selection ? BoundsOf(selection) : null;
+
+    private Rect? SelectedDragBounds() =>
+        _session is { } session
+            ? DesignerSelectionBounds.Enclose(session.SelectedElements
+                .Select(BoundsOf)
+                .OfType<Rect>())
+            : null;
 
     /// <summary>Where an element is drawn, in surface coordinates.</summary>
     private Rect? BoundsOf(XElement element)
