@@ -28,6 +28,8 @@ public enum IconKind
     /// <summary>Two versions of a file, side by side.</summary>
     Diff,
 
+    /// <summary>A prompt and its cursor: the Immediate window.</summary>
+    Immediate,
 
     /// <summary>A box opened to show what is inside: the Object Browser.</summary>
     ObjectBrowser,
@@ -275,6 +277,7 @@ public static class IdeIcons
                            + "M8,1 V3 M8,13 V15 M1,8 H3 M13,8 H15 "
                            + "M3,3 L4.5,4.5 M11.5,11.5 L13,13 M13,3 L11.5,4.5 M4.5,11.5 L3,13",
 
+        IconKind.Immediate => "M2,3.5 L7.5,8 L2,12.5 M9,12.5 H14",
         IconKind.Terminal => "M1,2 H15 V14 H1 Z M3.5,5.5 L6.5,8 L3.5,10.5 M8,11 H12",
 
         IconKind.Branch => "M4,3 A1.5,1.5 0 1 1 4,6 A1.5,1.5 0 0 1 4,3 M4,6 V13 "

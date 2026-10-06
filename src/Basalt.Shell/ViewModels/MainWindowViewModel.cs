@@ -328,7 +328,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         // no longer loaded.
         CloseAllDocuments();
 
-        IsBusy = true;
+        BeginBusy();
         StatusMessage = Localizer.Get(StringKeys.StatusOpening, Path.GetFileName(path));
         try
         {
@@ -370,7 +370,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            IsBusy = false;
+            EndBusy();
         }
     }
 

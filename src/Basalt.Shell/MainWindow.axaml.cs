@@ -107,7 +107,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Finds and runs the tests of the solution.</summary>
-    private readonly DotnetTestService _testService = new();
+    private DotnetTestService _testService = null!;
 
     /// <summary>
     /// The debugging session, which outlives any one open file: a breakpoint
@@ -299,6 +299,7 @@ public partial class MainWindow : Window
         InitializeDesignerToolDocks();
         _contents[_factory.Problems] = new ProblemsPanel(viewModel, OpenDiagnostic);
         _contents[_factory.Output] = new OutputPanel(viewModel);
+        _contents[_factory.Immediate] = new ImmediatePanel(viewModel, _debug);
 
         _search = new SearchPanel();
         if (viewModel.LoadSettings?.Invoke() is { } startupSettings) _search.ApplySettings(startupSettings);
@@ -2849,6 +2850,10 @@ public partial class MainWindow : Window
                 ShowTool(_factory.Output);
                 break;
 
+            case IdeCommands.ViewImmediate:
+                ShowTool(_factory.Immediate);
+                break;
+
             case IdeCommands.ViewTerminal:
                 OpenNewTerminal();
                 break;
@@ -3709,7 +3714,10 @@ public partial class MainWindow : Window
             ViewModel.WriteOutput, "ide");
 
         // The same retargeting the build used: "dotnet test" builds too.
+        _testService = new DotnetTestService(ViewModel.BuildGate);
         _testService.Compatibility = ViewModel.Compatibility;
+        ViewModel.WatchTestService(_testService);
+        ViewModel.IsDebuggingProbe = () => _debug.IsRunning;
         _testService.OutputReceived += (_, text) => ViewModel.WriteOutput(text);
 
         _contents[_factory.Tests] = _tests;

@@ -6,13 +6,29 @@ using System.Text.Json.Nodes;
 namespace Basalt.Workspace.Debugging;
 
 /// <summary>
+/// What the debug service needs of a connection to a debug adapter.
+///
+/// The seam exists so the requests the service builds (their command names,
+/// frame ids and contexts) can be checked against a stand-in that records
+/// them: netcoredbg is not installed everywhere the tests run.
+/// </summary>
+public interface IDapConnection : IDisposable
+{
+    bool IsRunning { get; }
+    event EventHandler<DapEvent>? EventReceived;
+    event EventHandler<int>? Exited;
+    Task<JsonObject> SendAsync(string command, JsonObject? arguments = null, CancellationToken ct = default);
+    void Send(string command, JsonObject? arguments = null);
+}
+
+/// <summary>
 /// Talks to a debug adapter over the Debug Adapter Protocol.
 ///
 /// Messages are JSON with a Content-Length header, the same framing the
 /// Language Server Protocol uses. This class knows the framing and the
 /// request/response pairing; what the messages mean is the caller's business.
 /// </summary>
-public sealed class DapClient : IDisposable
+public sealed class DapClient : IDapConnection
 {
     private readonly Process _process;
     private readonly Lock _writeGate = new();

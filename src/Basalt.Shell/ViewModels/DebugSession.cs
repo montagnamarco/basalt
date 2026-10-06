@@ -3,6 +3,7 @@ using Basalt.Core.Services;
 using Basalt.Extensibility.Interpretation;
 using Basalt.QuickBasic.Interpretation;
 using Basalt.Workspace.Debugging;
+using Basalt.Workspace.Immediate;
 
 namespace Basalt.Shell.ViewModels;
 
@@ -14,7 +15,7 @@ namespace Basalt.Shell.ViewModels;
 /// must still stop there. The panels read from this; the editor margin reports
 /// into it.
 /// </summary>
-public sealed class DebugSession : IDisposable
+public sealed class DebugSession : IDisposable, IImmediateDebugger
 {
     private readonly Dictionary<string, List<Breakpoint>> _breakpoints =
         new(StringComparer.Ordinal);
@@ -37,6 +38,13 @@ public sealed class DebugSession : IDisposable
     public event EventHandler? Resumed;
     public event EventHandler<int>? Exited;
     public event EventHandler<string>? OutputReceived;
+
+    /// <summary>
+    /// What the program wrote through Debug and Trace, raised on the
+    /// interface thread like the other events. The Immediate window listens
+    /// here; <see cref="OutputReceived"/> still carries it as well.
+    /// </summary>
+    public event EventHandler<string>? DebugOutputReceived;
 
     /// <summary>The program is running, whether or not it will ever stop.</summary>
     public event EventHandler? Started;
@@ -174,6 +182,20 @@ public sealed class DebugSession : IDisposable
             _service = new NetCoreDebugService(adapter);
         }
 
+        await StartWithAsync(_service, assemblyPath, workingDirectory, ct).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Connects a service to the session's events and launches the program with it.
+    ///
+    /// Apart from <see cref="StartAsync"/> so that a stand-in for the debug
+    /// adapter can be run through the same wiring the real one gets.
+    /// </summary>
+    internal async Task StartWithAsync(
+        IDebugSessionService service, string assemblyPath, string? workingDirectory, CancellationToken ct = default)
+    {
+        _service = service;
+
         // Every one of these arrives on the reader thread that pumps the
         // debug adapter, and every subscriber is a control. Touching Avalonia
         // from there does nothing visible on macOS rather than failing
@@ -188,6 +210,9 @@ public sealed class DebugSession : IDisposable
         _service.Exited += (_, code) => OnUiThread(() => OnExited(this, code));
         _service.OutputReceived += (_, text) => OnUiThread(() => OutputReceived?.Invoke(this, text));
         _service.Started += (_, _) => OnUiThread(() => Started?.Invoke(this, EventArgs.Empty));
+
+        if (_service is NetCoreDebugService netCore)
+            netCore.DebugOutputReceived += (_, text) => OnUiThread(() => DebugOutputReceived?.Invoke(this, text));
         _service.Faulted += (_, ex) => OnUiThread(() => Failed?.Invoke(this, ex.Message));
 
         // Not marshalled: the interpreter blocks inside a statement waiting
@@ -345,6 +370,30 @@ public sealed class DebugSession : IDisposable
         _service is null || !IsPaused
             ? Task.FromResult<string?>(null)
             : _service.EvaluateAsync(expression, SelectedFrame, ct);
+
+    /// <inheritdoc />
+    bool IImmediateDebugger.IsDebugging => IsRunning;
+
+    /// <summary>
+    /// Evaluates a line from the Immediate window in the frame being looked at.
+    ///
+    /// Refuses, with an empty failure, when nothing is stopped. The service is
+    /// read once: the session can end on another thread between the check and
+    /// the call.
+    /// </summary>
+    public Task<ReplEvaluation> EvaluateReplAsync(
+        string text, bool isExpression, CancellationToken ct = default)
+    {
+        var service = _service;
+
+        return service is null || !service.IsPaused
+            ? Task.FromResult(new ReplEvaluation(false, ""))
+            : service.EvaluateReplAsync(text, isExpression, SelectedFrame, ct);
+    }
+
+    Task<ReplEvaluation> IImmediateDebugger.EvaluateAsync(
+        string text, bool isExpression, CancellationToken ct) =>
+        EvaluateReplAsync(text, isExpression, ct);
 
     public async Task StopAsync(CancellationToken ct = default)
     {

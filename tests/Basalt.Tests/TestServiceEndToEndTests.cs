@@ -19,7 +19,7 @@ public sealed class TestServiceEndToEndTests : IAsyncLifetime
 
     private string ProjectPath => Path.Combine(_root, "VbTests.vbproj");
 
-    private readonly DotnetTestService _service = new();
+    private readonly DotnetTestService _service = new(new Basalt.Workspace.BuildGate());
 
     public async ValueTask InitializeAsync()
     {
@@ -172,7 +172,7 @@ public sealed class TestProjectTemplateTests : IDisposable
         var result = await Basalt.Designer.SolutionTemplates.CreateAsync(
             _root, "SampleTests", Basalt.Designer.ProjectTemplate.TestProject);
 
-        var service = new DotnetTestService();
+        var service = new DotnetTestService(new Basalt.Workspace.BuildGate());
 
         var discovered = await service.DiscoverAsync(result.ProjectPath);
 

@@ -834,7 +834,7 @@ public sealed class WindowsDesktopProjectDetectionTests : IDisposable
         // "dotnet test" restores (and, for a test project, builds): without the
         // properties the SDK refuses the Windows framework (NETSDK1100) off
         // Windows and the restore writes to obj/, not where the build looks.
-        var tests = new Basalt.Workspace.Testing.DotnetTestService();
+        var tests = new Basalt.Workspace.Testing.DotnetTestService(new Basalt.Workspace.BuildGate());
         var text = new StringBuilder();
         tests.OutputReceived += (_, chunk) => text.Append(chunk);
         await tests.DiscoverAsync(lib);

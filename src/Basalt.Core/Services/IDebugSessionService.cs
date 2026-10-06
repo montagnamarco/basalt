@@ -1,3 +1,5 @@
+using Basalt.Core.Localization;
+
 namespace Basalt.Core.Services;
 
 /// <summary>
@@ -39,4 +41,29 @@ public interface IDebugSessionService : IDebugService, IDisposable
     /// </summary>
     Task<IReadOnlyList<VariableValue>> ExpandAsync(
         int reference, CancellationToken ct = default);
+
+    /// <summary>
+    /// Evaluates a line typed in the Immediate window in the given frame.
+    ///
+    /// <paramref name="isExpression"/> says the line was asked for its value
+    /// ("?x") rather than run for its effect ("x = 3").
+    ///
+    /// The default asks for the value the way a watch does, which is all an
+    /// interpreter can offer; the .NET debugger overrides it to send the
+    /// "repl" context, where assignments and calls are allowed.
+    /// </summary>
+    async Task<ReplEvaluation> EvaluateReplAsync(
+        string text, bool isExpression, int frameIndex, CancellationToken ct = default)
+    {
+        // An interpreter evaluates values; running a statement as one would
+        // read "x = 3" as a comparison and answer False without assigning.
+        if (!isExpression)
+            return new ReplEvaluation(false, Localizer.Get(StringKeys.ImmediateNoStatements));
+
+        var value = await EvaluateAsync(text, frameIndex, ct).ConfigureAwait(false);
+
+        return value is null
+            ? new ReplEvaluation(false, "")
+            : new ReplEvaluation(true, value);
+    }
 }

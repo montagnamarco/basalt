@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Xml.Linq;
+using Basalt.Core.Localization;
 using Basalt.Core.Services;
 
 namespace Basalt.Workspace.Testing;
@@ -17,6 +18,22 @@ public sealed class DotnetTestService : ITestService
 {
     /// <summary>The session that retargets Windows desktop projects, shared with the build.</summary>
     public WindowsDesktopCompatibilitySession Compatibility { get; set; } = new();
+
+    private readonly BuildGate _gate;
+
+    /// <summary>
+    /// Takes the gate every build of the project passes through, because
+    /// "dotnet test" builds it: two dotnet builds over one obj folder corrupt
+    /// each other. Required, so a service cannot be left ungated by forgetting
+    /// to wire it.
+    /// </summary>
+    public DotnetTestService(BuildGate gate) => _gate = gate;
+
+    /// <summary>The gate has to be waited for: carries who holds it.</summary>
+    public event EventHandler<string>? WaitingForGate;
+
+    /// <summary>The wait is over, whether the gate was won or the run stopped.</summary>
+    public event EventHandler? WaitEnded;
 
     public event EventHandler<string>? OutputReceived;
 
@@ -221,6 +238,37 @@ public sealed class DotnetTestService : ITestService
     internal ProcessStartInfo? LastStartInfo { get; private set; }
 
     private async Task<(int ExitCode, string Output)> RunDotnetAsync(
+        string projectPath, IReadOnlyList<string> arguments, CancellationToken ct)
+    {
+        var waited = false;
+
+        IDisposable held;
+
+        try
+        {
+            held = await _gate
+                .AcquireAsync(
+                    Localizer.Get(StringKeys.GateTests),
+                    holder =>
+                    {
+                        waited = true;
+                        WaitingForGate?.Invoke(this, holder);
+                    },
+                    ct)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            if (waited) WaitEnded?.Invoke(this, EventArgs.Empty);
+        }
+
+        using (held)
+        {
+            return await RunDotnetCoreAsync(projectPath, arguments, ct).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<(int ExitCode, string Output)> RunDotnetCoreAsync(
         string projectPath, IReadOnlyList<string> arguments, CancellationToken ct)
     {
         var startInfo = DotnetProcess.CreateStartInfo();

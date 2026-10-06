@@ -104,7 +104,8 @@ public class VbConditionTranslatorTests
     public void KeepsAnEscapedQuoteInsideAString()
     {
         // "" inside a VB literal is one quote character, not the end of it.
-        Assert.Equal("name == \"say \"\"hi\"\"\"", Translate("name = \"say \"\"hi\"\"\""));
+        // C# escapes a quote with a backslash, not by doubling it.
+        Assert.Equal("name == \"say \\\"hi\\\"\"", Translate("name = \"say \"\"hi\"\"\""));
     }
 
     [Fact]
@@ -123,5 +124,12 @@ public class VbConditionTranslatorTests
     public void LeavesAMethodCallAlone()
     {
         Assert.Equal("name.Length == 3", Translate("name.Length = 3"));
+    }
+
+    [Fact]
+    public void ABackslashInAStringStaysALiteralBackslash()
+    {
+        // In Visual Basic "C:\temp" has no escapes; copied as it was, C# read \t as a tab.
+        Assert.Equal("path == \"C:\\\\temp\\\\x\"", Translate("path = \"C:\\temp\\x\""));
     }
 }

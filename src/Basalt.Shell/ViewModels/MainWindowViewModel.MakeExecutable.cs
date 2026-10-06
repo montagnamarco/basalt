@@ -63,14 +63,25 @@ public sealed partial class MainWindowViewModel
             return null;
         }
 
-        IsBusy = true;
-        BuildOutput.Clear();
-        Diagnostics.Clear();
-        StatusMessage = Localizer.Get(StringKeys.StatusMakeExeRunning);
+        BeginBusy();
         var operation = Operations.Start(Localizer.Get(StringKeys.StatusMakeExeRunning));
+        IDisposable? gate = null;
 
         try
         {
+            // A publish builds too: not beside another build of the project.
+            // Waited for before anything is cleared or announced, so that a
+            // publish queued behind another build leaves that build's output
+            // and status alone.
+            gate = await BuildGate.AcquireAsync(
+                Localizer.Get(StringKeys.GatePublish),
+                holder => StatusMessage = Localizer.Get(StringKeys.StatusWaitingForBuild, holder),
+                operation.Token).ConfigureAwait(true);
+
+            BuildOutput.Clear();
+            Diagnostics.Clear();
+            StatusMessage = Localizer.Get(StringKeys.StatusMakeExeRunning);
+
             // The publish compiles from disk, like a build.
             await SaveAllAsync().ConfigureAwait(true);
             StatusMessage = Localizer.Get(StringKeys.StatusMakeExeRunning);
@@ -116,7 +127,8 @@ public sealed partial class MainWindowViewModel
         finally
         {
             Operations.Finish(operation);
-            IsBusy = false;
+            gate?.Dispose();
+            EndBusy();
         }
     }
 }

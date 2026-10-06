@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Basalt.Core.Localization;
 using Basalt.Core.Services;
 
 namespace Basalt.Workspace.Debugging;
@@ -12,8 +13,8 @@ namespace Basalt.Workspace.Debugging;
 /// </summary>
 public sealed class NetCoreDebugService : IDebugSessionService
 {
-    private readonly string _adapterPath;
-    private DapClient? _client;
+    private readonly Func<IDapConnection> _connect;
+    private IDapConnection? _client;
 
     private int _currentThread;
     private readonly Dictionary<string, IReadOnlyList<Breakpoint>> _breakpoints = new(StringComparer.Ordinal);
@@ -27,7 +28,13 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// </summary>
     private readonly Dictionary<string, string> _pathsAsGiven = new(StringComparer.Ordinal);
 
-    public NetCoreDebugService(string adapterPath) => _adapterPath = adapterPath;
+    public NetCoreDebugService(string adapterPath)
+        : this(() => new DapClient(adapterPath))
+    {
+    }
+
+    /// <summary>Connects through something other than the adapter process, for the tests.</summary>
+    internal NetCoreDebugService(Func<IDapConnection> connect) => _connect = connect;
 
     /// <summary>Whether a debugging session is under way.</summary>
     public bool IsRunning => _client is { IsRunning: true };
@@ -35,12 +42,43 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// <summary>Whether the program is stopped at a breakpoint or a step.</summary>
     public bool IsPaused { get; private set; }
 
+    /// <summary>
+    /// Counts every stop and resume, so that a request prepared in one stop
+    /// can tell the program has moved on before it is sent.
+    /// </summary>
+    private int _stopGeneration;
+
+    /// <summary>
+    /// The stop generation that was last reported to the interface.
+    ///
+    /// <see cref="IsPaused"/> is set the moment "stopped" arrives, before a
+    /// breakpoint that waits for a count has decided to resume silently. A
+    /// stop the user was never shown is not one to evaluate in: this equals
+    /// the current generation only for a stop that was shown and has not
+    /// been left since.
+    /// </summary>
+    private int _shownGeneration = -1;
+
+    private bool IsStopShown =>
+        Volatile.Read(ref _shownGeneration) == Volatile.Read(ref _stopGeneration);
+
     public event EventHandler<StackFrame>? Paused;
     public event EventHandler? Resumed;
     public event EventHandler<int>? Exited;
 
     /// <summary>Text the debugged program wrote to its console.</summary>
     public event EventHandler<string>? OutputReceived;
+
+    /// <summary>
+    /// What the program wrote through Debug and Trace (Debug.Print,
+    /// Debug.WriteLine), which Visual Basic 6 sent to the Immediate window.
+    ///
+    /// netcoredbg reports it as an "output" event of category "console",
+    /// apart from the program's own stdout and stderr. It is also raised
+    /// through <see cref="OutputReceived"/>, so nothing that listened there
+    /// before loses it.
+    /// </summary>
+    public event EventHandler<string>? DebugOutputReceived;
 
     /// <summary>The program is running, whether or not it will ever stop.</summary>
     public event EventHandler? Started;
@@ -89,10 +127,11 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         _hits.Clear();
 
-        _client = new DapClient(_adapterPath);
+        _client = _connect();
         _client.EventReceived += OnEvent;
         _client.Exited += (_, code) =>
         {
+            Interlocked.Increment(ref _stopGeneration);
             IsPaused = false;
             Exited?.Invoke(this, code);
         };
@@ -313,6 +352,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
     {
         if (_client is null || !IsPaused) return;
 
+        Interlocked.Increment(ref _stopGeneration);
         IsPaused = false;
         Resumed?.Invoke(this, EventArgs.Empty);
 
@@ -462,6 +502,94 @@ public sealed class NetCoreDebugService : IDebugSessionService
         }
     }
 
+    /// <summary>
+    /// Evaluates a line from the Immediate window, in the "repl" context.
+    ///
+    /// "repl" rather than "watch": a watch is an expression the debugger may
+    /// refuse to let change anything, while the Immediate window is where one
+    /// assigns and calls. The frame is looked up here from a fresh stack
+    /// trace instead of the shared list of ids, because this runs on whatever
+    /// thread the Immediate window used and the list is rewritten by others.
+    /// </summary>
+    public async Task<ReplEvaluation> EvaluateReplAsync(
+        string text, bool isExpression, int frameIndex, CancellationToken ct = default)
+    {
+        // Only values: a Visual Basic statement cannot be handed to an
+        // evaluator that speaks C# without being translated, and a wrong
+        // translation would change the program being debugged. Said plainly
+        // instead.
+        if (!isExpression) return new ReplEvaluation(false, Localizer.Get(StringKeys.ImmediateNoStatements));
+
+        var client = _client;
+        var generation = Volatile.Read(ref _stopGeneration);
+
+        if (client is null || !IsPaused || !IsStopShown) return new ReplEvaluation(false, "");
+
+        try
+        {
+            var trace = await client.SendAsync("stackTrace", new JsonObject
+            {
+                ["threadId"] = _currentThread
+            }, ct).ConfigureAwait(false);
+
+            var frames = trace["body"]?["stackFrames"] as JsonArray;
+            var frame = frames is not null && frameIndex >= 0 && frameIndex < frames.Count
+                ? frames[frameIndex] as JsonObject
+                : null;
+
+            // The evaluator speaks C#: a value asked for in a Visual Basic
+            // file is translated like a breakpoint condition.
+            var sourcePath = (frame?["source"] as JsonObject)?["path"]?.GetValue<string>() ?? "";
+            var expression = TranslateCondition(text, sourcePath);
+
+            var arguments = new JsonObject
+            {
+                ["expression"] = expression,
+                ["context"] = "repl"
+            };
+
+            if (frame?["id"]?.GetValue<int>() is { } frameId) arguments["frameId"] = frameId;
+
+            // The frame id belongs to the stop it was read in. If the program
+            // ran on while the stack was fetched, the id names nothing (or
+            // another frame) and the answer would be about the wrong place.
+            if (generation != Volatile.Read(ref _stopGeneration) || !IsPaused || !IsStopShown)
+                return new ReplEvaluation(false, Localizer.Get(StringKeys.ImmediateStale));
+
+            var response = await client.SendAsync("evaluate", arguments, ct).ConfigureAwait(false);
+
+            return response["success"]?.GetValue<bool>() == true
+                ? new ReplEvaluation(true, response["body"]?["result"]?.GetValue<string>() ?? "")
+                : new ReplEvaluation(false, response["message"]?.GetValue<string>() ?? "");
+        }
+        catch (Exception ex) when (ex is IOException or ObjectDisposedException
+                                      || (ex is InvalidOperationException && SessionEnded(client)))
+        {
+            // The session ended while the line was being evaluated. A client
+            // disposed by Stop throws InvalidOperationException (its process
+            // is gone), not the IOException of a closed pipe; the same type
+            // is also what a malformed answer throws while it is read, and
+            // that one is a bug to see, so only the first is caught.
+            return new ReplEvaluation(false, Localizer.Get(StringKeys.ImmediateSessionEnded));
+        }
+    }
+
+    /// <summary>Whether the connection a request was made on has been stopped or has died.</summary>
+    private bool SessionEnded(IDapConnection client)
+    {
+        if (!ReferenceEquals(_client, client)) return true;
+
+        try
+        {
+            return !client.IsRunning;
+        }
+        catch (InvalidOperationException)
+        {
+            // Asking a disposed client whether it runs is itself the answer.
+            return true;
+        }
+    }
+
     public Task StopAsync(CancellationToken ct = default)
     {
         Stop();
@@ -483,6 +611,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         _client.Dispose();
         _client = null;
+        Interlocked.Increment(ref _stopGeneration);
         IsPaused = false;
     }
 
@@ -492,11 +621,13 @@ public sealed class NetCoreDebugService : IDebugSessionService
         {
             case "stopped":
                 _currentThread = dapEvent.Body?["threadId"]?.GetValue<int>() ?? 0;
+                Interlocked.Increment(ref _stopGeneration);
                 IsPaused = true;
                 _ = OnStoppedAsync();
                 break;
 
             case "continued":
+                Interlocked.Increment(ref _stopGeneration);
                 IsPaused = false;
                 Resumed?.Invoke(this, EventArgs.Empty);
                 break;
@@ -523,13 +654,20 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 break;
 
             case "exited":
+                Interlocked.Increment(ref _stopGeneration);
                 IsPaused = false;
                 Exited?.Invoke(this, dapEvent.Body?["exitCode"]?.GetValue<int>() ?? 0);
                 break;
 
             case "output":
                 if (dapEvent.Body?["output"]?.GetValue<string>() is { } text)
+                {
                     OutputReceived?.Invoke(this, text);
+
+                    // DAP says an event without a category is "console".
+                    if (dapEvent.Body?["category"]?.GetValue<string>() is null or "console")
+                        DebugOutputReceived?.Invoke(this, text);
+                }
                 break;
         }
     }
@@ -546,6 +684,9 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// </summary>
     private async Task OnStoppedAsync()
     {
+        // The stop this call is about, before anything can move the counter.
+        var generation = Volatile.Read(ref _stopGeneration);
+
         try
         {
             var frames = await GetCallStackAsync().ConfigureAwait(false);
@@ -558,6 +699,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 // refuses to act unless IsPaused is still set — and clearing
                 // it first is what makes it refuse. No Resumed either: the
                 // panels were never told this stop happened.
+                Interlocked.Increment(ref _stopGeneration);
                 IsPaused = false;
 
                 if (_client is not null)
@@ -571,6 +713,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 return;
             }
 
+            Volatile.Write(ref _shownGeneration, generation);
             Paused?.Invoke(this, frame);
         }
         catch (Exception ex) when (ex is IOException or OperationCanceledException)

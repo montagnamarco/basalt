@@ -14,6 +14,8 @@ public sealed partial class MainWindowViewModel
         await BuildProjectAsync().ConfigureAwait(true);
     }
 
+    internal Task<bool> BuildProjectForTestsAsync() => BuildProjectAsync();
+
     private async Task<bool> BuildProjectAsync()
     {
         var projectPath = StartupProject;
@@ -24,18 +26,48 @@ public sealed partial class MainWindowViewModel
             return false;
         }
 
-        _builtAssemblyPath = null;
-        IsBusy = true;
-        BuildOutput.Clear();
-        Diagnostics.Clear();
-        StatusMessage = Localizer.Get(StringKeys.StatusBuilding);
+        // One build waiting is enough: a second click while the first still
+        // waits behind another build would only queue the same work twice.
+        if (_buildQueued)
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusBuildAlreadyWaiting, BuildGate.Holder ?? Localizer.Get(StringKeys.GateBuild));
+            return false;
+        }
+
+        BeginBusy();
 
         // Tracked so the status bar can offer to stop it: a build that has
-        // gone wrong is one the user wants to end, not wait out.
+        // gone wrong is one the user wants to end, not wait out. Started
+        // before the wait, so Stop also ends a build that is still queued.
         var operation = Operations.Start(Localizer.Get(StringKeys.StatusBuilding));
+        IDisposable? gate = null;
 
         try
         {
+            // Both write the same output folder, so a build the Immediate
+            // window (or a test run, or another build) has under way is
+            // waited for, and the status says for whom.
+            try
+            {
+                gate = await BuildGate.AcquireAsync(
+                    Localizer.Get(StringKeys.GateBuild),
+                    holder =>
+                    {
+                        _buildQueued = true;
+                        StatusMessage = Localizer.Get(StringKeys.StatusWaitingForBuild, holder);
+                    },
+                    operation.Token).ConfigureAwait(true);
+            }
+            finally
+            {
+                _buildQueued = false;
+            }
+
+            _builtAssemblyPath = null;
+            BuildOutput.Clear();
+            Diagnostics.Clear();
+            StatusMessage = Localizer.Get(StringKeys.StatusBuilding);
+
             // The compiler reads the disk, not the editors. Without this a
             // control drawn in the designer and never saved was simply not in
             // the build: the window came up empty and nothing said why, which
@@ -86,7 +118,8 @@ public sealed partial class MainWindowViewModel
         finally
         {
             Operations.Finish(operation);
-            IsBusy = false;
+            gate?.Dispose();
+            EndBusy();
         }
     }
 
@@ -141,7 +174,7 @@ public sealed partial class MainWindowViewModel
         // Asked before building, not after: a build of a program that is
         // still running fails on Windows (the output is locked) and clears
         // the Problems list, only for the answer to be "already running".
-        if (ReportIfAlreadyRunning()) return;
+        if (ReportIfAlreadyRunning() || ReportIfDebugging()) return;
 
         // Built before running: launching the build's own output, rather
         // than asking "dotnet run" to build again, means a build that failed
@@ -164,6 +197,18 @@ public sealed partial class MainWindowViewModel
     internal bool ReportIfAlreadyRunning()
     {
         if (!_runService.IsRunning) return false;
+
+        StatusMessage = Localizer.Get(StringKeys.StatusAlreadyRunning);
+        return true;
+    }
+
+    /// <summary>
+    /// A debug session counts as the program running: building over the
+    /// debuggee's output fails on locked files, or swaps the program under it.
+    /// </summary>
+    internal bool ReportIfDebugging()
+    {
+        if (IsDebuggingProbe?.Invoke() != true) return false;
 
         StatusMessage = Localizer.Get(StringKeys.StatusAlreadyRunning);
         return true;

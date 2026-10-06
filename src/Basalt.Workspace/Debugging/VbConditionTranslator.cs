@@ -76,28 +76,38 @@ public static class VbConditionTranslator
         return index + 1 < condition.Length && condition[index + 1] == '=';
     }
 
+    /// <summary>
+    /// Copies a Visual Basic string literal as the C# literal of the same text.
+    ///
+    /// The two escape differently: Visual Basic doubles a quote and treats a
+    /// backslash as an ordinary character, C# escapes both. Copied as it was,
+    /// "C:\temp" lost its backslash to a tab and "say ""hi""" ended its
+    /// literal at the first doubled quote.
+    /// </summary>
     private static int CopyStringLiteral(string condition, int index, StringBuilder result)
     {
-        result.Append(condition[index]);
+        result.Append('"');
         index++;
 
         while (index < condition.Length)
         {
-            result.Append(condition[index]);
+            var current = condition[index];
 
-            // "" inside a VB literal is an escaped quote, not the end of it.
-            if (condition[index] == '"')
+            if (current == '"')
             {
+                // "" inside a VB literal is an escaped quote, not the end of it.
                 if (index + 1 < condition.Length && condition[index + 1] == '"')
                 {
-                    result.Append(condition[index + 1]);
+                    result.Append("\\\"");
                     index += 2;
                     continue;
                 }
 
+                result.Append('"');
                 return index + 1;
             }
 
+            result.Append(current == '\\' ? "\\\\" : current.ToString());
             index++;
         }
 

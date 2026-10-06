@@ -88,7 +88,7 @@ public sealed class DotnetProcessLanguageTests : IDisposable
     public void ATestRunStartsDotnetInTheInterfaceLanguage()
     {
         Localizer.Culture = new CultureInfo("it-IT");
-        var service = new DotnetTestService();
+        var service = new DotnetTestService(new Basalt.Workspace.BuildGate());
 
         service.DiscoverAsync(MissingProject).GetAwaiter().GetResult();
 

@@ -40,6 +40,7 @@ public static class IdeCommands
     public const string ViewSolutionExplorer = "view.solutionExplorer";
     public const string ViewProblems = "view.problems";
     public const string ViewOutput = "view.output";
+    public const string ViewImmediate = "view.immediate";
     public const string ViewTerminal = "view.terminal";
     public const string ViewTests = "view.tests";
     public const string ViewAssistant = "view.assistant";
@@ -186,6 +187,9 @@ public static class IdeCommands
             new(ViewSolutionExplorer, "Solution Explorer", CommandCategory.View),
             new(ViewProblems, "Problems", CommandCategory.View),
             new(ViewOutput, "Output", CommandCategory.View),
+            // No gesture: Ctrl+G is Go to Line, which the editor owned first.
+            new(ViewImmediate, "Immediate", CommandCategory.View)
+                { Description = "Evaluate expressions and run statements, in the paused frame while debugging." },
             new(ViewTerminal, "Terminal", CommandCategory.View)
                 { DefaultGesture = "Ctrl+`" },
             new(ViewTests, "Tests", CommandCategory.View),

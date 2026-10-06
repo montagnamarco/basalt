@@ -74,6 +74,17 @@ public sealed class OutputTool : IdeTool
     }
 }
 
+/// <summary>The Visual Basic 6 Immediate window: type a line, see its value.</summary>
+public sealed class ImmediateTool : IdeTool
+{
+    public ImmediateTool()
+    {
+        Id = "Immediate";
+        Title = Localizer.Get(StringKeys.ToolImmediate);
+        Icon = IconKind.Immediate;
+    }
+}
+
 /// <summary>Results of searching across the solution.</summary>
 public sealed class SearchTool : IdeTool
 {
