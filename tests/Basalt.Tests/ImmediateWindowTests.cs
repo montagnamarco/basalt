@@ -153,13 +153,26 @@ public sealed class ImmediateWindowTests
     [Fact]
     public async Task APausedEvaluationAlsoRunsOffTheCallingThread()
     {
-        var debugger = new FakeImmediateDebugger { IsDebugging = true, IsPaused = true };
+        // Same race as EvaluationRunsOffTheCallingThreadWithoutBlockingIt
+        // above, and the same fix: awaiting the pending task right away lets
+        // the thread pool hand this very thread the queued work once the
+        // await yields it back, since nothing here keeps it busy in the
+        // meantime — making the two ids equal by reusing a thread, not by
+        // evaluating on the calling one. Blocking on Started first, rather
+        // than awaiting, keeps this thread occupied until the evaluation has
+        // provably started elsewhere.
+        var gate = new ManualResetEventSlim();
+        var debugger = new FakeImmediateDebugger { IsDebugging = true, IsPaused = true, Gate = gate };
         var session = new ImmediateSession(debugger, new RecordingEvaluator());
         var callerThread = Environment.CurrentManagedThreadId;
 
-        await session.SubmitAsync("?x");
+        var pending = session.SubmitAsync("?x");
 
+        Assert.True(debugger.Started.Wait(TimeSpan.FromSeconds(10)));
         Assert.NotEqual(callerThread, debugger.ThreadId);
+
+        gate.Set();
+        await pending;
     }
 
     // The request the IDE puts on the wire is the contract with netcoredbg.
@@ -415,10 +428,23 @@ public sealed class ImmediateWindowTests
         public List<(string Text, bool IsExpression)> Asked { get; } = [];
         public int ThreadId { get; private set; }
 
+        /// <summary>
+        /// Held by a test that needs to see the evaluation start before
+        /// letting it finish, the same way <see cref="RecordingEvaluator"/>'s
+        /// own gate does. Unused (and so never waited on) by every other
+        /// test, which never sets it.
+        /// </summary>
+        public ManualResetEventSlim? Gate { get; init; }
+
+        /// <summary>Set once this evaluator has started, win or lose the race with the caller.</summary>
+        public ManualResetEventSlim Started { get; } = new();
+
         public Task<ReplEvaluation> EvaluateAsync(string text, bool isExpression, CancellationToken ct = default)
         {
             ThreadId = Environment.CurrentManagedThreadId;
             Asked.Add((text, isExpression));
+            Started.Set();
+            Gate?.Wait(TimeSpan.FromSeconds(10), ct);
 
             return Task.FromResult(Answer);
         }
