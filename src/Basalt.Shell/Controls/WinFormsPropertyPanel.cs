@@ -130,6 +130,7 @@ public sealed partial class WinFormsPropertyPanel : UserControl
                     AllowedValues = property.IsComponentReference && referenceNames is not null
                         ? new[] { Localizer.Get(StringKeys.PropertyGridNone) }.Concat(referenceNames(property.ValueType)).ToArray()
                         : property.AllowedValues,
+                    ImageThumbnail = ImageThumbnailFor(control!, property),
                 };
             }).ToArray();
         _rootProperties = componentName is null ? properties :

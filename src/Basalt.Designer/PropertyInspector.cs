@@ -75,6 +75,13 @@ public sealed record DesignableProperty(
     /// <summary>The original component category, retained for the Forms property grid.</summary>
     public string? CategoryName { get; init; }
 
+    /// <summary>
+    /// PNG bytes of an Image, Bitmap or Icon property's current value, for the grid
+    /// row to show a small preview beside the value the way Visual Studio does. Null
+    /// when the property is not a picture property, or its value is unset.
+    /// </summary>
+    public byte[]? ImageThumbnail { get; init; }
+
     /// <summary>Shows a property whose value can be inspected but not assigned.</summary>
     public bool IsReadOnly { get; init; }
 

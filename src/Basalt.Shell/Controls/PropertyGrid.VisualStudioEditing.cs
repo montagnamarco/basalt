@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using Basalt.Core.Localization;
 using Basalt.Designer;
@@ -100,6 +101,7 @@ public sealed partial class PropertyGrid
             };
             editor = box;
         }
+        editor = WithImageThumbnail(property, editor);
         if (property.IsReadOnly || CanRequestPropertyEditor?.Invoke(property) != true) return editor;
         var ellipsis = new Button
         {
@@ -122,6 +124,51 @@ public sealed partial class PropertyGrid
         };
         Grid.SetColumn(ellipsis, 1);
         return container;
+    }
+
+    /// <summary>
+    /// A 16x16 preview of an Image, Bitmap or Icon property's value beside the
+    /// editor, the way Visual Studio's property grid shows one next to the value.
+    /// </summary>
+    private static Control WithImageThumbnail(DesignableProperty property, Control editor)
+    {
+        if (property.ImageThumbnail is not { Length: > 0 } bytes) return editor;
+
+        Bitmap bitmap;
+        try
+        {
+            using var stream = new MemoryStream(bytes);
+            bitmap = new Bitmap(stream);
+        }
+        catch (Exception)
+        {
+            // The bytes came from the component's own picture; an undecodable
+            // one still has a value and an editor, just no preview beside them.
+            return editor;
+        }
+
+        var thumbnail = new Image
+        {
+            Name = "PropertyGridThumbnail",
+            Source = bitmap,
+            Width = 16,
+            Height = 16,
+            Stretch = Stretch.Uniform,
+            Margin = new Thickness(2, 0, 2, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        // The grid rebuilds its rows after every edit: the decoded bitmap goes
+        // with the row instead of waiting for a finalizer.
+        thumbnail.DetachedFromVisualTree += (_, _) => bitmap.Dispose();
+
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            Children = { thumbnail, editor },
+        };
+        Grid.SetColumn(editor, 1);
+        return row;
     }
 
     private void CommitVisualStudioProperty(DesignableProperty property, string? value)
