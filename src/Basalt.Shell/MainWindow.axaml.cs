@@ -4859,7 +4859,7 @@ public partial class MainWindow : Window
             new(Localizer.Get(StringKeys.ToolObjectBrowser),
                 Action: ShowObjectBrowser) { Icon = IconKind.ObjectBrowser },
             new(Localizer.Get(StringKeys.ToolWatch),
-                Action: () => ShowTool(_factory.Watch)) { Icon = IconKind.Information },
+                Action: () => ShowTool(_factory.Watch)) { Icon = IconKind.Watch },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuViewNewTerminal), Action: OpenNewTerminal,
                 Gesture: new KeyGesture(Key.OemBackslash, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Terminal },
