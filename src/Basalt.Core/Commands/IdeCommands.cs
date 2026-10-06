@@ -43,6 +43,7 @@ public static class IdeCommands
     public const string ViewTerminal = "view.terminal";
     public const string ViewTests = "view.tests";
     public const string ViewAssistant = "view.assistant";
+    public const string ViewObjectBrowser = "view.objectBrowser";
 
     public const string NavigateGoToDefinition = "navigate.goToDefinition";
     public const string NavigateFindReferences = "navigate.findReferences";
@@ -190,6 +191,10 @@ public static class IdeCommands
             new(ViewTests, "Tests", CommandCategory.View),
             new(ViewAssistant, "Assistant", CommandCategory.View)
                 { DefaultGesture = "Ctrl+Shift+A" },
+            // No default gesture: Visual Basic 6 opened it with F2, but F2
+            // is Rename here, as in Visual Studio and VS Code. Bind one in
+            // the shortcut settings.
+            new(ViewObjectBrowser, "Object Browser", CommandCategory.View),
 
             new(NavigateGoToDefinition, "Go to Definition", CommandCategory.Navigate)
                 { DefaultGesture = "F12" },

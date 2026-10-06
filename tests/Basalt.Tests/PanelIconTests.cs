@@ -20,7 +20,7 @@ public class PanelIconTests
     [
         new SolutionExplorerTool(), new ToolboxTool(), new PropertiesTool(),
         new ProblemsTool(), new OutputTool(), new SearchTool(),
-        new OutlineTool(), new ReferencesTool(), new CallStackTool(),
+        new OutlineTool(), new ReferencesTool(), new ObjectBrowserTool(), new CallStackTool(),
         new VariablesTool(), new BreakpointsTool(), new TestsTool(),
         new AssistantTool(), new GitChangesTool(), new GitBranchesTool(),
         new GitDiffTool(), new GitHistoryTool(), new TerminalTool("/tmp", 1)

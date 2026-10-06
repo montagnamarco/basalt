@@ -37,6 +37,7 @@ public sealed class IdeDockFactory : Factory
     public DatabaseTool Database { get; } = new();
     public EventsTool Events { get; } = new();
     public ReferencesTool References { get; } = new();
+    public ObjectBrowserTool ObjectBrowser { get; } = new();
     public CallStackTool CallStack { get; } = new();
     public VariablesTool Variables { get; } = new();
     public BreakpointsTool Breakpoints { get; } = new();
@@ -133,7 +134,7 @@ public sealed class IdeDockFactory : Factory
             // of a dozen tabs in the order they happened to be written is one
             // nobody learns the shape of.
             VisibleDockables = CreateList<IDockable>(
-                Problems, Output, Search, References,
+                Problems, Output, Search, References, ObjectBrowser,
                 CallStack, Variables, Breakpoints,
                 Tests, Database, GitHistory, GitDiff, terminal),
             ActiveDockable = Problems

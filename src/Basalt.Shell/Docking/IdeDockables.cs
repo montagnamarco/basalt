@@ -140,6 +140,17 @@ public sealed class ReferencesTool : IdeTool
     }
 }
 
+/// <summary>The types and members of the solution and of the libraries it uses.</summary>
+public sealed class ObjectBrowserTool : IdeTool
+{
+    public ObjectBrowserTool()
+    {
+        Id = "ObjectBrowser";
+        Title = Localizer.Get(StringKeys.ToolObjectBrowser);
+        Icon = IconKind.ObjectBrowser;
+    }
+}
+
 /// <summary>Where execution is stopped, innermost call first.</summary>
 public sealed class CallStackTool : IdeTool
 {

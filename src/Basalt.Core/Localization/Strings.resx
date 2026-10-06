@@ -699,4 +699,23 @@
   <data name="MakeExe_FailedExit" xml:space="preserve"><value>dotnet publish ended with code {0}: {1}</value></data>
   <data name="MakeExe_NuGetHint" xml:space="preserve"><value>Publishing for a platform needs its runtime pack from NuGet. Check the network and the package sources, then try again.</value></data>
   <data name="Status_MakeExeBusy" xml:space="preserve"><value>Wait for the build or publish in progress to finish.</value></data>
+  <data name="Tool_ObjectBrowser" xml:space="preserve"><value>Object Browser</value></data>
+  <data name="ObjectBrowser_LibraryTip" xml:space="preserve"><value>Library or project to browse</value></data>
+  <data name="ObjectBrowser_Refresh" xml:space="preserve"><value>Read the solution's libraries again</value></data>
+  <data name="ObjectBrowser_SearchPlaceholder" xml:space="preserve"><value>Search types and members</value></data>
+  <data name="ObjectBrowser_Inherited" xml:space="preserve"><value>Inherited</value></data>
+  <data name="ObjectBrowser_InheritedTip" xml:space="preserve"><value>Also list the members a type inherits</value></data>
+  <data name="ObjectBrowser_Types" xml:space="preserve"><value>Types</value></data>
+  <data name="ObjectBrowser_Members" xml:space="preserve"><value>Members</value></data>
+  <data name="ObjectBrowser_CopySignature" xml:space="preserve"><value>Copy Signature</value></data>
+  <data name="ObjectBrowser_GoToSource" xml:space="preserve"><value>Go to Source</value></data>
+  <data name="ObjectBrowser_Empty" xml:space="preserve"><value>Open a solution to browse its types and the libraries it uses.</value></data>
+  <data name="ObjectBrowser_NoMatches" xml:space="preserve"><value>No types or members match "{0}".</value></data>
+  <data name="ObjectBrowser_AllLibraries" xml:space="preserve"><value>&lt;All Libraries&gt;</value></data>
+  <data name="ObjectBrowser_SelectType" xml:space="preserve"><value>Select a type to see its members and its declaration.</value></data>
+  <data name="ObjectBrowser_MemberOf" xml:space="preserve"><value>Member of {0}</value></data>
+  <data name="ObjectBrowser_Namespace" xml:space="preserve"><value>Namespace {0}</value></data>
+  <data name="ObjectBrowser_Assembly" xml:space="preserve"><value>Assembly {0}</value></data>
+  <data name="ObjectBrowser_FromMetadata" xml:space="preserve"><value>From a referenced assembly: there is no source to open.</value></data>
+  <data name="ObjectBrowser_TypesCapped" xml:space="preserve"><value>Types - showing the first {0} of {1}</value></data>
 </root>

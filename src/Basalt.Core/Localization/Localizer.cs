@@ -719,4 +719,23 @@ public static class StringKeys
     public const string MakeExeNuGetHint = "MakeExe_NuGetHint";
     public const string StatusMakeExeBusy = "Status_MakeExeBusy";
     public const string SearchFileMatchesOne = "Search_FileMatchesOne";
+    public const string ToolObjectBrowser = "Tool_ObjectBrowser";
+    public const string ObjectBrowserLibraryTip = "ObjectBrowser_LibraryTip";
+    public const string ObjectBrowserRefresh = "ObjectBrowser_Refresh";
+    public const string ObjectBrowserSearchPlaceholder = "ObjectBrowser_SearchPlaceholder";
+    public const string ObjectBrowserInherited = "ObjectBrowser_Inherited";
+    public const string ObjectBrowserInheritedTip = "ObjectBrowser_InheritedTip";
+    public const string ObjectBrowserTypes = "ObjectBrowser_Types";
+    public const string ObjectBrowserMembers = "ObjectBrowser_Members";
+    public const string ObjectBrowserCopySignature = "ObjectBrowser_CopySignature";
+    public const string ObjectBrowserGoToSource = "ObjectBrowser_GoToSource";
+    public const string ObjectBrowserEmpty = "ObjectBrowser_Empty";
+    public const string ObjectBrowserNoMatches = "ObjectBrowser_NoMatches";
+    public const string ObjectBrowserAllLibraries = "ObjectBrowser_AllLibraries";
+    public const string ObjectBrowserSelectType = "ObjectBrowser_SelectType";
+    public const string ObjectBrowserMemberOf = "ObjectBrowser_MemberOf";
+    public const string ObjectBrowserNamespace = "ObjectBrowser_Namespace";
+    public const string ObjectBrowserAssembly = "ObjectBrowser_Assembly";
+    public const string ObjectBrowserFromMetadata = "ObjectBrowser_FromMetadata";
+    public const string ObjectBrowserTypesCapped = "ObjectBrowser_TypesCapped";
 }

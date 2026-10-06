@@ -321,6 +321,7 @@ public partial class MainWindow : Window
         BuildGitPanels();
         BuildTestPanel();
         BuildAssistantPanel();
+        BuildObjectBrowserPanel();
         BuildToolbar();
         ConnectContextMenus();
 
@@ -2860,6 +2861,10 @@ public partial class MainWindow : Window
                 ShowTool(_factory.Assistant);
                 break;
 
+            case IdeCommands.ViewObjectBrowser:
+                ShowObjectBrowser();
+                break;
+
             case IdeCommands.NavigateGoToDefinition:
                 await GoToDefinitionAsync();
                 break;
@@ -4833,6 +4838,8 @@ public partial class MainWindow : Window
                 Action: () => ShowTool(_factory.Outline)) { Icon = IconKind.Outline },
             new(Localizer.Get(StringKeys.ToolReferences),
                 Action: () => ShowTool(_factory.References)) { Icon = IconKind.References },
+            new(Localizer.Get(StringKeys.ToolObjectBrowser),
+                Action: ShowObjectBrowser) { Icon = IconKind.ObjectBrowser },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuViewNewTerminal), Action: OpenNewTerminal,
                 Gesture: new KeyGesture(Key.OemBackslash, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Terminal },

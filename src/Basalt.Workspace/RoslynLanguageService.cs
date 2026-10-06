@@ -46,6 +46,14 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
     public event EventHandler? SolutionChanged;
 
+    /// <summary>
+    /// Raised after the text of a document in the solution was replaced by
+    /// what the editor holds. Not on the interface thread necessarily; a
+    /// subscriber that wants to act on it should debounce, since it fires on
+    /// every keystroke.
+    /// </summary>
+    public event EventHandler? DocumentTextChanged;
+
     public async Task OpenSolutionAsync(string solutionOrProjectPath, CancellationToken ct = default)
     {
         MsBuildEnvironment.EnsureInitialized();
@@ -98,6 +106,8 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
     public async Task UpdateDocumentAsync(string filePath, string text, CancellationToken ct = default)
     {
+        var applied = false;
+
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
@@ -106,17 +116,28 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
             var documentId = FindDocumentId(filePath);
             if (documentId is null) return;
 
+            // Most callers send the editor's text again before asking a
+            // question, and it is almost always what the workspace already
+            // holds. Only a real change is worth telling anyone about.
+            var current = await _workspace.CurrentSolution.GetDocument(documentId)!
+                .GetTextAsync(ct).ConfigureAwait(false);
+
+            var newText = SourceText.From(text);
+            if (current.ContentEquals(newText)) return;
+
             var updated = _workspace.CurrentSolution.WithDocumentText(
-                documentId, SourceText.From(text), PreservationMode.PreserveIdentity);
+                documentId, newText, PreservationMode.PreserveIdentity);
 
             // TryApplyChanges can fail if another change arrived in the
             // meantime; in that case the next keystroke will resend the text.
-            _workspace.TryApplyChanges(updated);
+            applied = _workspace.TryApplyChanges(updated);
         }
         finally
         {
             _gate.Release();
         }
+
+        if (applied) DocumentTextChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public Task<IReadOnlyList<IdeDiagnostic>> GetDiagnosticsAsync(
