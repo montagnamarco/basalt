@@ -46,6 +46,47 @@ internal static class WinFormsCollectionPreview
                 }
                 catch (NotSupportedException) { problems.Add(name + ".Items: " + Localizer.Get(StringKeys.WinFormsCollectionUnsupported)); }
             }
+            // A plain ToolStrip or StatusStrip (also a ToolStrip subclass, but not a MenuStrip,
+            // which the branch above already materialized) owns a flat Items collection the
+            // "Type Here" box edits; without this the real control never shows what the inline
+            // editor just added, even though the serialized source is correct.
+            if (control is Forms.ToolStrip strip && strip is not Forms.MenuStrip)
+            {
+                try
+                {
+                    var toolStripDocument = document.ToolStripItems;
+                    foreach (var item in toolStripDocument.Read(name))
+                    {
+                        var itemType = typeof(Forms.ToolStripItem).Assembly.GetType(
+                            "System.Windows.Forms." + item.TypeName, false, true);
+                        if (itemType is null)
+                        {
+                            problems.Add(item.Name + ": " + item.TypeName);
+                            continue;
+                        }
+                        var created = (Forms.ToolStripItem)Activator.CreateInstance(itemType)!;
+                        created.Name = item.Name;
+                        foreach (var (property, expression) in toolStripDocument.ReadItemProperties(name, item.Name))
+                        {
+                            if (property.Equals("Name", StringComparison.OrdinalIgnoreCase)) continue;
+                            var descriptor = TypeDescriptor.GetProperties(created)[property];
+                            if (descriptor is null || descriptor.IsReadOnly) continue;
+                            try
+                            {
+                                descriptor.SetValue(created,
+                                    WinFormsDesignerValues.Evaluate(expression, descriptor.PropertyType));
+                            }
+                            catch
+                            {
+                                problems.Add(item.Name + "." + property + ": " +
+                                    Localizer.Get(StringKeys.WinFormsCollectionUnsupported));
+                            }
+                        }
+                        strip.Items.Add(created);
+                    }
+                }
+                catch (NotSupportedException) { problems.Add(name + ".Items: " + Localizer.Get(StringKeys.WinFormsCollectionUnsupported)); }
+            }
             if (control is Forms.ListBox or Forms.ComboBox)
             {
                 var state = document.Collections.ReadItems(name);

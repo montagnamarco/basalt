@@ -74,6 +74,7 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
 
         _surface.SelectionChanged += ShowProperties;
         InitializeInlineMenuEditor();
+        InitializeInlineToolStripEditor();
         WinFormsToolboxDrag.Attach(_toolbox);
         _surface.ControlDropRequested += drop => RunEditAsync(() => PlaceControlAsync(drop));
         InitializeExtendedDesigner();
@@ -139,6 +140,7 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
         }
 
         InvalidateMenuItemProperties();
+        InvalidateToolStripItemProperties();
         if (_session is null || control is null)
         {
             _properties.Show(null);

@@ -15,6 +15,7 @@ public sealed partial class WinFormsDesignerDocument
     private readonly SourceText _text;
 
     public WinFormsMenuDocument Menus { get; }
+    public WinFormsToolStripDocument ToolStripItems { get; }
 
     public WinFormsDesignerDocument(string source)
     {
@@ -29,6 +30,7 @@ public sealed partial class WinFormsDesignerDocument
         _class = _initialize.FirstAncestorOrSelf<ClassBlockSyntax>()!;
         ClassName = _class.ClassStatement.Identifier.ValueText;
         Menus = new WinFormsMenuDocument(_text, _syntax);
+        ToolStripItems = new WinFormsToolStripDocument(_text, _syntax);
 
         var controls = new Dictionary<string, WinFormsDesignerControl>(StringComparer.OrdinalIgnoreCase);
         var fields = DeclaredNames;
@@ -86,7 +88,7 @@ public sealed partial class WinFormsDesignerDocument
             }
         }
         _components = ReadComponents();
-        Controls = controls.Values.Where(control => !WinFormsMenuDocument.IsItemType(control.TypeName) && !WinFormsCollectionDocument.ColumnTypes.Any(type =>
+        Controls = controls.Values.Where(control => !WinFormsMenuDocument.IsItemType(control.TypeName) && !IsToolStripItemTypeName(control.TypeName) && !WinFormsCollectionDocument.ColumnTypes.Any(type =>
             control.TypeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase).Equals(type, StringComparison.OrdinalIgnoreCase)
             || control.TypeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase).Equals("System.Windows.Forms." + type, StringComparison.OrdinalIgnoreCase))).ToArray();
         ResourceOperations = ReadResourceOperations();
@@ -197,6 +199,11 @@ public sealed partial class WinFormsDesignerDocument
     {
         if (!SyntaxFacts.IsValidIdentifier(value)) throw new ArgumentException(Localizer.Get(StringKeys.WinFormsDesignerIdentifierRequired));
     }
+
+    private static bool IsToolStripItemTypeName(string typeName) => WinFormsToolStripDocument.KnownItemTypes.Contains(
+        typeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("System.Windows.Forms.", "", StringComparison.OrdinalIgnoreCase),
+        StringComparer.OrdinalIgnoreCase);
 
     private static string? ControlName(ExpressionSyntax expression) => expression switch
     {

@@ -20,7 +20,14 @@ internal sealed partial class WinFormsDesignerView
         if (_session is not { } session || selected is not Forms.MenuStrip strip ||
             !ReferenceEquals(_surface.SelectedControl, strip))
         {
-            _surface.ShowInlineMenuEditor(null, null);
+            // A plain ToolStrip/StatusStrip (also a ToolStrip subclass, but not a MenuStrip)
+            // owns the shared inline-overlay slot through RefreshInlineToolStripEditor, which
+            // runs right after this handler on the same SelectionChanged event: clearing the
+            // slot here too would remove what that handler is about to show.
+            if (selected is not Forms.ToolStrip || selected is Forms.MenuStrip)
+            {
+                _surface.ShowInlineMenuEditor(null, null);
+            }
             _inlineMenuStripName = null;
             _inlineMenuSnapshot = null;
             return;

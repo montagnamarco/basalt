@@ -518,6 +518,29 @@
   <data name="WinFormsMenu_PropertyMustBeIdentifier" xml:space="preserve"><value>The property must be a Visual Basic identifier.</value></data>
   <data name="WinFormsMenu_TextMustFitOnOneLine" xml:space="preserve"><value>Menu text must fit on one line.</value></data>
   <data name="WinFormsMenu_UnknownParent" xml:space="preserve"><value>Unknown menu parent.</value></data>
+  <data name="WinFormsToolStrip_ConstantInitializationOnly" xml:space="preserve"><value>Only constant Items Add/AddRange initialization is supported.</value></data>
+  <data name="WinFormsToolStrip_CustomItemType" xml:space="preserve"><value>This toolbar contains a custom item type.</value></data>
+  <data name="WinFormsToolStrip_DynamicText" xml:space="preserve"><value>This toolbar uses a dynamic text expression.</value></data>
+  <data name="WinFormsToolStrip_ItemCannotChangeType" xml:space="preserve"><value>An existing item cannot change its type.</value></data>
+  <data name="WinFormsToolStrip_ItemFieldReference" xml:space="preserve"><value>A toolbar item must be a field reference.</value></data>
+  <data name="WinFormsToolStrip_ItemNotInStrip" xml:space="preserve"><value>The item is not in this toolbar.</value></data>
+  <data name="WinFormsToolStrip_ItemsSharedOrCyclic" xml:space="preserve"><value>Toolbar items cannot be shared or cyclic.</value></data>
+  <data name="WinFormsToolStrip_NameAlreadyDeclared" xml:space="preserve"><value>The item name is already declared.</value></data>
+  <data name="WinFormsToolStrip_NamesMustBeUniqueIdentifiers" xml:space="preserve"><value>Item names must be unique VB identifiers.</value></data>
+  <data name="WinFormsToolStrip_OneConstantArgument" xml:space="preserve"><value>An Items collection requires one constant argument.</value></data>
+  <data name="WinFormsToolStrip_PropertyMustBeIdentifier" xml:space="preserve"><value>The property name must be a valid identifier.</value></data>
+  <data name="WinFormsToolStrip_TextMustFitOnOneLine" xml:space="preserve"><value>Item text must fit on one line.</value></data>
+  <data name="WinFormsToolStrip_Unsupported" xml:space="preserve"><value>This toolbar uses an unsupported item expression.</value></data>
+  <data name="WinFormsToolStrip_ChooseType" xml:space="preserve"><value>Choose item type</value></data>
+  <data name="WinFormsToolStrip_Button" xml:space="preserve"><value>Button</value></data>
+  <data name="WinFormsToolStrip_Label" xml:space="preserve"><value>Label</value></data>
+  <data name="WinFormsToolStrip_SplitButton" xml:space="preserve"><value>SplitButton</value></data>
+  <data name="WinFormsToolStrip_DropDownButton" xml:space="preserve"><value>DropDownButton</value></data>
+  <data name="WinFormsToolStrip_Separator" xml:space="preserve"><value>Separator</value></data>
+  <data name="WinFormsToolStrip_ComboBox" xml:space="preserve"><value>ComboBox</value></data>
+  <data name="WinFormsToolStrip_TextBox" xml:space="preserve"><value>TextBox</value></data>
+  <data name="WinFormsToolStrip_ProgressBar" xml:space="preserve"><value>ProgressBar</value></data>
+  <data name="WinFormsToolStrip_StatusLabel" xml:space="preserve"><value>StatusLabel</value></data>
   <data name="WinFormsDesigner_EventDelegateTypeRequired" xml:space="preserve"><value>An event delegate type is required.</value></data>
   <data name="WinFormsDesigner_EventHandlerSyntaxErrors" xml:space="preserve"><value>The event handler source contains syntax errors.</value></data>
   <data name="WinFormsDesigner_GenericEventArgumentsUnsupported" xml:space="preserve"><value>Generic event argument types are not supported yet.</value></data>

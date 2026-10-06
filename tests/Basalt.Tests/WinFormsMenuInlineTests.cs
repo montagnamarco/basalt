@@ -245,7 +245,14 @@ public sealed class WinFormsMenuInlineTests
 
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(5);
+        // 20s, not 5s: under a full-suite run every AvaloniaFact test shares one dispatcher
+        // thread (see AvaloniaTestApp), so a slow neighbour test can starve this one's
+        // RunEditAsync of CPU for several seconds. ImplementsOnEnterTests and
+        // ImmediateWindowTests already use 10-15s deadlines for the same reason; this test
+        // does more sequential UI edits than either, so it gets the most headroom. A real
+        // failure (the edit never completing) still fails the same assertion below, just
+        // after waiting longer.
+        var deadline = DateTime.UtcNow.AddSeconds(20);
         while (!condition() && DateTime.UtcNow < deadline)
         {
             Dispatcher.UIThread.RunJobs();

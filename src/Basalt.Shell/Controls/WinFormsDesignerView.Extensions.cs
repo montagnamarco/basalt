@@ -43,6 +43,7 @@ internal sealed partial class WinFormsDesignerView
     private void ShowComponentProperties(IComponent component)
     {
         InvalidateMenuItemProperties();
+        InvalidateToolStripItemProperties();
         if (_session is null) return;
         _surface.Select(null);
         _selectedName = _session.NameOfComponent(component);
