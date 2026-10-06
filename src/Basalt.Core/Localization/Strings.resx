@@ -545,6 +545,7 @@
   <data name="WinFormsToolStrip_TextBox" xml:space="preserve"><value>TextBox</value></data>
   <data name="WinFormsToolStrip_ProgressBar" xml:space="preserve"><value>ProgressBar</value></data>
   <data name="WinFormsToolStrip_StatusLabel" xml:space="preserve"><value>StatusLabel</value></data>
+  <data name="WinFormsToolStrip_MenuItem" xml:space="preserve"><value>MenuItem</value></data>
   <data name="WinFormsDesigner_EventDelegateTypeRequired" xml:space="preserve"><value>An event delegate type is required.</value></data>
   <data name="WinFormsDesigner_EventHandlerSyntaxErrors" xml:space="preserve"><value>The event handler source contains syntax errors.</value></data>
   <data name="WinFormsDesigner_GenericEventArgumentsUnsupported" xml:space="preserve"><value>Generic event argument types are not supported yet.</value></data>

@@ -53,7 +53,7 @@ public sealed class WinFormsMenuDocumentTests
         {
             new("FileMenu", "MenuStrip1", "&File"),
             new("OpenMenu", "FileMenu", "&Open"),
-            new("Separator1", "FileMenu", "", true),
+            new("Separator1", "FileMenu", "", true, "ToolStripSeparator"),
             new("ExitMenu", "FileMenu", "E&xit"),
         };
         await session.ApplyCollectionAsync(document => new WinFormsMenuDocument(document.Source).Set("MenuStrip1", definitions));
@@ -68,6 +68,68 @@ public sealed class WinFormsMenuDocumentTests
         Assert.Equal(Source, session.Document.Source);
         await session.RedoAsync();
         Assert.Equal(definitions, new WinFormsMenuDocument(session.Document.Source).Read("MenuStrip1"));
+    }
+
+    private const string ToolStripSource = """
+        Partial Class MainForm
+            Inherits Global.System.Windows.Forms.Form
+            Private Sub InitializeComponent()
+                Me.ToolStripDropDownButton1 = New Global.System.Windows.Forms.ToolStripDropDownButton()
+                Me.ToolStripDropDownButton1.Name = "ToolStripDropDownButton1"
+                Me.ToolStrip1 = New Global.System.Windows.Forms.ToolStrip()
+                Me.ToolStrip1.Name = "ToolStrip1"
+                Me.ToolStrip1.Items.AddRange(New Global.System.Windows.Forms.ToolStripItem() {Me.ToolStripDropDownButton1})
+                Me.Controls.Add(Me.ToolStrip1)
+                ' Preserve unrelated application initialization.
+            End Sub
+            Friend WithEvents ToolStrip1 As Global.System.Windows.Forms.ToolStrip
+            Friend WithEvents ToolStripDropDownButton1 As Global.System.Windows.Forms.ToolStripDropDownButton
+        End Class
+        """;
+
+    // A ToolStripDropDownButton (or ToolStripSplitButton) is a flat item of its owning
+    // ToolStrip's own Items collection (WinFormsToolStripDocument's job), but it also owns a
+    // cascading DropDownItems tree edited the same way a MenuStrip's is: this proves
+    // WinFormsMenuDocument, not a third document type, now handles that tree too.
+    [AvaloniaFact]
+    public async Task DropDownButtonOwnsItsOwnDropDownItemsTreeLikeAMenuStripDoes()
+    {
+        using var session = new WinFormsDesignerSession(new(ToolStripSource));
+        var definitions = new WinFormsMenuItem[]
+        {
+            new("ToolStripMenuItem1", "ToolStripDropDownButton1", "Open"),
+            new("ToolStripSeparator1", "ToolStripDropDownButton1", "", true, "ToolStripSeparator"),
+            new("ToolStripComboBox1", "ToolStripDropDownButton1", "", TypeName: "ToolStripComboBox"),
+            new("ToolStripMenuItem2", "ToolStripMenuItem1", "Recent"),
+        };
+        await session.ApplyCollectionAsync(document =>
+            new WinFormsMenuDocument(document.Source).Set("ToolStripDropDownButton1", definitions));
+
+        Assert.Contains(
+            "Me.ToolStripDropDownButton1.DropDownItems.AddRange(New Global.System.Windows.Forms.ToolStripItem() " +
+            "{Me.ToolStripMenuItem1, Me.ToolStripSeparator1, Me.ToolStripComboBox1})",
+            session.Document.Source);
+        Assert.Contains(
+            "Me.ToolStripMenuItem1.DropDownItems.AddRange(New Global.System.Windows.Forms.ToolStripItem() {Me.ToolStripMenuItem2})",
+            session.Document.Source);
+        Assert.DoesNotContain("Me.ToolStripComboBox1.Text", session.Document.Source);
+        // Read() walks depth first, so a nested item's own children come right after it,
+        // ahead of its remaining siblings.
+        Assert.Equal(
+            new[] { definitions[0], definitions[3], definitions[1], definitions[2] },
+            new WinFormsMenuDocument(session.Document.Source).Read("ToolStripDropDownButton1"));
+
+        var strip = Assert.IsType<Forms.ToolStrip>(session.FindControl("ToolStrip1"));
+        var dropDown = Assert.IsType<Forms.ToolStripDropDownButton>(Assert.Single(strip.Items.Cast<Forms.ToolStripItem>()));
+        Assert.Equal(3, dropDown.DropDownItems.Count);
+        var open = Assert.IsType<Forms.ToolStripMenuItem>(dropDown.DropDownItems[0]);
+        Assert.Equal("Open", open.Text);
+        Assert.Single(open.DropDownItems.Cast<Forms.ToolStripItem>());
+        Assert.IsType<Forms.ToolStripSeparator>(dropDown.DropDownItems[1]);
+        Assert.IsType<Forms.ToolStripComboBox>(dropDown.DropDownItems[2]);
+
+        await session.UndoAsync();
+        Assert.Equal(ToolStripSource, session.Document.Source);
     }
 
     [Fact]

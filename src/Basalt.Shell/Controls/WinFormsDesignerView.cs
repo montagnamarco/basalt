@@ -148,6 +148,7 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
 
         InvalidateMenuItemProperties();
         InvalidateToolStripItemProperties();
+        InvalidateDropDownItemProperties();
         if (_session is null || control is null)
         {
             _properties.Show(null);

@@ -23,7 +23,16 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
 {
     private readonly Border _bar = new() { Name = "ToolStripInlineBar" };
     private readonly Border _dropdown = new() { Name = "ToolStripInlineDropdown" };
+    // A ToolStripDropDownButton/SplitButton item owns its own cascading DropDownItems, edited
+    // through this single panel rather than a second copy of WinFormsMenuDesignEditor's tree
+    // logic: see WinFormsToolStripDropDownPanel for why it is its own class. It is itself a bare
+    // Canvas with no paint of its own, so it is hosted in this Border the same way _dropdown
+    // hosts the flat type picker, giving it a paintable surface a test can rasterise.
+    private readonly Border _dropDownHost = new() { Name = "ToolStripDropDownHost" };
+    private readonly WinFormsToolStripDropDownPanel _dropDownPanel = new();
     private IReadOnlyList<WinFormsToolStripItem> _items = [];
+    private IReadOnlyList<WinFormsMenuItem> _dropDownItems = [];
+    private bool _dropDownUnsupported;
     private string _strip = "";
     private bool _statusStrip;
     private bool _typePickerOpen;
@@ -34,7 +43,26 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
 
     internal event Action<string?>? SelectedItemChanged;
 
+    /// <summary>Raised when the nested drop-down panel for the selected DropDownButton/SplitButton
+    /// item wants to add, remove or retext one of its own DropDownItems.</summary>
+    internal event Action<WinFormsToolStripDropDownChange>? DropDownEditRequested;
+
+    /// <summary>Raised when the selection inside the nested drop-down panel changes, carrying the
+    /// name of the item selected there (or null), distinct from <see cref="SelectedItemChanged"/>
+    /// which only ever reports a top-level flat Items selection.</summary>
+    internal event Action<string?>? DropDownSelectedItemChanged;
+
     internal string? SelectedItemName => _selectedItemName;
+
+    /// <summary>The top-level item the nested drop-down panel is currently open for, or null when
+    /// the current selection does not own one.</summary>
+    internal WinFormsToolStripItem? SelectedDropDownOwner => _selectedItemName is { } name
+        ? _items.FirstOrDefault(item => item.Name == name && IsDropDownCapable(item.TypeName))
+        : null;
+
+    private static bool IsDropDownCapable(string typeName) =>
+        typeName.Equals("ToolStripDropDownButton", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("ToolStripSplitButton", StringComparison.OrdinalIgnoreCase);
 
     internal WinFormsToolStripDesignEditor()
     {
@@ -45,8 +73,16 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
         _dropdown.BorderBrush = Brushes.DodgerBlue;
         _dropdown.BorderThickness = new Thickness(1);
         _dropdown.IsVisible = false;
+        _dropDownHost.Background = Brushes.White;
+        _dropDownHost.BorderBrush = Brushes.DodgerBlue;
+        _dropDownHost.BorderThickness = new Thickness(1);
+        _dropDownHost.IsVisible = false;
+        _dropDownHost.Child = _dropDownPanel;
         Children.Add(_bar);
         Children.Add(_dropdown);
+        Children.Add(_dropDownHost);
+        _dropDownPanel.EditRequested += change => DropDownEditRequested?.Invoke(change);
+        _dropDownPanel.SelectedItemChanged += name => DropDownSelectedItemChanged?.Invoke(name);
     }
 
     internal void Show(string strip, IReadOnlyList<WinFormsToolStripItem> items, bool statusStrip,
@@ -77,6 +113,23 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
     /// <summary>Selects the item a pending add is about to create, before the document commits
     /// it, so the Properties panel already targets it once that commit's Show() call arrives.</summary>
     internal void SelectPendingItem(string name) => SetSelectedItem(name);
+
+    /// <summary>Feeds the DropDownItems tree of the currently selected DropDownButton/SplitButton
+    /// item (see <see cref="SelectedDropDownOwner"/>) to the nested panel; a no-op while the
+    /// selection is not one of those two kinds.</summary>
+    internal void ShowDropDownItems(IReadOnlyList<WinFormsMenuItem> items, bool unsupported = false)
+    {
+        _dropDownItems = items;
+        _dropDownUnsupported = unsupported;
+        if (SelectedDropDownOwner is not null)
+        {
+            Rebuild();
+        }
+    }
+
+    /// <summary>Selects the nested item a pending add is about to create inside the currently
+    /// open drop-down panel, mirroring <see cref="SelectPendingItem"/> for the top level.</summary>
+    internal void SelectPendingDropDownItem(string name) => _dropDownPanel.SelectPendingItem(name);
 
     private void SetSelectedItem(string? name)
     {
@@ -136,16 +189,15 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
         }
 
         _bar.Child = bar;
-        Canvas.SetTop(_dropdown, 25);
-        Canvas.SetLeft(_dropdown, 4);
         BuildDropdown();
-        Height = _dropdown.IsVisible ? Math.Min(30 + Kinds.Count() * 30, 310) : 28;
     }
 
     private void BuildDropdown()
     {
         if (_unsupported)
         {
+            Canvas.SetTop(_dropdown, 25);
+            Canvas.SetLeft(_dropdown, 4);
             _dropdown.IsVisible = true;
             _dropdown.Child = new TextBlock
             {
@@ -154,13 +206,34 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
                 TextWrapping = TextWrapping.Wrap,
                 Width = 230,
             };
+            _dropDownHost.IsVisible = false;
+            Height = 90;
             return;
+        }
+
+        // A selected DropDownButton/SplitButton shows its own cascading DropDownItems panel
+        // first, directly under the bar: Visual Studio opens that submenu-editing surface the
+        // moment the owning item is selected, before the plain "add a new top-level item" picker
+        // below it gets a turn, so the two stack rather than compete for the same slot.
+        var top = 25.0;
+        if (SelectedDropDownOwner is { } owner)
+        {
+            _dropDownPanel.Show(owner.Name, _dropDownItems, _dropDownUnsupported);
+            Canvas.SetTop(_dropDownHost, top);
+            Canvas.SetLeft(_dropDownHost, 4);
+            _dropDownHost.IsVisible = true;
+            top += _dropDownPanel.Height + 4;
+        }
+        else
+        {
+            _dropDownHost.IsVisible = false;
         }
 
         if (!_typePickerOpen)
         {
             _dropdown.IsVisible = false;
             _dropdown.Child = null;
+            Height = Math.Max(28, top);
             return;
         }
 
@@ -188,7 +261,11 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
             MaxHeight = 280,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
+        Canvas.SetTop(_dropdown, top);
+        Canvas.SetLeft(_dropdown, 4);
         _dropdown.IsVisible = true;
+        top += Math.Min(10 + Kinds.Count() * 30, 290) + 4;
+        Height = Math.Max(28, top);
     }
 
     private static string DisplayKey(string typeName) => typeName switch

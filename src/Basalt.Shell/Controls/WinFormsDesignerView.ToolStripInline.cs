@@ -30,6 +30,8 @@ internal sealed partial class WinFormsDesignerView
             }
             _inlineToolStripName = null;
             _inlineToolStripSnapshot = null;
+            _inlineDropDownOwnerName = null;
+            _inlineDropDownSnapshot = null;
             return;
         }
 
@@ -38,6 +40,13 @@ internal sealed partial class WinFormsDesignerView
         _inlineToolStripName = stripName;
         _inlineToolStripSnapshot = session.Document;
         var statusStrip = strip is Forms.StatusStrip;
+
+        // Feed the selected owner's (possibly just-edited) DropDownItems tree before Show()
+        // below does its own Rebuild() pass: Show() always re-raises SelectedItemChanged too,
+        // which would otherwise feed it a stale tree first and clobber a pending nested
+        // selection (see WinFormsToolStripDropDownPanel.Show's existence check) before the
+        // fresh one lands.
+        RefreshInlineToolStripDropDownItems();
 
         try
         {
@@ -68,7 +77,19 @@ internal sealed partial class WinFormsDesignerView
             {
                 ShowToolStripItemProperties(stripName, itemName);
             }
+            // The selected item's own DropDownItems tree (if it owns one) needs feeding on
+            // every selection change too, not just when the strip itself is (re)selected: see
+            // WinFormsDesignerView.ToolStripDropDownInline.
+            RefreshInlineToolStripDropDownItems();
         };
+        editor.DropDownEditRequested += change =>
+        {
+            if (!_busy)
+            {
+                RunEditAsync(() => ApplyInlineToolStripDropDownEditAsync(change));
+            }
+        };
+        editor.DropDownSelectedItemChanged += ShowToolStripDropDownItemProperties;
         return editor;
     }
 

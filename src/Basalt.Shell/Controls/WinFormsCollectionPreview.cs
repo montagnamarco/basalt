@@ -86,6 +86,19 @@ internal static class WinFormsCollectionPreview
                         }
                         strip.Items.Add(created);
 
+                        // A DropDownButton/SplitButton also owns a cascading DropDownItems tree,
+                        // edited and modeled the same way a MenuStrip's own Items/DropDownItems
+                        // are (see WinFormsMenuDocument): materialize it here too, isolated in its
+                        // own file so this loop only grows by this one call-out.
+                        if (created is Forms.ToolStripDropDownItem dropDownOwner &&
+                            WinFormsMenuDocument.IsDropDownOwnerType(item.TypeName))
+                        {
+                            try { WinFormsToolStripDropDownPreview.Apply(document.Menus, item.Name, dropDownOwner, problems, resources); }
+                            catch (NotSupportedException)
+                            {
+                                problems.Add(item.Name + ".DropDownItems: " + Localizer.Get(StringKeys.WinFormsCollectionUnsupported));
+                            }
+                        }
                     }
                 }
                 catch (NotSupportedException) { problems.Add(name + ".Items: " + Localizer.Get(StringKeys.WinFormsCollectionUnsupported)); }

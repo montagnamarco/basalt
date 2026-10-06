@@ -6,11 +6,26 @@ using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 
 namespace Basalt.Workspace;
 
-public sealed record WinFormsMenuItem(string Name, string Parent, string Text, bool IsSeparator = false);
+/// <summary>
+/// One menu item. <paramref name="TypeName"/> is the bare WinForms type Visual Studio would
+/// declare for it ("ToolStripMenuItem" by default, or "ToolStripComboBox"/"ToolStripTextBox"
+/// for the two kinds a cascading drop-down can also host); <paramref name="IsSeparator"/>
+/// stays a separate flag for the callers written before TypeName existed, so a caller that
+/// only ever sets IsSeparator (never TypeName) still gets a ToolStripSeparator field. Use
+/// <see cref="WinFormsMenuDocument.EffectiveType"/> rather than TypeName alone when the actual
+/// WinForms type is needed.
+/// </summary>
+public sealed record WinFormsMenuItem(string Name, string Parent, string Text, bool IsSeparator = false,
+    string TypeName = "ToolStripMenuItem");
 
 /// <summary>Reads and edits built-in menu trees using the shared VB syntax model.</summary>
 public sealed partial class WinFormsMenuDocument
 {
+    // What a cascading drop-down's "Type Here" arrow offers beyond a plain ToolStripMenuItem:
+    // these two items paint their own control instead of text, so (like ToolStripSeparator)
+    // they never get a Text assignment when Set() creates one.
+    private static readonly string[] TextlessTypes = ["ToolStripSeparator", "ToolStripComboBox", "ToolStripTextBox"];
+
     private readonly SourceText _source;
     private readonly ClassBlockSyntax _class;
     private readonly MethodBlockSyntax _initialize;
@@ -60,7 +75,8 @@ public sealed partial class WinFormsMenuDocument
             var parent = Name(collection.Expression);
             if (parent is null) continue;
             if (!_types.TryGetValue(parent, out var parentType) || !(IsItemType(parentType) ||
-                parentType.EndsWith("MenuStrip", StringComparison.OrdinalIgnoreCase))) continue;
+                parentType.EndsWith("MenuStrip", StringComparison.OrdinalIgnoreCase) ||
+                IsDropDownOwnerType(parentType))) continue;
             var arguments = invocation.ArgumentList?.Arguments.OfType<SimpleArgumentSyntax>().ToArray() ?? [];
             if (arguments.Length != 1)
             {
@@ -108,8 +124,27 @@ public sealed partial class WinFormsMenuDocument
 
     public static bool IsItemType(string type) => new[]
         {
-            "ToolStripMenuItem", "ToolStripSeparator", "System.Windows.Forms.ToolStripMenuItem", "System.Windows.Forms.ToolStripSeparator"
+            "ToolStripMenuItem", "ToolStripSeparator", "ToolStripComboBox", "ToolStripTextBox",
+            "System.Windows.Forms.ToolStripMenuItem", "System.Windows.Forms.ToolStripSeparator",
+            "System.Windows.Forms.ToolStripComboBox", "System.Windows.Forms.ToolStripTextBox",
         }.Contains(type.Replace("Global.", "", StringComparison.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether <paramref name="type"/> is a ToolStripDropDownButton or ToolStripSplitButton: a
+    /// flat ToolStrip/StatusStrip item (see <see cref="WinFormsToolStripDocument"/>) that also
+    /// owns its own cascading DropDownItems, edited the same way a MenuStrip's are.
+    /// </summary>
+    public static bool IsDropDownOwnerType(string type)
+    {
+        var bare = type.Replace("Global.", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("System.Windows.Forms.", "", StringComparison.OrdinalIgnoreCase);
+        return bare.Equals("ToolStripDropDownButton", StringComparison.OrdinalIgnoreCase) ||
+            bare.Equals("ToolStripSplitButton", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The WinForms type Set() must declare for <paramref name="item"/>: IsSeparator
+    /// wins over TypeName so callers written before TypeName existed keep working unchanged.</summary>
+    private static string EffectiveType(WinFormsMenuItem item) => item.IsSeparator ? "ToolStripSeparator" : item.TypeName;
 
     public IEnumerable<string> DeclaredNames => _types.Keys.Concat(
         _class.DescendantNodes().Where(node => node.FirstAncestorOrSelf<ClassBlockSyntax>() == _class)
@@ -137,7 +172,10 @@ public sealed partial class WinFormsMenuDocument
                     throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsMenuCustomItemType));
                 if (_unsupportedTexts.Contains(link.Child))
                     throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsMenuDynamicText));
-                result.Add(new(link.Child, parent, _texts.GetValueOrDefault(link.Child) ?? "", type.EndsWith("ToolStripSeparator", StringComparison.OrdinalIgnoreCase)));
+                var bare = type.Replace("Global.", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace("System.Windows.Forms.", "", StringComparison.OrdinalIgnoreCase);
+                result.Add(new(link.Child, parent, _texts.GetValueOrDefault(link.Child) ?? "",
+                    bare.Equals("ToolStripSeparator", StringComparison.OrdinalIgnoreCase), bare));
                 Visit(link.Child);
             }
         }
@@ -166,7 +204,10 @@ public sealed partial class WinFormsMenuDocument
             {
                 ancestor = items.SingleOrDefault(candidate => candidate.Name.Equals(ancestor.Parent, StringComparison.OrdinalIgnoreCase))
                     ?? throw new ArgumentException(Localizer.Get(StringKeys.WinFormsMenuUnknownParent));
-                if (ancestor.IsSeparator || !path.Add(ancestor.Name)) throw new ArgumentException(Localizer.Get(StringKeys.WinFormsMenuInvalidHierarchy));
+                // Only a ToolStripMenuItem can own further nested items: a separator, a
+                // ToolStripComboBox and a ToolStripTextBox are all leaves, same as in Visual Studio.
+                if (!EffectiveType(ancestor).Equals("ToolStripMenuItem", StringComparison.OrdinalIgnoreCase) || !path.Add(ancestor.Name))
+                    throw new ArgumentException(Localizer.Get(StringKeys.WinFormsMenuInvalidHierarchy));
             }
         }
         var changes = new List<TextChange>();
@@ -179,11 +220,11 @@ public sealed partial class WinFormsMenuDocument
         foreach (var item in items)
         {
             var previous = old.FirstOrDefault(candidate => candidate.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase));
-            if (previous is not null && previous.IsSeparator != item.IsSeparator)
+            if (previous is not null && !EffectiveType(previous).Equals(EffectiveType(item), StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException(Localizer.Get(StringKeys.WinFormsMenuItemCannotChangeType));
             if (previous is null)
             {
-                var type = item.IsSeparator ? "ToolStripSeparator" : "ToolStripMenuItem";
+                var type = EffectiveType(item);
                 fields.Add($"    Friend WithEvents {item.Name} As Global.System.Windows.Forms.{type}");
                 initializers.Add($"        Me.{item.Name} = New Global.System.Windows.Forms.{type}()");
                 initializers.Add($"        Me.{item.Name}.Name = {Quote(item.Name)}");
@@ -193,11 +234,12 @@ public sealed partial class WinFormsMenuDocument
                 member.Name.Identifier.ValueText.Equals("Text", StringComparison.OrdinalIgnoreCase)).ToArray();
             if (assignments.LastOrDefault() is { } assignment)
                 changes.Add(new(assignment.Right.Span, Quote(item.Text)));
-            else if (!item.IsSeparator) initializers.Add($"        Me.{item.Name}.Text = {Quote(item.Text)}");
+            else if (!TextlessTypes.Contains(EffectiveType(item), StringComparer.OrdinalIgnoreCase))
+                initializers.Add($"        Me.{item.Name}.Text = {Quote(item.Text)}");
         }
         foreach (var parent in items.Select(item => item.Parent).Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var collection = parent.Equals(strip, StringComparison.OrdinalIgnoreCase) ? "Items" : "DropDownItems";
+            var collection = CollectionNameFor(parent);
             var children = string.Join(", ", items.Where(item => item.Parent.Equals(parent, StringComparison.OrdinalIgnoreCase)).Select(item => "Me." + item.Name));
             initializers.Add($"        Me.{parent}.{collection}.AddRange(New Global.System.Windows.Forms.ToolStripItem() {{{children}}})");
         }
@@ -208,6 +250,14 @@ public sealed partial class WinFormsMenuDocument
             changes.Add(new(new TextSpan(_class.EndClassStatement.FullSpan.Start, 0), string.Join(newline, fields) + newline));
         return _source.WithChanges(changes).ToString();
     }
+
+    // A MenuStrip/ContextMenuStrip owner uses "Items" for its direct children; everything
+    // else that can own a cascading drop-down (a menu item, a ToolStripDropDownButton, a
+    // ToolStripSplitButton) uses "DropDownItems", whether or not it is the root passed to Set().
+    private string CollectionNameFor(string owner) =>
+        _types.TryGetValue(owner, out var ownerType) &&
+        ownerType.Replace("Global.", "", StringComparison.OrdinalIgnoreCase).EndsWith("MenuStrip", StringComparison.OrdinalIgnoreCase)
+            ? "Items" : "DropDownItems";
 
     private static string Quote(string text) => "\"" + text.Replace("\"", "\"\"") + "\"";
     private static string? Name(ExpressionSyntax? expression) => expression switch

@@ -472,6 +472,7 @@ public static class StringKeys
     public const string WinFormsToolStripTextBox = "WinFormsToolStrip_TextBox";
     public const string WinFormsToolStripProgressBar = "WinFormsToolStrip_ProgressBar";
     public const string WinFormsToolStripStatusLabel = "WinFormsToolStrip_StatusLabel";
+    public const string WinFormsToolStripMenuItem = "WinFormsToolStrip_MenuItem";
     public const string WinFormsDesignerEventDelegateTypeRequired = "WinFormsDesigner_EventDelegateTypeRequired";
     public const string WinFormsDesignerEventHandlerSyntaxErrors = "WinFormsDesigner_EventHandlerSyntaxErrors";
     public const string WinFormsDesignerGenericEventArgumentsUnsupported = "WinFormsDesigner_GenericEventArgumentsUnsupported";
