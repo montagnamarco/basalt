@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Globalization;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Windows.Forms.Internal.Rendering;
@@ -221,7 +222,10 @@ public class PortableVisualStyleInputControlsTests
         {
             Size = new Size(8, 28),
             ShowUpDown = true,
-            VisualStylesOverride = true
+            VisualStylesOverride = true,
+            // The text of a picker is today's date by default: its width changes from day to day
+            // and, antialiased, it used to bleed past the client. Pin it so the test is repeatable.
+            Value = new DateTime(2024, 6, 15, 13, 45, 30)
         };
 
         using var numericRaster = Draw(numeric);
@@ -239,6 +243,60 @@ public class PortableVisualStyleInputControlsTests
         // ButtonBounds begins to the left of a client narrower than ButtonWidth.
         // Rendering without intersection paints the button into this sentinel area.
         Assert.Equal(Color.Magenta.ToArgb(), outside.GetPixel(10, 6).ToArgb());
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false, 8)]
+    [InlineData(true, 8)]
+    [InlineData(false, 40)]
+    [InlineData(true, 40)]
+    public void LongDateTextInANarrowPickerStaysInsideTheClient(bool showUpDown, int width)
+    {
+        var previous = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        try
+        {
+            using var picker = new DateTimePicker
+            {
+                Size = new Size(width, 28),
+                ShowUpDown = showUpDown,
+                VisualStylesOverride = true,
+                Format = DateTimePickerFormat.Custom,
+                CustomFormat = "dddd, MMMM dd, yyyy HH:mm:ss",
+                Value = new DateTime(2024, 9, 30, 23, 59, 59)
+            };
+
+            const int margin = 40;
+            using var raster = new Bitmap(width + 2 * margin, 40);
+            using var graphics = Graphics.FromImage(raster);
+            graphics.Clear(Color.Magenta);
+            graphics.TranslateTransform(margin, 0);
+            using var paint = new PaintEventArgs(graphics, picker.ClientRectangle);
+            picker.DefaultPaint(paint);
+
+            var client = new Rectangle(margin, 0, picker.ClientSize.Width, picker.ClientSize.Height);
+            var inside = 0;
+            for (var y = 0; y < raster.Height; y++)
+            {
+                for (var x = 0; x < raster.Width; x++)
+                {
+                    if (client.Contains(x, y))
+                    {
+                        if (raster.GetPixel(x, y).ToArgb() != Color.Magenta.ToArgb()) inside++;
+                        continue;
+                    }
+
+                    Assert.True(raster.GetPixel(x, y).ToArgb() == Color.Magenta.ToArgb(),
+                        $"Pixel ({x - margin},{y}) outside the {picker.ClientSize} client was painted.");
+                }
+            }
+
+            Assert.True(inside > 0, "The picker painted nothing inside its client.");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 
     [AvaloniaFact]

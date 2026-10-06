@@ -48,17 +48,30 @@ public partial class DateTimePicker
         var graphics = e.Graphics;
         var client = ClientRectangle;
 
-        using (var background = new SolidBrush(EffectiveBackColor))
+        // Nothing a native control paints leaves its client: the formatted text is as wide as the
+        // format makes it and the buttons start left of a client narrower than ButtonWidth, so
+        // without this antialiased glyphs and button edges land on the neighbouring pixels.
+        var state = graphics.Save();
+        graphics.IntersectClip(client);
+
+        try
         {
-            graphics.FillRectangle(background, client);
+            using (var background = new SolidBrush(EffectiveBackColor))
+            {
+                graphics.FillRectangle(background, client);
+            }
+
+            if (_showCheckBox) PaintCheckBox(graphics);
+
+            PaintFields(graphics);
+
+            if (_showUpDown) PaintSpinButtons(graphics);
+            else PaintDropDownButton(graphics);
         }
-
-        if (_showCheckBox) PaintCheckBox(graphics);
-
-        PaintFields(graphics);
-
-        if (_showUpDown) PaintSpinButtons(graphics);
-        else PaintDropDownButton(graphics);
+        finally
+        {
+            graphics.Restore(state);
+        }
     }
 
     private void PaintCheckBox(Graphics graphics)
@@ -84,29 +97,40 @@ public partial class DateTimePicker
         var selectedIndex = editableCount == 0 ? -1 : Math.Clamp(_selectedEditableIndex, 0, editableCount - 1);
         var focused = Focused && (!_showCheckBox || _checked);
 
-        var editableSeen = -1;
-        foreach (var field in RenderFields())
+        // The text stops where the button starts, as in the native control, instead of running under it.
+        var state = graphics.Save();
+        graphics.IntersectClip(TextAreaBounds());
+
+        try
         {
-            var bounds = FieldScreenBounds(field);
-            var isEditable = IsEditable(field.Kind);
-            if (isEditable) editableSeen++;
-
-            var isSelected = focused && isEditable && editableSeen == selectedIndex;
-
-            if (isSelected)
+            var editableSeen = -1;
+            foreach (var field in RenderFields())
             {
-                var palette = UsePortablePickerAppearance
-                    ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
-                using var highlight = new SolidBrush(palette?.Selection ?? SystemColors.Highlight);
-                graphics.FillRectangle(highlight, bounds);
-                TextRenderer.DrawText(graphics, field.Text, Font, bounds,
-                    palette?.SelectedText ?? SystemColors.HighlightText,
-                    TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter);
+                var bounds = FieldScreenBounds(field);
+                var isEditable = IsEditable(field.Kind);
+                if (isEditable) editableSeen++;
+
+                var isSelected = focused && isEditable && editableSeen == selectedIndex;
+
+                if (isSelected)
+                {
+                    var palette = UsePortablePickerAppearance
+                        ? PortableVisualStyles.Palette(PortableVisualStylePlatform) : null;
+                    using var highlight = new SolidBrush(palette?.Selection ?? SystemColors.Highlight);
+                    graphics.FillRectangle(highlight, bounds);
+                    TextRenderer.DrawText(graphics, field.Text, Font, bounds,
+                        palette?.SelectedText ?? SystemColors.HighlightText,
+                        TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter);
+                }
+                else
+                {
+                    TextRenderer.DrawText(graphics, field.Text, Font, bounds, EffectiveForeColor, TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter);
+                }
             }
-            else
-            {
-                TextRenderer.DrawText(graphics, field.Text, Font, bounds, EffectiveForeColor, TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter);
-            }
+        }
+        finally
+        {
+            graphics.Restore(state);
         }
     }
 
