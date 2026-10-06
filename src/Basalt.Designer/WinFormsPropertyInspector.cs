@@ -55,9 +55,10 @@ public static class WinFormsPropertyInspector
             var collection = editableCollection || type != typeof(string) && typeof(IList).IsAssignableFrom(type);
             var componentReference = typeof(IComponent).IsAssignableFrom(type);
             var expandable = IsExpandable(type);
+            var image = IsImageType(type);
             var kind = BuiltInEditorKind(type);
             var readOnly = descriptor.IsReadOnly && !editableCollection
-                || kind is null && !expandable && !componentReference && !editableCollection;
+                || kind is null && !expandable && !componentReference && !editableCollection && !image;
             var defaultValue = descriptor.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
 
             properties.Add(new DesignableProperty(
@@ -79,7 +80,7 @@ public static class WinFormsPropertyInspector
                 IsCollection = collection,
                 IsComponentReference = componentReference,
                 HasCustomEditor = type.FullName is "System.Drawing.Font" or "System.Drawing.Color"
-                    || editableCollection,
+                    || editableCollection || image,
             });
         }
 
@@ -103,6 +104,13 @@ public static class WinFormsPropertyInspector
     private static bool IsExpandable(Type type) => type.FullName is
         "System.Drawing.Point" or "System.Drawing.Size" or "System.Windows.Forms.Padding"
         or "System.Drawing.Font" or "System.Drawing.Color";
+
+    /// <summary>
+    /// Image, BackgroundImage, InitialImage, ErrorImage and Icon: picture properties
+    /// the designer edits through the "Select Resource" dialog rather than text.
+    /// </summary>
+    private static bool IsImageType(Type type) => type.FullName is
+        "System.Drawing.Image" or "System.Drawing.Bitmap" or "System.Drawing.Icon";
 
     private static PropertyEditorKind? BuiltInEditorKind(Type type)
     {
@@ -131,6 +139,9 @@ public static class WinFormsPropertyInspector
         // own converter is never invoked to format an unfamiliar application value.
         _ when value.GetType().FullName is "System.Drawing.Font" or "System.Drawing.Color" =>
             TypeDescriptor.GetConverter(value.GetType()).ConvertToInvariantString(value),
+        // An Image's own converter would decode and re-encode the picture just to
+        // name it; the type is enough to show something next to the thumbnail.
+        _ when IsImageType(value.GetType()) => value.GetType().Name,
         _ => null,
     };
 

@@ -138,6 +138,20 @@ internal sealed partial class WinFormsDesignerView
             document.ToolStripItems.SetItemProperty(strip, itemName, property, expression));
     }
 
+    private Task RequireAndSetToolStripItemImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string strip, string itemName, string property, byte[] bytes, bool isIcon)
+    {
+        RequireSelectedToolStripItem(session, original, strip, itemName);
+        return session.SetToolStripItemImageResourceAsync(strip, itemName, property, bytes, isIcon);
+    }
+
+    private Task RequireAndClearToolStripItemImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string strip, string itemName, string property)
+    {
+        RequireSelectedToolStripItem(session, original, strip, itemName);
+        return session.ClearToolStripItemImageResourceAsync(strip, itemName, property);
+    }
+
     private async void OpenToolStripItemPropertyEditor(WinFormsDesignerSession session, WinFormsDesignerDocument original,
         string strip, string itemName, Forms.ToolStripItem item, DesignableProperty property)
     {
@@ -150,7 +164,30 @@ internal sealed partial class WinFormsDesignerView
         Font? selectedFont = null;
         try
         {
-            var value = TypeDescriptor.GetProperties(item)[property.Name]?.GetValue(item);
+            var descriptor = TypeDescriptor.GetProperties(item)[property.Name];
+            var value = descriptor?.GetValue(item);
+            if (descriptor is not null && IsImageProperty(descriptor.PropertyType))
+            {
+                var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
+                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(value), isIcon, _importImageFile);
+                if (!await editor.ShowDialog<bool>(owner))
+                {
+                    return;
+                }
+                if (!ReferenceEquals(_session, session) || !ReferenceEquals(session.Document, original))
+                {
+                    throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+                }
+                if (editor.Cleared)
+                {
+                    RunEditAsync(() => RequireAndClearToolStripItemImageAsync(session, original, strip, itemName, property.Name));
+                }
+                else if (editor.Changed && editor.SelectedBytes is { } bytes)
+                {
+                    RunEditAsync(() => RequireAndSetToolStripItemImageAsync(session, original, strip, itemName, property.Name, bytes, isIcon));
+                }
+                return;
+            }
             if (value is Color color)
             {
                 var editor = new WinFormsColorEditor(color);

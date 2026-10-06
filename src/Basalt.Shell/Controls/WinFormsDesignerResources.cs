@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using Basalt.Workspace;
 
 namespace Basalt.Shell.Controls;
@@ -81,6 +82,14 @@ internal static class WinFormsDesignerResources
         ArgumentNullException.ThrowIfNull(expectedType);
 
         value = null;
+        // An embedded Image or Icon is the one resource kind this reader accepts with
+        // a mimetype attached: decoding a byte array into a picture runs no application
+        // code, unlike the BinaryFormatter and SOAP mimetypes the rest of this method refuses.
+        if ((expectedType == typeof(Image) || expectedType == typeof(Icon)) && TryReadImage(entry, expectedType, out value))
+        {
+            return true;
+        }
+
         if (entry.MimeType is not null || !MatchesType(entry.TypeName, expectedType))
         {
             return false;
@@ -125,6 +134,26 @@ internal static class WinFormsDesignerResources
         }
 
         return false;
+    }
+
+    /// <summary>Decodes the raw file bytes an Image or Icon resx entry carries, the same way for an import or a round trip.</summary>
+    private static bool TryReadImage(WinFormsResourceEntry entry, Type expectedType, out object? value)
+    {
+        value = null;
+        if (!WinFormsImageResources.TryDecode(entry, out var bytes))
+        {
+            return false;
+        }
+
+        try
+        {
+            value = expectedType == typeof(Icon) ? new Icon(new MemoryStream(bytes)) : Image.FromStream(new MemoryStream(bytes));
+            return true;
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException)
+        {
+            return false;
+        }
     }
 
     private static bool MatchesType(string? typeName, Type expectedType)

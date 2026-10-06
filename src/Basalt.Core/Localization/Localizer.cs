@@ -844,4 +844,15 @@ public static class StringKeys
     public const string WinFormsSmartTagDockInParent = "WinFormsSmartTag_DockInParent";
     public const string WinFormsSmartTagUndockInParent = "WinFormsSmartTag_UndockInParent";
     public const string WinFormsSmartTagSizeMode = "WinFormsSmartTag_SizeMode";
+
+    // "Select Resource" dialog for Image, BackgroundImage, InitialImage, ErrorImage
+    // and Icon properties: Visual Studio's Local resource / Project resource file choice.
+    public const string WinFormsImageDialogTitle = "WinFormsImageDialog_Title";
+    public const string WinFormsImageDialogLocalResource = "WinFormsImageDialog_LocalResource";
+    public const string WinFormsImageDialogProjectResource = "WinFormsImageDialog_ProjectResource";
+    public const string WinFormsImageDialogImport = "WinFormsImageDialog_Import";
+    public const string WinFormsImageDialogClear = "WinFormsImageDialog_Clear";
+    public const string WinFormsImageDialogImageFiles = "WinFormsImageDialog_ImageFiles";
+    public const string WinFormsImageDialogImportFailed = "WinFormsImageDialog_ImportFailed";
+    public const string WinFormsImageDialogInvalidFormat = "WinFormsImageDialog_InvalidFormat";
 }

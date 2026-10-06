@@ -1,8 +1,10 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using Avalonia.Controls;
 using Basalt.Core.Localization;
 using Basalt.Designer;
+using Forms = System.Windows.Forms;
 
 namespace Basalt.Shell.Controls;
 
@@ -30,6 +32,31 @@ internal sealed partial class WinFormsDesignerView
 
             object? selectedValue;
             var currentValue = descriptor.GetValue(component);
+
+            if (IsImageProperty(descriptor.PropertyType) && component is Forms.Control imageControl)
+            {
+                var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
+                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(currentValue), isIcon, _importImageFile);
+                if (!await editor.ShowDialog<bool>(owner))
+                {
+                    return;
+                }
+
+                if (!ReferenceEquals(_session, session) || !ReferenceEquals(session.Document, original))
+                {
+                    throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+                }
+
+                if (editor.Cleared)
+                {
+                    RunEditAsync(() => session.ClearImageResourcePropertyAsync(imageControl, property.Name));
+                }
+                else if (editor.Changed && editor.SelectedBytes is { } bytes)
+                {
+                    RunEditAsync(() => session.SetImageResourcePropertyAsync(imageControl, property.Name, bytes, isIcon));
+                }
+                return;
+            }
 
             if (currentValue is Color color)
             {
@@ -87,6 +114,28 @@ internal sealed partial class WinFormsDesignerView
             {
                 _properties.RestoreSelectedPropertyFocus(propertyOffset);
             }
+        }
+    }
+
+    /// <summary>Image, BackgroundImage, InitialImage, ErrorImage and Icon: edited through "Select Resource" rather than text.</summary>
+    internal static bool IsImageProperty(Type type) => type.FullName is
+        "System.Drawing.Image" or "System.Drawing.Bitmap" or "System.Drawing.Icon";
+
+    /// <summary>The bytes an already-assigned Image or Icon would round-trip as, for the dialog's starting preview.</summary>
+    private static byte[]? EncodeCurrentImage(object? value)
+    {
+        switch (value)
+        {
+            case Icon icon:
+                using (var stream = new MemoryStream())
+                {
+                    icon.Save(stream);
+                    return stream.ToArray();
+                }
+            case System.Drawing.Image image:
+                return (byte[]?)new ImageConverter().ConvertTo(image, typeof(byte[]));
+            default:
+                return null;
         }
     }
 

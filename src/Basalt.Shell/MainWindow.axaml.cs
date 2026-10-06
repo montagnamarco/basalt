@@ -563,7 +563,7 @@ public partial class MainWindow : Window
         if (WinFormsDesignerView.IsDesignerPath(document.FilePath))
         {
             var forms = new WinFormsDesignerView(document, OpenWinFormsCodeAsync, FindWinFormsCode, GetWinFormsCodeAsync,
-                ViewModel.PreviewWinFormsRenameAsync, dockTools: true);
+                ViewModel.PreviewWinFormsRenameAsync, dockTools: true, createCode: CreateWinFormsCodeAsync);
             forms.EventsPanelRequested += () => ShowTool(_factory.Events);
             forms.PropertiesPanelRequested += () => ShowTool(_factory.Properties);
             return forms;

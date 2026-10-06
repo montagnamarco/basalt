@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Basalt.Core.Localization;
 using Basalt.Workspace;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Forms = System.Windows.Forms;
 
 namespace Basalt.Shell.Controls;
@@ -8,7 +9,8 @@ namespace Basalt.Shell.Controls;
 /// <summary>Materializes pre-read collection constants; application initialization is never invoked.</summary>
 internal static class WinFormsCollectionPreview
 {
-    public static void Apply(WinFormsDesignerDocument document, IReadOnlyDictionary<string, Forms.Control> controls, List<string> problems)
+    public static void Apply(WinFormsDesignerDocument document, IReadOnlyDictionary<string, Forms.Control> controls,
+        List<string> problems, WinFormsResourceDocument? resources = null)
     {
         foreach (var (name, control) in controls)
         {
@@ -31,7 +33,7 @@ internal static class WinFormsCollectionPreview
                             try
                             {
                                 descriptor.SetValue(items[item.Name],
-                                    WinFormsDesignerValues.Evaluate(expression, descriptor.PropertyType));
+                                    EvaluateItemProperty(expression, descriptor.PropertyType, resources));
                             }
                             catch
                             {
@@ -74,7 +76,7 @@ internal static class WinFormsCollectionPreview
                             try
                             {
                                 descriptor.SetValue(created,
-                                    WinFormsDesignerValues.Evaluate(expression, descriptor.PropertyType));
+                                    EvaluateItemProperty(expression, descriptor.PropertyType, resources));
                             }
                             catch
                             {
@@ -83,6 +85,7 @@ internal static class WinFormsCollectionPreview
                             }
                         }
                         strip.Items.Add(created);
+
                     }
                 }
                 catch (NotSupportedException) { problems.Add(name + ".Items: " + Localizer.Get(StringKeys.WinFormsCollectionUnsupported)); }
@@ -117,5 +120,51 @@ internal static class WinFormsCollectionPreview
                 grid.Columns.Add(column);
             }
         }
+    }
+
+    /// <summary>
+    /// A MenuStrip/ToolStrip item's Image or Icon is never a literal <see cref="WinFormsDesignerValues"/>
+    /// can parse: Visual Studio (and <see cref="Basalt.Workspace.WinFormsDesignerDocument.SetImageResource"/>)
+    /// write it as "CType(resources.GetObject(key), Type)". Without this, the statement the editor wrote
+    /// parses but the live preview never shows the picture, the same bug
+    /// <see cref="WinFormsDesignerSession.Resources.ApplyResourceProperties"/> already fixed for ordinary
+    /// controls.
+    /// </summary>
+    private static object? EvaluateItemProperty(ExpressionSyntax expression, Type propertyType, WinFormsResourceDocument? resources)
+    {
+        if (WinFormsDesignerView.IsImageProperty(propertyType)
+            && TryExtractResourceKey(expression) is { } key
+            && resources?.TryGet(key) is { } entry
+            && WinFormsDesignerResources.TryRead(entry, propertyType, out var decoded))
+        {
+            return decoded;
+        }
+
+        return WinFormsDesignerValues.Evaluate(expression, propertyType);
+    }
+
+    /// <summary>The resource key out of "CType(resources.GetObject("key"), Type)", however it is wrapped or cast.</summary>
+    private static string? TryExtractResourceKey(ExpressionSyntax expression)
+    {
+        var inner = expression switch
+        {
+            CTypeExpressionSyntax cast => cast.Expression,
+            DirectCastExpressionSyntax cast => cast.Expression,
+            ParenthesizedExpressionSyntax parentheses => parentheses.Expression,
+            _ => expression,
+        };
+        if (!ReferenceEquals(inner, expression)) return TryExtractResourceKey(inner);
+
+        if (expression is not InvocationExpressionSyntax
+            {
+                Expression: MemberAccessExpressionSyntax method,
+            } invocation
+            || method.Name.Identifier.ValueText is not ("GetObject" or "GetString"))
+        {
+            return null;
+        }
+
+        var arguments = invocation.ArgumentList?.Arguments.OfType<SimpleArgumentSyntax>().ToArray();
+        return arguments is [{ Expression: LiteralExpressionSyntax { Token.Value: string key } }] ? key : null;
     }
 }

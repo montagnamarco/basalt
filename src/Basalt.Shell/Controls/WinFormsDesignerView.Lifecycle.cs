@@ -68,6 +68,7 @@ internal sealed partial class WinFormsDesignerView
             {
                 _session = new WinFormsDesignerSession(parsed, resources);
                 BindResourceEditing(_session);
+                BindImageResourceCreation(_session);
                 _session.SourceChanging += ValidateDesignerBuffer;
                 _session.Changed += SessionChanged;
             }

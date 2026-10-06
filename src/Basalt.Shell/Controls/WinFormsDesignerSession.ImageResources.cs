@@ -1,0 +1,156 @@
+using Basalt.Core.Localization;
+using Basalt.Workspace;
+using Forms = System.Windows.Forms;
+
+namespace Basalt.Shell.Controls;
+
+internal sealed partial class WinFormsDesignerSession
+{
+    /// <summary>
+    /// Sets a Button/PictureBox/Form Image, BackgroundImage, InitialImage, ErrorImage
+    /// or Icon the way Visual Studio does: a resx entry holding the raw file bytes,
+    /// and an InitializeComponent line reading it back through a ComponentResourceManager.
+    /// One undo step covers both files, matching every other resource edit.
+    /// </summary>
+    internal Task SetImageResourcePropertyAsync(Forms.Control control, string property, byte[] bytes, bool isIcon) =>
+        SetImageResourceCoreAsync(NameOf(control), property, null, bytes, isIcon);
+
+    /// <summary>Removes both the resx entry and the InitializeComponent statement it is read from.</summary>
+    internal Task ClearImageResourcePropertyAsync(Forms.Control control, string property) =>
+        ClearImageResourceCoreAsync(NameOf(control), property, null);
+
+    /// <summary>The ToolStrip item equivalent: items are not in <see cref="Controls"/>, so the owning strip is given separately.</summary>
+    internal Task SetToolStripItemImageResourceAsync(string stripName, string itemName, string property, byte[] bytes, bool isIcon) =>
+        SetImageResourceCoreAsync(itemName, property, stripName, bytes, isIcon);
+
+    internal Task ClearToolStripItemImageResourceAsync(string stripName, string itemName, string property) =>
+        ClearImageResourceCoreAsync(itemName, property, stripName);
+
+    /// <summary>
+    /// Creates the resx a form does not have yet, the way Visual Studio does the
+    /// first time a picture property is set: it writes the header and returns the
+    /// new, still-empty document. Null when the host offers no way to create files.
+    /// </summary>
+    internal Func<Task<string>>? CreateResourceDocument { get; set; }
+
+    private async Task SetImageResourceCoreAsync(string ownerName, string property, string? stripName, byte[] bytes, bool isIcon)
+    {
+        var original = Document;
+        var beforeResources = _resources;
+        if (beforeResources is null)
+        {
+            beforeResources = await CreateResourcesAsync();
+        }
+        else if (PrepareResourceEdit is not null)
+        {
+            await PrepareResourceEdit(beforeResources.Source);
+        }
+        if (!ReferenceEquals(original, Document) || !ReferenceEquals(beforeResources, _resources))
+        {
+            throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+        }
+
+        var edited = await Task.Run(() =>
+        {
+            // The form itself keys its own resources as "$this", the way Visual
+            // Studio writes Form.Icon; every other owner uses its field name.
+            var prefix = ownerName.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "$this" : ownerName;
+            var key = ResourceKeyFor(ownerName, property) ?? $"{prefix}.{property}";
+            var (value, typeName, mimeType) = WinFormsImageResources.Encode(bytes, isIcon);
+            var resources = new WinFormsResourceDocument(beforeResources.SetValue(key, value, typeName, mimeType));
+            var imageTypeName = isIcon ? "System.Drawing.Icon" : "System.Drawing.Image";
+            var document = new WinFormsDesignerDocument(
+                original.SetImageResource(ownerName, property, key, imageTypeName, stripName));
+            return (Document: document, Resources: resources);
+        });
+
+        await CommitDocumentAndResourcesAsync(original, beforeResources, edited.Document, edited.Resources);
+    }
+
+    /// <summary>
+    /// Creating the file is not itself an undoable step, the same way Visual
+    /// Studio never offers to undo "the project gained a .resx": the resx stays
+    /// on disk even if the image assignment that prompted it is undone.
+    /// </summary>
+    private async Task<WinFormsResourceDocument> CreateResourcesAsync()
+    {
+        if (CreateResourceDocument is null)
+        {
+            throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeUnavailable));
+        }
+        var created = await CreateResourceDocument();
+        var resources = new WinFormsResourceDocument(created);
+        _resources = resources;
+        return resources;
+    }
+
+    private async Task ClearImageResourceCoreAsync(string ownerName, string property, string? stripName)
+    {
+        var original = Document;
+        var beforeResources = _resources;
+        var key = ResourceKeyFor(ownerName, property);
+        if (beforeResources is null || key is null)
+        {
+            // Nothing stored as a resource: only a bare assignment, if any, to remove.
+            var cleared = new WinFormsDesignerDocument(original.RemoveImageResource(ownerName, property, stripName));
+            if (cleared.Source == original.Source) return;
+            await ApplyAsync(_ => cleared.Source);
+            return;
+        }
+
+        if (PrepareResourceEdit is not null)
+        {
+            await PrepareResourceEdit(beforeResources.Source);
+        }
+        if (!ReferenceEquals(original, Document) || !ReferenceEquals(beforeResources, _resources))
+        {
+            throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+        }
+
+        var edited = await Task.Run(() =>
+        {
+            var resources = new WinFormsResourceDocument(beforeResources.Remove(key));
+            var document = new WinFormsDesignerDocument(original.RemoveImageResource(ownerName, property, stripName));
+            return (Document: document, Resources: resources);
+        });
+
+        await CommitDocumentAndResourcesAsync(original, beforeResources, edited.Document, edited.Resources);
+    }
+
+    /// <summary>
+    /// The atomic resx-plus-code commit every other resource edit uses
+    /// (<see cref="ApplyPropertyChangesAsync"/>), duplicated rather than shared so this
+    /// file never has to change that already-tested method's signature.
+    /// </summary>
+    private async Task CommitDocumentAndResourcesAsync(WinFormsDesignerDocument originalDocument,
+        WinFormsResourceDocument? originalResources, WinFormsDesignerDocument editedDocument, WinFormsResourceDocument? editedResources)
+    {
+        if (!ReferenceEquals(originalDocument, Document) || !ReferenceEquals(originalResources, _resources))
+        {
+            throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+        }
+        var resourceChanged = originalResources?.Source != editedResources?.Source;
+        if (!resourceChanged && editedDocument.Source == originalDocument.Source) return;
+
+        void RestoreResources(WinFormsResourceDocument? expected, WinFormsResourceDocument? replacement)
+        {
+            if (_resources?.Source != expected?.Source)
+            {
+                throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+            }
+            if (expected is not null && replacement is not null)
+            {
+                CommitResourceSource?.Invoke(expected.Source, replacement.Source);
+            }
+            _resources = replacement;
+        }
+
+        await ApplyAsync(_ => editedDocument.Source,
+            resourceChanged ? () => RestoreResources(originalResources, editedResources) : null,
+            resourceChanged ? () => RestoreResources(editedResources, originalResources) : null,
+            resourceChanged ? () => RestoreResources(originalResources, editedResources) : null,
+            commitUnchangedSource: resourceChanged,
+            undoPrepare: resourceChanged ? () => PrepareResourceEdit?.Invoke(editedResources!.Source) ?? Task.CompletedTask : null,
+            redoPrepare: resourceChanged ? () => PrepareResourceEdit?.Invoke(originalResources!.Source) ?? Task.CompletedTask : null);
+    }
+}

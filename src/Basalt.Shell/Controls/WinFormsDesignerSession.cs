@@ -171,7 +171,7 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
             catch (Exception exception) { problems.Add(model.Name + ": " + exception.GetBaseException().Message); }
         }
         BuildComponentPreviews(problems);
-        WinFormsCollectionPreview.Apply(Document, _controls, problems);
+        WinFormsCollectionPreview.Apply(Document, _controls, problems, _resources);
         ApplyProperties(Document.Root, Form, problems);
         foreach (var model in Document.Controls)
         {

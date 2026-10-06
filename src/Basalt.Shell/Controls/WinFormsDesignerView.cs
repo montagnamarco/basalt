@@ -21,6 +21,8 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
     private readonly Func<string, Task<EditorDocumentViewModel>>? _openCode;
     private readonly Func<string, EditorDocumentViewModel?>? _findCode;
     private readonly Func<string, Task<EditorDocumentViewModel>>? _getCode;
+    private readonly Func<string, string, Task<EditorDocumentViewModel>>? _createCode;
+    private readonly Func<Task<string?>>? _importImageFile;
     private readonly Dictionary<string, IReadOnlyDictionary<string, string>> _handlers = new(StringComparer.OrdinalIgnoreCase);
     private readonly ToolboxList _toolboxPanel = new();
     private ListBox _toolbox => _toolboxPanel.List;
@@ -37,12 +39,16 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
         Func<string, EditorDocumentViewModel?>? findCode = null,
         Func<string, Task<EditorDocumentViewModel>>? getCode = null,
         Func<string, string, int, string, Task<Basalt.Workspace.Refactoring.RefactoringPreview>>? rename = null,
-        bool dockTools = false)
+        bool dockTools = false,
+        Func<string, string, Task<EditorDocumentViewModel>>? createCode = null,
+        Func<Task<string?>>? importImageFile = null)
     {
         _document = document;
         _openCode = openCode;
         _findCode = findCode;
         _getCode = getCode;
+        _createCode = createCode;
+        _importImageFile = importImageFile;
         _rename = rename;
         var undo = new Button { Content = Localizer.Get(StringKeys.MenuEditUndo) };
         var redo = new Button { Content = Localizer.Get(StringKeys.MenuEditRedo) };
