@@ -102,29 +102,47 @@ internal static class VisualBasicImplementsCompleter
     /// A change whose line breaks are the file's.
     /// </summary>
     /// <remarks>
-    /// The comparison that produced the change may split a CRLF: a "\r"
-    /// ending the new text before the file's own "\n", or a "\n" starting it
-    /// after the file's own "\r". Those halves complete a break already there
-    /// and are kept or dropped as that break needs, not doubled.
+    /// The comparison that produced the change may split a CRLF at either
+    /// edge of its span, and on either side of the edit: the new text can
+    /// end or start with a stray half that completes a break the untouched
+    /// neighbour already has, or the REMOVED original text can itself end
+    /// or start with a half whose partner survives just outside the span,
+    /// stranded once that half is gone. Either way the survivor already has
+    /// one half of the break; this change supplies the other half exactly
+    /// once, never doubling it.
     /// </remarks>
     private static TextChange WithNewlines(TextChange change, SourceText original, string newline)
     {
         var text = change.NewText ?? "";
+        var span = change.Span;
 
-        var completesFollowing = text.EndsWith('\r') &&
-            change.Span.End < original.Length && original[change.Span.End] == '\n';
-        var completesPreceding = text.StartsWith('\n') &&
-            change.Span.Start > 0 && original[change.Span.Start - 1] == '\r';
+        // The new text's own stray half: trimmed into core below so it is
+        // not treated as ordinary content, then (for CRLF) put back once.
+        var textEndsWithCr = text.EndsWith('\r') &&
+            span.End < original.Length && original[span.End] == '\n';
+        var textStartsWithLf = text.StartsWith('\n') &&
+            span.Start > 0 && original[span.Start - 1] == '\r';
 
-        var start = completesPreceding ? 1 : 0;
-        var end = text.Length - (completesFollowing ? 1 : 0);
+        // The REMOVED original text's own stray half: nothing to trim from
+        // text (it was never there), but the survivor just outside the span
+        // still needs the other half put back, same as above.
+        var removedEndsWithCr = span.Length > 0 && original[span.End - 1] == '\r' &&
+            span.End < original.Length && original[span.End] == '\n';
+        var removedStartsWithLf = span.Length > 0 && original[span.Start] == '\n' &&
+            span.Start > 0 && original[span.Start - 1] == '\r';
+
+        var needsTrailingCr = textEndsWithCr || removedEndsWithCr;
+        var needsLeadingLf = textStartsWithLf || removedStartsWithLf;
+
+        var start = textStartsWithLf ? 1 : 0;
+        var end = text.Length - (textEndsWithCr ? 1 : 0);
         var core = start < end ? text[start..end] : "";
 
         core = core.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
         if (newline != "\n") core = core.Replace("\n", newline, StringComparison.Ordinal);
 
-        var written = (completesPreceding ? "\n" : "") + core +
-                      (completesFollowing && newline == "\r\n" ? "\r" : "");
+        var written = (needsLeadingLf ? "\n" : "") + core +
+                      (needsTrailingCr && newline == "\r\n" ? "\r" : "");
 
         return new TextChange(change.Span, written);
     }
