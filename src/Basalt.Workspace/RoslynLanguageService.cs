@@ -1660,32 +1660,43 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         if (currentText is not null)
             document = document.WithText(SourceText.From(currentText));
 
-        var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, position, ct)
-            .ConfigureAwait(false);
-        if (symbol is null) return [];
+        // On a thread of its own, deliberately, the same reason as
+        // GetDiagnosticsAsync: FindSymbolAtPositionAsync returns a completed
+        // task whenever the binding is already cached, so the await does not
+        // yield and the symbol search that follows — which walks every
+        // project in the solution — would otherwise run in the caller's own
+        // call stack. Measured at 10-12ms on a 600-member module; on the
+        // interface thread that is a stutter on every Find References.
+        return await Task.Run(async () =>
+        {
+            var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, position, ct)
+                .ConfigureAwait(false);
+            if (symbol is null) return (IReadOnlyList<Extensibility.SourceLocation>)[];
 
-        // The document's own solution, not the workspace's: a scratch document
-        // lives in a fork the workspace does not know about, and searching the
-        // workspace's solution for a symbol from the fork finds nothing.
-        var found = await SymbolFinder
-            .FindReferencesAsync(symbol, document.Project.Solution, ct)
-            .ConfigureAwait(false);
+            // The document's own solution, not the workspace's: a scratch
+            // document lives in a fork the workspace does not know about, and
+            // searching the workspace's solution for a symbol from the fork
+            // finds nothing.
+            var found = await SymbolFinder
+                .FindReferencesAsync(symbol, document.Project.Solution, ct)
+                .ConfigureAwait(false);
 
-        var locations = new List<Extensibility.SourceLocation>();
+            var locations = new List<Extensibility.SourceLocation>();
 
-        // The declaration itself is a reference the user expects to see listed.
-        foreach (var declaration in symbol.Locations.Where(l => l.IsInSource))
-            locations.Add(ToLocation(declaration));
+            // The declaration itself is a reference the user expects to see listed.
+            foreach (var declaration in symbol.Locations.Where(l => l.IsInSource))
+                locations.Add(ToLocation(declaration));
 
-        foreach (var reference in found)
-            foreach (var location in reference.Locations.Where(l => !l.Location.IsInMetadata))
-                locations.Add(ToLocation(location.Location));
+            foreach (var reference in found)
+                foreach (var location in reference.Locations.Where(l => !l.Location.IsInMetadata))
+                    locations.Add(ToLocation(location.Location));
 
-        return locations
-            .DistinctBy(l => (l.FilePath, l.Range.Start.Line, l.Range.Start.Column))
-            .OrderBy(l => l.FilePath)
-            .ThenBy(l => l.Range.Start.Line)
-            .ToList();
+            return (IReadOnlyList<Extensibility.SourceLocation>)locations
+                .DistinctBy(l => (l.FilePath, l.Range.Start.Line, l.Range.Start.Column))
+                .OrderBy(l => l.FilePath)
+                .ThenBy(l => l.Range.Start.Line)
+                .ToList();
+        }, ct).ConfigureAwait(false);
     }
 
     /// <summary>A declaration found by name: what it is called, what it is, what holds it, where it is.</summary>

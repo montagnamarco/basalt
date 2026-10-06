@@ -108,4 +108,59 @@ public sealed class LanguageServiceThreadingTests : IDisposable
 
         Assert.NotEmpty(await service.GetDiagnosticsAsync(file));
     }
+
+    /// <summary>
+    /// A project with a function called from every other member, so the
+    /// search SymbolFinder.FindReferencesAsync does on it costs something.
+    /// </summary>
+    private async Task<(RoslynLanguageService Service, string File, int Position)> BigProjectWithReferencesAsync()
+    {
+        File.WriteAllText(Path.Combine(_root, "P.vbproj"), """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net10.0</TargetFramework>
+                <RootNamespace></RootNamespace>
+              </PropertyGroup>
+            </Project>
+            """);
+
+        var body = string.Join("\n", Enumerable.Range(1, 3000).Select(i =>
+            $"    Public Function F{i}(x As Integer) As Integer\n        Return F1(x) + {i}\n    End Function"));
+
+        var file = Path.Combine(_root, "Big.vb");
+        var code = $"Module Big\n{body}\nEnd Module\n";
+        File.WriteAllText(file, code);
+
+        var service = new RoslynLanguageService();
+        await service.OpenSolutionAsync(Path.Combine(_root, "P.vbproj"));
+
+        var position = code.IndexOf("Function F1(", StringComparison.Ordinal) + "Function ".Length;
+
+        // Warm, so the first call's binding is not what is measured.
+        await service.FindReferencesAsync(file, position);
+
+        return (service, file, position);
+    }
+
+    [Fact]
+    public async Task FindReferencesDoesNotHoldTheCaller()
+    {
+        // Shift+F12 on a widely-used symbol, which is exactly when
+        // SymbolFinder.FindReferencesAsync has the most work to do.
+        var (service, file, position) = await BigProjectWithReferencesAsync();
+
+        await service.UpdateDocumentAsync(file, File.ReadAllText(file) + "\n' edit\n");
+
+        var watch = Stopwatch.StartNew();
+        var task = service.FindReferencesAsync(file, position);
+        var held = watch.Elapsed.TotalMilliseconds;
+
+        var found = await task;
+
+        Assert.True(held < Budget,
+            $"the caller was held for {held:0.0}ms; the work belongs on another thread");
+        // Moving the work off the thread must not lose it: the declaration
+        // plus every call site.
+        Assert.Equal(3001, found.Count);
+    }
 }
