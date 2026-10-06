@@ -774,5 +774,16 @@
   <data name="Inline_Failed" xml:space="preserve"><value>Inline suggestions stopped: {0}</value></data>
   <data name="Inline_MoreLine" xml:space="preserve"><value>  +1 line</value></data>
   <data name="Inline_MoreLines" xml:space="preserve"><value>  +{0} lines</value></data>
+
+  <!-- Watch panel, docked alongside the other debug panels -->
   <data name="Tool_Watch" xml:space="preserve"><value>Watch</value></data>
+
+  <!-- WinForms designer smart tag: the VS-style glyph and "<Type> Tasks" flyout -->
+  <data name="WinFormsSmartTag_TasksHeader" xml:space="preserve"><value>{0} Tasks</value></data>
+  <data name="WinFormsSmartTag_InsertStandardItems" xml:space="preserve"><value>Insert Standard Items</value></data>
+  <data name="WinFormsSmartTag_EditItems" xml:space="preserve"><value>Edit Items…</value></data>
+  <data name="WinFormsSmartTag_Dock" xml:space="preserve"><value>Dock:</value></data>
+  <data name="WinFormsSmartTag_DockInParent" xml:space="preserve"><value>Dock in Parent Container</value></data>
+  <data name="WinFormsSmartTag_UndockInParent" xml:space="preserve"><value>Undock in Parent Container</value></data>
+  <data name="WinFormsSmartTag_SizeMode" xml:space="preserve"><value>Size Mode:</value></data>
 </root>

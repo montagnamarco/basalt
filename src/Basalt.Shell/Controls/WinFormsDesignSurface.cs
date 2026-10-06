@@ -231,6 +231,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
     {
         UpdateSize();
         PositionInlineMenuEditor();
+        PositionSmartTag();
         _canvas?.RequestFrame();
         _grid.InvalidateVisual();
         DrawSelection();

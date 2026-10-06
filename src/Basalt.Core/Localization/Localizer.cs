@@ -795,4 +795,14 @@ public static class StringKeys
     public const string InlineMoreLines = "Inline_MoreLines";
 
     public const string ToolWatch = "Tool_Watch";
+
+    // WinForms designer smart tag: the Visual Studio style glyph a selected control with
+    // tasks shows at the top-right corner of its selection, and its "<Type> Tasks" flyout.
+    public const string WinFormsSmartTagTasksHeader = "WinFormsSmartTag_TasksHeader";
+    public const string WinFormsSmartTagInsertStandardItems = "WinFormsSmartTag_InsertStandardItems";
+    public const string WinFormsSmartTagEditItems = "WinFormsSmartTag_EditItems";
+    public const string WinFormsSmartTagDock = "WinFormsSmartTag_Dock";
+    public const string WinFormsSmartTagDockInParent = "WinFormsSmartTag_DockInParent";
+    public const string WinFormsSmartTagUndockInParent = "WinFormsSmartTag_UndockInParent";
+    public const string WinFormsSmartTagSizeMode = "WinFormsSmartTag_SizeMode";
 }

@@ -75,6 +75,7 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
         _surface.SelectionChanged += ShowProperties;
         InitializeInlineMenuEditor();
         InitializeInlineToolStripEditor();
+        InitializeSmartTag();
         WinFormsToolboxDrag.Attach(_toolbox);
         _surface.ControlDropRequested += drop => RunEditAsync(() => PlaceControlAsync(drop));
         InitializeExtendedDesigner();
