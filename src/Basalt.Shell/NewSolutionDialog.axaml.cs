@@ -8,7 +8,17 @@ using Basalt.Designer;
 
 namespace Basalt.Shell;
 
-/// <summary>Collects the data for the new solution and generates it on disk.</summary>
+/// <summary>
+/// What the user chose, validated as well-formed but not yet written to
+/// disk.
+///
+/// Collecting these is a separate step from <see cref="NewSolutionDialog.CreateAsync"/>
+/// creating the solution from them: see <see cref="MainWindow.ShowNewSolutionDialogAsync"/>
+/// for why the dialog itself never touches disk.
+/// </summary>
+public sealed record NewSolutionParameters(string ParentDirectory, string Name, ProjectTemplate Template);
+
+/// <summary>Collects the data for a new solution; creating it on disk is a separate step.</summary>
 public partial class NewSolutionDialog : Window
 {
     public NewSolutionDialog()
@@ -60,7 +70,13 @@ public partial class NewSolutionDialog : Window
         if (path is not null) PathBox.Text = path;
     }
 
-    private async void OnCreate(object? sender, RoutedEventArgs e)
+    // Collects and validates only: writing anything to disk — even the
+    // destination folder — happens later, in CreateAsync, once the caller
+    // has had its own chance to ask whether starting a new solution is
+    // still wanted. Creating it here, before that question, used to leave
+    // a solution on disk that was never opened whenever the question was
+    // answered "no" (critical-review finding).
+    private void OnCreate(object? sender, RoutedEventArgs e)
     {
         ErrorLabel.Text = "";
 
@@ -87,21 +103,25 @@ public partial class NewSolutionDialog : Window
             return;
         }
 
-        var template = SelectedTemplate;
-
-        try
-        {
-            Directory.CreateDirectory(parent);
-            var result = await SolutionTemplates.CreateAsync(parent, name, template);
-            Close(result);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            ErrorLabel.Text = ex.Message;
-        }
+        Close(new NewSolutionParameters(parent, name, SelectedTemplate));
     }
 
     private void OnCancel(object? sender, RoutedEventArgs e) => Close(null);
+
+    /// <summary>
+    /// Creates the solution <paramref name="parameters"/> describes.
+    ///
+    /// Separate from the dialog itself so the caller controls exactly when
+    /// disk is touched — after asking the user whatever it needs to about
+    /// leaving the solution currently open, not before.
+    /// </summary>
+    public static async Task<NewSolutionResult> CreateAsync(
+        NewSolutionParameters parameters, CancellationToken ct = default)
+    {
+        Directory.CreateDirectory(parameters.ParentDirectory);
+        return await SolutionTemplates.CreateAsync(
+            parameters.ParentDirectory, parameters.Name, parameters.Template, ct);
+    }
 
     // The GUI picker only matters for the desktop template, which can be built either on
     // Avalonia or on WinForms; every other template ignores it, so showing it there would

@@ -213,6 +213,188 @@ public sealed class SolutionExplorerCommandTests
     }
 
     /// <summary>
+    /// Renaming a form's own .vb file carries its Designer.vb and .resx
+    /// companions along with it, the way Visual Studio renames all three
+    /// together — and retargets an open tab on the Designer.vb companion to
+    /// the new path, keeping its unsaved text, just as a tab on the renamed
+    /// file itself would.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task RenamingAFormsVbFileRenamesItsDesignerAndResxCompanions()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-explorer-rename-form-").FullName;
+        var project = WriteProject(root);
+
+        var formPath = Path.Combine(root, "Form1.vb");
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+        var resxPath = Path.Combine(root, "Form1.resx");
+
+        // The class is named deliberately unlike the file, so renaming never
+        // offers to rename a class too — this test is only about the
+        // companion files following the rename.
+        File.WriteAllText(formPath, "Public Class SomeOtherName\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class SomeOtherName\nEnd Class\n");
+        File.WriteAllText(resxPath, "<root></root>\n");
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+
+        await vm.OpenFileAsync(designerPath);
+        await host.SettleAsync(5);
+        const string unsavedDesignerText = "Partial Class SomeOtherName\n    ' edited, unsaved\nEnd Class\n";
+        vm.ActiveDocument!.Text = unsavedDesignerText;
+
+        var fileNode = vm.Explorer.Roots.SelectMany(Descendants).Single(n => n.Path == formPath);
+
+        var task = InvokePrivateAsync(w, "RenameInExplorerAsync", fileNode);
+        await DriveDialogAsync(host, task, dialog => SetTextBox(dialog, "Renamed.vb"), b => b.IsDefault);
+
+        var newFormPath = Path.Combine(root, "Renamed.vb");
+        var newDesignerPath = Path.Combine(root, "Renamed.Designer.vb");
+        var newResxPath = Path.Combine(root, "Renamed.resx");
+
+        Assert.False(File.Exists(formPath), "the old .vb file still exists");
+        Assert.False(File.Exists(designerPath), "the old Designer.vb still exists");
+        Assert.False(File.Exists(resxPath), "the old .resx still exists");
+        Assert.True(File.Exists(newFormPath), "the .vb file was not renamed");
+        Assert.True(File.Exists(newDesignerPath), "the Designer.vb companion was not renamed");
+        Assert.True(File.Exists(newResxPath), "the .resx companion was not renamed");
+
+        var document = Assert.Single(vm.OpenDocuments);
+        Assert.Equal(newDesignerPath, document.FilePath);
+        Assert.Equal(unsavedDesignerText, document.Text);
+        Assert.True(document.IsModified);
+    }
+
+    /// <summary>
+    /// After a form's own .vb file is renamed, Roslyn must answer about the
+    /// Designer.vb companion under its new path too, and not go on
+    /// answering about one that no longer exists.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task RenamingAFormsVbFileMovesItsCompanionsInTheRoslynWorkspaceToo()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-explorer-rename-form-roslyn-").FullName;
+        var project = WriteProject(root);
+
+        var formPath = Path.Combine(root, "Form1.vb");
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+
+        File.WriteAllText(formPath, "Public Class SomeOtherName\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class SomeOtherName\nEnd Class\n");
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        var language = (RoslynLanguageService)typeof(MainWindowViewModel)
+            .GetField("_languageService", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(vm)!;
+
+        bool Tracks(string path) => language.CurrentSolution?.Projects
+            .SelectMany(p => p.Documents).Any(d => d.FilePath == path) == true;
+
+        for (var i = 0; i < 500 && !Tracks(designerPath); i++) await host.SettleAsync(1);
+        Assert.True(Tracks(designerPath), "Roslyn never picked up the Designer.vb companion");
+
+        var fileNode = vm.Explorer.Roots.SelectMany(Descendants).Single(n => n.Path == formPath);
+        var task = InvokePrivateAsync(w, "RenameInExplorerAsync", fileNode);
+        await DriveDialogAsync(host, task, dialog => SetTextBox(dialog, "Renamed.vb"), b => b.IsDefault);
+
+        var newDesignerPath = Path.Combine(root, "Renamed.Designer.vb");
+
+        for (var i = 0; i < 500 && !Tracks(newDesignerPath); i++) await host.SettleAsync(1);
+        Assert.True(Tracks(newDesignerPath), "Roslyn never picked up the renamed Designer.vb companion");
+        Assert.False(Tracks(designerPath), "Roslyn still tracks the old Designer.vb path");
+    }
+
+    /// <summary>
+    /// When a file's own main class is named like the file, Solution
+    /// Explorer's rename offers to rename the class too, the way Visual
+    /// Studio does — and on "Yes", renames it everywhere through the same
+    /// Roslyn rename Rename Symbol uses, including in the Designer.vb
+    /// companion's partial declaration.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task RenamingAFileOffersToRenameItsMatchingClassAndDoesOnYes()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-explorer-rename-class-yes-").FullName;
+        var project = WriteProject(root);
+
+        var formPath = Path.Combine(root, "Form1.vb");
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+        File.WriteAllText(formPath, "Public Class Form1\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class Form1\nEnd Class\n");
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+
+        var fileNode = vm.Explorer.Roots.SelectMany(Descendants).Single(n => n.Path == formPath);
+        var task = InvokePrivateAsync(w, "RenameInExplorerAsync", fileNode);
+
+        // Three dialogs in turn: the rename prompt, the "rename the class
+        // too?" question, and the refactoring preview — every one of them
+        // answered by its own default button, the way DriveDialogAsync's
+        // other callers accept a single dialog's default.
+        await DriveDialogAsync(host, task, dialog => SetTextBox(dialog, "Renamed.vb"), b => b.IsDefault);
+
+        var newPath = Path.Combine(root, "Renamed.vb");
+        var newDesignerPath = Path.Combine(root, "Renamed.Designer.vb");
+
+        Assert.Contains("Class Renamed", await File.ReadAllTextAsync(newPath));
+        Assert.Contains("Class Renamed", await File.ReadAllTextAsync(newDesignerPath));
+    }
+
+    /// <summary>
+    /// Declining the "rename the class too?" question leaves the class
+    /// alone — only the files moved.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task DecliningTheClassRenameOfferLeavesTheClassAlone()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-explorer-rename-class-no-").FullName;
+        var project = WriteProject(root);
+
+        var formPath = Path.Combine(root, "Form1.vb");
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+        File.WriteAllText(formPath, "Public Class Form1\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class Form1\nEnd Class\n");
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+
+        var fileNode = vm.Explorer.Roots.SelectMany(Descendants).Single(n => n.Path == formPath);
+        var task = InvokePrivateAsync(w, "RenameInExplorerAsync", fileNode);
+
+        var renameDialog = await WaitForDialogAsync(host);
+        Assert.NotNull(renameDialog);
+        SetTextBox(renameDialog!, "Renamed.vb");
+        renameDialog!.GetVisualDescendants().OfType<Button>().First(b => b.IsDefault)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        // Raised above the default: this dialog only opens after
+        // RenameInExplorerAsync reloads the Roslyn workspace, which a cold
+        // MSBuildWorkspace load can make slower than the usual dialog wait.
+        var confirmDialog = await WaitForDialogAsync(host, maxPasses: 500);
+        Assert.NotNull(confirmDialog);
+        confirmDialog!.GetVisualDescendants().OfType<Button>().First(b => b.IsCancel)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        await task;
+        await host.SettleAsync(10);
+
+        var newPath = Path.Combine(root, "Renamed.vb");
+        Assert.True(File.Exists(newPath));
+        Assert.Contains("Class Form1", await File.ReadAllTextAsync(newPath));
+    }
+
+    /// <summary>
     /// Renaming a file whose tab has a breakpoint moves the breakpoint to
     /// the new path, a breakpoint set after the rename also lands on the new
     /// path rather than a name that no longer exists on disk, and the tab's
@@ -1062,12 +1244,18 @@ public sealed class SolutionExplorerCommandTests
         await host.SettleAsync(10);
     }
 
-    /// <summary>Waits for the window to own a dialog, as a dispatcher-driven async handler opens one.</summary>
-    private static async Task<Window?> WaitForDialogAsync(TestWindow host)
+    /// <summary>
+    /// Waits for the window to own a dialog, as a dispatcher-driven async
+    /// handler opens one. <paramref name="maxPasses"/> is raised above the
+    /// default for a dialog that only opens after a Roslyn workspace reload
+    /// — the same cold-MSBuildWorkspace margin <c>WaitUntilAsync</c> gives
+    /// elsewhere in this file.
+    /// </summary>
+    private static async Task<Window?> WaitForDialogAsync(TestWindow host, int maxPasses = 40)
     {
         Window? dialog = null;
 
-        for (var i = 0; i < 40 && dialog is null; i++)
+        for (var i = 0; i < maxPasses && dialog is null; i++)
         {
             await host.SettleAsync(1);
             dialog = host.Window.OwnedWindows.FirstOrDefault();

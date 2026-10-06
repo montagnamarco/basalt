@@ -438,6 +438,61 @@ public sealed class SaveChangesPromptTests
         Assert.Empty(vm.OpenDocuments);
     }
 
+    /// <summary>
+    /// "New Solution" collects a name and a location, then asks whether the
+    /// current solution's dirty tab may be left before anything is written
+    /// to disk. Cancelling that question must leave no trace of the
+    /// solution the dialog described — not generate it first and ask
+    /// afterwards, which left an unopened solution on disk whenever the
+    /// question was answered "no" (critical-review finding).
+    /// </summary>
+    [AvaloniaFact]
+    public async Task CancellingTheSaveChangesPromptLeavesNoNewSolutionOnDisk()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-newsolution-order-").FullName;
+        var project = WriteProject(root);
+        var file = Path.Combine(root, "M.vb");
+        File.WriteAllText(file, "Module M\nEnd Module\n");
+
+        var parent = Directory.CreateTempSubdirectory("basalt-newsolution-order-parent-").FullName;
+        var newSolutionFolder = Path.Combine(parent, "NewApp");
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+
+        await vm.OpenFileAsync(file);
+        await host.SettleAsync(5);
+        vm.ActiveDocument!.Text += "\n' edited, unsaved\n";
+
+        var method = typeof(MainWindow).GetMethod(
+            "ShowNewSolutionDialogAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var task = (Task)method.Invoke(w, [])!;
+
+        var newSolutionDialog = await WaitForDialogAsync(host);
+        Assert.NotNull(newSolutionDialog);
+
+        var boxes = newSolutionDialog!.GetVisualDescendants().OfType<TextBox>().ToList();
+        boxes.First(b => b.Name == "NameBox").Text = "NewApp";
+        boxes.First(b => b.Name == "PathBox").Text = parent;
+
+        ClickButton(newSolutionDialog, b => b.Classes.Contains("primary")); // Create
+
+        // The question about leaving the current, dirty solution — Save,
+        // Don't Save or Cancel — only now, with nothing created yet.
+        var saveDialog = await WaitForDialogAsync(host);
+        Assert.NotNull(saveDialog);
+        ClickButton(saveDialog!, b => b.IsCancel);
+
+        await task;
+        await host.SettleAsync(10);
+
+        Assert.False(Directory.Exists(newSolutionFolder),
+            "the new solution was generated on disk despite cancelling the save-changes prompt");
+        Assert.Equal(project, vm.SolutionPath);
+    }
+
     private static object DocumentDockableFor(MainWindow window, EditorDocumentViewModel document)
     {
         var field = typeof(MainWindow).GetField("_documents", BindingFlags.Instance | BindingFlags.NonPublic)!;

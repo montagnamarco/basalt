@@ -334,6 +334,8 @@ public static class StringKeys
     public const string ButtonCreate = "Button_Create";
     public const string ButtonCancel = "Button_Cancel";
     public const string ButtonOk = "Button_Ok";
+    public const string ButtonYes = "Button_Yes";
+    public const string ButtonNo = "Button_No";
 
     public const string TerminalInputHint = "Terminal_InputHint";
     public const string TerminalCouldNotStart = "Terminal_CouldNotStart";
@@ -517,6 +519,7 @@ public static class StringKeys
     public const string NewSolutionInvalidName = "NewSolution_InvalidName";
     public const string NewSolutionLocationRequired = "NewSolution_LocationRequired";
     public const string NewSolutionNameRequired = "NewSolution_NameRequired";
+    public const string NewSolutionCreateFailed = "NewSolution_CreateFailed";
     public const string PropertyGridCollection = "PropertyGrid_Collection";
     public const string PropertyGridComponentReference = "PropertyGrid_ComponentReference";
     public const string PropertyGridName = "PropertyGrid_Name";
@@ -803,6 +806,8 @@ public static class StringKeys
     public const string ExplorerNewFolderPrompt = "Explorer_NewFolder_Prompt";
     public const string ExplorerRenameTitle = "Explorer_Rename_Title";
     public const string ExplorerRenamePrompt = "Explorer_Rename_Prompt";
+    public const string ExplorerRenameClassTitle = "Explorer_RenameClass_Title";
+    public const string ExplorerRenameClassPrompt = "Explorer_RenameClass_Prompt";
     public const string ExplorerDeleteTitle = "Explorer_Delete_Title";
     public const string ExplorerDeleteFileMessage = "Explorer_Delete_FileMessage";
     public const string ExplorerDeleteFolderMessage = "Explorer_Delete_FolderMessage";

@@ -5237,18 +5237,31 @@ public partial class MainWindow : Window
     /// <summary>Creates a new solution with an initial project and opens it.</summary>
     private async Task ShowNewSolutionDialogAsync()
     {
-        // Asked only once the dialog has actually produced a solution to
-        // switch to: asking first and closing or discarding the current
-        // solution's dirty tabs right away, only to have the user cancel
-        // the dialog that follows, left those documents "Don't Save"d —
-        // Roslyn already holding their disk text — while the tabs and the
-        // solution itself were untouched, two views of the world disagreeing
-        // about what the user had just typed.
+        // The dialog only collects and validates what the user wants; it
+        // never writes anything to disk itself (NewSolutionDialog.CreateAsync
+        // does, below). Asking to leave the current solution comes after
+        // that collection and before any file exists — not before (closing
+        // or discarding the current solution's dirty tabs only to have the
+        // dialog that follows get cancelled left those documents "Don't
+        // Save"d while solution and tabs stayed untouched) and not after a
+        // solution was already generated on disk (cancelling the prompt
+        // then left it there, unopened — critical-review finding).
         var dialog = new NewSolutionDialog();
-        var created = await dialog.ShowDialog<NewSolutionResult?>(this);
-        if (created is null) return;
+        var parameters = await dialog.ShowDialog<NewSolutionParameters?>(this);
+        if (parameters is null) return;
 
         if (!await ConfirmLeavingSolutionAsync()) return;
+
+        NewSolutionResult created;
+        try
+        {
+            created = await NewSolutionDialog.CreateAsync(parameters);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.NewSolutionCreateFailed, ex.Message));
+            return;
+        }
 
         await ViewModel.OpenSolutionAsync(created.SolutionPath);
 

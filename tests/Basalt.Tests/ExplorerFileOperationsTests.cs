@@ -114,4 +114,161 @@ public sealed class ExplorerFileOperationsTests
 
         Assert.False(Directory.Exists(folder));
     }
+
+    [Fact]
+    public void FormCompanionsFindsTheDesignerAndResxNextToAFormsVbFile()
+    {
+        var root = TempDirectory();
+        var formPath = Path.Combine(root, "Form1.vb");
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+        var resxPath = Path.Combine(root, "Form1.resx");
+        File.WriteAllText(formPath, "Public Class Form1\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class Form1\nEnd Class\n");
+        File.WriteAllText(resxPath, "<root></root>\n");
+
+        var companions = ExplorerFileOperations.FormCompanions(formPath);
+
+        Assert.Equal(2, companions.Count);
+        Assert.Contains(designerPath, companions);
+        Assert.Contains(resxPath, companions);
+    }
+
+    /// <summary>Most .vb files are not a form and have neither companion.</summary>
+    [Fact]
+    public void FormCompanionsIsEmptyForAPlainVbFile()
+    {
+        var root = TempDirectory();
+        var path = Path.Combine(root, "Module1.vb");
+        File.WriteAllText(path, "Module Module1\nEnd Module\n");
+
+        Assert.Empty(ExplorerFileOperations.FormCompanions(path));
+    }
+
+    /// <summary>Asking from the generated Designer.vb half never reports itself as its own companion.</summary>
+    [Fact]
+    public void FormCompanionsIsEmptyWhenAskedFromTheDesignerFileItself()
+    {
+        var root = TempDirectory();
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+        File.WriteAllText(Path.Combine(root, "Form1.vb"), "Public Class Form1\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class Form1\nEnd Class\n");
+
+        Assert.Empty(ExplorerFileOperations.FormCompanions(designerPath));
+    }
+
+    /// <summary>
+    /// Renaming a form's own .vb file carries its Designer.vb and .resx
+    /// along with it under the new name, the way Visual Studio renames all
+    /// three together.
+    /// </summary>
+    [Fact]
+    public void RenameFileCarriesTheDesignerAndResxCompanionsAlong()
+    {
+        var root = TempDirectory();
+        var formPath = Path.Combine(root, "Form1.vb");
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+        var resxPath = Path.Combine(root, "Form1.resx");
+        File.WriteAllText(formPath, "Public Class Form1\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class Form1\nEnd Class\n");
+        File.WriteAllText(resxPath, "<root></root>\n");
+
+        var moves = ExplorerFileOperations.RenameFile(formPath, "Renamed.vb");
+
+        var newFormPath = Path.Combine(root, "Renamed.vb");
+        var newDesignerPath = Path.Combine(root, "Renamed.Designer.vb");
+        var newResxPath = Path.Combine(root, "Renamed.resx");
+
+        Assert.Equal(3, moves.Count);
+        Assert.Contains((formPath, newFormPath), moves);
+        Assert.Contains((designerPath, newDesignerPath), moves);
+        Assert.Contains((resxPath, newResxPath), moves);
+
+        Assert.True(File.Exists(newFormPath));
+        Assert.True(File.Exists(newDesignerPath));
+        Assert.True(File.Exists(newResxPath));
+        Assert.False(File.Exists(formPath));
+        Assert.False(File.Exists(designerPath));
+        Assert.False(File.Exists(resxPath));
+    }
+
+    /// <summary>
+    /// When a companion's target name is already taken, the whole rename is
+    /// rolled back rather than leaving the form split between its old and
+    /// new name — the primary file renamed but a companion stranded under
+    /// the old one.
+    /// </summary>
+    [Fact]
+    public void RenameFileRollsBackWhenACompanionsTargetNameIsTaken()
+    {
+        var root = TempDirectory();
+        var formPath = Path.Combine(root, "Form1.vb");
+        var designerPath = Path.Combine(root, "Form1.Designer.vb");
+        File.WriteAllText(formPath, "Public Class Form1\nEnd Class\n");
+        File.WriteAllText(designerPath, "Partial Class Form1\nEnd Class\n");
+        // Already occupies the Designer.vb companion's computed target name.
+        File.WriteAllText(Path.Combine(root, "Renamed.Designer.vb"), "' in the way\n");
+
+        Assert.Throws<IOException>(() => ExplorerFileOperations.RenameFile(formPath, "Renamed.vb"));
+
+        Assert.True(File.Exists(formPath), "the primary file was left renamed after the rollback");
+        Assert.True(File.Exists(designerPath), "the Designer.vb companion was left stranded after the rollback");
+        Assert.False(File.Exists(Path.Combine(root, "Renamed.vb")));
+    }
+
+    /// <summary>
+    /// The pair Visual Studio writes for every form follows the rename, so
+    /// the Designer.vb stays nested under its form when the project goes
+    /// back to Visual Studio; nothing else in the project file changes.
+    /// </summary>
+    [Fact]
+    public void RenameFileRewritesTheProjectsDependentUponPair()
+    {
+        var root = TempDirectory();
+        var project = Path.Combine(root, "App.vbproj");
+        var projectText = """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <!-- kept as written -->
+              <ItemGroup>
+                <Compile Update="Form1.Designer.vb">
+                  <DependentUpon>Form1.vb</DependentUpon>
+                </Compile>
+                <EmbeddedResource Update="Form1.resx">
+                  <DependentUpon>Form1.vb</DependentUpon>
+                </EmbeddedResource>
+                <Compile Update="Form10.Designer.vb">
+                  <DependentUpon>Form10.vb</DependentUpon>
+                </Compile>
+              </ItemGroup>
+            </Project>
+            """;
+        File.WriteAllText(project, projectText);
+        File.WriteAllText(Path.Combine(root, "Form1.vb"), "Public Class Form1\nEnd Class\n");
+        File.WriteAllText(Path.Combine(root, "Form1.Designer.vb"), "Partial Class Form1\nEnd Class\n");
+        File.WriteAllText(Path.Combine(root, "Form1.resx"), "<root />");
+
+        var moves = ExplorerFileOperations.RenameFile(Path.Combine(root, "Form1.vb"), "MainForm.vb");
+        Assert.Equal(project, ExplorerFileOperations.RewriteProjectItems(moves));
+
+        var expected = projectText
+            .Replace("Update=\"Form1.Designer.vb\"", "Update=\"MainForm.Designer.vb\"")
+            .Replace("Update=\"Form1.resx\"", "Update=\"MainForm.resx\"")
+            .Replace("<DependentUpon>Form1.vb</DependentUpon>", "<DependentUpon>MainForm.vb</DependentUpon>");
+
+        Assert.Equal(expected, File.ReadAllText(project));
+    }
+
+    /// <summary>A plain .vb file with no companions renames exactly as <see cref="Rename"/> alone would.</summary>
+    [Fact]
+    public void RenameFileWithNoCompanionsMovesOnlyTheOneFile()
+    {
+        var root = TempDirectory();
+        var path = Path.Combine(root, "Module1.vb");
+        File.WriteAllText(path, "Module Module1\nEnd Module\n");
+
+        var moves = ExplorerFileOperations.RenameFile(path, "Renamed.vb");
+
+        var move = Assert.Single(moves);
+        Assert.Equal(path, move.OldPath);
+        Assert.Equal(Path.Combine(root, "Renamed.vb"), move.NewPath);
+    }
 }

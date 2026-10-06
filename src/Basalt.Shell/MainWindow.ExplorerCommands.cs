@@ -124,10 +124,12 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Renames the selected file or folder on disk, retargets every open
-    /// document under it to the new path (keeping unsaved text), reopens
-    /// the Roslyn workspace from disk so it sees the move, and refreshes
-    /// the tree.
+    /// Renames the selected file or folder on disk — together with a
+    /// form's Designer.vb and .resx companions, when the file renamed is
+    /// one — retargets every open document under it to the new path
+    /// (keeping unsaved text), reopens the Roslyn workspace from disk so it
+    /// sees the move, refreshes the tree, and then offers to rename the
+    /// file's own class to match, the way Visual Studio does.
     /// </summary>
     private async Task RenameInExplorerAsync(SolutionTreeNode? node)
     {
@@ -171,10 +173,22 @@ public partial class MainWindow
             return;
         }
 
+        // A form's own .vb file carries its Designer.vb and .resx with it,
+        // the way Visual Studio renames all three together rather than
+        // leaving two of them behind under the old name — present only
+        // when the file actually has them on disk. A folder rename needs
+        // none of this: every file under it, companions included, already
+        // follows through IsAtOrUnder/Retarget below.
+        var companionOldPaths = isDirectory ? [] : ExplorerFileOperations.FormCompanions(oldPath);
+        var allOldPaths = companionOldPaths.Prepend(oldPath).ToArray();
+
         // Read before the move: the tabs' own paths are only the real ones
         // up to this point.
         var openDocuments = ViewModel.OpenDocuments
-            .Where(d => IsAtOrUnder(d.FilePath, oldPath)).ToList();
+            .Where(d => isDirectory
+                ? IsAtOrUnder(d.FilePath, oldPath)
+                : allOldPaths.Contains(d.FilePath, PathComparer))
+            .ToList();
 
         // Same read, for breakpoints: a breakpoint in a file that was never
         // opened in this session is still on disk under the renamed path,
@@ -184,13 +198,27 @@ public partial class MainWindow
         var breakpointPaths = _debug.AllBreakpoints
             .Select(b => b.FilePath)
             .Distinct()
-            .Where(p => IsAtOrUnder(p, oldPath))
+            .Where(p => isDirectory
+                ? IsAtOrUnder(p, oldPath)
+                : allOldPaths.Contains(p, PathComparer))
             .ToList();
 
         string newPath;
+        var companionRetargets = new Dictionary<string, string>(PathComparer);
+
         try
         {
-            newPath = ExplorerFileOperations.Rename(oldPath, name, isDirectory);
+            if (isDirectory)
+            {
+                newPath = ExplorerFileOperations.Rename(oldPath, name, isDirectory: true);
+            }
+            else
+            {
+                var moves = ExplorerFileOperations.RenameFile(oldPath, name);
+                newPath = moves[0].NewPath;
+                ExplorerFileOperations.RewriteProjectItems(moves);
+                foreach (var (old, @new) in moves.Skip(1)) companionRetargets[old] = @new;
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -198,12 +226,14 @@ public partial class MainWindow
             return;
         }
 
+        string Retarget(string oldItemPath) => isDirectory
+            ? ExplorerFileOperations.Retarget(oldItemPath, oldPath, newPath)
+            : string.Equals(oldItemPath, oldPath, PathComparison) ? newPath : companionRetargets[oldItemPath];
+
         foreach (var document in openDocuments)
         {
             var documentOldPath = document.FilePath;
-            var documentNewPath = isDirectory
-                ? ExplorerFileOperations.Retarget(documentOldPath, oldPath, newPath)
-                : newPath;
+            var documentNewPath = Retarget(documentOldPath);
 
             document.Retarget(documentNewPath);
             RetargetMarginFor(documentOldPath, documentNewPath);
@@ -211,11 +241,7 @@ public partial class MainWindow
 
         foreach (var breakpointPath in breakpointPaths)
         {
-            var retargetedPath = isDirectory
-                ? ExplorerFileOperations.Retarget(breakpointPath, oldPath, newPath)
-                : newPath;
-
-            _debug.RetargetBreakpoints(breakpointPath, retargetedPath);
+            _debug.RetargetBreakpoints(breakpointPath, Retarget(breakpointPath));
         }
 
         // Reopens the Roslyn workspace from disk rather than asking
@@ -225,6 +251,116 @@ public partial class MainWindow
         await ViewModel.ReloadLanguageServiceAsync();
 
         ViewModel.Explorer.Refresh();
+
+        // Only for a form just renamed with its companions: offering to
+        // rename the class for every .vb file whose module or class happens
+        // to be named like it (a "Program.vb" with "Module Program", say)
+        // would ask far more often than Visual Studio's own WinForms rename
+        // does.
+        if (!isDirectory && companionOldPaths.Count > 0) await OfferClassRenameAsync(currentName, newPath, name);
+    }
+
+    /// <summary>
+    /// After a file rename, asks whether to rename the file's own class,
+    /// module or structure to match — the way Visual Studio asks after
+    /// "Form1.vb" becomes "Renamed.vb" — but only when one declared in the
+    /// file is named like the file was, so renaming an unrelated file never
+    /// asks anything.
+    /// </summary>
+    private async Task OfferClassRenameAsync(string oldFileName, string newPath, string newFileName)
+    {
+        if (!newPath.EndsWith(".vb", StringComparison.OrdinalIgnoreCase)
+            || newPath.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var oldClassName = Path.GetFileNameWithoutExtension(oldFileName);
+        if (oldClassName is not { Length: > 0 }) return;
+
+        // The text Roslyn is currently working from: an open tab's own
+        // buffer when there is one — ReloadLanguageServiceAsync just pushed
+        // it back into the workspace — the file on disk otherwise.
+        var openDocument = ViewModel.OpenDocuments.FirstOrDefault(
+            d => string.Equals(d.FilePath, newPath, PathComparison));
+        string source;
+        try
+        {
+            source = openDocument?.Text ?? await File.ReadAllTextAsync(newPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        var position = await Task.Run(() => FormClassRenameLookup.FindDeclarationPosition(source, oldClassName));
+        if (position is null) return;
+
+        var confirmed = await ConfirmYesNoAsync(
+            Localizer.Get(StringKeys.ExplorerRenameClassTitle),
+            Localizer.Get(StringKeys.ExplorerRenameClassPrompt, oldClassName));
+        if (!confirmed) return;
+
+        var newClassName = Path.GetFileNameWithoutExtension(newFileName);
+
+        var preview = await PreviewOffUiThreadAsync(
+            () => ViewModel.PreviewRenameAsync(newPath, position.Value, newClassName));
+
+        var dialog = new RefactoringPreviewDialog(preview);
+        await dialog.ShowDialog(this);
+        if (!dialog.Accepted) return;
+
+        if (!await MainWindowViewModel.ApplyRefactoringAsync(preview))
+        {
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerOperationFailed, newClassName));
+            return;
+        }
+
+        await ReloadOpenDocumentsAsync(preview.Changes.Select(c => c.FilePath));
+    }
+
+    /// <summary>
+    /// Asks a Yes/No question — distinct from <see cref="ConfirmDeleteAsync"/>'s
+    /// delete-flavoured wording, for a question that is not about deleting
+    /// anything.
+    /// </summary>
+    private async Task<bool> ConfirmYesNoAsync(string title, string message)
+    {
+        var answered = false;
+
+        var yes = new Button { Content = Localizer.Get(StringKeys.ButtonYes), IsDefault = true };
+        var no = new Button { Content = Localizer.Get(StringKeys.ButtonNo), IsCancel = true };
+
+        var dialog = new Window
+        {
+            Title = title,
+            Width = 420,
+            SizeToContent = SizeToContent.Height,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false
+        };
+
+        yes.Click += (_, _) => { answered = true; dialog.Close(); };
+        no.Click += (_, _) => dialog.Close();
+
+        dialog.Content = new StackPanel
+        {
+            Margin = new Thickness(20),
+            Spacing = 16,
+            Children =
+            {
+                new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
+                new StackPanel
+                {
+                    Orientation = Avalonia.Layout.Orientation.Horizontal,
+                    Spacing = 8,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                    Children = { no, yes }
+                }
+            }
+        };
+
+        await dialog.ShowDialog(this);
+
+        return answered;
     }
 
     /// <summary>
@@ -328,6 +464,10 @@ public partial class MainWindow
     /// <summary>On Windows and macOS paths are case-insensitive, on Linux they are not.</summary>
     private static StringComparison PathComparison =>
         OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
+    /// <summary>Same comparison as <see cref="PathComparison"/>, as an <see cref="IEqualityComparer{T}"/>.</summary>
+    private static StringComparer PathComparer =>
+        OperatingSystem.IsLinux() ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
 
     /// <summary>
     /// Asks the user to confirm a delete, with a button that says so rather

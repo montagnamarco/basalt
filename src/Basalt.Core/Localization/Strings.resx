@@ -236,6 +236,8 @@
   <data name="Button_Create" xml:space="preserve"><value>Create</value></data>
   <data name="Button_Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Button_Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="Button_Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Button_No" xml:space="preserve"><value>No</value></data>
 
   <!-- Terminal -->
   <data name="Terminal_InputHint" xml:space="preserve"><value>Type a command and press Enter</value></data>
@@ -317,6 +319,7 @@
   <data name="NewSolution_WinForms" xml:space="preserve"><value>WinForms (Basalt, cross-platform)</value></data>
   <data name="NewSolution_ChooseFolder" xml:space="preserve"><value>Choose the folder for the solution</value></data>
   <data name="NewSolution_NameRequired" xml:space="preserve"><value>Enter a solution name.</value></data>
+  <data name="NewSolution_CreateFailed" xml:space="preserve"><value>[new solution] {0}</value></data>
   <data name="NewSolution_InvalidName" xml:space="preserve"><value>The name must start with a letter and contain only letters, digits or underscores.</value></data>
   <data name="NewSolution_LocationRequired" xml:space="preserve"><value>Enter a destination folder.</value></data>
   <data name="Template_TestProject" xml:space="preserve"><value>Test Project</value></data>
@@ -786,6 +789,8 @@
   <data name="Explorer_NewFolder_Prompt" xml:space="preserve"><value>Folder name:</value></data>
   <data name="Explorer_Rename_Title" xml:space="preserve"><value>Rename</value></data>
   <data name="Explorer_Rename_Prompt" xml:space="preserve"><value>New name:</value></data>
+  <data name="Explorer_RenameClass_Title" xml:space="preserve"><value>Rename</value></data>
+  <data name="Explorer_RenameClass_Prompt" xml:space="preserve"><value>You are renaming a file. Would you also like to rename all references to the code element '{0}'?</value></data>
   <data name="Explorer_Delete_Title" xml:space="preserve"><value>Delete?</value></data>
   <data name="Explorer_Delete_FileMessage" xml:space="preserve"><value>'{0}' will be deleted. This cannot be undone.</value></data>
   <data name="Explorer_Delete_FolderMessage" xml:space="preserve"><value>'{0}' and everything in it will be deleted. This cannot be undone.</value></data>
