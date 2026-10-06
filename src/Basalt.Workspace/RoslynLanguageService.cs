@@ -42,7 +42,22 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     /// </summary>
     public WindowsDesktopCompatibilitySession Compatibility { get; set; } = new();
 
-    public Solution? CurrentSolution => _workspace?.CurrentSolution;
+    /// <summary>
+    /// The workspace's solution with the text the editors hold, saved or not.
+    /// </summary>
+    /// <remarks>
+    /// Kept here rather than applied to the workspace: MSBuildWorkspace's
+    /// TryApplyChanges writes every changed document to its file, so applying
+    /// the editors' text saved each buffer to disk half a second after the
+    /// user stopped typing, whether or not they chose Save. Replaced as a
+    /// whole under the gate; readers take the reference once.
+    /// </remarks>
+    private Solution? _edited;
+
+    /// <summary>What every question is answered from: the edited solution, or the loaded one.</summary>
+    private Solution? Current => _edited ?? _workspace?.CurrentSolution;
+
+    public Solution? CurrentSolution => Current;
 
     /// <summary>Warnings reported by MSBuild while loading the solution.</summary>
     public IReadOnlyList<string> LoadWarnings { get; private set; } = [];
@@ -73,6 +88,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         try
         {
             _workspace?.Dispose();
+            _edited = null;
             // Visual Studio Windows desktop projects are loaded the way the
             // build sees them (net10.0 plus Basalt.Forms), or IntelliSense
             // would describe a framework that is not what runs.
@@ -127,18 +143,17 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
             // Most callers send the editor's text again before asking a
             // question, and it is almost always what the workspace already
             // holds. Only a real change is worth telling anyone about.
-            var current = await _workspace.CurrentSolution.GetDocument(documentId)!
+            var solution = Current!;
+            var current = await solution.GetDocument(documentId)!
                 .GetTextAsync(ct).ConfigureAwait(false);
 
             var newText = SourceText.From(text);
             if (current.ContentEquals(newText)) return;
 
-            var updated = _workspace.CurrentSolution.WithDocumentText(
-                documentId, newText, PreservationMode.PreserveIdentity);
-
-            // TryApplyChanges can fail if another change arrived in the
-            // meantime; in that case the next keystroke will resend the text.
-            applied = _workspace.TryApplyChanges(updated);
+            // In memory only: see _edited for why this is never applied to
+            // the workspace.
+            _edited = solution.WithDocumentText(documentId, newText, PreservationMode.PreserveIdentity);
+            applied = true;
         }
         finally
         {
@@ -733,7 +748,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
             return null;
         }
 
-        return _workspace.CurrentSolution.Projects
+        return Current!.Projects
             .Where(p => p.Language == LanguageNames.VisualBasic && p.FilePath is { Length: > 0 })
             .Select(p => (Project: p, Directory: Path.GetDirectoryName(p.FilePath)))
             .Where(x => x.Directory is { Length: > 0 } &&
@@ -1047,7 +1062,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewRenameAsync(
         string filePath, int position, string newName, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Rename", "No solution is open.");
@@ -1066,7 +1081,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewExtractVariableAsync(
         string filePath, int start, int length, string name, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Extract Variable", "No solution is open.");
@@ -1081,7 +1096,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewGenerateConstructorAsync(
         string filePath, int position, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Generate Constructor", "No solution is open.");
@@ -1096,7 +1111,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewGeneratePropertyAsync(
         string filePath, int position, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Generate Property", "No solution is open.");
@@ -1111,7 +1126,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewMoveTypeToFileAsync(
         string filePath, int position, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Move Type to File", "No solution is open.");
@@ -1126,7 +1141,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<IReadOnlyList<(string Name, string Type)>> GetParametersAsync(
         string filePath, int position, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution) return [];
+        if (Current is not { } solution) return [];
 
         return await new Refactoring.ChangeSignatureRefactoring(solution)
             .ParametersAsync(filePath, position, ct)
@@ -1138,7 +1153,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         string filePath, int position, Refactoring.SignatureChange change,
         CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Change Signature", "No solution is open.");
@@ -1153,7 +1168,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewConvertConditionalAsync(
         string filePath, int position, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Convert If and Select Case", "No solution is open.");
@@ -1168,7 +1183,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewInlineVariableAsync(
         string filePath, int position, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Inline Variable", "No solution is open.");
@@ -1183,7 +1198,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewExtractConstantAsync(
         string filePath, int start, int length, string name, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Extract Constant", "No solution is open.");
@@ -1201,7 +1216,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     public async Task<Refactoring.RefactoringPreview> PreviewExtractMethodAsync(
         string filePath, int start, int length, string name, CancellationToken ct = default)
     {
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Extract Method", "No solution is open.");
@@ -1222,7 +1237,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         if (filePath.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase))
             return await TidyViewImportsAsync(filePath, ct).ConfigureAwait(false);
 
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
         {
             return Refactoring.RefactoringPreview.Refused(
                 "Sort and Remove Imports", "No solution is open.");
@@ -1247,7 +1262,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     {
         const string title = "Add Imports";
 
-        if (_workspace?.CurrentSolution is not { } solution)
+        if (Current is not { } solution)
             return Refactoring.RefactoringPreview.Refused(title, "No solution is open.");
 
         if (string.IsNullOrWhiteSpace(typeName))
@@ -1748,7 +1763,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
         var found = await SymbolFinder
             .FindSourceDeclarationsAsync(
-                _workspace.CurrentSolution,
+                Current!,
                 name => name.Contains(query, StringComparison.OrdinalIgnoreCase),
                 ct)
             .ConfigureAwait(false);
@@ -1789,7 +1804,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
         var found = await SymbolFinder
             .FindSourceDeclarationsAsync(
-                _workspace.CurrentSolution,
+                Current!,
                 name => name.Contains(query, StringComparison.OrdinalIgnoreCase),
                 ct)
             .ConfigureAwait(false);
@@ -1999,7 +2014,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         // finds no location to open and silently does nothing. Adding the
         // document to the real project is what makes the view's own types
         // visible.
-        var host = _workspace?.CurrentSolution.Projects
+        var host = Current?.Projects
             .FirstOrDefault(p => p.Language == LanguageNames.VisualBasic);
 
         if (host is not null)
@@ -2032,7 +2047,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     private Document? GetDocument(string filePath)
     {
         var id = FindDocumentId(filePath);
-        return id is null ? null : _workspace?.CurrentSolution.GetDocument(id);
+        return id is null ? null : Current?.GetDocument(id);
     }
 
     private DocumentId? FindDocumentId(string filePath)
@@ -2040,7 +2055,7 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         if (_workspace is null) return null;
 
         var full = Path.GetFullPath(filePath);
-        return _workspace.CurrentSolution.Projects
+        return Current!.Projects
             .SelectMany(p => p.Documents)
             .FirstOrDefault(d => d.FilePath is not null
                                  && string.Equals(Path.GetFullPath(d.FilePath), full, PathComparison))

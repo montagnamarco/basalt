@@ -586,6 +586,34 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         };
     }
 
+    /// <summary>
+    /// Makes the language service forget an edit the user chose not to save.
+    /// </summary>
+    /// <remarks>
+    /// Closing a tab with "Don't Save" leaves whatever the user last typed
+    /// sitting in Roslyn's in-memory copy of the file: nothing about closing
+    /// the tab tells the workspace the edit never happened. Reading the file
+    /// back in, off the interface thread, is what keeps another file's
+    /// diagnostics, completion and refactorings from answering against text
+    /// that was never saved. A no-op when the file is gone (deleted from
+    /// Solution Explorer, say): there is nothing on disk to read back.
+    /// </remarks>
+    public async Task ForgetDiscardedEditAsync(string filePath)
+    {
+        if (!File.Exists(filePath)) return;
+
+        var diskText = await Task.Run(() => File.ReadAllText(filePath)).ConfigureAwait(true);
+
+        // The read above is the only part of this that takes any real time,
+        // and the user may have reopened the file while it ran: that tab
+        // already pushed its own text into the language service, newer than
+        // the disk snapshot read for the tab that just closed. Pushing the
+        // old snapshot in now would overwrite it.
+        if (OpenDocuments.Any(d => string.Equals(d.FilePath, filePath, StringComparison.Ordinal))) return;
+
+        await _languageService.UpdateDocumentAsync(filePath, diskText).ConfigureAwait(true);
+    }
+
     /// <summary>Closes the document being edited.</summary>
     public void CloseActiveDocument()
     {

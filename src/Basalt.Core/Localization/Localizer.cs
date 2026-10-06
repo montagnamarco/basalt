@@ -333,6 +333,7 @@ public static class StringKeys
 
     public const string ButtonCreate = "Button_Create";
     public const string ButtonCancel = "Button_Cancel";
+    public const string ButtonOk = "Button_Ok";
 
     public const string TerminalInputHint = "Terminal_InputHint";
     public const string TerminalCouldNotStart = "Terminal_CouldNotStart";
@@ -813,6 +814,21 @@ public static class StringKeys
     public const string ExplorerNameInvalid = "Explorer_NameInvalid";
     public const string ExplorerOperationFailed = "Explorer_OperationFailed";
     public const string ExplorerBlockedWhileDebugging = "Explorer_BlockedWhileDebugging";
+
+    // Save/Don't Save/Cancel, asked whenever a dirty document is about to be
+    // closed: a tab's own close, Close All and friends, opening another
+    // solution, New Project and quitting.
+    public const string SaveChangesTitle = "SaveChanges_Title";
+    public const string SaveChangesMessageOne = "SaveChanges_MessageOne";
+    public const string SaveChangesMessageMany = "SaveChanges_MessageMany";
+    public const string SaveChangesSave = "SaveChanges_Save";
+    public const string SaveChangesDontSave = "SaveChanges_DontSave";
+
+    // Shown instead of closing the document when its save failed (a
+    // read-only file, say): the text stays in the tab rather than being
+    // lost, and the user is told why it was not saved.
+    public const string SaveChangesSaveFailedTitle = "SaveChanges_SaveFailedTitle";
+    public const string SaveChangesSaveFailedMessage = "SaveChanges_SaveFailedMessage";
 
     // WinForms designer smart tag: the Visual Studio style glyph a selected control with
     // tasks shows at the top-right corner of its selection, and its "<Type> Tasks" flyout.

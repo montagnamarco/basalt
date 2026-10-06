@@ -37,5 +37,15 @@ public sealed class TestWindow : IDisposable
 
     public static implicit operator MainWindow(TestWindow window) => window.Window;
 
-    public void Dispose() => Window.Close();
+    /// <summary>
+    /// Closes the window without the "Save changes?" prompt: a test that
+    /// deliberately left a dirty document open would otherwise have its
+    /// dialog stay up forever, Closed never raised, and the window's
+    /// terminal processes outlive the test.
+    /// </summary>
+    public void Dispose()
+    {
+        Window.SkipSaveChangesPromptForTests = true;
+        Window.Close();
+    }
 }

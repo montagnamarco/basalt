@@ -235,6 +235,7 @@
   <!-- Shared buttons -->
   <data name="Button_Create" xml:space="preserve"><value>Create</value></data>
   <data name="Button_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Button_Ok" xml:space="preserve"><value>OK</value></data>
 
   <!-- Terminal -->
   <data name="Terminal_InputHint" xml:space="preserve"><value>Type a command and press Enter</value></data>
@@ -796,6 +797,15 @@
   <data name="Explorer_NameInvalid" xml:space="preserve"><value>[explorer] '{0}' is not a valid name.</value></data>
   <data name="Explorer_OperationFailed" xml:space="preserve"><value>[explorer] {0}</value></data>
   <data name="Explorer_BlockedWhileDebugging" xml:space="preserve"><value>Rename and Delete are disabled while debugging.</value></data>
+
+  <!-- Save/Don't Save/Cancel, asked before a dirty document closes -->
+  <data name="SaveChanges_Title" xml:space="preserve"><value>Save Changes?</value></data>
+  <data name="SaveChanges_MessageOne" xml:space="preserve"><value>Save changes to {0}?</value></data>
+  <data name="SaveChanges_MessageMany" xml:space="preserve"><value>Save changes to the following items?</value></data>
+  <data name="SaveChanges_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="SaveChanges_DontSave" xml:space="preserve"><value>Don't Save</value></data>
+  <data name="SaveChanges_SaveFailedTitle" xml:space="preserve"><value>Save Failed</value></data>
+  <data name="SaveChanges_SaveFailedMessage" xml:space="preserve"><value>{0} could not be saved: {1}</value></data>
 
   <!-- WinForms designer smart tag: the VS-style glyph and "<Type> Tasks" flyout -->
   <data name="WinFormsSmartTag_TasksHeader" xml:space="preserve"><value>{0} Tasks</value></data>

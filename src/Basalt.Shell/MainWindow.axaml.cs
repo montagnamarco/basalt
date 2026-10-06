@@ -171,6 +171,7 @@ public partial class MainWindow : Window
 
         DataContext = viewModel;
         InitializeDocumentViewLifetime();
+        InitializeSaveChanges();
 
         InstallMenu(viewModel);
         ShowRecentOnWelcome();
@@ -3052,7 +3053,7 @@ public partial class MainWindow : Window
                 break;
 
             case IdeCommands.FileClose:
-                ViewModel.CloseActiveDocument();
+                await CloseActiveDocumentWithSaveCheckAsync();
                 break;
 
             case IdeCommands.EditToggleComment:
@@ -3832,6 +3833,11 @@ public partial class MainWindow : Window
     {
         if (_tests is null) return;
 
+        // Tests run against what is on disk, same as a build: an edit left
+        // unsaved in a tab would otherwise be tested as it last was saved,
+        // silently.
+        await ViewModel.SaveAllAsync();
+
         var chosen = scope switch
         {
             TestExplorerPanel.RunScope.All => _tests.AllTests,
@@ -3891,6 +3897,9 @@ public partial class MainWindow : Window
             ViewModel.WriteOutput("[test] Select a single test to debug.");
             return;
         }
+
+        // Same as Run Tests: debug what is on disk, not a stale save.
+        await ViewModel.SaveAllAsync();
 
         var test = chosen[0];
 
@@ -4670,7 +4679,7 @@ public partial class MainWindow : Window
             };
 
             button.Click += (_, _) => Guarded.Run(
-                () => ViewModel.OpenSolutionAsync(target), ViewModel.WriteOutput, "ide");
+                () => OpenSolutionAskingToSaveAsync(target), ViewModel.WriteOutput, "ide");
 
             WelcomeRecent.Children.Add(button);
         }
@@ -4730,7 +4739,7 @@ public partial class MainWindow : Window
                 Path.GetFileName(target),
                 Action: () => Guarded.Run(
                     () => isSolutions
-                        ? ViewModel.OpenSolutionAsync(target)
+                        ? OpenSolutionAskingToSaveAsync(target)
                         : ViewModel.OpenFileAsync(target),
                     ViewModel.WriteOutput, "ide"))
             {
@@ -5199,7 +5208,7 @@ public partial class MainWindow : Window
         });
 
         var path = files.FirstOrDefault()?.TryGetLocalPath();
-        if (path is not null) await ViewModel.OpenSolutionAsync(path);
+        if (path is not null) await OpenSolutionAskingToSaveAsync(path);
     }
 
     /// <summary>Creates a new Avalonia window in the selected project and opens it in the designer.</summary>
@@ -5228,9 +5237,18 @@ public partial class MainWindow : Window
     /// <summary>Creates a new solution with an initial project and opens it.</summary>
     private async Task ShowNewSolutionDialogAsync()
     {
+        // Asked only once the dialog has actually produced a solution to
+        // switch to: asking first and closing or discarding the current
+        // solution's dirty tabs right away, only to have the user cancel
+        // the dialog that follows, left those documents "Don't Save"d —
+        // Roslyn already holding their disk text — while the tabs and the
+        // solution itself were untouched, two views of the world disagreeing
+        // about what the user had just typed.
         var dialog = new NewSolutionDialog();
         var created = await dialog.ShowDialog<NewSolutionResult?>(this);
         if (created is null) return;
+
+        if (!await ConfirmLeavingSolutionAsync()) return;
 
         await ViewModel.OpenSolutionAsync(created.SolutionPath);
 
