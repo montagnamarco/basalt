@@ -856,4 +856,5 @@ public static class StringKeys
     public const string WinFormsImageDialogImageFiles = "WinFormsImageDialog_ImageFiles";
     public const string WinFormsImageDialogImportFailed = "WinFormsImageDialog_ImportFailed";
     public const string WinFormsImageDialogInvalidFormat = "WinFormsImageDialog_InvalidFormat";
+    public const string WinFormsImageDialogProjectImportFailed = "WinFormsImageDialog_ProjectImportFailed";
 }

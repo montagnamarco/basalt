@@ -831,4 +831,5 @@
   <data name="WinFormsImageDialog_ImageFiles" xml:space="preserve"><value>Image files</value></data>
   <data name="WinFormsImageDialog_ImportFailed" xml:space="preserve"><value>The image could not be read: {0}</value></data>
   <data name="WinFormsImageDialog_InvalidFormat" xml:space="preserve"><value>This file cannot be used for this property: {0}</value></data>
+  <data name="WinFormsImageDialog_ProjectImportFailed" xml:space="preserve"><value>The project resource could not be added: {0}</value></data>
 </root>

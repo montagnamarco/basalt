@@ -4,6 +4,7 @@ using System.IO;
 using Avalonia.Controls;
 using Basalt.Core.Localization;
 using Basalt.Designer;
+using Basalt.Workspace;
 using Forms = System.Windows.Forms;
 
 namespace Basalt.Shell.Controls;
@@ -36,7 +37,8 @@ internal sealed partial class WinFormsDesignerView
             if (IsImageProperty(descriptor.PropertyType) && component is Forms.Control imageControl)
             {
                 var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
-                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(currentValue), isIcon, _importImageFile);
+                var projectPath = WinFormsProjectResources.FindProject(_document.FilePath);
+                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(currentValue), isIcon, _importImageFile, projectPath);
                 if (!await editor.ShowDialog<bool>(owner))
                 {
                     return;
@@ -47,7 +49,12 @@ internal sealed partial class WinFormsDesignerView
                     throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
                 }
 
-                if (editor.Cleared)
+                if (editor.UsedProjectResource && editor.SelectedProjectResourceName is { } resourceName)
+                {
+                    var rootNamespace = WinFormsProjectResources.RootNamespace(projectPath!);
+                    RunEditAsync(() => session.SetProjectImageResourcePropertyAsync(imageControl, property.Name, rootNamespace, resourceName));
+                }
+                else if (editor.Cleared)
                 {
                     RunEditAsync(() => session.ClearImageResourcePropertyAsync(imageControl, property.Name));
                 }

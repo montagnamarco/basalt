@@ -435,6 +435,299 @@ public sealed class WinFormsImageEditorUiTests
         }
     }
 
+    /// <summary>A vbproj with a &lt;RootNamespace&gt;, so a project resource's assignment names it explicitly.</summary>
+    private static string VbprojWithRootNamespace(string rootNamespace) => $"""
+        <Project Sdk="Microsoft.NET.Sdk">
+          <PropertyGroup>
+            <TargetFramework>net10.0</TargetFramework>
+            <RootNamespace>{rootNamespace}</RootNamespace>
+          </PropertyGroup>
+        </Project>
+        """;
+
+    /// <summary>
+    /// Proves the designer can find the .vbproj above a form on disk, list an already-imported
+    /// project resource, and write the plain "Global.RootNamespace.My.Resources.Resources.Name"
+    /// assignment Visual Studio writes for it — the path
+    /// <see cref="WinFormsImageResourceDialog"/>'s "Project resource file" radio could not reach
+    /// before this fix, because it was always disabled.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task ChoosingAProjectResourceOnAPictureBoxWritesTheGlobalAssignment()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-project-test-").FullName;
+        try
+        {
+            var projectPath = Path.Combine(root, "App.vbproj");
+            File.WriteAllText(projectPath, VbprojWithRootNamespace("Contoso.App"));
+            var imported = WinFormsProjectResources.Import(projectPath, WriteTempPng(SolidPng(Drawing.Color.Blue)), isIcon: false);
+
+            var designerPath = Path.Combine(root, "MainForm.Designer.vb");
+            var designer = new EditorDocumentViewModel(designerPath, BuildFreshSource(), true);
+
+            using var view = new WinFormsDesignerView(designer);
+            var window = new Window { Content = view, Width = 1100, Height = 700 };
+            window.Show();
+            try
+            {
+                var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+                await WaitUntilAsync(() => surface.RootForm is not null);
+                var pictureBox = surface.RootForm!.Controls.OfType<Forms.PictureBox>().Single();
+                surface.Select(pictureBox);
+
+                var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+                await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+                var row = FindRow(grid, "Image");
+                var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+                ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+                var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+                // "Project resource file" is enabled: MainForm.Designer.vb sits inside App.vbproj.
+                var projectRadio = Assert.Single(dialog.GetVisualDescendants().OfType<RadioButton>(),
+                    r => Equals(r.Content, Localizer.Get(StringKeys.WinFormsImageDialogProjectResource)));
+                Assert.True(projectRadio.IsEnabled);
+                projectRadio.IsChecked = true;
+
+                var list = Assert.Single(dialog.GetVisualDescendants().OfType<ListBox>(), l => l.Name == "WinFormsImageDialogProjectList");
+                var entry = list.ItemsSource!.Cast<WinFormsProjectResourceEntry>().Single(e => e.Name == imported.Name);
+                list.SelectedItem = entry;
+
+                ClickOk(dialog);
+                await WaitUntilAsync(() =>
+                    designer.Text.Contains($"Global.Contoso.App.My.Resources.Resources.{imported.Name}", StringComparison.Ordinal)
+                    && view.IsEnabled);
+
+                Assert.Contains($"Me.PictureBox1.Image = Global.Contoso.App.My.Resources.Resources.{imported.Name}", designer.Text);
+                // Nothing of the resx-backed path leaked in: no ComponentResourceManager, no resx key.
+                Assert.DoesNotContain("resources.GetObject", designer.Text, StringComparison.Ordinal);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            WindowsDesktopSamples.DeleteQuietly(root);
+        }
+    }
+
+    /// <summary>
+    /// Switching an already resource-backed PictureBox to a project resource must remove the
+    /// local resx entry the property had (Visual Studio leaves no orphaned entry behind) and
+    /// write the project assignment in the same step.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task ChoosingAProjectResourceRemovesTheLocalResxEntryItReplaces()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-project-switch-").FullName;
+        try
+        {
+            var projectPath = Path.Combine(root, "App.vbproj");
+            File.WriteAllText(projectPath, VbprojWithRootNamespace("Contoso.App"));
+            var imported = WinFormsProjectResources.Import(projectPath, WriteTempPng(SolidPng(Drawing.Color.Green)), isIcon: false);
+
+            var (designerSource, resourcesSource) = BuildVisualStudioAuthoredSource();
+            var designerPath = Path.Combine(root, "MainForm.Designer.vb");
+            var designer = new EditorDocumentViewModel(designerPath, designerSource, true);
+            var resourceBuffer = new EditorDocumentViewModel(Path.Combine(root, "MainForm.resx"), resourcesSource);
+
+            using var view = new WinFormsDesignerView(designer,
+                findCode: path => path.EndsWith(".resx", StringComparison.Ordinal) ? resourceBuffer : null);
+            var window = new Window { Content = view, Width = 1100, Height = 700 };
+            window.Show();
+            try
+            {
+                var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+                await WaitUntilAsync(() => surface.RootForm is not null);
+                var pictureBox = surface.RootForm!.Controls.OfType<Forms.PictureBox>().Single();
+                surface.Select(pictureBox);
+
+                var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+                await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+                var row = FindRow(grid, "Image");
+                var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+                ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+                var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+                // Starts showing the Local resource Visual Studio already assigned.
+                Assert.NotNull(dialog.SelectedBytes);
+
+                var projectRadio = Assert.Single(dialog.GetVisualDescendants().OfType<RadioButton>(),
+                    r => Equals(r.Content, Localizer.Get(StringKeys.WinFormsImageDialogProjectResource)));
+                Assert.True(projectRadio.IsEnabled);
+                projectRadio.IsChecked = true;
+                var list = Assert.Single(dialog.GetVisualDescendants().OfType<ListBox>(), l => l.Name == "WinFormsImageDialogProjectList");
+                var entry = list.ItemsSource!.Cast<WinFormsProjectResourceEntry>().Single(e => e.Name == imported.Name);
+                list.SelectedItem = entry;
+
+                ClickOk(dialog);
+                await WaitUntilAsync(() =>
+                    designer.Text.Contains($"Global.Contoso.App.My.Resources.Resources.{imported.Name}", StringComparison.Ordinal)
+                    && view.IsEnabled);
+
+                Assert.Contains($"Me.PictureBox1.Image = Global.Contoso.App.My.Resources.Resources.{imported.Name}", designer.Text);
+                Assert.DoesNotContain("resources.GetObject", designer.Text, StringComparison.Ordinal);
+                Assert.Null(new WinFormsResourceDocument(resourceBuffer.Text).TryGet("PictureBox1.Image"));
+
+                // One undo step covers both the removal and the new assignment.
+                ClickUndo(view);
+                await WaitUntilAsync(() => designer.Text == designerSource && view.IsEnabled);
+                Assert.Equal(resourcesSource, resourceBuffer.Text);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            WindowsDesktopSamples.DeleteQuietly(root);
+        }
+    }
+
+    /// <summary>
+    /// A vbproj with no &lt;RootNamespace&gt; element at all defaults to the project's file
+    /// name (the MSBuild default); an explicit but empty one is a deliberate "no root
+    /// namespace" in Visual Basic instead, and must not leave a stray "Global..My.Resources"
+    /// with a double dot in the statement the designer writes.
+    /// </summary>
+    private static string VbprojWithEmptyRootNamespace() => """
+        <Project Sdk="Microsoft.NET.Sdk">
+          <PropertyGroup>
+            <TargetFramework>net10.0</TargetFramework>
+            <RootNamespace></RootNamespace>
+          </PropertyGroup>
+        </Project>
+        """;
+
+    [AvaloniaFact]
+    public async Task ChoosingAProjectResourceWithAnExplicitlyEmptyRootNamespaceWritesTheBareGlobalAssignment()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-project-empty-namespace-").FullName;
+        try
+        {
+            var projectPath = Path.Combine(root, "App.vbproj");
+            File.WriteAllText(projectPath, VbprojWithEmptyRootNamespace());
+            var imported = WinFormsProjectResources.Import(projectPath, WriteTempPng(SolidPng(Drawing.Color.Blue)), isIcon: false);
+
+            var designerPath = Path.Combine(root, "MainForm.Designer.vb");
+            var designer = new EditorDocumentViewModel(designerPath, BuildFreshSource(), true);
+
+            using var view = new WinFormsDesignerView(designer);
+            var window = new Window { Content = view, Width = 1100, Height = 700 };
+            window.Show();
+            try
+            {
+                var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+                await WaitUntilAsync(() => surface.RootForm is not null);
+                var pictureBox = surface.RootForm!.Controls.OfType<Forms.PictureBox>().Single();
+                surface.Select(pictureBox);
+
+                var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+                await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+                var row = FindRow(grid, "Image");
+                var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+                ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+                var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+                var projectRadio = Assert.Single(dialog.GetVisualDescendants().OfType<RadioButton>(),
+                    r => Equals(r.Content, Localizer.Get(StringKeys.WinFormsImageDialogProjectResource)));
+                projectRadio.IsChecked = true;
+                var list = Assert.Single(dialog.GetVisualDescendants().OfType<ListBox>(), l => l.Name == "WinFormsImageDialogProjectList");
+                var entry = list.ItemsSource!.Cast<WinFormsProjectResourceEntry>().Single(e => e.Name == imported.Name);
+                list.SelectedItem = entry;
+
+                ClickOk(dialog);
+                await WaitUntilAsync(() =>
+                    designer.Text.Contains($"Global.My.Resources.Resources.{imported.Name}", StringComparison.Ordinal)
+                    && view.IsEnabled);
+
+                Assert.Contains($"Me.PictureBox1.Image = Global.My.Resources.Resources.{imported.Name}", designer.Text);
+                // No double dot where the (empty) root namespace would otherwise have gone.
+                Assert.DoesNotContain("Global..My.Resources", designer.Text, StringComparison.Ordinal);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            WindowsDesktopSamples.DeleteQuietly(root);
+        }
+    }
+
+    /// <summary>
+    /// The crash this guards against: before this fix, <see cref="WinFormsImageResourceDialog"/>
+    /// caught only IOException/UnauthorizedAccessException around
+    /// <see cref="WinFormsProjectResources.Import"/>, so a Resources.Designer.vb this method
+    /// cannot find its way around (hand-edited into something broken, not merely reformatted)
+    /// threw a FormatException straight through the dialog's Click handler instead of being
+    /// shown as an error. Nothing must be written when that happens, either.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task ImportingAProjectResourceWithAMalformedDesignerVbShowsAnErrorAndChangesNothing()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-project-malformed-").FullName;
+        try
+        {
+            var projectPath = Path.Combine(root, "App.vbproj");
+            File.WriteAllText(projectPath, VbprojWithRootNamespace("Contoso.App"));
+            var designerVbPath = WinFormsProjectResources.ResourcesDesignerVbPath(projectPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(designerVbPath)!);
+            const string malformedDesignerVb = """
+                Namespace My.Resources
+                    Friend Module Resources
+                        ' Hand-edited: the closing "End Module" was deleted by mistake.
+                End Namespace
+                """;
+            File.WriteAllText(designerVbPath, malformedDesignerVb);
+
+            var owner = new Window();
+            owner.Show();
+            try
+            {
+                var pngPath = WriteTempPng(SolidPng(Drawing.Color.Red));
+                var dialog = new WinFormsImageResourceDialog(
+                    currentBytes: null, isIcon: false, importFile: () => Task.FromResult<string?>(pngPath), projectPath: projectPath);
+                var resultTask = dialog.ShowDialog<bool>(owner);
+                Dispatcher.UIThread.RunJobs();
+
+                var projectRadio = Assert.Single(dialog.GetVisualDescendants().OfType<RadioButton>(),
+                    r => Equals(r.Content, Localizer.Get(StringKeys.WinFormsImageDialogProjectResource)));
+                projectRadio.IsChecked = true;
+
+                Click(dialog, "WinFormsImageDialogProjectImport");
+                await WaitUntilAsync(() => FindError(dialog).IsVisible);
+
+                Assert.Contains("Resources.Designer.vb", FindError(dialog).Text);
+                var list = Assert.Single(dialog.GetVisualDescendants().OfType<ListBox>(), l => l.Name == "WinFormsImageDialogProjectList");
+                Assert.Empty(list.ItemsSource!.Cast<WinFormsProjectResourceEntry>());
+
+                ClickCancel(dialog);
+                Assert.False(await resultTask);
+            }
+            finally
+            {
+                owner.Close();
+            }
+
+            // Nothing was written: the malformed Designer.vb survives untouched, and no
+            // Resources.resx (or copied file) was created for the rejected import.
+            Assert.Equal(malformedDesignerVb, File.ReadAllText(designerVbPath));
+            Assert.False(File.Exists(WinFormsProjectResources.ResourcesResxPath(projectPath)));
+            Assert.False(Directory.Exists(WinFormsProjectResources.ImportedFilesDirectory(projectPath)));
+        }
+        finally
+        {
+            WindowsDesktopSamples.DeleteQuietly(root);
+        }
+    }
+
     private static TextBlock FindError(Window dialog) =>
         dialog.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "WinFormsImageDialogError");
 

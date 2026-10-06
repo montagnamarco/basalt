@@ -217,11 +217,22 @@ public static class ExplorerFileOperations
         return project;
     }
 
-    /// <summary>The nearest .vbproj or .csproj at or above the file's folder.</summary>
-    private static string? ProjectContaining(string filePath)
+    /// <summary>
+    /// The nearest .vbproj or .csproj at or above the file's folder.
+    ///
+    /// Shared with <see cref="Basalt.Workspace.WinFormsProjectResources"/>, which uses the
+    /// same lookup to find the .vbproj a WinForms designer form belongs to.
+    /// </summary>
+    public static string? ProjectContaining(string filePath)
     {
-        for (var directory = Path.GetDirectoryName(filePath); directory is not null; directory = Path.GetDirectoryName(directory))
+        for (var directory = Path.GetDirectoryName(filePath);
+             !string.IsNullOrEmpty(directory);
+             directory = Path.GetDirectoryName(directory))
         {
+            // A headless test's document path is often a bare file name with no real
+            // folder on disk; nothing to find above it, and EnumerateFiles would throw.
+            if (!Directory.Exists(directory)) continue;
+
             var project = Directory.EnumerateFiles(directory, "*.vbproj")
                 .Concat(Directory.EnumerateFiles(directory, "*.csproj"))
                 .FirstOrDefault();
