@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Basalt.Core.Localization;
 using Basalt.Shell.ViewModels;
+using Basalt.Workspace;
 using Basalt.Workspace.Refactoring;
 
 namespace Basalt.Shell.Controls;
@@ -13,18 +14,21 @@ internal sealed class EditorSmartTagTransaction
 
     private readonly ObservableCollection<EditorDocumentViewModel> _documents;
     private readonly IReadOnlyList<Snapshot> _snapshots;
+    private readonly PathMatcher _matcher;
 
     private EditorSmartTagTransaction(ObservableCollection<EditorDocumentViewModel> documents,
-        IReadOnlyList<Snapshot> snapshots)
+        IReadOnlyList<Snapshot> snapshots, PathMatcher matcher)
     {
         _documents = documents;
         _snapshots = snapshots;
+        _matcher = matcher;
     }
 
     internal static async Task<EditorSmartTagTransaction> CaptureAsync(RefactoringPreview preview,
-        ObservableCollection<EditorDocumentViewModel> documents)
+        ObservableCollection<EditorDocumentViewModel> documents, PathMatcher? matcher = null)
     {
-        var buffers = preview.Changes.Select(change => (Change: change, Document: Find(documents, change.FilePath))).ToArray();
+        matcher ??= new PathMatcher();
+        var buffers = preview.Changes.Select(change => (Change: change, Document: Find(documents, change.FilePath, matcher))).ToArray();
         var snapshots = new List<Snapshot>();
         foreach (var (change, document) in buffers)
         {
@@ -43,7 +47,7 @@ internal sealed class EditorSmartTagTransaction
             snapshots.Add(new Snapshot(change, document, disk, modified));
         }
 
-        var transaction = new EditorSmartTagTransaction(documents, snapshots);
+        var transaction = new EditorSmartTagTransaction(documents, snapshots, matcher);
         transaction.ValidateBuffers();
         return transaction;
     }
@@ -86,7 +90,7 @@ internal sealed class EditorSmartTagTransaction
             {
                 // An observer can make another edit while notified. Never roll
                 // that newer edit back just because this transaction failed.
-                if (!ReferenceEquals(Find(_documents, snapshot.Change.FilePath), document)
+                if (!ReferenceEquals(Find(_documents, snapshot.Change.FilePath, _matcher), document)
                     || document.Text != snapshot.Change.NewText && (!created || document.Text != snapshot.Change.OriginalText))
                 {
                     continue;
@@ -135,7 +139,7 @@ internal sealed class EditorSmartTagTransaction
             var written = applied?.FirstOrDefault(entry => ReferenceEquals(entry.Snapshot, snapshot));
             var expectedDocument = written?.Document ?? snapshot.Document;
             var expectedText = written?.Document is not null ? snapshot.Change.NewText : snapshot.Change.OriginalText;
-            var current = Find(_documents, snapshot.Change.FilePath);
+            var current = Find(_documents, snapshot.Change.FilePath, _matcher);
             if (!ReferenceEquals(current, expectedDocument) || current is not null && current.Text != expectedText)
             {
                 throw Changed();
@@ -143,9 +147,9 @@ internal sealed class EditorSmartTagTransaction
         }
     }
 
-    private static EditorDocumentViewModel? Find(IEnumerable<EditorDocumentViewModel> documents, string path) =>
-        documents.FirstOrDefault(document => string.Equals(Path.GetFullPath(document.FilePath), Path.GetFullPath(path),
-            OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal));
+    internal static EditorDocumentViewModel? Find(IEnumerable<EditorDocumentViewModel> documents, string path,
+        PathMatcher matcher) =>
+        documents.FirstOrDefault(document => matcher.Same(document.FilePath, path));
 
     private static Task<string?> ReadDiskAsync(string path) => Task.Run(async () =>
         File.Exists(path) ? await File.ReadAllTextAsync(path) : null);

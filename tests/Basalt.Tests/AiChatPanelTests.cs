@@ -100,35 +100,34 @@ public class AiContextTests
     }
 
     [Fact]
-    public void PrefersTheSelectionToTheWholeFile()
+    public void SendsTheSelectionWithItsLines()
     {
-        // The selection is what the user is asking about, and a whole file
-        // would crowd out the question.
         var described = new AiContext
         {
             SelectedText = "Dim x = 1",
-            FileText = "the entire file"
+            SelectionStartLine = 4,
+            SelectionEndLine = 4
         }.Describe();
 
         Assert.Contains("Dim x = 1", described);
-        Assert.DoesNotContain("the entire file", described);
+        Assert.Contains("lines 4-4", described);
     }
 
     [Fact]
-    public void UsesTheFileWhenNothingIsSelected()
+    public void DoesNotSendTheWholeFileOrCutItOff()
     {
-        var described = new AiContext { FileText = "Module A\nEnd Module" }.Describe();
-
-        Assert.Contains("Module A", described);
+        // The assistant reads files with its own tools; the 8000-character
+        // cut-off that used to apply to the one file sent is gone with it.
+        Assert.Null(typeof(AiContext).GetProperty("FileText"));
     }
 
     [Fact]
-    public void ShortensAVeryLongFile()
+    public void CutsAnEnormousSelectionAndSaysWhere()
     {
-        var described = new AiContext { FileText = new string('x', 20000) }.Describe();
+        var described = new AiContext { SelectedText = new string('x', 100000) }.Describe();
 
-        Assert.Contains("truncated", described);
-        Assert.True(described.Length < 12000);
+        Assert.Contains("selection cut here", described);
+        Assert.True(described.Length < 40000);
     }
 
     [Fact]
@@ -224,13 +223,62 @@ public class AiChatPanelTests
             Avalonia.Controls.ToolTip.GetTip(send));
         Assert.NotEqual(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiSend), send.Content);
 
-        panel.EndReply();
+        panel.EndReply(running);
         AssertSend();
 
-        // Stopping from the button goes back to Send too.
+        // Stopping from the button goes back to Send once the reply has
+        // really stopped, not before.
         panel.BeginReply(running);
         panel.Cancel();
+        panel.EndReply(running);
         AssertSend();
+    }
+
+    [AvaloniaFact]
+    public void KeepsSendUnavailableUntilAStoppedReplyHasReallyStopped()
+    {
+        // Send came back the moment Stop was pressed, so a new question could
+        // start a second loop on the same conversation while the first was
+        // still winding down.
+        var panel = new AiChatPanel();
+        using var old = new CancellationTokenSource();
+
+        panel.BeginReply(old);
+        panel.Cancel();
+
+        Assert.True(old.IsCancellationRequested);
+        Assert.False(panel.SendButton.IsEnabled);
+
+        var asked = 0;
+        panel.Asked += (_, _) => asked++;
+        panel.InputText = "Another question";
+        panel.RequestSend();
+
+        Assert.Equal(0, asked);
+        Assert.True(panel.IsReplying);
+
+        panel.EndReply(old);
+
+        Assert.True(panel.SendButton.IsEnabled);
+        Assert.False(panel.IsReplying);
+    }
+
+    [AvaloniaFact]
+    public void AnOldReplyFinishingLateDoesNotEndANewerOne()
+    {
+        var panel = new AiChatPanel();
+        using var old = new CancellationTokenSource();
+        using var current = new CancellationTokenSource();
+
+        panel.BeginReply(old);
+        panel.BeginReply(current);
+        panel.EndReply(old);
+
+        Assert.True(panel.IsReplying);
+
+        panel.EndReply(current);
+
+        Assert.False(panel.IsReplying);
     }
 
     [AvaloniaFact]
@@ -335,50 +383,70 @@ public class AiConversationTests
     {
         // An assistant answers better for having seen the conversation.
         var conversation = new AiConversation();
-        var client = new StubChatClient("It declares a variable.");
+        var backend = new ScriptedBackend(ScriptedBackend.Say("It declares a variable."));
 
-        await DrainAsync(conversation.AskAsync(client, "What does Dim do?"));
+        await DrainAsync(conversation.AskAsync(backend, "What does Dim do?"));
 
         Assert.Equal(2, conversation.History.Count);
-        Assert.Equal(ChatRole.User, conversation.History[0].Role);
-        Assert.Equal(ChatRole.Assistant, conversation.History[1].Role);
+        Assert.Equal(AiRole.User, conversation.History[0].Role);
+        Assert.Equal(AiRole.Assistant, conversation.History[1].Role);
     }
 
     [Fact]
-    public async Task SendsTheContextWithTheQuestionButDoesNotRememberIt()
+    public async Task PutsTheContextInTheNewestUserMessageNotInTheSystemText()
     {
-        // The file changes as the user edits; a copy from three turns ago
-        // would mislead.
+        // The system text and the tools never vary; what does (the solution,
+        // the active file) rides in the message, and stays there unchanged,
+        // so every later request begins with exactly what the last one sent.
         var conversation = new AiConversation();
-        var client = new StubChatClient("Fine.");
+        var backend = new ScriptedBackend(ScriptedBackend.Say("Fine."), ScriptedBackend.Say("Again."));
 
-        await DrainAsync(conversation.AskAsync(client, "Why?", context: "File: Program.vb"));
+        await DrainAsync(conversation.AskAsync(backend, "Why?",
+            new AiPromptContext("Solution: App.sln", "Active file: Program.vb")));
+        await DrainAsync(conversation.AskAsync(backend, "And?",
+            new AiPromptContext("Solution: Changed.sln", "Active file: Other.vb")));
 
-        Assert.Contains("File: Program.vb", client.LastPrompt);
-        Assert.DoesNotContain("File: Program.vb", conversation.History[0].Text);
+        Assert.Equal(AiConversation.SystemPrompt, backend.Requests[0].StableSystem);
+        Assert.DoesNotContain("Program.vb", backend.Requests[0].StableSystem);
+
+        var first = backend.Requests[0].Messages[0];
+        Assert.Contains("Solution: App.sln", first.Text);
+        Assert.Contains("Active file: Program.vb", first.Text);
+        Assert.True(first.Parts.OfType<AiTextPart>().First().CacheBreakpoint);
+
+        // The second request repeats the first message untouched, and the
+        // solution is not described again.
+        Assert.Same(first, backend.Requests[1].Messages[0]);
+        Assert.DoesNotContain("Changed.sln", backend.Requests[1].Messages[2].Text);
+        Assert.Contains("Active file: Other.vb", backend.Requests[1].Messages[2].Text);
     }
 
     [Fact]
     public async Task TellsTheAssistantItsJobEveryTime()
     {
         var conversation = new AiConversation();
-        var client = new StubChatClient("Fine.");
+        var backend = new ScriptedBackend(ScriptedBackend.Say("Fine."));
 
-        await DrainAsync(conversation.AskAsync(client, "A question"));
+        await DrainAsync(conversation.AskAsync(backend, "A question"));
 
-        Assert.Equal(ChatRole.System, client.LastMessages[0].Role);
+        Assert.Equal(AiConversation.SystemPrompt, backend.Requests[0].StableSystem);
     }
 
     [Fact]
     public async Task YieldsTheReplyAsItArrives()
     {
         var conversation = new AiConversation();
-        var client = new StubChatClient("It ", "declares ", "a variable.");
+        var backend = new ScriptedBackend(
+        [
+            new AiTextDelta("It "), new AiTextDelta("declares "), new AiTextDelta("a variable."),
+            new AiTurnEnd(new AiMessage(AiRole.Assistant, [new AiTextPart("It declares a variable.")]),
+                AiStopReason.EndTurn)
+        ]);
 
         var pieces = new List<string>();
 
-        await foreach (var piece in conversation.AskAsync(client, "What does Dim do?"))
-            pieces.Add(piece);
+        await foreach (var update in conversation.AskAsync(backend, "What does Dim do?"))
+            if (update is AiTextChunk chunk) pieces.Add(chunk.Text);
 
         Assert.Equal(3, pieces.Count);
         Assert.Equal("It declares a variable.", string.Concat(pieces));
@@ -389,55 +457,15 @@ public class AiConversationTests
     {
         var conversation = new AiConversation();
 
-        await DrainAsync(conversation.AskAsync(new StubChatClient("Fine."), "A question"));
+        await DrainAsync(conversation.AskAsync(new ScriptedBackend(ScriptedBackend.Say("Fine.")), "A question"));
 
         conversation.Clear();
 
         Assert.Empty(conversation.History);
     }
 
-    private static async Task DrainAsync(IAsyncEnumerable<string> stream)
+    private static async Task DrainAsync(IAsyncEnumerable<AiChatEvent> stream)
     {
         await foreach (var _ in stream) { }
-    }
-
-    /// <summary>An assistant that answers with what it was given.</summary>
-    private sealed class StubChatClient : IChatClient
-    {
-        private readonly string[] _pieces;
-
-        public StubChatClient(params string[] pieces) => _pieces = pieces;
-
-        public IReadOnlyList<ChatMessage> LastMessages { get; private set; } = [];
-
-        public string LastPrompt => LastMessages.LastOrDefault()?.Text ?? "";
-
-        public Task<ChatResponse> GetResponseAsync(
-            IEnumerable<ChatMessage> messages, ChatOptions? options = null,
-            CancellationToken cancellationToken = default)
-        {
-            LastMessages = [.. messages];
-
-            return Task.FromResult(
-                new ChatResponse(new ChatMessage(ChatRole.Assistant, string.Concat(_pieces))));
-        }
-
-        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
-            IEnumerable<ChatMessage> messages, ChatOptions? options = null,
-            [System.Runtime.CompilerServices.EnumeratorCancellation]
-            CancellationToken cancellationToken = default)
-        {
-            LastMessages = [.. messages];
-
-            foreach (var piece in _pieces)
-            {
-                await Task.Yield();
-                yield return new ChatResponseUpdate(ChatRole.Assistant, piece);
-            }
-        }
-
-        public object? GetService(Type serviceType, object? serviceKey = null) => null;
-
-        public void Dispose() { }
     }
 }

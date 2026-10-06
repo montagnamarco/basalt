@@ -1,15 +1,12 @@
-using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.Extensions.AI;
 using Basalt.Core.Services;
 
 namespace Basalt.Workspace.Ai;
 
 /// <summary>ChatGPT, through OpenAI's chat completions API.</summary>
-public sealed class OpenAiProvider : IAiProvider
+public sealed class OpenAiProvider : IAiChatProvider
 {
     public AiVendor Vendor => AiVendor.ChatGpt;
 
@@ -24,122 +21,209 @@ public sealed class OpenAiProvider : IAiProvider
         new("gpt-4o", "GPT-4o")
     ];
 
-    public IChatClient CreateClient(string apiKey, string modelId) =>
-        new OpenAiChatClient(apiKey, modelId);
+    public IAiChatBackend CreateBackend(string apiKey, string modelId) =>
+        new OpenAiBackend(apiKey, modelId);
 }
 
-/// <summary>Talks to OpenAI's chat completions endpoint.</summary>
-internal sealed class OpenAiChatClient : IChatClient
+/// <summary>One assistant turn from OpenAI, with function calling.</summary>
+internal sealed class OpenAiBackend : IAiChatBackend
 {
-    private const string Endpoint = "https://api.openai.com/v1/chat/completions";
+    private const string DefaultEndpoint = "https://api.openai.com/v1/chat/completions";
 
     private readonly HttpClient _http;
     private readonly string _model;
+    private readonly string _endpoint;
 
-    public OpenAiChatClient(string apiKey, string model, HttpClient? http = null)
+    public OpenAiBackend(string apiKey, string model, HttpClient? http = null, string? endpoint = null)
     {
         _model = model;
+        _endpoint = endpoint ?? DefaultEndpoint;
 
         _http = http ?? new HttpClient();
         _http.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
     }
 
-    public async Task<ChatResponse> GetResponseAsync(
-        IEnumerable<ChatMessage> messages,
-        ChatOptions? options = null,
-        CancellationToken cancellationToken = default)
+    internal JsonObject BuildRequest(AiTurnRequest request)
     {
-        var text = new StringBuilder();
-
-        await foreach (var update in GetStreamingResponseAsync(messages, options, cancellationToken))
-            text.Append(update.Text);
-
-        return new ChatResponse(new ChatMessage(ChatRole.Assistant, text.ToString()));
-    }
-
-    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
-        IEnumerable<ChatMessage> messages,
-        ChatOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        using var response = await _http
-            .PostAsJsonAsync(Endpoint, BuildRequest(messages, options), cancellationToken)
-            .ConfigureAwait(false);
-
-        if (!response.IsSuccessStatusCode)
+        var conversation = new JsonArray
         {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            throw new InvalidOperationException(
-                ClaudeChatClient.Describe(response.StatusCode, error));
-        }
-
-        var stream = await response.Content.ReadAsStreamAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        using var reader = new StreamReader(stream);
-
-        while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
-        {
-            if (!line.StartsWith("data: ", StringComparison.Ordinal)) continue;
-
-            var payload = line["data: ".Length..];
-
-            if (payload == "[DONE]") yield break;
-
-            var text = TextOf(payload);
-
-            if (text.Length > 0) yield return new ChatResponseUpdate(ChatRole.Assistant, text);
-        }
-    }
-
-    /// <summary>The text carried by one event, or empty when it carries none.</summary>
-    internal static string TextOf(string payload)
-    {
-        try
-        {
-            return JsonNode.Parse(payload)?["choices"]?[0]?["delta"]?["content"]
-                ?.GetValue<string>() ?? "";
-        }
-        catch (JsonException)
-        {
-            return "";
-        }
-    }
-
-    internal JsonObject BuildRequest(IEnumerable<ChatMessage> messages, ChatOptions? options)
-    {
-        var conversation = new JsonArray();
-
-        // Here the system prompt is a message like any other, unlike Claude.
-        foreach (var message in messages)
-        {
-            conversation.Add(new JsonObject
-            {
-                ["role"] = message.Role == ChatRole.Assistant ? "assistant"
-                         : message.Role == ChatRole.System ? "system"
-                         : "user",
-                ["content"] = message.Text
-            });
-        }
-
-        var request = new JsonObject
-        {
-            ["model"] = options?.ModelId ?? _model,
-            ["stream"] = true,
-            ["messages"] = conversation
+            // Here the system prompt is a message like any other.
+            new JsonObject { ["role"] = "system", ["content"] = request.SystemText() }
         };
 
-        if (options?.MaxOutputTokens is { } limit) request["max_completion_tokens"] = limit;
-        if (options?.Temperature is { } temperature) request["temperature"] = temperature;
+        foreach (var message in request.Messages)
+        {
+            if (message.Role == AiRole.User)
+            {
+                // Each tool result is a message of its own, answering one call.
+                foreach (var result in message.Parts.OfType<AiToolResultPart>())
+                    conversation.Add(new JsonObject
+                    {
+                        ["role"] = "tool",
+                        ["tool_call_id"] = result.CallId,
+                        ["content"] = result.IsError ? $"Error: {result.Content}" : result.Content
+                    });
 
-        return request;
+                if (message.Text.Length > 0)
+                    conversation.Add(new JsonObject { ["role"] = "user", ["content"] = message.Text });
+
+                continue;
+            }
+
+            var assistant = new JsonObject
+            {
+                ["role"] = "assistant",
+                ["content"] = message.Text.Length > 0 ? message.Text : null
+            };
+
+            if (message.ToolCalls.Count > 0)
+            {
+                assistant["tool_calls"] = new JsonArray([.. message.ToolCalls.Select(call =>
+                    (JsonNode)new JsonObject
+                    {
+                        ["id"] = call.Id,
+                        ["type"] = "function",
+                        ["function"] = new JsonObject
+                        {
+                            ["name"] = call.Name,
+                            ["arguments"] = call.Input.ToJsonString()
+                        }
+                    })]);
+            }
+
+            conversation.Add(assistant);
+        }
+
+        var body = new JsonObject
+        {
+            ["model"] = _model,
+            ["stream"] = true,
+            ["messages"] = conversation,
+            ["max_completion_tokens"] = request.MaxTokens
+        };
+
+        if (request.Tools.Count > 0)
+        {
+            body["tools"] = new JsonArray([.. request.Tools
+                .OrderBy(t => t.Name, StringComparer.Ordinal)
+                .Select(t => (JsonNode)new JsonObject
+                {
+                    ["type"] = "function",
+                    ["function"] = new JsonObject
+                    {
+                        ["name"] = t.Name,
+                        ["description"] = t.Description,
+                        ["parameters"] = t.InputSchema.DeepClone()
+                    }
+                })]);
+
+            body["tool_choice"] = "auto";
+        }
+
+        // Only the reasoning models take it; sending it to the others is an error.
+        if (_model.StartsWith("gpt-5", StringComparison.Ordinal))
+            body["reasoning_effort"] = request.Effort switch
+            {
+                AiEffort.Low => "low",
+                AiEffort.High => "high",
+                _ => "medium"
+            };
+
+        return body;
     }
 
-    public object? GetService(Type serviceType, object? serviceKey = null) =>
-        serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+    public async IAsyncEnumerable<AiTurnEvent> StreamTurnAsync(
+        AiTurnRequest request, [EnumeratorCancellation] CancellationToken ct)
+    {
+        using var reader = await AiSse.PostAsync(_http, _endpoint, BuildRequest(request), ct)
+            .ConfigureAwait(false);
+
+        var turn = new TurnReader(_model);
+
+        await foreach (var chunk in AiSse.ReadAsync(reader, ct).ConfigureAwait(false))
+            if (turn.Apply(chunk) is { Length: > 0 } text)
+                yield return new AiTextDelta(text);
+
+        yield return turn.Finish();
+    }
+
+    /// <summary>Reads a turn out of the stream's chunks.</summary>
+    internal sealed class TurnReader(string model)
+    {
+        private readonly StringBuilder _text = new();
+        private readonly SortedDictionary<int, (string Id, string Name, StringBuilder Arguments)> _calls = [];
+        private string? _finish;
+        private bool _refused;
+        private string? _served;
+
+        public string? Apply(JsonObject chunk)
+        {
+            _served ??= chunk["model"]?.GetValue<string>();
+
+            var choice = chunk["choices"]?[0];
+
+            if (choice is null) return null;
+
+            if (choice["finish_reason"] is JsonValue finish && finish.TryGetValue<string>(out var reason))
+                _finish = reason;
+
+            var delta = choice["delta"];
+
+            if (delta is null) return null;
+
+            if (delta["refusal"] is JsonValue refusal && refusal.TryGetValue<string>(out var refused) && refused.Length > 0)
+                _refused = true;
+
+            if (delta["tool_calls"] is JsonArray calls)
+            {
+                foreach (var call in calls)
+                {
+                    var index = call?["index"]?.GetValue<int>() ?? 0;
+
+                    if (!_calls.TryGetValue(index, out var entry))
+                        entry = ("", "", new StringBuilder());
+
+                    var id = call?["id"]?.GetValue<string>();
+                    var name = call?["function"]?["name"]?.GetValue<string>();
+
+                    _calls[index] = (id ?? entry.Id, name ?? entry.Name, entry.Arguments);
+
+                    if (call?["function"]?["arguments"]?.GetValue<string>() is { } arguments)
+                        entry.Arguments.Append(arguments);
+                }
+            }
+
+            if (delta["content"] is JsonValue content && content.TryGetValue<string>(out var text) && text.Length > 0)
+            {
+                _text.Append(text);
+                return text;
+            }
+
+            return null;
+        }
+
+        public AiTurnEnd Finish()
+        {
+            var parts = new List<AiPart>();
+
+            if (_text.Length > 0) parts.Add(new AiTextPart(_text.ToString()));
+
+            foreach (var (_, (id, name, arguments)) in _calls)
+            {
+                var (input, error) = AiSse.ParseArguments(arguments.ToString());
+                parts.Add(new AiToolCallPart(id, name, input, error));
+            }
+
+            var stop = _refused || _finish == "content_filter" ? AiStopReason.Refusal
+                : _finish == "length" ? AiStopReason.MaxTokens
+                : _finish == "tool_calls" || _finish == "function_call" || _calls.Count > 0 ? AiStopReason.ToolUse
+                : _finish == "stop" ? AiStopReason.EndTurn
+                : AiStopReason.Other;
+
+            return new AiTurnEnd(new AiMessage(AiRole.Assistant, parts), stop, ModelUsed: _served ?? model);
+        }
+    }
 
     public void Dispose() => _http.Dispose();
 }

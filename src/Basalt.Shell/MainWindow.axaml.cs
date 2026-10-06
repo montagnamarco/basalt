@@ -69,7 +69,7 @@ public partial class MainWindow : Window
     private AiChatPanel? _assistant;
 
     /// <summary>The conversation with the assistant, which outlives one question.</summary>
-    private readonly AiConversation _conversation = new();
+    private AiAssistantController? _assistantController;
 
     /// <summary>Where the assistants' API keys are kept.</summary>
     private readonly ApiKeyStore _apiKeys = new();
@@ -3882,174 +3882,22 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>Builds the assistant panel and connects it to a conversation.</summary>
+    /// <summary>Builds the assistant panel; the controller owns everything it does.</summary>
     private void BuildAssistantPanel()
     {
         _assistant = new AiChatPanel();
 
-        _assistant.Asked += (_, request) => Guarded.Run(
-            () => AskAssistantAsync(request),
-            ViewModel.WriteOutput, "ide");
-
-        _assistant.ApplyRequested += (_, code) => Guarded.Run(
-            () => ApplyAssistantCodeAsync(code),
-            ViewModel.WriteOutput, "ide");
+        _assistantController = new AiAssistantController(
+            _assistant, ViewModel, () => _settingsStore.Load().Ai, _apiKeys,
+            CurrentEditor, ShowSmartTagDocumentTabs,
+            async preview =>
+            {
+                var dialog = new RefactoringPreviewDialog(preview);
+                await dialog.ShowDialog(this);
+                return dialog.Accepted;
+            });
 
         _contents[_factory.Assistant] = _assistant;
-
-        ShowAssistantStatus();
-    }
-
-    /// <summary>Says which assistant is in use, or that none is set up.</summary>
-    private void ShowAssistantStatus()
-    {
-        if (_assistant is null) return;
-
-        var settings = _settingsStore.Load().Ai;
-
-        if (!Enum.TryParse<AiVendor>(settings.Vendor, out var vendor))
-        {
-            _assistant.ShowStatus(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiNoAssistant));
-            return;
-        }
-
-        var provider = AiConversation.ProviderFor(vendor);
-
-        _assistant.ShowStatus(_apiKeys.Has(vendor)
-            ? $"{provider.DisplayName} — {ModelNameOf(provider, settings.Model)}"
-            : $"{provider.DisplayName} needs an API key. Add it in Settings.");
-    }
-
-    private static string ModelNameOf(IAiProvider provider, string modelId) =>
-        provider.Models.FirstOrDefault(m => m.Id == modelId)?.DisplayName
-        ?? provider.Models[0].DisplayName;
-
-    /// <summary>
-    /// Asks the assistant, showing the reply as it arrives.
-    ///
-    /// Nothing is awaited before the turns are added: the user should see
-    /// their question in the conversation the moment they ask it.
-    /// </summary>
-    private async Task AskAssistantAsync(AiRequest request)
-    {
-        if (_assistant is null) return;
-
-        var settings = _settingsStore.Load().Ai;
-
-        if (!Enum.TryParse<AiVendor>(settings.Vendor, out var vendor))
-        {
-            _assistant.ShowStatus(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiNoAssistant));
-            return;
-        }
-
-        if (_apiKeys.Get(vendor) is not { Length: > 0 } apiKey)
-        {
-            _assistant.ShowStatus("That assistant needs an API key. Add it in Settings.");
-            return;
-        }
-
-        var provider = AiConversation.ProviderFor(vendor);
-
-        var model = settings.Model is { Length: > 0 } chosen ? chosen : provider.Models[0].Id;
-
-        var question = AiConversation.InstructionFor(ActionName(request.Action), request.Question);
-
-        _assistant.Append(Microsoft.Extensions.AI.ChatRole.User,
-            request.Question.Length > 0 ? request.Question : ActionName(request.Action));
-
-        _assistant.Append(Microsoft.Extensions.AI.ChatRole.Assistant, "");
-
-        using var running = new CancellationTokenSource();
-        _assistant.BeginReply(running);
-
-        try
-        {
-            using var client = provider.CreateClient(apiKey, model);
-
-            await foreach (var piece in _conversation
-                .AskAsync(client, question, GatherContext(settings), running.Token)
-                .ConfigureAwait(true))
-            {
-                _assistant.AppendToLast(piece);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _assistant.AppendToLast("\n\n(stopped)");
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or HttpRequestException
-                                      or IOException)
-        {
-            _assistant.AppendToLast($"\n\n{ex.Message}");
-        }
-        finally
-        {
-            _assistant.EndReply();
-        }
-    }
-
-    private static string ActionName(AiAction action) => action switch
-    {
-        AiAction.Explain => "Explain",
-        AiAction.FixError => "Fix the error",
-        AiAction.GenerateTests => "Generate tests",
-        AiAction.Document => "Document",
-        _ => "Ask"
-    };
-
-    /// <summary>
-    /// What the assistant is told about the code.
-    ///
-    /// The selection where there is one, the file otherwise, and the current
-    /// errors — each only if the user has left that setting on.
-    /// </summary>
-    private string GatherContext(AiSettings settings)
-    {
-        if (CurrentEditor() is not { } editor) return "";
-        if (ViewModel.ActiveDocument is not { } document) return new AiContext().Describe();
-
-        var context = new AiContext
-        {
-            FilePath = document.FilePath,
-            Language = document.Language.ToString(),
-            SelectedText = editor.SelectionLength > 0 ? editor.SelectedText : null,
-            FileText = settings.SendFileContext && editor.SelectionLength == 0
-                ? editor.Text
-                : null,
-            Errors = settings.SendErrors
-                ? [.. ViewModel.Diagnostics
-                    .Where(d => d.Severity == Basalt.Core.Model.DiagnosticSeverity.Error)
-                    .Select(d => $"{d.Id}: {d.Message}")]
-                : []
-        };
-
-        return context.Describe();
-    }
-
-    /// <summary>
-    /// Puts the assistant's code into the editor.
-    ///
-    /// It replaces the selection where there is one and is inserted at the
-    /// caret otherwise; either way it is one edit, which undo takes back in
-    /// one step.
-    /// </summary>
-    private async Task ApplyAssistantCodeAsync(string code)
-    {
-        if (CurrentEditor() is not { } editor)
-        {
-            ViewModel.WriteOutput("[assistant] Open a file to apply the change to.");
-            return;
-        }
-
-        await Task.Yield();
-
-        if (editor.SelectionLength > 0)
-        {
-            editor.Document.Replace(editor.SelectionStart, editor.SelectionLength, code);
-            return;
-        }
-
-        editor.Document.Insert(editor.CaretOffset, code);
     }
 
     /// <summary>Builds the source control panels and connects them to git.</summary>

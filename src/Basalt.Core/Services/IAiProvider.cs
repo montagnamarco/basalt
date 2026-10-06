@@ -1,5 +1,3 @@
-using Microsoft.Extensions.AI;
-
 namespace Basalt.Core.Services;
 
 /// <summary>Which assistant to talk to.</summary>
@@ -14,9 +12,9 @@ public sealed record AiModel(string Id, string DisplayName)
 /// <summary>
 /// An assistant the IDE can talk to.
 ///
-/// Built on <see cref="IChatClient"/> so the panel talks to one interface
-/// whichever assistant is chosen, and a fourth could be added without the
-/// panel changing.
+/// This describes the assistant: its name, its models and where to get a key.
+/// Talking to it is the workspace layer's business (see IAiChatProvider), so
+/// the panel works the same whichever assistant is chosen.
 /// </summary>
 public interface IAiProvider
 {
@@ -29,12 +27,4 @@ public interface IAiProvider
 
     /// <summary>Where the user gets a key, shown when none is set.</summary>
     string ApiKeyUrl { get; }
-
-    /// <summary>
-    /// A client for talking to the assistant.
-    ///
-    /// The key is passed rather than stored here: a provider that held one
-    /// would keep it alive for as long as the IDE runs.
-    /// </summary>
-    IChatClient CreateClient(string apiKey, string modelId);
 }

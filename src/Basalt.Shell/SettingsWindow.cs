@@ -842,12 +842,7 @@ public sealed class SettingsWindow : Window
 
         if (chosen is not null)
         {
-            rows.Add(Choice("Model",
-                [.. chosen.Models.Select(m => m.DisplayName)],
-                chosen.Models.FirstOrDefault(m => m.Id == _settings.Ai.Model)?.DisplayName
-                    ?? chosen.Models[0].DisplayName,
-                v => Apply(() =>
-                    _settings.Ai.Model = chosen.Models.First(m => m.DisplayName == v).Id)));
+            rows.Add(ModelRow(chosen));
 
             rows.Add(ApiKeyRow(chosen));
         }
@@ -862,6 +857,33 @@ public sealed class SettingsWindow : Window
             v => Apply(() => _settings.Ai.SendErrors = v)));
 
         return Page([.. rows]);
+    }
+
+    /// <summary>
+    /// The model: one of the listed ones, or any id typed in. Models appear
+    /// before a list can be updated, and a vendor's older ones stay usable.
+    /// </summary>
+    private Control ModelRow(IAiProvider provider)
+    {
+        var box = new TextBox { Text = _settings.Ai.Model, PlaceholderText = provider.Models[0].Id };
+
+        var known = new ComboBox
+        {
+            ItemsSource = provider.Models.Select(m => m.DisplayName).ToList(),
+            SelectedItem = provider.Models.FirstOrDefault(m => m.Id == _settings.Ai.Model)?.DisplayName,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
+        known.SelectionChanged += (_, _) =>
+        {
+            if (known.SelectedItem is string name)
+                box.Text = provider.Models.First(m => m.DisplayName == name).Id;
+        };
+
+        box.TextChanged += (_, _) => Apply(() => _settings.Ai.Model = (box.Text ?? "").Trim());
+
+        return Labelled("Model", new StackPanel { Spacing = 4, Children = { known, box } },
+            Localizer.Get(StringKeys.SettingsAiModelHint));
     }
 
     /// <summary>The API key box, which never shows what is already stored.</summary>
