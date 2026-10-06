@@ -4798,7 +4798,7 @@ public partial class MainWindow : Window
                 Gesture: new KeyGesture(Key.S, PlatformCommandModifier)) { Icon = IconKind.Save },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuFileMakeExecutable),
-                Action: RunMakeExecutable) { Icon = IconKind.Build },
+                Action: RunMakeExecutable) { Icon = IconKind.Publish },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuFileExit), Action: Close) { Icon = IconKind.Exit }
         ]),

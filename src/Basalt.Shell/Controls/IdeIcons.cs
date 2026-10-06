@@ -32,6 +32,9 @@ public enum IconKind
     /// <summary>A box opened to show what is inside: the Object Browser.</summary>
     ObjectBrowser,
 
+    /// <summary>A tray with an arrow leaving it: making a program to hand out.</summary>
+    Publish,
+
     /// <summary>Folded and unfolded: the state of a category in a list.</summary>
     ChevronRight, ChevronDown,
 
@@ -243,6 +246,7 @@ public static class IdeIcons
         // Two panes with a line between: what a diff looks like before
         // you can read any of it.
         IconKind.ObjectBrowser => "M8,2 L14,5 V11 L8,14 L2,11 V5 Z M2,5 L8,8 L14,5 M8,8 V14",
+        IconKind.Publish => "M2,9 V13.5 H14 V9 M8,2 V10 M5,5 L8,2 L11,5",
 
         IconKind.Diff => "M1.5,2.5 H7 V13.5 H1.5 Z M9,2.5 H14.5 V13.5 H9 Z M3,5.5 H5.5 M3,8 H5.5 M10.5,8 H13 M10.5,10.5 H13",
         IconKind.ChevronRight => "M6,3.5 L10.5,8 L6,12.5",
