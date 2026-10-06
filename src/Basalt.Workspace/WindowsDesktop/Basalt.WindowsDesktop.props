@@ -24,8 +24,10 @@
     <_BasaltInsideSourceRoot Condition="!$([MSBuild]::IsOSPlatform('Linux'))">$(MSBuildProjectFullPath.StartsWith('$(_BasaltSourceRootSlash)', System.StringComparison.OrdinalIgnoreCase))</_BasaltInsideSourceRoot>
   </PropertyGroup>
 
-  <!-- Every project outside the Basalt source tree: the Basalt projects keep their normal bin and obj. -->
-  <PropertyGroup Condition="'$(_BasaltSourceRootSlash)' != '' and '$(_BasaltInsideSourceRoot)' != 'true'">
+  <!-- Every project outside the Basalt source tree: the Basalt projects keep their normal bin and obj.
+       Without a source root (BasaltWinFormsVersion is passed instead: the shipped packages are
+       referenced) there is no Basalt project to spare, so every project is outside. -->
+  <PropertyGroup Condition="('$(_BasaltSourceRootSlash)' != '' and '$(_BasaltInsideSourceRoot)' != 'true') or ('$(_BasaltSourceRootSlash)' == '' and '$(BasaltWinFormsVersion)' != '')">
     <_BasaltOutsideSourceRoot>true</_BasaltOutsideSourceRoot>
     <!-- Kept apart so a Windows build of the same folder (real WinForms) neither
          reuses nor overwrites what the retargeted build produced. -->

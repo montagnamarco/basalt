@@ -1,4 +1,5 @@
 using Basalt.Core.Model;
+using Basalt.Core.Platform;
 
 namespace Basalt.Designer;
 
@@ -105,7 +106,8 @@ public static partial class SolutionTemplates
         string parentDirectory,
         string solutionName,
         ProjectTemplate template,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        BasaltWinFormsReference? winForms = null)
     {
         var root = Path.Combine(parentDirectory, solutionName);
         if (Directory.Exists(root) && Directory.EnumerateFileSystemEntries(root).Any())
@@ -130,7 +132,7 @@ public static partial class SolutionTemplates
         var projectPath = Path.Combine(projectDirectory, $"{solutionName}.vbproj");
 
         await File.WriteAllTextAsync(
-            projectPath, ProjectFile(template), ct).ConfigureAwait(false);
+            projectPath, ProjectFile(template, winForms), ct).ConfigureAwait(false);
 
         string? mainWindowXaml = null;
         string? mainFormDesigner = null;
@@ -419,7 +421,7 @@ public static partial class SolutionTemplates
     private static string Crlf(string text) =>
         text.Replace("\r\n", "\n").Replace("\n", "\r\n");
 
-    private static string ProjectFile(ProjectTemplate template)
+    private static string ProjectFile(ProjectTemplate template, BasaltWinFormsReference? winForms)
     {
         var outputType = template switch
         {
@@ -471,7 +473,7 @@ public static partial class SolutionTemplates
                 <Nullable>enable</Nullable>
                 <RootNamespace></RootNamespace>
               </PropertyGroup>
-            {avaloniaPackages}{testPackages}{VbHtmlSupport(template)}{WinFormsSupport(template)}
+            {avaloniaPackages}{testPackages}{VbHtmlSupport(template)}{WinFormsSupport(template, winForms)}
             </Project>
             """;
     }

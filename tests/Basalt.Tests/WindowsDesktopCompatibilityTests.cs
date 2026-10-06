@@ -872,8 +872,11 @@ public sealed class WindowsDesktopProjectDetectionTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "Windows builds the projects with the real WinForms.");
         var lib = WriteFormsLibrary();
         var previous = Environment.GetEnvironmentVariable(BasaltSourceRoot.EnvironmentVariable);
-        // A folder without Basalt.Forms: the same as an IDE installed without its sources.
+        var previousPackages = Environment.GetEnvironmentVariable(BasaltWinFormsPackages.SourceVariable);
+        // A folder without Basalt.Forms and without the .nupkg files: the same as
+        // an IDE installed with neither its sources nor the shipped packages.
         Environment.SetEnvironmentVariable(BasaltSourceRoot.EnvironmentVariable, _root);
+        Environment.SetEnvironmentVariable(BasaltWinFormsPackages.SourceVariable, _root);
         try
         {
             using var viewModel = new Basalt.Shell.ViewModels.MainWindowViewModel();
@@ -888,6 +891,7 @@ public sealed class WindowsDesktopProjectDetectionTests : IDisposable
         finally
         {
             Environment.SetEnvironmentVariable(BasaltSourceRoot.EnvironmentVariable, previous);
+            Environment.SetEnvironmentVariable(BasaltWinFormsPackages.SourceVariable, previousPackages);
         }
     }
 

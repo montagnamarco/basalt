@@ -52,42 +52,88 @@ public static partial class WindowsDesktopProjectCompatibility
     /// <see cref="WindowsDesktopCompatibilitySession"/>, which does and caches).
     /// </summary>
     public static WindowsDesktopRetargeting Resolve(string path) =>
-        Resolve(path, OperatingSystem.IsWindows(), BasaltSourceRoot.TryFind());
+        Resolve(path, OperatingSystem.IsWindows(), BasaltSourceRoot.TryFind(), BasaltWinFormsPackages.TryFind());
 
     internal static IReadOnlyDictionary<string, string> GetGlobalProperties(
         string path, bool isWindows, string? sourceRoot) =>
-        Resolve(path, isWindows, sourceRoot).Properties;
+        Resolve(path, isWindows, sourceRoot, packages: null).Properties;
 
-    internal static WindowsDesktopRetargeting Resolve(string path, bool isWindows, string? sourceRoot)
+    internal static WindowsDesktopRetargeting Resolve(string path, bool isWindows, string? sourceRoot) =>
+        Resolve(path, isWindows, sourceRoot, packages: null);
+
+    internal static WindowsDesktopRetargeting Resolve(
+        string path, bool isWindows, string? sourceRoot, BasaltWinFormsPackages? packages)
     {
-        if (isWindows || string.IsNullOrWhiteSpace(path)) return WindowsDesktopRetargeting.None;
+        if (string.IsNullOrWhiteSpace(path)) return WindowsDesktopRetargeting.None;
+
+        // A project that references the Basalt.WinForms package (the WinForms
+        // template, without sources) needs the folder of the shipped packages as
+        // an extra restore source, on every system. The project does not say
+        // where it is: it would be a path of this machine.
+        var properties = new Dictionary<string, string>();
+        if (packages is not null && UsesWinFormsPackage(path))
+            properties["RestoreAdditionalProjectSources"] = packages.Source;
+
+        if (isWindows) return new WindowsDesktopRetargeting(properties, SourcesMissing: false);
 
         var props = Path.Combine(FilesDirectory, "Basalt.WindowsDesktop.props");
         var retarget = Path.Combine(FilesDirectory, "Basalt.WindowsDesktop.Retarget.targets");
         var targets = Path.Combine(FilesDirectory, "Basalt.WindowsDesktop.targets");
         if (!File.Exists(props) || !File.Exists(retarget) || !File.Exists(targets))
-            return WindowsDesktopRetargeting.None;
+            return new WindowsDesktopRetargeting(properties, SourcesMissing: false);
 
-        if (string.IsNullOrEmpty(sourceRoot)
-            || !File.Exists(Path.Combine(Path.GetFullPath(sourceRoot), "Basalt.Forms", "Basalt.Forms.csproj")))
+        // The sources win (development); the shipped packages are the way out
+        // for an installed IDE.
+        var reference = BasaltWinFormsReference.Resolve(sourceRoot, packages);
+        if (!reference.IsAvailable)
         {
-            // Without the sources there is nothing to retarget onto, but the
-            // user still has to be told why the build will fail.
-            return NeedsRetargeting(path, sourceRoot: null)
-                ? new WindowsDesktopRetargeting(Empty, SourcesMissing: true)
-                : WindowsDesktopRetargeting.None;
+            // Nothing to retarget onto, but the user still has to be told why
+            // the build will fail.
+            return new WindowsDesktopRetargeting(properties, NeedsRetargeting(path, sourceRoot: null));
         }
 
-        sourceRoot = Path.GetFullPath(sourceRoot);
-        if (!NeedsRetargeting(path, sourceRoot)) return WindowsDesktopRetargeting.None;
+        if (!NeedsRetargeting(path, reference.SourceRoot))
+            return new WindowsDesktopRetargeting(properties, SourcesMissing: false);
 
-        return new WindowsDesktopRetargeting(new Dictionary<string, string>
+        properties["DirectoryBuildPropsPath"] = props;
+        properties["BeforeMicrosoftNETSdkTargets"] = retarget;
+        properties["CustomAfterMicrosoftCommonTargets"] = targets;
+        if (reference.UsesSources)
         {
-            ["DirectoryBuildPropsPath"] = props,
-            ["BeforeMicrosoftNETSdkTargets"] = retarget,
-            ["CustomAfterMicrosoftCommonTargets"] = targets,
-            ["BasaltSourceRoot"] = sourceRoot,
-        }, SourcesMissing: false);
+            properties["BasaltSourceRoot"] = reference.SourceRoot!;
+        }
+        else
+        {
+            // The targets file emits a PackageReference of this version.
+            properties["BasaltWinFormsVersion"] = reference.Packages!.Version;
+            properties["RestoreAdditionalProjectSources"] = reference.Packages.Source;
+        }
+        return new WindowsDesktopRetargeting(properties, SourcesMissing: false);
+    }
+
+    /// <summary>
+    /// Whether a project of the solution (or the project itself) references the
+    /// Basalt.WinForms package, judged on the project XML.
+    /// </summary>
+    private static bool UsesWinFormsPackage(string path)
+    {
+        foreach (var projectPath in ProjectsOf(path))
+        {
+            if (!projectPath.EndsWith("proj", StringComparison.OrdinalIgnoreCase) || !File.Exists(projectPath)) continue;
+            try
+            {
+                var references = XDocument.Load(projectPath).Descendants().Where(e => e.Name.LocalName == "PackageReference");
+                if (references.Any(e => string.Equals(
+                        (string?)e.Attribute("Include") ?? (string?)e.Attribute("Update"),
+                        BasaltWinFormsPackages.PackageId, StringComparison.OrdinalIgnoreCase)))
+                    return true;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Xml.XmlException)
+            {
+                // Unreadable here, unreadable to the build, which says so itself.
+            }
+        }
+        return false;
     }
 
     /// <summary>
@@ -235,9 +281,9 @@ public static partial class WindowsDesktopProjectCompatibility
 /// </summary>
 /// <param name="Properties">Properties for restore, build, clean, run, test and Roslyn.</param>
 /// <param name="SourcesMissing">
-/// A Windows desktop project is present, but the Basalt.Forms sources were not
-/// found, so the build will fail with NETSDK1100 unless the user sets
-/// <c>BASALT_FORMS_PATH</c>.
+/// A Windows desktop project is present, but neither the Basalt.Forms sources
+/// nor the shipped Basalt.WinForms packages were found, so the build will fail
+/// with NETSDK1100 unless the user sets <c>BASALT_FORMS_PATH</c>.
 /// </param>
 public sealed record WindowsDesktopRetargeting(
     IReadOnlyDictionary<string, string> Properties, bool SourcesMissing)

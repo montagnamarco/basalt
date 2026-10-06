@@ -5,15 +5,34 @@ namespace Basalt.Designer;
 
 public static partial class SolutionTemplates
 {
-    private static string WinFormsSupport(ProjectTemplate template)
+    private static string WinFormsSupport(ProjectTemplate template, BasaltWinFormsReference? reference)
     {
         if (template != ProjectTemplate.WinFormsApp) return "";
-        var sourceRoot = BasaltSourceRoot.Find();
+        reference = (reference ?? BasaltWinFormsReference.Current()).Require();
+
+        // With the packages the project names no folder of this machine: the
+        // version is all it says, and the IDE passes the package folder to
+        // restore (RestoreAdditionalProjectSources, see
+        // WindowsDesktopProjectCompatibility) instead of writing it here, so
+        // the project still opens elsewhere once the packages are on a feed.
+        if (reference.UsesPackages)
+            return $"""
+
+                  <ItemGroup>
+                    <Import Include="System.Windows.Forms" />
+                    <Import Include="System.Drawing" />
+                    <PackageReference Include="{BasaltWinFormsPackages.PackageId}" Version="{SecurityElement.Escape(reference.Packages!.Version)}" />
+                    <Compile Update="MainForm.Designer.vb">
+                      <DependentUpon>MainForm.vb</DependentUpon>
+                    </Compile>
+                  </ItemGroup>
+                """;
+
         return $"""
 
               <PropertyGroup>
                 <!-- Retarget this path when moving the project to another installation. -->
-                <BasaltFormsPath>{SecurityElement.Escape(sourceRoot)}</BasaltFormsPath>
+                <BasaltFormsPath>{SecurityElement.Escape(reference.SourceRoot)}</BasaltFormsPath>
               </PropertyGroup>
               <ItemGroup>
                 <Import Include="System.Windows.Forms" />

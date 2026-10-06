@@ -10,4 +10,24 @@
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.9.0" />
   </ItemGroup>
 
+  <!--
+    The version of the Basalt.WinForms package the IDE writes into the projects it
+    creates (the WinForms template, the retargeting of Visual Studio projects).
+    It is stamped from the one property that versions the package, and the two
+    packages are shipped next to the application once build/pack.sh (option
+    winforms-only) has produced them: a source of its own for restore, so no
+    nuget.org publication is needed. Absent artifacts are not an error; the IDE
+    then works from the sources, or says that neither exists.
+  -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>BasaltWinFormsVersion</_Parameter1>
+      <_Parameter2>$(WinFormsVersion)</_Parameter2>
+    </AssemblyAttribute>
+    <Content Include="..\..\artifacts\Basalt.WinForms.$(WinFormsVersion).nupkg;..\..\artifacts\Basalt.Drawing.$(WinFormsVersion).nupkg"
+             Condition="Exists('..\..\artifacts\Basalt.WinForms.$(WinFormsVersion).nupkg') and Exists('..\..\artifacts\Basalt.Drawing.$(WinFormsVersion).nupkg')"
+             CopyToOutputDirectory="PreserveNewest" Visible="false"
+             Link="WinFormsPackages\%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

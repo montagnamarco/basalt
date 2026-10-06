@@ -3,9 +3,17 @@
        The Basalt projects are built the way they always are: with none of the
        properties that retarget the user's project. Only these references drop them;
        a reference to another Windows desktop project of the user must keep them. -->
-  <ItemGroup Condition="'$(_BasaltWindowsDesktop)' == 'true'">
+  <ItemGroup Condition="'$(_BasaltWindowsDesktop)' == 'true' and '$(_BasaltSourceRootSlash)' != ''">
     <ProjectReference Include="$(_BasaltSourceRootSlash)Basalt.Forms/Basalt.Forms.csproj;$(_BasaltSourceRootSlash)Basalt.Forms.VisualBasic/Basalt.Forms.VisualBasic.csproj;$(_BasaltSourceRootSlash)Basalt.Drawing/Basalt.Drawing.csproj;$(_BasaltSourceRootSlash)Basalt.Forms.Primitives/Basalt.Forms.Primitives.csproj;$(_BasaltSourceRootSlash)Basalt.Windows.Extensions/Basalt.Windows.Extensions.csproj;$(_BasaltSourceRootSlash)Basalt.Accessibility/Basalt.Accessibility.vbproj"
                       GlobalPropertiesToRemove="UseWindowsForms;BaseIntermediateOutputPath;BaseOutputPath;BasaltSourceRoot;DirectoryBuildPropsPath;BeforeMicrosoftNETSdkTargets;CustomAfterMicrosoftCommonTargets" />
+  </ItemGroup>
+
+  <!-- No source root: the Basalt.WinForms package (and Basalt.Drawing, which it depends on) from the
+       package source the IDE passed as RestoreAdditionalProjectSources. A project that already
+       references the package keeps working: the version the IDE ships replaces its own. -->
+  <ItemGroup Condition="'$(_BasaltWindowsDesktop)' == 'true' and '$(_BasaltSourceRootSlash)' == '' and '$(BasaltWinFormsVersion)' != ''">
+    <PackageReference Remove="Basalt.WinForms" />
+    <PackageReference Include="Basalt.WinForms" Version="$(BasaltWinFormsVersion)" />
   </ItemGroup>
 
   <!-- Basalt.Drawing provides System.Drawing; the Windows-only System.Drawing.Common
