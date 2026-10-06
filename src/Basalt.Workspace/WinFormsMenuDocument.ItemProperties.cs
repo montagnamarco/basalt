@@ -46,7 +46,7 @@ public sealed partial class WinFormsMenuDocument
         var newline = _source.ToString().Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
         var statement = $"        Me.{itemName}.{property} = {expression}{newline}";
         return _source.WithChanges(new TextChange(
-            new TextSpan(_initialize.EndSubOrFunctionStatement.FullSpan.Start, 0), statement)).ToString();
+            new TextSpan(WinFormsInitializeComponentSyntax.InsertionPoint(_initialize), 0), statement)).ToString();
     }
 
     private IEnumerable<AssignmentStatementSyntax> ItemAssignments(string itemName) =>

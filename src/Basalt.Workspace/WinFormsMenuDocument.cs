@@ -203,7 +203,7 @@ public sealed partial class WinFormsMenuDocument
         }
         // Detached fields remain intact so existing user event handlers and custom metadata stay valid.
         if (initializers.Count > 0)
-            changes.Add(new(new TextSpan(_initialize.EndSubOrFunctionStatement.FullSpan.Start, 0), string.Join(newline, initializers) + newline));
+            changes.Add(new(new TextSpan(WinFormsInitializeComponentSyntax.InsertionPoint(_initialize), 0), string.Join(newline, initializers) + newline));
         if (fields.Count > 0)
             changes.Add(new(new TextSpan(_class.EndClassStatement.FullSpan.Start, 0), string.Join(newline, fields) + newline));
         return _source.WithChanges(changes).ToString();

@@ -71,6 +71,24 @@ public sealed class WinFormsMenuDocumentTests
     }
 
     [Fact]
+    public void ItemsAndTheirPropertiesAreWrittenBeforeTheFormResumesLayout()
+    {
+        // Visual Studio writes every item inside the form's SuspendLayout block.
+        var source = Source
+            .Replace("Me.MenuStrip1.Name", "Me.SuspendLayout()\n        Me.MenuStrip1.Name", StringComparison.Ordinal)
+            .Replace("    End Sub", "    Me.ResumeLayout(False)\n        Me.PerformLayout()\n    End Sub", StringComparison.Ordinal);
+
+        var withItem = new WinFormsMenuDocument(source).Set("MenuStrip1", [new("FileMenu", "MenuStrip1", "&File")]);
+        var withProperty = new WinFormsMenuDocument(withItem).SetItemProperty("MenuStrip1", "FileMenu", "ShortcutKeyDisplayString", "\"F\"");
+
+        var resume = withProperty.IndexOf("Me.ResumeLayout(False)", StringComparison.Ordinal);
+
+        Assert.InRange(withProperty.IndexOf("Me.FileMenu = New", StringComparison.Ordinal), 0, resume);
+        Assert.InRange(withProperty.IndexOf("Me.MenuStrip1.Items.AddRange(", StringComparison.Ordinal), 0, resume);
+        Assert.InRange(withProperty.IndexOf("Me.FileMenu.ShortcutKeyDisplayString = ", StringComparison.Ordinal), 0, resume);
+    }
+
+    [Fact]
     public void RejectsCyclesAndDynamicTextWithoutRewritingSource()
     {
         var menu = new WinFormsMenuDocument(Source);
