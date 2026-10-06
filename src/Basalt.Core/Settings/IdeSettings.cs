@@ -146,6 +146,20 @@ public sealed class AiSettings
 
     /// <summary>Whether the current errors are sent along with the question.</summary>
     public bool SendErrors { get; set; } = true;
+
+    /// <summary>
+    /// Whether the editor suggests what to write next, in grey, from the
+    /// assistant. Off by default: it sends the code around the caret to the
+    /// provider while typing.
+    /// </summary>
+    public bool InlineEnabled { get; set; }
+
+    /// <summary>
+    /// The model for inline suggestions; empty means the chat model. Kept
+    /// apart because a suggestion wants a fast, cheap model where a
+    /// conversation wants a capable one.
+    /// </summary>
+    public string InlineModel { get; set; } = "";
 }
 
 /// <summary>

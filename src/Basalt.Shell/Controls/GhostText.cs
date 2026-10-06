@@ -23,7 +23,13 @@ public sealed class GhostTextGenerator : VisualLineElementGenerator
     private string? _text;
     private int _position;
 
-    /// <summary>What is being suggested, and where.</summary>
+    /// <summary>
+    /// The colour of the suggestion, resolved from the theme by the editor
+    /// when it is shown, so it follows light and dark.
+    /// </summary>
+    public IBrush? Foreground { get; set; }
+
+    /// <summary>What is being suggested on the caret's line, and where.</summary>
     public void Show(string text, int position)
     {
         _text = text;
@@ -53,7 +59,7 @@ public sealed class GhostTextGenerator : VisualLineElementGenerator
     {
         if (_text is not { Length: > 0 } text || offset != _position) return null;
 
-        return new GhostTextElement(text);
+        return new GhostTextElement(text, Foreground);
     }
 }
 
@@ -67,7 +73,7 @@ public sealed class GhostTextGenerator : VisualLineElementGenerator
 /// Declared as one column instead, the formatter refused the run outright —
 /// "The returned TextRun is too long" — and the editor threw on every draw.
 /// </remarks>
-internal sealed class GhostTextElement(string text)
+internal sealed class GhostTextElement(string text, IBrush? foreground)
     : VisualLineElement(text.Length, 0)
 {
     public override TextRun CreateTextRun(
@@ -75,12 +81,14 @@ internal sealed class GhostTextElement(string text)
     {
         var properties = TextRunProperties;
 
-        // Dimmed rather than coloured: a suggestion is not part of the code
-        // and should not compete with it for attention. Half opacity reads as
-        // provisional at any theme, where a fixed grey is invisible on one and
-        // shouting on the other.
+        // The theme's secondary text colour where the editor found one: a
+        // suggestion is not part of the code and should not compete with it,
+        // and a token reads right in every theme where a fixed grey is
+        // invisible on one and shouting on the other. Without a token, the
+        // text colour at half strength.
         properties.SetForegroundBrush(
-            new SolidColorBrush(
+            foreground
+            ?? new SolidColorBrush(
                 (properties.ForegroundBrush as ISolidColorBrush)?.Color ?? Colors.Gray,
                 0.45));
 

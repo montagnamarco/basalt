@@ -686,7 +686,7 @@ public partial class MainWindow : Window
     /// </summary>
     private CodeEditor TextEditorFor(EditorDocumentViewModel document)
     {
-        var editor = new CodeEditor(document, ViewModel);
+        var editor = new CodeEditor(document, ViewModel) { SuggestionProvider = InlineSuggestions };
         WireSmartTags(editor);
 
         // The settings the user already chose apply to this editor too, not
@@ -2722,6 +2722,7 @@ public partial class MainWindow : Window
         var window = new SettingsWindow(_settingsStore, Languages);
 
         window.SettingsChanged += (_, settings) => ApplySettings(settings);
+        window.ApiKeyChanged += (_, _) => OnApiKeyChanged();
 
         await window.ShowDialog(this);
     }

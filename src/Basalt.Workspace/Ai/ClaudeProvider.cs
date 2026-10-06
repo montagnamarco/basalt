@@ -107,7 +107,11 @@ internal sealed class ClaudeBackend : IAiChatBackend
         var parameters = new MessageCreateParams
         {
             Model = _model,
-            MaxTokens = MaxTokensFor(_model),
+            // A brief request (an inline suggestion) keeps its own small limit:
+            // the chat's 64000 would let a runaway answer bill for minutes.
+            MaxTokens = request.Brief
+                ? Math.Min(request.MaxTokens, MaxTokensFor(_model))
+                : MaxTokensFor(_model),
             System = system,
             Messages = [.. request.Messages.Select(ToParam)]
         };
@@ -142,7 +146,16 @@ internal sealed class ClaudeBackend : IAiChatBackend
             };
         }
 
-        if (SupportsFallback(_model))
+        // Sonnet 5.5 thinks by default, and thinking counts toward max_tokens:
+        // a suggestion is not worth it. "between_tools" is its lowest setting
+        // (the "disabled" setting is a 400 there); no other model accepts it,
+        // and Opus 5.5 cannot turn thinking off, so effort is its control.
+        if (request.Brief && _model.StartsWith("claude-sonnet-5-5", StringComparison.Ordinal))
+            parameters = parameters with { Thinking = new BetaThinkingConfigBetweenTools() };
+
+        // No rerouting for a brief request: a suggestion the classifiers
+        // decline is simply not shown, and the beta header buys nothing.
+        if (SupportsFallback(_model) && !request.Brief)
         {
             // A request the safety classifiers decline is answered by the
             // recommended model instead of coming back as a refusal.

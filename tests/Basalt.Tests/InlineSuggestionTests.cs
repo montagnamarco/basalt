@@ -64,6 +64,18 @@ public class InlineSuggestionTests
 
         if (suggests is not null) editor.SuggestionProvider = new Fixed(suggests);
 
+        // The window being the one in use is a guard of its own (tested
+        // there); here it must not depend on which window the harness
+        // happened to activate.
+        editor.WindowActiveOverride = () => true;
+
+        // The completion list opens on a letter, and while it is open no
+        // suggestion is asked for (tested on its own): these tests are about
+        // the suggestion, so the list is not left to Roslyn's timing.
+        var quiet = new Basalt.Core.Settings.IdeSettings();
+        quiet.Editor.CompleteAutomatically = false;
+        editor.ApplySettings(quiet);
+
         var window = new Window { Content = editor, Width = 700, Height = 500 };
 
         window.Show();

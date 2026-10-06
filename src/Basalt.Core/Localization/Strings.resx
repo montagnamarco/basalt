@@ -744,4 +744,11 @@
   <data name="Gate_Publish" xml:space="preserve"><value>the publish in progress</value></data>
   <data name="Gate_Immediate" xml:space="preserve"><value>the Immediate window's build</value></data>
   <data name="Gate_Tests" xml:space="preserve"><value>the test run</value></data>
+  <data name="Settings_Ai_Inline" xml:space="preserve"><value>Inline suggestions</value></data>
+  <data name="Settings_Ai_InlineNote" xml:space="preserve"><value>Suggests code in grey as you type. The code around the caret (about 4 KB before and 1 KB after) is sent to the provider chosen above. Files that may hold secrets are never sent. Tab accepts, Ctrl+Right takes a word, Esc dismisses.</value></data>
+  <data name="Settings_Ai_InlineModel" xml:space="preserve"><value>Inline model</value></data>
+  <data name="Settings_Ai_InlineModelHint" xml:space="preserve"><value>Leave empty to use the chat model. A small, fast model suits suggestions.</value></data>
+  <data name="Inline_Failed" xml:space="preserve"><value>Inline suggestions stopped: {0}</value></data>
+  <data name="Inline_MoreLine" xml:space="preserve"><value>  +1 line</value></data>
+  <data name="Inline_MoreLines" xml:space="preserve"><value>  +{0} lines</value></data>
 </root>

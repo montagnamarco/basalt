@@ -237,12 +237,18 @@ internal static class AiSchema
 /// (the project, the active file) travels inside the newest user message.
 /// </summary>
 /// <param name="StableSystem">The instructions that never change.</param>
+/// <param name="Brief">
+/// A short completion rather than a conversation turn: the output is capped
+/// at <paramref name="MaxTokens"/> (a backend that otherwise allows a long
+/// answer must not), and a model is not rerouted to another one.
+/// </param>
 public sealed record AiTurnRequest(
     string StableSystem,
     IReadOnlyList<AiTool> Tools,
     IReadOnlyList<AiMessage> Messages,
     AiEffort Effort,
-    int MaxTokens)
+    int MaxTokens,
+    bool Brief = false)
 {
     /// <summary>The system text for assistants that take one string.</summary>
     public string SystemText() => StableSystem;

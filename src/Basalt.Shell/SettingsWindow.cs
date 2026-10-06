@@ -57,6 +57,9 @@ public sealed class SettingsWindow : Window
     /// </summary>
     public event EventHandler<IdeSettings>? SettingsChanged;
 
+    /// <summary>A key was saved or removed: whoever kept one must read it again.</summary>
+    public event EventHandler<AiVendor>? ApiKeyChanged;
+
     public SettingsWindow() : this(new SettingsStore(), null) { }
 
     public SettingsWindow(SettingsStore store, LanguageRegistry? languages)
@@ -836,6 +839,9 @@ public sealed class SettingsWindow : Window
 
                        _settings.Ai.Vendor = provider?.Vendor.ToString() ?? "";
                        _settings.Ai.Model = provider?.Models[0].Id ?? "";
+
+                       // A model id of the old assistant means nothing to the new one.
+                       _settings.Ai.InlineModel = "";
                    }),
                    "Restart the window after changing this to see the models.")
         };
@@ -845,6 +851,13 @@ public sealed class SettingsWindow : Window
             rows.Add(ModelRow(chosen));
 
             rows.Add(ApiKeyRow(chosen));
+
+            rows.Add(Switch(Localizer.Get(StringKeys.SettingsAiInline),
+                _settings.Ai.InlineEnabled,
+                v => Apply(() => _settings.Ai.InlineEnabled = v),
+                Localizer.Get(StringKeys.SettingsAiInlineNote)));
+
+            rows.Add(InlineModelRow(chosen));
         }
 
         rows.Add(Switch("Send the open file with the question",
@@ -886,6 +899,24 @@ public sealed class SettingsWindow : Window
             Localizer.Get(StringKeys.SettingsAiModelHint));
     }
 
+    /// <summary>
+    /// The model for inline suggestions: empty follows the chat model, and any
+    /// id may be typed (a small, fast one suits suggestions better).
+    /// </summary>
+    private Control InlineModelRow(IAiProvider provider)
+    {
+        var box = new TextBox
+        {
+            Text = _settings.Ai.InlineModel,
+            PlaceholderText = _settings.Ai.Model is { Length: > 0 } chat ? chat : provider.Models[0].Id
+        };
+
+        box.TextChanged += (_, _) => Apply(() => _settings.Ai.InlineModel = (box.Text ?? "").Trim());
+
+        return Labelled(Localizer.Get(StringKeys.SettingsAiInlineModel), box,
+            Localizer.Get(StringKeys.SettingsAiInlineModelHint));
+    }
+
     /// <summary>The API key box, which never shows what is already stored.</summary>
     private Control ApiKeyRow(IAiProvider provider)
     {
@@ -919,6 +950,7 @@ public sealed class SettingsWindow : Window
                 : "The key could not be stored.";
 
             box.Text = "";
+            ApiKeyChanged?.Invoke(this, provider.Vendor);
         };
 
         var remove = new Button { Content = "Remove", FontSize = 11, IsEnabled = stored };
@@ -928,6 +960,7 @@ public sealed class SettingsWindow : Window
             _keys.Remove(provider.Vendor);
             status.Text = "Removed.";
             remove.IsEnabled = false;
+            ApiKeyChanged?.Invoke(this, provider.Vendor);
         };
 
         var buttons = new StackPanel

@@ -763,4 +763,11 @@ public static class StringKeys
     public const string GatePublish = "Gate_Publish";
     public const string GateImmediate = "Gate_Immediate";
     public const string GateTests = "Gate_Tests";
+    public const string SettingsAiInline = "Settings_Ai_Inline";
+    public const string SettingsAiInlineNote = "Settings_Ai_InlineNote";
+    public const string SettingsAiInlineModel = "Settings_Ai_InlineModel";
+    public const string SettingsAiInlineModelHint = "Settings_Ai_InlineModelHint";
+    public const string InlineFailed = "Inline_Failed";
+    public const string InlineMoreLine = "Inline_MoreLine";
+    public const string InlineMoreLines = "Inline_MoreLines";
 }
