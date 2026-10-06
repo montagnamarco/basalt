@@ -796,6 +796,24 @@ public static class StringKeys
 
     public const string ToolWatch = "Tool_Watch";
 
+    public const string ExplorerNewFileTitle = "Explorer_NewFile_Title";
+    public const string ExplorerNewFilePrompt = "Explorer_NewFile_Prompt";
+    public const string ExplorerNewFolderTitle = "Explorer_NewFolder_Title";
+    public const string ExplorerNewFolderPrompt = "Explorer_NewFolder_Prompt";
+    public const string ExplorerRenameTitle = "Explorer_Rename_Title";
+    public const string ExplorerRenamePrompt = "Explorer_Rename_Prompt";
+    public const string ExplorerDeleteTitle = "Explorer_Delete_Title";
+    public const string ExplorerDeleteFileMessage = "Explorer_Delete_FileMessage";
+    public const string ExplorerDeleteFolderMessage = "Explorer_Delete_FolderMessage";
+    public const string ExplorerDeleteFileMessageUnsaved = "Explorer_Delete_FileMessageUnsaved";
+    public const string ExplorerDeleteFolderMessageUnsaved = "Explorer_Delete_FolderMessageUnsaved";
+    public const string ExplorerDeleteConfirm = "Explorer_Delete_Confirm";
+    public const string ExplorerNameEmpty = "Explorer_NameEmpty";
+    public const string ExplorerNameExists = "Explorer_NameExists";
+    public const string ExplorerNameInvalid = "Explorer_NameInvalid";
+    public const string ExplorerOperationFailed = "Explorer_OperationFailed";
+    public const string ExplorerBlockedWhileDebugging = "Explorer_BlockedWhileDebugging";
+
     // WinForms designer smart tag: the Visual Studio style glyph a selected control with
     // tasks shows at the top-right corner of its selection, and its "<Type> Tasks" flyout.
     public const string WinFormsSmartTagTasksHeader = "WinFormsSmartTag_TasksHeader";

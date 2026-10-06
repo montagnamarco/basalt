@@ -778,6 +778,25 @@
   <!-- Watch panel, docked alongside the other debug panels -->
   <data name="Tool_Watch" xml:space="preserve"><value>Watch</value></data>
 
+  <!-- Solution Explorer: New File/Folder, Rename, Delete -->
+  <data name="Explorer_NewFile_Title" xml:space="preserve"><value>New File</value></data>
+  <data name="Explorer_NewFile_Prompt" xml:space="preserve"><value>File name:</value></data>
+  <data name="Explorer_NewFolder_Title" xml:space="preserve"><value>New Folder</value></data>
+  <data name="Explorer_NewFolder_Prompt" xml:space="preserve"><value>Folder name:</value></data>
+  <data name="Explorer_Rename_Title" xml:space="preserve"><value>Rename</value></data>
+  <data name="Explorer_Rename_Prompt" xml:space="preserve"><value>New name:</value></data>
+  <data name="Explorer_Delete_Title" xml:space="preserve"><value>Delete?</value></data>
+  <data name="Explorer_Delete_FileMessage" xml:space="preserve"><value>'{0}' will be deleted. This cannot be undone.</value></data>
+  <data name="Explorer_Delete_FolderMessage" xml:space="preserve"><value>'{0}' and everything in it will be deleted. This cannot be undone.</value></data>
+  <data name="Explorer_Delete_FileMessageUnsaved" xml:space="preserve"><value>'{0}' will be deleted. This cannot be undone, and its open tab's unsaved changes will be discarded.</value></data>
+  <data name="Explorer_Delete_FolderMessageUnsaved" xml:space="preserve"><value>'{0}' and everything in it will be deleted. This cannot be undone, and the unsaved changes in its open tabs will be discarded.</value></data>
+  <data name="Explorer_Delete_Confirm" xml:space="preserve"><value>Delete</value></data>
+  <data name="Explorer_NameEmpty" xml:space="preserve"><value>[explorer] A name is needed.</value></data>
+  <data name="Explorer_NameExists" xml:space="preserve"><value>[explorer] '{0}' already exists.</value></data>
+  <data name="Explorer_NameInvalid" xml:space="preserve"><value>[explorer] '{0}' is not a valid name.</value></data>
+  <data name="Explorer_OperationFailed" xml:space="preserve"><value>[explorer] {0}</value></data>
+  <data name="Explorer_BlockedWhileDebugging" xml:space="preserve"><value>Rename and Delete are disabled while debugging.</value></data>
+
   <!-- WinForms designer smart tag: the VS-style glyph and "<Type> Tasks" flyout -->
   <data name="WinFormsSmartTag_TasksHeader" xml:space="preserve"><value>{0} Tasks</value></data>
   <data name="WinFormsSmartTag_InsertStandardItems" xml:space="preserve"><value>Insert Standard Items</value></data>

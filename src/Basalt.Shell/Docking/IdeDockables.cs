@@ -299,6 +299,18 @@ public sealed class IdeDocument : Document
         Document = document;
         Id = $"{document.FilePath}|{document.OpenInDesigner}";
         Title = document.Title;
+
+        // Title is read once above rather than bound: a rename in Solution
+        // Explorer calls document.Retarget, which changes document.Title
+        // (and the unsaved-changes marker changes it too), but nothing would
+        // tell this tab to read it again without this subscription — it
+        // would go on showing the name the file had when the tab was first
+        // opened.
+        document.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ViewModels.EditorDocumentViewModel.Title))
+                Title = document.Title;
+        };
     }
 
     public ViewModels.EditorDocumentViewModel Document { get; }

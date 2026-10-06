@@ -19,9 +19,23 @@ public sealed partial class EditorDocumentViewModel : ObservableObject
         OpenInDesigner = openInDesigner;
     }
 
-    public string FilePath { get; }
+    public string FilePath { get; private set; }
     public string FileName => Path.GetFileName(FilePath);
     public SourceLanguage Language => SourceLanguageExtensions.FromPath(FilePath);
+
+    /// <summary>
+    /// Follows a rename or move made in Solution Explorer: the tab keeps its
+    /// unsaved text and modified state, only the path (and so file name and
+    /// language, for an extension change) moves with it.
+    /// </summary>
+    internal void Retarget(string newFilePath)
+    {
+        FilePath = newFilePath;
+        OnPropertyChanged(nameof(FilePath));
+        OnPropertyChanged(nameof(FileName));
+        OnPropertyChanged(nameof(Language));
+        OnPropertyChanged(nameof(Title));
+    }
 
     /// <summary>The document is open in the visual designer rather than the text editor.</summary>
     public bool OpenInDesigner { get; }

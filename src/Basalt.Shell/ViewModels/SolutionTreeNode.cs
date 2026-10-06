@@ -67,6 +67,17 @@ public sealed partial class SolutionTreeNode : ObservableObject
                                    or NodeKind.WebAsset
                                    or NodeKind.Other;
 
+    /// <summary>
+    /// Whether Rename and Delete apply to this node.
+    ///
+    /// False for the solution and for a project: their own path is the
+    /// .sln/.slnx or .csproj/.vbproj the tree was loaded from
+    /// (<see cref="SolutionExplorerViewModel.LoadedPath"/>). Renaming or
+    /// deleting that file out from under the open session leaves
+    /// <c>ReloadAsync</c> reopening a path that no longer exists.
+    /// </summary>
+    public bool CanRenameOrDelete => Kind is not (NodeKind.Solution or NodeKind.Project);
+
     public string Icon => Kind switch
     {
         NodeKind.Solution => "\U0001F4E6",

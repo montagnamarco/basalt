@@ -32,6 +32,9 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
     private readonly SemaphoreSlim _gate = new(1, 1);
     private MSBuildWorkspace? _workspace;
 
+    /// <summary>The path last given to <see cref="OpenSolutionAsync"/>, for <see cref="ReloadAsync"/>.</summary>
+    private string? _openedPath;
+
     /// <summary>
     /// Opening a solution here makes it the solution of the session, in the
     /// same step as the workspace switches; share it with the build, run and
@@ -78,6 +81,11 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
             // cancelled open cannot leave build, run and test on another
             // solution than the one IntelliSense describes.
             Compatibility.Open(solutionOrProjectPath);
+            // Remembered so a later ReloadAsync — made after Solution
+            // Explorer renames, moves or deletes something on disk — reopens
+            // the same solution or project rather than needing its own copy
+            // of which one that was.
+            _openedPath = solutionOrProjectPath;
 
             // A load failure on a single project must not prevent the others
             // from opening: they are collected and surfaced.
@@ -139,6 +147,32 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
         if (applied) DocumentTextChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// Reopens the solution or project exactly as <see cref="OpenSolutionAsync"/>
+    /// did, so Roslyn sees a rename, move or delete Solution Explorer just
+    /// made on disk — under the new project state, not a stale one.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not an AddDocument/RemoveDocument edit applied through
+    /// <see cref="MSBuildWorkspace.TryApplyChanges"/>, which used to run
+    /// here: that asks MSBuildWorkspace to write the moved document's text
+    /// to its new path itself, from whatever the workspace held — the last
+    /// saved copy, not necessarily what Explorer had just put on disk — and
+    /// to rewrite the project file. On an SDK-style project, whose compile
+    /// items an implicit glob finds with nothing written explicitly, the
+    /// rewrite adds a `&lt;Compile Include&gt;` the glob already covers, and
+    /// the next build fails with NETSDK1022 (duplicate items). Reopening
+    /// from disk needs neither: the glob already finds the file at its new
+    /// path, and nothing is written that was not already there.
+    ///
+    /// Every open tab's unsaved text is lost from the new workspace by this
+    /// — it is read fresh off disk — so the caller is expected to push every
+    /// open document's current buffer back in with <see
+    /// cref="UpdateDocumentAsync"/> afterwards.
+    /// </remarks>
+    public Task ReloadAsync(CancellationToken ct = default) =>
+        _openedPath is { Length: > 0 } path ? OpenSolutionAsync(path, ct) : Task.CompletedTask;
 
     public Task<IReadOnlyList<IdeDiagnostic>> GetDiagnosticsAsync(
         string filePath, CancellationToken ct = default) =>

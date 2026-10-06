@@ -733,27 +733,34 @@ public partial class MainWindow : Window
     /// </summary>
     private void ConnectDebugging(CodeEditor editor)
     {
-        var path = editor.FilePath;
-
-        _margins[path] = editor.BreakpointMargin;
+        // Read from editor.FilePath at the moment each closure runs rather
+        // than capturing it once here: a rename in Solution Explorer
+        // retargets the document this editor shows (EditorDocumentViewModel
+        // .Retarget), and editor.FilePath follows it. A path captured into a
+        // local here would not — it would go on reporting clicks against the
+        // name the file had when the tab was opened, long after that name
+        // stopped existing on disk. See RetargetDebuggingFor in
+        // MainWindow.ExplorerCommands.cs for the other half: moving what is
+        // already keyed by the old path.
+        _margins[editor.FilePath] = editor.BreakpointMargin;
 
         editor.BreakpointMargin.Toggled += (_, line) => Guarded.Run(
-            () => _debug.ToggleBreakpointAsync(path, line),
+            () => _debug.ToggleBreakpointAsync(editor.FilePath, line),
             ViewModel.WriteOutput, "ide");
 
         editor.BreakpointMargin.ConditionRequested += (_, line) => Guarded.Run(
-            () => EditBreakpointConditionAsync(path, line),
+            () => EditBreakpointConditionAsync(editor.FilePath, line),
             ViewModel.WriteOutput, "ide");
 
         editor.BreakpointMargin.RunToLineRequested += (_, line) => Guarded.Run(
-            () => RunToLineAsync(path, line),
+            () => RunToLineAsync(editor.FilePath, line),
             ViewModel.WriteOutput, "ide");
 
-        RefreshBreakpointDisplay(path);
+        RefreshBreakpointDisplay(editor.FilePath);
 
         // While stopped in this file, mark the line execution is on.
         if (_debug.CurrentFrame is { } frame &&
-            string.Equals(frame.FilePath, path, StringComparison.Ordinal))
+            string.Equals(frame.FilePath, editor.FilePath, StringComparison.Ordinal))
         {
             editor.BreakpointMargin.ShowCurrentLine(frame.Line);
         }
@@ -2779,6 +2786,12 @@ public partial class MainWindow : Window
             return false;
         }
 
+        // This handler runs in the Tunnel phase, before the Solution
+        // Explorer's own (Bubble) key handling ever sees the key: F2 is also
+        // RefactorRename's gesture below, and without this a press meant for
+        // the selected node would rename the active editor's symbol instead.
+        if (await TryRunExplorerShortcutAsync(e.Key, e.KeyModifiers)) return true;
+
         var gesture = ShortcutRecorder.Describe(e.Key, e.KeyModifiers);
 
         if (_commands.ForGesture(gesture) is not { } command) return false;
@@ -3278,12 +3291,19 @@ public partial class MainWindow : Window
                 break;
 
             case SolutionExplorerPanel.ExplorerCommand.NewFile:
+                await NewFileInExplorerAsync(node);
+                break;
+
             case SolutionExplorerPanel.ExplorerCommand.NewFolder:
+                await NewFolderInExplorerAsync(node);
+                break;
+
             case SolutionExplorerPanel.ExplorerCommand.Rename:
+                await RenameInExplorerAsync(node);
+                break;
+
             case SolutionExplorerPanel.ExplorerCommand.Delete:
-                // Each needs a dialog and a confirmation; saying so beats a
-                // menu entry that quietly does nothing.
-                ViewModel.WriteOutput("[explorer] Not implemented yet.");
+                await DeleteInExplorerAsync(node);
                 break;
         }
     }

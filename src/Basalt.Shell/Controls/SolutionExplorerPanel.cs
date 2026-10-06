@@ -238,6 +238,15 @@ public sealed class SolutionExplorerPanel : UserControl
         bool IsForm() => SelectedNode is { IsForm: true };
         bool IsProject() => SelectedNode is { Kind: NodeKind.Project };
 
+        // Off for the solution and for a project, whose own path is the
+        // .sln/.vbproj the session is open from: see
+        // SolutionTreeNode.CanRenameOrDelete. Off too while a debug session
+        // is running — the same refusal MainWindow.ExplorerCommands makes
+        // when asked directly, greyed out here first so the menu reflects
+        // it rather than letting the click do nothing.
+        bool CanRenameOrDelete() => SelectedNode is { CanRenameOrDelete: true }
+            && !((DataContext as MainWindowViewModel)?.IsDebuggingProbe?.Invoke() ?? false);
+
         void Choose(ExplorerCommand command) =>
             CommandChosen?.Invoke(this, (command, SelectedNode));
 
@@ -255,9 +264,9 @@ public sealed class SolutionExplorerPanel : UserControl
                 { Icon = IconKind.Folder },
             MenuAction.Separator,
             new("Rename…", () => Choose(ExplorerCommand.Rename))
-                { IsAvailable = HasNode, Icon = IconKind.Replace },
+                { IsAvailable = CanRenameOrDelete, Icon = IconKind.Replace },
             new("Delete", () => Choose(ExplorerCommand.Delete))
-                { IsAvailable = HasNode, Icon = IconKind.Exit },
+                { IsAvailable = CanRenameOrDelete, Icon = IconKind.Exit },
             MenuAction.Separator,
             new(RevealLabel, () => Choose(ExplorerCommand.RevealInFinder))
                 { IsAvailable = HasNode, Icon = IconKind.FolderOpen },

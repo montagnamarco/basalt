@@ -591,12 +591,58 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         if (ActiveDocument is not { } document) return;
 
+        CloseDocument(document);
+    }
+
+    /// <summary>
+    /// Closes a document with no save prompt, active or not.
+    ///
+    /// Used when Solution Explorer deletes the file underneath an open tab:
+    /// by then there is nothing left on disk to save unsaved text to, so
+    /// asking would only offer a choice with no good answer.
+    /// </summary>
+    public void CloseDocument(EditorDocumentViewModel document)
+    {
+        _designerSessions.Remove(document);
+        DesignerProblems.Remove(document);
+
+        var wasActive = ActiveDocument == document;
+
         OpenDocuments.Remove(document);
+
+        if (!wasActive) return;
 
         // The last one closed leaves nothing active, and the welcome screen
         // comes back on its own.
         if (OpenDocuments.LastOrDefault() is { } next) ActivateDocument(next);
         else ActiveDocument = null;
+    }
+
+    /// <summary>
+    /// Makes the Roslyn workspace see a rename, move or delete Solution
+    /// Explorer just made on disk, off the interface thread: reopening the
+    /// solution reads every project file, and on a large one is not free.
+    /// </summary>
+    /// <remarks>
+    /// Reopening re-creates the workspace from disk
+    /// (<see cref="RoslynLanguageService.ReloadAsync"/>), which is what
+    /// keeps a rename from being written back over by MSBuildWorkspace's own
+    /// stale copy of a moved file — see that method's remarks — but it also
+    /// means every open tab's unsaved text reverts to what reopening just
+    /// read off disk. Pushing every open document's current buffer back in
+    /// afterwards is what keeps those edits from being lost, not only the
+    /// ones under the path that was renamed or deleted: reopening discards
+    /// the whole workspace, not just the affected corner of it.
+    /// </remarks>
+    public async Task ReloadLanguageServiceAsync()
+    {
+        await Task.Run(() => _languageService.ReloadAsync()).ConfigureAwait(true);
+
+        // A copy: OpenDocuments can change while this awaits (closing a tab,
+        // opening another), and enumerating the live collection across an
+        // await throws once it does.
+        foreach (var document in OpenDocuments.ToList())
+            await _languageService.UpdateDocumentAsync(document.FilePath, document.Text).ConfigureAwait(true);
     }
 
     /// <summary>Deletes what the last build produced.</summary>

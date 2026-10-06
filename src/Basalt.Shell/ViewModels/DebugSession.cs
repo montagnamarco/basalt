@@ -62,6 +62,27 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
     public IReadOnlyList<Breakpoint> BreakpointsIn(string filePath) =>
         _breakpoints.TryGetValue(filePath, out var list) ? list : [];
 
+    /// <summary>
+    /// Moves a file's breakpoints to a new path after Solution Explorer
+    /// renames or moves it.
+    ///
+    /// Without this a breakpoint set before the rename keeps answering to a
+    /// path that no longer exists, so it quietly stops working rather than
+    /// following the file the way it does everywhere else in the IDE.
+    /// </summary>
+    public void RetargetBreakpoints(string oldPath, string newPath)
+    {
+        if (!_breakpoints.Remove(oldPath, out var list)) return;
+
+        for (var i = 0; i < list.Count; i++)
+            list[i] = list[i] with { FilePath = newPath };
+
+        _breakpoints[newPath] = list;
+
+        BreakpointsChanged?.Invoke(this, oldPath);
+        BreakpointsChanged?.Invoke(this, newPath);
+    }
+
     /// <summary>Sets or clears a breakpoint, reporting which it did.</summary>
     public async Task ToggleBreakpointAsync(
         string filePath, int line, CancellationToken ct = default)
