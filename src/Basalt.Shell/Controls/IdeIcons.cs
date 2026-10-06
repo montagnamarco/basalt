@@ -28,6 +28,9 @@ public enum IconKind
     /// <summary>Two versions of a file, side by side.</summary>
     Diff,
 
+    /// <summary>Folded and unfolded: the state of a category in a list.</summary>
+    ChevronRight, ChevronDown,
+
     /// <summary>Basalt itself: a volcano, which is where basalt comes from.</summary>
     Application
 }
@@ -236,6 +239,8 @@ public static class IdeIcons
         // Two panes with a line between: what a diff looks like before
         // you can read any of it.
         IconKind.Diff => "M1.5,2.5 H7 V13.5 H1.5 Z M9,2.5 H14.5 V13.5 H9 Z M3,5.5 H5.5 M3,8 H5.5 M10.5,8 H13 M10.5,10.5 H13",
+        IconKind.ChevronRight => "M6,3.5 L10.5,8 L6,12.5",
+        IconKind.ChevronDown => "M3.5,6 L8,10.5 L12.5,6",
         IconKind.Zoom => "M3,3 H13 V13 H3 Z M6,6 H10 V10 H6 Z",
 
         // Basalt: the rock the IDE is named after. Cooling lava cracks into

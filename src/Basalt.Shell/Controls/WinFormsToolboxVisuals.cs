@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Basalt.Designer.Toolbox;
 
@@ -9,13 +8,8 @@ namespace Basalt.Shell.Controls;
 /// <summary>Uses the IDE's vector toolbox artwork for corresponding Forms controls.</summary>
 internal static class WinFormsToolboxVisuals
 {
-    internal static readonly FuncDataTemplate<WinFormsToolboxItem> Template =
-        new((item, _) => CreateRow(item), supportsRecycling: false);
-
-    private static Control CreateRow(WinFormsToolboxItem? item)
+    internal static Control CreateRow(WinFormsToolboxItem item)
     {
-        if (item is null) return new TextBlock();
-
         var icon = new ToolboxIconView
         {
             ElementName = IconName(item.ControlType),
@@ -26,6 +20,7 @@ internal static class WinFormsToolboxVisuals
         var name = new TextBlock
         {
             Text = item.DisplayName,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
         };

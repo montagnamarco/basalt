@@ -301,6 +301,7 @@ public partial class MainWindow : Window
         _contents[_factory.Output] = new OutputPanel(viewModel);
 
         _search = new SearchPanel();
+        if (viewModel.LoadSettings?.Invoke() is { } startupSettings) _search.ApplySettings(startupSettings);
         _search.HitActivated += (_, hit) => Guarded.Run(
             () => OpenHitAsync(hit),
             ViewModel.WriteOutput, "ide");
@@ -2737,6 +2738,11 @@ public partial class MainWindow : Window
         foreach (var terminal in _contents.Values.OfType<TerminalView>())
             terminal.ApplySettings(settings);
 
+        foreach (var output in _contents.Values.OfType<OutputPanel>())
+            output.ApplySettings(settings);
+
+        _search?.ApplySettings(settings);
+
         ApplyTheme(settings.Appearance.Theme);
     }
 
@@ -3899,7 +3905,7 @@ public partial class MainWindow : Window
 
         if (!Enum.TryParse<AiVendor>(settings.Vendor, out var vendor))
         {
-            _assistant.ShowStatus("No assistant chosen. Pick one in Settings.");
+            _assistant.ShowStatus(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiNoAssistant));
             return;
         }
 
@@ -3928,7 +3934,7 @@ public partial class MainWindow : Window
 
         if (!Enum.TryParse<AiVendor>(settings.Vendor, out var vendor))
         {
-            _assistant.ShowStatus("No assistant chosen. Pick one in Settings.");
+            _assistant.ShowStatus(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiNoAssistant));
             return;
         }
 

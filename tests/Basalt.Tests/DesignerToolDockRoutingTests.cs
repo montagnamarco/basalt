@@ -5,6 +5,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using Basalt.Designer.Toolbox;
 using Basalt.Shell;
 using Basalt.Shell.Controls;
 using Basalt.Shell.Docking;
@@ -38,7 +39,10 @@ public sealed class DesignerToolDockRoutingTests
 
             await model.OpenFileAsync(formsPath, inDesigner: true);
             await window.SettleAsync();
-            Assert.IsType<ListBox>(toolbox.Content);
+            // The Forms toolbox: the shared filter-and-categories control
+            // listing Forms controls (the Avalonia one is a ToolboxPanel).
+            var formsToolbox = Assert.IsType<ToolboxList>(toolbox.Content);
+            Assert.Contains(formsToolbox.List.ItemsSource!.Cast<object>(), row => row is WinFormsToolboxItem);
             var formsProperties = Assert.IsType<WinFormsPropertyPanel>(properties.Content);
             var formsEvents = Assert.IsType<WinFormsEventPanel>(events.Content);
             var formsHost = Assert.Single(window.Window.GetVisualDescendants().OfType<DesignerHost>());

@@ -1,3 +1,5 @@
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
@@ -59,10 +61,10 @@ public class ToolboxIconTests
         Assert.Equal(ToolboxCatalog.Items.Count, rows.OfType<ToolboxItem>().Count());
         Assert.Equal(
             ToolboxCatalog.ByCategory().Count(),
-            rows.OfType<string>().Count());
+            rows.OfType<ToolboxHeading>().Count());
 
         // The first row is a heading, or the first group has none.
-        Assert.IsType<string>(rows[0]);
+        Assert.IsType<ToolboxHeading>(rows[0]);
 
         window.Close();
     }
@@ -71,22 +73,30 @@ public class ToolboxIconTests
     public void AHeadingCannotBeInsertedIntoTheForm()
     {
         // A heading is a label, not a control: selecting one and pressing
-        // Enter would ask the designer to insert the word "Layout".
+        // Enter would ask the designer to insert the word "Layout". Headings
+        // are focusable so the keyboard can fold them, which is why this now
+        // asserts the behaviour rather than the focusability.
         var panel = new ToolboxPanel();
         var window = new Window { Content = panel, Width = 240, Height = 600 };
+        var chosen = new List<ToolboxItem>();
+        panel.ControlChosen += (_, item) => chosen.Add(item);
+        // ToolboxPanel filters headings out again before raising ControlChosen,
+        // so that alone would hide a ToolboxList that activated a heading. The
+        // list's own event is what the WinForms toolbox listens to.
+        var activated = new List<object>();
+        panel.Body.ItemActivated += (_, item) => activated.Add(item);
 
         window.Show();
         window.UpdateLayout();
 
-        var list = panel.GetVisualDescendants().OfType<ListBox>().Single();
+        var list = panel.Body.List;
+        list.SelectedIndex = 0;
+        Assert.IsType<ToolboxHeading>(list.SelectedItem);
+        list.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        list.RaiseEvent(new TappedEventArgs(Control.DoubleTappedEvent, null!));
 
-        var headings = list.GetRealizedContainers()
-            .OfType<ListBoxItem>()
-            .Where(c => c.DataContext is string)
-            .ToList();
-
-        Assert.NotEmpty(headings);
-        Assert.All(headings, h => Assert.False(h.Focusable));
+        Assert.Empty(chosen);
+        Assert.Empty(activated);
 
         window.Close();
     }

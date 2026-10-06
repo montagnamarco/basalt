@@ -536,4 +536,108 @@
   <data name="Debug_BuildFailed" xml:space="preserve"><value>The build failed with {0} error(s); nothing was produced to debug.</value></data>
   <data name="Debug_NoAssembly" xml:space="preserve"><value>The build succeeded but no assembly was found under bin. Is '{0}' a library with no entry point?</value></data>
   <data name="Build_WindowsDesktopSourcesMissing" xml:space="preserve"><value>This solution has a Windows Forms project, which the .NET SDK refuses to build on this system. Basalt can build it on Basalt.Forms instead, but the Basalt.Forms sources were not found, so the build will fail with NETSDK1100. Set the {0} environment variable to the folder that contains Basalt.Forms (the "src" folder of the Basalt repository) and open the solution again.</value></data>
+  <data name="Problems_Errors" xml:space="preserve"><value>Errors</value></data>
+  <data name="Problems_Warnings" xml:space="preserve"><value>Warnings</value></data>
+  <data name="Problems_Messages" xml:space="preserve"><value>Messages</value></data>
+  <data name="Problems_ErrorsCount" xml:space="preserve"><value>{0} Errors</value></data>
+  <data name="Problems_WarningsCount" xml:space="preserve"><value>{0} Warnings</value></data>
+  <data name="Problems_MessagesCount" xml:space="preserve"><value>{0} Messages</value></data>
+  <data name="Problems_Filter" xml:space="preserve"><value>Filter problems</value></data>
+  <data name="Problems_NoMatch" xml:space="preserve"><value>No problems match the filter.</value></data>
+  <data name="Output_Clear" xml:space="preserve"><value>Clear output</value></data>
+  <data name="Output_WordWrap" xml:space="preserve"><value>Word wrap</value></data>
+  <data name="Output_ScrollToEnd" xml:space="preserve"><value>Scroll to the end as output arrives</value></data>
+  <data name="Search_Find" xml:space="preserve"><value>Find</value></data>
+  <data name="Search_ReplaceWith" xml:space="preserve"><value>Replace with</value></data>
+  <data name="Search_ReplaceAll" xml:space="preserve"><value>Replace all</value></data>
+  <data name="Search_FileTypes" xml:space="preserve"><value>File types, e.g. .vb .vbhtml</value></data>
+  <data name="Search_MatchCase" xml:space="preserve"><value>Match case</value></data>
+  <data name="Search_WholeWord" xml:space="preserve"><value>Whole word</value></data>
+  <data name="Search_UseRegex" xml:space="preserve"><value>Regular expression</value></data>
+  <data name="Search_Searching" xml:space="preserve"><value>Searching…</value></data>
+  <data name="Search_OpenSolutionFirst" xml:space="preserve"><value>Open a solution first.</value></data>
+  <data name="Search_NoResults" xml:space="preserve"><value>No results.</value></data>
+  <data name="Search_Progress" xml:space="preserve"><value>{0} in {1} files…</value></data>
+  <data name="Search_Results" xml:space="preserve"><value>{0} results in {1} files.</value></data>
+  <data name="Search_Replaced" xml:space="preserve"><value>Replaced in {0} files.</value></data>
+  <data name="Search_Empty" xml:space="preserve"><value>Type a term and press Enter to search the solution.</value></data>
+  <data name="Search_FileMatches" xml:space="preserve"><value>{0} matches</value></data>
+  <!-- Phase 2b panels -->
+  <data name="Toolbox_FilterWatermark" xml:space="preserve"><value>Search toolbox</value></data>
+  <data name="Toolbox_FilterTip" xml:space="preserve"><value>Filter the toolbox by name (Esc clears, Down moves to the list, Enter adds the first match)</value></data>
+  <data name="Toolbox_NoMatches" xml:space="preserve"><value>No controls match "{0}".</value></data>
+  <data name="Outline_CollapseAll" xml:space="preserve"><value>Collapse All</value></data>
+  <data name="Outline_ExpandAll" xml:space="preserve"><value>Expand All</value></data>
+  <data name="Outline_GoTo" xml:space="preserve"><value>Go to Symbol</value></data>
+  <data name="ElementTree_Empty" xml:space="preserve"><value>No design is open. Open a form or a XAML view to see its controls.</value></data>
+  <data name="Database_NoTables" xml:space="preserve"><value>This database has no tables.</value></data>
+  <data name="Watch_AddExpression" xml:space="preserve"><value>Add an expression</value></data>
+  <data name="Breakpoint_When" xml:space="preserve"><value>when {0}</value></data>
+  <data name="Breakpoint_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Breakpoint_GoTo" xml:space="preserve"><value>Go to Breakpoint</value></data>
+  <data name="Breakpoint_AddCondition" xml:space="preserve"><value>Add Condition…</value></data>
+  <data name="Breakpoint_EditCondition" xml:space="preserve"><value>Edit Condition…</value></data>
+  <data name="References_Count" xml:space="preserve"><value>{0} references to '{1}'.</value></data>
+  <data name="References_NoneTo" xml:space="preserve"><value>No references to '{0}'.</value></data>
+  <data name="References_Empty" xml:space="preserve"><value>No references to show. Use Find All References on a symbol.</value></data>
+  <data name="References_None" xml:space="preserve"><value>No references.</value></data>
+  <data name="Branch_Remote" xml:space="preserve"><value>Remote</value></data>
+  <data name="Branch_Local" xml:space="preserve"><value>Local</value></data>
+  <data name="Branch_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Branch_Merge" xml:space="preserve"><value>Merge</value></data>
+  <data name="Branch_Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Branch_NewName" xml:space="preserve"><value>New branch name</value></data>
+  <data name="Git_HistoryEmpty" xml:space="preserve"><value>No commits yet</value></data>
+  <data name="Git_StageSomething" xml:space="preserve"><value>Stage something to commit</value></data>
+  <data name="Git_WriteMessageFirst" xml:space="preserve"><value>Write a message first</value></data>
+  <data name="Git_UpToDate" xml:space="preserve"><value>up to date</value></data>
+  <data name="Git_NotPublished" xml:space="preserve"><value>not published</value></data>
+  <data name="Git_NoBranch" xml:space="preserve"><value>No branch</value></data>
+  <data name="Git_CopyPath" xml:space="preserve"><value>Copy Path</value></data>
+  <data name="Git_DiscardChanges" xml:space="preserve"><value>Discard Changes…</value></data>
+  <data name="Git_OpenFile" xml:space="preserve"><value>Open File</value></data>
+  <data name="Git_OpenDiff" xml:space="preserve"><value>Open Diff</value></data>
+  <data name="Git_Stage" xml:space="preserve"><value>Stage</value></data>
+  <data name="Git_Unstage" xml:space="preserve"><value>Unstage</value></data>
+  <data name="Git_Changes" xml:space="preserve"><value>Changes</value></data>
+  <data name="Git_Staged" xml:space="preserve"><value>Staged</value></data>
+  <data name="Git_UnstageAll" xml:space="preserve"><value>Unstage all</value></data>
+  <data name="Git_StageAll" xml:space="preserve"><value>Stage all</value></data>
+  <data name="Git_Amend" xml:space="preserve"><value>Amend</value></data>
+  <data name="Git_Commit" xml:space="preserve"><value>Commit</value></data>
+  <data name="Git_AmendLast" xml:space="preserve"><value>Amend the last commit</value></data>
+  <data name="Git_CommitMessage" xml:space="preserve"><value>Commit message</value></data>
+  <data name="Tests_Summary" xml:space="preserve"><value>{0} passed, {1} failed, {2} skipped, of {3}.</value></data>
+  <data name="Tests_Count" xml:space="preserve"><value>{0} tests.</value></data>
+  <data name="Tests_Running" xml:space="preserve"><value>Running…</value></data>
+  <data name="Tests_NoClass" xml:space="preserve"><value>(no class)</value></data>
+  <data name="Tests_CopyFailure" xml:space="preserve"><value>Copy Failure</value></data>
+  <data name="Tests_CopyName" xml:space="preserve"><value>Copy Name</value></data>
+  <data name="Tests_OpenSource" xml:space="preserve"><value>Open Source</value></data>
+  <data name="Tests_Run" xml:space="preserve"><value>Run</value></data>
+  <data name="Tests_Debug" xml:space="preserve"><value>Debug</value></data>
+  <data name="Tests_RunFailed" xml:space="preserve"><value>Run Failed</value></data>
+  <data name="Tests_RunSelected" xml:space="preserve"><value>Run Selected</value></data>
+  <data name="Tests_RunAll" xml:space="preserve"><value>Run All</value></data>
+  <data name="Tests_NoneDiscovered" xml:space="preserve"><value>No tests discovered.</value></data>
+  <data name="Ai_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Ai_Assistant" xml:space="preserve"><value>Assistant</value></data>
+  <data name="Ai_You" xml:space="preserve"><value>You</value></data>
+  <data name="Ai_NoAssistant" xml:space="preserve"><value>No assistant configured. Choose one in Settings.</value></data>
+  <data name="Ai_ClearTip" xml:space="preserve"><value>Clear the conversation</value></data>
+  <data name="Ai_Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="Ai_SendTip" xml:space="preserve"><value>Send the question (Enter; Shift+Enter writes a new line)</value></data>
+  <data name="Ai_Send" xml:space="preserve"><value>Send</value></data>
+  <data name="Ai_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Ai_StopTip" xml:space="preserve"><value>Stop the reply that is arriving</value></data>
+  <data name="Ai_AskPlaceholder" xml:space="preserve"><value>Ask about the code…</value></data>
+  <data name="Ai_Action_Document" xml:space="preserve"><value>Document</value></data>
+  <data name="Ai_Action_Tests" xml:space="preserve"><value>Generate tests</value></data>
+  <data name="Ai_Action_Fix" xml:space="preserve"><value>Fix the error</value></data>
+  <data name="Ai_Action_Explain" xml:space="preserve"><value>Explain</value></data>
+  <data name="Ai_Action_Ask" xml:space="preserve"><value>Ask</value></data>
+  <data name="Problems_ErrorsCountOne" xml:space="preserve"><value>1 Error</value></data>
+  <data name="Problems_WarningsCountOne" xml:space="preserve"><value>1 Warning</value></data>
+  <data name="Problems_MessagesCountOne" xml:space="preserve"><value>1 Message</value></data>
+  <data name="Search_FileMatchesOne" xml:space="preserve"><value>1 match</value></data>
 </root>

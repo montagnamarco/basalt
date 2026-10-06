@@ -1,3 +1,4 @@
+using Basalt.Core.Localization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -55,8 +56,9 @@ public sealed class WatchPanel : UserControl
     {
         _input = new TextBox
         {
-            PlaceholderText = "Add an expression",
-            Margin = new Thickness(6, 6, 6, 4)
+            PlaceholderText = Localizer.Get(StringKeys.WatchAddExpression),
+            FontSize = PanelMetrics.FontSize,
+            Margin = new Thickness(Spacing.Small, Spacing.Small, Spacing.Small, Spacing.Tight)
         };
 
         _input.KeyDown += (_, e) =>
@@ -70,12 +72,22 @@ public sealed class WatchPanel : UserControl
 
         _list = new ListBox
         {
-            ItemTemplate = new FuncDataTemplate<WatchEntry>((entry, _) => new TextBlock
+            ItemTemplate = new FuncDataTemplate<WatchEntry>((entry, _) =>
             {
-                Text = entry?.Display,
-                FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-                FontSize = 12,
-                Opacity = entry?.Failed == true ? 0.55 : 1
+                var text = new TextBlock
+                {
+                    Text = entry?.Display,
+                    FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
+                    FontSize = PanelMetrics.FontSize
+                };
+
+                // A watch that failed to evaluate is dimmed with the theme's
+                // secondary text colour. The others keep the inherited one so a
+                // selected row still reads in the selection's foreground.
+                if (entry?.Failed == true)
+                    text.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
+
+                return text;
             })
         };
 

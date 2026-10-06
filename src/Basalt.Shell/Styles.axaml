@@ -431,4 +431,72 @@
     <Setter Property="Foreground" Value="{DynamicResource ListActiveSelectionForegroundBrush}" />
   </Style>
 
+  <!--
+    Panel toolbars (Problems, Output, Search): flat buttons that show a fill
+    only under the pointer, and toggles that stay filled while pressed so a
+    filter that is on reads differently from one that is off. Fluent's
+    checked and hover fills are stated per state, hover chained after checked,
+    because a plain hover rule would otherwise paint over a pressed toggle.
+  -->
+  <Style Selector="Button.panelTool, ToggleButton.panelTool">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
+  </Style>
+
+  <Style Selector="Button.panelTool:pointerover /template/ ContentPresenter#PART_ContentPresenter,
+                   ToggleButton.panelTool:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ListHoverBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
+  </Style>
+
+  <Style Selector="ToggleButton.panelTool:checked /template/ ContentPresenter#PART_ContentPresenter,
+                   ToggleButton.panelTool:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ListInactiveSelectionBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
+  </Style>
+
+  <!-- Rows of a data grid: the selection is visible whether or not the grid has the keyboard. -->
+  <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+    <Setter Property="Fill" Value="{DynamicResource ListHoverBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+    <Setter Property="Fill" Value="{DynamicResource ListInactiveSelectionBackgroundBrush}" />
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <Style Selector="DataGridRow:selected DataGridCell">
+    <Setter Property="Foreground" Value="{DynamicResource EditorForegroundBrush}" />
+  </Style>
+
+  <Style Selector="DataGrid:focus-within DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+    <Setter Property="Fill" Value="{DynamicResource ListActiveSelectionBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="DataGrid:focus-within DataGridRow:selected DataGridCell">
+    <Setter Property="Foreground" Value="{DynamicResource ListActiveSelectionForegroundBrush}" />
+  </Style>
+
+  <!--
+    Output lines: one style per severity instead of a theme subscription per
+    line. The panel keeps up to five thousand lines; each used to carry its own.
+  -->
+  <Style Selector="SelectableTextBlock.outputLine">
+    <Setter Property="FontSize" Value="{DynamicResource PanelFontSize}" />
+    <Setter Property="Foreground" Value="{DynamicResource EditorForegroundBrush}" />
+  </Style>
+  <Style Selector="SelectableTextBlock.outputLine.error">
+    <Setter Property="Foreground" Value="{DynamicResource ErrorForegroundBrush}" />
+  </Style>
+  <Style Selector="SelectableTextBlock.outputLine.warning">
+    <Setter Property="Foreground" Value="{DynamicResource WarningForegroundBrush}" />
+  </Style>
+  <Style Selector="SelectableTextBlock.outputLine.success">
+    <Setter Property="Foreground" Value="{DynamicResource SuccessForegroundBrush}" />
+  </Style>
+
 </Styles>

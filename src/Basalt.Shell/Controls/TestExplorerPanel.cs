@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Basalt.Core.Localization;
 using Basalt.Core.Services;
 
 namespace Basalt.Shell.Controls;
@@ -80,6 +81,7 @@ public sealed class TestExplorerPanel : UserControl
     private readonly TextBox _details;
     private readonly Button _runAll;
     private readonly Button _runFailed;
+    private readonly EmptyState _empty;
 
     private IReadOnlyList<TestCase> _tests = [];
     private readonly Dictionary<string, TestNode> _byName = new(StringComparer.Ordinal);
@@ -88,29 +90,29 @@ public sealed class TestExplorerPanel : UserControl
     {
         _summary = new TextBlock
         {
-            Text = "No tests discovered.",
+            Text = Localizer.Get(StringKeys.TestsNoneDiscovered),
             FontSize = PanelMetrics.SecondaryFontSize,
-            Opacity = 0.75,
+            Margin = new Thickness(Spacing.Normal, 0, Spacing.Normal, Spacing.Tight),
             VerticalAlignment = VerticalAlignment.Center
-        };
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
-        _runAll = new Button { Content = "Run All" };
+        _runAll = new Button { Content = Localizer.Get(StringKeys.TestsRunAll) };
         _runAll.Click += (_, _) => RunRequested?.Invoke(this, RunScope.All);
 
-        _runFailed = new Button { Content = "Run Failed", IsEnabled = false };
+        _runFailed = new Button { Content = Localizer.Get(StringKeys.TestsRunFailed), IsEnabled = false };
         _runFailed.Click += (_, _) => RunRequested?.Invoke(this, RunScope.Failed);
 
-        var runSelected = new Button { Content = "Run Selected" };
+        var runSelected = new Button { Content = Localizer.Get(StringKeys.TestsRunSelected) };
         runSelected.Click += (_, _) => RunRequested?.Invoke(this, RunScope.Selected);
 
-        var debugSelected = new Button { Content = "Debug" };
+        var debugSelected = new Button { Content = Localizer.Get(StringKeys.TestsDebug) };
         debugSelected.Click += (_, _) => DebugRequested?.Invoke(this, EventArgs.Empty);
 
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 4,
-            Margin = new Thickness(6, 4)
+            Spacing = Spacing.Tight,
+            Margin = new Thickness(Spacing.Small, Spacing.Tight)
         };
 
         buttons.Children.Add(_runAll);
@@ -159,6 +161,11 @@ public sealed class TestExplorerPanel : UserControl
         layout.Children.Add(_details);
         layout.Children.Add(_tree);
 
+        // Nothing discovered: say so where the tree would be, and what to do.
+        _empty = new EmptyState(Localizer.Get(StringKeys.TestsNoneDiscovered), IconKind.Tests);
+        layout.Children.Add(_empty);
+        UpdateEmpty();
+
         Content = layout;
     }
 
@@ -197,17 +204,17 @@ public sealed class TestExplorerPanel : UserControl
 
         _tree.ContextMenu = ContextMenus.Build(
         [
-            new("Run", () => Choose(TestCommand.Run))
+            new(Localizer.Get(StringKeys.TestsRun), () => Choose(TestCommand.Run))
                 { IsAvailable = AnySelection, Icon = IconKind.Run },
-            new("Debug", () => Choose(TestCommand.Debug))
+            new(Localizer.Get(StringKeys.TestsDebug), () => Choose(TestCommand.Debug))
                 { IsAvailable = OneTest, Icon = IconKind.Debug },
             MenuAction.Separator,
-            new("Open Source", () => Choose(TestCommand.OpenSource))
+            new(Localizer.Get(StringKeys.TestsOpenSource), () => Choose(TestCommand.OpenSource))
                 { IsAvailable = OneTest, Icon = IconKind.Open },
             MenuAction.Separator,
-            new("Copy Name", () => Choose(TestCommand.CopyName))
+            new(Localizer.Get(StringKeys.TestsCopyName), () => Choose(TestCommand.CopyName))
                 { IsAvailable = OneTest, Icon = IconKind.Copy },
-            new("Copy Failure", () => Choose(TestCommand.CopyFailure))
+            new(Localizer.Get(StringKeys.TestsCopyFailure), () => Choose(TestCommand.CopyFailure))
                 { IsAvailable = Failed, Icon = IconKind.Error }
         ]);
     }
@@ -261,7 +268,7 @@ public sealed class TestExplorerPanel : UserControl
             foreach (var byClass in byProject.GroupBy(t => t.ClassName, StringComparer.Ordinal))
             {
                 var className = new TestNode(
-                    byClass.Key.Length == 0 ? "(no class)" : ShortClassName(byClass.Key));
+                    byClass.Key.Length == 0 ? Localizer.Get(StringKeys.TestsNoClass) : ShortClassName(byClass.Key));
 
                 foreach (var test in byClass.OrderBy(t => t.DisplayName, StringComparer.Ordinal))
                 {
@@ -302,7 +309,7 @@ public sealed class TestExplorerPanel : UserControl
         }
 
         Refresh();
-        _summary.Text = "Running…";
+        _summary.Text = Localizer.Get(StringKeys.TestsRunning);
     }
 
     /// <summary>Records what a run produced.</summary>
@@ -331,7 +338,8 @@ public sealed class TestExplorerPanel : UserControl
     {
         if (_tests.Count == 0)
         {
-            _summary.Text = "No tests discovered.";
+            _summary.Text = Localizer.Get(StringKeys.TestsNoneDiscovered);
+            UpdateEmpty();
             return;
         }
 
@@ -342,8 +350,17 @@ public sealed class TestExplorerPanel : UserControl
         var skipped = counted.Count(n => n.Outcome == TestOutcome.Skipped);
 
         _summary.Text = passed + failed + skipped == 0
-            ? $"{_tests.Count} tests."
-            : $"{passed} passed, {failed} failed, {skipped} skipped, of {_tests.Count}.";
+            ? string.Format(Localizer.Get(StringKeys.TestsCount), _tests.Count)
+            : string.Format(Localizer.Get(StringKeys.TestsSummary), passed, failed, skipped, _tests.Count);
+
+        UpdateEmpty();
+    }
+
+    private void UpdateEmpty()
+    {
+        var none = _tests.Count == 0;
+        _empty.IsVisible = none;
+        _tree.IsVisible = !none;
     }
 
     private void ShowDetails(TestNode? node)
@@ -383,7 +400,7 @@ public sealed class TestExplorerPanel : UserControl
         var row = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 6
+            Spacing = Spacing.Small
         };
 
         row.Children.Add(new IconView
@@ -396,7 +413,7 @@ public sealed class TestExplorerPanel : UserControl
         row.Children.Add(new TextBlock
         {
             Text = node.Display,
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center
         });
 

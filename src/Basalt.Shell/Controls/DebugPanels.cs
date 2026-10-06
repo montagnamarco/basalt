@@ -30,7 +30,7 @@ public sealed class CallStackPanel : UserControl
             {
                 Text = Describe(frame),
                 FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-                FontSize = 12
+                FontSize = PanelMetrics.FontSize
             })
         };
 
@@ -146,7 +146,7 @@ public sealed class VariablesPanel : UserControl
                 {
                     Text = node?.Display,
                     FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-                    FontSize = 12
+                    FontSize = PanelMetrics.FontSize
                 },
                 node => node?.Children ?? [])
         };
@@ -213,8 +213,8 @@ public sealed class BreakpointsPanel : UserControl
         var row = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Margin = new Thickness(6, 2, 6, 2)
+            Spacing = Spacing.Small,
+            Margin = new Thickness(Spacing.Small, 2)
         };
 
         var enabled = new CheckBox { IsChecked = breakpoint.Enabled, VerticalAlignment = VerticalAlignment.Center };
@@ -223,7 +223,7 @@ public sealed class BreakpointsPanel : UserControl
         var label = new TextBlock
         {
             Text = Describe(breakpoint),
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -237,16 +237,16 @@ public sealed class BreakpointsPanel : UserControl
         var edit = new MenuItem
         {
             Header = breakpoint.Condition is { Length: > 0 }
-                ? "Edit Condition…"
-                : "Add Condition…"
+                ? Localizer.Get(StringKeys.BreakpointEditCondition)
+                : Localizer.Get(StringKeys.BreakpointAddCondition)
         };
 
         edit.Click += (_, _) => ConditionRequested?.Invoke(this, breakpoint);
 
-        var goTo = new MenuItem { Header = "Go to Breakpoint" };
+        var goTo = new MenuItem { Header = Localizer.Get(StringKeys.BreakpointGoTo) };
         goTo.Click += (_, _) => Activated?.Invoke(this, breakpoint);
 
-        var remove = new MenuItem { Header = "Remove" };
+        var remove = new MenuItem { Header = Localizer.Get(StringKeys.BreakpointRemove) };
         remove.Click += (_, _) => RemoveRequested?.Invoke(this, breakpoint);
 
         menu.ItemsSource = new Control[] { goTo, edit, new Separator(), remove };
@@ -275,7 +275,7 @@ public sealed class BreakpointsPanel : UserControl
         var where = $"{Path.GetFileName(breakpoint.FilePath)}:{breakpoint.Line}";
 
         return breakpoint.Condition is { Length: > 0 } condition
-            ? $"{where}   when {condition}"
+            ? $"{where}   {string.Format(Localizer.Get(StringKeys.BreakpointWhen), condition)}"
             : where;
     }
 

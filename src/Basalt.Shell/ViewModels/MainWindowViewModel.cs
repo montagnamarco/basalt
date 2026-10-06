@@ -88,11 +88,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public SolutionExplorerViewModel Explorer { get; } = new();
     public ObservableCollection<EditorDocumentViewModel> OpenDocuments { get; } = [];
-    public ObservableCollection<IdeDiagnostic> Diagnostics { get; } = [];
-    public ObservableCollection<string> BuildOutput { get; } = [];
+    public ReplaceableCollection<IdeDiagnostic> Diagnostics { get; } = [];
+    public ReplaceableCollection<string> BuildOutput { get; } = [];
 
     /// <summary>Project used to build and run.</summary>
-    public string? StartupProject { get; private set; }
+    public string? StartupProject { get; internal set; }
 
     /// <summary>
     /// Every project in the solution that can be run.
@@ -605,6 +605,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         await BuildAsync().ConfigureAwait(true);
     }
 
+    /// <summary>The process Clean or Rebuild last started, for the tests.</summary>
+    internal System.Diagnostics.ProcessStartInfo? LastTargetStartInfo { get; private set; }
+
     private async Task BuildWithTargetAsync(string target)
     {
         if (StartupProject is null)
@@ -622,8 +625,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             CreateNoWindow = true
         };
 
+        // Clean and rebuild print into the Output panel as well.
+        Basalt.Workspace.DotnetProcess.UseInterfaceLanguage(start);
+
         await AddCompatibilityArgumentsAsync(start).ConfigureAwait(true);
 
+        LastTargetStartInfo = start;
         using var process = System.Diagnostics.Process.Start(start);
 
         if (process is null) return;
@@ -1018,15 +1025,20 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         await _languageService.UpdateDocumentAsync(document.FilePath, document.Text).ConfigureAwait(true);
         var diagnostics = await _languageService.GetDiagnosticsAsync(document.FilePath).ConfigureAwait(true);
 
-        // Only the diagnostics of the affected file are replaced, so as not to
-        // wipe those produced by the last build on the other files.
-        var others = Diagnostics
-            .Where(d => !string.Equals(d.FilePath, document.FilePath, StringComparison.Ordinal))
-            .ToList();
+        ReplaceDiagnosticsOf(document.FilePath, diagnostics);
+    }
 
-        Diagnostics.Clear();
-        foreach (var d in others) Diagnostics.Add(d);
-        foreach (var d in diagnostics) Diagnostics.Add(d);
+    /// <summary>
+    /// Replaces the diagnostics of one file and keeps those of every other, as
+    /// the last build produced them, announcing the change once.
+    /// </summary>
+    internal void ReplaceDiagnosticsOf(string filePath, IEnumerable<IdeDiagnostic> diagnostics)
+    {
+        var kept = Diagnostics
+            .Where(d => !string.Equals(d.FilePath, filePath, StringComparison.Ordinal))
+            .Concat(diagnostics);
+
+        Diagnostics.ReplaceAll(kept);
     }
 
     /// <summary>
@@ -1088,22 +1100,49 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         else Dispatcher.UIThread.Post(work);
     }
 
+    private const int MaxOutputLines = 5000;
+    private readonly List<string> _pendingOutput = [];
+    private bool _outputDrainScheduled;
+
     private void AppendOutput(string line)
     {
         // Onto the UI thread first: MSBuild reports each line from a worker,
         // and adding to the collection from there raises CollectionChanged on
         // that thread — where the panel handling it touches controls and
         // Avalonia throws. It brought the whole application down mid-build.
+        //
+        // The lines of a burst are queued and added together, so a build that
+        // prints thousands of lines raises a handful of events, not thousands.
         if (!Dispatcher.UIThread.CheckAccess())
         {
-            Dispatcher.UIThread.Post(() => AppendOutput(line));
+            lock (_pendingOutput)
+            {
+                _pendingOutput.Add(line);
+                if (_outputDrainScheduled) return;
+                _outputDrainScheduled = true;
+            }
+
+            Dispatcher.UIThread.Post(DrainOutput);
             return;
         }
 
-        BuildOutput.Add(line);
+        // Anything queued from a worker came first.
+        DrainOutput();
+        BuildOutput.AddRange([line], MaxOutputLines);
+    }
 
-        // Unbounded output would eat memory during long builds.
-        while (BuildOutput.Count > 5000) BuildOutput.RemoveAt(0);
+    private void DrainOutput()
+    {
+        string[] lines;
+        lock (_pendingOutput)
+        {
+            lines = [.. _pendingOutput];
+            _pendingOutput.Clear();
+            _outputDrainScheduled = false;
+        }
+
+        // The cap keeps unbounded output from eating memory during long builds.
+        BuildOutput.AddRange(lines, MaxOutputLines);
     }
 
     /// <summary>Finds the executable project to build first.</summary>

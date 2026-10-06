@@ -1,3 +1,4 @@
+using Basalt.Core.Localization;
 using System.Xml.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -81,7 +82,22 @@ public sealed class ElementTreePanel : UserControl
             if (_tree.SelectedItem is Node node) ElementSelected?.Invoke(this, node.Element);
         };
 
-        Content = _tree;
+        // The tree is blank until a design is open; say so rather than leave
+        // an empty box that looks like a panel that failed to load.
+        _empty = new EmptyState(Localizer.Get(StringKeys.ElementTreeEmpty), IconKind.Outline);
+        Content = new Grid { Children = { _tree, _empty } };
+        UpdateEmpty();
+    }
+
+    private readonly EmptyState _empty;
+
+    /// <summary>Whether the panel is saying there is nothing to show. For tests.</summary>
+    internal bool IsShowingEmptyState => _empty.IsVisible;
+
+    private void UpdateEmpty()
+    {
+        _empty.IsVisible = _roots.Count == 0;
+        _tree.IsVisible = _roots.Count > 0;
     }
 
     /// <summary>One control in the tree.</summary>
@@ -157,6 +173,7 @@ public sealed class ElementTreePanel : UserControl
         {
             _roots = [];
             _tree.ItemsSource = null;
+            UpdateEmpty();
             return;
         }
 
@@ -178,6 +195,7 @@ public sealed class ElementTreePanel : UserControl
         // between wanting a control and reaching it.
         ExpandAll();
 
+        UpdateEmpty();
         Follow(session.Selection);
     }
 
@@ -210,7 +228,7 @@ public sealed class ElementTreePanel : UserControl
                     new TextBlock
                     {
                         Text = node?.Label ?? "",
-                        FontSize = 12,
+                        FontSize = PanelMetrics.FontSize,
                         VerticalAlignment = VerticalAlignment.Center,
                     },
                 },

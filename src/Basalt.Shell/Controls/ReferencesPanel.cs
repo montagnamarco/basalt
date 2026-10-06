@@ -1,3 +1,4 @@
+using Basalt.Core.Localization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -21,16 +22,22 @@ public sealed class ReferencesPanel : UserControl
     private readonly ListBox _list;
     private readonly TextBlock _summary;
     private readonly List<ReferenceRow> _rows = [];
+    private readonly EmptyState _empty;
+
+    private void UpdateEmpty()
+    {
+        _empty.IsVisible = _rows.Count == 0;
+        _list.IsVisible = _rows.Count > 0;
+    }
 
     public ReferencesPanel()
     {
         _summary = new TextBlock
         {
-            Text = "No references.",
-            FontSize = 11,
-            Opacity = 0.7,
-            Margin = new Thickness(12, 6, 12, 6)
-        };
+            Text = Localizer.Get(StringKeys.ReferencesNone),
+            FontSize = PanelMetrics.SecondaryFontSize,
+            Margin = new Thickness(Spacing.Normal, Spacing.Small)
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
         _list = new ListBox
         {
@@ -38,7 +45,7 @@ public sealed class ReferencesPanel : UserControl
             {
                 Text = row?.Display,
                 FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-                FontSize = 12
+                FontSize = PanelMetrics.FontSize
             })
         };
 
@@ -51,7 +58,13 @@ public sealed class ReferencesPanel : UserControl
         var layout = new DockPanel();
         DockPanel.SetDock(_summary, Avalonia.Controls.Dock.Top);
         layout.Children.Add(_summary);
+
+        // Nothing to list: the sentence above says what was searched for, and
+        // the panel says it has no results instead of showing a blank list.
+        _empty = new EmptyState(Localizer.Get(StringKeys.ReferencesEmpty), IconKind.References);
+        layout.Children.Add(_empty);
         layout.Children.Add(_list);
+        UpdateEmpty();
 
         Content = layout;
     }
@@ -107,8 +120,10 @@ public sealed class ReferencesPanel : UserControl
         _list.ItemsSource = _rows.ToList();
 
         _summary.Text = _rows.Count == 0
-            ? $"No references to '{symbolName}'."
-            : $"{_rows.Count} references to '{symbolName}'.";
+            ? string.Format(Localizer.Get(StringKeys.ReferencesNoneTo), symbolName)
+            : string.Format(Localizer.Get(StringKeys.ReferencesCount), _rows.Count, symbolName);
+
+        UpdateEmpty();
     }
 
     /// <summary>The list, so a test can double-click it for real.</summary>

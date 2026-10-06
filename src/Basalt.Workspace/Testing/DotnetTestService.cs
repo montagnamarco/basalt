@@ -217,16 +217,14 @@ public sealed class DotnetTestService : ITestService
     public static string FilterFor(IEnumerable<string> fullyQualifiedNames) =>
         string.Join("|", fullyQualifiedNames.Select(name => $"FullyQualifiedName={name}"));
 
+    /// <summary>The process the last discovery or run started, for the tests.</summary>
+    internal ProcessStartInfo? LastStartInfo { get; private set; }
+
     private async Task<(int ExitCode, string Output)> RunDotnetAsync(
         string projectPath, IReadOnlyList<string> arguments, CancellationToken ct)
     {
-        var startInfo = new ProcessStartInfo("dotnet")
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var startInfo = DotnetProcess.CreateStartInfo();
+        LastStartInfo = startInfo;
 
         foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
 

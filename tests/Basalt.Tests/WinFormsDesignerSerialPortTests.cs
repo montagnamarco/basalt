@@ -94,8 +94,8 @@ public sealed class WinFormsDesignerSerialPortTests
     {
         var document = new EditorDocumentViewModel("MainForm.Designer.vb", Source, true);
         using var view = new WinFormsDesignerView(document);
-        var toolbox = Assert.IsType<ListBox>(view.ToolboxContent);
-        var item = Assert.Single(toolbox.ItemsSource!.Cast<WinFormsToolboxItem>(),
+        var toolbox = Assert.IsType<ToolboxList>(view.ToolboxContent).List;
+        var item = Assert.Single(toolbox.ItemsSource!.OfType<WinFormsToolboxItem>(),
             candidate => candidate.ControlType == typeof(SerialPort));
         var window = new Window { Content = view, Width = 1100, Height = 700 };
         window.Show();

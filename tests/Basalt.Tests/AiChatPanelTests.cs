@@ -202,6 +202,38 @@ public class AiChatPanelTests
     }
 
     [AvaloniaFact]
+    public void TheSendButtonSaysStopOnlyWhileAReplyIsArriving()
+    {
+        var panel = new AiChatPanel();
+        var send = panel.SendButton;
+
+        void AssertSend()
+        {
+            Assert.Equal(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiSend), send.Content);
+            Assert.Equal(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiSendTip),
+                Avalonia.Controls.ToolTip.GetTip(send));
+        }
+
+        AssertSend();
+
+        using var running = new CancellationTokenSource();
+        panel.BeginReply(running);
+
+        Assert.Equal(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiStop), send.Content);
+        Assert.Equal(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiStopTip),
+            Avalonia.Controls.ToolTip.GetTip(send));
+        Assert.NotEqual(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.AiSend), send.Content);
+
+        panel.EndReply();
+        AssertSend();
+
+        // Stopping from the button goes back to Send too.
+        panel.BeginReply(running);
+        panel.Cancel();
+        AssertSend();
+    }
+
+    [AvaloniaFact]
     public void EmptiesTheBoxOnceTheQuestionIsAsked()
     {
         var panel = new AiChatPanel();

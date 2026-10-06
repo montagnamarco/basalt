@@ -23,15 +23,6 @@ public sealed record DiffLine(DiffLineKind Kind, string Text, int? OldLine, int?
 /// </summary>
 public sealed class DiffView : UserControl
 {
-    private static readonly IBrush AddedBackground =
-        new SolidColorBrush(Color.FromRgb(0x22, 0x86, 0x36), 0.15);
-
-    private static readonly IBrush RemovedBackground =
-        new SolidColorBrush(Color.FromRgb(0xCF, 0x22, 0x2E), 0.15);
-
-    private static readonly IBrush HeaderForeground =
-        new SolidColorBrush(Color.FromRgb(0x57, 0x5F, 0x6D));
-
     private readonly ItemsControl _lines;
     private readonly EmptyState _empty;
 
@@ -53,23 +44,29 @@ public sealed class DiffView : UserControl
     {
         if (line is null) return new TextBlock();
 
-        return new Border
+        var text = new TextBlock
         {
-            Background = line.Kind switch
-            {
-                DiffLineKind.Added => AddedBackground,
-                DiffLineKind.Removed => RemovedBackground,
-                _ => null
-            },
-            Padding = new Thickness(6, 0, 6, 0),
-            Child = new TextBlock
-            {
-                Text = line.Display,
-                FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-                FontSize = 12,
-                Foreground = line.Kind == DiffLineKind.Header ? HeaderForeground : null
-            }
+            Text = line.Display,
+            FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
+            FontSize = PanelMetrics.FontSize,
         };
+
+        // The header colour was a fixed slate grey, which is a pale smudge on a
+        // dark surface; the description token is the theme's own secondary text.
+        if (line.Kind == DiffLineKind.Header)
+            text.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
+
+        var row = new Border { Padding = new Thickness(Spacing.Small, 0), Child = text };
+
+        // Washes of the theme's success and error colours: green and red keep
+        // their meaning in every theme and stay readable behind the text.
+        switch (line.Kind)
+        {
+            case DiffLineKind.Added: row.ThemedTint(Border.BackgroundProperty, "SuccessForeground", 0.15); break;
+            case DiffLineKind.Removed: row.ThemedTint(Border.BackgroundProperty, "ErrorForeground", 0.15); break;
+        }
+
+        return row;
     }
 
     public void Show(string unifiedDiff)

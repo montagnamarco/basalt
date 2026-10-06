@@ -29,6 +29,7 @@ public sealed class ToolboxPanel : UserControl
     public static readonly DataFormat<ToolboxItem> DragFormat =
         DataFormat.CreateInProcessFormat<ToolboxItem>("basalt.toolbox-item");
 
+    private readonly ToolboxList _toolbox;
     private readonly ListBox _list;
 
     public ToolboxPanel()
@@ -41,29 +42,14 @@ public sealed class ToolboxPanel : UserControl
         // Headings are rows in the same list because Avalonia has no grouped
         // list — a second control per category would scroll independently,
         // and a toolbox that scrolls in five places is worse than one long
-        // list.
-        _list = new ListBox
-        {
-            ItemsSource = WithHeadings(),
-            ItemTemplate = new FuncDataTemplate<object>(
-                (item, _) => item is string ? Heading() : Row(),
-                supportsRecycling: false),
-        };
+        // list. ToolboxList folds them and filters the rows.
+        _toolbox = new ToolboxList();
+        _list = _toolbox.List;
+        ShowCatalogue();
 
-        // A heading is not something you can insert, so it does not take the
-        // selection: arrowing down the list steps over them.
-        _list.ContainerPrepared += (_, e) =>
+        _toolbox.ItemActivated += (_, item) =>
         {
-            if (e.Container is ListBoxItem row && row.DataContext is string)
-            {
-                row.IsHitTestVisible = false;
-                row.Focusable = false;
-            }
-        };
-
-        _list.DoubleTapped += (_, _) =>
-        {
-            if (_list.SelectedItem is ToolboxItem item) ControlChosen?.Invoke(this, item);
+            if (item is ToolboxItem chosen) ControlChosen?.Invoke(this, chosen);
         };
 
         _list.AddHandler(PointerPressedEvent, OnPressed, RoutingStrategies.Tunnel);
@@ -74,22 +60,24 @@ public sealed class ToolboxPanel : UserControl
         var hint = new TextBlock
         {
             Text = Localizer.Get(StringKeys.ToolboxHint),
-            FontSize = 11,
-            Opacity = 0.7,
+            FontSize = PanelMetrics.SecondaryFontSize,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(Spacing.Normal, Spacing.Tight),
-        };
+            Margin = new Thickness(Spacing.Normal, 0, Spacing.Normal, Spacing.Tight),
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
         var layout = new Grid
         {
             RowDefinitions = new RowDefinitions("Auto,*"),
-            Children = { hint, _list },
+            Children = { hint, _toolbox },
         };
 
-        Grid.SetRow(_list, 1);
+        Grid.SetRow(_toolbox, 1);
 
         Content = layout;
     }
+
+    /// <summary>The filter and list, for the tests.</summary>
+    internal ToolboxList Body => _toolbox;
 
     public event EventHandler<ToolboxItem>? ControlChosen;
 
@@ -195,6 +183,7 @@ public sealed class ToolboxPanel : UserControl
 
         var name = new TextBlock
         {
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
@@ -215,41 +204,18 @@ public sealed class ToolboxPanel : UserControl
         return row;
     }
 
-    /// <summary>A category heading between the groups.</summary>
-    private static Control Heading()
-    {
-        var heading = new TextBlock
-        {
-            FontSize = 10,
-            FontWeight = FontWeight.SemiBold,
-            Opacity = 0.6,
-            Margin = new Thickness(0, Spacing.Tight, 0, 0),
-        };
-
-        heading.Bind(TextBlock.TextProperty, new Binding("."));
-
-        return heading;
-    }
-
-    /// <summary>The catalogue with a heading before each category.</summary>
-    /// <remarks>
-    /// In catalogue order rather than sorted: the order there puts the
-    /// controls people reach for first at the top of each group, which
-    /// alphabetical order would scatter.
-    /// </remarks>
     /// <summary>Rebuilds the list, after a plugin has added to it.</summary>
-    public void Reload() => _list.ItemsSource = WithHeadings();
+    public void Reload() => ShowCatalogue();
 
-    private static List<object> WithHeadings()
-    {
-        var rows = new List<object>();
-
-        foreach (var group in ToolboxCatalog.ByCategory())
-        {
-            rows.Add(group.Key);
-            rows.AddRange(group);
-        }
-
-        return rows;
-    }
+    /// <summary>
+    /// The catalogue, in catalogue order rather than sorted: the order there
+    /// puts the controls people reach for first at the top of each group,
+    /// which alphabetical order would scatter.
+    /// </summary>
+    private void ShowCatalogue() =>
+        _toolbox.Show(
+            ToolboxCatalog.All,
+            item => item.Category,
+            item => [item.DisplayName, item.ElementName],
+            _ => Row());
 }

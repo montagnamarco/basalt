@@ -38,6 +38,7 @@ public sealed class DatabasePanel : UserControl, IDisposable
     private readonly TextBlock _status;
     private readonly Button _run;
     private readonly Button _stop;
+    private readonly EmptyState _noTables;
 
     private CancellationTokenSource? _running;
 
@@ -49,7 +50,7 @@ public sealed class DatabasePanel : UserControl, IDisposable
         _query = new TextEditor
         {
             FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             ShowLineNumbers = false,
             MinHeight = 70,
             Text = "SELECT * FROM ",
@@ -65,18 +66,17 @@ public sealed class DatabasePanel : UserControl, IDisposable
             AutoGenerateColumns = false,
             HeadersVisibility = DataGridHeadersVisibility.Column,
             GridLinesVisibility = DataGridGridLinesVisibility.Horizontal,
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
         };
 
         _status = new TextBlock
         {
-            FontSize = 11,
-            Opacity = 0.7,
+            FontSize = PanelMetrics.SecondaryFontSize,
             Margin = new Thickness(Spacing.Normal, Spacing.Tight),
             TextWrapping = TextWrapping.Wrap,
-        };
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
-        _run = new Button { Content = Localizer.Get(StringKeys.DatabaseRun), FontSize = 12 };
+        _run = new Button { Content = Localizer.Get(StringKeys.DatabaseRun), FontSize = PanelMetrics.FontSize };
         _run.Click += (_, _) => _ = RunAsync();
 
         // Only while something is running: a stop button with nothing to stop
@@ -84,13 +84,13 @@ public sealed class DatabasePanel : UserControl, IDisposable
         _stop = new Button
         {
             Content = Localizer.Get(StringKeys.DatabaseStop),
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             IsVisible = false,
         };
 
         _stop.Click += (_, _) => _running?.Cancel();
 
-        var open = new Button { Content = Localizer.Get(StringKeys.DatabaseOpen), FontSize = 12 };
+        var open = new Button { Content = Localizer.Get(StringKeys.DatabaseOpen), FontSize = PanelMetrics.FontSize };
         open.Click += (_, _) => OpenRequested?.Invoke(this, EventArgs.Empty);
 
         var bar = new StackPanel
@@ -117,10 +117,15 @@ public sealed class DatabasePanel : UserControl, IDisposable
 
         var split = new Grid { ColumnDefinitions = new ColumnDefinitions("200,4,*") };
 
-        Grid.SetColumn(_tables, 0);
+        // The tables column says so when no database is open, instead of being
+        // an empty white box beside the query.
+        _noTables = new EmptyState(Localizer.Get(StringKeys.DatabaseNothingOpen), IconKind.Information);
+        var left = new Grid { Children = { _tables, _noTables } };
+
+        Grid.SetColumn(left, 0);
         Grid.SetColumn(right, 2);
 
-        split.Children.Add(_tables);
+        split.Children.Add(left);
         split.Children.Add(new GridSplitter { Width = 4, [Grid.ColumnProperty] = 1 });
         split.Children.Add(right);
 
@@ -172,12 +177,14 @@ public sealed class DatabasePanel : UserControl, IDisposable
         var tables = await _client.GetTablesAsync().ConfigureAwait(true);
 
         _tables.ItemsSource = tables.Select(t => new TableNode(t)).ToList();
+        _noTables.IsVisible = tables.Count == 0;
+        _noTables.Message = Localizer.Get(StringKeys.DatabaseNoTables);
 
         _tables.ItemTemplate = new Avalonia.Controls.Templates.FuncTreeDataTemplate<object>(
             (item, _) => new TextBlock
             {
                 Text = item?.ToString() ?? "",
-                FontSize = 12,
+                FontSize = PanelMetrics.FontSize,
                 Margin = new Thickness(0, Spacing.Hairline),
             },
             item => (item as TableNode)?.Columns ?? []);
@@ -256,7 +263,7 @@ public sealed class DatabasePanel : UserControl, IDisposable
                 CellTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<IReadOnlyList<string?>>(
                     (_, _) => new TextBlock
                     {
-                        FontSize = 12,
+                        FontSize = PanelMetrics.FontSize,
                         Margin = new Thickness(Spacing.Tight, 2),
                         VerticalAlignment = VerticalAlignment.Center,
                         [!TextBlock.TextProperty] = new Avalonia.Data.Binding($"[{at}]"),
@@ -277,6 +284,8 @@ public sealed class DatabasePanel : UserControl, IDisposable
     private void ShowNothingOpen()
     {
         _tables.ItemsSource = null;
+        _noTables.IsVisible = true;
+        _noTables.Message = Localizer.Get(StringKeys.DatabaseNothingOpen);
         _results.ItemsSource = null;
         _results.Columns.Clear();
         _run.IsEnabled = false;

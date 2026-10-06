@@ -22,7 +22,8 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
     private readonly Func<string, EditorDocumentViewModel?>? _findCode;
     private readonly Func<string, Task<EditorDocumentViewModel>>? _getCode;
     private readonly Dictionary<string, IReadOnlyDictionary<string, string>> _handlers = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ListBox _toolbox = new();
+    private readonly ToolboxList _toolboxPanel = new();
+    private ListBox _toolbox => _toolboxPanel.List;
     private readonly TextBlock _status = new() { TextWrapping = Avalonia.Media.TextWrapping.Wrap };
     private WinFormsDesignerSession? _session;
     private bool _busy;
@@ -53,21 +54,18 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
             Spacing = 6,
             Children = { undo, redo, _layoutToolbar }
         };
-        _toolbox.ItemTemplate = WinFormsToolboxVisuals.Template;
-        _toolbox.ItemsSource = WinFormsToolboxCatalog.Describe(typeof(Forms.Control).Assembly, typeof(Forms.Control))
-            .Where(item => !typeof(Forms.Form).IsAssignableFrom(item.ControlType)
-                && item.ControlType != typeof(Forms.WebBrowser) && item.ControlType != typeof(Forms.AxHost)
-                && item.ControlType != typeof(Forms.ContextMenuStrip))
-            .Concat(new[] { typeof(Forms.Timer), typeof(Forms.ImageList), typeof(Forms.ToolTip), typeof(Forms.ContextMenuStrip), typeof(SerialPort) }
-                .Select(type => new WinFormsToolboxItem(type)))
-            .OrderBy(item => item.DisplayName, StringComparer.OrdinalIgnoreCase).ToArray();
-        _toolbox.DoubleTapped += (_, _) => AddSelectedTool();
-        _toolbox.KeyDown += (_, args) =>
-        {
-            if (args.Key != Key.Enter) return;
-            AddSelectedTool();
-            args.Handled = true;
-        };
+        _toolboxPanel.Show(
+            WinFormsToolboxCatalog.Order(
+                WinFormsToolboxCatalog.Describe(typeof(Forms.Control).Assembly, typeof(Forms.Control))
+                    .Where(item => !typeof(Forms.Form).IsAssignableFrom(item.ControlType)
+                        && item.ControlType != typeof(Forms.WebBrowser) && item.ControlType != typeof(Forms.AxHost)
+                        && item.ControlType != typeof(Forms.ContextMenuStrip))
+                    .Concat(new[] { typeof(Forms.Timer), typeof(Forms.ImageList), typeof(Forms.ToolTip), typeof(Forms.ContextMenuStrip), typeof(SerialPort) }
+                        .Select(type => new WinFormsToolboxItem(type)))),
+            item => item.Category,
+            item => [item.DisplayName],
+            WinFormsToolboxVisuals.CreateRow);
+        _toolboxPanel.ItemActivated += (_, activated) => AddTool(activated as WinFormsToolboxItem);
         var body = CreateDesignerBody(dockTools);
         var layout = new DockPanel { Margin = new Thickness(8), Children = { toolbar, _status, body } };
         DockPanel.SetDock(toolbar, Avalonia.Controls.Dock.Top);
@@ -172,9 +170,11 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
 
     private string CompanionPath => _document.FilePath[..^".Designer.vb".Length] + ".vb";
 
-    private void AddSelectedTool()
+    // The item the toolbox reports, not its selection: Enter in the filter box
+    // activates the first match while the list may still hold an older selection.
+    private void AddTool(WinFormsToolboxItem? item)
     {
-        if (_session is null || _toolbox.SelectedItem is not WinFormsToolboxItem item) return;
+        if (_session is null || item is null) return;
         RunEditAsync(async () =>
         {
             var session = _session!;
@@ -199,7 +199,7 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
         _editSelectionNames = _surface.SelectedControls.Select(_session.NameOf).ToArray();
         _busy = true;
         IsEnabled = false;
-        _toolbox.IsEnabled = false;
+        _toolboxPanel.IsEnabled = false;
         _properties.IsEnabled = false;
         _events.IsEnabled = false;
         try { await edit(); }
@@ -209,7 +209,7 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
             _busy = false;
             _editSelectionNames = [];
             IsEnabled = true;
-            _toolbox.IsEnabled = true;
+            _toolboxPanel.IsEnabled = true;
             _properties.IsEnabled = true;
             _events.IsEnabled = true;
         }

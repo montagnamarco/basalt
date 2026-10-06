@@ -71,20 +71,6 @@ public sealed record ChangeRow(FileChange Change)
         FileChangeKind.Renamed => "FocusBorderBrush",
         _ => "DescriptionForegroundBrush"
     };
-
-    /// <summary>
-    /// The same colours as fixed values: what the letter falls back to when
-    /// the control is not in a window yet, and what the tests compare.
-    /// </summary>
-    public Color Colour => Change.Kind switch
-    {
-        FileChangeKind.Added => Color.FromRgb(0x2E, 0xA0, 0x43),
-        FileChangeKind.Modified => Color.FromRgb(0xBF, 0x87, 0x00),
-        FileChangeKind.Deleted => Color.FromRgb(0xCF, 0x22, 0x2E),
-        FileChangeKind.Renamed => Color.FromRgb(0x37, 0x94, 0xFF),
-        FileChangeKind.Conflicted => Color.FromRgb(0xCF, 0x22, 0x2E),
-        _ => Color.FromRgb(0x8A, 0x8A, 0x8A)
-    };
 }
 
 /// <summary>
@@ -127,7 +113,7 @@ public sealed class GitChangesPanel : UserControl
         _branch = new TextBlock
         {
             FontWeight = FontWeight.SemiBold,
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
@@ -138,19 +124,19 @@ public sealed class GitChangesPanel : UserControl
         _upstream = new TextBlock
         {
             FontSize = PanelMetrics.SecondaryFontSize,
-            Opacity = 0.7,
             VerticalAlignment = VerticalAlignment.Center
-        };
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
-        _pull = SmallButton(IconKind.Pull, "Pull");
-        _push = SmallButton(IconKind.Push, "Push");
+        _pull = SmallButton(IconKind.Pull, Localizer.Get(StringKeys.MenuGitPull));
+        _push = SmallButton(IconKind.Push, Localizer.Get(StringKeys.MenuGitPush));
 
         _pull.Click += (_, _) => RemoteRequested?.Invoke(this, RemoteCommand.Pull);
         _push.Click += (_, _) => RemoteRequested?.Invoke(this, RemoteCommand.Push);
 
         _message = new TextBox
         {
-            PlaceholderText = "Commit message",
+            PlaceholderText = Localizer.Get(StringKeys.GitCommitMessage),
+            FontSize = PanelMetrics.FontSize,
             AcceptsReturn = true,
             MinHeight = 60,
             MaxHeight = 140,
@@ -176,14 +162,13 @@ public sealed class GitChangesPanel : UserControl
         _summaryLength = new TextBlock
         {
             FontSize = PanelMetrics.SecondaryFontSize,
-            Opacity = 0.55,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Right
-        };
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
         _amend = new CheckBox
         {
-            Content = "Amend the last commit",
+            Content = Localizer.Get(StringKeys.GitAmendLast),
             FontSize = PanelMetrics.SecondaryFontSize,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -199,7 +184,7 @@ public sealed class GitChangesPanel : UserControl
 
         _commit = new Button
         {
-            Content = "Commit",
+            Content = Localizer.Get(StringKeys.GitCommit),
             Margin = new Thickness(Spacing.Normal, 0, Spacing.Normal, Spacing.Normal),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center
@@ -228,8 +213,8 @@ public sealed class GitChangesPanel : UserControl
         _stagedCount = CountLabel();
         _unstagedCount = CountLabel();
 
-        _stageAll = LinkButton("Stage all");
-        _unstageAll = LinkButton("Unstage all");
+        _stageAll = LinkButton(Localizer.Get(StringKeys.GitStageAll));
+        _unstageAll = LinkButton(Localizer.Get(StringKeys.GitUnstageAll));
 
         _stageAll.Click += (_, _) => StageAllRequested?.Invoke(this, EventArgs.Empty);
         _unstageAll.Click += (_, _) => UnstageAllRequested?.Invoke(this, EventArgs.Empty);
@@ -248,9 +233,9 @@ public sealed class GitChangesPanel : UserControl
         AddRow(layout, _message, 1);
         AddRow(layout, MessageFooter(), 2);
         AddRow(layout, _commit, 3);
-        AddRow(layout, new Separator { Opacity = 0.25, Margin = new Thickness(0, 0, 0, 2) }, 4);
-        _stagedHeader = SectionHeader("Staged", _stagedCount, _unstageAll);
-        _unstagedHeader = SectionHeader("Changes", _unstagedCount, _stageAll);
+        AddRow(layout, new Separator { Margin = new Thickness(0, 0, 0, 2) }.Themed(Separator.BackgroundProperty, "PanelBorderBrush"), 4);
+        _stagedHeader = SectionHeader(Localizer.Get(StringKeys.GitStaged), _stagedCount, _unstageAll);
+        _unstagedHeader = SectionHeader(Localizer.Get(StringKeys.GitChanges), _unstagedCount, _stageAll);
 
         AddRow(layout, _stagedHeader, 5);
         AddRow(layout, _staged, 6);
@@ -334,25 +319,25 @@ public sealed class GitChangesPanel : UserControl
         return ContextMenus.Build(
         [
             staged
-                ? new MenuAction("Unstage", () => Choose(ChangeCommand.Unstage))
+                ? new MenuAction(Localizer.Get(StringKeys.GitUnstage), () => Choose(ChangeCommand.Unstage))
                     { IsAvailable = HasFile }
-                : new MenuAction("Stage", () => Choose(ChangeCommand.Stage))
+                : new MenuAction(Localizer.Get(StringKeys.GitStage), () => Choose(ChangeCommand.Stage))
                     { IsAvailable = HasFile },
 
             MenuAction.Separator,
-            new("Open Diff", () => Choose(ChangeCommand.OpenDiff))
+            new(Localizer.Get(StringKeys.GitOpenDiff), () => Choose(ChangeCommand.OpenDiff))
                 { IsAvailable = HasFile, Icon = IconKind.Diff },
-            new("Open File", () => Choose(ChangeCommand.OpenFile))
+            new(Localizer.Get(StringKeys.GitOpenFile), () => Choose(ChangeCommand.OpenFile))
                 { IsAvailable = HasFile, Icon = IconKind.Open },
             MenuAction.Separator,
 
             // Only on the unstaged list: discarding a staged change would
             // throw away work the user has already chosen to keep.
-            new("Discard Changes…", () => Choose(ChangeCommand.Discard))
+            new(Localizer.Get(StringKeys.GitDiscardChanges), () => Choose(ChangeCommand.Discard))
                 { IsAvailable = () => !staged && HasFile(), Icon = IconKind.Warning },
 
             MenuAction.Separator,
-            new("Copy Path", () => Choose(ChangeCommand.CopyPath))
+            new(Localizer.Get(StringKeys.GitCopyPath), () => Choose(ChangeCommand.CopyPath))
                 { IsAvailable = HasFile, Icon = IconKind.Copy }
         ]);
     }
@@ -457,9 +442,8 @@ public sealed class GitChangesPanel : UserControl
                     Text = text,
                     FontSize = PanelMetrics.SecondaryFontSize,
                     FontWeight = FontWeight.SemiBold,
-                    Opacity = 0.75,
                     VerticalAlignment = VerticalAlignment.Center
-                },
+                }.Themed(TextBlock.ForegroundProperty, "ChromeSecondaryForegroundBrush"),
                 count
             }
         };
@@ -477,13 +461,12 @@ public sealed class GitChangesPanel : UserControl
     }
 
     /// <summary>How many files, in a pill beside the heading.</summary>
-    private static TextBlock CountLabel() => new()
+    private static TextBlock CountLabel() => new TextBlock
     {
         FontSize = PanelMetrics.SecondaryFontSize,
-        Opacity = 0.6,
         VerticalAlignment = VerticalAlignment.Center,
         FontFamily = Monospace
-    };
+    }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
     private static readonly FontFamily Monospace =
         new("Menlo,Consolas,DejaVu Sans Mono,monospace");
@@ -496,11 +479,11 @@ public sealed class GitChangesPanel : UserControl
     /// </remarks>
     private static Button LinkButton(string text) => new()
     {
-        Content = new TextBlock { Text = text, FontSize = PanelMetrics.SecondaryFontSize },
+        Content = new TextBlock { Text = text, FontSize = PanelMetrics.SecondaryFontSize }
+            .Themed(TextBlock.ForegroundProperty, "ChromeSecondaryForegroundBrush"),
         Background = Brushes.Transparent,
         BorderThickness = new Thickness(0),
         Padding = new Thickness(Spacing.Tight, 0),
-        Opacity = 0.75,
         VerticalAlignment = VerticalAlignment.Center
     };
 
@@ -548,7 +531,6 @@ public sealed class GitChangesPanel : UserControl
             FontFamily = Monospace,
             FontSize = PanelMetrics.SecondaryFontSize,
             FontWeight = FontWeight.Bold,
-            Foreground = new SolidColorBrush(row.Colour),
             Width = 12,
             VerticalAlignment = VerticalAlignment.Center
         }.Themed(TextBlock.ForegroundProperty, row.BrushKey);
@@ -556,7 +538,7 @@ public sealed class GitChangesPanel : UserControl
         var name = new TextBlock
         {
             Text = row.Name,
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -567,10 +549,9 @@ public sealed class GitChangesPanel : UserControl
         {
             Text = row.Folder,
             FontSize = PanelMetrics.SecondaryFontSize,
-            Opacity = 0.5,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
-        };
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
         var layout = new Grid
         {
@@ -602,7 +583,7 @@ public sealed class GitChangesPanel : UserControl
     public void Show(
         string? branch, IReadOnlyList<FileChange> changes, UpstreamState? upstream)
     {
-        _branch.Text = branch ?? "No branch";
+        _branch.Text = branch ?? Localizer.Get(StringKeys.GitNoBranch);
 
         var staged = changes.Where(c => c.Staged).Select(c => new ChangeRow(c)).ToList();
         var unstaged = changes.Where(c => !c.Staged).Select(c => new ChangeRow(c)).ToList();
@@ -651,14 +632,14 @@ public sealed class GitChangesPanel : UserControl
         {
             // Publishing a branch is a push, so the button stays live; there
             // is nothing to pull from a remote that has never heard of it.
-            _upstream.Text = "not published";
+            _upstream.Text = Localizer.Get(StringKeys.GitNotPublished);
             _pull.IsEnabled = false;
             _push.IsEnabled = true;
             return;
         }
 
         _upstream.Text = upstream.IsInStep
-            ? "up to date"
+            ? Localizer.Get(StringKeys.GitUpToDate)
             : string.Join(
                 "  ",
                 new[]
@@ -691,21 +672,23 @@ public sealed class GitChangesPanel : UserControl
 
         _commit.IsEnabled = message.Length > 0 && (amending || Staged.Count > 0);
 
-        _commit.Content = amending ? "Amend" : "Commit";
+        _commit.Content = Localizer.Get(amending ? StringKeys.GitAmend : StringKeys.GitCommit);
 
         var subject = (_message.Text ?? "").Replace("\r\n", "\n").Split('\n')[0];
 
         _summaryLength.Text = subject.Length == 0 ? "" : subject.Length.ToString();
 
-        _summaryLength.Foreground = subject.Length > SubjectLimit
-            ? new SolidColorBrush(Color.FromRgb(0xBF, 0x87, 0x00))
-            : null;
+        // The theme's warning colour, not a fixed amber: the amber that read on
+        // white was a smear on a dark surface.
+        _summaryLength.Themed(
+            TextBlock.ForegroundProperty,
+            subject.Length > SubjectLimit ? "WarningForegroundBrush" : "DescriptionForegroundBrush");
 
         ToolTip.SetTip(
             _commit,
             _commit.IsEnabled
                 ? null
-                : message.Length == 0 ? "Write a message first" : "Stage something to commit");
+                : Localizer.Get(message.Length == 0 ? StringKeys.GitWriteMessageFirst : StringKeys.GitStageSomething));
     }
 
     /// <summary>
@@ -763,8 +746,12 @@ public sealed class GitChangesPanel : UserControl
 public sealed class GitHistoryPanel : UserControl
 {
     private const double LaneWidth = 14;
-    private const double RowHeight = 22;
+    private const double RowHeight = PanelMetrics.RowHeight;
 
+    // A categorical palette, not theme text: each lane needs a hue of its own to
+    // be told apart from its neighbours, and these six read on both the light
+    // and the dark side bar. Tokens would collapse them into the theme's three
+    // semantic colours and merge lanes.
     private static readonly Color[] LaneColours =
     [
         Color.FromRgb(0x37, 0x94, 0xFF), Color.FromRgb(0x2E, 0xA0, 0x43),
@@ -787,7 +774,21 @@ public sealed class GitHistoryPanel : UserControl
             if (_list.SelectedItem is GraphRow row) CommitSelected?.Invoke(this, row.Commit);
         };
 
-        Content = _list;
+        _empty = new EmptyState(Localizer.Get(StringKeys.GitHistoryEmpty), IconKind.History);
+
+        Content = new Grid { Children = { _list, _empty } };
+        UpdateEmpty();
+    }
+
+    private readonly EmptyState _empty;
+
+    /// <summary>Whether the panel says there is no history. For tests.</summary>
+    internal bool IsShowingEmptyState => _empty.IsVisible;
+
+    private void UpdateEmpty()
+    {
+        _empty.IsVisible = _rows.Count == 0;
+        _list.IsVisible = _rows.Count > 0;
     }
 
     public event EventHandler<CommitInfo>? CommitSelected;
@@ -827,7 +828,7 @@ public sealed class GitHistoryPanel : UserControl
         text.Children.Add(new TextBlock
         {
             Text = row.Commit.Subject,
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             VerticalAlignment = VerticalAlignment.Center
         });
 
@@ -835,9 +836,8 @@ public sealed class GitHistoryPanel : UserControl
         {
             Text = $"{row.Commit.Author}   {row.Commit.When:yyyy-MM-dd}",
             FontSize = PanelMetrics.SecondaryFontSize,
-            Opacity = 0.6,
             VerticalAlignment = VerticalAlignment.Center
-        });
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush"));
 
         layout.Children.Add(text);
 
@@ -848,6 +848,7 @@ public sealed class GitHistoryPanel : UserControl
     {
         _rows = CommitGraph.Build(commits);
         _list.ItemsSource = _rows;
+        UpdateEmpty();
     }
 
     public void Clear() => Show([]);

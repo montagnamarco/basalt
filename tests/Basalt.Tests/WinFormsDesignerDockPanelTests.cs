@@ -46,7 +46,8 @@ public sealed class WinFormsDesignerDockPanelTests
             var designer = Assert.IsType<WinFormsDesignerView>(view);
             var surface = designer.GetVisualDescendants().OfType<WinFormsDesignSurface>().Single();
             await WaitUntilAsync(() => surface.RootForm is not null);
-            var toolbox = Assert.IsType<ListBox>(toolboxDock.Content);
+            var toolbox = Assert.IsType<ToolboxList>(toolboxDock.Content);
+            Assert.Contains(toolbox.List.ItemsSource!.Cast<object>(), row => row is WinFormsToolboxItem);
             var properties = Assert.IsType<WinFormsPropertyPanel>(propertiesDock.Content);
             Assert.IsType<WinFormsEventPanel>(eventsDock.Content);
             Assert.Null(properties.EventsContent);
@@ -168,8 +169,8 @@ public sealed class WinFormsDesignerDockPanelTests
             var surface = designer.GetVisualDescendants().OfType<WinFormsDesignSurface>().Single();
             await WaitUntilAsync(() => surface.RootForm is not null);
             surface.Select(surface.RootForm!.Controls[0]);
-            var toolbox = Assert.IsType<ListBox>(toolboxDock.Content);
-            toolbox.SelectedItem = toolbox.ItemsSource!.Cast<WinFormsToolboxItem>()
+            var toolbox = Assert.IsType<ToolboxList>(toolboxDock.Content).List;
+            toolbox.SelectedItem = toolbox.ItemsSource!.OfType<WinFormsToolboxItem>()
                 .Single(item => item.ControlType == typeof(Forms.Label));
             toolbox.RaiseEvent(new TappedEventArgs(Control.DoubleTappedEvent, null!));
             await WaitUntilAsync(() => document.Text.Contains("Friend WithEvents Label1", StringComparison.Ordinal));

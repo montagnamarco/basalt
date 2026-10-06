@@ -30,6 +30,9 @@ public sealed partial class MsBuildBuildService : IBuildService
 
     public event EventHandler<string>? OutputReceived;
 
+    /// <summary>The process the last build or restore started, for the tests.</summary>
+    internal ProcessStartInfo? LastStartInfo { get; private set; }
+
     /// <summary>
     /// Where the properties that retarget a Visual Studio Windows desktop
     /// project onto Basalt.Forms come from. Share one session with the
@@ -58,14 +61,8 @@ public sealed partial class MsBuildBuildService : IBuildService
         var stopwatch = Stopwatch.StartNew();
         var output = new List<string>();
 
-        var startInfo = new ProcessStartInfo("dotnet")
-        {
-            WorkingDirectory = Path.GetDirectoryName(Path.GetFullPath(projectPath)),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var startInfo = DotnetProcess.CreateStartInfo(Path.GetDirectoryName(Path.GetFullPath(projectPath)));
+        LastStartInfo = startInfo;
         foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
 
         using var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };

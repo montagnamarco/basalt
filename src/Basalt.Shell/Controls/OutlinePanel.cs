@@ -62,11 +62,11 @@ public sealed class OutlinePanel : UserControl
 
         _tree.ContextMenu = ContextMenus.Build(
         [
-            new("Go to Symbol", () => Choose(OutlineCommand.GoTo)) { IsAvailable = HasSymbol },
-            new("Copy Name", () => Choose(OutlineCommand.CopyName)) { IsAvailable = HasSymbol },
+            new(Localizer.Get(StringKeys.OutlineGoTo), () => Choose(OutlineCommand.GoTo)) { IsAvailable = HasSymbol },
+            new(Localizer.Get(StringKeys.TestsCopyName), () => Choose(OutlineCommand.CopyName)) { IsAvailable = HasSymbol },
             MenuAction.Separator,
-            new("Expand All", () => Choose(OutlineCommand.ExpandAll)),
-            new("Collapse All", () => Choose(OutlineCommand.CollapseAll))
+            new(Localizer.Get(StringKeys.OutlineExpandAll), () => Choose(OutlineCommand.ExpandAll)),
+            new(Localizer.Get(StringKeys.OutlineCollapseAll), () => Choose(OutlineCommand.CollapseAll))
         ]);
     }
 
@@ -114,7 +114,7 @@ public sealed class OutlinePanel : UserControl
         var row = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 6
+            Spacing = Spacing.Small
         };
 
         row.Children.Add(new Image
@@ -137,9 +137,8 @@ public sealed class OutlinePanel : UserControl
             {
                 Text = detail,
                 FontSize = PanelMetrics.SecondaryFontSize,
-                Opacity = 0.6,
                 VerticalAlignment = VerticalAlignment.Center
-            });
+            }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush"));
 
         return row;
     }

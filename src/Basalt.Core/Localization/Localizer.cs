@@ -50,6 +50,26 @@ public static class Localizer
     /// </summary>
     public static IReadOnlyList<CultureInfo> AvailableCultures { get; } = BuildAvailableCultures();
 
+    /// <summary>
+    /// The language the IDE is actually displayed in: the current culture when
+    /// a translation of it ships, English otherwise.
+    ///
+    /// <see cref="Culture"/> starts as the operating system's language, so on
+    /// an Italian machine it says "it" while every string still resolves to
+    /// English. Anything that has to match what the user reads (the language
+    /// of the tools the IDE launches) asks this rather than the raw culture.
+    /// </summary>
+    public static string InterfaceLanguage
+    {
+        get
+        {
+            var match = AvailableCultures.FirstOrDefault(c =>
+                c.TwoLetterISOLanguageName == _culture.TwoLetterISOLanguageName);
+
+            return (match ?? AvailableCultures[0]).Name;
+        }
+    }
+
     /// <summary>Looks up a string by key.</summary>
     public static string Get(string key) =>
         Resources.GetString(key, _culture) ?? key;
@@ -533,4 +553,111 @@ public static class StringKeys
 
     // Visual Studio Windows desktop projects retargeted onto Basalt.Forms.
     public const string BuildWindowsDesktopSourcesMissing = "Build_WindowsDesktopSourcesMissing";
+
+    // Problems, Output and Search panels: toolbars, filters and the search literals.
+    public const string ProblemsErrors = "Problems_Errors";
+    public const string ProblemsWarnings = "Problems_Warnings";
+    public const string ProblemsMessages = "Problems_Messages";
+    public const string ProblemsErrorsCount = "Problems_ErrorsCount";
+    public const string ProblemsWarningsCount = "Problems_WarningsCount";
+    public const string ProblemsMessagesCount = "Problems_MessagesCount";
+    public const string ProblemsFilter = "Problems_Filter";
+    public const string ProblemsNoMatch = "Problems_NoMatch";
+    public const string OutputClear = "Output_Clear";
+    public const string OutputWordWrap = "Output_WordWrap";
+    public const string OutputScrollToEnd = "Output_ScrollToEnd";
+    public const string SearchFind = "Search_Find";
+    public const string SearchReplaceWith = "Search_ReplaceWith";
+    public const string SearchReplaceAll = "Search_ReplaceAll";
+    public const string SearchFileTypes = "Search_FileTypes";
+    public const string SearchMatchCase = "Search_MatchCase";
+    public const string SearchWholeWord = "Search_WholeWord";
+    public const string SearchUseRegex = "Search_UseRegex";
+    public const string SearchSearching = "Search_Searching";
+    public const string SearchOpenSolutionFirst = "Search_OpenSolutionFirst";
+    public const string SearchNoResults = "Search_NoResults";
+    public const string SearchProgress = "Search_Progress";
+    public const string SearchResults = "Search_Results";
+    public const string SearchReplaced = "Search_Replaced";
+    public const string SearchEmpty = "Search_Empty";
+    public const string SearchFileMatches = "Search_FileMatches";
+
+    // Phase 2b panels: toolbox filter, panel tooltips and empty states.
+    public const string ToolboxFilterWatermark = "Toolbox_FilterWatermark";
+    public const string ToolboxFilterTip = "Toolbox_FilterTip";
+    public const string ToolboxNoMatches = "Toolbox_NoMatches";
+    public const string OutlineCollapseAll = "Outline_CollapseAll";
+    public const string OutlineExpandAll = "Outline_ExpandAll";
+    public const string OutlineGoTo = "Outline_GoTo";
+    public const string ElementTreeEmpty = "ElementTree_Empty";
+    public const string DatabaseNoTables = "Database_NoTables";
+    public const string WatchAddExpression = "Watch_AddExpression";
+    public const string BreakpointWhen = "Breakpoint_When";
+    public const string BreakpointRemove = "Breakpoint_Remove";
+    public const string BreakpointGoTo = "Breakpoint_GoTo";
+    public const string BreakpointAddCondition = "Breakpoint_AddCondition";
+    public const string BreakpointEditCondition = "Breakpoint_EditCondition";
+    public const string ReferencesCount = "References_Count";
+    public const string ReferencesNoneTo = "References_NoneTo";
+    public const string ReferencesEmpty = "References_Empty";
+    public const string ReferencesNone = "References_None";
+    public const string BranchRemote = "Branch_Remote";
+    public const string BranchLocal = "Branch_Local";
+    public const string BranchDelete = "Branch_Delete";
+    public const string BranchMerge = "Branch_Merge";
+    public const string BranchCreate = "Branch_Create";
+    public const string BranchNewName = "Branch_NewName";
+    public const string GitHistoryEmpty = "Git_HistoryEmpty";
+    public const string GitStageSomething = "Git_StageSomething";
+    public const string GitWriteMessageFirst = "Git_WriteMessageFirst";
+    public const string GitUpToDate = "Git_UpToDate";
+    public const string GitNotPublished = "Git_NotPublished";
+    public const string GitNoBranch = "Git_NoBranch";
+    public const string GitCopyPath = "Git_CopyPath";
+    public const string GitDiscardChanges = "Git_DiscardChanges";
+    public const string GitOpenFile = "Git_OpenFile";
+    public const string GitOpenDiff = "Git_OpenDiff";
+    public const string GitStage = "Git_Stage";
+    public const string GitUnstage = "Git_Unstage";
+    public const string GitChanges = "Git_Changes";
+    public const string GitStaged = "Git_Staged";
+    public const string GitUnstageAll = "Git_UnstageAll";
+    public const string GitStageAll = "Git_StageAll";
+    public const string GitAmend = "Git_Amend";
+    public const string GitCommit = "Git_Commit";
+    public const string GitAmendLast = "Git_AmendLast";
+    public const string GitCommitMessage = "Git_CommitMessage";
+    public const string TestsSummary = "Tests_Summary";
+    public const string TestsCount = "Tests_Count";
+    public const string TestsRunning = "Tests_Running";
+    public const string TestsNoClass = "Tests_NoClass";
+    public const string TestsCopyFailure = "Tests_CopyFailure";
+    public const string TestsCopyName = "Tests_CopyName";
+    public const string TestsOpenSource = "Tests_OpenSource";
+    public const string TestsRun = "Tests_Run";
+    public const string TestsDebug = "Tests_Debug";
+    public const string TestsRunFailed = "Tests_RunFailed";
+    public const string TestsRunSelected = "Tests_RunSelected";
+    public const string TestsRunAll = "Tests_RunAll";
+    public const string TestsNoneDiscovered = "Tests_NoneDiscovered";
+    public const string AiApply = "Ai_Apply";
+    public const string AiAssistant = "Ai_Assistant";
+    public const string AiYou = "Ai_You";
+    public const string AiNoAssistant = "Ai_NoAssistant";
+    public const string AiClearTip = "Ai_ClearTip";
+    public const string AiClear = "Ai_Clear";
+    public const string AiSendTip = "Ai_SendTip";
+    public const string AiSend = "Ai_Send";
+    public const string AiStop = "Ai_Stop";
+    public const string AiStopTip = "Ai_StopTip";
+    public const string AiAskPlaceholder = "Ai_AskPlaceholder";
+    public const string AiActionDocument = "Ai_Action_Document";
+    public const string AiActionTests = "Ai_Action_Tests";
+    public const string AiActionFix = "Ai_Action_Fix";
+    public const string AiActionExplain = "Ai_Action_Explain";
+    public const string AiActionAsk = "Ai_Action_Ask";
+    public const string ProblemsErrorsCountOne = "Problems_ErrorsCountOne";
+    public const string ProblemsWarningsCountOne = "Problems_WarningsCountOne";
+    public const string ProblemsMessagesCountOne = "Problems_MessagesCountOne";
+    public const string SearchFileMatchesOne = "Search_FileMatchesOne";
 }

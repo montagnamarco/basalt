@@ -50,12 +50,50 @@ public class GitChangesPanelLookTests
         // Green added, amber modified, red deleted: the conventions every
         // other client uses, because the list is scanned for the red one and
         // the letter is read only after the row is found.
-        Color Of(FileChangeKind kind) =>
-            new ChangeRow(new FileChange("a.vb", kind, false)).Colour;
+        string Of(FileChangeKind kind) =>
+            new ChangeRow(new FileChange("a.vb", kind, false)).BrushKey;
 
         Assert.NotEqual(Of(FileChangeKind.Added), Of(FileChangeKind.Modified));
         Assert.NotEqual(Of(FileChangeKind.Modified), Of(FileChangeKind.Deleted));
         Assert.NotEqual(Of(FileChangeKind.Added), Of(FileChangeKind.Deleted));
+    }
+
+    [AvaloniaTheory]
+    [InlineData("Light")]
+    [InlineData("Dark")]
+    public void TheKindLettersAreDrawnInTheThemesStatusColours(string name)
+    {
+        // The letters used to carry fixed greens and reds picked for white;
+        // they must be the theme's own tokens, so they stay readable on the
+        // dark surface and follow a theme change.
+        using var scope = new ThemeScope(name == "Dark" ? Avalonia.Styling.ThemeVariant.Dark : Avalonia.Styling.ThemeVariant.Light);
+        var panel = new GitChangesPanel();
+        panel.Show("master", Sample(), new UpstreamState("origin/master", 0, 0));
+        var window = new Window { Content = panel, Width = 400, Height = 600 };
+        window.Show();
+        window.UpdateLayout();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        try
+        {
+            Color Token(string key)
+            {
+                Assert.True(window.TryFindResource(key, window.ActualThemeVariant, out var value), key);
+                return (Color)value!;
+            }
+
+            Color LetterColour(string letter)
+            {
+                var block = panel.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == letter);
+                return Assert.IsAssignableFrom<ISolidColorBrush>(block.Foreground).Color;
+            }
+
+            Assert.Equal(Token("SuccessForeground"), LetterColour("A"));
+            Assert.Equal(Token("WarningForeground"), LetterColour("M"));
+            Assert.Equal(Token("ErrorForeground"), LetterColour("D"));
+            Assert.Equal(Token("DescriptionForeground"), LetterColour("?"));
+        }
+        finally { window.Close(); }
     }
 
     [AvaloniaFact]

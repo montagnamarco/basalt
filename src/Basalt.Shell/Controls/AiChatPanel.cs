@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Microsoft.Extensions.AI;
+using Basalt.Core.Localization;
 using Basalt.Core.Services;
 
 namespace Basalt.Shell.Controls;
@@ -102,9 +103,9 @@ public sealed class AiChatPanel : UserControl
         _status = new TextBlock
         {
             FontSize = PanelMetrics.SecondaryFontSize,
-            Opacity = 0.7,
-            Margin = new Thickness(8, 4)
-        };
+            Margin = new Thickness(Spacing.Normal, Spacing.Tight),
+            TextWrapping = TextWrapping.Wrap
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
         _history = new ItemsControl
         {
@@ -116,7 +117,12 @@ public sealed class AiChatPanel : UserControl
 
         _actions = new ComboBox
         {
-            ItemsSource = new[] { "Ask", "Explain", "Fix the error", "Generate tests", "Document" },
+            ItemsSource = new[]
+            {
+                Localizer.Get(StringKeys.AiActionAsk), Localizer.Get(StringKeys.AiActionExplain),
+                Localizer.Get(StringKeys.AiActionFix), Localizer.Get(StringKeys.AiActionTests),
+                Localizer.Get(StringKeys.AiActionDocument)
+            },
             SelectedIndex = 0,
             FontSize = PanelMetrics.FontSize,
             Width = 130
@@ -124,10 +130,11 @@ public sealed class AiChatPanel : UserControl
 
         _input = new TextBox
         {
-            PlaceholderText = "Ask about the code…",
+            PlaceholderText = Localizer.Get(StringKeys.AiAskPlaceholder),
             AcceptsReturn = true,
             MinHeight = 60,
             MaxHeight = 140,
+            FontSize = PanelMetrics.FontSize,
             TextWrapping = TextWrapping.Wrap
         };
 
@@ -140,10 +147,12 @@ public sealed class AiChatPanel : UserControl
             RequestSend();
         };
 
-        _send = new Button { Content = "Send" };
+        _send = new Button { Content = Localizer.Get(StringKeys.AiSend), FontSize = PanelMetrics.FontSize };
         _send.Click += (_, _) => RequestSend();
 
-        var clear = new Button { Content = "Clear" };
+        var clear = new Button { Content = Localizer.Get(StringKeys.AiClear), FontSize = PanelMetrics.FontSize };
+        ToolTip.SetTip(clear, Localizer.Get(StringKeys.AiClearTip));
+        ToolTip.SetTip(_send, Localizer.Get(StringKeys.AiSendTip));
         clear.Click += (_, _) => Clear();
 
         var controls = new StackPanel
@@ -172,7 +181,7 @@ public sealed class AiChatPanel : UserControl
 
         Content = layout;
 
-        ShowStatus("No assistant configured. Choose one in Settings.");
+        ShowStatus(Localizer.Get(StringKeys.AiNoAssistant));
     }
 
     /// <summary>Raised when the user asks something.</summary>
@@ -184,6 +193,9 @@ public sealed class AiChatPanel : UserControl
     internal IReadOnlyList<ChatEntry> Entries => _entries;
 
     internal string StatusText => _status.Text ?? "";
+
+    /// <summary>The button that sends, and stops while a reply is arriving.</summary>
+    internal Button SendButton => _send;
 
     internal string InputText
     {
@@ -236,20 +248,28 @@ public sealed class AiChatPanel : UserControl
         _running?.Cancel();
         _running = null;
 
-        _send.Content = "Send";
+        ShowSendState(replying: false);
     }
 
     /// <summary>Says a reply is on its way, so the button can stop it.</summary>
     public void BeginReply(CancellationTokenSource running)
     {
         _running = running;
-        _send.Content = "Stop";
+        ShowSendState(replying: true);
     }
 
     public void EndReply()
     {
         _running = null;
-        _send.Content = "Send";
+        ShowSendState(replying: false);
+    }
+
+    // The label and its tooltip change together: a "Stop" button that still
+    // says "Send the question" in its tooltip is worse than none.
+    private void ShowSendState(bool replying)
+    {
+        _send.Content = Localizer.Get(replying ? StringKeys.AiStop : StringKeys.AiSend);
+        ToolTip.SetTip(_send, Localizer.Get(replying ? StringKeys.AiStopTip : StringKeys.AiSendTip));
     }
 
     internal void RequestSend()
@@ -291,11 +311,10 @@ public sealed class AiChatPanel : UserControl
 
         stack.Children.Add(new TextBlock
         {
-            Text = entry.IsUser ? "You" : "Assistant",
+            Text = Localizer.Get(entry.IsUser ? StringKeys.AiYou : StringKeys.AiAssistant),
             FontWeight = FontWeight.SemiBold,
-            FontSize = PanelMetrics.SecondaryFontSize,
-            Opacity = 0.7
-        });
+            FontSize = PanelMetrics.SecondaryFontSize
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush"));
 
         foreach (var part in MarkdownBlocks.Split(entry.Text))
         {
@@ -305,18 +324,22 @@ public sealed class AiChatPanel : UserControl
                 {
                     Text = part.Text,
                     TextWrapping = TextWrapping.Wrap,
-                    FontSize = 12
+                    FontSize = PanelMetrics.FontSize
                 });
         }
 
-        return new Border
+        var card = new Border
         {
-            Background = entry.IsUser
-                ? new SolidColorBrush(Colors.Gray, 0.08)
-                : null,
             CornerRadius = new CornerRadius(4),
             Child = stack
         };
+
+        // The user's turns sit on a wash of the editor's own text colour: a
+        // fixed grey at 8 percent was a pale tint on white and invisible on a
+        // dark surface, and does not follow the theme when it changes.
+        if (entry.IsUser) card.ThemedTint(Border.BackgroundProperty, "EditorForeground", 0.08);
+
+        return card;
     }
 
     private Control BuildCodeBlock(string code)
@@ -327,13 +350,13 @@ public sealed class AiChatPanel : UserControl
             IsReadOnly = true,
             AcceptsReturn = true,
             FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-            FontSize = 12,
+            FontSize = PanelMetrics.FontSize,
             BorderThickness = new Thickness(0)
         };
 
         var apply = new Button
         {
-            Content = "Apply",
+            Content = Localizer.Get(StringKeys.AiApply),
             FontSize = PanelMetrics.FontSize,
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new Thickness(0, 2, 0, 0)
@@ -345,13 +368,16 @@ public sealed class AiChatPanel : UserControl
         stack.Children.Add(text);
         stack.Children.Add(apply);
 
-        return new Border
+        var block = new Border
         {
-            Background = new SolidColorBrush(Colors.Gray, 0.10),
             CornerRadius = new CornerRadius(3),
-            Padding = new Thickness(6, 4),
+            Padding = new Thickness(Spacing.Small, Spacing.Tight),
             Child = stack
         };
+
+        block.ThemedTint(Border.BackgroundProperty, "EditorForeground", 0.10);
+
+        return block;
     }
 }
 

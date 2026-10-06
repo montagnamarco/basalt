@@ -14,6 +14,9 @@ public sealed class ProcessRunService : IDisposable
     /// a rebuild on run.</summary>
     public IReadOnlyList<string> LastArguments { get; private set; } = [];
 
+    /// <summary>The process the last start created, for the tests.</summary>
+    internal ProcessStartInfo? LastStartInfo { get; private set; }
+
     /// <summary>
     /// Used by <see cref="StartAsync"/> to look where the build wrote, with the
     /// same session the build used.
@@ -44,14 +47,8 @@ public sealed class ProcessRunService : IDisposable
         if (IsRunning)
             throw new InvalidOperationException("The application is already running.");
 
-        var startInfo = new ProcessStartInfo("dotnet")
-        {
-            WorkingDirectory = Path.GetDirectoryName(Path.GetFullPath(projectPath)),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var startInfo = DotnetProcess.CreateStartInfo(Path.GetDirectoryName(Path.GetFullPath(projectPath)));
+        LastStartInfo = startInfo;
 
         // The build put its output in bin/basalt; without the same properties
         // "dotnet run" would look in bin/Debug and find nothing, or a

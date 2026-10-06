@@ -9,7 +9,7 @@ internal sealed partial class WinFormsDesignerView
     internal event Action? EventsPanelRequested;
     internal event Action? PropertiesPanelRequested;
 
-    internal Control ToolboxContent => _toolbox;
+    internal Control ToolboxContent => _toolboxPanel;
     internal Control PropertiesContent => _properties;
     internal Control EventsContent => _events;
 
@@ -49,7 +49,7 @@ internal sealed partial class WinFormsDesignerView
         else
         {
             _properties.EventsContent = _events;
-            var left = StandaloneTool("WinFormsDesigner_Toolbox", _toolbox, 165);
+            var left = StandaloneTool("WinFormsDesigner_Toolbox", _toolboxPanel, 165);
             var right = StandaloneTool("WinFormsDesigner_Properties", _properties, 285);
             DockPanel.SetDock(left, Avalonia.Controls.Dock.Left);
             DockPanel.SetDock(right, Avalonia.Controls.Dock.Right);

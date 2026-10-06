@@ -122,8 +122,8 @@ public class PanelEmptyStateTests
         // The panels that used to carry a copy of a faded TextBlock each.
         var viewModel = new MainWindowViewModel();
 
-        Assert.IsType<EmptyState>(new ProblemsPanel(viewModel, _ => { }).Content);
-        Assert.IsType<EmptyState>(new OutputPanel(viewModel).Content);
+        Assert.IsType<EmptyState>(new ProblemsPanel(viewModel, _ => { }).EmptyState);
+        Assert.IsType<EmptyState>(new OutputPanel(viewModel).EmptyState);
         Assert.IsType<EmptyState>(new OutlinePanel().Content);
         Assert.IsType<EmptyState>(new CallStackPanel().Content);
         Assert.IsType<EmptyState>(new VariablesPanel().Content);

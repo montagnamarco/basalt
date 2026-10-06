@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
@@ -10,14 +11,19 @@ using Basalt.Workspace.Search;
 
 namespace Basalt.Shell.Controls;
 
-/// <summary>A hit as the results list shows it.</summary>
-public sealed record SearchResultRow(string FilePath, SearchHit? Hit, bool IsFileHeader)
+/// <summary>
+/// A hit as the results list shows it: a file header carrying how many
+/// matches the file has, or one matching line.
+/// </summary>
+public sealed record SearchResultRow(
+    string FilePath, SearchHit? Hit, bool IsFileHeader, int MatchCount = 0, string? Folder = null)
 {
     public string Display => IsFileHeader
         ? Path.GetFileName(FilePath)
         : $"{Hit!.Line,5}: {Hit.LineText.Trim()}";
 
-    public string? Detail => IsFileHeader ? Path.GetDirectoryName(FilePath) : null;
+    /// <summary>Where the file is: relative to the searched folder when known.</summary>
+    public string? Detail => IsFileHeader ? Folder ?? Path.GetDirectoryName(FilePath) : null;
 }
 
 /// <summary>
@@ -33,9 +39,14 @@ public sealed class SearchPanel : UserControl
 
     private readonly TextBox _term;
     private readonly TextBox _replacement;
-    private readonly CheckBox _matchCase;
-    private readonly CheckBox _wholeWord;
-    private readonly CheckBox _useRegex;
+    private readonly ToggleButton _matchCase;
+    private readonly ToggleButton _wholeWord;
+    private readonly ToggleButton _useRegex;
+    private readonly Button _findButton;
+    private readonly Button _replaceButton;
+    private readonly ContentControl _body = new();
+    private readonly EmptyState _hint;
+    private readonly EmptyState _noResults;
     private readonly TextBox _extensions;
     private readonly ListBox _results;
     private readonly TextBlock _summary;
@@ -43,33 +54,58 @@ public sealed class SearchPanel : UserControl
     private CancellationTokenSource? _running;
     private readonly List<SearchResultRow> _rows = [];
 
+    // The editor's font, as the Output panel uses it: matched lines are code,
+    // and read against the editor they came from.
+    private FontFamily _font = new(new Basalt.Core.Settings.EditorSettings().FontFamily);
+
     public SearchPanel()
     {
-        _term = new TextBox { PlaceholderText = "Find" };
-        _replacement = new TextBox { PlaceholderText = "Replace with" };
+        _term = Input(Localizer.Get(StringKeys.SearchFind));
+        _replacement = Input(Localizer.Get(StringKeys.SearchReplaceWith));
+        _extensions = Input(Localizer.Get(StringKeys.SearchFileTypes));
 
-        _matchCase = new CheckBox { Content = "Aa", FontSize = 11 };
-        _wholeWord = new CheckBox { Content = "Word", FontSize = 11 };
-        _useRegex = new CheckBox { Content = ".*", FontSize = 11 };
+        _matchCase = PanelToolbar.TextToggle("Aa", Localizer.Get(StringKeys.SearchMatchCase));
+        _wholeWord = PanelToolbar.TextToggle("ab", Localizer.Get(StringKeys.SearchWholeWord));
+        _useRegex = PanelToolbar.TextToggle(".*", Localizer.Get(StringKeys.SearchUseRegex));
 
-        _extensions = new TextBox
+        _findButton = new Button { Content = Localizer.Get(StringKeys.SearchFind), Classes = { "primary" } };
+        _findButton.Click += async (_, _) => await RunSearchAsync();
+
+        _replaceButton = new Button { Content = Localizer.Get(StringKeys.SearchReplaceAll) };
+        _replaceButton.Click += async (_, _) => await RunReplaceAsync();
+
+        foreach (var button in new[] { _findButton, _replaceButton })
         {
-            PlaceholderText = "File types, e.g. .vb .vbhtml",
-            FontSize = 11
-        };
+            button.MinHeight = Spacing.EditorHeight;
+            button.MinWidth = 88;
+            button.FontSize = PanelMetrics.FontSize;
+            button.Padding = new Thickness(Spacing.Normal, 2);
+            button.HorizontalContentAlignment = HorizontalAlignment.Center;
+            button.VerticalContentAlignment = VerticalAlignment.Center;
+        }
 
         _summary = new TextBlock
         {
-            FontSize = 11,
-            Opacity = 0.7,
-            Margin = new Thickness(2, 4, 2, 4)
-        };
+            FontSize = PanelMetrics.SecondaryFontSize,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
         _results = new ListBox
         {
             ItemTemplate = new FuncDataTemplate<SearchResultRow>((row, _) => BuildRow(row))
         };
         _results.DoubleTapped += (_, _) => OpenSelected();
+        _results.KeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Enter) return;
+
+            OpenSelected();
+            e.Handled = true;
+        };
+
+        _hint = new EmptyState(Localizer.Get(StringKeys.SearchEmpty), IconKind.Find);
+        _noResults = new EmptyState(Localizer.Get(StringKeys.SearchNoResults), IconKind.Find);
+        _body.Content = _hint;
 
         Content = BuildLayout();
 
@@ -82,8 +118,31 @@ public sealed class SearchPanel : UserControl
         };
     }
 
+    private static TextBox Input(string placeholder) => new()
+    {
+        PlaceholderText = placeholder,
+        FontSize = PanelMetrics.FontSize,
+        MinHeight = Spacing.EditorHeight,
+        Padding = new Thickness(Spacing.Tight, 2),
+        VerticalContentAlignment = VerticalAlignment.Center
+    };
+
     /// <summary>Directory the search covers, normally the solution folder.</summary>
     public string? SearchRoot { get; set; }
+
+    /// <summary>The font the matched lines are drawn in.</summary>
+    internal FontFamily Font => _font;
+
+    /// <summary>
+    /// Follows the editor's font from Settings. The rows on screen are built
+    /// again, because each one carries the font it was made with.
+    /// </summary>
+    public void ApplySettings(Basalt.Core.Settings.IdeSettings settings)
+    {
+        _font = new FontFamily(settings.Editor.FontFamily);
+
+        if (_results.ItemsSource is not null) _results.ItemsSource = _rows.ToList();
+    }
 
     /// <summary>Raised when the user picks a hit to open.</summary>
     public event EventHandler<SearchHit>? HitActivated;
@@ -98,6 +157,21 @@ public sealed class SearchPanel : UserControl
 
     /// <summary>What the panel is telling the user about the last search.</summary>
     internal string Summary => _summary.Text ?? "";
+
+    /// <summary>The controls the tests read the visible text of.</summary>
+    internal Button FindButton => _findButton;
+    internal Button ReplaceAllButton => _replaceButton;
+    internal TextBox TermBox => _term;
+    internal TextBox ReplacementBox => _replacement;
+    internal TextBox ExtensionsBox => _extensions;
+    internal ToggleButton MatchCaseToggle => _matchCase;
+    internal ToggleButton WholeWordToggle => _wholeWord;
+    internal ToggleButton RegexToggle => _useRegex;
+    internal ListBox ResultsList => _results;
+
+    /// <summary>Which of the three bodies the panel shows, for the tests.</summary>
+    internal bool IsShowingHint => ReferenceEquals(_body.Content, _hint);
+    internal bool IsShowingNoResults => ReferenceEquals(_body.Content, _noResults);
 
     /// <summary>Reports a hit as if the user had picked it.</summary>
     internal void ActivateForTests(SearchResultRow row)
@@ -121,68 +195,162 @@ public sealed class SearchPanel : UserControl
 
     private Control BuildLayout()
     {
-        var options = new StackPanel
+        // Two rows of an input and the button that acts on it, so the
+        // buttons line up in one column whatever the panel's width.
+        var inputs = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            RowDefinitions = new RowDefinitions("Auto,Auto"),
+            ColumnSpacing = Spacing.Tight,
+            RowSpacing = Spacing.Tight
+        };
+
+        Place(inputs, _term, 0, 0);
+        Place(inputs, _findButton, 0, 1);
+        Place(inputs, _replacement, 1, 0);
+        Place(inputs, _replaceButton, 1, 1);
+
+        var options = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = Spacing.Tight };
+        var toggles = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 12,
+            Spacing = Spacing.Hairline * 2,
             Children = { _matchCase, _wholeWord, _useRegex }
         };
-
-        var findButton = new Button { Content = "Find", Classes = { "primary" } };
-        findButton.Click += async (_, _) => await RunSearchAsync();
-
-        var replaceButton = new Button { Content = "Replace all" };
-        replaceButton.Click += async (_, _) => await RunReplaceAsync();
-
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Children = { findButton, replaceButton }
-        };
+        Grid.SetColumn(_extensions, 1);
+        options.Children.Add(toggles);
+        options.Children.Add(_extensions);
 
         var top = new StackPanel
         {
-            Margin = new Thickness(12, 8, 12, 6),
-            Spacing = 6,
-            Children = { _term, _replacement, options, _extensions, buttons, _summary }
+            Margin = new Thickness(Spacing.Normal, Spacing.Normal, Spacing.Normal, Spacing.Tight),
+            Spacing = Spacing.Tight,
+            Children = { inputs, options, _summary }
         };
 
-        var layout = new DockPanel();
+        var header = new Border { Child = top, BorderThickness = new Thickness(0, 0, 0, 1) };
+        header.Themed(Border.BorderBrushProperty, "PanelBorderBrush");
         // Fully qualified: the docking library also declares a "Dock"
         // namespace, which shadows Avalonia's enum of the same name.
-        DockPanel.SetDock(top, Avalonia.Controls.Dock.Top);
-        layout.Children.Add(top);
-        layout.Children.Add(_results);
+        DockPanel.SetDock(header, Avalonia.Controls.Dock.Top);
+
+        return new DockPanel { Children = { header, _body } };
+    }
+
+    private static void Place(Grid grid, Control control, int row, int column)
+    {
+        Grid.SetRow(control, row);
+        Grid.SetColumn(control, column);
+        grid.Children.Add(control);
+    }
+
+    private Control BuildRow(SearchResultRow? row)
+    {
+        if (row is null) return new TextBlock();
+
+        return row.IsFileHeader ? BuildFileRow(row) : BuildHitRow(row);
+    }
+
+    private static Control BuildFileRow(SearchResultRow row)
+    {
+        var name = new TextBlock
+        {
+            Text = row.Display,
+            FontWeight = FontWeight.SemiBold,
+            FontSize = PanelMetrics.FontSize,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var line = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Spacing.Normal,
+            Children = { name }
+        };
+
+        if (!string.IsNullOrEmpty(row.Detail))
+        {
+            line.Children.Add(new TextBlock
+            {
+                Text = row.Detail,
+                FontSize = PanelMetrics.SecondaryFontSize,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush"));
+        }
+
+        var count = new TextBlock
+        {
+            Text = row.MatchCount == 1
+                ? Localizer.Get(StringKeys.SearchFileMatchesOne)
+                : Localizer.Get(StringKeys.SearchFileMatches, row.MatchCount),
+            FontSize = PanelMetrics.SecondaryFontSize,
+            VerticalAlignment = VerticalAlignment.Center
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
+
+        var layout = new DockPanel { Margin = new Thickness(0, 2) };
+        DockPanel.SetDock(count, Avalonia.Controls.Dock.Right);
+        layout.Children.Add(count);
+        layout.Children.Add(line);
 
         return layout;
     }
 
-    private static Control BuildRow(SearchResultRow? row)
+    private Control BuildHitRow(SearchResultRow row)
     {
-        if (row is null) return new TextBlock();
+        var hit = row.Hit!;
 
-        var text = new TextBlock
+        var number = new TextBlock
         {
-            Text = row.Display,
-            FontFamily = row.IsFileHeader
-                ? FontFamily.Default
-                : new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
-            FontWeight = row.IsFileHeader ? FontWeight.SemiBold : FontWeight.Normal,
-            FontSize = row.IsFileHeader ? 13 : 12
+            Text = hit.Line.ToString(),
+            FontSize = PanelMetrics.SecondaryFontSize,
+            Width = 44,
+            TextAlignment = TextAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, Spacing.Normal, 0)
+        }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Children = { number, HighlightedLine(hit) }
+        };
+    }
+
+    /// <summary>
+    /// The matching line, trimmed, with the matched text on a highlight.
+    ///
+    /// Without it the user reads the whole line for the term. The highlight
+    /// is the theme's focus colour, translucent, so the text stays legible
+    /// on every theme.
+    /// </summary>
+    private TextBlock HighlightedLine(SearchHit hit)
+    {
+        var text = hit.LineText.TrimEnd('\r', '\n');
+        var indent = text.Length - text.TrimStart().Length;
+        var visible = text.Trim();
+
+        var start = Math.Clamp(hit.Column - 1 - indent, 0, visible.Length);
+        var length = Math.Clamp(hit.Length, 0, visible.Length - start);
+
+        var block = new TextBlock
+        {
+            FontFamily = _font,
+            FontSize = PanelMetrics.FontSize,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center
         };
 
-        if (row.Detail is null) return text;
+        block.Inlines!.Add(new Run(visible[..start]));
 
-        var detail = new TextBlock
-        {
-            Text = row.Detail,
-            FontSize = 10,
-            Opacity = 0.6,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        };
+        var match = new Run(visible.Substring(start, length)) { FontWeight = FontWeight.SemiBold };
+        match.Bind(Inline.BackgroundProperty, block.GetResourceObservable(
+            "FocusBorder", value => value is Color color ? new SolidColorBrush(color, 0.35) : (IBrush?)null));
+        block.Inlines.Add(match);
 
-        return new StackPanel { Children = { text, detail } };
+        block.Inlines.Add(new Run(visible[(start + length)..]));
+
+        return block;
     }
 
     private SearchOptions CurrentOptions() => new()
@@ -210,7 +378,7 @@ public sealed class SearchPanel : UserControl
 
         if (string.IsNullOrEmpty(term) || root is null || !Directory.Exists(root))
         {
-            _summary.Text = root is null ? "Open a solution first." : "";
+            _summary.Text = root is null ? Localizer.Get(StringKeys.SearchOpenSolutionFirst) : "";
             return;
         }
 
@@ -222,7 +390,7 @@ public sealed class SearchPanel : UserControl
 
         _rows.Clear();
         _results.ItemsSource = null;
-        _summary.Text = "Searching…";
+        _summary.Text = Localizer.Get(StringKeys.SearchSearching);
 
         var options = CurrentOptions();
         var files = 0;
@@ -237,24 +405,39 @@ public sealed class SearchPanel : UserControl
                 files++;
                 hits += file.Hits.Count;
 
-                _rows.Add(new SearchResultRow(file.FilePath, null, IsFileHeader: true));
+                _rows.Add(new SearchResultRow(file.FilePath, null, IsFileHeader: true,
+                    file.Hits.Count, RelativeFolder(file.FilePath, root)));
                 foreach (var hit in file.Hits)
                     _rows.Add(new SearchResultRow(file.FilePath, hit, IsFileHeader: false));
 
                 // Rebinding as results arrive lets the first files appear while
                 // the rest of the solution is still being read.
                 _results.ItemsSource = _rows.ToList();
-                _summary.Text = $"{hits} in {files} files…";
+                _body.Content = _results;
+                _summary.Text = Localizer.Get(StringKeys.SearchProgress, hits, files);
             }
 
             _summary.Text = hits == 0
-                ? "No results."
-                : $"{hits} results in {files} files.";
+                ? Localizer.Get(StringKeys.SearchNoResults)
+                : Localizer.Get(StringKeys.SearchResults, hits, files);
+
+            _body.Content = hits == 0 ? _noResults : _results;
         }
         catch (OperationCanceledException)
         {
             // Superseded by a newer search.
         }
+    }
+
+    /// <summary>The file's folder relative to the searched one; null at the root, where there is nothing to add.</summary>
+    private static string? RelativeFolder(string filePath, string root)
+    {
+        var folder = Path.GetDirectoryName(filePath);
+        if (folder is null) return null;
+
+        var relative = Path.GetRelativePath(root, folder);
+
+        return relative == "." ? "" : relative.StartsWith("..", StringComparison.Ordinal) ? folder : relative;
     }
 
     private async Task RunReplaceAsync()
@@ -268,11 +451,12 @@ public sealed class SearchPanel : UserControl
             .ReplaceInDirectoryAsync(root, term, _replacement.Text ?? "", CurrentOptions())
             .ConfigureAwait(true);
 
-        _summary.Text = $"Replaced in {changed} files.";
+        _summary.Text = Localizer.Get(StringKeys.SearchReplaced, changed);
 
         // The old results point at text that is no longer there.
         _rows.Clear();
         _results.ItemsSource = null;
+        _body.Content = _hint;
     }
 
     private void OpenSelected()
