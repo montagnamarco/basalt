@@ -37,6 +37,12 @@ public sealed class SolutionSession
 
     /// <summary>The selected solution explorer file or folder.</summary>
     public string? SelectedPath { get; set; }
+
+    /// <summary>The runtime identifiers last chosen in "Make executable".</summary>
+    public List<string> PublishRids { get; set; } = [];
+
+    /// <summary>The output folder last chosen there; null means the project's bin/Publish folder.</summary>
+    public string? PublishOutputRoot { get; set; }
 }
 
 public sealed class OpenDocumentSession

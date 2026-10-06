@@ -19,6 +19,7 @@ public static class IdeCommands
     public const string FileSave = "file.save";
     public const string FileSaveAll = "file.saveAll";
     public const string FileClose = "file.close";
+    public const string FileMakeExecutable = "file.makeExecutable";
 
     public const string EditUndo = "edit.undo";
     public const string EditRedo = "edit.redo";
@@ -144,6 +145,11 @@ public static class IdeCommands
                 { DefaultGesture = "Ctrl+Shift+S" },
             new(FileClose, "Close Document", CommandCategory.File)
                 { DefaultGesture = "Ctrl+W" },
+            // The VB6 "Make Project.exe", for every platform .NET publishes to.
+            new(FileMakeExecutable, "Make Executable…", CommandCategory.File)
+                { // No default gesture: Ctrl+Alt+E is AltGr+E, the euro sign, on
+                  // several European layouts. Users can bind a key.
+                  Description = "Publish the startup project as a self-contained program." },
 
             new(EditUndo, "Undo", CommandCategory.Edit) { DefaultGesture = "Ctrl+Z" },
             new(EditRedo, "Redo", CommandCategory.Edit)

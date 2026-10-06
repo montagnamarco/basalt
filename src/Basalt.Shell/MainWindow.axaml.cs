@@ -3044,6 +3044,10 @@ public partial class MainWindow : Window
                 await AskAndGoToLineAsync();
                 break;
 
+            case IdeCommands.FileMakeExecutable:
+                RunMakeExecutable();
+                break;
+
             case IdeCommands.BuildClean:
                 await ViewModel.CleanAsync();
                 break;
@@ -4939,6 +4943,9 @@ public partial class MainWindow : Window
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuFileSave), vm.SaveCommand,
                 Gesture: new KeyGesture(Key.S, PlatformCommandModifier)) { Icon = IconKind.Save },
+            MenuEntry.Separator,
+            new(Localizer.Get(StringKeys.MenuFileMakeExecutable),
+                Action: RunMakeExecutable) { Icon = IconKind.Build },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuFileExit), Action: Close) { Icon = IconKind.Exit }
         ]),

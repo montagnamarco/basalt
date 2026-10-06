@@ -213,6 +213,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         InDesigner = [.. OpenDocuments.Where(d => d.OpenInDesigner).Select(d => d.FilePath)],
         ExpandedFolders = [.. ReadExpandedFolders?.Invoke() ?? []],
         SelectedPath = Explorer.SelectedNode?.Path,
+        PublishRids = [.. MakeExecutableChoice?.Rids ?? []],
+        PublishOutputRoot = MakeExecutableChoice?.OutputRoot,
     };
 
     /// <summary>
@@ -238,6 +240,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// </remarks>
     public async Task RestoreSessionAsync(SolutionSession session)
     {
+        RestoreMakeExecutableChoice(session);
+
         var tabs = session.OpenTabs.Count > 0
             ? session.OpenTabs
             : session.OpenFiles.Select(file => new OpenDocumentSession
