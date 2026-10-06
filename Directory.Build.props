@@ -12,6 +12,13 @@
     <SystemResourcesExtensionsVersion>10.0.12</SystemResourcesExtensionsVersion>
     <SystemIoPortsVersion>10.0.12</SystemIoPortsVersion>
     <!--
+      Basalt.WinForms and Basalt.Drawing have a line of versions of their own,
+      shared because the WinForms assemblies use Drawing's internals and the
+      two must always be released together. Below 1.0 while the WinForms
+      surface is still being filled in.
+    -->
+    <WinFormsVersion>0.1.0</WinFormsVersion>
+    <!--
       The SkiaSharp that Avalonia.Skia $(AvaloniaVersion) itself depends on. Basalt.Drawing
       names it because it must work without Avalonia; an application that uses
       both gets one native library, and two versions of it do not load side by

@@ -1,0 +1,97 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Basalt.WinForms package: cross-platform Windows Forms as one NuGet
+    package. It holds five assemblies, each under Microsoft's own name because
+    a compiled WinForms binary binds by simple name:
+
+      System.Windows.Forms              Basalt.Forms
+      System.Windows.Forms.Primitives   Basalt.Forms.Primitives
+      Microsoft.VisualBasic.Forms       Basalt.Forms.VisualBasic
+      System.Windows.Extensions         Basalt.Windows.Extensions
+      Accessibility                     Basalt.Accessibility
+
+    Why a project of its own, rather than packing Basalt.Forms: Forms.VisualBasic
+    references Forms, so Forms cannot reference it back to carry it, and
+    Basalt.Forms is also what the IDE and the tests build against. This project
+    compiles nothing. It references the leaf project (Forms.VisualBasic, which
+    reaches the other four), takes their built assemblies out of the resolved
+    references, and puts them in lib/net10.0 itself. The dependencies a consumer
+    needs (Avalonia and the rest) are declared here by hand, because the
+    ProjectReferences are private: NuGet would otherwise try to emit a
+    dependency on projects that are not packages.
+
+    Basalt.Drawing stays a package of its own, so a console application can
+    draw without taking a UI toolkit. It is the one ProjectReference that is not
+    private, which makes pack emit a dependency on it.
+
+    In Basalt.slnx so it builds with everything else; build/pack.sh and
+    build/pack.ps1 pack it and prove a project can build against the result.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Basalt.WinForms</PackageId>
+    <VersionPrefix>$(WinFormsVersion)</VersionPrefix>
+    <Description>Windows Forms on macOS, Linux and Windows, drawn with Avalonia and SkiaSharp. The assemblies have the names and the public surface of Microsoft's System.Windows.Forms, Microsoft.VisualBasic.Forms and their companions, so a Visual Basic or C# WinForms project builds against them unchanged.</Description>
+    <PackageTags>winforms;windows-forms;cross-platform;avalonia;visualbasic;vb;system-windows-forms</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- There is nothing to compile; the assemblies come from the references. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- A lib/ folder is not the placeholder this warns about. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!--
+      No .snupkg: the SDK builds one from this project's own build output, and
+      there is none (IncludeBuildOutput is false), so pack would fail with
+      NU5017. Measured: adding the five .pdb files through
+      TargetsForTfmSpecificDebugSymbolsInPackage is ignored while
+      IncludeBuildOutput is false. A debugger can still step into the code
+      from a build of this repository.
+    -->
+    <IncludeSymbols>false</IncludeSymbols>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeWinFormsAssemblies</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="PACKAGE.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Basalt.Forms.VisualBasic\Basalt.Forms.VisualBasic.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Basalt.Forms\Basalt.Forms.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Basalt.Forms.Primitives\Basalt.Forms.Primitives.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Basalt.Windows.Extensions\Basalt.Windows.Extensions.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Basalt.Accessibility\Basalt.Accessibility.vbproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Basalt.Drawing\Basalt.Drawing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- What the assemblies above need at run time; the same versions Basalt.Forms is built with. -->
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Controls.WebView" Version="$(AvaloniaWebViewVersion)" />
+    <PackageReference Include="System.Resources.Extensions" Version="$(SystemResourcesExtensionsVersion)" />
+    <PackageReference Include="System.IO.Ports" Version="$(SystemIoPortsVersion)" />
+  </ItemGroup>
+
+  <!--
+    The built assemblies of the referenced projects, minus Basalt.Drawing's
+    (System.Drawing.Common), which its own package carries.
+  -->
+  <Target Name="_SelectWinFormsAssemblies">
+    <ItemGroup>
+      <_WinFormsAssembly Include="@(ReferencePath)"
+                         Condition="'%(ReferencePath.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferencePath.Filename)' != 'System.Drawing.Common'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="IncludeWinFormsAssemblies" DependsOnTargets="ResolveReferences;_SelectWinFormsAssemblies">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="@(_WinFormsAssembly)" PackagePath="lib/$(TargetFramework)/" />
+    </ItemGroup>
+  </Target>
+
+</Project>

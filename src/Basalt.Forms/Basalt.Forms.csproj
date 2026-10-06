@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
 
-    <!-- Packable once the spine holds: the package will carry this assembly and System.Windows.Forms.Primitives. -->
+    <!-- Packed inside Basalt.WinForms (src/Basalt.WinForms), with the other four assemblies it needs. -->
     <IsPackable>false</IsPackable>
 
     <!--
@@ -36,6 +36,14 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Basalt.Forms.Tests" />
+    <!--
+      The IDE's design surface hosts the internal FormsCanvas Avalonia control
+      (Internal/Hosting) to paint the form being designed, and there is no
+      public equivalent: exposing one would add API Microsoft's assembly does
+      not have, which ApiSurfaceTests forbids. Harmless in the Basalt.WinForms
+      package: it grants nothing at run time, only to an assembly that is
+      itself named Basalt.Shell, and no consumer has one.
+    -->
     <InternalsVisibleTo Include="Basalt.Shell" />
   </ItemGroup>
 

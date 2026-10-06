@@ -8,7 +8,7 @@
       Microsoft splits a few types (Padding, Message, HighDpiMode) out of
       System.Windows.Forms into this assembly, and a compiled Designer.vb
       names them here: the name must match for such a binary to bind. It
-      ships inside the Basalt.Forms package, not as a package of its own.
+      ships inside the Basalt.WinForms package, not as a package of its own.
     -->
     <AssemblyName>System.Windows.Forms.Primitives</AssemblyName>
     <RootNamespace>System.Windows.Forms</RootNamespace>

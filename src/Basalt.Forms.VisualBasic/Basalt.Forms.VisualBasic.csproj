@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
 
-    <!-- Packable once the spine holds: the package will carry this assembly alongside System.Windows.Forms. -->
+    <!-- Packed inside Basalt.WinForms (src/Basalt.WinForms), alongside System.Windows.Forms. -->
     <IsPackable>false</IsPackable>
 
     <!--

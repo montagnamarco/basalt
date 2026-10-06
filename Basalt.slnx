@@ -9,6 +9,7 @@
     <Project Path="src/Basalt.Forms/Basalt.Forms.csproj" />
     <Project Path="src/Basalt.Forms.Primitives/Basalt.Forms.Primitives.csproj" />
     <Project Path="src/Basalt.Forms.VisualBasic/Basalt.Forms.VisualBasic.csproj" />
+    <Project Path="src/Basalt.WinForms/Basalt.WinForms.csproj" />
     <Project Path="src/Basalt.Windows.Extensions/Basalt.Windows.Extensions.csproj" />
   <Project Path="src/Basalt.Vb6/Basalt.Vb6.csproj" />
   <Project Path="src/Basalt.Vb6.Generator/Basalt.Vb6.Generator.csproj" />

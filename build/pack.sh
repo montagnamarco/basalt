@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Builds the three NuGet packages and proves they work before anyone publishes
-# them.
+# Builds the NuGet packages and proves they work before anyone publishes them.
 #
 # The proof is the point. A package can pack cleanly, install cleanly, and
 # still produce nothing: the generator flows through a dependency but the
@@ -11,6 +10,8 @@
 #
 #   build/pack.sh              # pack and verify
 #   build/pack.sh --skip-test  # pack only
+#   build/pack.sh --winforms-only  # pack and verify Basalt.Drawing and
+#                                  # Basalt.WinForms only; installs nothing
 #
 set -euo pipefail
 
@@ -21,7 +22,13 @@ projects=(
   src/Basalt.Razor.Vb.AspNetCore
   src/Basalt.Razor.Vb.Hosting
   templates
+  src/Basalt.Drawing
+  src/Basalt.WinForms
 )
+mode="${1:-}"
+if [[ "$mode" == "--winforms-only" ]]; then
+  projects=(src/Basalt.Drawing src/Basalt.WinForms)
+fi
 
 echo "==> Packing into $out"
 rm -rf "$out"
@@ -31,15 +38,113 @@ done
 
 ls "$out"/*.nupkg | sed 's|.*/|    |'
 
-if [[ "${1:-}" == "--skip-test" ]]; then
+if [[ "$mode" == "--skip-test" ]]; then
   echo "==> Verification skipped"
   exit 0
 fi
 
-# A scratch project consuming the packages the way a user would: from a feed,
+# Scratch projects consuming the packages the way a user would: from a feed,
 # by version, with no reference to this repository's sources.
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
+
+# A project that has only Basalt.WinForms, as a user's would: a net10.0 VB
+# WinExe restored from the local feed. Built and not run, because starting a
+# window needs a display. This catches a package that packs but does not work:
+# an assembly missing from lib/, or a dependency left out of the nuspec, which
+# fails the restore or the compile of the form below.
+echo "==> Verifying the WinForms package"
+winforms_package="$(ls "$out"/Basalt.WinForms.*.nupkg | head -1)"
+# Read into variables first: grep -q closes the pipe early, and with pipefail
+# the resulting SIGPIPE in unzip would fail the check for a package that is fine.
+winforms_files="$(unzip -l "$winforms_package")"
+winforms_nuspec="$(unzip -p "$winforms_package" Basalt.WinForms.nuspec)"
+for assembly in System.Windows.Forms System.Windows.Forms.Primitives \
+                Microsoft.VisualBasic.Forms System.Windows.Extensions Accessibility; do
+  if ! grep -q "lib/net10.0/$assembly.dll" <<<"$winforms_files"; then
+    echo "FAILED: the WinForms package does not hold lib/net10.0/$assembly.dll." >&2
+    exit 1
+  fi
+done
+if ! grep -q '<dependency id="Basalt.Drawing"' <<<"$winforms_nuspec"; then
+  echo "FAILED: the WinForms package does not depend on Basalt.Drawing." >&2
+  exit 1
+fi
+
+mkdir -p "$work/WinApp"
+cat > "$work/WinApp/WinApp.vbproj" <<'PROJECT'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WinApp</RootNamespace>
+    <OptionStrict>On</OptionStrict>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Basalt.WinForms" Version="*-*" />
+  </ItemGroup>
+</Project>
+PROJECT
+cat > "$work/WinApp/MainForm.vb" <<'FORM'
+Imports System.Windows.Forms
+
+Public Class MainForm
+    Inherits Form
+
+    Private WithEvents Greet As New Button()
+
+    Public Sub New()
+        Text = "Probe"
+        Greet.Text = "Click me"
+        Controls.Add(Greet)
+    End Sub
+
+    Private Sub Greet_Click(sender As Object, e As EventArgs) Handles Greet.Click
+        MessageBox.Show("Hello")
+    End Sub
+
+    <STAThread>
+    Public Shared Sub Main()
+        Application.Run(New MainForm())
+    End Sub
+End Class
+FORM
+cat > "$work/WinApp/nuget.config" <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="local" value="$out" />
+    <add key="nuget" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+EOF
+
+# Cached copies of an earlier pack at the same version would be restored
+# instead of the ones just built.
+for id in basalt.winforms basalt.drawing; do
+  rm -rf "${NUGET_PACKAGES:-$HOME/.nuget/packages}/$id"
+done
+
+dotnet build "$work/WinApp" -c Release --nologo -v q
+echo "==> A WinForms project builds against Basalt.WinForms."
+
+# Building proves only what the consumer's own code touches. The windowing,
+# drawing and resource packages are used inside the WinForms assemblies, so a
+# dependency dropped from the package would still build and fail at run time:
+# the dependency file of the build output says what will actually be loaded.
+deps="$(find "$work/WinApp/bin/Release" -name WinApp.deps.json | head -1)"
+for library in Basalt.Drawing/ Avalonia.Desktop/ Avalonia.Skia/ System.Resources.Extensions/ System.IO.Ports/; do
+  if ! grep -q "\"$library" "$deps"; then
+    echo "error: the WinForms application would run without $library" >&2
+    exit 1
+  fi
+done
+echo "==> Its run-time dependencies are resolved."
+
+if [[ "$mode" == "--winforms-only" ]]; then
+  exit 0
+fi
 
 # The package's own layout, read from the package. Installing and asking
 # dotnet new what it offers measures the machine instead: templates left over

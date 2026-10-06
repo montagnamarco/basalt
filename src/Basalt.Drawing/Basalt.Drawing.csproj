@@ -28,7 +28,8 @@
       package agrees with nothing but itself. Below 1.0 while most of
       Microsoft's surface is still in the pending list.
     -->
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <!-- Released with Basalt.WinForms, whose assemblies use its internals. -->
+    <VersionPrefix>$(WinFormsVersion)</VersionPrefix>
 
     <!--
       For Interop.LOGFONT alone, whose face name is a fixed buffer of 32

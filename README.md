@@ -803,7 +803,8 @@ for `osx-arm64` as needed.
 build/pack.sh
 ```
 
-Packs all four NuGet packages into `artifacts/`, then proves they work. It
+Packs the NuGet packages into `artifacts/` — the four Razor for VB packages,
+`Basalt.Drawing` and `Basalt.WinForms` — then proves they work. It
 reads the template package's own layout, installs it, creates a project through
 `dotnet new mvc -lang VB`, restores it **by version from a feed** with no
 reference to this repository's sources, builds it, and checks the `.vbhtml`
@@ -821,6 +822,11 @@ The template check reads the package rather than asking `dotnet new` what it
 offers: templates left over from an earlier run answer that question, so the
 check passed with the layout deliberately broken. It was rewritten and then
 verified by breaking the layout again.
+
+The two Windows Forms packages are checked the same way, by version from the
+feed: a throwaway net10.0 VB project with a form, a button and a `MessageBox`
+references `Basalt.WinForms` and must build. `build/pack.sh --winforms-only`
+packs and checks just those two, without installing the templates.
 
 `build/pack.sh --skip-test` packs without verifying. Publishing:
 
