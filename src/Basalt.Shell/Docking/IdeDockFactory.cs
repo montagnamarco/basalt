@@ -41,6 +41,7 @@ public sealed class IdeDockFactory : Factory
     public CallStackTool CallStack { get; } = new();
     public VariablesTool Variables { get; } = new();
     public BreakpointsTool Breakpoints { get; } = new();
+    public WatchTool Watch { get; } = new();
     public ImmediateTool Immediate { get; } = new();
     public GitChangesTool GitChanges { get; } = new();
     public GitHistoryTool GitHistory { get; } = new();
@@ -136,7 +137,7 @@ public sealed class IdeDockFactory : Factory
             // nobody learns the shape of.
             VisibleDockables = CreateList<IDockable>(
                 Problems, Output, Search, References, ObjectBrowser,
-                CallStack, Variables, Breakpoints, Immediate,
+                CallStack, Variables, Watch, Breakpoints, Immediate,
                 Tests, Database, GitHistory, GitDiff, terminal),
             ActiveDockable = Problems
         };

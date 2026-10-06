@@ -751,4 +751,5 @@
   <data name="Inline_Failed" xml:space="preserve"><value>Inline suggestions stopped: {0}</value></data>
   <data name="Inline_MoreLine" xml:space="preserve"><value>  +1 line</value></data>
   <data name="Inline_MoreLines" xml:space="preserve"><value>  +{0} lines</value></data>
+  <data name="Tool_Watch" xml:space="preserve"><value>Watch</value></data>
 </root>

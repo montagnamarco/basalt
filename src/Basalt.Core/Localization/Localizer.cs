@@ -770,4 +770,6 @@ public static class StringKeys
     public const string InlineFailed = "Inline_Failed";
     public const string InlineMoreLine = "Inline_MoreLine";
     public const string InlineMoreLines = "Inline_MoreLines";
+
+    public const string ToolWatch = "Tool_Watch";
 }

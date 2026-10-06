@@ -243,6 +243,14 @@ public sealed class TestExplorerPanel : UserControl
         }
     }
 
+    /// <summary>
+    /// Every test discovered, regardless of selection.
+    ///
+    /// "Run All" means all: a selection in the tree must not narrow it to one
+    /// class or project the way <see cref="SelectedTests"/> does.
+    /// </summary>
+    public IReadOnlyList<TestCase> AllTests => _tests;
+
     /// <summary>The tests that failed the last time they ran.</summary>
     public IReadOnlyList<TestCase> FailedTests =>
         [.. _byName.Values

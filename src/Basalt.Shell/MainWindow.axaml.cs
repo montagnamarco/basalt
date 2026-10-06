@@ -809,24 +809,18 @@ public partial class MainWindow : Window
         await ViewModel.OpenFileAsync(hit.FilePath);
 
         // The editor is created by the document change, so moving the caret is
-        // queued until after that has happened.
+        // queued until after that has happened. The opened file is the active
+        // document by then, so CurrentEditor() resolves to its editor rather
+        // than whichever document happened to be first in the tab list.
         Dispatcher.UIThread.Post(() =>
         {
-            var editor = DocumentHostContent()?.GetVisualDescendants()
-                .OfType<AvaloniaEdit.TextEditor>().FirstOrDefault();
-
-            if (editor is null) return;
+            if (CurrentEditor() is not { } editor) return;
 
             editor.CaretOffset = Math.Clamp(hit.Offset, 0, editor.Document.TextLength);
             editor.ScrollToLine(hit.Line);
             editor.Select(editor.CaretOffset, hit.Length);
         }, DispatcherPriority.Background);
     }
-
-    private Control? DocumentHostContent() =>
-        _documents.Values
-            .Select(d => _contents.TryGetValue(d, out var c) ? c : null)
-            .FirstOrDefault(c => c is not null);
 
     /// <summary>Rebuilds the outline for the document now in front.</summary>
     private async Task RefreshOutlineAsync()
@@ -918,6 +912,11 @@ public partial class MainWindow : Window
         _watch.Changed += (_, _) => Guarded.Run(
             () => RefreshWatchAsync(),
             ViewModel.WriteOutput, "ide");
+
+        // Built like CallStack and Variables just above, but it used to stop
+        // here: never added to _contents nor to the dock factory's layout, so
+        // nothing ever showed its content and no menu entry could reach it.
+        _contents[_factory.Watch] = _watch;
 
         _breakpoints = new BreakpointsPanel();
 
@@ -3815,6 +3814,7 @@ public partial class MainWindow : Window
 
         var chosen = scope switch
         {
+            TestExplorerPanel.RunScope.All => _tests.AllTests,
             TestExplorerPanel.RunScope.Failed => _tests.FailedTests,
             TestExplorerPanel.RunScope.Selected => _tests.SelectedTests,
             _ => _tests.SelectedTests
@@ -4538,7 +4538,16 @@ public partial class MainWindow : Window
         if (diagnostic.FilePath is null || !File.Exists(diagnostic.FilePath)) return;
 
         Guarded.Run(
-            () => ViewModel.OpenFileAsync(diagnostic.FilePath),
+            async () =>
+            {
+                await ViewModel.OpenFileAsync(diagnostic.FilePath);
+
+                // The editor is created by the document change, so moving the
+                // caret waits until after that has happened.
+                Dispatcher.UIThread.Post(
+                    () => GoToLine(diagnostic.Line, diagnostic.Column),
+                    DispatcherPriority.Background);
+            },
             ViewModel.WriteOutput, "ide");
     }
 
@@ -4849,6 +4858,8 @@ public partial class MainWindow : Window
                 Action: () => ShowTool(_factory.References)) { Icon = IconKind.References },
             new(Localizer.Get(StringKeys.ToolObjectBrowser),
                 Action: ShowObjectBrowser) { Icon = IconKind.ObjectBrowser },
+            new(Localizer.Get(StringKeys.ToolWatch),
+                Action: () => ShowTool(_factory.Watch)) { Icon = IconKind.Information },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuViewNewTerminal), Action: OpenNewTerminal,
                 Gesture: new KeyGesture(Key.OemBackslash, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Terminal },

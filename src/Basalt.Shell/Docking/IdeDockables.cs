@@ -195,6 +195,17 @@ public sealed class BreakpointsTool : IdeTool
     }
 }
 
+/// <summary>Expressions the user wants to keep an eye on while stepping.</summary>
+public sealed class WatchTool : IdeTool
+{
+    public WatchTool()
+    {
+        Id = "Watch";
+        Title = Localizer.Get(StringKeys.ToolWatch);
+        Icon = IconKind.Information;
+    }
+}
+
 /// <summary>The tests of the solution, and how they last ran.</summary>
 public sealed class TestsTool : IdeTool
 {
