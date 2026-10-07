@@ -169,12 +169,12 @@ public sealed class ImmediatePanelTests
     }
 
     [Fact]
-    public void TheCommandIsRegisteredAndDoesNotStealGoToLinesShortcut()
+    public void TheCommandHasVisualStudiosGestureAndDoesNotStealGoToLinesShortcut()
     {
         var registry = IdeCommands.CreateRegistry(KeyboardScheme.Basalt);
 
         Assert.NotNull(registry.ById(IdeCommands.ViewImmediate));
-        Assert.Null(registry.GestureFor(IdeCommands.ViewImmediate));
+        Assert.Equal("Ctrl+Alt+I", registry.GestureFor(IdeCommands.ViewImmediate));
         Assert.Equal("Ctrl+G", registry.GestureFor(IdeCommands.NavigateGoToLine));
     }
 }

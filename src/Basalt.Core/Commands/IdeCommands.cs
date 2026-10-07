@@ -187,9 +187,11 @@ public static class IdeCommands
             new(ViewSolutionExplorer, "Solution Explorer", CommandCategory.View),
             new(ViewProblems, "Problems", CommandCategory.View),
             new(ViewOutput, "Output", CommandCategory.View),
-            // No gesture: Ctrl+G is Go to Line, which the editor owned first.
+            // Visual Studio's gesture: Ctrl+G stays Go to Line, as in Visual
+            // Studio, rather than VB6's Immediate window.
             new(ViewImmediate, "Immediate", CommandCategory.View)
-                { Description = "Evaluate expressions and run statements, in the paused frame while debugging." },
+                { DefaultGesture = "Ctrl+Alt+I",
+                  Description = "Evaluate expressions and run statements, in the paused frame while debugging." },
             new(ViewTerminal, "Terminal", CommandCategory.View)
                 { DefaultGesture = "Ctrl+`" },
             new(ViewTests, "Tests", CommandCategory.View),
