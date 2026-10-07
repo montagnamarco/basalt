@@ -16,7 +16,8 @@ namespace Basalt.Shell.Controls;
 internal static class WinFormsToolStripDropDownPreview
 {
     public static void Apply(WinFormsMenuDocument menus, string ownerName, Forms.ToolStripDropDownItem owner,
-        List<string> problems, WinFormsResourceDocument? resources)
+        List<string> problems, WinFormsResourceDocument? resources,
+        Lazy<IReadOnlyList<WinFormsProjectResourceEntry>?> projectResources)
     {
         var definitions = menus.Read(ownerName);
         var items = new Dictionary<string, Forms.ToolStripItem>(StringComparer.OrdinalIgnoreCase);
@@ -49,7 +50,11 @@ internal static class WinFormsToolStripDropDownPreview
                 if (property.Equals("Name", StringComparison.OrdinalIgnoreCase)) continue;
                 var descriptor = TypeDescriptor.GetProperties(created)[property];
                 if (descriptor is null || descriptor.IsReadOnly) continue;
-                try { descriptor.SetValue(created, WinFormsDesignerValues.Evaluate(expression, descriptor.PropertyType)); }
+                try
+                {
+                    descriptor.SetValue(created,
+                        WinFormsCollectionPreview.EvaluateItemProperty(expression, descriptor.PropertyType, resources, projectResources));
+                }
                 catch
                 {
                     problems.Add(item.Name + "." + property + ": " + Localizer.Get(StringKeys.WinFormsCollectionUnsupported));

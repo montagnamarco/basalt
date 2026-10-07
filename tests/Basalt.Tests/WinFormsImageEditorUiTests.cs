@@ -302,6 +302,20 @@ public sealed class WinFormsImageEditorUiTests
         return document.Source;
     }
 
+    /// <summary>A plain ToolStrip (no MenuStrip) whose only item is a ToolStripDropDownButton
+    /// owning one nested ToolStripMenuItem (OpenItem) in its own cascading DropDownItems tree,
+    /// the shape <see cref="WinFormsDesignerView.ToolStripDropDownInline"/> edits and
+    /// <see cref="WinFormsToolStripDropDownPreview"/> materializes live.</summary>
+    private static string BuildFreshSourceWithDropDown()
+    {
+        var document = new WinFormsDesignerDocument(FreshSource);
+        document = new WinFormsDesignerDocument(document.ToolStripItems.Set("ToolStrip1",
+            [new WinFormsToolStripItem("ToolStripDropDownButton1", "ToolStripDropDownButton", "Menu")]));
+        document = new WinFormsDesignerDocument(
+            document.Menus.Set("ToolStripDropDownButton1", [new WinFormsMenuItem("OpenItem", "ToolStripDropDownButton1", "Open")]));
+        return document.Source;
+    }
+
     /// <summary>
     /// <see cref="WinFormsDesignerView.MenuItemProperties"/>'s <c>OpenMenuItemPropertyEditor</c>
     /// had no Image/Icon branch at all before this fix: opening "…" on a MenuStrip item's Image
@@ -574,6 +588,188 @@ public sealed class WinFormsImageEditorUiTests
                 ClickUndo(view);
                 await WaitUntilAsync(() => designer.Text == BuildFreshSourceWithMenu() && view.IsEnabled);
                 Assert.DoesNotContain("FileMenu.Image", designer.Text);
+
+                ClickRedo(view);
+                await WaitUntilAsync(() => designer.Text == afterImport && view.IsEnabled);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            WindowsDesktopSamples.DeleteQuietly(root);
+        }
+    }
+
+    /// <summary>
+    /// The nested drop-down item equivalent of <see cref="MenuItemImageRoundTripsThroughTheItemPropertiesPathAndPaintsRed"/>:
+    /// <see cref="WinFormsDesignerView.ToolStripDropDownInline"/>'s <c>OpenToolStripDropDownItemPropertyEditor</c>
+    /// had no Image/Icon branch at all before this fix, so "…" on a nested item's Image fell
+    /// through to the Color/Font checks and did nothing. Drives the owner's own selection, then
+    /// the nested panel's own selection, exactly the way
+    /// <see cref="WinFormsToolStripDropDownInlineTests"/> already proves for adding/deleting a
+    /// nested item.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task DropDownItemImageRoundTripsThroughTheItemPropertiesPathAndPaintsRed()
+    {
+        var designer = new EditorDocumentViewModel("MainForm.Designer.vb", BuildFreshSourceWithDropDown(), true);
+        EditorDocumentViewModel? resourceBuffer = null;
+        var redPng = SolidPng(Drawing.Color.Red);
+
+        using var view = new WinFormsDesignerView(designer,
+            createCode: (path, content) =>
+            {
+                resourceBuffer = new EditorDocumentViewModel(path, content);
+                return Task.FromResult(resourceBuffer);
+            },
+            importImageFile: () => Task.FromResult<string?>(WriteTempPng(redPng)));
+        var window = new Window { Content = view, Width = 1100, Height = 700 };
+        window.Show();
+        try
+        {
+            var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+            await WaitUntilAsync(() => surface.RootForm is not null);
+            surface.Select(surface.RootForm!.Controls.OfType<Forms.ToolStrip>().Single());
+
+            var editor = Assert.Single(view.GetVisualDescendants().OfType<WinFormsToolStripDesignEditor>());
+            var ownerButton = Assert.Single(editor.GetVisualDescendants().OfType<Button>(),
+                b => b.Name == "ToolStripInlineItem_ToolStripDropDownButton1");
+            ownerButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+
+            var panelHost = Assert.Single(editor.GetVisualDescendants().OfType<Border>(), b => b.Name == "ToolStripDropDownHost");
+            var itemButton = Assert.Single(panelHost.GetVisualDescendants().OfType<Button>(),
+                b => b.Name == "ToolStripDropDownItem_OpenItem");
+            itemButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            window.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+
+            var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+            await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+            var row = FindRow(grid, "Image");
+            var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+            ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+            var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+            Click(dialog, "WinFormsImageDialogImport");
+            await WaitUntilAsync(() => dialog.SelectedBytes is not null);
+            ClickOk(dialog);
+            await WaitUntilAsync(() =>
+                designer.Text.Contains("OpenItem.Image", StringComparison.Ordinal) && view.IsEnabled);
+
+            Assert.Contains(
+                "Me.OpenItem.Image = CType(resources.GetObject(\"OpenItem.Image\"), System.Drawing.Image)",
+                designer.Text);
+            Assert.True(WinFormsImageResources.TryDecode(
+                new WinFormsResourceDocument(resourceBuffer!.Text).TryGet("OpenItem.Image")!, out var decoded));
+            Assert.Equal(redPng, decoded);
+            // The commit re-parses and re-instantiates the whole form, so the live owner/item from
+            // before the edit is stale; the current ones are read again.
+            var realStrip = surface.RootForm!.Controls.OfType<Forms.ToolStrip>().Single();
+            var realOwner = Assert.IsAssignableFrom<Forms.ToolStripDropDownItem>(
+                Assert.Single(realStrip.Items.Cast<Forms.ToolStripItem>()));
+            var realItem = Assert.Single(realOwner.DropDownItems.Cast<Forms.ToolStripItem>());
+            Assert.NotNull(realItem.Image);
+
+            var afterImport = designer.Text;
+            ClickUndo(view);
+            await WaitUntilAsync(() =>
+                !designer.Text.Contains("OpenItem.Image", StringComparison.Ordinal) && view.IsEnabled);
+            Assert.DoesNotContain("OpenItem.Image", designer.Text);
+            Assert.Empty(new WinFormsResourceDocument(resourceBuffer.Text).Entries);
+
+            ClickRedo(view);
+            await WaitUntilAsync(() => designer.Text == afterImport && view.IsEnabled);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    /// <summary>The nested drop-down item equivalent of <see cref="MenuItemImageSupportsProjectResourceFile"/>:
+    /// before this fix, <see cref="WinFormsToolStripDropDownPreview"/>'s materializer only ever
+    /// resolved a Local resource's "CType(resources.GetObject(...))" shape for a nested item,
+    /// never a Project resource's plain "Global.RootNamespace.My.Resources.Resources.Name".</summary>
+    [AvaloniaFact]
+    public async Task DropDownItemImageSupportsProjectResourceFile()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-dropdown-project-").FullName;
+        try
+        {
+            var projectPath = Path.Combine(root, "App.vbproj");
+            File.WriteAllText(projectPath, VbprojWithRootNamespace("Contoso.App"));
+            var imported = WinFormsProjectResources.Import(projectPath, WriteTempPng(SolidPng(Drawing.Color.Blue)), isIcon: false);
+
+            var designerPath = Path.Combine(root, "MainForm.Designer.vb");
+            var designer = new EditorDocumentViewModel(designerPath, BuildFreshSourceWithDropDown(), true);
+
+            using var view = new WinFormsDesignerView(designer);
+            var window = new Window { Content = view, Width = 1100, Height = 700 };
+            window.Show();
+            try
+            {
+                var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+                await WaitUntilAsync(() => surface.RootForm is not null);
+                surface.Select(surface.RootForm!.Controls.OfType<Forms.ToolStrip>().Single());
+
+                var editor = Assert.Single(view.GetVisualDescendants().OfType<WinFormsToolStripDesignEditor>());
+                var ownerButton = Assert.Single(editor.GetVisualDescendants().OfType<Button>(),
+                    b => b.Name == "ToolStripInlineItem_ToolStripDropDownButton1");
+                ownerButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                window.UpdateLayout();
+                Dispatcher.UIThread.RunJobs();
+
+                var panelHost = Assert.Single(editor.GetVisualDescendants().OfType<Border>(), b => b.Name == "ToolStripDropDownHost");
+                var itemButton = Assert.Single(panelHost.GetVisualDescendants().OfType<Button>(),
+                    b => b.Name == "ToolStripDropDownItem_OpenItem");
+                itemButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                window.UpdateLayout();
+                Dispatcher.UIThread.RunJobs();
+
+                var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+                await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+                var row = FindRow(grid, "Image");
+                var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+                ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+                var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+                var projectRadio = Assert.Single(dialog.GetVisualDescendants().OfType<RadioButton>(),
+                    r => Equals(r.Content, Localizer.Get(StringKeys.WinFormsImageDialogProjectResource)));
+                Assert.True(projectRadio.IsEnabled);
+                projectRadio.IsChecked = true;
+
+                var list = Assert.Single(dialog.GetVisualDescendants().OfType<ListBox>(), l => l.Name == "WinFormsImageDialogProjectList");
+                var entry = list.ItemsSource!.Cast<WinFormsProjectResourceEntry>().Single(e => e.Name == imported.Name);
+                list.SelectedItem = entry;
+
+                ClickOk(dialog);
+                await WaitUntilAsync(() =>
+                    designer.Text.Contains($"Global.Contoso.App.My.Resources.Resources.{imported.Name}", StringComparison.Ordinal)
+                    && view.IsEnabled);
+
+                Assert.Contains($"Me.OpenItem.Image = Global.Contoso.App.My.Resources.Resources.{imported.Name}", designer.Text);
+                Assert.DoesNotContain("resources.GetObject", designer.Text, StringComparison.Ordinal);
+
+                // The live owner must actually resolve the Project resource for its preview, not
+                // just parse the statement: WinFormsToolStripDropDownPreview has to understand
+                // this expression shape too, not only a Local resource's.
+                var realStrip = surface.RootForm!.Controls.OfType<Forms.ToolStrip>().Single();
+                var realOwner = Assert.IsAssignableFrom<Forms.ToolStripDropDownItem>(
+                    Assert.Single(realStrip.Items.Cast<Forms.ToolStripItem>()));
+                var realItem = Assert.Single(realOwner.DropDownItems.Cast<Forms.ToolStripItem>());
+                Assert.NotNull(realItem.Image);
+
+                var afterImport = designer.Text;
+                ClickUndo(view);
+                await WaitUntilAsync(() => designer.Text == BuildFreshSourceWithDropDown() && view.IsEnabled);
+                Assert.DoesNotContain("OpenItem.Image", designer.Text);
 
                 ClickRedo(view);
                 await WaitUntilAsync(() => designer.Text == afterImport && view.IsEnabled);

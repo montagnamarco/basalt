@@ -289,6 +289,35 @@ internal sealed partial class WinFormsDesignerView
             document.Menus.SetItemProperty(ownerName, itemName, property, expression));
     }
 
+    /// <summary>
+    /// The nested drop-down item equivalent of <see cref="WinFormsDesignerView.RequireAndSetMenuItemImageAsync"/>:
+    /// a DropDownButton/SplitButton's own cascading items are written through the same
+    /// <see cref="WinFormsMenuDocument.SetItemProperty"/> a MenuStrip's items are (with the
+    /// owner's own field name standing in for the MenuStrip's), so
+    /// <see cref="WinFormsDesignerSession.SetMenuItemImageResourceAsync"/> already does the right
+    /// thing here; only the "is this nested selection still current" guard differs.
+    /// </summary>
+    private Task RequireAndSetDropDownItemImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string ownerName, string itemName, string property, byte[] bytes, bool isIcon)
+    {
+        RequireSelectedDropDownItem(session, original, ownerName, itemName);
+        return session.SetMenuItemImageResourceAsync(ownerName, itemName, property, bytes, isIcon);
+    }
+
+    private Task RequireAndClearDropDownItemImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string ownerName, string itemName, string property)
+    {
+        RequireSelectedDropDownItem(session, original, ownerName, itemName);
+        return session.ClearMenuItemImageResourceAsync(ownerName, itemName, property);
+    }
+
+    private Task RequireAndSetDropDownItemProjectImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string ownerName, string itemName, string property, string rootNamespace, string resourceName)
+    {
+        RequireSelectedDropDownItem(session, original, ownerName, itemName);
+        return session.SetMenuItemProjectImageResourceAsync(ownerName, itemName, property, rootNamespace, resourceName);
+    }
+
     private async void OpenToolStripDropDownItemPropertyEditor(WinFormsDesignerSession session, WinFormsDesignerDocument original,
         string ownerName, string itemName, Forms.ToolStripItem item, DesignableProperty property)
     {
@@ -301,7 +330,37 @@ internal sealed partial class WinFormsDesignerView
         Font? selectedFont = null;
         try
         {
-            var value = TypeDescriptor.GetProperties(item)[property.Name]?.GetValue(item);
+            var descriptor = TypeDescriptor.GetProperties(item)[property.Name];
+            var value = descriptor?.GetValue(item);
+            if (descriptor is not null && IsImageProperty(descriptor.PropertyType))
+            {
+                var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
+                var projectPath = WinFormsProjectResources.FindProject(_document.FilePath);
+                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(value), isIcon, _importImageFile, projectPath);
+                if (!await editor.ShowDialog<bool>(owner))
+                {
+                    return;
+                }
+                if (!ReferenceEquals(_session, session) || !ReferenceEquals(session.Document, original))
+                {
+                    throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+                }
+                if (editor.UsedProjectResource && editor.SelectedProjectResourceName is { } resourceName)
+                {
+                    var rootNamespace = WinFormsProjectResources.RootNamespace(projectPath!);
+                    RunEditAsync(() => RequireAndSetDropDownItemProjectImageAsync(
+                        session, original, ownerName, itemName, property.Name, rootNamespace, resourceName));
+                }
+                else if (editor.Cleared)
+                {
+                    RunEditAsync(() => RequireAndClearDropDownItemImageAsync(session, original, ownerName, itemName, property.Name));
+                }
+                else if (editor.Changed && editor.SelectedBytes is { } bytes)
+                {
+                    RunEditAsync(() => RequireAndSetDropDownItemImageAsync(session, original, ownerName, itemName, property.Name, bytes, isIcon));
+                }
+                return;
+            }
             if (value is Color color)
             {
                 var editor = new WinFormsColorEditor(color);

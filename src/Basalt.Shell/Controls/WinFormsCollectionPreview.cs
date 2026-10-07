@@ -101,7 +101,7 @@ internal static class WinFormsCollectionPreview
                         if (created is Forms.ToolStripDropDownItem dropDownOwner &&
                             WinFormsMenuDocument.IsDropDownOwnerType(item.TypeName))
                         {
-                            try { WinFormsToolStripDropDownPreview.Apply(document.Menus, item.Name, dropDownOwner, problems, resources); }
+                            try { WinFormsToolStripDropDownPreview.Apply(document.Menus, item.Name, dropDownOwner, problems, resources, projectResources); }
                             catch (NotSupportedException)
                             {
                                 problems.Add(item.Name + ".DropDownItems: " + Localizer.Get(StringKeys.WinFormsCollectionUnsupported));
@@ -151,8 +151,11 @@ internal static class WinFormsCollectionPreview
     /// this, the statement the editor wrote parses but the live preview never shows the
     /// picture, the same bug <see cref="WinFormsDesignerSession.Resources.ApplyResourceProperties"/>
     /// already fixed for ordinary controls' Local resources.
+    /// Internal rather than private so <see cref="WinFormsToolStripDropDownPreview"/> can resolve
+    /// the same two expression shapes for a DropDownButton/SplitButton's own nested items instead
+    /// of carrying a second copy of this method.
     /// </summary>
-    private static object? EvaluateItemProperty(ExpressionSyntax expression, Type propertyType,
+    internal static object? EvaluateItemProperty(ExpressionSyntax expression, Type propertyType,
         WinFormsResourceDocument? resources, Lazy<IReadOnlyList<WinFormsProjectResourceEntry>?> projectResources)
     {
         if (WinFormsDesignerView.IsImageProperty(propertyType))
@@ -187,7 +190,7 @@ internal static class WinFormsCollectionPreview
     /// project images unresolved in the preview instead of failing the whole form's preview,
     /// which would make every form in the project uneditable until the file was fixed.
     /// </summary>
-    private static IReadOnlyList<WinFormsProjectResourceEntry>? LoadProjectResources(string? projectPath)
+    internal static IReadOnlyList<WinFormsProjectResourceEntry>? LoadProjectResources(string? projectPath)
     {
         if (projectPath is null) return null;
 
