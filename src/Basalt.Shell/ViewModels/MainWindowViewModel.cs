@@ -298,7 +298,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// </remarks>
     public void CloseAllDocuments()
     {
-        foreach (var document in OpenDocuments.ToList()) _designerSessions.Remove(document);
+        foreach (var document in OpenDocuments.ToList()) ForgetDesignerSession(document);
 
         OpenDocuments.Clear();
         ActiveDocument = null;
@@ -430,25 +430,47 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly Dictionary<EditorDocumentViewModel, DesignerSession> _designerSessions = [];
 
     /// <summary>
-    /// Whether a session still stands for what the document says.
+    /// The document text each live session in <see cref="_designerSessions"/>
+    /// was last known to agree with.
     /// </summary>
     /// <remarks>
-    /// Compared as text rather than by a dirty flag: the session writes the
-    /// document itself on every edit, so a flag would have to be cleared in
-    /// the one place that already knows, and one missed clear brings the
-    /// stale tree back.
+    /// A session built from text the user has since edited by hand (outside
+    /// the designer) is a stale tree, and the next designer edit would write
+    /// it back over what they typed: <see cref="DesignerSessionFor"/> rebuilds
+    /// when the document's text no longer matches this stored value.
     ///
-    /// A Visual Basic 6 form is left alone: its document holds .frm text
-    /// while the session holds the markup converted from it, so the two are
-    /// never equal and comparing them would rebuild on every keystroke.
+    /// The comparison used to recompute <c>session.Document.ToXaml()</c> and
+    /// compare that against <c>document.Text</c> on every call. That is wrong
+    /// at the one moment it matters: a hand-written file's formatting (spacing,
+    /// attribute order, comments, line endings) almost never matches the
+    /// serialiser's, so the very first comparison after opening such a file
+    /// already called the brand-new session stale and rebuilt it with new
+    /// <c>XElement</c> instances. Worse, <c>RefreshDesignerToolDocks</c>
+    /// (MainWindow.DesignerToolDocks.cs) asks for the session twice — once
+    /// synchronously, once deferred at <c>DispatcherPriority.Loaded</c> — and a
+    /// rebuild between those two calls handed the Element Tree / Properties /
+    /// Events docks a session that <see cref="ActiveDesigner"/> (set only once,
+    /// in <see cref="ActivateDocument"/>) never saw: a tree click then selected
+    /// an <c>XElement</c> nobody else was showing.
+    ///
+    /// Remembering the exact text a session last produced — its parse source
+    /// right after creation, or whatever it already wrote back after an edit —
+    /// and comparing the document's current text against that stored value,
+    /// instead of recomputing a fresh serialisation, keeps the two in step for
+    /// the document's whole lifetime: the stored value only goes stale when
+    /// something outside the session changes the text directly (reopening the
+    /// file as another encoding, a future external-reload or text-undo
+    /// feature) — the one case a rebuild is genuinely needed, and then every
+    /// caller in the same dispatcher turn sees the new session because the
+    /// comparison, not a retry, is what decides.
     /// </remarks>
-    private static bool SameMarkup(DesignerSession session, EditorDocumentViewModel document)
-    {
-        if (document.FilePath is { } path
-            && path.EndsWith(".frm", StringComparison.OrdinalIgnoreCase))
-            return true;
+    private readonly Dictionary<EditorDocumentViewModel, string> _designerSessionText = [];
 
-        return string.Equals(session.Document.ToXaml(), document.Text, StringComparison.Ordinal);
+    /// <summary>Forgets a session and the text it was last known to agree with.</summary>
+    private void ForgetDesignerSession(EditorDocumentViewModel document)
+    {
+        _designerSessions.Remove(document);
+        _designerSessionText.Remove(document);
     }
 
     /// <summary>
@@ -460,14 +482,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         if (!document.OpenInDesigner) return null;
         if (document.FilePath.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase)) return null;
 
-        // A session built from text the user has since edited by hand is a
-        // stale tree, and the next designer edit writes it back over what
-        // they typed. Rebuilt when the text no longer matches what the
-        // session holds, so the two halves of the tab agree.
-        if (_designerSessions.TryGetValue(document, out var cached)
-            && !SameMarkup(cached, document))
+        if (_designerSessions.ContainsKey(document)
+            && (!_designerSessionText.TryGetValue(document, out var lastSynced)
+                || !string.Equals(document.Text, lastSynced, StringComparison.Ordinal)))
         {
-            _designerSessions.Remove(document);
+            ForgetDesignerSession(document);
         }
 
         if (!_designerSessions.TryGetValue(document, out var session))
@@ -506,10 +525,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             // XAML lived only in the session: controls were added, the
             // preview showed them, and closing the file threw them away with
             // nothing warning that anything was unsaved.
+            //
+            // The text just written is also what this session now agrees
+            // with: remembered so the next DesignerSessionFor call compares
+            // against it instead of re-serialising (see _designerSessionText).
             session.DocumentModified += (_, _) =>
+            {
                 document.Text = WriteBack(document, session);
+                _designerSessionText[document] = document.Text;
+            };
 
             _designerSessions[document] = session;
+            _designerSessionText[document] = document.Text;
         }
 
         DesignerProblems.Remove(document);
@@ -545,7 +572,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         // same path as an edit, because this is the one that reaches the file
         // — writing markup here would leave Avalonia XAML in a .frm.
         if (ActiveDesigner is not null)
+        {
             document.Text = WriteBack(document, ActiveDesigner);
+            _designerSessionText[document] = document.Text;
+        }
 
         if (FormatOnSave && !document.OpenInDesigner)
             await FormatDocumentAsync().ConfigureAwait(true);
@@ -631,7 +661,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// </summary>
     public void CloseDocument(EditorDocumentViewModel document)
     {
-        _designerSessions.Remove(document);
+        ForgetDesignerSession(document);
         DesignerProblems.Remove(document);
 
         var wasActive = ActiveDocument == document;
