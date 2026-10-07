@@ -361,7 +361,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
                  ?? LoadSettings?.Invoke().Session.For(path)) is { } remembered)
                 await RestoreSessionAsync(remembered).ConfigureAwait(true);
 
-            StatusMessage = Localizer.Get(StringKeys.StatusOpened, Path.GetFileName(path));
+            // Guarded: opening a solution runs in the background from the
+            // moment the window loads, and nothing else waits for it. By the
+            // time every await above finishes, a debug session can already
+            // be running — "Opened X" would then land after, and overwrite,
+            // whatever that session's own status (say, Solution Explorer's
+            // "while debugging" refusal) had just told the user. Opened is
+            // no longer news at that point either, so it is simply skipped
+            // rather than raced against.
+            if (IsDebuggingProbe?.Invoke() != true)
+                StatusMessage = Localizer.Get(StringKeys.StatusOpened, Path.GetFileName(path));
         }
         catch (Exception ex)
         {

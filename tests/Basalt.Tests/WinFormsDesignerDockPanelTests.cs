@@ -27,14 +27,12 @@ public sealed class WinFormsDesignerDockPanelTests
             () => new TextBox());
         var toolboxDock = new ContentControl();
         var propertiesDock = new ContentControl();
-        var eventsDock = new ContentControl();
-        var window = CreateWindow(host, toolboxDock, propertiesDock, eventsDock);
+        var window = CreateWindow(host, toolboxDock, propertiesDock);
 
         void RefreshDocks()
         {
             toolboxDock.Content = host.ShowingDesigner ? view!.ToolboxContent : null;
             propertiesDock.Content = host.ShowingDesigner ? view!.PropertiesContent : null;
-            eventsDock.Content = host.ShowingDesigner ? view!.EventsContent : null;
         }
 
         host.ViewChanged += (_, _) => RefreshDocks();
@@ -49,20 +47,26 @@ public sealed class WinFormsDesignerDockPanelTests
             var toolbox = Assert.IsType<ToolboxList>(toolboxDock.Content);
             Assert.Contains(toolbox.List.ItemsSource!.Cast<object>(), row => row is WinFormsToolboxItem);
             var properties = Assert.IsType<WinFormsPropertyPanel>(propertiesDock.Content);
-            Assert.IsType<WinFormsEventPanel>(eventsDock.Content);
-            Assert.Null(properties.EventsContent);
+            Assert.IsType<WinFormsEventPanel>(designer.EventsContent);
+            // Events live inside the Properties tool window itself (Visual
+            // Studio's own arrangement): the same control the lightning
+            // button swaps to, not a separate dockable anywhere else.
+            Assert.Same(designer.EventsContent, properties.EventsContent);
             Assert.DoesNotContain(toolbox, host.GetVisualDescendants());
             Assert.DoesNotContain(properties, host.GetVisualDescendants());
-            Assert.DoesNotContain(eventsDock.Content, host.GetVisualDescendants());
+            Assert.DoesNotContain(designer.EventsContent, host.GetVisualDescendants());
 
-            var eventRequests = 0;
-            designer.EventsPanelRequested += () => eventRequests++;
+            var grid = properties.GetVisualDescendants().OfType<PropertyGrid>().Single();
             var lightning = properties.GetVisualDescendants().OfType<ToggleButton>()
                 .Single(button => button.Name == "PropertyGridEvents");
             lightning.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            Assert.Equal(1, eventRequests);
-            Assert.False(properties.GetVisualDescendants().OfType<PropertyGrid>().Single().EventsMode);
-            Assert.Same(designer.EventsContent, eventsDock.Content);
+            Assert.True(grid.EventsMode);
+            Assert.Contains(designer.EventsContent, properties.GetVisualDescendants());
+
+            var propertiesButton = properties.GetVisualDescendants().OfType<ToggleButton>()
+                .Single(button => button.Name == "PropertyGridProperties");
+            propertiesButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.False(grid.EventsMode);
 
             surface.Select(surface.RootForm!.Controls[0].Controls[0]);
             Assert.Equal("Button1", surface.SelectedControl!.Name);
@@ -83,14 +87,12 @@ public sealed class WinFormsDesignerDockPanelTests
             var right = Assert.IsType<Grid>(mainLayout.Children[2]);
             mainLayout.Children.Remove(toolboxDock);
             right.Children.Remove(propertiesDock);
-            right.Children.Remove(eventsDock);
             var floatingLayout = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("180,300,300"),
-                Children = { toolboxDock, propertiesDock, eventsDock },
+                ColumnDefinitions = new ColumnDefinitions("180,300"),
+                Children = { toolboxDock, propertiesDock },
             };
             Grid.SetColumn(propertiesDock, 1);
-            Grid.SetColumn(eventsDock, 2);
             var floating = new Window
             {
                 Content = floatingLayout,
@@ -105,7 +107,6 @@ public sealed class WinFormsDesignerDockPanelTests
                 Assert.Equal("Button1", surface.SelectedControl!.Name);
                 Assert.Same(toolbox, toolboxDock.Content);
                 Assert.Same(properties, propertiesDock.Content);
-                Assert.Same(designer.EventsContent, eventsDock.Content);
             }
             finally
             {
@@ -113,16 +114,12 @@ public sealed class WinFormsDesignerDockPanelTests
                 floating.Close();
                 mainLayout.Children.Add(toolboxDock);
                 right.Children.Add(propertiesDock);
-                right.Children.Add(eventsDock);
                 Grid.SetColumn(propertiesDock, 0);
-                Grid.SetColumn(eventsDock, 0);
-                Grid.SetRow(eventsDock, 1);
             }
 
             host.ShowText();
             Assert.Null(toolboxDock.Content);
             Assert.Null(propertiesDock.Content);
-            Assert.Null(eventsDock.Content);
             Assert.Same(session, SessionOf(designer));
             host.ShowDesigner();
             await WaitUntilAsync(() => surface.RootForm is not null);
@@ -130,7 +127,6 @@ public sealed class WinFormsDesignerDockPanelTests
             Assert.Equal("Button1", surface.SelectedControl!.Name);
             Assert.Same(toolbox, toolboxDock.Content);
             Assert.Same(properties, propertiesDock.Content);
-            Assert.Same(designer.EventsContent, eventsDock.Content);
 
             ClickUndo(designer);
             await WaitUntilAsync(() => document.Text == original);
@@ -139,7 +135,6 @@ public sealed class WinFormsDesignerDockPanelTests
         {
             toolboxDock.Content = null;
             propertiesDock.Content = null;
-            eventsDock.Content = null;
             window.Close();
         }
     }
@@ -188,14 +183,13 @@ public sealed class WinFormsDesignerDockPanelTests
     }
 
     private static Window CreateWindow(DesignerHost host, ContentControl toolbox,
-        ContentControl properties, ContentControl events)
+        ContentControl properties)
     {
         var right = new Grid
         {
-            RowDefinitions = new RowDefinitions("*,*"),
-            Children = { properties, events },
+            RowDefinitions = new RowDefinitions("*"),
+            Children = { properties },
         };
-        Grid.SetRow(events, 1);
         var layout = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("180,*,300"),

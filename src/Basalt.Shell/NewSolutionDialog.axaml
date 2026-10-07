@@ -76,19 +76,13 @@
           </StackPanel>
 
           <!--
-            The app-wide CheckBox style (Styles.axaml) pins every box to
-            Height="20" so a column of switches reads as a group. Fluent's
-            own template keeps its box cell a fixed 32 tall and top-aligned
-            within the control, sized for a control about that same height;
-            squeezed into 20 that cell simply overflows downward from the
-            top, so the box ends up noticeably lower than the label beside
-            it. Thirty-two here cancels the app-wide Height (a value set
-            directly on an element always beats a style) and gives the box
-            cell exactly the room its own template expects, which is what
-            actually keeps the two centred on each other.
+            No local Height override needed: the app-wide CheckBox style
+            (Styles.axaml) now corrects the box's vertical position itself
+            with a RenderTransform, which the template does not fight over
+            the way it does Height — so this box is centred on its label at
+            the same compact Height="20" every other check box uses.
           -->
-          <CheckBox x:Name="SameDirectoryCheck" Content="{l:LocalizedString NewSolution_PlaceInSameDirectory}"
-                    Height="32" />
+          <CheckBox x:Name="SameDirectoryCheck" Content="{l:LocalizedString NewSolution_PlaceInSameDirectory}" />
 
           <TextBlock x:Name="PreviewLabel" FontSize="11"
                      Foreground="{DynamicResource DescriptionForegroundBrush}" TextWrapping="Wrap" />

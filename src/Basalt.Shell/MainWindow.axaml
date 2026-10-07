@@ -2,6 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Basalt.Shell.ViewModels"
         xmlns:dock="using:Dock.Avalonia.Controls"
+        xmlns:l="clr-namespace:Basalt.Shell"
+        xmlns:controls="using:Basalt.Shell.Controls"
         x:Class="Basalt.Shell.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Basalt"
@@ -197,27 +199,66 @@
               Background="{DynamicResource EditorBackgroundBrush}"
               IsHitTestVisible="{Binding IsWelcomeVisible}"
               IsVisible="{Binding IsWelcomeVisible}">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Spacing="10" Width="320">
-          <TextBlock Text="Basalt" FontSize="30" FontWeight="Light"
-                     HorizontalAlignment="Center" />
-          <TextBlock Text="Visual Basic, con designer Avalonia"
-                     Foreground="{DynamicResource DescriptionForegroundBrush}"
-                     HorizontalAlignment="Center" Margin="0,0,0,18" />
-
-          <Button Content="Nuova soluzione…" Classes="primary"
-                  Click="OnNewSolutionClick" HorizontalAlignment="Stretch" />
-          <Button Content="Apri soluzione o progetto…"
-                  Click="OnOpenSolutionClick" HorizontalAlignment="Stretch" />
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center"
+              Width="680" ColumnDefinitions="320,40,320">
 
           <!--
-            The solutions opened lately. Filled in code because the list comes
-            from the settings and changes while the IDE runs; hidden when there
-            is nothing to show rather than left as an empty heading.
+            Left: the solutions and files opened lately, as Visual Studio's
+            own start page shows them. Filled in code because the list comes
+            from the settings and changes while the IDE runs.
           -->
-          <StackPanel x:Name="WelcomeRecent" Spacing="2" Margin="0,16,0,0"
-                      IsVisible="False" />
-        </StackPanel>
+          <StackPanel Grid.Column="0" Spacing="8">
+            <TextBlock Text="{l:LocalizedString Welcome_Recent}"
+                       FontSize="16" FontWeight="SemiBold" />
+            <StackPanel x:Name="WelcomeRecent" Spacing="2" />
+          </StackPanel>
+
+          <!-- Right: the two ways to begin, with New Project first as the one most people want. -->
+          <StackPanel Grid.Column="2" Spacing="8">
+            <TextBlock Text="Basalt" FontSize="30" FontWeight="Light" />
+            <TextBlock Text="{l:LocalizedString Welcome_Subtitle}"
+                       Foreground="{DynamicResource DescriptionForegroundBrush}"
+                       Margin="0,0,0,14" />
+
+            <TextBlock Text="{l:LocalizedString Welcome_GetStarted}"
+                       FontSize="16" FontWeight="SemiBold" Margin="0,0,0,2" />
+
+            <!--
+              A Grid, not a horizontal StackPanel, around the icon and text:
+              a StackPanel measures each child with infinite available width,
+              so the inner TextBlock's TextWrapping="Wrap" had no width to
+              wrap within and the description's last words were clipped at
+              the button's right edge instead ("…QuickBASIC p"). The Grid's
+              "*" column gives the text an actual width to wrap inside, and
+              the button grows taller to fit.
+            -->
+            <Button x:Name="WelcomeNewProjectButton" Classes="primary"
+                    Click="OnNewSolutionClick" HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left" Padding="10,8">
+              <Grid ColumnDefinitions="Auto,10,*">
+                <controls:IconView Grid.Column="0" Kind="New" IconSize="20" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Spacing="2">
+                  <TextBlock Text="{l:LocalizedString Welcome_NewProject}" FontWeight="SemiBold" />
+                  <TextBlock Text="{l:LocalizedString Welcome_NewProject_Description}"
+                             FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
+                </StackPanel>
+              </Grid>
+            </Button>
+
+            <Button x:Name="WelcomeOpenProjectButton"
+                    Click="OnOpenSolutionClick" HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left" Padding="10,8">
+              <Grid ColumnDefinitions="Auto,10,*">
+                <controls:IconView Grid.Column="0" Kind="Open" IconSize="20" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Spacing="2">
+                  <TextBlock Text="{l:LocalizedString Welcome_OpenProject}" FontWeight="SemiBold" />
+                  <TextBlock Text="{l:LocalizedString Welcome_OpenProject_Description}"
+                             FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
+                </StackPanel>
+              </Grid>
+            </Button>
+          </StackPanel>
+        </Grid>
       </Border>
     </Panel>
   </DockPanel>

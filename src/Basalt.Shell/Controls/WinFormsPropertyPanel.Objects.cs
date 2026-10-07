@@ -25,12 +25,6 @@ public sealed partial class WinFormsPropertyPanel
         set => _grid.EventsContent = value;
     }
 
-    public Action? ExternalEventsRequested
-    {
-        get => _grid.ExternalEventsRequested;
-        set => _grid.ExternalEventsRequested = value;
-    }
-
     private void ApplyObjectSelectorTheme() => WinFormsPropertyGridPalette.For(this).StyleSelector(_objects);
 
     private void InitializeObjectSelector()

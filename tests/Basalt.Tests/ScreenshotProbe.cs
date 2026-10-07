@@ -71,6 +71,18 @@ public sealed class ScreenshotProbe : IDisposable
         window.Height = Height;
         window.UpdateLayout();
 
+        // A popup shown before this resize (the completion list, say) computes
+        // its position lazily: AvaloniaEdit's CompletionWindowBase places
+        // itself from the caret's visual position on the next layout pass
+        // after it opens, not synchronously inside Show(). A running IDE
+        // pumps its dispatcher every frame, so a user never sees the gap; a
+        // one-shot RenderTargetBitmap.Render below would otherwise capture
+        // the popup still sitting at its initial (0,0) before that pass ever
+        // ran, which is what made completion.png show the list pinned to the
+        // window's corner instead of under "Me.".
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+
         using var target = new RenderTargetBitmap(new PixelSize(Width, Height));
         target.Render(window);
 

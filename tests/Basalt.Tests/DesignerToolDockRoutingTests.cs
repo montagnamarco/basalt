@@ -35,7 +35,6 @@ public sealed class DesignerToolDockRoutingTests
             var model = Assert.IsType<MainWindowViewModel>(window.Window.DataContext);
             var toolbox = DockHost(window.Window, "_designerToolboxDock");
             var properties = DockHost(window.Window, "_designerPropertiesDock");
-            var events = DockHost(window.Window, "_designerEventsDock");
 
             await model.OpenFileAsync(formsPath, inDesigner: true);
             await window.SettleAsync();
@@ -44,7 +43,9 @@ public sealed class DesignerToolDockRoutingTests
             var formsToolbox = Assert.IsType<ToolboxList>(toolbox.Content);
             Assert.Contains(formsToolbox.List.ItemsSource!.Cast<object>(), row => row is WinFormsToolboxItem);
             var formsProperties = Assert.IsType<WinFormsPropertyPanel>(properties.Content);
-            var formsEvents = Assert.IsType<WinFormsEventPanel>(events.Content);
+            // Events live inside the Properties tool window, as Visual
+            // Studio's does: there is no separate Events dock to find.
+            var formsEvents = Assert.IsType<WinFormsEventPanel>(formsProperties.EventsContent);
             var formsHost = Assert.Single(window.Window.GetVisualDescendants().OfType<DesignerHost>());
             Assert.DoesNotContain(formsHost.GetVisualDescendants(), control => ReferenceEquals(control, formsProperties));
             Assert.DoesNotContain(formsHost.GetVisualDescendants(), control => ReferenceEquals(control, formsEvents));
@@ -78,18 +79,19 @@ public sealed class DesignerToolDockRoutingTests
             formsHost.ShowText();
             Assert.Null(toolbox.Content);
             Assert.Null(properties.Content);
-            Assert.Null(events.Content);
             Assert.Null(model.DesignerUndoRequested);
             Assert.Null(model.DesignerRedoRequested);
             formsHost.ShowDesigner();
             Assert.Same(formsProperties, properties.Content);
-            Assert.Same(formsEvents, events.Content);
+            Assert.Same(formsEvents, formsProperties.EventsContent);
 
             await model.OpenFileAsync(avaloniaPath, inDesigner: true);
             await window.SettleAsync();
             Assert.IsType<ToolboxPanel>(toolbox.Content);
-            Assert.IsType<PropertyPanel>(properties.Content);
-            Assert.IsType<EventsPanel>(events.Content);
+            var xamlProperties = Assert.IsType<PropertyPanel>(properties.Content);
+            // The Avalonia designer's own Properties window hosts its Events
+            // the same way: no separate dockable for them either.
+            Assert.IsType<EventsPanel>(xamlProperties.EventsContent);
             Assert.Same(toolbox, DockHost(window.Window, "_designerToolboxDock"));
             Assert.Same(properties, DockHost(window.Window, "_designerPropertiesDock"));
 
@@ -97,13 +99,12 @@ public sealed class DesignerToolDockRoutingTests
             model.ActivateFromTabSelection(formsDocument);
             await window.SettleAsync();
             Assert.Same(formsProperties, properties.Content);
-            Assert.Same(formsEvents, events.Content);
+            Assert.Same(formsEvents, formsProperties.EventsContent);
 
             await model.OpenFileAsync(codePath);
             await window.SettleAsync();
             Assert.Null(toolbox.Content);
             Assert.Null(properties.Content);
-            Assert.Null(events.Content);
             Assert.Null(model.DesignerUndoRequested);
             Assert.Null(model.DesignerRedoRequested);
 
@@ -113,7 +114,6 @@ public sealed class DesignerToolDockRoutingTests
             await window.SettleAsync();
             Assert.DoesNotContain(formsDocument, model.OpenDocuments);
             Assert.IsNotType<WinFormsPropertyPanel>(properties.Content);
-            Assert.IsNotType<WinFormsEventPanel>(events.Content);
         }
         finally
         {

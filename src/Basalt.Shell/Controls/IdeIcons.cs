@@ -22,6 +22,11 @@ public enum IconKind
     Explorer, Toolbox, Properties, Problems, Output, Outline, References,
     Tests, History, Pull, Push, Assistant, Layout, Window, Minimize, Zoom,
 
+    // Drawn so the View menu's debug-layout tools and Project's Add
+    // Reference stop sharing an icon with an unrelated command (see
+    // MenuTests.NoIconStandsForTwoUnrelatedCommands).
+    CallStack, Variables, BreakpointsWindow, AddReference,
+
     /// <summary>The controls Dock draws on a panel's title bar.</summary>
     Close, Pin, Menu,
 
@@ -282,6 +287,28 @@ public static class IdeIcons
                            + "M3,3 L4.5,4.5 M11.5,11.5 L13,13 M13,3 L11.5,4.5 M4.5,11.5 L3,13",
 
         IconKind.Immediate => "M2,3.5 L7.5,8 L2,12.5 M9,12.5 H14",
+
+        // Stacked frames with an arrow pointing at the one on top: the Call
+        // Stack window, which is exactly that — frames, newest first.
+        IconKind.CallStack => "M2,11 H14 M2,8 H14 M2,5 H10 M11.5,3 V7 M9.5,5 L11.5,3 L13.5,5",
+
+        // "{x}": a variable's name inside braces, the shorthand this window
+        // is named for in Visual Studio and Code alike.
+        IconKind.Variables => "M4,2 C2.5,2 2.5,4 2.5,5.5 C2.5,7 1,7 1,8 C1,9 2.5,9 2.5,10.5 "
+                            + "C2.5,12 2.5,14 4,14 M12,2 C13.5,2 13.5,4 13.5,5.5 C13.5,7 15,7 15,8 "
+                            + "C15,9 13.5,9 13.5,10.5 C13.5,12 13.5,14 12,14 M7,8 H9",
+
+        // A filled dot beside lines of a list: the Breakpoints window, which
+        // lists every breakpoint rather than marking one in the margin (see
+        // Breakpoint, the toggle's own icon).
+        IconKind.BreakpointsWindow => "M2.5,4 A1.5,1.5 0 1 1 2.5,7 A1.5,1.5 0 0 1 2.5,4 Z "
+                                    + "M6,4.5 H14 M6,8.5 H14 M2.5,11 H14",
+
+        // An open book with a plus: adding a reference to the project reads
+        // another assembly, the way a book lends its own words.
+        IconKind.AddReference => "M2,3 C4,2 6,2.5 8,3.5 C10,2.5 12,2 14,3 V12 "
+                               + "C12,11 10,11.5 8,12.5 C6,11.5 4,11 2,12 Z M8,3.5 V12.5 "
+                               + "M11.5,5 V8 M10,6.5 H13",
         IconKind.Terminal => "M1,2 H15 V14 H1 Z M3.5,5.5 L6.5,8 L3.5,10.5 M8,11 H12",
 
         IconKind.Branch => "M4,3 A1.5,1.5 0 1 1 4,6 A1.5,1.5 0 0 1 4,3 M4,6 V13 "

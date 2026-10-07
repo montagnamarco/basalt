@@ -66,6 +66,7 @@
   <data name="Menu_Project_AddWindow" xml:space="preserve"><value>Add Window…</value></data>
   <data name="Menu_Project_References" xml:space="preserve"><value>References…</value></data>
   <data name="Menu_Project_Properties" xml:space="preserve"><value>Properties…</value></data>
+
   <!-- References dialog -->
   <data name="References_Title" xml:space="preserve"><value>{0} References</value></data>
   <data name="References_Tab_Projects" xml:space="preserve"><value>Projects</value></data>
@@ -209,7 +210,13 @@
   <data name="Severity_Hidden" xml:space="preserve"><value>Hidden</value></data>
 
   <!-- Welcome screen -->
-  <data name="Welcome_Subtitle" xml:space="preserve"><value>C# and VB.NET, with an Avalonia designer</value></data>
+  <data name="Welcome_Subtitle" xml:space="preserve"><value>Visual Basic for Windows Forms, Avalonia and the web</value></data>
+  <data name="Welcome_Recent_Empty" xml:space="preserve"><value>Nothing opened yet. Your recent projects and solutions will show up here.</value></data>
+  <data name="Welcome_GetStarted" xml:space="preserve"><value>Get started</value></data>
+  <data name="Welcome_NewProject" xml:space="preserve"><value>New Project…</value></data>
+  <data name="Welcome_NewProject_Description" xml:space="preserve"><value>Create a Windows Forms, Avalonia, web or QuickBASIC project from a template.</value></data>
+  <data name="Welcome_OpenProject" xml:space="preserve"><value>Open Project or Solution…</value></data>
+  <data name="Welcome_OpenProject_Description" xml:space="preserve"><value>Open an existing .slnx, .vbproj, .csproj or Visual Basic 6 project.</value></data>
 
   <!-- New Solution dialog -->
   <data name="NewSolution_Title" xml:space="preserve"><value>New Solution</value></data>
@@ -232,6 +239,7 @@
   <data name="NewSolution_Dialect_QuickBasic" xml:space="preserve"><value>QuickBASIC</value></data>
   <data name="NewSolution_Category_WindowsDesktop" xml:space="preserve"><value>Windows Desktop</value></data>
   <data name="NewSolution_Category_Web" xml:space="preserve"><value>Web</value></data>
+
   <!-- New Solution dialog: one line naming what a template targets -->
   <data name="NewSolution_Target_WinFormsApp" xml:space="preserve"><value>.NET 10 • Windows Forms (Basalt, cross-platform)</value></data>
   <data name="NewSolution_Target_AvaloniaApp" xml:space="preserve"><value>.NET 10 • Avalonia, cross-platform desktop</value></data>
@@ -245,6 +253,7 @@
   <data name="NewSolution_Target_Blazor" xml:space="preserve"><value>.NET 10 • ASP.NET Core</value></data>
   <data name="NewSolution_Target_VisualBasic6" xml:space="preserve"><value>Visual Basic 6 • Windows (opens here and in Visual Basic 6)</value></data>
   <data name="NewSolution_Target_QuickBasic" xml:space="preserve"><value>QuickBASIC • compiled to a native executable</value></data>
+
   <!-- Project templates -->
   <data name="Template_AvaloniaApp" xml:space="preserve"><value>Avalonia Application</value></data>
   <data name="Template_AvaloniaApp_Description" xml:space="preserve"><value>Cross-platform desktop window, editable in the visual designer.</value></data>
@@ -322,7 +331,7 @@
   <data name="Menu_File_RecentFiles" xml:space="preserve"><value>Recent Files</value></data>
   <data name="Menu_File_RecentNone" xml:space="preserve"><value>Nothing yet</value></data>
   <data name="Menu_File_RecentClear" xml:space="preserve"><value>Clear the list</value></data>
-  <data name="Welcome_Recent" xml:space="preserve"><value>Pick up where you left off</value></data>
+  <data name="Welcome_Recent" xml:space="preserve"><value>Open recent</value></data>
   <data name="Explorer_ShowAllFiles" xml:space="preserve"><value>Show all files</value></data>
   <data name="Explorer_CollapseAll" xml:space="preserve"><value>Collapse all</value></data>
   <data name="Explorer_SyncWithEditor" xml:space="preserve"><value>Sync with the open document</value></data>

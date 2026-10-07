@@ -144,6 +144,7 @@ public static class StringKeys
     public const string MenuProjectAddWindow = "Menu_Project_AddWindow";
     public const string MenuProjectReferences = "Menu_Project_References";
     public const string MenuProjectProperties = "Menu_Project_Properties";
+
     public const string ReferencesTitle = "References_Title";
     public const string ReferencesTabProjects = "References_Tab_Projects";
     public const string ReferencesTabAssemblies = "References_Tab_Assemblies";
@@ -181,6 +182,12 @@ public static class StringKeys
     public const string MenuFileRecentNone = "Menu_File_RecentNone";
     public const string MenuFileRecentClear = "Menu_File_RecentClear";
     public const string WelcomeRecent = "Welcome_Recent";
+    public const string WelcomeRecentEmpty = "Welcome_Recent_Empty";
+    public const string WelcomeGetStarted = "Welcome_GetStarted";
+    public const string WelcomeNewProject = "Welcome_NewProject";
+    public const string WelcomeNewProjectDescription = "Welcome_NewProject_Description";
+    public const string WelcomeOpenProject = "Welcome_OpenProject";
+    public const string WelcomeOpenProjectDescription = "Welcome_OpenProject_Description";
 
     public const string ExplorerShowAllFiles = "Explorer_ShowAllFiles";
     public const string ExplorerCollapseAll = "Explorer_CollapseAll";
@@ -346,6 +353,7 @@ public static class StringKeys
     public const string TemplateVisualBasic6Description = "Template_VisualBasic6_Description";
     public const string TemplateQuickBasic = "Template_QuickBasic";
     public const string TemplateQuickBasicDescription = "Template_QuickBasic_Description";
+
     // The New Solution window's tree: three dialects, Visual Basic .NET split
     // into categories, each leaf naming the one project template it creates.
     public const string NewSolutionDialectVisualBasicNet = "NewSolution_Dialect_VisualBasicNet";
@@ -353,6 +361,7 @@ public static class StringKeys
     public const string NewSolutionDialectQuickBasic = "NewSolution_Dialect_QuickBasic";
     public const string NewSolutionCategoryWindowsDesktop = "NewSolution_Category_WindowsDesktop";
     public const string NewSolutionCategoryWeb = "NewSolution_Category_Web";
+
     // One line naming the framework or platform a template targets, shown
     // above the form once its leaf is selected.
     public const string NewSolutionTargetWinFormsApp = "NewSolution_Target_WinFormsApp";
@@ -367,6 +376,7 @@ public static class StringKeys
     public const string NewSolutionTargetBlazor = "NewSolution_Target_Blazor";
     public const string NewSolutionTargetVisualBasic6 = "NewSolution_Target_VisualBasic6";
     public const string NewSolutionTargetQuickBasic = "NewSolution_Target_QuickBasic";
+
     public const string NewSolutionSolutionName = "NewSolution_SolutionName";
     public const string NewSolutionPlaceInSameDirectory = "NewSolution_PlaceInSameDirectory";
     public const string NewSolutionFolderNotEmpty = "NewSolution_FolderNotEmpty";

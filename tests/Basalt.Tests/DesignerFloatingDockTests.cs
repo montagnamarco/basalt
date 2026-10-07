@@ -72,7 +72,7 @@ public sealed class DesignerFloatingDockTests
             Assert.Equal("Edited while floating", surface.SelectedControl!.Text);
 
             var floatingDock = Assert.IsAssignableFrom<IDock>(factory.Properties.Owner);
-            factory.MoveDockable(floatingDock, originalDock, factory.Properties, factory.Events);
+            factory.MoveDockable(floatingDock, originalDock, factory.Properties, factory.Assistant);
             await window.SettleAsync();
 
             Assert.Same(originalDock, factory.Properties.Owner);

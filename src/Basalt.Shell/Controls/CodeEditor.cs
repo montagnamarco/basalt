@@ -210,6 +210,9 @@ public sealed partial class CodeEditor : UserControl
     /// <summary>Whether the completion list is showing, for the tests.</summary>
     internal bool CompletionOpenForTests => _completionWindow is not null;
 
+    /// <summary>The open completion popup itself, for tests that check where it lands.</summary>
+    internal CompletionWindow? CompletionWindowForTests => _completionWindow;
+
     /// <summary>How many times completion was asked for, for the tests.</summary>
     internal int CompletionRequestsForTests { get; private set; }
 

@@ -89,7 +89,12 @@ public sealed class WinFormsEventsPanelEndToEndTests : IDisposable
         var canvas = (Canvas)typeof(WinFormsDesignSurface)
             .GetField("_host", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .GetValue(surface)!;
-        var point = canvas.TranslatePoint(new Point(60, 55), window.Window)!.Value;
+        // 12: the surface's gutter. 4, 23: Form1's own default frame
+        // (Sizable border, captioned since it has a non-empty Text) - its
+        // client area starts that far past the gutter, with Button1 at
+        // (40,40)-(130,70) (mirrors ScreenshotProbe.OpenWinFormsDesignerAsync,
+        // which clicks the same fixture's Button1 the same way).
+        var point = canvas.TranslatePoint(new Point(12 + 4 + 50, 12 + 23 + 50), window.Window)!.Value;
         window.Window.MouseDown(point, MouseButton.Left);
         window.Window.MouseUp(point, MouseButton.Left);
         Dispatcher.UIThread.RunJobs();

@@ -200,11 +200,13 @@ public sealed class PanelFixTests
         var factory = Field<IdeDockFactory>(w, "_factory");
         var contents = Field<Dictionary<IDockable, Control>>(w, "_contents");
 
-        // Built, but a dockable that was never added to a dock or to the
-        // content map cannot be shown: this is what the audit found broken.
+        // Built and mapped to its content, but — like Search, References and
+        // the rest of the on-demand tools — not pre-docked: the bottom strip
+        // only grows once something asks for it (docs/planning item: bottom
+        // dock clutter). Owner is null until that first ask.
         Assert.True(contents.ContainsKey(factory.Watch));
         Assert.IsType<WatchPanel>(contents[factory.Watch]);
-        Assert.NotNull(factory.Watch.Owner);
+        Assert.Null(factory.Watch.Owner);
 
         Invoke(w, L(StringKeys.MenuView), L(StringKeys.ToolWatch));
         await host.SettleAsync(10);
@@ -233,9 +235,11 @@ public sealed class PanelFixTests
         var factory = Field<IdeDockFactory>(w, "_factory");
         var contents = Field<Dictionary<IDockable, Control>>(w, "_contents");
 
+        // Not pre-docked either (see WatchPanelIsDockedAndReachableFromTheViewMenu):
+        // it opens the first time the View menu, or a debug session, asks for it.
         Assert.True(contents.ContainsKey(factory.Immediate));
         Assert.IsType<ImmediatePanel>(contents[factory.Immediate]);
-        Assert.NotNull(factory.Immediate.Owner);
+        Assert.Null(factory.Immediate.Owner);
 
         Invoke(w, L(StringKeys.MenuView), L(StringKeys.ToolImmediate));
         await host.SettleAsync(10);

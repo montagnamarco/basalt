@@ -3,6 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
+using Basalt.Core.Localization;
+using Basalt.Shell;
 using Basalt.Shell.Controls;
 
 namespace Basalt.Tests;
@@ -48,21 +50,44 @@ public class ChromeInWindowTests
     }
 
     [AvaloniaFact]
-    public async Task PutsTheAssistantAndTestWindowsInTheLayout()
+    public async Task PutsTheAssistantInTheDefaultLayoutAndTheTestsWindowOnDemand()
     {
         // Registering a dockable is not the same as it appearing: a tool with
         // no content is an empty tab, which reads as a broken feature.
+        //
+        // The Tests window is no longer part of the design layout — like
+        // Visual Studio's own Test Explorer, it opens on demand rather than
+        // sitting docked from the start — so this only asserts it afterward,
+        // once its View menu entry has opened it.
         using var host = new TestWindow();
         await host.SettleAsync();
 
-        var titles = host.Window.GetVisualDescendants()
+        List<string?> Titles() => host.Window.GetVisualDescendants()
             .OfType<TextBlock>()
             .Select(t => t.Text)
             .Where(t => t is not null)
             .ToList();
 
-        Assert.Contains("Assistant", titles);
-        Assert.Contains("Tests", titles);
+        Assert.Contains("Assistant", Titles());
+        Assert.DoesNotContain("Tests", Titles());
+
+        void Collect(IReadOnlyList<MenuEntry> entries, List<MenuEntry> into)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.Children is { Count: > 0 } children) Collect(children, into);
+                else into.Add(entry);
+            }
+        }
+
+        var all = new List<MenuEntry>();
+        Collect(host.Window.MenuEntriesForTests(), all);
+
+        var showTests = all.Single(e => e.Header == Localizer.Get(StringKeys.ToolTests));
+        showTests.Action!();
+        await host.SettleAsync();
+
+        Assert.Contains("Tests", Titles());
     }
 
     [AvaloniaFact]

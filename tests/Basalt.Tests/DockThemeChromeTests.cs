@@ -25,8 +25,32 @@ namespace Basalt.Tests;
 /// rasterise the real window and read pixels, because a brush resolving to
 /// the right colour says nothing about what reaches the screen.
 /// </summary>
-public sealed class DockThemeChromeTests
+// MainWindow now reads a saved theme at startup (see MainWindowThemeStartupTests),
+// which made this class's missing settings isolation a real bug rather than a
+// latent one: without BASALT_SETTINGS pointed elsewhere, TestWindow below reads
+// and can be overridden by whatever is at the real default path (a developer's
+// own ~/.basalt/settings.json, or another test's file left behind), stomping the
+// variant ThemeScope just set. Isolated here the same way ScreenshotProbe and
+// ShellAppearanceTests already are, and put in their shared collection so the
+// shared BASALT_SETTINGS environment variable is never read mid-write either.
+[Collection(SettingsFileCollection.Name)]
+public sealed class DockThemeChromeTests : IDisposable
 {
+    private readonly string _settings = Path.Combine(
+        Path.GetTempPath(), "basalt-dock-chrome-" + Guid.NewGuid().ToString("N") + ".json");
+
+    private readonly string? _previousSettings =
+        Environment.GetEnvironmentVariable("BASALT_SETTINGS");
+
+    public DockThemeChromeTests() =>
+        Environment.SetEnvironmentVariable("BASALT_SETTINGS", _settings);
+
+    public void Dispose()
+    {
+        Environment.SetEnvironmentVariable("BASALT_SETTINGS", _previousSettings);
+        try { File.Delete(_settings); } catch (IOException) { }
+    }
+
     /// <summary>
     /// A small solution on disk: without one the window is the welcome
     /// screen and no panel is ever built, which is how chrome problems went

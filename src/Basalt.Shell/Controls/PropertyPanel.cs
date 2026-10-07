@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Basalt.Core.Localization;
 using Basalt.Designer;
@@ -14,12 +16,21 @@ namespace Basalt.Shell.Controls;
 /// to a type, reading its properties, and writing changes back to the session.
 /// The grid itself knows nothing of any of that, so it can show a Visual Basic
 /// form's properties one day without being untangled from XAML first.
+///
+/// Also hosts the events of the selected element, the way Visual Studio's own
+/// Properties window does: a small Properties/Events toggle swaps the body in
+/// place, so there is no separate Events tool to dock.
 /// </remarks>
 public sealed class PropertyPanel : UserControl
 {
     private readonly PropertyGrid _grid = new();
     private readonly GridTrackEditor _tracks = new();
     private readonly TextBlock _element;
+    private readonly ToggleButton _propertiesButton;
+    private readonly ToggleButton _eventsButton;
+    private readonly ContentControl _body;
+    private Control? _eventsContent;
+    private bool _showingEvents;
     private DesignerSession? _session;
 
     /// <summary>Raised when the grid's rows or columns changed.</summary>
@@ -40,14 +51,39 @@ public sealed class PropertyPanel : UserControl
         // of the form, and the properties are what fills it.
         _tracks.Changed += (_, _) => LayoutChanged?.Invoke(this, EventArgs.Empty);
 
-        var layout = new Grid
+        _propertiesButton = new ToggleButton
         {
-            RowDefinitions = new RowDefinitions("Auto,Auto,*"),
-            Children = { _element, _tracks, _grid },
+            Name = "PropertyPanelProperties",
+            Content = Localizer.Get("WinFormsDesigner_Properties"),
+            IsChecked = true,
+        };
+        _eventsButton = new ToggleButton
+        {
+            Name = "PropertyPanelEvents",
+            Content = Localizer.Get("WinFormsDesigner_Events"),
+        };
+        _propertiesButton.Click += (_, _) => ShowEvents(false);
+        _eventsButton.Click += (_, _) => ShowEvents(true);
+
+        var toolbar = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Spacing.Tight,
+            Margin = new Thickness(Spacing.Normal, Spacing.Tight),
+            Children = { _propertiesButton, _eventsButton },
         };
 
-        Grid.SetRow(_tracks, 1);
-        Grid.SetRow(_grid, 2);
+        _body = new ContentControl { Content = _grid };
+
+        var layout = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,*"),
+            Children = { _element, toolbar, _tracks, _body },
+        };
+
+        Grid.SetRow(toolbar, 1);
+        Grid.SetRow(_tracks, 2);
+        Grid.SetRow(_body, 3);
 
         Content = layout;
     }
@@ -57,6 +93,40 @@ public sealed class PropertyPanel : UserControl
 
     /// <summary>The rows and columns editor, for tests.</summary>
     internal GridTrackEditor Tracks => _tracks;
+
+    /// <summary>
+    /// The events panel shown when the toolbar's Events button is pressed, in
+    /// place of the properties grid — the same control whether or not it is
+    /// currently on screen.
+    /// </summary>
+    public Control? EventsContent
+    {
+        get => _eventsContent;
+        set
+        {
+            _eventsContent = value;
+            if (_showingEvents) _body.Content = value;
+        }
+    }
+
+    /// <summary>Whether the Events view is the one currently shown, for tests.</summary>
+    internal bool ShowingEvents => _showingEvents;
+
+    /// <summary>
+    /// Switches between the properties grid and the events list. Sticky
+    /// across selection changes, the way Visual Studio's own toggle is: the
+    /// user picked a view, not a one-off look at a single control.
+    /// </summary>
+    private void ShowEvents(bool show)
+    {
+        if (_showingEvents == show) return;
+
+        _showingEvents = show;
+        _propertiesButton.IsChecked = !show;
+        _eventsButton.IsChecked = show;
+        _tracks.IsVisible = !show;
+        _body.Content = show ? _eventsContent : _grid;
+    }
 
     /// <summary>Shows the properties of the element selected in the given session.</summary>
     public void Show(DesignerSession? session)

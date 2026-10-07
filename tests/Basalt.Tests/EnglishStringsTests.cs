@@ -95,6 +95,52 @@ public class EnglishStringsTests
     }
 
     [Fact]
+    public void NoItalianIsLeftInAxamlFiles()
+    {
+        // Only attribute values (Content="…", Text="…"): an XML comment
+        // written in Italian is a note to whoever maintains the style, not
+        // something a user ever reads, and this heuristic would otherwise
+        // flag Styles.axaml's own design comments.
+        var root = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src"));
+
+        var found = new List<string>();
+
+        if (!Directory.Exists(root)) { Assert.Empty(found); return; }
+
+        foreach (var file in Directory.EnumerateFiles(root, "*.axaml", SearchOption.AllDirectories)
+                     .Where(f => !f.Contains("/obj/") && !f.Contains("/bin/")))
+        {
+            var text = File.ReadAllText(file);
+
+            foreach (Match literal in Regex.Matches(text, "=\"([^\"]{2,})\""))
+            {
+                var value = literal.Groups[1].Value;
+
+                if (!AxamlItalian.Any(word => value.Contains(word, StringComparison.Ordinal)))
+                    continue;
+
+                found.Add($"{Path.GetFileName(file)}: \"{value}\"");
+            }
+        }
+
+        Assert.Empty(found);
+    }
+
+    /// <summary>
+    /// <see cref="Italian"/> plus the words the welcome screen used before it
+    /// was translated. Kept apart from <see cref="Italian"/> rather than
+    /// merged into it: "Apri" alone is too short a fragment to trust against
+    /// attribute values in general (binding paths, resource keys), so it is
+    /// only checked here, against literal quoted text.
+    /// </summary>
+    private static readonly string[] AxamlItalian =
+    [
+        .. Italian,
+        "Nuova soluzione", "Apri soluzione", "progetto",
+    ];
+
+    [Fact]
     public void NoItalianIsLeftInStringsResx()
     {
         // Strings.resx is the one place every user-visible string ultimately

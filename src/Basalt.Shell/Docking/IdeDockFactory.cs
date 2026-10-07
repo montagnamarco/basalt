@@ -35,7 +35,6 @@ public sealed class IdeDockFactory : Factory
     public OutlineTool Outline { get; } = new();
     public ElementTreeTool ElementTree { get; } = new();
     public DatabaseTool Database { get; } = new();
-    public EventsTool Events { get; } = new();
     public ReferencesTool References { get; } = new();
     public ObjectBrowserTool ObjectBrowser { get; } = new();
     public CallStackTool CallStack { get; } = new();
@@ -98,13 +97,15 @@ public sealed class IdeDockFactory : Factory
         // Beneath it, the properties of whatever is selected — the pairing
         // that made the Visual Basic 6 designer what it was: pick a control
         // in the tree, set it in the grid below without moving your eyes.
+        // Events live inside this same Properties window, as Visual Studio's
+        // does: there is no separate Events tool to dock here.
         var propertiesPanel = new ToolDock
         {
             Id = "DestraSotto",
             Title = "DestraSotto",
             Alignment = Alignment.Right,
             Proportion = 0.65,
-            VisibleDockables = CreateList<IDockable>(Properties, Events, Assistant),
+            VisibleDockables = CreateList<IDockable>(Properties, Assistant),
             ActiveDockable = Properties
         };
 
@@ -130,15 +131,15 @@ public sealed class IdeDockFactory : Factory
             Title = "Inferiore",
             Alignment = Alignment.Bottom,
             Proportion = 0.28,
-            // Ordered by how often they are wanted, and grouped by what they
-            // are about: what is wrong, what was printed, what was searched
-            // for, then the debugging three together, then the rest. A strip
-            // of a dozen tabs in the order they happened to be written is one
-            // nobody learns the shape of.
-            VisibleDockables = CreateList<IDockable>(
-                Problems, Output, Search, References, ObjectBrowser,
-                CallStack, Variables, Watch, Breakpoints, Immediate,
-                Tests, Database, GitHistory, GitDiff, terminal),
+            // Visual Studio keeps this strip small while editing: the Error
+            // List, Output and whatever terminal was already running. Search,
+            // References, Object Browser, Tests, Database and the Git history
+            // and diff panes open here on demand instead of crowding the tab
+            // strip from the start (ShowTool reopens them where they were,
+            // the way a closed one always comes back). Call Stack, Variables,
+            // Watch, Breakpoints and Immediate belong to the debug layout
+            // (see EnterDebugLayout) and are not part of the design one.
+            VisibleDockables = CreateList<IDockable>(Problems, Output, terminal),
             ActiveDockable = Problems
         };
 
@@ -208,6 +209,59 @@ public sealed class IdeDockFactory : Factory
 
         SetActiveDockable(pannello);
         SetFocusedDockable(contenitore, pannello);
+    }
+
+    /// <summary>
+    /// The panels that only mean something while a program is being
+    /// debugged, Visual Studio's "Debug" layout: where execution stopped,
+    /// its variables, the expressions being watched, every breakpoint and a
+    /// line to evaluate. Nothing here belongs to the "Design" layout the
+    /// window otherwise keeps.
+    /// </summary>
+    private IEnumerable<IdeTool> DebugLayoutTools => [CallStack, Variables, Watch, Breakpoints, Immediate];
+
+    /// <summary>The debug tools this session opened, so stopping closes only those.</summary>
+    private readonly HashSet<IDockable> _openedForDebugLayout = [];
+
+    /// <summary>
+    /// Switches the bottom strip to the debug layout as a session starts.
+    ///
+    /// A tool the user already had open - in the bottom strip or moved
+    /// somewhere else entirely - is left exactly where it is: only the ones
+    /// this call itself adds are remembered, so stopping later undoes this
+    /// and nothing the user did by hand.
+    /// </summary>
+    public void EnterDebugLayout()
+    {
+        if (BottomArea is null) return;
+
+        foreach (var tool in DebugLayoutTools)
+        {
+            if (tool.Owner is not null) continue;
+
+            ShowTool(tool, BottomArea);
+            _openedForDebugLayout.Add(tool);
+        }
+
+        SetActiveDockable(CallStack);
+        SetFocusedDockable(BottomArea, CallStack);
+    }
+
+    /// <summary>
+    /// Takes the debug layout away as a session ends, restoring the design
+    /// one it replaced.
+    ///
+    /// Only closes what <see cref="EnterDebugLayout"/> itself opened: one the
+    /// user had already pinned open, in the bottom strip or elsewhere, stays
+    /// exactly as they left it, debugging or not.
+    /// </summary>
+    public void ExitDebugLayout()
+    {
+        foreach (var tool in DebugLayoutTools)
+        {
+            if (_openedForDebugLayout.Remove(tool) && tool.Owner is not null)
+                RemoveDockable(tool, collapse: false);
+        }
     }
 
     public override void InitLayout(IDockable layout)

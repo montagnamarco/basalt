@@ -41,7 +41,6 @@ public sealed partial class PropertyGrid
     private Border _visualStudioDescriptionPane = null!;
 
     public event Action<bool>? EventsModeChanged;
-    public Action? ExternalEventsRequested { get; set; }
     public Control? EventsContent
     {
         get => _eventsContent;
@@ -144,12 +143,6 @@ public sealed partial class PropertyGrid
         };
         _visualStudioEvents.Click += (_, _) =>
         {
-            if (ExternalEventsRequested is { } openEvents)
-            {
-                openEvents();
-                UpdateVisualStudioToolbar();
-                return;
-            }
             EventsMode = true;
             UpdateVisualStudioToolbar();
         };

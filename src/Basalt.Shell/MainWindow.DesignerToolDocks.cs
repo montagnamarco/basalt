@@ -8,25 +8,30 @@ public partial class MainWindow
 {
     private readonly ContentControl _designerToolboxDock = new();
     private readonly ContentControl _designerPropertiesDock = new();
-    private readonly ContentControl _designerEventsDock = new();
 
     private void InitializeDesignerToolDocks()
     {
         _contents[_factory.Toolbox] = _designerToolboxDock;
         _contents[_factory.Properties] = _designerPropertiesDock;
-        _contents[_factory.Events] = _designerEventsDock;
         RefreshDesignerToolDocks();
     }
 
     private IDock? DefaultDockForTool(IDockable tool)
     {
-        if (tool == _factory.Properties || tool == _factory.Events)
+        if (tool == _factory.Properties)
             return _factory.DesignerToolsArea;
         if (tool == _factory.Toolbox)
             return _factory.ToolboxArea;
-        if (tool == _factory.Problems || tool == _factory.Output)
-            return _factory.BottomArea;
-        return null;
+
+        // Everything else that is not already anchored elsewhere (Solution
+        // Explorer and the Git panels at top right) opens in the bottom
+        // strip the first time it is asked for: Search, References, Object
+        // Browser, Tests, Database, the Git history and diff, and the debug
+        // tools now open on demand rather than crowding it from the start.
+        if (tool == _factory.SolutionExplorer || tool == _factory.GitChanges || tool == _factory.GitBranches)
+            return null;
+
+        return _factory.BottomArea;
     }
 
     private void CancelInactivePropertyFocus(Control? nextProperties)
@@ -55,7 +60,6 @@ public partial class MainWindow
             CancelInactivePropertyFocus(forms.PropertiesContent);
             _designerToolboxDock.Content = forms.ToolboxContent;
             _designerPropertiesDock.Content = forms.PropertiesContent;
-            _designerEventsDock.Content = forms.EventsContent;
             _elementTree?.Show(null);
             return;
         }
@@ -65,7 +69,6 @@ public partial class MainWindow
             ? ViewModel.DesignerSessionFor(document) : null;
         _designerToolboxDock.Content = session is null ? null : _toolbox;
         _designerPropertiesDock.Content = session is null ? null : _properties;
-        _designerEventsDock.Content = session is null ? null : _events;
         _properties?.Show(session);
         _events?.Show(session);
         _elementTree?.Show(session);

@@ -130,14 +130,76 @@ public sealed class RecentInTheShellTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void TheWelcomeScreenHidesTheListWhenThereIsNothingToShow()
+    public void TheWelcomeScreenSaysSoWhenThereIsNothingToShow()
     {
+        // Visual Studio's own start page never hides "Open recent": a freshly
+        // installed IDE says there is nothing there yet instead of leaving a
+        // heading with blank space under it, which reads as broken.
         using var host = new TestWindow();
 
-        var lists = host.Window.GetVisualDescendants().OfType<StackPanel>()
-            .Where(p => p.Name == "WelcomeRecent")
-            .ToList();
+        var list = host.Window.GetVisualDescendants().OfType<StackPanel>()
+            .Single(p => p.Name == "WelcomeRecent");
 
-        Assert.All(lists, l => Assert.False(l.IsVisible));
+        Assert.True(list.IsVisible);
+
+        var text = Assert.Single(list.Children.OfType<TextBlock>());
+        Assert.Equal(Localizer.Get(StringKeys.WelcomeRecentEmpty), text.Text);
+    }
+
+    [AvaloniaFact]
+    public async Task TheWelcomeScreenShowsEachRecentSolutionsNameAndFolder()
+    {
+        var created = await Basalt.Designer.SolutionTemplates.CreateAsync(
+            _root, "WelcomeListed", Basalt.Designer.ProjectTemplate.ClassLibrary);
+
+        using (var opening = new TestWindow())
+        {
+            var vm = (MainWindowViewModel)opening.Window.DataContext!;
+            await vm.OpenSolutionAsync(created.SolutionPath);
+            await opening.SettleAsync();
+        }
+
+        // A second, fresh window: the welcome screen it shows reads the
+        // solution back out of the settings file the first window wrote to,
+        // exactly as the IDE does between one run and the next.
+        using var host = new TestWindow();
+
+        var list = host.Window.GetVisualDescendants().OfType<StackPanel>()
+            .Single(p => p.Name == "WelcomeRecent");
+
+        var entry = Assert.Single(list.Children.OfType<Button>());
+        var labels = entry.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+
+        Assert.Contains("WelcomeListed", labels);
+        Assert.Contains(Path.GetDirectoryName(created.SolutionPath), labels);
+    }
+
+    [AvaloniaFact]
+    public async Task ClickingARecentEntryOpensIt()
+    {
+        var created = await Basalt.Designer.SolutionTemplates.CreateAsync(
+            _root, "WelcomeClicked", Basalt.Designer.ProjectTemplate.ClassLibrary);
+
+        using (var opening = new TestWindow())
+        {
+            var vm = (MainWindowViewModel)opening.Window.DataContext!;
+            await vm.OpenSolutionAsync(created.SolutionPath);
+            await opening.SettleAsync();
+        }
+
+        using var host = new TestWindow();
+
+        var list = host.Window.GetVisualDescendants().OfType<StackPanel>()
+            .Single(p => p.Name == "WelcomeRecent");
+
+        var entry = Assert.Single(list.Children.OfType<Button>());
+
+        entry.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        await host.SettleAsync();
+
+        var openedVm = (MainWindowViewModel)host.Window.DataContext!;
+        Assert.Equal(
+            Path.GetFullPath(created.SolutionPath),
+            Path.GetFullPath(openedVm.SolutionPath!));
     }
 }

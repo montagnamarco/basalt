@@ -146,6 +146,22 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // ApplySettings (below) only runs once the Settings window pushes a
+        // live change; nothing else ever read the saved theme, so a window
+        // opened with Dark already on disk still started in App.axaml's
+        // hard-coded Light until the user reopened Settings and touched the
+        // chooser. Applied before BuildLayout so every panel it builds
+        // resolves its DynamicResource brushes against the right variant
+        // from its first layout pass rather than flashing from light to dark.
+        //
+        // Guarded on a settings file actually existing: nothing was ever
+        // saved on a first run, and DockThemeChromeTests (among others) sets
+        // Application.RequestedThemeVariant directly before building a window
+        // to render one theme's chrome without a settings file at all - this
+        // must not stomp that back to Light.
+        if (File.Exists(_settingsStore.FilePath))
+            ApplyTheme(_settingsStore.Load().Appearance.Theme);
+
         var viewModel = new MainWindowViewModel();
         _viewModel = viewModel;
 
@@ -270,7 +286,9 @@ public partial class MainWindow : Window
         _contents[_factory.ElementTree] = _elementTree;
 
         // The events of whatever is selected, and a way to wire the ones a
-        // double click on the surface does not reach.
+        // double click on the surface does not reach. Hosted inside the
+        // Properties panel itself, the way Visual Studio's own Properties
+        // window hosts Events — there is no separate dockable for it.
         _events = new EventsPanel();
 
         _events.HandlerRequested += (_, name) =>
@@ -282,8 +300,6 @@ public partial class MainWindow : Window
                 ViewModel.WriteOutput, "designer");
         };
 
-        _contents[_factory.Events] = _events;
-
         // The panel knows about databases; only the window can put a file
         // picker on screen.
         var database = new DatabasePanel();
@@ -293,7 +309,7 @@ public partial class MainWindow : Window
 
         _contents[_factory.Database] = database;
 
-        _properties = new PropertyPanel();
+        _properties = new PropertyPanel { EventsContent = _events };
 
         _contents[_factory.SolutionExplorer] = _solutionExplorer;
         _contents[_factory.Toolbox] = _toolbox;
@@ -565,7 +581,6 @@ public partial class MainWindow : Window
         {
             var forms = new WinFormsDesignerView(document, OpenWinFormsCodeAsync, FindWinFormsCode, GetWinFormsCodeAsync,
                 ViewModel.PreviewWinFormsRenameAsync, dockTools: true, createCode: CreateWinFormsCodeAsync);
-            forms.EventsPanelRequested += () => ShowTool(_factory.Events);
             forms.PropertiesPanelRequested += () => ShowTool(_factory.Properties);
             return forms;
         }
@@ -972,13 +987,14 @@ public partial class MainWindow : Window
 
             _debugTarget = null;
             ShowDebugState();
+            _factory.ExitDebugLayout();
         };
 
         // A program with a window or a web host never stops on its own, so
         // "running" is the last thing that will ever be said about it. Until
         // this was heard the banner stayed on "starting" for a program that
         // had in fact started perfectly well.
-        _debug.Started += (_, _) => ShowDebugState();
+        _debug.Started += (_, _) => { ShowDebugState(); _factory.EnterDebugLayout(); };
 
         _debug.BreakpointsChanged += (_, file) => RefreshBreakpointDisplay(file);
         _debug.OutputReceived += (_, text) => ViewModel.WriteOutput(text);
@@ -3696,6 +3712,11 @@ public partial class MainWindow : Window
         // had already ended, which is worse than never having shown one.
         _debugTarget = null;
         ShowDebugState();
+
+        // Stopping a real session never raises Exited (the adapter is just
+        // disconnected, not told to say goodbye), so the debug layout has to
+        // be taken down from here rather than from that event.
+        _factory.ExitDebugLayout();
     }
 
     /// <summary>Builds the test window and connects it to the runner.</summary>
@@ -4613,92 +4634,6 @@ public partial class MainWindow : Window
         NativeMenu.SetMenu(this, rebuilt);
     }
 
-    /// <summary>The real menu, for tests.</summary>
-    /// <summary>
-    /// Fills the list of recent solutions on the welcome screen.
-    ///
-    /// On the screen and not only in a menu: opening yesterday's work is the
-    /// commonest thing to do on starting, and it should not need a menu.
-    /// </summary>
-    private void ShowRecentOnWelcome()
-    {
-        var recent = _settingsStore.Load().Recent.ExistingSolutions();
-
-        WelcomeRecent.Children.Clear();
-        WelcomeRecent.IsVisible = recent.Count > 0;
-
-        if (recent.Count == 0) return;
-
-        WelcomeRecent.Children.Add(new TextBlock
-        {
-            Text = Localizer.Get(StringKeys.WelcomeRecent),
-            FontSize = 11,
-            Opacity = 0.6,
-            Margin = new Thickness(0, 0, 0, 4)
-        });
-
-        // Five: enough to reach yesterday without turning the welcome screen
-        // into a list.
-        foreach (var path in recent.Take(5))
-        {
-            var target = path;
-
-            var button = new Button
-            {
-                Content = new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 6,
-                    Children =
-                    {
-                        new IconView { Kind = IconKind.Solution, IconSize = 13 },
-                        new TextBlock { Text = Path.GetFileNameWithoutExtension(target) }
-                    }
-                },
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-                Background = Avalonia.Media.Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Padding = new Thickness(6, 2),
-                [ToolTip.TipProperty] = target
-            };
-
-            button.Click += (_, _) => Guarded.Run(
-                () => OpenSolutionAskingToSaveAsync(target), ViewModel.WriteOutput, "ide");
-
-            WelcomeRecent.Children.Add(button);
-        }
-    }
-
-    /// <summary>
-    /// Puts a solution or a file at the top of the list it belongs to.
-    /// </summary>
-    private void Remember(string path, bool isSolution)
-    {
-        var settings = _settingsStore.Load();
-
-        var before = Listed(settings.Recent, isSolution);
-
-        if (isSolution) settings.Recent.RememberSolution(path);
-        else settings.Recent.RememberFile(path);
-
-        _settingsStore.Save(settings);
-
-        // Only when the list really changed. Rebuilding on every file opened
-        // meant replacing the whole macOS menu bar each time, which leaves it
-        // stale: reopening the same file changes nothing and was rebuilding
-        // it anyway.
-        if (string.Equals(before, Listed(settings.Recent, isSolution), StringComparison.Ordinal))
-            return;
-
-        InstallMenu(ViewModel);
-        ShowRecentOnWelcome();
-    }
-
-    /// <summary>The list as one string, to tell whether it moved.</summary>
-    private static string Listed(Basalt.Core.Settings.RecentSettings recent, bool solutions) =>
-        string.Join("\n", solutions ? recent.Solutions : recent.Files);
-
     /// <summary>
     /// The entries under Recent Solutions or Recent Files.
     ///
@@ -4872,6 +4807,19 @@ public partial class MainWindow : Window
                 Action: () => ShowTool(_factory.References)) { Icon = IconKind.References },
             new(Localizer.Get(StringKeys.ToolObjectBrowser),
                 Action: ShowObjectBrowser) { Icon = IconKind.ObjectBrowser },
+            new(Localizer.Get(StringKeys.ToolDatabase),
+                Action: () => ShowTool(_factory.Database)) { Icon = IconKind.JsonFile },
+            MenuEntry.Separator,
+            // The rest of these belong to the debug layout (IdeDockFactory.
+            // EnterDebugLayout) and open here too, so one closed while not
+            // debugging — or wanted open outside a session — is never stuck
+            // unreachable.
+            new(Localizer.Get(StringKeys.ToolCallStack),
+                Action: () => ShowTool(_factory.CallStack)) { Icon = IconKind.CallStack },
+            new(Localizer.Get(StringKeys.ToolVariables),
+                Action: () => ShowTool(_factory.Variables)) { Icon = IconKind.Variables },
+            new(Localizer.Get(StringKeys.ToolBreakpoints),
+                Action: () => ShowTool(_factory.Breakpoints)) { Icon = IconKind.BreakpointsWindow },
             new(Localizer.Get(StringKeys.ToolWatch),
                 Action: () => ShowTool(_factory.Watch)) { Icon = IconKind.Watch },
             new(Localizer.Get(StringKeys.ToolImmediate),
@@ -4911,7 +4859,7 @@ public partial class MainWindow : Window
                 Action: () => _ = ShowAddWindowDialogAsync()) { Icon = IconKind.Window },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuProjectReferences),
-                Action: () => _ = ShowReferencesDialogAsync()) { Icon = IconKind.References },
+                Action: () => _ = ShowReferencesDialogAsync()) { Icon = IconKind.AddReference },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuProjectProperties),
                 Action: () => _ = ShowProjectPropertiesAsync(),
@@ -5167,12 +5115,6 @@ public partial class MainWindow : Window
 
         return ViewModel.StartupProject;
     }
-
-    private void OnNewSolutionClick(object? sender, RoutedEventArgs e) =>
-        _ = ShowNewSolutionDialogAsync();
-
-    private void OnOpenSolutionClick(object? sender, RoutedEventArgs e) =>
-        _ = ShowOpenSolutionDialogAsync();
 
     private async Task ShowOpenSolutionDialogAsync()
     {

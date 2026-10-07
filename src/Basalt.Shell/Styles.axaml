@@ -171,10 +171,29 @@
     20 whatever it is scaled to, so a narrower cell clips it — the ticked one
     came out with its bottom edge cut off. The scale is what makes it look
     smaller; the cell only has to not cut it.
+
+    The other half is where the cell sits within the row, and that is a
+    second local value: the template writes VerticalAlignment="Top" directly
+    onto this Grid, and — exactly like the Width above — a value set on the
+    element beats a Style's Setter for the same property, so a
+    VerticalAlignment Setter here is silently ignored (measured: the control
+    still reports Top). With the control squeezed to the CheckBox style's
+    Height of 20, the cell keeps measuring its template height of 32 and,
+    top-aligned, overflows downward from the shared top edge, and the
+    Viewbox's own scale (set above on the Border) shifts the measured
+    position further still. Measured against a label at this FontSize (every
+    box in the app shares it, from the Style below), the box's centre lands
+    nine pixels below the row's, which reads as the box sitting below its
+    label. RenderTransform is not fought over by the template, so a
+    TranslateTransform can do here what the Setter could not: move the cell
+    up by that same nine pixels, putting its centre back on the row's.
   -->
   <Style Selector="CheckBox /template/ Grid#RootGrid > Grid">
     <Setter Property="MinWidth" Value="0" />
     <Setter Property="MinHeight" Value="0" />
+    <Setter Property="RenderTransform">
+      <TranslateTransform Y="-9" />
+    </Setter>
   </Style>
 
   <!--
@@ -195,9 +214,36 @@
     <Setter Property="Height" Value="15" />
   </Style>
 
+  <!--
+    VerticalContentAlignment set here, on the control itself, and not on the
+    inner PART_TextBox below: Fluent's own NumericUpDown template binds
+    PART_TextBox's VerticalContentAlignment with a TemplateBinding back to
+    this same property on the NumericUpDown, and a TemplateBinding outranks
+    a Style setter aimed at the same property on that same element — a
+    setter placed directly on "/template/ TextBox#PART_TextBox" below is
+    silently overridden back to the template's own default (Stretch), which
+    left the digits sitting at the top of the box instead of centred like
+    every TextBox in the app. Setting it here, where nothing competes for
+    the property, is what the TemplateBinding actually picks up.
+  -->
   <Style Selector="NumericUpDown">
     <Setter Property="MinHeight" Value="22" />
     <Setter Property="FontSize" Value="12" />
+    <Setter Property="Padding" Value="5,2" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="NumericUpDown /template/ TextBox#PART_TextBox">
+    <Setter Property="Padding" Value="5,2" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
+  <Style Selector="NumericUpDown /template/ RepeatButton">
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
+  <Style Selector="NumericUpDown /template/ ButtonSpinner#PART_Spinner">
+    <Setter Property="MinHeight" Value="0" />
   </Style>
 
   <Style Selector="DataGrid">

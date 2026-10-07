@@ -6,7 +6,6 @@ namespace Basalt.Shell.Controls;
 
 internal sealed partial class WinFormsDesignerView
 {
-    internal event Action? EventsPanelRequested;
     internal event Action? PropertiesPanelRequested;
 
     internal Control ToolboxContent => _toolboxPanel;
@@ -40,15 +39,15 @@ internal sealed partial class WinFormsDesignerView
         var body = new DockPanel();
         _events.VisualStudioStyle = true;
 
-        if (dockTools)
+        // Visual Studio's Properties window hosts Events too: the lightning
+        // button in its toolbar swaps the grid for this list in place, so
+        // there is no separate Events tool to dock or undock. Wiring this
+        // the same way whether the shell owns these controls (dockTools) or
+        // a standalone host does keeps the two paths identical.
+        _properties.EventsContent = _events;
+
+        if (!dockTools)
         {
-            // The document retains its session and panel controls; the shell
-            // hosts those controls in its stable, movable tool windows.
-            _properties.ExternalEventsRequested = () => EventsPanelRequested?.Invoke();
-        }
-        else
-        {
-            _properties.EventsContent = _events;
             var left = StandaloneTool("WinFormsDesigner_Toolbox", _toolboxPanel, 165);
             var right = StandaloneTool("WinFormsDesigner_Properties", _properties, 285);
             DockPanel.SetDock(left, Avalonia.Controls.Dock.Left);
