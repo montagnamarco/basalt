@@ -3277,6 +3277,10 @@ public partial class MainWindow : Window
                 await ShowProjectPropertiesAsync();
                 break;
 
+            case SolutionExplorerPanel.ExplorerCommand.References when node is not null:
+                await ReferencesDialog.ShowForProjectAsync(this, ViewModel, node.Path);
+                break;
+
             case SolutionExplorerPanel.ExplorerCommand.NewFile:
                 await NewFileInExplorerAsync(node);
                 break;
@@ -4906,6 +4910,9 @@ public partial class MainWindow : Window
             new(Localizer.Get(StringKeys.MenuProjectAddWindow),
                 Action: () => _ = ShowAddWindowDialogAsync()) { Icon = IconKind.Window },
             MenuEntry.Separator,
+            new(Localizer.Get(StringKeys.MenuProjectReferences),
+                Action: () => _ = ShowReferencesDialogAsync()) { Icon = IconKind.References },
+            MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuProjectProperties),
                 Action: () => _ = ShowProjectPropertiesAsync(),
                 Gesture: new KeyGesture(Key.Enter, PlatformCommandModifier | KeyModifiers.Alt)) { Icon = IconKind.Properties }
@@ -5193,6 +5200,10 @@ public partial class MainWindow : Window
         var path = files.FirstOrDefault()?.TryGetLocalPath();
         if (path is not null) await OpenSolutionAskingToSaveAsync(path);
     }
+
+    /// <summary>Project &gt; References…, on the project selected in the tree or, failing that, the startup project.</summary>
+    private Task ShowReferencesDialogAsync() =>
+        ReferencesDialog.ShowForProjectAsync(this, ViewModel, SelectedProjectPath());
 
     /// <summary>Creates a new Avalonia window in the selected project and opens it in the designer.</summary>
     private async Task ShowAddWindowDialogAsync()

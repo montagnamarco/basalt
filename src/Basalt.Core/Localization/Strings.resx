@@ -64,7 +64,22 @@
   <!-- Menu: Project -->
   <data name="Menu_Project" xml:space="preserve"><value>Project</value></data>
   <data name="Menu_Project_AddWindow" xml:space="preserve"><value>Add Window…</value></data>
+  <data name="Menu_Project_References" xml:space="preserve"><value>References…</value></data>
   <data name="Menu_Project_Properties" xml:space="preserve"><value>Properties…</value></data>
+  <!-- References dialog -->
+  <data name="References_Title" xml:space="preserve"><value>{0} References</value></data>
+  <data name="References_Tab_Projects" xml:space="preserve"><value>Projects</value></data>
+  <data name="References_Tab_Assemblies" xml:space="preserve"><value>Assemblies</value></data>
+  <data name="References_Tab_Packages" xml:space="preserve"><value>Packages</value></data>
+  <data name="References_NoOtherProjects" xml:space="preserve"><value>No other projects in this solution.</value></data>
+  <data name="References_Browse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="References_BrowseTitle" xml:space="preserve"><value>Browse for an assembly</value></data>
+  <data name="References_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="References_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="References_PackageId" xml:space="preserve"><value>Package id</value></data>
+  <data name="References_PackageVersion" xml:space="preserve"><value>Version</value></data>
+  <data name="References_PackageManagedCentrally" xml:space="preserve"><value>Package versions are managed centrally; edit the version in Directory.Packages.props instead.</value></data>
+  <data name="Explorer_AddReference" xml:space="preserve"><value>Add Reference…</value></data>
 
   <!-- Menu: Build and Run -->
   <data name="Menu_Build" xml:space="preserve"><value>Build</value></data>

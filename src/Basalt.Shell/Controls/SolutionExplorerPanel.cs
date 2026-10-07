@@ -209,7 +209,7 @@ public sealed class SolutionExplorerPanel : UserControl
     {
         Open, OpenInDesigner, ViewCode, Rename, Delete,
         NewFile, NewFolder, RevealInFinder, CopyPath, CopyRelativePath, Refresh,
-        Properties
+        Properties, References
     }
 
     /// <summary>Raised when the user picks something from the menu.</summary>
@@ -280,6 +280,8 @@ public sealed class SolutionExplorerPanel : UserControl
 
             // On the project node, which is where anyone looks for them
             // before thinking of the Project menu.
+            new(Localizer.Get(StringKeys.ExplorerAddReference), () => Choose(ExplorerCommand.References))
+                { IsAvailable = IsProject, Icon = IconKind.References },
             new("Properties…", () => Choose(ExplorerCommand.Properties))
                 { IsAvailable = IsProject, Icon = IconKind.Properties }
         ]);

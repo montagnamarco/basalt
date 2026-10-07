@@ -142,7 +142,21 @@ public static class StringKeys
 
     public const string MenuProject = "Menu_Project";
     public const string MenuProjectAddWindow = "Menu_Project_AddWindow";
+    public const string MenuProjectReferences = "Menu_Project_References";
     public const string MenuProjectProperties = "Menu_Project_Properties";
+    public const string ReferencesTitle = "References_Title";
+    public const string ReferencesTabProjects = "References_Tab_Projects";
+    public const string ReferencesTabAssemblies = "References_Tab_Assemblies";
+    public const string ReferencesTabPackages = "References_Tab_Packages";
+    public const string ReferencesNoOtherProjects = "References_NoOtherProjects";
+    public const string ReferencesBrowse = "References_Browse";
+    public const string ReferencesBrowseTitle = "References_BrowseTitle";
+    public const string ReferencesAdd = "References_Add";
+    public const string ReferencesRemove = "References_Remove";
+    public const string ReferencesPackageId = "References_PackageId";
+    public const string ReferencesPackageVersion = "References_PackageVersion";
+    public const string ReferencesPackageManagedCentrally = "References_PackageManagedCentrally";
+    public const string ExplorerAddReference = "Explorer_AddReference";
 
     public const string MenuBuild = "Menu_Build";
     public const string MenuBuildBuildSolution = "Menu_Build_BuildSolution";
