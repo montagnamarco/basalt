@@ -19,7 +19,7 @@ namespace Basalt.Tests;
 /// </remarks>
 public sealed class ComponentBreakpointTests : IAsyncLifetime
 {
-    private readonly string _root = Path.Combine(
+    private string _root = Path.Combine(
         Path.GetTempPath(), "basalt-component-debug", Guid.NewGuid().ToString("N"));
 
     private string _componentPath = "";
@@ -69,6 +69,16 @@ public sealed class ComponentBreakpointTests : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         if (AdapterPath is null) return;
+
+        // Canonicalized before anything is written under it: on macOS
+        // Path.GetTempPath() answers through a symlink (/var is really
+        // /private/var), and "dotnet build" never records that spelling in a
+        // PDB because its working directory is resolved by the kernel first.
+        // This compiles in memory instead, so the #ExternalSource path has to
+        // be resolved by hand to match what NetCoreDebugService will later
+        // ask netcoredbg to break on.
+        Directory.CreateDirectory(_root);
+        _root = NetCoreDebugService.ResolvePath(_root);
 
         var component = Component.ReplaceLineEndings("\n");
         _componentPath = Path.Combine(_root, "Components", "Counter.vbrazor");

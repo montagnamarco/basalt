@@ -20,7 +20,7 @@ namespace Basalt.Tests;
 /// </remarks>
 public sealed class TemplateBreakpointTests : IAsyncLifetime
 {
-    private readonly string _root = Path.Combine(
+    private string _root = Path.Combine(
         Path.GetTempPath(), "basalt-template-debug", Guid.NewGuid().ToString("N"));
 
     private string _templatePath = "";
@@ -56,6 +56,15 @@ public sealed class TemplateBreakpointTests : IAsyncLifetime
         if (AdapterPath is null) return;
 
         Directory.CreateDirectory(_root);
+
+        // Canonicalized before anything is written under it: on macOS
+        // Path.GetTempPath() answers through a symlink (/var is really
+        // /private/var), and "dotnet build" never records that spelling in a
+        // PDB because its working directory is resolved by the kernel first.
+        // This compiles in memory instead, so the #ExternalSource path has to
+        // be resolved by hand to match what NetCoreDebugService will later
+        // ask netcoredbg to break on.
+        _root = NetCoreDebugService.ResolvePath(_root);
 
         // On disk and in the PDB under the same name: the debugger matches a
         // breakpoint to a document by path.

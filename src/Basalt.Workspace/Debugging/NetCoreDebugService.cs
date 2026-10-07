@@ -192,8 +192,13 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// matches and the breakpoint is silently ignored. On macOS this is not an
     /// edge case: /tmp is a symlink to /private/tmp, and a project built there
     /// records the resolved form. Resolving here makes the two agree.
+    ///
+    /// Internal rather than private so a test that builds its own PDB in
+    /// memory (rather than through "dotnet build", whose working directory
+    /// the kernel already canonicalizes) can give the compiler the same
+    /// resolved path it will later ask the debugger to break on.
     /// </summary>
-    private static string ResolvePath(string filePath)
+    internal static string ResolvePath(string filePath)
     {
         try
         {
