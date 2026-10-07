@@ -571,10 +571,23 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         // tab's text: it must be realigned before writing to disk. Through the
         // same path as an edit, because this is the one that reaches the file
         // — writing markup here would leave Avalonia XAML in a .frm.
+        //
+        // Only while the session still describes the text: the same tab can be
+        // switched to its text view and edited by hand, and the session does
+        // not follow that. Writing it back then would overwrite what was typed
+        // with the markup from before; the text is what gets saved, and the
+        // designer is rebuilt from it next time it is shown.
         if (ActiveDesigner is not null)
         {
-            document.Text = WriteBack(document, ActiveDesigner);
-            _designerSessionText[document] = document.Text;
+            if (_designerSessionText.TryGetValue(document, out var produced) && produced == document.Text)
+            {
+                document.Text = WriteBack(document, ActiveDesigner);
+                _designerSessionText[document] = document.Text;
+            }
+            else
+            {
+                ForgetDesignerSession(document);
+            }
         }
 
         if (FormatOnSave && !document.OpenInDesigner)

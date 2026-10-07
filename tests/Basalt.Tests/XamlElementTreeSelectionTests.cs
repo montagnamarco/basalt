@@ -164,6 +164,41 @@ public sealed class XamlElementTreeSelectionTests : IDisposable
         Assert.Same(button, tree.SelectedElement);
     }
 
+    /// <summary>
+    /// The same tab switched to its text view and edited by hand, then saved
+    /// without leaving it: the designer's session still holds the markup from
+    /// before, and writing it back on save would throw the typing away.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task SavingAfterEditingTheTextByHandKeepsWhatWasTyped()
+    {
+        using var window = new TestWindow();
+        var vm = (MainWindowViewModel)window.Window.DataContext!;
+
+        var path = Write();
+        await vm.OpenFileAsync(path, inDesigner: true);
+        await window.SettleAsync();
+
+        var designer = vm.ActiveDesigner!;
+        designer.Select(designer.Document.Root);
+        designer.SetProperty("Title", "From the designer");
+        await window.SettleAsync();
+
+        var document = vm.ActiveDocument!;
+        Assert.Contains("From the designer", document.Text);
+        Assert.Same(designer, vm.ActiveDesigner);
+
+        // What the text half of the tab does on every keystroke.
+        document.Text = document.Text.Replace("From the designer", "Typed by hand", StringComparison.Ordinal);
+
+        await vm.SaveCommand.ExecuteAsync(null);
+        await window.SettleAsync();
+
+        var saved = File.ReadAllText(path);
+        Assert.Contains("Typed by hand", saved);
+        Assert.DoesNotContain("From the designer", saved);
+    }
+
     [AvaloniaFact]
     public async Task SwitchingDocumentsAndBackKeepsTheSameSessionAndSelection()
     {

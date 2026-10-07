@@ -27,7 +27,7 @@ public partial class MainWindow
             }
             else
             {
-                ViewModel.OpenDocuments.Remove(dockable.Document);
+                ViewModel.CloseDocument(dockable.Document);
             }
         };
     }
