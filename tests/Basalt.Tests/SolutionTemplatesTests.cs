@@ -121,6 +121,60 @@ public sealed class SolutionTemplatesTests : IDisposable
             _root, "Doppia", ProjectTemplate.ClassLibrary));
     }
 
+    /// <summary>
+    /// A project named differently from its solution — the dialog's
+    /// "Solution name" field edited apart from "Name" — sits in its own
+    /// subfolder under the solution's, the way Visual Studio lays a new
+    /// solution out, and the .sln refers to it there under its own name.
+    /// </summary>
+    [Fact]
+    public async Task AProjectNamedDifferentlyFromItsSolutionSitsInItsOwnFolder()
+    {
+        var created = await SolutionTemplates.CreateAsync(
+            _root, "MySolution", ProjectTemplate.ClassLibrary, projectName: "MyProject");
+
+        var root = Path.Combine(_root, "MySolution");
+
+        Assert.Equal(Path.Combine(root, "MySolution.sln"), created.SolutionPath);
+        Assert.Equal(Path.Combine(root, "MyProject", "MyProject.vbproj"), created.ProjectPath);
+        Assert.True(File.Exists(created.SolutionPath));
+        Assert.True(File.Exists(created.ProjectPath));
+
+        var solution = await File.ReadAllTextAsync(created.SolutionPath);
+
+        // The .sln format always uses backslashes in its paths, regardless
+        // of the platform that wrote it.
+        Assert.Contains(@"MyProject\MyProject.vbproj", solution);
+
+        // The project is listed under its own name, not the solution's.
+        Assert.Contains("\"MyProject\"", solution);
+    }
+
+    /// <summary>
+    /// "Place solution and project in the same directory" collapses the
+    /// usual extra subfolder: both files end up side by side, and the
+    /// relative path the .sln records is just the project file's name.
+    /// </summary>
+    [Fact]
+    public async Task PlacingTheProjectInTheSolutionDirectoryPutsBothFilesTogether()
+    {
+        var created = await SolutionTemplates.CreateAsync(
+            _root, "SameDir", ProjectTemplate.ClassLibrary,
+            projectName: "SameDir", placeProjectInSolutionDirectory: true);
+
+        var root = Path.Combine(_root, "SameDir");
+
+        Assert.Equal(root, Path.GetDirectoryName(created.ProjectPath));
+        Assert.Equal(root, Path.GetDirectoryName(created.SolutionPath));
+
+        var solution = await File.ReadAllTextAsync(created.SolutionPath);
+
+        Assert.Contains("\"SameDir.vbproj\"", solution);
+
+        // No subfolder in the relative path: just the project file's name.
+        Assert.DoesNotContain(@"SameDir\SameDir.vbproj", solution);
+    }
+
     [Fact]
     public async Task IlFileSolutionRiferisceIlProgettoConIlGuidDelLinguaggio()
     {

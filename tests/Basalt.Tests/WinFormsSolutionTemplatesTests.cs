@@ -12,21 +12,39 @@ namespace Basalt.Tests;
 public sealed class WinFormsSolutionTemplatesTests
 {
     [AvaloniaFact]
-    public void DesktopGuiChoiceSelectsTheRequestedTemplateAndDoesNotAffectConsoleProjects()
+    public void TheTreesTwoDesktopLeavesSelectWinFormsAndAvalonia()
     {
+        // The GUI picker is gone: WinForms and Avalonia are now two separate
+        // leaves of the tree, under "Windows Desktop".
         var dialog = new NewSolutionDialog();
-        var gui = dialog.FindControl<ComboBox>("GuiChoice")!;
-        var templates = dialog.FindControl<ListBox>("TemplateList")!;
-        var panel = dialog.FindControl<StackPanel>("GuiPanel")!;
-        Assert.Equal(ProjectTemplate.AvaloniaApp, dialog.SelectedTemplate);
-        gui.SelectedIndex = 1;
+        var tree = dialog.FindControl<TreeView>("TemplateTree")!;
+
         Assert.Equal(ProjectTemplate.WinFormsApp, dialog.SelectedTemplate);
-        templates.SelectedItem = templates.Items.OfType<ListBoxItem>().Single(item => (string?)item.Tag == "ConsoleApp");
+
+        SelectLeaf(tree, ProjectTemplate.ConsoleApp);
         Assert.Equal(ProjectTemplate.ConsoleApp, dialog.SelectedTemplate);
-        Assert.False(panel.IsVisible);
-        templates.SelectedItem = templates.Items.OfType<ListBoxItem>().Single(item => (string?)item.Tag == "AvaloniaApp");
-        Assert.True(panel.IsVisible);
-        Assert.Equal(ProjectTemplate.WinFormsApp, dialog.SelectedTemplate);
+
+        SelectLeaf(tree, ProjectTemplate.AvaloniaApp);
+        Assert.Equal(ProjectTemplate.AvaloniaApp, dialog.SelectedTemplate);
+    }
+
+    private static void SelectLeaf(TreeView tree, ProjectTemplate template)
+    {
+        var item = Flatten(tree.ItemsSource).Single(i =>
+            i.Tag?.GetType().GetProperty("Template")?.GetValue(i.Tag) is ProjectTemplate t && t == template);
+        tree.SelectedItem = item;
+    }
+
+    private static IEnumerable<TreeViewItem> Flatten(System.Collections.IEnumerable? items)
+    {
+        if (items is null) yield break;
+
+        foreach (var entry in items)
+        {
+            if (entry is not TreeViewItem item) continue;
+            yield return item;
+            foreach (var child in Flatten(item.ItemsSource)) yield return child;
+        }
     }
 
     [Fact]

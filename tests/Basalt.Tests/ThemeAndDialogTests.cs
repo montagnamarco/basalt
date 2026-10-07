@@ -16,7 +16,7 @@ public class ThemeAndDialogTests
 
         Assert.NotNull(dialog.FindControl<TextBox>("NameBox"));
         Assert.NotNull(dialog.FindControl<TextBox>("PathBox"));
-        Assert.NotNull(dialog.FindControl<ListBox>("TemplateList"));
+        Assert.NotNull(dialog.FindControl<TreeView>("TemplateTree"));
 
         // No language chooser any more: Visual Basic is the only one, and a
         // dialog that asks a question with one answer is a dialog that wastes
@@ -27,79 +27,57 @@ public class ThemeAndDialogTests
     [AvaloniaFact]
     public void ListsEveryAvailableTemplate()
     {
+        // Every template the generator supports must be reachable as a leaf
+        // of the tree: WinForms and Avalonia are now two separate leaves
+        // under "Windows Desktop" rather than one item plus a GUI picker.
         var dialog = new NewSolutionDialog();
-        var list = dialog.FindControl<ListBox>("TemplateList")!;
-        var guiChoice = dialog.FindControl<ComboBox>("GuiChoice")!;
+        var tree = dialog.FindControl<TreeView>("TemplateTree")!;
 
-        var tags = list.Items.OfType<ListBoxItem>()
-            .Select(i => i.Tag as string)
-            .Where(t => t is not null)
-            .ToList();
-        var guiChoiceTags = guiChoice.Items.OfType<ComboBoxItem>().Select(i => i.Tag as string).ToList();
-
-        // Every template the generator supports must be reachable from the UI: most directly
-        // as a list item's tag, but WinFormsApp is reached by selecting the desktop
-        // (AvaloniaApp) item and then choosing "WinForms" in the GUI picker.
-        foreach (var template in Enum.GetNames<Basalt.Designer.ProjectTemplate>())
-        {
-            if (template == nameof(Basalt.Designer.ProjectTemplate.WinFormsApp))
-            {
-                Assert.Contains(nameof(Basalt.Designer.ProjectTemplate.AvaloniaApp), tags);
-                Assert.Contains("WinForms", guiChoiceTags);
-                continue;
-            }
-            Assert.Contains(template, tags);
-        }
+        var leaves = Flatten(tree.ItemsSource).Select(LeafTemplate).Where(t => t is not null).ToList();
+        foreach (var template in Enum.GetValues<Basalt.Designer.ProjectTemplate>())
+            Assert.Contains(template, leaves);
     }
 
     [AvaloniaFact]
-    public void SelectingBlazorWithWinFormsGuiChoiceStillYieldsBlazorAndHidesThePanel()
+    public void SelectingBlazorAfterWinFormsStillYieldsBlazor()
     {
-        // The GUI picker only applies to the desktop template; once the user picks a web
-        // template its stale selection ("WinForms" from a previous look at the desktop
-        // template) must not leak into what gets created, and the now-irrelevant panel
-        // must not stay on screen.
+        // Each leaf carries its own template directly now, so an earlier
+        // selection (WinForms) cannot leak into a later one (Blazor): there
+        // is no shared GUI picker left for a stale choice to hide in.
         var dialog = new NewSolutionDialog();
-        var list = dialog.FindControl<ListBox>("TemplateList")!;
-        var guiChoice = dialog.FindControl<ComboBox>("GuiChoice")!;
-        var guiPanel = dialog.FindControl<StackPanel>("GuiPanel")!;
+        var tree = dialog.FindControl<TreeView>("TemplateTree")!;
 
-        guiChoice.SelectedItem = guiChoice.Items.OfType<ComboBoxItem>().Single(item => item.Tag as string == "WinForms");
-        list.SelectedItem = list.Items.OfType<ListBoxItem>().Single(item => item.Tag as string == "Blazor");
+        SelectLeaf(tree, Basalt.Designer.ProjectTemplate.WinFormsApp);
+        SelectLeaf(tree, Basalt.Designer.ProjectTemplate.Blazor);
 
-        Assert.False(guiPanel.IsVisible);
         Assert.Equal(Basalt.Designer.ProjectTemplate.Blazor, dialog.SelectedTemplate);
     }
 
     [AvaloniaFact]
-    public void CarriesItsTemplateOnEachItem()
+    public void CarriesItsTemplateOnEachLeaf()
     {
-        // The template is read from the item's tag, so a reordered list cannot
+        // The template is read from the leaf's tag, so a reordered tree cannot
         // silently change what gets created.
         var dialog = new NewSolutionDialog();
-        var list = dialog.FindControl<ListBox>("TemplateList")!;
+        var tree = dialog.FindControl<TreeView>("TemplateTree")!;
 
-        foreach (var item in list.Items.OfType<ListBoxItem>())
+        foreach (var leaf in Flatten(tree.ItemsSource).Where(i => LeafTemplate(i) is not null))
         {
-            var tag = Assert.IsType<string>(item.Tag);
-            Assert.True(Enum.TryParse<Basalt.Designer.ProjectTemplate>(tag, out _),
-                $"'{tag}' is not a known template");
+            var template = LeafTemplate(leaf)!.Value;
+            Assert.True(Enum.IsDefined(template), $"'{template}' is not a known template");
         }
     }
 
     [AvaloniaFact]
-    public void DefaultsToTheDesktopTemplate()
+    public void DefaultsToTheWindowsFormsTemplate()
     {
-        // By what is selected rather than by where it sits: the list is
-        // grouped by language, so the desktop template is no longer the first
-        // row — the first row is a heading. An index says nothing about which
-        // template a reader would get.
+        // By what is selected rather than by where it sits in the tree: in
+        // the spirit of Visual Basic 6, the dialog opens with the one
+        // project every dialect's own classic tool would have made the easy
+        // choice already picked.
         var dialog = new NewSolutionDialog();
 
-        var selected = Assert.IsType<ListBoxItem>(
-            dialog.FindControl<ListBox>("TemplateList")!.SelectedItem);
-
-        Assert.Equal("AvaloniaApp", selected.Tag);
+        Assert.Equal(Basalt.Designer.ProjectTemplate.WinFormsApp, dialog.SelectedTemplate);
     }
 
     [AvaloniaFact]
@@ -156,36 +134,57 @@ public class ThemeAndDialogTests
     [AvaloniaFact]
     public void OpensWithATemplateChosen()
     {
-        // The list is grouped by language now, and a heading is not something
-        // anyone can create: opening with one selected leaves the dialog
-        // showing no choice at all, and Create falls back to whatever the
-        // code's default happens to be.
+        // A category heading is not something anyone can create: opening
+        // with a leaf already selected leaves the dialog showing a real
+        // choice, and Create enabled rather than falling back to whatever
+        // the code's default happens to be.
         var dialog = new NewSolutionDialog();
-        var list = dialog.FindControl<ListBox>("TemplateList")!;
 
-        var selected = Assert.IsType<ListBoxItem>(list.SelectedItem);
-
-        Assert.IsType<string>(selected.Tag);
+        Assert.NotNull(dialog.SelectedTemplate);
+        Assert.True(dialog.FindControl<Button>("CreateButton")!.IsEnabled);
     }
 
     [AvaloniaFact]
-    public void GroupsTheTemplatesByLanguage()
+    public void GroupsTheTemplatesByDialect()
     {
         // Basalt is an IDE for Visual Basic and its dialects, and the first
         // question anyone has is which dialect they are writing — not whether
         // the result is a window or a service.
         var dialog = new NewSolutionDialog();
-        var list = dialog.FindControl<ListBox>("TemplateList")!;
+        var tree = dialog.FindControl<TreeView>("TemplateTree")!;
 
-        var headings = list.Items.OfType<TextBlock>().Select(t => t.Text).ToList();
+        var headings = tree.ItemsSource!.OfType<TreeViewItem>()
+            .Select(i => (i.Header as TextBlock)?.Text).ToList();
 
-        Assert.Contains(headings, h => h?.Contains("VISUAL BASIC .NET") == true);
-        Assert.Contains(headings, h => h?.Contains("DIALECTS") == true);
+        Assert.Contains("Visual Basic .NET", headings);
+        Assert.Contains("Visual Basic 6", headings);
+        Assert.Contains("QuickBASIC", headings);
 
         // And the two newest are there to be chosen.
-        var tags = list.Items.OfType<ListBoxItem>().Select(i => i.Tag as string).ToList();
+        var leaves = Flatten(tree.ItemsSource).Select(LeafTemplate).Where(t => t is not null).ToList();
 
-        Assert.Contains("Blazor", tags);
-        Assert.Contains("VisualBasic6", tags);
+        Assert.Contains(Basalt.Designer.ProjectTemplate.Blazor, leaves);
+        Assert.Contains(Basalt.Designer.ProjectTemplate.VisualBasic6, leaves);
+    }
+
+    private static void SelectLeaf(TreeView tree, Basalt.Designer.ProjectTemplate template)
+    {
+        var item = Flatten(tree.ItemsSource).Single(i => LeafTemplate(i) == template);
+        tree.SelectedItem = item;
+    }
+
+    private static Basalt.Designer.ProjectTemplate? LeafTemplate(TreeViewItem item) =>
+        item.Tag?.GetType().GetProperty("Template")?.GetValue(item.Tag) as Basalt.Designer.ProjectTemplate?;
+
+    private static IEnumerable<TreeViewItem> Flatten(System.Collections.IEnumerable? items)
+    {
+        if (items is null) yield break;
+
+        foreach (var entry in items)
+        {
+            if (entry is not TreeViewItem item) continue;
+            yield return item;
+            foreach (var child in Flatten(item.ItemsSource)) yield return child;
+        }
     }
 }

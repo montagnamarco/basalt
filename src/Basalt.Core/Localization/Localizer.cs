@@ -322,6 +322,40 @@ public static class StringKeys
     public const string TemplateMvcDescription = "Template_Mvc_Description";
     public const string TemplateBlazor = "Template_Blazor";
     public const string TemplateBlazorDescription = "Template_Blazor_Description";
+    public const string TemplateWinFormsApp = "Template_WinFormsApp";
+    public const string TemplateWinFormsAppDescription = "Template_WinFormsApp_Description";
+    public const string TemplateTestProject = "Template_TestProject";
+    public const string TemplateTestProjectDescription = "Template_TestProject_Description";
+    public const string TemplateWebApp = "Template_WebApp";
+    public const string TemplateWebAppDescription = "Template_WebApp_Description";
+    public const string TemplateVisualBasic6 = "Template_VisualBasic6";
+    public const string TemplateVisualBasic6Description = "Template_VisualBasic6_Description";
+    public const string TemplateQuickBasic = "Template_QuickBasic";
+    public const string TemplateQuickBasicDescription = "Template_QuickBasic_Description";
+    // The New Solution window's tree: three dialects, Visual Basic .NET split
+    // into categories, each leaf naming the one project template it creates.
+    public const string NewSolutionDialectVisualBasicNet = "NewSolution_Dialect_VisualBasicNet";
+    public const string NewSolutionDialectVisualBasic6 = "NewSolution_Dialect_VisualBasic6";
+    public const string NewSolutionDialectQuickBasic = "NewSolution_Dialect_QuickBasic";
+    public const string NewSolutionCategoryWindowsDesktop = "NewSolution_Category_WindowsDesktop";
+    public const string NewSolutionCategoryWeb = "NewSolution_Category_Web";
+    // One line naming the framework or platform a template targets, shown
+    // above the form once its leaf is selected.
+    public const string NewSolutionTargetWinFormsApp = "NewSolution_Target_WinFormsApp";
+    public const string NewSolutionTargetAvaloniaApp = "NewSolution_Target_AvaloniaApp";
+    public const string NewSolutionTargetConsoleApp = "NewSolution_Target_ConsoleApp";
+    public const string NewSolutionTargetClassLibrary = "NewSolution_Target_ClassLibrary";
+    public const string NewSolutionTargetTestProject = "NewSolution_Target_TestProject";
+    public const string NewSolutionTargetWebApi = "NewSolution_Target_WebApi";
+    public const string NewSolutionTargetWebApp = "NewSolution_Target_WebApp";
+    public const string NewSolutionTargetRazorPages = "NewSolution_Target_RazorPages";
+    public const string NewSolutionTargetMvc = "NewSolution_Target_Mvc";
+    public const string NewSolutionTargetBlazor = "NewSolution_Target_Blazor";
+    public const string NewSolutionTargetVisualBasic6 = "NewSolution_Target_VisualBasic6";
+    public const string NewSolutionTargetQuickBasic = "NewSolution_Target_QuickBasic";
+    public const string NewSolutionSolutionName = "NewSolution_SolutionName";
+    public const string NewSolutionPlaceInSameDirectory = "NewSolution_PlaceInSameDirectory";
+    public const string NewSolutionFolderNotEmpty = "NewSolution_FolderNotEmpty";
 
     public const string NewWindowTitle = "NewWindow_Title";
     public const string NewWindowClassName = "NewWindow_ClassName";
@@ -518,6 +552,7 @@ public static class StringKeys
     public const string MenuInlineUnsupported = "MenuInline_Unsupported";
     public const string NewSolutionChooseFolder = "NewSolution_ChooseFolder";
     public const string NewSolutionInvalidName = "NewSolution_InvalidName";
+    public const string NewSolutionInvalidSolutionName = "NewSolution_InvalidSolutionName";
     public const string NewSolutionLocationRequired = "NewSolution_LocationRequired";
     public const string NewSolutionNameRequired = "NewSolution_NameRequired";
     public const string NewSolutionCreateFailed = "NewSolution_CreateFailed";

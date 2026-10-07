@@ -107,29 +107,42 @@ public static partial class SolutionTemplates
         string solutionName,
         ProjectTemplate template,
         CancellationToken ct = default,
-        BasaltWinFormsReference? winForms = null)
+        BasaltWinFormsReference? winForms = null,
+        string? projectName = null,
+        bool placeProjectInSolutionDirectory = false)
     {
+        // The project is usually named after the solution, the way a brand
+        // new solution's first project always is; the dialog lets that be
+        // edited separately, the way Visual Studio's "Solution name" field
+        // does, so a caller that wants the two apart passes this.
+        var project = string.IsNullOrWhiteSpace(projectName) ? solutionName : projectName;
+
         var root = Path.Combine(parentDirectory, solutionName);
         if (Directory.Exists(root) && Directory.EnumerateFileSystemEntries(root).Any())
             throw new IOException($"The folder '{solutionName}' already exists and is not empty.");
 
-        var projectDirectory = Path.Combine(root, solutionName);
+        // Normally the project sits in its own subfolder, the way Visual
+        // Studio lays a solution out; "Place solution and project in the
+        // same directory" collapses that extra level.
+        var projectDirectory = placeProjectInSolutionDirectory
+            ? root
+            : Path.Combine(root, project);
         Directory.CreateDirectory(projectDirectory);
 
         // QuickBASIC has no project file and no solution: the source is the
         // program, and the compiler takes it directly.
         if (template == ProjectTemplate.QuickBasic)
-            return await CreateQuickBasicAsync(projectDirectory, solutionName, ct)
+            return await CreateQuickBasicAsync(projectDirectory, project, ct)
                 .ConfigureAwait(false);
 
         // A Visual Basic 6 project is a .vbp and a .frm, not a .vbproj: the
         // point is a project that opens both here and in Visual Basic 6, and
         // Basalt writes the .NET project beside it when the .vbp is opened.
         if (template == ProjectTemplate.VisualBasic6)
-            return await CreateVisualBasic6Async(projectDirectory, solutionName, ct)
+            return await CreateVisualBasic6Async(projectDirectory, project, ct)
                 .ConfigureAwait(false);
 
-        var projectPath = Path.Combine(projectDirectory, $"{solutionName}.vbproj");
+        var projectPath = Path.Combine(projectDirectory, $"{project}.vbproj");
 
         await File.WriteAllTextAsync(
             projectPath, ProjectFile(template, winForms), ct).ConfigureAwait(false);
@@ -141,50 +154,53 @@ public static partial class SolutionTemplates
         {
             case ProjectTemplate.AvaloniaApp:
                 mainWindowXaml = await WriteAvaloniaAppAsync(
-                    projectDirectory, solutionName, ct).ConfigureAwait(false);
+                    projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.WinFormsApp:
-                mainFormDesigner = await WriteWinFormsAppAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                mainFormDesigner = await WriteWinFormsAppAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.ConsoleApp:
-                await WriteConsoleAppAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteConsoleAppAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.ClassLibrary:
-                await WriteClassLibraryAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteClassLibraryAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.TestProject:
-                await WriteTestProjectAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteTestProjectAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.WebApi:
-                await WriteWebApiAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteWebApiAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.WebApp:
-                await WriteWebAppAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteWebAppAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.RazorPages:
-                await WriteRazorPagesAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteRazorPagesAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.Mvc:
-                await WriteMvcAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteMvcAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
 
             case ProjectTemplate.Blazor:
-                await WriteBlazorAsync(projectDirectory, solutionName, ct).ConfigureAwait(false);
+                await WriteBlazorAsync(projectDirectory, project, ct).ConfigureAwait(false);
                 break;
         }
 
         var solutionPath = Path.Combine(root, $"{solutionName}.sln");
+        var relativeProjectPath = placeProjectInSolutionDirectory
+            ? Path.GetFileName(projectPath)
+            : $"{project}{Path.DirectorySeparatorChar}{Path.GetFileName(projectPath)}";
         await File.WriteAllTextAsync(
             solutionPath,
-            SolutionFile(solutionName, $"{solutionName}{Path.DirectorySeparatorChar}{Path.GetFileName(projectPath)}"),
+            SolutionFile(project, relativeProjectPath),
             ct).ConfigureAwait(false);
 
         return new NewSolutionResult(solutionPath, projectPath, mainWindowXaml)

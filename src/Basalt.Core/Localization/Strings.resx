@@ -201,26 +201,51 @@
   <data name="NewSolution_Subtitle" xml:space="preserve"><value>Choose a language and a project type.</value></data>
   <data name="NewSolution_Language" xml:space="preserve"><value>Language</value></data>
   <data name="NewSolution_ProjectType" xml:space="preserve"><value>Project type</value></data>
-  <data name="NewSolution_Name" xml:space="preserve"><value>Solution name</value></data>
+  <data name="NewSolution_Name" xml:space="preserve"><value>Name</value></data>
   <data name="NewSolution_Location" xml:space="preserve"><value>Location</value></data>
   <data name="NewSolution_Browse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="NewSolution_SolutionName" xml:space="preserve"><value>Solution name</value></data>
+  <data name="NewSolution_PlaceInSameDirectory" xml:space="preserve"><value>Place solution and project in the same directory</value></data>
+  <data name="NewSolution_FolderNotEmpty" xml:space="preserve"><value>The folder '{0}' already exists and is not empty.</value>
+    <comment>{0} is the solution name, which also names the folder</comment></data>
   <data name="NewSolution_Preview" xml:space="preserve"><value>Will be created in {0}</value>
     <comment>{0} is the full target directory path</comment></data>
 
+  <!-- New Solution dialog: the tree's dialects and categories -->
+  <data name="NewSolution_Dialect_VisualBasicNet" xml:space="preserve"><value>Visual Basic .NET</value></data>
+  <data name="NewSolution_Dialect_VisualBasic6" xml:space="preserve"><value>Visual Basic 6</value></data>
+  <data name="NewSolution_Dialect_QuickBasic" xml:space="preserve"><value>QuickBASIC</value></data>
+  <data name="NewSolution_Category_WindowsDesktop" xml:space="preserve"><value>Windows Desktop</value></data>
+  <data name="NewSolution_Category_Web" xml:space="preserve"><value>Web</value></data>
+  <!-- New Solution dialog: one line naming what a template targets -->
+  <data name="NewSolution_Target_WinFormsApp" xml:space="preserve"><value>.NET 10 • Windows Forms (Basalt, cross-platform)</value></data>
+  <data name="NewSolution_Target_AvaloniaApp" xml:space="preserve"><value>.NET 10 • Avalonia, cross-platform desktop</value></data>
+  <data name="NewSolution_Target_ConsoleApp" xml:space="preserve"><value>.NET 10 • Console</value></data>
+  <data name="NewSolution_Target_ClassLibrary" xml:space="preserve"><value>.NET 10 • Class library</value></data>
+  <data name="NewSolution_Target_TestProject" xml:space="preserve"><value>.NET 10 • xUnit</value></data>
+  <data name="NewSolution_Target_WebApi" xml:space="preserve"><value>.NET 10 • ASP.NET Core</value></data>
+  <data name="NewSolution_Target_WebApp" xml:space="preserve"><value>.NET 10 • ASP.NET Core</value></data>
+  <data name="NewSolution_Target_RazorPages" xml:space="preserve"><value>.NET 10 • ASP.NET Core</value></data>
+  <data name="NewSolution_Target_Mvc" xml:space="preserve"><value>.NET 10 • ASP.NET Core</value></data>
+  <data name="NewSolution_Target_Blazor" xml:space="preserve"><value>.NET 10 • ASP.NET Core</value></data>
+  <data name="NewSolution_Target_VisualBasic6" xml:space="preserve"><value>Visual Basic 6 • Windows (opens here and in Visual Basic 6)</value></data>
+  <data name="NewSolution_Target_QuickBasic" xml:space="preserve"><value>QuickBASIC • compiled to a native executable</value></data>
   <!-- Project templates -->
-  <data name="Template_AvaloniaApp" xml:space="preserve"><value>Desktop Application</value></data>
+  <data name="Template_AvaloniaApp" xml:space="preserve"><value>Avalonia Application</value></data>
   <data name="Template_AvaloniaApp_Description" xml:space="preserve"><value>Cross-platform desktop window, editable in the visual designer.</value></data>
+  <data name="Template_WinFormsApp" xml:space="preserve"><value>Windows Forms Application</value></data>
+  <data name="Template_WinFormsApp_Description" xml:space="preserve"><value>Classic Windows Forms designer; runs cross-platform through Basalt.WinForms.</value></data>
   <data name="Template_ConsoleApp" xml:space="preserve"><value>Console Application</value></data>
   <data name="Template_ConsoleApp_Description" xml:space="preserve"><value>Command-line program.</value></data>
   <data name="Template_ClassLibrary" xml:space="preserve"><value>Class Library</value></data>
   <data name="Template_ClassLibrary_Description" xml:space="preserve"><value>Reusable component with no entry point.</value></data>
   <data name="Template_WebApi" xml:space="preserve"><value>ASP.NET Core Web API</value></data>
   <data name="Template_WebApi_Description" xml:space="preserve"><value>HTTP service with JSON endpoints.</value></data>
-  <data name="Template_RazorPages" xml:space="preserve"><value>ASP.NET Core Razor Pages</value></data>
+  <data name="Template_RazorPages" xml:space="preserve"><value>Razor Pages</value></data>
   <data name="Template_RazorPages_Description" xml:space="preserve"><value>Web application with page-based Razor views.</value></data>
-  <data name="Template_Mvc" xml:space="preserve"><value>ASP.NET Core MVC</value></data>
+  <data name="Template_Mvc" xml:space="preserve"><value>MVC</value></data>
   <data name="Template_Mvc_Description" xml:space="preserve"><value>Web application with controllers and views.</value></data>
-  <data name="Template_Blazor" xml:space="preserve"><value>Blazor Web App</value></data>
+  <data name="Template_Blazor" xml:space="preserve"><value>Blazor</value></data>
   <data name="Template_Blazor_Description" xml:space="preserve"><value>Interactive web UI built from Razor components.</value></data>
 
   <!-- New Window dialog -->
@@ -311,23 +336,19 @@
   <data name="Picker_OpenSolution" xml:space="preserve"><value>Open solution or project</value></data>
   <data name="Picker_SolutionFilter" xml:space="preserve"><value>.NET solutions and projects</value></data>
   <data name="Picker_ChooseFolder" xml:space="preserve"><value>Choose the folder for the new solution</value></data>
-  <data name="NewSolution_VisualBasic" xml:space="preserve"><value>VISUAL BASIC .NET</value></data>
-  <data name="NewSolution_Web" xml:space="preserve"><value>VISUAL BASIC ON THE WEB</value></data>
-  <data name="NewSolution_OtherDialects" xml:space="preserve"><value>OTHER DIALECTS</value></data>
-  <data name="NewSolution_Gui" xml:space="preserve"><value>Desktop GUI framework</value></data>
-  <data name="NewSolution_WinForms" xml:space="preserve"><value>WinForms (Basalt, cross-platform)</value></data>
   <data name="NewSolution_ChooseFolder" xml:space="preserve"><value>Choose the folder for the solution</value></data>
-  <data name="NewSolution_NameRequired" xml:space="preserve"><value>Enter a solution name.</value></data>
+  <data name="NewSolution_NameRequired" xml:space="preserve"><value>Enter a name.</value></data>
   <data name="NewSolution_CreateFailed" xml:space="preserve"><value>[new solution] {0}</value></data>
   <data name="NewSolution_InvalidName" xml:space="preserve"><value>The name must start with a letter and contain only letters, digits or underscores.</value></data>
+  <data name="NewSolution_InvalidSolutionName" xml:space="preserve"><value>The solution name cannot contain \ / : * ? " &lt; &gt; |, end with a space or a period, or be a reserved name such as CON or COM1.</value></data>
   <data name="NewSolution_LocationRequired" xml:space="preserve"><value>Enter a destination folder.</value></data>
   <data name="Template_TestProject" xml:space="preserve"><value>Test Project</value></data>
   <data name="Template_TestProject_Description" xml:space="preserve"><value>Unit tests with xunit, discovered and run from the test window.</value></data>
-  <data name="Template_WebApp" xml:space="preserve"><value>ASP.NET Core Empty</value></data>
+  <data name="Template_WebApp" xml:space="preserve"><value>Web Application</value></data>
   <data name="Template_WebApp_Description" xml:space="preserve"><value>Minimal web application serving one page.</value></data>
-  <data name="Template_VisualBasic6" xml:space="preserve"><value>Visual Basic 6</value></data>
+  <data name="Template_VisualBasic6" xml:space="preserve"><value>Standard EXE</value></data>
   <data name="Template_VisualBasic6_Description" xml:space="preserve"><value>A .vbp and a .frm compatible with Visual Basic 6.</value></data>
-  <data name="Template_QuickBasic" xml:space="preserve"><value>QuickBASIC</value></data>
+  <data name="Template_QuickBasic" xml:space="preserve"><value>QuickBASIC Program</value></data>
   <data name="Template_QuickBasic_Description" xml:space="preserve"><value>Classic BASIC compiled to a native executable.</value></data>
   <data name="WinFormsDesigner_Toolbox" xml:space="preserve"><value>Toolbox — double-click to add</value></data>
   <data name="WinFormsDesigner_Properties" xml:space="preserve"><value>Properties</value></data>
