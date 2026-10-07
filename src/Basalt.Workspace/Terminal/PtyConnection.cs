@@ -192,20 +192,26 @@ public sealed class UnixPtyConnection : IPtyConnection
 
         _reading.Cancel();
 
-        // Closing the master first is what a terminal emulator does when its
-        // window goes away: the child sees end-of-input and exits on its own.
-        // It also unblocks the reader, which is otherwise parked inside read().
-        UnixPty.close(_master);
-
+        // The shell is stopped before the master is closed, not after. The
+        // reader is parked inside read() on the master, and on macOS close()
+        // of a descriptor another thread is reading waits for that read to
+        // return — which, with the shell still alive and silent, is never:
+        // closing the IDE with a terminal open hung. Once the shell's group
+        // is gone the slave side closes, read() returns, and close() is
+        // immediate.
         try
         {
-            if (!_process.HasExited && !_process.WaitForExit(300))
+            if (!_process.HasExited)
             {
                 // Signalling the group, not the pid: /bin/sh launched the shell
                 // through exec, so the shell may sit in a different process than
                 // the one .NET is holding. A negative pid means "the group".
+                // Never our own group, though: when the shell was not given a
+                // session of its own it shares the IDE's, and signalling it
+                // would take the IDE down with it.
                 var group = UnixPty.getpgid(_process.Id);
-                var target = group > 0 ? -group : _process.Id;
+                var ownGroup = UnixPty.getpgid(Environment.ProcessId);
+                var target = group > 0 && group != ownGroup ? -group : _process.Id;
 
                 UnixPty.kill(target, UnixPty.SIGHUP);
                 if (!_process.WaitForExit(300)) UnixPty.kill(target, UnixPty.SIGKILL);
@@ -218,6 +224,8 @@ public sealed class UnixPtyConnection : IPtyConnection
         {
             // Already gone.
         }
+
+        UnixPty.close(_master);
 
         _process.Dispose();
         _reading.Dispose();
