@@ -138,6 +138,27 @@ internal sealed partial class WinFormsDesignerView
             document.Menus.SetItemProperty(strip, itemName, property, expression));
     }
 
+    private Task RequireAndSetMenuItemImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string strip, string itemName, string property, byte[] bytes, bool isIcon)
+    {
+        RequireSelectedMenuItem(session, original, strip, itemName);
+        return session.SetMenuItemImageResourceAsync(strip, itemName, property, bytes, isIcon);
+    }
+
+    private Task RequireAndClearMenuItemImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string strip, string itemName, string property)
+    {
+        RequireSelectedMenuItem(session, original, strip, itemName);
+        return session.ClearMenuItemImageResourceAsync(strip, itemName, property);
+    }
+
+    private Task RequireAndSetMenuItemProjectImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string strip, string itemName, string property, string rootNamespace, string resourceName)
+    {
+        RequireSelectedMenuItem(session, original, strip, itemName);
+        return session.SetMenuItemProjectImageResourceAsync(strip, itemName, property, rootNamespace, resourceName);
+    }
+
     private async void OpenMenuItemPropertyEditor(WinFormsDesignerSession session, WinFormsDesignerDocument original,
         string strip, string itemName, Forms.ToolStripItem item, DesignableProperty property)
     {
@@ -150,7 +171,37 @@ internal sealed partial class WinFormsDesignerView
         Font? selectedFont = null;
         try
         {
-            var value = TypeDescriptor.GetProperties(item)[property.Name]?.GetValue(item);
+            var descriptor = TypeDescriptor.GetProperties(item)[property.Name];
+            var value = descriptor?.GetValue(item);
+            if (descriptor is not null && IsImageProperty(descriptor.PropertyType))
+            {
+                var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
+                var projectPath = WinFormsProjectResources.FindProject(_document.FilePath);
+                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(value), isIcon, _importImageFile, projectPath);
+                if (!await editor.ShowDialog<bool>(owner))
+                {
+                    return;
+                }
+                if (!ReferenceEquals(_session, session) || !ReferenceEquals(session.Document, original))
+                {
+                    throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+                }
+                if (editor.UsedProjectResource && editor.SelectedProjectResourceName is { } resourceName)
+                {
+                    var rootNamespace = WinFormsProjectResources.RootNamespace(projectPath!);
+                    RunEditAsync(() => RequireAndSetMenuItemProjectImageAsync(
+                        session, original, strip, itemName, property.Name, rootNamespace, resourceName));
+                }
+                else if (editor.Cleared)
+                {
+                    RunEditAsync(() => RequireAndClearMenuItemImageAsync(session, original, strip, itemName, property.Name));
+                }
+                else if (editor.Changed && editor.SelectedBytes is { } bytes)
+                {
+                    RunEditAsync(() => RequireAndSetMenuItemImageAsync(session, original, strip, itemName, property.Name, bytes, isIcon));
+                }
+                return;
+            }
             if (value is Color color)
             {
                 var editor = new WinFormsColorEditor(color);

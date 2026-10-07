@@ -21,10 +21,18 @@ internal sealed partial class WinFormsDesignerSession
 
     /// <summary>The ToolStrip item equivalent: items are not in <see cref="Controls"/>, so the owning strip is given separately.</summary>
     internal Task SetToolStripItemImageResourceAsync(string stripName, string itemName, string property, byte[] bytes, bool isIcon) =>
-        SetImageResourceCoreAsync(itemName, property, stripName, bytes, isIcon);
+        SetImageResourceCoreAsync(itemName, property, stripName, bytes, isIcon, isMenu: false);
 
     internal Task ClearToolStripItemImageResourceAsync(string stripName, string itemName, string property) =>
-        ClearImageResourceCoreAsync(itemName, property, stripName);
+        ClearImageResourceCoreAsync(itemName, property, stripName, isMenu: false);
+
+    /// <summary>The MenuStrip item equivalent, nested through <see cref="WinFormsDesignerDocument.Menus"/> rather
+    /// than <see cref="WinFormsDesignerDocument.ToolStripItems"/>'s flat collection.</summary>
+    internal Task SetMenuItemImageResourceAsync(string stripName, string itemName, string property, byte[] bytes, bool isIcon) =>
+        SetImageResourceCoreAsync(itemName, property, stripName, bytes, isIcon, isMenu: true);
+
+    internal Task ClearMenuItemImageResourceAsync(string stripName, string itemName, string property) =>
+        ClearImageResourceCoreAsync(itemName, property, stripName, isMenu: true);
 
     /// <summary>
     /// Creates the resx a form does not have yet, the way Visual Studio does the
@@ -50,8 +58,18 @@ internal sealed partial class WinFormsDesignerSession
     internal Task SetProjectImageResourcePropertyAsync(Forms.Control control, string property, string rootNamespace, string resourceName) =>
         SetProjectImageResourceCoreAsync(NameOf(control), property, null, rootNamespace, resourceName);
 
+    /// <summary>The ToolStrip item equivalent of <see cref="SetProjectImageResourcePropertyAsync"/>.</summary>
+    internal Task SetToolStripItemProjectImageResourceAsync(string stripName, string itemName, string property,
+        string rootNamespace, string resourceName) =>
+        SetProjectImageResourceCoreAsync(itemName, property, stripName, rootNamespace, resourceName, isMenu: false);
+
+    /// <summary>The MenuStrip item equivalent of <see cref="SetProjectImageResourcePropertyAsync"/>.</summary>
+    internal Task SetMenuItemProjectImageResourceAsync(string stripName, string itemName, string property,
+        string rootNamespace, string resourceName) =>
+        SetProjectImageResourceCoreAsync(itemName, property, stripName, rootNamespace, resourceName, isMenu: true);
+
     private async Task SetProjectImageResourceCoreAsync(string ownerName, string property, string? stripName,
-        string rootNamespace, string resourceName)
+        string rootNamespace, string resourceName, bool isMenu = false)
     {
         var original = Document;
         var beforeResources = _resources;
@@ -68,7 +86,9 @@ internal sealed partial class WinFormsDesignerSession
             // Nothing stored as a local resource to remove: a plain property assignment.
             await ApplyAsync(document => stripName is null
                 ? document.SetProperty(ownerName, property, expression)
-                : document.ToolStripItems.SetItemProperty(stripName, ownerName, property, expression));
+                : isMenu
+                    ? document.Menus.SetItemProperty(stripName, ownerName, property, expression)
+                    : document.ToolStripItems.SetItemProperty(stripName, ownerName, property, expression));
             return;
         }
 
@@ -86,14 +106,17 @@ internal sealed partial class WinFormsDesignerSession
             var resources = new WinFormsResourceDocument(beforeResources.Remove(key));
             var document = new WinFormsDesignerDocument(stripName is null
                 ? original.SetProperty(ownerName, property, expression)
-                : original.ToolStripItems.SetItemProperty(stripName, ownerName, property, expression));
+                : isMenu
+                    ? original.Menus.SetItemProperty(stripName, ownerName, property, expression)
+                    : original.ToolStripItems.SetItemProperty(stripName, ownerName, property, expression));
             return (Document: document, Resources: resources);
         });
 
         await CommitDocumentAndResourcesAsync(original, beforeResources, edited.Document, edited.Resources);
     }
 
-    private async Task SetImageResourceCoreAsync(string ownerName, string property, string? stripName, byte[] bytes, bool isIcon)
+    private async Task SetImageResourceCoreAsync(string ownerName, string property, string? stripName, byte[] bytes,
+        bool isIcon, bool isMenu = false)
     {
         var original = Document;
         var beforeResources = _resources;
@@ -120,7 +143,7 @@ internal sealed partial class WinFormsDesignerSession
             var resources = new WinFormsResourceDocument(beforeResources.SetValue(key, value, typeName, mimeType));
             var imageTypeName = isIcon ? "System.Drawing.Icon" : "System.Drawing.Image";
             var document = new WinFormsDesignerDocument(
-                original.SetImageResource(ownerName, property, key, imageTypeName, stripName));
+                original.SetImageResource(ownerName, property, key, imageTypeName, stripName, isMenu));
             return (Document: document, Resources: resources);
         });
 
@@ -144,7 +167,7 @@ internal sealed partial class WinFormsDesignerSession
         return resources;
     }
 
-    private async Task ClearImageResourceCoreAsync(string ownerName, string property, string? stripName)
+    private async Task ClearImageResourceCoreAsync(string ownerName, string property, string? stripName, bool isMenu = false)
     {
         var original = Document;
         var beforeResources = _resources;
@@ -152,7 +175,7 @@ internal sealed partial class WinFormsDesignerSession
         if (beforeResources is null || key is null)
         {
             // Nothing stored as a resource: only a bare assignment, if any, to remove.
-            var cleared = new WinFormsDesignerDocument(original.RemoveImageResource(ownerName, property, stripName));
+            var cleared = new WinFormsDesignerDocument(original.RemoveImageResource(ownerName, property, stripName, isMenu));
             if (cleared.Source == original.Source) return;
             await ApplyAsync(_ => cleared.Source);
             return;
@@ -170,7 +193,7 @@ internal sealed partial class WinFormsDesignerSession
         var edited = await Task.Run(() =>
         {
             var resources = new WinFormsResourceDocument(beforeResources.Remove(key));
-            var document = new WinFormsDesignerDocument(original.RemoveImageResource(ownerName, property, stripName));
+            var document = new WinFormsDesignerDocument(original.RemoveImageResource(ownerName, property, stripName, isMenu));
             return (Document: document, Resources: resources);
         });
 

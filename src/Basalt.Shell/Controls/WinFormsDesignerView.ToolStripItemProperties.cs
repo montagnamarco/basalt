@@ -152,6 +152,13 @@ internal sealed partial class WinFormsDesignerView
         return session.ClearToolStripItemImageResourceAsync(strip, itemName, property);
     }
 
+    private Task RequireAndSetToolStripItemProjectImageAsync(WinFormsDesignerSession session, WinFormsDesignerDocument original,
+        string strip, string itemName, string property, string rootNamespace, string resourceName)
+    {
+        RequireSelectedToolStripItem(session, original, strip, itemName);
+        return session.SetToolStripItemProjectImageResourceAsync(strip, itemName, property, rootNamespace, resourceName);
+    }
+
     private async void OpenToolStripItemPropertyEditor(WinFormsDesignerSession session, WinFormsDesignerDocument original,
         string strip, string itemName, Forms.ToolStripItem item, DesignableProperty property)
     {
@@ -169,7 +176,8 @@ internal sealed partial class WinFormsDesignerView
             if (descriptor is not null && IsImageProperty(descriptor.PropertyType))
             {
                 var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
-                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(value), isIcon, _importImageFile);
+                var projectPath = WinFormsProjectResources.FindProject(_document.FilePath);
+                var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(value), isIcon, _importImageFile, projectPath);
                 if (!await editor.ShowDialog<bool>(owner))
                 {
                     return;
@@ -178,7 +186,13 @@ internal sealed partial class WinFormsDesignerView
                 {
                     throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
                 }
-                if (editor.Cleared)
+                if (editor.UsedProjectResource && editor.SelectedProjectResourceName is { } resourceName)
+                {
+                    var rootNamespace = WinFormsProjectResources.RootNamespace(projectPath!);
+                    RunEditAsync(() => RequireAndSetToolStripItemProjectImageAsync(
+                        session, original, strip, itemName, property.Name, rootNamespace, resourceName));
+                }
+                else if (editor.Cleared)
                 {
                     RunEditAsync(() => RequireAndClearToolStripItemImageAsync(session, original, strip, itemName, property.Name));
                 }

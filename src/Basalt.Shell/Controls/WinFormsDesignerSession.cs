@@ -23,10 +23,20 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
     public event Action? Changed;
     public event Action? SourceChanging;
 
-    public WinFormsDesignerSession(WinFormsDesignerDocument document, WinFormsResourceDocument? resources = null)
+    /// <summary>
+    /// The .vbproj the edited form belongs to, or null when none was found: resolved once at
+    /// construction (the form does not move projects mid-session) so the live preview can
+    /// decode a "Project resource file" Image/Icon the same way
+    /// <see cref="WinFormsImageResourceDialog"/>'s "Project resource file" list already does.
+    /// </summary>
+    private readonly string? _projectPath;
+
+    public WinFormsDesignerSession(WinFormsDesignerDocument document, WinFormsResourceDocument? resources = null,
+        string? projectPath = null)
     {
         Document = document;
         _resources = resources;
+        _projectPath = projectPath;
         BuildPreview();
     }
 
@@ -171,7 +181,7 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
             catch (Exception exception) { problems.Add(model.Name + ": " + exception.GetBaseException().Message); }
         }
         BuildComponentPreviews(problems);
-        WinFormsCollectionPreview.Apply(Document, _controls, problems, _resources);
+        WinFormsCollectionPreview.Apply(Document, _controls, problems, _resources, _projectPath);
         ApplyProperties(Document.Root, Form, problems);
         foreach (var model in Document.Controls)
         {

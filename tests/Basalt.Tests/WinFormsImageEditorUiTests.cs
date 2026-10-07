@@ -291,6 +291,304 @@ public sealed class WinFormsImageEditorUiTests
         }
     }
 
+    /// <summary>A form with a MenuStrip holding one ToolStripMenuItem (FileMenu), on top of
+    /// everything <see cref="BuildFreshSource"/> already has.</summary>
+    private static string BuildFreshSourceWithMenu()
+    {
+        var document = new WinFormsDesignerDocument(BuildFreshSource());
+        document = new WinFormsDesignerDocument(document.AddControl("MenuStrip1", "Global.System.Windows.Forms.MenuStrip"));
+        document = new WinFormsDesignerDocument(
+            document.Menus.Set("MenuStrip1", [new WinFormsMenuItem("FileMenu", "MenuStrip1", "&File")]));
+        return document.Source;
+    }
+
+    /// <summary>
+    /// <see cref="WinFormsDesignerView.MenuItemProperties"/>'s <c>OpenMenuItemPropertyEditor</c>
+    /// had no Image/Icon branch at all before this fix: opening "…" on a MenuStrip item's Image
+    /// fell through to the Color/Font checks and did nothing. This proves the same "Select
+    /// Resource" round trip <see cref="ToolStripButtonImageRoundTripsThroughTheItemPropertiesPathAndPaintsRed"/>
+    /// already proves for a flat ToolStrip item works for a MenuStrip item too, including the
+    /// live preview (<see cref="WinFormsCollectionPreview"/>'s MenuStrip branch already resolved
+    /// Local resources; this is the same statement shape, just reached from a new editor).
+    /// </summary>
+    [AvaloniaFact]
+    public async Task MenuItemImageRoundTripsThroughTheItemPropertiesPathAndPaintsRed()
+    {
+        var designer = new EditorDocumentViewModel("MainForm.Designer.vb", BuildFreshSourceWithMenu(), true);
+        EditorDocumentViewModel? resourceBuffer = null;
+        var redPng = SolidPng(Drawing.Color.Red);
+
+        using var view = new WinFormsDesignerView(designer,
+            createCode: (path, content) =>
+            {
+                resourceBuffer = new EditorDocumentViewModel(path, content);
+                return Task.FromResult(resourceBuffer);
+            },
+            importImageFile: () => Task.FromResult<string?>(WriteTempPng(redPng)));
+        var window = new Window { Content = view, Width = 1100, Height = 700 };
+        window.Show();
+        try
+        {
+            var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+            await WaitUntilAsync(() => surface.RootForm is not null);
+            surface.Select(surface.RootForm!.Controls.OfType<Forms.MenuStrip>().Single());
+
+            var editor = Assert.Single(view.GetVisualDescendants().OfType<WinFormsMenuDesignEditor>());
+            var itemButton = Assert.Single(editor.GetVisualDescendants().OfType<Button>(),
+                b => b.Name == "MenuInlineItem_FileMenu");
+            itemButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+            await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+            var row = FindRow(grid, "Image");
+            var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+            ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+            var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+            Click(dialog, "WinFormsImageDialogImport");
+            await WaitUntilAsync(() => dialog.SelectedBytes is not null);
+            ClickOk(dialog);
+            await WaitUntilAsync(() =>
+                designer.Text.Contains("FileMenu.Image", StringComparison.Ordinal) && view.IsEnabled);
+
+            Assert.Contains(
+                "Me.FileMenu.Image = CType(resources.GetObject(\"FileMenu.Image\"), System.Drawing.Image)",
+                designer.Text);
+            Assert.True(WinFormsImageResources.TryDecode(
+                new WinFormsResourceDocument(resourceBuffer!.Text).TryGet("FileMenu.Image")!, out var decoded));
+            Assert.Equal(redPng, decoded);
+            // The commit re-parses and re-instantiates the whole form, so the live control
+            // behind "editor"/the menu from before the edit is stale; the current one is read again.
+            var realMenu = surface.RootForm!.Controls.OfType<Forms.MenuStrip>().Single();
+            var realItem = realMenu.Items.Cast<Forms.ToolStripItem>().Single();
+            Assert.NotNull(realItem.Image);
+
+            var afterImport = designer.Text;
+            ClickUndo(view);
+            await WaitUntilAsync(() =>
+                !designer.Text.Contains("FileMenu.Image", StringComparison.Ordinal) && view.IsEnabled);
+            Assert.DoesNotContain("FileMenu.Image", designer.Text);
+            Assert.Empty(new WinFormsResourceDocument(resourceBuffer.Text).Entries);
+
+            ClickRedo(view);
+            await WaitUntilAsync(() => designer.Text == afterImport && view.IsEnabled);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    /// <summary>
+    /// Proves the ToolStrip item path <see cref="WinFormsImageResourceDialog"/>'s "Project
+    /// resource file" radio can now reach the same way the PictureBox test
+    /// (<see cref="ChoosingAProjectResourceOnAPictureBoxWritesTheGlobalAssignment"/>) already
+    /// proves for an ordinary control, and that the live strip actually paints the picture:
+    /// before this fix, <see cref="WinFormsCollectionPreview"/>'s item loop only ever resolved
+    /// a Local resource's "CType(resources.GetObject(...))" shape, never the plain
+    /// "Global.RootNamespace.My.Resources.Resources.Name" a Project resource writes.
+    /// </summary>
+    /// <summary>
+    /// A Resources.resx the preview cannot parse leaves the item without its picture,
+    /// not the whole form without a preview: the preview is rebuilt after every edit, so
+    /// a failure there would make every form in the project uneditable.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task AMalformedProjectResourceFileDoesNotBreakTheFormsPreview()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-bad-resx-").FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(root, "App.vbproj"), VbprojWithRootNamespace("Contoso.App"));
+            Directory.CreateDirectory(Path.Combine(root, "My Project"));
+            File.WriteAllText(Path.Combine(root, "My Project", "Resources.resx"), "<root><data name=");
+
+            var source = new WinFormsDesignerDocument(BuildFreshSource()).ToolStripItems
+                .SetItemProperty("ToolStrip1", "ToolStripButton1", "Image", "Global.Contoso.App.My.Resources.Resources.Logo");
+            var designer = new EditorDocumentViewModel(Path.Combine(root, "MainForm.Designer.vb"), source, true);
+
+            using var view = new WinFormsDesignerView(designer);
+            var window = new Window { Content = view, Width = 1100, Height = 700 };
+            window.Show();
+            try
+            {
+                var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+                await WaitUntilAsync(() => surface.RootForm is not null);
+
+                var item = surface.RootForm!.Controls.OfType<Forms.ToolStrip>().Single().Items.Cast<Forms.ToolStripItem>().Single();
+                Assert.Equal("ToolStripButton1", item.Name);
+                Assert.Null(item.Image);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ToolStripButtonImageSupportsProjectResourceFile()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-toolstrip-project-").FullName;
+        try
+        {
+            var projectPath = Path.Combine(root, "App.vbproj");
+            File.WriteAllText(projectPath, VbprojWithRootNamespace("Contoso.App"));
+            var imported = WinFormsProjectResources.Import(projectPath, WriteTempPng(SolidPng(Drawing.Color.Blue)), isIcon: false);
+
+            var designerPath = Path.Combine(root, "MainForm.Designer.vb");
+            var designer = new EditorDocumentViewModel(designerPath, BuildFreshSource(), true);
+
+            using var view = new WinFormsDesignerView(designer);
+            var window = new Window { Content = view, Width = 1100, Height = 700 };
+            window.Show();
+            try
+            {
+                var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+                await WaitUntilAsync(() => surface.RootForm is not null);
+                var strip = surface.RootForm!.Controls.OfType<Forms.ToolStrip>().Single();
+                surface.Select(strip);
+
+                var editor = Assert.Single(view.GetVisualDescendants().OfType<WinFormsToolStripDesignEditor>());
+                var itemButton = Assert.Single(editor.GetVisualDescendants().OfType<Button>(),
+                    b => b.Name == "ToolStripInlineItem_ToolStripButton1");
+                itemButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+                var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+                await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+                var row = FindRow(grid, "Image");
+                var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+                ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+                var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+                var projectRadio = Assert.Single(dialog.GetVisualDescendants().OfType<RadioButton>(),
+                    r => Equals(r.Content, Localizer.Get(StringKeys.WinFormsImageDialogProjectResource)));
+                Assert.True(projectRadio.IsEnabled);
+                projectRadio.IsChecked = true;
+
+                var list = Assert.Single(dialog.GetVisualDescendants().OfType<ListBox>(), l => l.Name == "WinFormsImageDialogProjectList");
+                var entry = list.ItemsSource!.Cast<WinFormsProjectResourceEntry>().Single(e => e.Name == imported.Name);
+                list.SelectedItem = entry;
+
+                ClickOk(dialog);
+                await WaitUntilAsync(() =>
+                    designer.Text.Contains($"Global.Contoso.App.My.Resources.Resources.{imported.Name}", StringComparison.Ordinal)
+                    && view.IsEnabled);
+
+                Assert.Contains($"Me.ToolStripButton1.Image = Global.Contoso.App.My.Resources.Resources.{imported.Name}", designer.Text);
+                Assert.DoesNotContain("resources.GetObject", designer.Text, StringComparison.Ordinal);
+
+                // The live strip must actually resolve the Project resource for its preview,
+                // not just parse the statement: WinFormsCollectionPreview.EvaluateItemProperty
+                // has to understand this expression shape too, not only a Local resource's.
+                var realStrip = surface.RootForm!.Controls.OfType<Forms.ToolStrip>().Single();
+                var realItem = realStrip.Items.Cast<Forms.ToolStripItem>().Single();
+                Assert.NotNull(realItem.Image);
+
+                var afterImport = designer.Text;
+                ClickUndo(view);
+                await WaitUntilAsync(() => designer.Text == BuildFreshSource() && view.IsEnabled);
+                Assert.DoesNotContain("ToolStripButton1.Image", designer.Text);
+
+                ClickRedo(view);
+                await WaitUntilAsync(() => designer.Text == afterImport && view.IsEnabled);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            WindowsDesktopSamples.DeleteQuietly(root);
+        }
+    }
+
+    /// <summary>The MenuStrip item equivalent of <see cref="ToolStripButtonImageSupportsProjectResourceFile"/>:
+    /// <see cref="WinFormsDesignerView.MenuItemProperties"/> had no way to reach "Project resource
+    /// file" at all (it had no Image branch whatsoever), and <see cref="WinFormsCollectionPreview"/>'s
+    /// MenuStrip branch needs the same expression-shape fix the ToolStrip branch needed.</summary>
+    [AvaloniaFact]
+    public async Task MenuItemImageSupportsProjectResourceFile()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-image-menu-project-").FullName;
+        try
+        {
+            var projectPath = Path.Combine(root, "App.vbproj");
+            File.WriteAllText(projectPath, VbprojWithRootNamespace("Contoso.App"));
+            var imported = WinFormsProjectResources.Import(projectPath, WriteTempPng(SolidPng(Drawing.Color.Blue)), isIcon: false);
+
+            var designerPath = Path.Combine(root, "MainForm.Designer.vb");
+            var designer = new EditorDocumentViewModel(designerPath, BuildFreshSourceWithMenu(), true);
+
+            using var view = new WinFormsDesignerView(designer);
+            var window = new Window { Content = view, Width = 1100, Height = 700 };
+            window.Show();
+            try
+            {
+                var surface = Assert.Single(view.GetVisualDescendants().OfType<WinFormsDesignSurface>());
+                await WaitUntilAsync(() => surface.RootForm is not null);
+                surface.Select(surface.RootForm!.Controls.OfType<Forms.MenuStrip>().Single());
+
+                var editor = Assert.Single(view.GetVisualDescendants().OfType<WinFormsMenuDesignEditor>());
+                var itemButton = Assert.Single(editor.GetVisualDescendants().OfType<Button>(),
+                    b => b.Name == "MenuInlineItem_FileMenu");
+                itemButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+                var grid = Assert.Single(view.GetVisualDescendants().OfType<PropertyGrid>());
+                await WaitUntilAsync(() => grid.Properties.Any(p => p.Name == "Image"));
+                var row = FindRow(grid, "Image");
+                var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
+                ellipsis.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                await WaitUntilAsync(() => window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Any());
+                var dialog = window.OwnedWindows.OfType<WinFormsImageResourceDialog>().Single();
+
+                var projectRadio = Assert.Single(dialog.GetVisualDescendants().OfType<RadioButton>(),
+                    r => Equals(r.Content, Localizer.Get(StringKeys.WinFormsImageDialogProjectResource)));
+                Assert.True(projectRadio.IsEnabled);
+                projectRadio.IsChecked = true;
+
+                var list = Assert.Single(dialog.GetVisualDescendants().OfType<ListBox>(), l => l.Name == "WinFormsImageDialogProjectList");
+                var entry = list.ItemsSource!.Cast<WinFormsProjectResourceEntry>().Single(e => e.Name == imported.Name);
+                list.SelectedItem = entry;
+
+                ClickOk(dialog);
+                await WaitUntilAsync(() =>
+                    designer.Text.Contains($"Global.Contoso.App.My.Resources.Resources.{imported.Name}", StringComparison.Ordinal)
+                    && view.IsEnabled);
+
+                Assert.Contains($"Me.FileMenu.Image = Global.Contoso.App.My.Resources.Resources.{imported.Name}", designer.Text);
+                Assert.DoesNotContain("resources.GetObject", designer.Text, StringComparison.Ordinal);
+
+                var realMenu = surface.RootForm!.Controls.OfType<Forms.MenuStrip>().Single();
+                var realItem = realMenu.Items.Cast<Forms.ToolStripItem>().Single();
+                Assert.NotNull(realItem.Image);
+
+                var afterImport = designer.Text;
+                ClickUndo(view);
+                await WaitUntilAsync(() => designer.Text == BuildFreshSourceWithMenu() && view.IsEnabled);
+                Assert.DoesNotContain("FileMenu.Image", designer.Text);
+
+                ClickRedo(view);
+                await WaitUntilAsync(() => designer.Text == afterImport && view.IsEnabled);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+        finally
+        {
+            WindowsDesktopSamples.DeleteQuietly(root);
+        }
+    }
+
     /// <summary>
     /// The root cause of the compiled app crashing at startup: a PNG on an Icon
     /// property wrote a resx <c>System.Drawing.Icon, System.Drawing</c> entry that

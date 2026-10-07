@@ -11,27 +11,36 @@ public sealed partial class WinFormsDesignerDocument
     /// ComponentResourceManager the first time any control needs one.
     /// </summary>
     /// <param name="stripName">
-    /// The owning ToolStrip's field name when <paramref name="ownerName"/> is a
-    /// ToolStrip item rather than a designer-tracked control: those items are
-    /// not in <see cref="Controls"/>, so the statement is written through
-    /// <see cref="ToolStripItems"/> instead of the normal control lookup.
+    /// The owning ToolStrip or MenuStrip's field name when <paramref name="ownerName"/> is a
+    /// strip item rather than a designer-tracked control: those items are not in
+    /// <see cref="Controls"/>, so the statement is written through <see cref="ToolStripItems"/>
+    /// or <see cref="Menus"/> instead of the normal control lookup.
+    /// </param>
+    /// <param name="isMenu">
+    /// Whether <paramref name="stripName"/> names a MenuStrip (its items nest through
+    /// <see cref="Menus"/>) rather than a plain ToolStrip/StatusStrip (<see cref="ToolStripItems"/>'s
+    /// flat collection). Ignored when <paramref name="stripName"/> is null.
     /// </param>
     public string SetImageResource(string ownerName, string propertyName, string resourceKey,
-        string imageTypeName, string? stripName = null)
+        string imageTypeName, string? stripName = null, bool isMenu = false)
     {
         ValidateIdentifier(propertyName);
         var (document, managerName) = EnsureComponentResourceManager();
         var expression = $"CType({managerName}.GetObject(\"{resourceKey}\"), {imageTypeName})";
         return stripName is null
             ? document.SetProperty(ownerName, propertyName, expression)
-            : document.ToolStripItems.SetItemProperty(stripName, ownerName, propertyName, expression);
+            : isMenu
+                ? document.Menus.SetItemProperty(stripName, ownerName, propertyName, expression)
+                : document.ToolStripItems.SetItemProperty(stripName, ownerName, propertyName, expression);
     }
 
     /// <summary>Removes the assignment statement an image resource was written as; the resx entry is removed separately.</summary>
-    public string RemoveImageResource(string ownerName, string propertyName, string? stripName = null) =>
+    public string RemoveImageResource(string ownerName, string propertyName, string? stripName = null, bool isMenu = false) =>
         stripName is null
             ? SetProperty(ownerName, propertyName, null)
-            : ToolStripItems.SetItemProperty(stripName, ownerName, propertyName, null);
+            : isMenu
+                ? Menus.SetItemProperty(stripName, ownerName, propertyName, null)
+                : ToolStripItems.SetItemProperty(stripName, ownerName, propertyName, null);
 
     /// <summary>
     /// The existing ComponentResourceManager local Visual Studio declares as the

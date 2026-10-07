@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Drawing;
+using System.IO;
 using Basalt.Core.Localization;
 using Basalt.Workspace;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
@@ -10,8 +12,14 @@ namespace Basalt.Shell.Controls;
 internal static class WinFormsCollectionPreview
 {
     public static void Apply(WinFormsDesignerDocument document, IReadOnlyDictionary<string, Forms.Control> controls,
-        List<string> problems, WinFormsResourceDocument? resources = null)
+        List<string> problems, WinFormsResourceDocument? resources = null, string? projectPath = null)
     {
+        // Read at most once per preview build, and only when an item actually refers to a
+        // project resource: the preview is rebuilt after every edit, and ListEntries reads
+        // Resources.resx and every file it references from disk.
+        var projectResources = new Lazy<IReadOnlyList<WinFormsProjectResourceEntry>?>(
+            () => LoadProjectResources(projectPath));
+
         foreach (var (name, control) in controls)
         {
             if (control is Forms.MenuStrip menu)
@@ -33,7 +41,7 @@ internal static class WinFormsCollectionPreview
                             try
                             {
                                 descriptor.SetValue(items[item.Name],
-                                    EvaluateItemProperty(expression, descriptor.PropertyType, resources));
+                                    EvaluateItemProperty(expression, descriptor.PropertyType, resources, projectResources));
                             }
                             catch
                             {
@@ -76,7 +84,7 @@ internal static class WinFormsCollectionPreview
                             try
                             {
                                 descriptor.SetValue(created,
-                                    EvaluateItemProperty(expression, descriptor.PropertyType, resources));
+                                    EvaluateItemProperty(expression, descriptor.PropertyType, resources, projectResources));
                             }
                             catch
                             {
@@ -138,22 +146,99 @@ internal static class WinFormsCollectionPreview
     /// <summary>
     /// A MenuStrip/ToolStrip item's Image or Icon is never a literal <see cref="WinFormsDesignerValues"/>
     /// can parse: Visual Studio (and <see cref="Basalt.Workspace.WinFormsDesignerDocument.SetImageResource"/>)
-    /// write it as "CType(resources.GetObject(key), Type)". Without this, the statement the editor wrote
-    /// parses but the live preview never shows the picture, the same bug
-    /// <see cref="WinFormsDesignerSession.Resources.ApplyResourceProperties"/> already fixed for ordinary
-    /// controls.
+    /// write it as "CType(resources.GetObject(key), Type)" for a Local resource, or a plain
+    /// "Global.RootNamespace.My.Resources.Resources.Name" for a Project resource file. Without
+    /// this, the statement the editor wrote parses but the live preview never shows the
+    /// picture, the same bug <see cref="WinFormsDesignerSession.Resources.ApplyResourceProperties"/>
+    /// already fixed for ordinary controls' Local resources.
     /// </summary>
-    private static object? EvaluateItemProperty(ExpressionSyntax expression, Type propertyType, WinFormsResourceDocument? resources)
+    private static object? EvaluateItemProperty(ExpressionSyntax expression, Type propertyType,
+        WinFormsResourceDocument? resources, Lazy<IReadOnlyList<WinFormsProjectResourceEntry>?> projectResources)
     {
-        if (WinFormsDesignerView.IsImageProperty(propertyType)
-            && TryExtractResourceKey(expression) is { } key
-            && resources?.TryGet(key) is { } entry
-            && WinFormsDesignerResources.TryRead(entry, propertyType, out var decoded))
+        if (WinFormsDesignerView.IsImageProperty(propertyType))
         {
-            return decoded;
+            if (TryExtractResourceKey(expression) is { } key
+                && resources?.TryGet(key) is { } entry
+                && WinFormsDesignerResources.TryRead(entry, propertyType, out var decoded))
+            {
+                return decoded;
+            }
+
+            if (TryExtractProjectResourceName(expression) is { } name
+                && projectResources.Value is { } entries
+                && entries.FirstOrDefault(candidate => candidate.Name == name) is { } projectEntry
+                && TryDecodeProjectResource(projectEntry.Bytes, propertyType, out var projectDecoded))
+            {
+                return projectDecoded;
+            }
         }
 
         return WinFormsDesignerValues.Evaluate(expression, propertyType);
+    }
+
+    /// <summary>The resource name out of "Global.RootNamespace.My.Resources.Resources.Name" (or the
+    /// bare "Global.My.Resources.Resources.Name" an empty RootNamespace writes), matched on the
+    /// rendered text rather than walked member by member: the qualifying namespace ahead of
+    /// "My.Resources.Resources" is whatever <see cref="Basalt.Workspace.WinFormsProjectResources.RootNamespace"/>
+    /// returned when the assignment was written, not a shape this preview needs to parse itself.</summary>
+    /// <summary>
+    /// The project's image resources, or null when there are none to read. A Resources.resx
+    /// this preview cannot make sense of — hand-edited, half-written, not XML at all — leaves
+    /// project images unresolved in the preview instead of failing the whole form's preview,
+    /// which would make every form in the project uneditable until the file was fixed.
+    /// </summary>
+    private static IReadOnlyList<WinFormsProjectResourceEntry>? LoadProjectResources(string? projectPath)
+    {
+        if (projectPath is null) return null;
+
+        try
+        {
+            return WinFormsProjectResources.ListEntries(projectPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                                              or System.Xml.XmlException or FormatException)
+        {
+            return null;
+        }
+    }
+
+    private static string? TryExtractProjectResourceName(ExpressionSyntax expression)
+    {
+        const string marker = ".My.Resources.Resources.";
+        var text = expression.ToString();
+        if (!text.StartsWith("Global.", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var index = text.IndexOf(marker, StringComparison.Ordinal);
+        if (index < 0)
+        {
+            return null;
+        }
+
+        var name = text[(index + marker.Length)..];
+        return name.Length > 0 ? name : null;
+    }
+
+    /// <summary>Decodes a project resource's already-read file bytes the same way
+    /// <see cref="WinFormsImageResourceDialog"/>'s own preview and <see cref="WinFormsDesignerResources"/>
+    /// do for a Local resource: an Icon property through <see cref="Icon"/>'s stream constructor,
+    /// everything else through <see cref="Image.FromStream"/>.</summary>
+    private static bool TryDecodeProjectResource(byte[] bytes, Type propertyType, out object? value)
+    {
+        value = null;
+        try
+        {
+            value = propertyType.FullName == "System.Drawing.Icon"
+                ? new Icon(new MemoryStream(bytes))
+                : Image.FromStream(new MemoryStream(bytes));
+            return true;
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException)
+        {
+            return false;
+        }
     }
 
     /// <summary>The resource key out of "CType(resources.GetObject("key"), Type)", however it is wrapped or cast.</summary>
