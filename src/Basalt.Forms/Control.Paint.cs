@@ -359,7 +359,15 @@ public partial class Control
         if (NonClient == default) return;
 
         using var graphics = Graphics.FromCanvas(canvas);
-        Skin.Current.DrawNonClientFrame(graphics, Size, parameters.Style, parameters.ExStyle, GetWindowScroll(vertical: false), GetWindowScroll(vertical: true), NonClientCaption);
+
+        // A top-level form only reaches here from a design surface (see
+        // FormsCanvas's includeFrame flag): a real running top-level form's
+        // frame is its native window's, never composed here.
+        if (this is Form form && GetTopLevel())
+            form.ComposeDesignerFrame(graphics);
+        else
+            Skin.Current.DrawNonClientFrame(graphics, Size, parameters.Style, parameters.ExStyle, GetWindowScroll(vertical: false), GetWindowScroll(vertical: true), NonClientCaption);
+
         PaintPortableNonClient(graphics, parameters.Style, parameters.ExStyle);
     }
 

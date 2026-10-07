@@ -11,7 +11,7 @@ public sealed record WinFormsControlDrop(Type ControlType, FormsControl Parent, 
 /// <summary>Resolves a drop in the receiving Forms container's client coordinates.</summary>
 internal static class WinFormsDesignerDrop
 {
-    internal static WinFormsControlDrop? Resolve(Type type, FormsControl root, Point at,
+    internal static WinFormsControlDrop? Resolve(Type type, Point at,
         Func<Point, FormsControl?> hitTest, Func<FormsControl, Rect> boundsOnHost)
     {
         if (!typeof(FormsControl).IsAssignableFrom(type) || type.Assembly != typeof(FormsControl).Assembly
@@ -23,14 +23,14 @@ internal static class WinFormsDesignerDrop
         if (parent is null) return null;
 
         var bounds = boundsOnHost(parent);
-        var insetX = IsRootContainer(parent, root) ? 0 : parent.NonClient.Left;
-        var insetY = IsRootContainer(parent, root) ? 0 : parent.NonClient.Top;
+        var insetX = parent.NonClient.Left;
+        var insetY = parent.NonClient.Top;
         var x = Math.Max(0, (int)Math.Round(at.X - bounds.X - insetX));
         var y = Math.Max(0, (int)Math.Round(at.Y - bounds.Y - insetY));
         return new(type, parent, new DrawingPoint(x, y));
     }
 
-    internal static void DrawPreview(Canvas adorners, WinFormsControlDrop? drop, FormsControl? root,
+    internal static void DrawPreview(Canvas adorners, WinFormsControlDrop? drop,
         Func<FormsControl, Rect> boundsOnHost)
     {
         adorners.Children.Clear();
@@ -38,8 +38,8 @@ internal static class WinFormsDesignerDrop
 
         var parent = drop.Parent;
         var bounds = boundsOnHost(parent);
-        var insetX = IsRootContainer(parent, root) ? 0 : parent.NonClient.Left;
-        var insetY = IsRootContainer(parent, root) ? 0 : parent.NonClient.Top;
+        var insetX = parent.NonClient.Left;
+        var insetY = parent.NonClient.Top;
         var target = new Border
         {
             Width = bounds.Width,
@@ -64,14 +64,6 @@ internal static class WinFormsDesignerDrop
         Canvas.SetTop(ghost, bounds.Y + insetY + drop.Location.Y);
         adorners.Children.Add(ghost);
     }
-
-    /// <summary>
-    /// Whether <paramref name="candidate"/> is the design surface's root form, the one
-    /// container that has no non-client chrome to offset against (it fills the whole
-    /// host surface, so its client origin is the host origin).
-    /// </summary>
-    internal static bool IsRootContainer(FormsControl candidate, FormsControl? root) =>
-        ReferenceEquals(candidate, root);
 
     internal static bool CanContain(FormsControl control) =>
         control is System.Windows.Forms.Form or System.Windows.Forms.Panel or

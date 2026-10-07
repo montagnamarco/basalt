@@ -20,7 +20,13 @@ public sealed class WinFormsDesignerContextMenuTests
     [AvaloniaFact]
     public void RightClickKeepsSelectedGroupAndRetargetsUnselectedControls()
     {
-        using var form = new Forms.Form { ClientSize = new Drawing.Size(300, 180) };
+        using var form = new Forms.Form
+        {
+            ClientSize = new Drawing.Size(300, 180),
+            // Context menu targeting, not the root form's own frame: None keeps
+            // the hard-coded pixels below exactly where they always were.
+            FormBorderStyle = Forms.FormBorderStyle.None,
+        };
         var first = new Forms.Button { Name = "First", Bounds = new Drawing.Rectangle(20, 20, 60, 30) };
         var second = new Forms.Button { Name = "Second", Bounds = new Drawing.Rectangle(110, 20, 60, 30) };
         var third = new Forms.Button { Name = "Third", Bounds = new Drawing.Rectangle(200, 20, 60, 30) };
@@ -62,7 +68,13 @@ public sealed class WinFormsDesignerContextMenuTests
     [AvaloniaFact]
     public void ContextActionsChangeGridModesAndRequestPropertiesWithoutEditingTheForm()
     {
-        using var form = new Forms.Form { ClientSize = new Drawing.Size(300, 180) };
+        using var form = new Forms.Form
+        {
+            ClientSize = new Drawing.Size(300, 180),
+            // Context menu targeting, not the root form's own frame: None keeps
+            // the hard-coded pixels below exactly where they always were.
+            FormBorderStyle = Forms.FormBorderStyle.None,
+        };
         var surface = new WinFormsDesignSurface { RootForm = form };
         var window = new Window { Content = surface, Width = 400, Height = 260 };
         window.Show();

@@ -143,8 +143,10 @@ public sealed class WinFormsImageEditorUiTests
             // view's full layout (unlike a bare surface filling the window), so the point has
             // to be translated through the surface's own position, the same way
             // WinFormsSmartTagTests locates glyphs painted inside this same view.
+            // 12: the surface's gutter. 4, 23: the root form's default window frame
+            // (sizing border, and border plus caption), drawn around the client area.
             var point = surface.TranslatePoint(
-                new Point(12 + realPictureBox.Location.X + 8, 12 + realPictureBox.Location.Y + 8), window)!.Value;
+                new Point(12 + 4 + realPictureBox.Location.X + 8, 12 + 23 + realPictureBox.Location.Y + 8), window)!.Value;
             var pixel = ReadPixel(window, point);
             Assert.True(pixel.Red > 150 && pixel.Green < 80 && pixel.Blue < 80,
                 $"The PictureBox should paint the imported red image at {point}; RGB={pixel.Red},{pixel.Green},{pixel.Blue}.");

@@ -21,6 +21,10 @@ public sealed class WinFormsDesignSurfaceTests
         {
             ClientSize = new Drawing.Size(220, 160),
             BackColor = Drawing.Color.White,
+            // This fixture is about hit-testing, dragging and resizing children,
+            // not the root form's own frame (covered by WinFormsDesignerFrameTests):
+            // None keeps every "OnForm" pixel exactly where it always was.
+            FormBorderStyle = Forms.FormBorderStyle.None,
         };
         var panel = new Forms.Panel
         {

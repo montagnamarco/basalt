@@ -283,6 +283,9 @@ public sealed class WinFormsDesignerGridSnapTests
         {
             ClientSize = new Drawing.Size(220, 160),
             BackColor = Drawing.Color.White,
+            // This fixture is about grid snapping, not the root form's own
+            // frame: None keeps every "OnForm" pixel exactly where it always was.
+            FormBorderStyle = Forms.FormBorderStyle.None,
         };
         var panel = new Forms.Panel
         {

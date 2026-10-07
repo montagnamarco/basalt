@@ -51,7 +51,7 @@ internal sealed class WinFormsDesignerGrid : Control
         base.Render(context);
         if (!_showGrid || _rootForm is null) return;
 
-        var rootClient = new Rect(Gutter, Gutter,
+        var rootClient = new Rect(Gutter + _rootForm.NonClient.Left, Gutter + _rootForm.NonClient.Top,
             _rootForm.ClientSize.Width, _rootForm.ClientSize.Height);
         PaintContainer(context, _rootForm, rootClient.TopLeft, rootClient, []);
     }

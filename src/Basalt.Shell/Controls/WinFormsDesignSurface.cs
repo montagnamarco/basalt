@@ -87,8 +87,9 @@ public sealed partial class WinFormsDesignSurface : ContentControl
             _guides.Clear();
             _rootForm = value;
             _grid.RootForm = value;
+            _rulers.RootForm = value;
             _selection.Clear();
-            _canvas = value is null ? null : new FormsCanvas(value);
+            _canvas = value is null ? null : new FormsCanvas(value, includeFrame: true);
 
             _host.Children.Clear();
 
@@ -261,8 +262,17 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         var width = Math.Max(1, size.Width);
         var height = Math.Max(1, size.Height);
 
-        _host.Width = width + Gutter * 2;
-        _host.Height = height + Gutter * 2;
+        // The root form's own frame (border and caption, from its FormBorderStyle
+        // and control box) sits outside its client area, the same way a nested
+        // container's frame already does in BoundsOnHost: the host must leave
+        // room for it, and the dotted client area starts past it rather than at
+        // the gutter itself.
+        var nonClient = _rootForm?.NonClient ?? default;
+        var outerWidth = width + nonClient.Horizontal;
+        var outerHeight = height + nonClient.Vertical;
+
+        _host.Width = outerWidth + Gutter * 2;
+        _host.Height = outerHeight + Gutter * 2;
         MinWidth = _host.Width;
         MinHeight = _host.Height;
         _adorners.Width = _host.Width;
@@ -273,7 +283,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         _grid.Height = _host.Height;
         _rulers.Width = _host.Width;
         _rulers.Height = _host.Height;
-        _rulers.ClientSize = new Size(width, height);
+        _rulers.InvalidateVisual();
         _dropAdorners.Width = _host.Width;
         _dropAdorners.Height = _host.Height;
         _input.Width = _host.Width;
@@ -281,8 +291,8 @@ public sealed partial class WinFormsDesignSurface : ContentControl
 
         if (_canvas is null) return;
 
-        _canvas.Width = width;
-        _canvas.Height = height;
+        _canvas.Width = outerWidth;
+        _canvas.Height = outerHeight;
         Canvas.SetLeft(_canvas, Gutter);
         Canvas.SetTop(_canvas, Gutter);
     }
@@ -523,10 +533,19 @@ public sealed partial class WinFormsDesignSurface : ContentControl
     {
         if (_rootForm is null) return null;
 
-        var x = at.X - Gutter;
-        var y = at.Y - Gutter;
+        var nonClient = _rootForm.NonClient;
+        var x = at.X - Gutter - nonClient.Left;
+        var y = at.Y - Gutter - nonClient.Top;
         if (x < 0 || y < 0 || x >= _rootForm.ClientSize.Width || y >= _rootForm.ClientSize.Height)
-            return null;
+        {
+            // Off the client area but still over the form's own frame (its
+            // border or caption bar): a click there selects the form itself,
+            // as Visual Studio's designer does.
+            var outerX = at.X - Gutter;
+            var outerY = at.Y - Gutter;
+            return outerX >= 0 && outerY >= 0 && outerX < _rootForm.Width && outerY < _rootForm.Height
+                ? _rootForm : null;
+        }
 
         return HitChild(_rootForm, new System.Drawing.Point((int)x, (int)y));
     }
@@ -535,7 +554,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
     {
         var drop = ResolveDrop(e);
         e.DragEffects = drop is null ? DragDropEffects.None : DragDropEffects.Copy;
-        WinFormsDesignerDrop.DrawPreview(_dropAdorners, drop, _rootForm, BoundsOnHost);
+        WinFormsDesignerDrop.DrawPreview(_dropAdorners, drop, BoundsOnHost);
         e.Handled = true;
     }
 
@@ -557,7 +576,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         if (_rootForm is null || _tabOrderMode ||
             e.DataTransfer.TryGetValue(WinFormsToolboxDrag.Format) is not { } item)
             return null;
-        var drop = WinFormsDesignerDrop.Resolve(item.ControlType, _rootForm, e.GetPosition(_host),
+        var drop = WinFormsDesignerDrop.Resolve(item.ControlType, e.GetPosition(_host),
             HitTest, BoundsOnHost);
         if (drop is null || !SnapToGrid || e.KeyModifiers.HasFlag(KeyModifiers.Alt)) return drop;
         return drop with { Location = WinFormsDesignerSnap.SnapPoint(drop.Location, GridSize) };
@@ -595,8 +614,11 @@ public sealed partial class WinFormsDesignSurface : ContentControl
 
     private Rect BoundsOnHost(FormsControl control)
     {
+        // The form's own outer frame - what Visual Studio's selection handles
+        // attach to, Size included rather than just ClientSize - the same box a
+        // nested container's own frame already gives its children below.
         if (ReferenceEquals(control, _rootForm))
-            return new Rect(Gutter, Gutter, control.ClientSize.Width, control.ClientSize.Height);
+            return new Rect(Gutter, Gutter, control.Width, control.Height);
 
         var x = control.Left;
         var y = control.Top;
@@ -608,7 +630,8 @@ public sealed partial class WinFormsDesignSurface : ContentControl
             y += parent.Top + parent.NonClient.Top;
         }
 
-        return new Rect(x + Gutter, y + Gutter, control.Width, control.Height);
+        return new Rect(x + Gutter + _rootForm!.NonClient.Left, y + Gutter + _rootForm.NonClient.Top,
+            control.Width, control.Height);
     }
 
     private Rectangle SnapMove(

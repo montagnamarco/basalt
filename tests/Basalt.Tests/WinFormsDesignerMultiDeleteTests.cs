@@ -82,7 +82,11 @@ public class WinFormsDesignerMultiDeleteTests
             var first = panel.Controls.Cast<Forms.Control>().Single(control => control.Name == "Button1");
             var second = panel.Controls.Cast<Forms.Control>().Single(control => control.Name == "Button2");
             surface.Select(first);
-            var secondPoint = surface.TranslatePoint(new Point(12 + second.Left + 20, 12 + second.Top + 15), window)!.Value;
+            // 12: the surface's gutter. 4, 23: the root form's own default frame
+            // (Sizable border, captioned since it has a non-empty Text) - its
+            // client area starts that far past the gutter.
+            var secondPoint = surface.TranslatePoint(
+                new Point(12 + 4 + second.Left + 20, 12 + 23 + second.Top + 15), window)!.Value;
             window.MouseDown(secondPoint, MouseButton.Left, RawInputModifiers.Shift);
             window.MouseUp(secondPoint, MouseButton.Left);
             Assert.Equal([first, second], surface.SelectedControls);

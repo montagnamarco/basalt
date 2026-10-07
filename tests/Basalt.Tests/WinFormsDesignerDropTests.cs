@@ -21,7 +21,13 @@ public sealed class WinFormsDesignerDropTests
     [AvaloniaFact]
     public void RoutedDragOverAndDropUseNestedContainerClientCoordinates()
     {
-        var form = new Forms.Form { ClientSize = new Drawing.Size(300, 200) };
+        var form = new Forms.Form
+        {
+            ClientSize = new Drawing.Size(300, 200),
+            // Drop targeting, not the root form's own frame: None keeps the
+            // hard-coded "12 + ..." pixels below exactly where they always were.
+            FormBorderStyle = Forms.FormBorderStyle.None,
+        };
         var panel = new Forms.Panel
         {
             Bounds = new Drawing.Rectangle(35, 30, 100, 90),
@@ -88,7 +94,10 @@ public sealed class WinFormsDesignerDropTests
             // DragEventArgs is resolved against the surface's host canvas. The
             // property pane can shift that canvas within its surface viewport.
             var host = Assert.IsType<Canvas>(surface.Content);
-            var position = host.TranslatePoint(new Point(12 + 140, 12 + 80), window)!.Value;
+            // 12: the surface's gutter. 4, 23: the root form's own default frame
+            // (Sizable border, captioned since it has a non-empty Text) - its
+            // client area starts that far past the gutter.
+            var position = host.TranslatePoint(new Point(12 + 4 + 140, 12 + 23 + 80), window)!.Value;
             var drop = new DragEventArgs(DragDrop.DropEvent, Transfer(typeof(Forms.Button)),
                 window, position, KeyModifiers.None);
             surface.RaiseEvent(drop);

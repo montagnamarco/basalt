@@ -19,10 +19,20 @@ internal sealed class FormsCanvas : Avalonia.Controls.Control
 {
     private readonly Control _form;
     private readonly FormsNativeViews _nativeViews;
+    private readonly bool _includeFrame;
 
-    public FormsCanvas(Control form)
+    /// <param name="form">The form or popup content this canvas paints.</param>
+    /// <param name="includeFrame">
+    /// Whether this canvas paints <paramref name="form"/>'s own non-client frame
+    /// around its client area, rather than starting at the client area as a real
+    /// top-level window's content does. A design surface sets this so the form
+    /// being designed shows the window it would be at run time - border, caption,
+    /// icon, title and control box - even though it is never actually shown.
+    /// </param>
+    public FormsCanvas(Control form, bool includeFrame = false)
     {
         _form = form;
+        _includeFrame = includeFrame;
         _nativeViews = new FormsNativeViews(this);
         Focusable = true;
         ClipToBounds = true;
@@ -76,7 +86,7 @@ internal sealed class FormsCanvas : Avalonia.Controls.Control
 
         using var recorder = new SKPictureRecorder();
         var canvas = recorder.BeginRecording(new SKRect(0, 0, (float)size.Width, (float)size.Height));
-        _form.Compose(canvas, includeFrame: false);
+        _form.Compose(canvas, includeFrame: _includeFrame);
 
         return recorder.EndRecording();
     }
