@@ -341,6 +341,7 @@ public partial class MainWindow
         yes.Click += (_, _) => { answered = true; dialog.Close(); };
         no.Click += (_, _) => dialog.Close();
 
+        // Windows order: the primary action (Yes) leads, Cancel-flavoured No follows.
         dialog.Content = new StackPanel
         {
             Margin = new Thickness(20),
@@ -348,13 +349,7 @@ public partial class MainWindow
             Children =
             {
                 new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
-                new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 8,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-                    Children = { no, yes }
-                }
+                DialogButtons.Row(yes, no)
             }
         };
 
@@ -481,13 +476,13 @@ public partial class MainWindow
         var yes = new Button
         {
             Content = Localizer.Get(StringKeys.ExplorerDeleteConfirm),
-            Classes = { "primary" }
+            Classes = { "primary" },
+            IsDefault = true
         };
         var no = new Button
         {
             Content = Localizer.Get(StringKeys.ButtonCancel),
-            IsCancel = true,
-            IsDefault = true
+            IsCancel = true
         };
 
         var dialog = new Window
@@ -502,6 +497,7 @@ public partial class MainWindow
         yes.Click += (_, _) => { answered = true; dialog.Close(); };
         no.Click += (_, _) => dialog.Close();
 
+        // Windows order: the primary action (Delete) leads, Cancel follows.
         dialog.Content = new StackPanel
         {
             Margin = new Thickness(20),
@@ -509,13 +505,7 @@ public partial class MainWindow
             Children =
             {
                 new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
-                new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 8,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-                    Children = { no, yes }
-                }
+                DialogButtons.Row(yes, no)
             }
         };
 

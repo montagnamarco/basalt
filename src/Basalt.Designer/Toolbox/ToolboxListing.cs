@@ -42,6 +42,16 @@ public static class ToolboxListing
                      .GroupBy(category))
         {
             var entries = group.ToList();
+
+            // An empty category name (the WinForms toolbox's Pointer entry) is
+            // not a group a user folds or reads a label for: it leads the list
+            // on its own, with no heading above it.
+            if (group.Key.Length == 0)
+            {
+                rows.AddRange(entries.Cast<object>());
+                continue;
+            }
+
             var fold = !filtering && collapsed.Contains(group.Key);
 
             rows.Add(new ToolboxHeading(group.Key, entries.Count, fold));

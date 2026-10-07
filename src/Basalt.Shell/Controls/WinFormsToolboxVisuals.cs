@@ -29,11 +29,15 @@ internal static class WinFormsToolboxVisuals
             Orientation = Orientation.Horizontal,
             Spacing = Spacing.Small,
             Children = { icon, name },
-            [ToolTip.TipProperty] = item.ControlType.FullName ?? item.DisplayName,
+            // Pointer has no real type for a user to care about; its own name
+            // is the whole story, the same one the row already shows.
+            [ToolTip.TipProperty] = WinFormsToolboxCatalog.IsPointer(item.ControlType)
+                ? item.DisplayName
+                : item.ControlType.FullName ?? item.DisplayName,
         };
     }
 
-    internal static string IconName(Type type) => type.Name switch
+    internal static string IconName(Type type) => WinFormsToolboxCatalog.IsPointer(type) ? "Pointer" : type.Name switch
     {
         "Label" or "LinkLabel" => "TextBlock",
         "Panel" or "GroupBox" or "FlowLayoutPanel" or "TableLayoutPanel" => "Border",

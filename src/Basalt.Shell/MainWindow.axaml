@@ -22,10 +22,10 @@
   <DockPanel>
 
     <!--
-      Barra dei menu: su macOS il menu viene esportato nella barra di sistema in
-      cima allo schermo e questo contenitore resta nascosto; sulle altre
-      piattaforme ospita il menu della finestra. Le voci sono costruite in
-      MainWindow.axaml.cs, una volta sola per entrambe le forme.
+      The menu bar: on macOS the menu is exported to the system menu bar at
+      the top of the screen and this container stays hidden; on the other
+      platforms it hosts the window's own menu. The entries are built in
+      MainWindow.axaml.cs, once for both shapes.
     -->
     <Menu x:Name="WindowMenu" DockPanel.Dock="Top" />
 
@@ -36,11 +36,11 @@
             BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,0,0,1" />
 
     <!--
-      Banner del debug: mentre una sessione e' in corso la finestra deve
-      dirlo senza che si debba cercare un pannello. Sta sotto la toolbar,
-      dove in Visual Studio compare la barra gialla della pausa, ed e'
-      nascosto del tutto quando non si sta debuggando: una striscia sempre
-      presente diventa invisibile proprio quando conta.
+      The debug banner: while a session is running the window must say so
+      without the user having to go looking for a panel. It sits under the
+      toolbar, where Visual Studio shows its own yellow pause bar, and is
+      hidden entirely when nothing is being debugged: a strip that is always
+      there becomes invisible exactly when it matters.
     -->
     <Border DockPanel.Dock="Top" x:Name="DebugBanner"
             IsVisible="False" Padding="10,4,12,4"
@@ -72,7 +72,7 @@
       </Grid>
     </Border>
 
-    <!-- Barra di stato, blu come quella di VS Code -->
+    <!-- The status bar, blue like VS Code's -->
     <Border DockPanel.Dock="Bottom"
             Background="{DynamicResource StatusBarBackgroundBrush}" Padding="10,3">
       <Grid ColumnDefinitions="Auto,*,Auto,Auto">
@@ -181,16 +181,17 @@
     </Border>
 
     <!--
-      Area dockabile: ogni pannello si può spostare, affiancare, staccare in una
-      finestra separata o chiudere. Il layout iniziale è costruito da FactoryIde.
+      The dockable area: every panel can be moved, docked side by side,
+      floated into its own window or closed. The initial layout is built by
+      FactoryIde.
     -->
     <Panel>
       <dock:DockControl x:Name="Docking" />
 
       <!--
-        Schermata iniziale, visibile finché non ci sono documenti aperti: rende
-        raggiungibili le azioni principali senza passare dal menu, che su macOS
-        vive fuori dalla finestra.
+        The welcome screen, visible as long as no documents are open: it
+        makes the main actions reachable without going through the menu,
+        which on macOS lives outside the window.
       -->
       <Border x:Name="WelcomePane"
               Background="{DynamicResource EditorBackgroundBrush}"

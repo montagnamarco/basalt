@@ -121,17 +121,17 @@
   <data name="Designer_AddColumn" xml:space="preserve"><value>Add a column</value></data>
   <data name="Designer_ContainingGrid" xml:space="preserve"><value>Containing grid</value></data>
   <data name="Menu_Designer" xml:space="preserve"><value>Designer</value></data>
-  <data name="Menu_Designer_AlignLeft" xml:space="preserve"><value>Allinea a sinistra</value></data>
-  <data name="Menu_Designer_AlignRight" xml:space="preserve"><value>Allinea a destra</value></data>
-  <data name="Menu_Designer_AlignTop" xml:space="preserve"><value>Allinea in alto</value></data>
-  <data name="Menu_Designer_AlignBottom" xml:space="preserve"><value>Allinea in basso</value></data>
-  <data name="Menu_Designer_SameWidth" xml:space="preserve"><value>Stessa larghezza</value></data>
-  <data name="Menu_Designer_SameHeight" xml:space="preserve"><value>Stessa altezza</value></data>
-  <data name="Menu_Designer_ZoomIn" xml:space="preserve"><value>Ingrandisci</value></data>
-  <data name="Menu_Designer_ZoomOut" xml:space="preserve"><value>Riduci</value></data>
-  <data name="Menu_Designer_ZoomReset" xml:space="preserve"><value>Dimensione reale</value></data>
-  <data name="Menu_Designer_ZoomToFit" xml:space="preserve"><value>Adatta alla finestra</value></data>
-  <data name="Menu_Designer_SelectParent" xml:space="preserve"><value>Seleziona il contenitore</value></data>
+  <data name="Menu_Designer_AlignLeft" xml:space="preserve"><value>Align Lefts</value></data>
+  <data name="Menu_Designer_AlignRight" xml:space="preserve"><value>Align Rights</value></data>
+  <data name="Menu_Designer_AlignTop" xml:space="preserve"><value>Align Tops</value></data>
+  <data name="Menu_Designer_AlignBottom" xml:space="preserve"><value>Align Bottoms</value></data>
+  <data name="Menu_Designer_SameWidth" xml:space="preserve"><value>Make Same Width</value></data>
+  <data name="Menu_Designer_SameHeight" xml:space="preserve"><value>Make Same Height</value></data>
+  <data name="Menu_Designer_ZoomIn" xml:space="preserve"><value>Zoom In</value></data>
+  <data name="Menu_Designer_ZoomOut" xml:space="preserve"><value>Zoom Out</value></data>
+  <data name="Menu_Designer_ZoomReset" xml:space="preserve"><value>Actual Size</value></data>
+  <data name="Menu_Designer_ZoomToFit" xml:space="preserve"><value>Zoom to Fit</value></data>
+  <data name="Menu_Designer_SelectParent" xml:space="preserve"><value>Select Parent Container</value></data>
   <data name="Menu_Debug" xml:space="preserve"><value>Debug</value></data>
   <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
   <data name="Menu_Git" xml:space="preserve"><value>Git</value></data>
@@ -225,7 +225,6 @@
 
   <!-- New Window dialog -->
   <data name="NewWindow_Title" xml:space="preserve"><value>Add Window</value></data>
-  <data name="NewWindow_Subtitle" xml:space="preserve"><value>New Avalonia window</value></data>
   <data name="NewWindow_ClassName" xml:space="preserve"><value>Class name</value></data>
   <data name="NewWindow_Namespace" xml:space="preserve"><value>Namespace (optional)</value></data>
   <data name="NewWindow_WindowTitle" xml:space="preserve"><value>Window title (optional)</value></data>
@@ -833,4 +832,12 @@
   <data name="WinFormsImageDialog_ImportFailed" xml:space="preserve"><value>The image could not be read: {0}</value></data>
   <data name="WinFormsImageDialog_InvalidFormat" xml:space="preserve"><value>This file cannot be used for this property: {0}</value></data>
   <data name="WinFormsImageDialog_ProjectImportFailed" xml:space="preserve"><value>The project resource could not be added: {0}</value></data>
+
+  <!-- Project > Add Window… dialog -->
+  <data name="NewWindow_Heading" xml:space="preserve"><value>New Avalonia Window</value></data>
+  <data name="NewWindow_ClassNamePlaceholder" xml:space="preserve"><value>NewWindow</value></data>
+  <data name="NewWindow_NamespacePlaceholder" xml:space="preserve"><value>MyApp.Views</value></data>
+  <data name="NewWindow_WindowTitlePlaceholder" xml:space="preserve"><value>Title shown in the title bar</value></data>
+  <data name="NewWindow_NameRequired" xml:space="preserve"><value>Enter a name for the window.</value></data>
+  <data name="NewWindow_NameInvalid" xml:space="preserve"><value>The name must start with a letter and contain only letters, digits or underscores.</value></data>
 </root>

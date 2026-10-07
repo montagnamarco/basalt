@@ -380,13 +380,8 @@ public partial class MainWindow
             });
         }
 
-        body.Children.Add(new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-            Children = { cancel, dontSave, save }
-        });
+        // Windows order: Save, Don't Save, Cancel.
+        body.Children.Add(DialogButtons.Row(save, dontSave, cancel));
 
         dialog.Content = body;
 

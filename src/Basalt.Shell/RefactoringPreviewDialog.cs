@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Basalt.Workspace.Refactoring;
 
@@ -93,13 +92,8 @@ public sealed class RefactoringPreviewDialog : Window
         {
             Padding = new Thickness(16, 12),
             BorderThickness = new Thickness(0, 1, 0, 0),
-            Child = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Children = { cancel, apply }
-            }
+            // Windows order: the primary action (Apply) leads, Cancel follows.
+            Child = DialogButtons.Row(apply, cancel)
         };
 
         DockPanel.SetDock(footer, Avalonia.Controls.Dock.Bottom);

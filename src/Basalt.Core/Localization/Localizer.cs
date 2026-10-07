@@ -324,7 +324,6 @@ public static class StringKeys
     public const string TemplateBlazorDescription = "Template_Blazor_Description";
 
     public const string NewWindowTitle = "NewWindow_Title";
-    public const string NewWindowSubtitle = "NewWindow_Subtitle";
     public const string NewWindowClassName = "NewWindow_ClassName";
     public const string NewWindowNamespace = "NewWindow_Namespace";
     public const string NewWindowWindowTitle = "NewWindow_WindowTitle";
@@ -858,4 +857,15 @@ public static class StringKeys
     public const string WinFormsImageDialogImportFailed = "WinFormsImageDialog_ImportFailed";
     public const string WinFormsImageDialogInvalidFormat = "WinFormsImageDialog_InvalidFormat";
     public const string WinFormsImageDialogProjectImportFailed = "WinFormsImageDialog_ProjectImportFailed";
+
+    // Project > Add Window… dialog: asks for the new window's class name,
+    // namespace and title before writing the Avalonia window to disk.
+    // (NewWindowTitle, NewWindowClassName, NewWindowNamespace and
+    // NewWindowWindowTitle are declared once already, above.)
+    public const string NewWindowHeading = "NewWindow_Heading";
+    public const string NewWindowClassNamePlaceholder = "NewWindow_ClassNamePlaceholder";
+    public const string NewWindowNamespacePlaceholder = "NewWindow_NamespacePlaceholder";
+    public const string NewWindowWindowTitlePlaceholder = "NewWindow_WindowTitlePlaceholder";
+    public const string NewWindowNameRequired = "NewWindow_NameRequired";
+    public const string NewWindowNameInvalid = "NewWindow_NameInvalid";
 }

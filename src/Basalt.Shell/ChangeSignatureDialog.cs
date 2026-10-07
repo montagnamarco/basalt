@@ -53,13 +53,8 @@ public sealed class ChangeSignatureDialog : Window
 
         cancel.Click += (_, _) => Close();
 
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { cancel, ok }
-        };
+        // Windows order: the primary action (Apply) leads, Cancel follows.
+        var buttons = DialogButtons.Row(ok, cancel);
 
         var layout = new DockPanel { Margin = new Thickness(16) };
 

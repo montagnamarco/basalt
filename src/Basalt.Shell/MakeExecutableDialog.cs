@@ -69,7 +69,8 @@ public sealed class MakeExecutableDialog : Window
             Orientation = Orientation.Horizontal,
             Spacing = Spacing.Normal,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { cancel, make }
+            // Windows order: the primary action (Make) leads, Cancel follows.
+            Children = { make, cancel }
         };
 
         Content = new StackPanel

@@ -22,6 +22,7 @@ public class EnglishStringsTests
         "Pulsante", "Etichetta", "Casella", "Pannello", "Trascina", "Sposta",
         "Aggiungi", "Seleziona", "Allinea", "Adatta", "Dimensione reale",
         "Struttura", "Voce di menu", "Barra di stato", "Espansore", "Bordo",
+        "Stessa", "Ingrandisci", "Riduci",
     ];
 
     private static IEnumerable<string> SourceFiles(string project)
@@ -87,6 +88,36 @@ public class EnglishStringsTests
 
                     found.Add($"{Path.GetFileName(file)}: \"{value}\"");
                 }
+            }
+        }
+
+        Assert.Empty(found);
+    }
+
+    [Fact]
+    public void NoItalianIsLeftInStringsResx()
+    {
+        // Strings.resx is the one place every user-visible string ultimately
+        // comes from. A translated key here is translated everywhere; an
+        // Italian one is Italian everywhere, including resource-key fallbacks
+        // in the English culture that no satellite assembly overrides.
+        var path = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "..",
+            "src", "Basalt.Core", "Localization", "Strings.resx"));
+
+        Assert.True(File.Exists(path), $"Strings.resx not found at {path}");
+
+        var found = new List<string>();
+
+        foreach (Match value in Regex.Matches(
+            File.ReadAllText(path), "<value>([^<]*)</value>"))
+        {
+            var text = value.Groups[1].Value;
+
+            foreach (var word in Italian)
+            {
+                if (text.Contains(word, StringComparison.Ordinal))
+                    found.Add($"\"{text}\" (matched \"{word}\")");
             }
         }
 

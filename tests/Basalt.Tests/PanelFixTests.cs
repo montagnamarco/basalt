@@ -215,6 +215,37 @@ public sealed class PanelFixTests
     }
 
     /// <summary>
+    /// The Immediate window is a VB6/Visual Studio tool window and must be
+    /// reachable from the View menu next to the other tool windows, the same
+    /// way Watch and Output are.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task ImmediateIsReachableFromTheViewMenuNextToTheOtherToolWindows()
+    {
+        var root = Directory.CreateTempSubdirectory("basalt-immediate-").FullName;
+        var project = WriteProject(root);
+        File.WriteAllText(Path.Combine(root, "Program.vb"), "Module Program\n    Sub Main()\n    End Sub\nEnd Module\n");
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+
+        var factory = Field<IdeDockFactory>(w, "_factory");
+        var contents = Field<Dictionary<IDockable, Control>>(w, "_contents");
+
+        Assert.True(contents.ContainsKey(factory.Immediate));
+        Assert.IsType<ImmediatePanel>(contents[factory.Immediate]);
+        Assert.NotNull(factory.Immediate.Owner);
+
+        Invoke(w, L(StringKeys.MenuView), L(StringKeys.ToolImmediate));
+        await host.SettleAsync(10);
+
+        var immediate = contents[factory.Immediate];
+        Assert.True(immediate.IsEffectivelyVisible);
+        Assert.True(immediate.Bounds.Width > 0);
+    }
+
+    /// <summary>
     /// "Run All" must run every discovered test, not just whatever happens to
     /// be selected in the tree.
     /// </summary>

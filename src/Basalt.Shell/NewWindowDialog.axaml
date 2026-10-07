@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:Basalt.Shell"
         x:Class="Basalt.Shell.NewWindowDialog"
-        Title="Aggiungi finestra"
+        Title="{l:LocalizedString NewWindow_Title}"
         Width="460" Height="280"
         MinWidth="380" MinHeight="240"
         WindowStartupLocation="CenterOwner"
@@ -9,29 +10,32 @@
 
   <StackPanel Margin="20" Spacing="10">
 
-    <TextBlock Text="Nuova finestra Avalonia" FontSize="16" FontWeight="SemiBold" />
+    <TextBlock Text="{l:LocalizedString NewWindow_Heading}" FontSize="16" FontWeight="SemiBold" />
     <TextBlock x:Name="LanguageLabel" Opacity="0.7" FontSize="12" />
 
     <StackPanel Spacing="3">
-      <TextBlock Text="Nome della classe" FontSize="12" />
-      <TextBox x:Name="NameBox" PlaceholderText="NuovaFinestra" />
+      <TextBlock Text="{l:LocalizedString NewWindow_ClassName}" FontSize="12" />
+      <TextBox x:Name="NameBox" PlaceholderText="{l:LocalizedString NewWindow_ClassNamePlaceholder}" />
     </StackPanel>
 
     <StackPanel Spacing="3">
-      <TextBlock Text="Spazio dei nomi (facoltativo)" FontSize="12" />
-      <TextBox x:Name="NamespaceBox" PlaceholderText="MiaApp.Views" />
+      <TextBlock Text="{l:LocalizedString NewWindow_Namespace}" FontSize="12" />
+      <TextBox x:Name="NamespaceBox" PlaceholderText="{l:LocalizedString NewWindow_NamespacePlaceholder}" />
     </StackPanel>
 
     <StackPanel Spacing="3">
-      <TextBlock Text="Titolo della finestra (facoltativo)" FontSize="12" />
-      <TextBox x:Name="TitleBox" PlaceholderText="Titolo mostrato nella barra" />
+      <TextBlock Text="{l:LocalizedString NewWindow_WindowTitle}" FontSize="12" />
+      <TextBox x:Name="TitleBox" PlaceholderText="{l:LocalizedString NewWindow_WindowTitlePlaceholder}" />
     </StackPanel>
 
     <TextBlock x:Name="ErrorLabel" Foreground="OrangeRed" TextWrapping="Wrap" FontSize="12" />
 
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-      <Button Content="Annulla" Click="OnCancel" IsCancel="True" />
-      <Button Content="Crea" Click="OnCreate" IsDefault="True" />
+    <!-- Windows/Visual Studio button order: the primary action leads, Cancel
+         follows it, the pair right-aligned. Enter triggers Create (IsDefault),
+         Esc triggers Cancel (IsCancel). -->
+    <StackPanel x:Name="ButtonPanel" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <Button x:Name="CreateButton" Content="{l:LocalizedString Button_Create}" Click="OnCreate" Classes="primary" IsDefault="True" />
+      <Button x:Name="CancelButton" Content="{l:LocalizedString Button_Cancel}" Click="OnCancel" IsCancel="True" />
     </StackPanel>
   </StackPanel>
 </Window>

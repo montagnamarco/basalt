@@ -67,10 +67,14 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
                         && item.ControlType != typeof(Forms.WebBrowser) && item.ControlType != typeof(Forms.AxHost)
                         && item.ControlType != typeof(Forms.ContextMenuStrip))
                     .Concat(new[] { typeof(Forms.Timer), typeof(Forms.ImageList), typeof(Forms.ToolTip), typeof(Forms.ContextMenuStrip), typeof(SerialPort) }
-                        .Select(type => new WinFormsToolboxItem(type)))),
+                        .Select(type => new WinFormsToolboxItem(type)))
+                    .Append(WinFormsToolboxCatalog.Pointer)),
             item => item.Category,
             item => [item.DisplayName],
             WinFormsToolboxVisuals.CreateRow);
+        // Pointer is the toolbox's resting state: nothing is pending to place
+        // until a control is chosen, just as VB6 and Visual Studio start out.
+        _toolbox.SelectedItem = WinFormsToolboxCatalog.Pointer;
         _toolboxPanel.ItemActivated += (_, activated) => AddTool(activated as WinFormsToolboxItem);
         var body = CreateDesignerBody(dockTools);
         var layout = new DockPanel { Margin = new Thickness(8), Children = { toolbar, _status, body } };
@@ -185,6 +189,12 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
     private void AddTool(WinFormsToolboxItem? item)
     {
         if (_session is null || item is null) return;
+
+        // Pointer places nothing: choosing it cancels whatever control was
+        // about to be placed and leaves the toolbox on plain selection, as
+        // VB6 and Visual Studio do when Pointer is clicked after a control.
+        if (item == WinFormsToolboxCatalog.Pointer) return;
+
         RunEditAsync(async () =>
         {
             var session = _session!;

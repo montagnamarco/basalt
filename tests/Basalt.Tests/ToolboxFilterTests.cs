@@ -226,6 +226,36 @@ public sealed class ToolboxFilterTests
     }
 
     [AvaloniaFact]
+    public void TheFormsToolboxLeadsWithPointerSelectedAndCancelsPlacement()
+    {
+        // VB6 and Visual Studio lead the toolbox with a Pointer entry that
+        // cancels a control placement and returns to plain selection; it is
+        // not a Forms control, so it carries no category heading of its own.
+        var document = new Basalt.Shell.ViewModels.EditorDocumentViewModel(
+            "MainForm.Designer.vb", WinFormsDesignerDocumentTests.Source, true);
+        using var view = new WinFormsDesignerView(document);
+        var window = new Window { Content = view, Width = 1000, Height = 700 };
+        window.Show();
+
+        try
+        {
+            var toolbox = Assert.IsType<ToolboxList>(view.ToolboxContent);
+            var rows = toolbox.List.ItemsSource!.Cast<object>().ToList();
+
+            Assert.Same(WinFormsToolboxCatalog.Pointer, rows[0]);
+            Assert.DoesNotContain(rows.OfType<ToolboxHeading>(), h => h.Name == "Pointer");
+            Assert.Same(WinFormsToolboxCatalog.Pointer, toolbox.List.SelectedItem);
+
+            var before = document.Text;
+            toolbox.List.SelectedItem = WinFormsToolboxCatalog.Pointer;
+            toolbox.Filter.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+            Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            Assert.Equal(before, document.Text);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
     public async Task TheFormsToolboxIsGroupedFilterableAndStillAddsOnEnter()
     {
         var document = new Basalt.Shell.ViewModels.EditorDocumentViewModel(

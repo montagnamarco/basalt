@@ -36,6 +36,11 @@ public static class ToolboxIcons
     /// </summary>
     public static string? PathDataFor(string elementName) => elementName switch
     {
+        // The selection arrow Pointer leads the toolbox with: VB6 and Visual
+        // Studio draw it as a mouse cursor, not a control, so it reads as "go
+        // back to selecting" rather than as one more thing to drop on the form.
+        "Pointer" => "M3,2 L3,13.5 L6,10.8 L7.8,14.2 L9.6,13.3 L7.8,9.9 L12,9.9 Z",
+
         // Layout: containers are drawn as the divisions they make. A grid is
         // its lines, a stack is its rows, a dock is a frame with a filled
         // edge — which is the one thing that distinguishes it from a border.

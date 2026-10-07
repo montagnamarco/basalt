@@ -3,12 +3,19 @@ using System.Reflection;
 
 namespace Basalt.Designer.Toolbox;
 
-public sealed record WinFormsToolboxItem(Type ControlType)
+/// <param name="ControlType">
+/// The Forms type the entry creates. The Pointer entry has no real control
+/// behind it, so it carries a private marker type and overrides below rather
+/// than being asked to resolve a category or a name from it.
+/// </param>
+/// <param name="DisplayNameOverride">Set only by <see cref="WinFormsToolboxCatalog.Pointer"/>.</param>
+/// <param name="CategoryOverride">Set only by <see cref="WinFormsToolboxCatalog.Pointer"/>.</param>
+public sealed record WinFormsToolboxItem(Type ControlType, string? DisplayNameOverride = null, string? CategoryOverride = null)
 {
-    public string DisplayName => ControlType.Name;
+    public string DisplayName => DisplayNameOverride ?? ControlType.Name;
 
     /// <summary>The group the control is listed under, as Visual Studio's toolbox names them.</summary>
-    public string Category => WinFormsToolboxCatalog.CategoryOf(ControlType);
+    public string Category => CategoryOverride ?? WinFormsToolboxCatalog.CategoryOf(ControlType);
 
     public override string ToString() => DisplayName;
 }
@@ -58,9 +65,30 @@ public static class WinFormsToolboxCatalog
     public const string Printing = "Printing";
     public const string Dialogs = "Dialogs";
 
+    /// <summary>
+    /// Pointer's category: the empty string rather than a named group, so
+    /// <see cref="ToolboxListing.Build"/> gives it no heading of its own and it
+    /// simply leads the list, the way VB6 and Visual Studio lead their toolbox.
+    /// </summary>
+    public const string PointerCategory = "";
+
+    /// <summary>Marker type for the Pointer entry; never instantiated, never a real Forms control.</summary>
+    private sealed class PointerToolMarker;
+
+    /// <summary>
+    /// The toolbox's permanent first entry. Activating it places nothing: it
+    /// cancels whatever control placement was pending and returns the toolbox
+    /// to plain selection, exactly as Pointer does in VB6 and Visual Studio.
+    /// </summary>
+    /// <summary>Whether a toolbox entry is <see cref="Pointer"/> rather than a control.</summary>
+    public static bool IsPointer(Type type) => type == typeof(PointerToolMarker);
+
+    public static readonly WinFormsToolboxItem Pointer =
+        new(typeof(PointerToolMarker), DisplayNameOverride: "Pointer", CategoryOverride: PointerCategory);
+
     /// <summary>Category titles in the order the toolbox shows them.</summary>
     public static IReadOnlyList<string> CategoryOrder { get; } =
-        [Common, Containers, MenusAndToolbars, Data, Components, Printing, Dialogs];
+        [PointerCategory, Common, Containers, MenusAndToolbars, Data, Components, Printing, Dialogs];
 
     private static readonly (string Title, HashSet<string> Names)[] Categories =
     [

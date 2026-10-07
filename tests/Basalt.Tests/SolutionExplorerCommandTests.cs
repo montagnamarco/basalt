@@ -1103,7 +1103,10 @@ public sealed class SolutionExplorerCommandTests
         var fileNode = vm.Explorer.Roots.SelectMany(Descendants).Single(n => n.Path == path);
 
         var task = InvokePrivateAsync(w, "DeleteInExplorerAsync", fileNode);
-        await DriveDialogAsync(host, task, _ => { }, b => b.IsDefault);
+        // Cancel, not the default button: Delete is the dialog's primary
+        // action (IsDefault) now that it follows Windows order, and Cancel
+        // is found by its own role instead.
+        await DriveDialogAsync(host, task, _ => { }, b => b.IsCancel);
 
         Assert.True(File.Exists(path), "the file was deleted despite cancelling");
         Assert.Single(vm.OpenDocuments);

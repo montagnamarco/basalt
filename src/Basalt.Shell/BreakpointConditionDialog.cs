@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Basalt.Core.Services;
 
@@ -67,13 +66,8 @@ public sealed class BreakpointConditionDialog : Window
         var cancel = new Button { Content = "Cancel", IsCancel = true };
         cancel.Click += (_, _) => Close();
 
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { cancel, ok }
-        };
+        // Windows order: the primary action (OK) leads, Cancel follows.
+        var buttons = DialogButtons.Row(ok, cancel);
 
         var layout = new StackPanel { Spacing = 12, Margin = new Thickness(20) };
 

@@ -3,13 +3,13 @@
                     xmlns:shell="clr-namespace:Basalt.Shell">
 
   <!--
-    Le palette dei temi. Ogni tema definisce le stesse chiavi; i temi custom
-    sono varianti dichiarate in IdeThemes, perché una variante non incorporata
-    non si può scrivere come chiave semplice in XAML e vuole `x:Static`.
+    The themes' palettes. Every theme defines the same keys; the custom
+    themes are variants declared in IdeThemes, because a variant that is not
+    built in cannot be written as a plain key in XAML and needs `x:Static`.
 
-    Una chiave che un tema non definisce ricade sulla variante di base, quindi
-    una palette deve dire solo dove differisce. Qui però le dicono tutte, così
-    ogni tema si legge per intero in un posto solo.
+    A key a theme does not define falls back to the base variant, so a
+    palette only needs to say where it differs. Here, though, all of them
+    say everything, so each theme reads whole in one place.
   -->
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
@@ -53,8 +53,9 @@
 
     <ResourceDictionary x:Key="Dark">
     <!--
-      Palette VS Code Dark ("Dark+"), speculare a quella chiara: gli stessi nomi
-      con i valori del tema scuro, così ogni pennello sotto vale per entrambi.
+      The VS Code Dark palette ("Dark+"), the mirror of the light one: the
+      same names with the dark theme's values, so every brush below holds
+      for both.
     -->
     <Color x:Key="EditorBackground">#1F1F1F</Color>
     <Color x:Key="EditorForeground">#D4D4D4</Color>

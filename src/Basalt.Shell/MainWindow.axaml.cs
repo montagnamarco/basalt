@@ -172,6 +172,7 @@ public partial class MainWindow : Window
         DataContext = viewModel;
         InitializeDocumentViewLifetime();
         InitializeSaveChanges();
+        InitializeWindowTitle();
 
         InstallMenu(viewModel);
         ShowRecentOnWelcome();
@@ -1708,6 +1709,7 @@ public partial class MainWindow : Window
         ok.Click += (_, _) => { answered = true; dialog.Close(); };
         cancel.Click += (_, _) => dialog.Close();
 
+        // Windows order: the primary action (OK) leads, Cancel follows.
         dialog.Content = new StackPanel
         {
             Margin = new Thickness(16),
@@ -1716,13 +1718,7 @@ public partial class MainWindow : Window
             {
                 new TextBlock { Text = prompt, FontSize = 12 },
                 box,
-                new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 8,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-                    Children = { cancel, ok }
-                }
+                DialogButtons.Row(ok, cancel)
             }
         };
 
@@ -1829,6 +1825,7 @@ public partial class MainWindow : Window
         ok.Click += (_, _) => { answered = true; dialog.Close(); };
         cancel.Click += (_, _) => dialog.Close();
 
+        // Windows order: the primary action (Go) leads, Cancel follows.
         dialog.Content = new StackPanel
         {
             Margin = new Thickness(16),
@@ -1837,13 +1834,7 @@ public partial class MainWindow : Window
             {
                 new TextBlock { Text = prompt, FontSize = 12 },
                 box,
-                new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 8,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-                    Children = { cancel, ok }
-                }
+                DialogButtons.Row(ok, cancel)
             }
         };
 
@@ -1879,6 +1870,7 @@ public partial class MainWindow : Window
 
         list.DoubleTapped += (_, _) => { answered = true; dialog.Close(); };
 
+        // Windows order: the primary action (OK) leads, Cancel follows.
         dialog.Content = new StackPanel
         {
             Margin = new Thickness(16),
@@ -1887,13 +1879,7 @@ public partial class MainWindow : Window
             {
                 new TextBlock { Text = prompt, FontSize = 12 },
                 list,
-                new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 8,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-                    Children = { cancel, ok }
-                }
+                DialogButtons.Row(ok, cancel)
             }
         };
 
@@ -3392,8 +3378,8 @@ public partial class MainWindow : Window
     {
         var answered = false;
 
-        var yes = new Button { Content = "Discard", Classes = { "primary" } };
-        var no = new Button { Content = "Cancel", IsCancel = true, IsDefault = true };
+        var yes = new Button { Content = "Discard", Classes = { "primary" }, IsDefault = true };
+        var no = new Button { Content = "Cancel", IsCancel = true };
 
         var dialog = new Window
         {
@@ -3407,6 +3393,7 @@ public partial class MainWindow : Window
         yes.Click += (_, _) => { answered = true; dialog.Close(); };
         no.Click += (_, _) => dialog.Close();
 
+        // Windows order: the primary action (Discard) leads, Cancel follows.
         dialog.Content = new StackPanel
         {
             Margin = new Thickness(20),
@@ -3414,13 +3401,7 @@ public partial class MainWindow : Window
             Children =
             {
                 new TextBlock { Text = message, TextWrapping = Avalonia.Media.TextWrapping.Wrap },
-                new StackPanel
-                {
-                    Orientation = Avalonia.Layout.Orientation.Horizontal,
-                    Spacing = 8,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
-                    Children = { no, yes }
-                }
+                DialogButtons.Row(yes, no)
             }
         };
 
@@ -4889,6 +4870,8 @@ public partial class MainWindow : Window
                 Action: ShowObjectBrowser) { Icon = IconKind.ObjectBrowser },
             new(Localizer.Get(StringKeys.ToolWatch),
                 Action: () => ShowTool(_factory.Watch)) { Icon = IconKind.Watch },
+            new(Localizer.Get(StringKeys.ToolImmediate),
+                Action: () => ShowTool(_factory.Immediate)) { Icon = IconKind.Immediate },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuViewNewTerminal), Action: OpenNewTerminal,
                 Gesture: new KeyGesture(Key.OemBackslash, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Terminal },

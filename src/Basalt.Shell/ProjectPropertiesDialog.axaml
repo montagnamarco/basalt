@@ -23,12 +23,14 @@
     <Border DockPanel.Dock="Bottom" Background="{DynamicResource SideBarBackgroundBrush}"
             BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0"
             Padding="20,12">
+      <!-- Windows/Visual Studio button order: the primary action (Save)
+           leads, Cancel follows it, the pair right-aligned. -->
       <Grid ColumnDefinitions="*,Auto,Auto">
         <TextBlock x:Name="StatusLabel" Grid.Column="0" VerticalAlignment="Center"
                    FontSize="12" Foreground="{DynamicResource DescriptionForegroundBrush}" />
-        <Button Grid.Column="1" Content="Cancel" Click="OnCancel" Margin="0,0,8,0"
-                IsCancel="True" />
-        <Button Grid.Column="2" Content="Save" Click="OnSave" Classes="primary" IsDefault="True" />
+        <Button Grid.Column="1" Content="Save" Click="OnSave" Margin="0,0,8,0"
+                Classes="primary" IsDefault="True" />
+        <Button Grid.Column="2" Content="Cancel" Click="OnCancel" IsCancel="True" />
       </Grid>
     </Border>
 

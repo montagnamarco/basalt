@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Basalt.Core.Localization;
 using Basalt.Core.Model;
 using Basalt.Designer;
 
@@ -19,11 +20,11 @@ public partial class NewWindowDialog : Window
         _directory = directory;
         _language = language;
 
-        LanguageLabel.Text = language == SourceLanguage.VisualBasic
-            ? "Code-behind: Visual Basic (.vb)"
-            : "Code-behind: C# (.cs)";
+        LanguageLabel.Text = Localizer.Get(language == SourceLanguage.VisualBasic
+            ? StringKeys.NewWindowCodeBehindVb
+            : StringKeys.NewWindowCodeBehindCs);
 
-        NameBox.Text = "NuovaFinestra";
+        NameBox.Text = Localizer.Get(StringKeys.NewWindowClassNamePlaceholder);
 
         // Focused when the dialog opens, so it can be filled in without
         // reaching for the mouse first.
@@ -36,7 +37,7 @@ public partial class NewWindowDialog : Window
 
         if (string.IsNullOrWhiteSpace(typeName))
         {
-            ErrorLabel.Text = "Indicare un nome per la finestra.";
+            ErrorLabel.Text = Localizer.Get(StringKeys.NewWindowNameRequired);
             return;
         }
 
@@ -44,7 +45,7 @@ public partial class NewWindowDialog : Window
         // writing files that would then fail to compile.
         if (!System.Text.RegularExpressions.Regex.IsMatch(typeName, @"^[A-Za-z_][A-Za-z0-9_]*$"))
         {
-            ErrorLabel.Text = "Il nome deve iniziare con una lettera e contenere solo lettere, cifre o trattini bassi.";
+            ErrorLabel.Text = Localizer.Get(StringKeys.NewWindowNameInvalid);
             return;
         }
 
