@@ -465,6 +465,15 @@
   <data name="Editor_VbNavigationFailed" xml:space="preserve">
     <value>VB navigation: {0}</value>
   </data>
+  <data name="Editor_VbGeneral" xml:space="preserve">
+    <value>(General)</value>
+  </data>
+  <data name="Editor_VbDeclarations" xml:space="preserve">
+    <value>(Declarations)</value>
+  </data>
+  <data name="Editor_VbFormEvents" xml:space="preserve">
+    <value>({0} Events)</value>
+  </data>
   <data name="MenuEditor_Title" xml:space="preserve"><value>Menu items</value></data>
   <data name="MenuEditor_Add" xml:space="preserve"><value>Add item</value></data>
   <data name="MenuEditor_Separator" xml:space="preserve"><value>Add separator</value></data>

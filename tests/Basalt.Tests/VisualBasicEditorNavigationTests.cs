@@ -1,8 +1,11 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
+using Basalt.Core.Localization;
+using Basalt.Core.Model;
 using Basalt.Shell.Controls;
 using Basalt.Shell.ViewModels;
 
@@ -115,15 +118,143 @@ public sealed class VisualBasicEditorNavigationTests
     public void ReadsPartialFieldsFrameworkEventsAndGeneralMembers()
     {
         var objects = VisualBasicEditorNavigation.Read(Source, Companion);
-        Assert.Contains(objects.Single(item => item.Name == "MainForm").Members, member => member.Name == "Existing");
+        var general = Localizer.Get(StringKeys.EditorVbGeneral);
+        var formEvents = Localizer.Get(StringKeys.EditorVbFormEvents, "MainForm");
+        Assert.Contains(objects.Single(item => item.Name == general).Members, member => member.Name == "Existing");
         Assert.Contains(objects.Single(item => item.Name == "Button1").Members, member => member.EventName == "Click");
-        Assert.Contains(objects.Single(item => item.Name == "(MainForm)").Members, member => member.EventName == "Load");
+        Assert.Contains(objects.Single(item => item.Name == formEvents).Members, member => member.EventName == "Load");
         var selected = VisualBasicEditorNavigation.SelectEvent(Source, objects.Single(item => item.Name == "Button1"),
             objects.Single(item => item.Name == "Button1").Members.Single(member => member.Name == "Click"));
         Assert.Equal(Source, selected.Source);
         Assert.True(selected.Offset > Source.IndexOf("Handles Button1.Click", StringComparison.Ordinal));
         Assert.True(selected.Offset < Source.IndexOf("End Sub", StringComparison.Ordinal));
     }
+
+    /// <summary>
+    /// The entry the left combo marks "general" is the one the caret-tracking
+    /// logic falls back to; without <see cref="VisualBasicNavigationObject.IsGeneral"/>
+    /// correctly set, following the caret into a type with no base-class
+    /// events and no fields would have nothing to fall back to.
+    /// </summary>
+    [Fact]
+    public void GeneralEntryIsMarkedGeneralAndLeadsWithDeclarations()
+    {
+        var target = VisualBasicEditorNavigation.Read(Source, Companion)
+            .Single(item => item.Name == Localizer.Get(StringKeys.EditorVbGeneral));
+        Assert.True(target.IsGeneral);
+        Assert.Equal(Localizer.Get(StringKeys.EditorVbDeclarations), target.Members[0].Name);
+        Assert.Null(target.Members[0].EventName);
+    }
+
+    /// <summary>
+    /// VB6 and Visual Studio's own Procedure list show a type's members in
+    /// the order they were written, not alphabetically — the author's
+    /// ordering is information, and scrambling it was a regression a plain
+    /// alphabetical sort would not have caught.
+    /// </summary>
+    [Fact]
+    public void GeneralMembersKeepDeclarationOrderRatherThanAlphabetical()
+    {
+        const string source = """
+            Partial Class MainForm
+                Private Sub Zebra()
+                End Sub
+                Private Sub Apple()
+                End Sub
+            End Class
+            """;
+        var target = VisualBasicEditorNavigation.Read(source, null)
+            .Single(item => item.Name == Localizer.Get(StringKeys.EditorVbGeneral));
+
+        // Skip the "(Declarations)" entry that always leads the list.
+        var names = target.Members.Skip(1).Select(member => member.Name).ToArray();
+        Assert.Equal(["Zebra", "Apple"], names);
+    }
+
+    /// <summary>
+    /// A method, property and event each carry the icon kind matching Visual
+    /// Studio's symbol icons, so the Procedure list is not just text.
+    /// </summary>
+    [Fact]
+    public void GeneralMembersCarryIconKindsForMethodsPropertiesAndEvents()
+    {
+        const string source = """
+            Partial Class MainForm
+                Public Sub DoWork()
+                End Sub
+                Public Property Count As Integer
+                Public Event Changed()
+            End Class
+            """;
+        var target = VisualBasicEditorNavigation.Read(source, null)
+            .Single(item => item.Name == Localizer.Get(StringKeys.EditorVbGeneral));
+
+        Assert.Equal(CompletionKind.Method, target.Members.Single(member => member.Name == "DoWork").Kind);
+        Assert.Equal(CompletionKind.Property, target.Members.Single(member => member.Name == "Count").Kind);
+        Assert.Equal(CompletionKind.Event, target.Members.Single(member => member.Name == "Changed").Kind);
+    }
+
+    /// <summary>
+    /// A control event that already has a handler is marked so the list can
+    /// show it in bold, the way Visual Studio marks a wired-up event;
+    /// an event nothing handles yet is not.
+    /// </summary>
+    [Fact]
+    public void ExistingHandlersAreFlaggedButUnhandledEventsAreNot()
+    {
+        var target = VisualBasicEditorNavigation.Read(Source, Companion).Single(item => item.Name == "Button1");
+        Assert.True(target.Members.Single(member => member.EventName == "Click").HasHandler);
+        Assert.False(target.Members.Single(member => member.EventName == "MouseEnter").HasHandler);
+    }
+
+    /// <summary>
+    /// The Procedure list draws an already-handled event in bold and an
+    /// unhandled one in normal weight — otherwise the list is only text, and
+    /// the user cannot tell which events already have code without opening
+    /// every one. The icon matches the member's kind.
+    /// </summary>
+    [AvaloniaFact]
+    public void HandledEventRendersBoldWithAnIconAndUnhandledDoesNot()
+    {
+        var handled = new VisualBasicNavigationMember("Click", 0, "Click",
+            Kind: CompletionKind.Event, HasHandler: true);
+        var unhandled = new VisualBasicNavigationMember("MouseEnter", 0, "MouseEnter",
+            Kind: CompletionKind.Event, HasHandler: false);
+
+        var handledText = Assert.IsType<TextBlock>(
+            FindText(CodeEditor.BuildMemberVisualForTests(handled)));
+        var unhandledText = Assert.IsType<TextBlock>(
+            FindText(CodeEditor.BuildMemberVisualForTests(unhandled)));
+
+        Assert.Equal(FontWeight.Bold, handledText.FontWeight);
+        Assert.Equal(FontWeight.Normal, unhandledText.FontWeight);
+
+        // Both carry an icon: the member kind, not whether it is handled,
+        // decides that.
+        Assert.NotNull(FindImage(CodeEditor.BuildMemberVisualForTests(handled)));
+        Assert.NotNull(FindImage(CodeEditor.BuildMemberVisualForTests(unhandled)));
+    }
+
+    /// <summary>
+    /// "(Declarations)" names a position rather than a symbol, so it carries
+    /// no icon — just the text, as Visual Studio shows it.
+    /// </summary>
+    [AvaloniaFact]
+    public void PseudoDeclarationsEntryHasNoIcon()
+    {
+        var declarations = new VisualBasicNavigationMember(
+            Localizer.Get(StringKeys.EditorVbDeclarations), 0);
+
+        var visual = CodeEditor.BuildMemberVisualForTests(declarations);
+
+        Assert.IsType<TextBlock>(visual);
+    }
+
+    private static Image? FindImage(Control? visual) =>
+        visual as Image ?? (visual as Panel)?.Children.OfType<Image>().FirstOrDefault();
+
+    private static TextBlock? FindText(Control? visual) =>
+        visual as TextBlock ?? (visual as Panel)?.Children.OfType<TextBlock>().FirstOrDefault();
 
     [AvaloniaFact]
     public async Task SerialPortDropdownCreatesHandlerWithoutOpeningAPort()

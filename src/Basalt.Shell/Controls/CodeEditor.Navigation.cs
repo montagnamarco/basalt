@@ -1,5 +1,8 @@
 using System.ComponentModel;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Basalt.Core.Localization;
 using Basalt.Core.Model;
@@ -37,6 +40,7 @@ public sealed partial class CodeEditor
         }
         ToolTip.SetTip(_navigationObjects, Localizer.Get(StringKeys.EditorVbObjects));
         ToolTip.SetTip(_navigationMembers, Localizer.Get(StringKeys.EditorVbMembers));
+        _navigationMembers.ItemTemplate = MemberItemTemplate();
         _navigationObjects.SelectionChanged += (_, _) => ShowNavigationMembers();
         _navigationMembers.SelectionChanged += async (_, _) => await NavigateSelectedMemberAsync();
         var selectors = new Grid
@@ -57,6 +61,44 @@ public sealed partial class CodeEditor
         Grid.SetRow(editorHost, 1);
         return layout;
     }
+
+    /// <summary>
+    /// How a Procedure list entry is drawn: an icon for the kind of member
+    /// ("(Declarations)" has none, as it names a position rather than a
+    /// symbol), bold for a control event that already has a handler — the
+    /// way Visual Studio marks a wired-up event, so the list says at a glance
+    /// what still needs one.
+    /// </summary>
+    private static FuncDataTemplate<VisualBasicNavigationMember> MemberItemTemplate() =>
+        new((member, _) =>
+        {
+            var text = new TextBlock
+            {
+                Text = member?.Name,
+                FontWeight = member?.HasHandler == true ? FontWeight.Bold : FontWeight.Normal,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            if (member?.Kind is not { } kind || CompletionIcons.For(kind) is not { } icon)
+            {
+                return text;
+            }
+
+            return new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                Children =
+                {
+                    new Image { Source = icon, Width = 14, Height = 14, VerticalAlignment = VerticalAlignment.Center },
+                    text,
+                },
+            };
+        });
+
+    /// <summary>Builds the Procedure list's visual for one entry, for the tests.</summary>
+    internal static Control? BuildMemberVisualForTests(VisualBasicNavigationMember member) =>
+        MemberItemTemplate().Build(member);
 
     private void OnNavigationDocumentChanged(object? sender, PropertyChangedEventArgs args)
     {
@@ -144,7 +186,7 @@ public sealed partial class CodeEditor
             _navigationObjects.ItemsSource = objects;
             _navigationObjects.SelectedItem = objects.FirstOrDefault(item =>
                 item.ClassName == selected?.ClassName && item.Name == selected?.Name)
-                ?? objects.Where(item => item.Name == item.ClassName && item.Offset <= _editor.CaretOffset)
+                ?? objects.Where(item => item.IsGeneral && item.Offset <= _editor.CaretOffset)
                     .LastOrDefault() ?? objects.FirstOrDefault();
             _updatingNavigation = false;
             ShowNavigationMembers();

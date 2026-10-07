@@ -538,6 +538,9 @@ public static class StringKeys
     public const string ResourceEditorEditFailed = "ResourceEditor_EditFailed";
     public const string DesignerView = "Designer_View";
     public const string EditorSmartTagsUnsupportedChanges = "Editor_SmartTagsUnsupportedChanges";
+    public const string EditorVbDeclarations = "Editor_VbDeclarations";
+    public const string EditorVbFormEvents = "Editor_VbFormEvents";
+    public const string EditorVbGeneral = "Editor_VbGeneral";
     public const string EditorVbMembers = "Editor_VbMembers";
     public const string EditorVbNavigationFailed = "Editor_VbNavigationFailed";
     public const string EditorVbObjects = "Editor_VbObjects";
