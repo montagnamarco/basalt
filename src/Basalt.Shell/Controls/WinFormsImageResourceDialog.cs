@@ -178,7 +178,7 @@ internal sealed class WinFormsImageResourceDialog : Window
         var layout = new StackPanel
         {
             Margin = new Thickness(16),
-            Spacing = 10,
+            Spacing = Spacing.Normal,
             Children = { localRadio, localRow, _projectRadio, projectRow, _projectList, _preview, _error, buttons },
         };
         Content = layout;
