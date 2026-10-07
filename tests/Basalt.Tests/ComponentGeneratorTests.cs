@@ -395,6 +395,28 @@ public class ComponentGeneratorTests
     }
 
     [Fact]
+    public void BasaltRelativePathMetadataGivesTheFolderNamespaceWhenThePathDoesNotMatchTheProjectDirectory()
+    {
+        // A symlinked checkout: AdditionalFiles is resolved through the
+        // physical filesystem while BasaltProjectDir keeps the path MSBuild
+        // was given, so they share no prefix and the component used to fall
+        // back to the legacy "Components" namespace regardless of its folder.
+        var physicalPath = "/private/physical/Site/Components/Layout/MainLayout.vbrazor";
+
+        var outcome = GeneratorRun.Run("VbComponentGenerator", new GeneratorRun.Setup
+        {
+            ProjectDirectory = Site,
+            RelativePaths = new Dictionary<string, string>
+            {
+                [physicalPath] = "Components/Layout/MainLayout.vbrazor",
+            },
+        }, (physicalPath, "@Inherits Microsoft.AspNetCore.Components.LayoutComponentBase\n@Body\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.Contains("Namespace Components.Layout", Assert.Single(outcome.Sources).Value);
+    }
+
+    [Fact]
     public void TwoComponentsOfTheSameNameInDifferentFoldersAreTwoClasses()
     {
         // Both were Components.Index under the older scheme: one hint name,
@@ -472,6 +494,33 @@ public class ComponentGeneratorTests
         var code = Assert.Single(outcome.Sources).Value;
 
         Assert.Contains("Namespace Components\r\n", code.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+    }
+
+    [Fact]
+    public void TheLegacySchemeIgnoresBasaltRelativePathMetadataToo()
+    {
+        // NamespaceFor forces the project directory to null under Legacy so
+        // folder namespacing stays off; passing BasaltRelativePath metadata
+        // as well — what a symlinked build supplies — must not turn it back
+        // on behind that switch's back.
+        var physicalPath = "/private/physical/Site/Components/Layout/MainLayout.vbrazor";
+
+        var outcome = GeneratorRun.Run("VbComponentGenerator", new GeneratorRun.Setup
+        {
+            ProjectDirectory = Site,
+            Properties = new Dictionary<string, string> { ["VbRazorComponentNamespaces"] = "Legacy" },
+            RelativePaths = new Dictionary<string, string>
+            {
+                [physicalPath] = "Components/Layout/MainLayout.vbrazor",
+            },
+        }, (physicalPath, "<p>layout</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+
+        var code = Assert.Single(outcome.Sources).Value;
+
+        Assert.Contains("Namespace Components\r\n", code.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+        Assert.DoesNotContain("Namespace Components.Layout", code);
     }
 
     [Fact]

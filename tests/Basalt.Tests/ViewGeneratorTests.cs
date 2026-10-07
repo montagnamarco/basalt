@@ -256,4 +256,62 @@ public class ViewGeneratorTests
 
         Assert.Contains(outcome.Diagnostics, d => d.Id == "VBH103");
     }
+
+    [Fact]
+    public void BasaltRelativePathMetadataIsUsedWhenTheTemplatesPathDoesNotMatchTheProjectDirectory()
+    {
+        // What a symlinked checkout looks like to the compiler: AdditionalFiles
+        // is resolved through the physical filesystem while BasaltProjectDir
+        // keeps the symlinked path MSBuild was given, so the two never share a
+        // prefix. The package's .props sets BasaltRelativePath from the
+        // template's own relative Include, independent of that resolution.
+        var physicalPath = "/private/physical/Site/Views/Home/Index.vbhtml";
+
+        var outcome = GeneratorRun.Run("VbHtmlGenerator", new GeneratorRun.Setup
+        {
+            ProjectDirectory = Project,
+            RelativePaths = new Dictionary<string, string>
+            {
+                [physicalPath] = "Views/Home/Index.vbhtml",
+            },
+        }, (physicalPath, "<p>hi</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.DoesNotContain(outcome.Diagnostics, d => d.Id == "VBH103");
+
+        var registration = Assert.Single(outcome.Sources, s => s.Key.EndsWith(".view.g.vb")).Value;
+
+        Assert.Contains("\"mvc.1.0.view\", \"/Views/Home/Index.vbhtml\"", registration, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ATruncatedBasaltRelativePathFallsBackToTheProjectDirectoryComparison()
+    {
+        // Roslyn's analyzer-config parser cuts a value at an unescaped '#':
+        // a .editorconfig section written by this package's props for
+        // Views/C#/Index.vbhtml, built and inspected directly, comes back
+        // from AnalyzerConfigOptions as "Views/C" alone — confirmed against
+        // the real parser, not assumed. Supplied here exactly as truncated,
+        // the path still matches ProjectDirectory by itself, so the generator
+        // must fall back to that comparison rather than trust "Views/C",
+        // which is not even a folder the template is really under.
+        var path = InProject("Views", "C#", "Index.vbhtml");
+
+        var outcome = GeneratorRun.Run("VbHtmlGenerator", new GeneratorRun.Setup
+        {
+            ProjectDirectory = Project,
+            RelativePaths = new Dictionary<string, string> { [path] = "Views/C" },
+        }, (path, "<p>hi</p>\n"));
+
+        Assert.Empty(outcome.CompilationErrors);
+        Assert.DoesNotContain(outcome.Diagnostics, d => d.Id == "VBH103");
+
+        Assert.Contains(outcome.Sources.Values, code => code.Contains("Namespace Views.C_"));
+
+        var registration = Assert.Single(outcome.Sources, s => s.Key.EndsWith(".view.g.vb")).Value;
+
+        // The real path, "/Views/C#/Index.vbhtml" — not "/Views/C", which
+        // trusting the truncated metadata as given would have produced.
+        Assert.Contains("\"mvc.1.0.view\", \"/Views/C#/Index.vbhtml\"", registration, StringComparison.Ordinal);
+    }
 }

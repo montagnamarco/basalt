@@ -102,7 +102,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
 
             var legacy = string.Equals(scheme?.Trim(), "Legacy", StringComparison.OrdinalIgnoreCase);
 
-            return new Naming(legacy ? null : projectDirectory is { Length: > 0 } ? projectDirectory : null);
+            return new Naming(legacy ? null : projectDirectory is { Length: > 0 } ? projectDirectory : null, legacy);
         });
 
         // The compilation itself as well: every component's parameters are
@@ -312,7 +312,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         // Sito.Sito.Home — a class that compiles and that nothing naming the
         // type can find. Measured: MapRazorComponents(Of Global.Sito.Home)
         // failed to resolve while the generated file was sitting right there.
-        return new Prepared(template, document, NamespaceFor(template.Path, naming));
+        return new Prepared(template, document, NamespaceFor(template.Path, naming, template.RelativePath));
     }
 
     private static void Write(
@@ -352,9 +352,13 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
     /// were the same class, and a layout in Components/Layout was not in
     /// Components.Layout, where anyone coming from C# looks for it.
     /// </remarks>
-    private static string NamespaceFor(string path, Naming naming)
+    private static string NamespaceFor(string path, Naming naming, string? relativePath)
     {
-        if (ViewNaming.ProjectFolderNamespaceFor(path, naming.ProjectDirectory) is { } folders)
+        // Ignored under the legacy scheme: ProjectDirectory is forced null
+        // above to turn folder-based namespacing off, and honouring the
+        // metadata here would turn it back on regardless.
+        if (ViewNaming.ProjectFolderNamespaceFor(path, naming.ProjectDirectory, naming.Legacy ? null : relativePath)
+            is { } folders)
             return folders;
 
         var folder = ViewNaming.FolderNamespaceFor(path);
@@ -363,7 +367,7 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
     }
 
     /// <summary>How components are namespaced: by project folder, or the older way when null.</summary>
-    private sealed record Naming(string? ProjectDirectory);
+    private sealed record Naming(string? ProjectDirectory, bool Legacy = false);
 
     /// <summary>The name of the file whose directives every component below it shares.</summary>
     internal const string ImportsFileName = "_Imports.vbrazor";
@@ -387,14 +391,18 @@ public sealed class VbComponentGenerator : IIncrementalGenerator
         var source = file.GetText(ct);
 
         options.TryGetValue("build_metadata.AdditionalFiles.CssScope", out var scope);
+        options.TryGetValue("build_metadata.AdditionalFiles.BasaltRelativePath", out var relativePath);
 
         return new(
             Path: file.Path,
             Text: source?.ToString() ?? string.Empty,
             ClassName: ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(file.Path)),
             Checksum: TemplateChecksum.Of(source),
-            CssScope: string.IsNullOrWhiteSpace(scope) ? null : scope!.Trim());
+            CssScope: string.IsNullOrWhiteSpace(scope) ? null : scope!.Trim(),
+            RelativePath: RelativePathMetadata.Validate(file.Path, relativePath));
     }
 
-    private sealed record Component(string Path, string Text, string ClassName, string? Checksum, string? CssScope);
+    private sealed record Component(
+        string Path, string Text, string ClassName, string? Checksum, string? CssScope,
+        string? RelativePath = null);
 }

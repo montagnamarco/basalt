@@ -14,6 +14,21 @@
 
   <ItemGroup>
     <AdditionalFiles Include="Pages\**\*.vbpage" />
+
+    <!--
+      The package's own .props compute this from %(Identity); the sample
+      declares its own AdditionalFiles instead of importing that .props, so
+      it is repeated here. Without it the IDE, which builds through a
+      symlinked checkout, resolves a template's AdditionalFiles path through
+      the physical filesystem while BasaltProjectDir keeps the symlinked path
+      as given: the two never match, and every page falls back to its bare
+      file name for both its route and its namespace.
+    -->
+    <AdditionalFiles Update="Pages\**\*.vbpage">
+      <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and !$([System.IO.Path]::IsPathRooted('%(Identity)'))">%(Identity)</BasaltRelativePath>
+      <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and $([System.IO.Path]::IsPathRooted('%(Identity)'))">$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), %(FullPath)))</BasaltRelativePath>
+    </AdditionalFiles>
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="BasaltRelativePath" />
   </ItemGroup>
 
   <ItemGroup>

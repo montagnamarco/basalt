@@ -98,23 +98,43 @@ public static class ViewNaming
     /// </summary>
     /// <returns>
     /// Empty for a file beside the project file, which is then in the root
-    /// namespace alone; null without a project folder, or for a file outside it.
+    /// namespace alone; null without a project folder or a relative path, or
+    /// for a file outside the project.
     /// </returns>
     /// <remarks>
     /// Visual Basic prepends RootNamespace to every Namespace statement, so
     /// only the folders are returned.
+    ///
+    /// <paramref name="relativePath"/> — MSBuild's BasaltRelativePath item
+    /// metadata — is preferred over comparing <paramref name="path"/> against
+    /// <paramref name="projectDirectory"/>: through a symlinked project path
+    /// the two are resolved differently (the compiler resolves a relative
+    /// AdditionalFiles glob against the physical directory it runs in) and the
+    /// comparison never matches, putting every component in the wrong
+    /// namespace.
     /// </remarks>
-    public static string? ProjectFolderNamespaceFor(string path, string? projectDirectory)
+    public static string? ProjectFolderNamespaceFor(string path, string? projectDirectory, string? relativePath = null)
     {
-        if (projectDirectory is not { Length: > 0 }) return null;
+        string relative;
 
-        var folder = projectDirectory.TrimEnd('/', '\\');
+        if (relativePath is { Length: > 0 })
+        {
+            relative = relativePath.Replace('\\', '/').TrimStart('/');
+        }
+        else
+        {
+            if (projectDirectory is not { Length: > 0 }) return null;
 
-        // Followed by a separator: C:\Site is not the folder of C:\Site.Shared\X.vbrazor.
-        if (!path.StartsWith(folder, StringComparison.OrdinalIgnoreCase)) return null;
-        if (path.Length <= folder.Length || path[folder.Length] is not ('/' or '\\')) return null;
+            var folder = projectDirectory.TrimEnd('/', '\\');
 
-        var segments = path.Substring(folder.Length + 1).Split('/', '\\');
+            // Followed by a separator: C:\Site is not the folder of C:\Site.Shared\X.vbrazor.
+            if (!path.StartsWith(folder, StringComparison.OrdinalIgnoreCase)) return null;
+            if (path.Length <= folder.Length || path[folder.Length] is not ('/' or '\\')) return null;
+
+            relative = path.Substring(folder.Length + 1);
+        }
+
+        var segments = relative.Split('/', '\\');
         var folders = new List<string>();
 
         for (var index = 0; index < segments.Length - 1; index++)

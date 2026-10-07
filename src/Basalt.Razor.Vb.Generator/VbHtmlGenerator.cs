@@ -26,7 +26,8 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     {
         var templates = context.AdditionalTextsProvider
             .Where(file => file.Path.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase))
-            .Select((file, ct) => ReadTemplate(file, ct));
+            .Combine(context.AnalyzerConfigOptionsProvider)
+            .Select((pair, ct) => ReadTemplate(pair.Left, pair.Right.GetOptions(pair.Left), ct));
 
         // The root namespace is a build property, so generated views land in
         // the same namespace as the project's hand-written code.
@@ -102,7 +103,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     private static string PageRegistration(
         Template template, string namespaceName, string? projectDirectory)
     {
-        var identifier = ApplicationRelativePath(template.Path, projectDirectory);
+        var identifier = ApplicationRelativePath(template.Path, projectDirectory, template.RelativePath);
         // Rooted at Global, and carrying the project's root namespace, which
         // Visual Basic prepends to every Namespace statement in the file: the
         // generated class is really RootNamespace.Views.Home.Index, and
@@ -137,8 +138,8 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         // A _ViewStart is looked for by its .cshtml name — MVC builds the
         // list of them itself, and only with that extension.
         var identifier = IsViewStart(template.Path)
-            ? ApplicationRelativePath(template.Path, projectDirectory)
-            : ProjectRelativePath(template.Path, projectDirectory);
+            ? ApplicationRelativePath(template.Path, projectDirectory, template.RelativePath)
+            : ProjectRelativePath(template.Path, projectDirectory, template.RelativePath);
         var typeName = $"Global.{namespaceName}.{ViewNaming.Escape(template.ClassName)}";
 
         return $"""
@@ -156,12 +157,23 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     /// null when it cannot be worked out.
     /// </summary>
     /// <remarks>
-    /// Null without BasaltProjectDir, or for a file outside the project
-    /// folder. The folder must be followed by a separator: C:\Site is not the
-    /// folder of C:\Site.Shared\Views\Index.vbhtml.
+    /// Preferring <paramref name="relativePath"/> — MSBuild's BasaltRelativePath
+    /// item metadata, computed from the template's own Include where its
+    /// relative form is known — over comparing the template's path against
+    /// BasaltProjectDir. The comparison fails when the project is reached
+    /// through a symlink: the compiler resolves a relative AdditionalFiles
+    /// glob against the physical directory it is running in, which differs
+    /// from BasaltProjectDir, the project directory as given.
+    ///
+    /// Null without either, or for a file outside the project folder. The
+    /// folder must be followed by a separator: C:\Site is not the folder of
+    /// C:\Site.Shared\Views\Index.vbhtml.
     /// </remarks>
-    private static string? RelativeToProject(string path, string? projectDirectory)
+    private static string? RelativeToProject(string path, string? projectDirectory, string? relativePath = null)
     {
+        if (relativePath is { Length: > 0 })
+            return "/" + relativePath.Replace('\\', '/').TrimStart('/');
+
         if (projectDirectory is not { Length: > 0 }) return null;
 
         var folder = projectDirectory.TrimEnd('/', '\\');
@@ -173,8 +185,8 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     }
 
     /// <summary>A template's path from the project folder, or its file name.</summary>
-    private static string ProjectRelativePath(string path, string? projectDirectory) =>
-        RelativeToProject(path, projectDirectory) ?? "/" + Path.GetFileName(path);
+    private static string ProjectRelativePath(string path, string? projectDirectory, string? relativePath = null) =>
+        RelativeToProject(path, projectDirectory, relativePath) ?? "/" + Path.GetFileName(path);
 
     /// <summary>
     /// A view's path as the application sees it: /Pages/Index.vbhtml.
@@ -185,9 +197,9 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     /// is used, which keeps a page working in the odd build that does not
     /// supply one.
     /// </remarks>
-    private static string ApplicationRelativePath(string path, string? projectDirectory)
+    private static string ApplicationRelativePath(string path, string? projectDirectory, string? relativePath = null)
     {
-        var normalised = ProjectRelativePath(path, projectDirectory);
+        var normalised = ProjectRelativePath(path, projectDirectory, relativePath);
 
         // ASP.NET Core keys its pages on a .cshtml path: the framework's own
         // conventions, route resolution and page-name lookups all assume that
@@ -233,16 +245,20 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
             .OrderBy(s => (Path.GetDirectoryName(s.Path) ?? "").Length);
     }
 
-    private static Template ReadTemplate(AdditionalText file, CancellationToken ct)
+    private static Template ReadTemplate(
+        AdditionalText file, Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions options, CancellationToken ct)
     {
         var source = file.GetText(ct);
+
+        options.TryGetValue("build_metadata.AdditionalFiles.BasaltRelativePath", out var relativePath);
 
         return new Template(
             Path: file.Path,
             ClassName: ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(file.Path)),
             FolderNamespace: ViewNaming.FolderNamespaceFor(file.Path),
             Text: source?.ToString() ?? string.Empty,
-            Checksum: TemplateChecksum.Of(source));
+            Checksum: TemplateChecksum.Of(source),
+            RelativePath: RelativePathMetadata.Validate(file.Path, relativePath));
     }
 
 
@@ -349,7 +365,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
         //
         // From the path inside the project where it is known, so a project
         // that itself sits in a folder called Areas is not taken for an area.
-        var relativePath = RelativeToProject(template.Path, projectDirectory);
+        var relativePath = RelativeToProject(template.Path, projectDirectory, template.RelativePath);
         var rootFolder = ViewNaming.RootFolderFor(relativePath ?? template.Path);
 
         // A _ViewStart at the project root belongs to no Views or Pages
@@ -401,7 +417,7 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
             : host;
 
         if (templateHost == ViewHost.RazorPage)
-            document.PageIdentifier = ApplicationRelativePath(template.Path, projectDirectory);
+            document.PageIdentifier = ApplicationRelativePath(template.Path, projectDirectory, template.RelativePath);
 
         var code = VbHtmlCodeWriter
             .WriteWithMap(
@@ -474,7 +490,8 @@ public sealed class VbHtmlGenerator : IIncrementalGenerator
     /// </summary>
 
     private sealed record Template(
-        string Path, string ClassName, string FolderNamespace, string Text, string? Checksum);
+        string Path, string ClassName, string FolderNamespace, string Text, string? Checksum,
+        string? RelativePath = null);
 
     private static readonly DiagnosticDescriptor TemplateProblem = new(
         id: "VBH100",

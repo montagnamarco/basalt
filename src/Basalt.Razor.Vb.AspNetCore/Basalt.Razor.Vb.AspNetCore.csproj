@@ -20,6 +20,20 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="build/Basalt.Razor.Vb.AspNetCore.props"
           Pack="true" PackagePath="build" Visible="false" />
+
+    <!--
+      The same physical file Basalt.Razor.Vb.Generator packs as
+      Basalt.Razor.Vb's own build/Basalt.Razor.Vb.Templates.props: one
+      definition of what templates are collected and how BasaltRelativePath
+      is computed, imported by both packages' .props (see
+      Basalt.Razor.Vb.Templates.props). NuGet imports a package's build/
+      folder only for a PackageReference the project makes directly, so this
+      package needs its own copy of the file to import, not just of the
+      .props that imports it.
+    -->
+    <None Include="../Basalt.Razor.Vb.Generator/build/Basalt.Razor.Vb.Templates.props"
+          Pack="true" PackagePath="build" Visible="false"
+          Link="build/Basalt.Razor.Vb.Templates.props" />
   </ItemGroup>
 
   <ItemGroup>

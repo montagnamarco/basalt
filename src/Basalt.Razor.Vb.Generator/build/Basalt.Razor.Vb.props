@@ -24,26 +24,11 @@
   <!--
     Every .vbhtml file in the project is handed to the generator, without the
     user having to list them. Imported before the project file so that a
-    project can still remove or add to the set.
+    project can still remove or add to the set. Shared with
+    Basalt.Razor.Vb.AspNetCore.props: see Basalt.Razor.Vb.Templates.props for
+    why and RelativeToProject's fallback (VbHtmlGenerator) for what happens
+    without the metadata it sets.
   -->
-  <ItemGroup Condition="'$(BasaltRazorVbViewsCollected)' == 'basalt.razor.vb'">
-    <!-- .vbpage, spelled out: the glob was "*.vbp", which names Visual Basic 6
-         project files, not pages. -->
-    <AdditionalFiles Include="**/*.vbpage"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-    <AdditionalFiles Include="**/*.vbhtml"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-
-    <!-- Blazor components: a .vbrazor is compiled into a render tree rather
-         than into a class that writes markup, which is why it carries its own
-         extension the way .razor does beside .cshtml. -->
-    <AdditionalFiles Include="**/*.vbrazor"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-    <CompilerVisibleProperty Include="BasaltProjectDir" />
-    <!-- On or Off for the templates alone; unset, they follow OptionStrict. -->
-    <CompilerVisibleProperty Include="VbRazorOptionStrict" />
-    <!-- Legacy for the namespaces components had before they followed their folders. -->
-    <CompilerVisibleProperty Include="VbRazorComponentNamespaces" />
-  </ItemGroup>
+  <Import Project="Basalt.Razor.Vb.Templates.props" Condition="'$(BasaltRazorVbViewsCollected)' == 'basalt.razor.vb'" />
 
 </Project>

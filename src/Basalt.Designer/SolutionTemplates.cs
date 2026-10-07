@@ -845,6 +845,22 @@ public static partial class SolutionTemplates
               component was never generated.
             -->
             <AdditionalFiles Include="Components/**/*.vbrazor" />
+
+            <!--
+              The package's own .props compute this from %(Identity); this
+              project declares its own AdditionalFiles instead of importing
+              that .props, so it is repeated here. Without it the IDE, which
+              builds through a symlinked checkout, resolves a template's
+              AdditionalFiles path through the physical filesystem while
+              BasaltProjectDir keeps the symlinked path as given: the two
+              never match, every view is reported outside the project
+              (VBH103), and every component gets the wrong namespace.
+            -->
+            <AdditionalFiles Update="Views/**/*.vbhtml;Components/**/*.vbrazor">
+              <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and !$([System.IO.Path]::IsPathRooted('%(Identity)'))">%(Identity)</BasaltRelativePath>
+              <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and $([System.IO.Path]::IsPathRooted('%(Identity)'))">$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), %(FullPath)))</BasaltRelativePath>
+            </AdditionalFiles>
+            <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="BasaltRelativePath" />
           </ItemGroup>
         """;
     }

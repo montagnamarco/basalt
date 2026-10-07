@@ -50,6 +50,23 @@
 
       <!-- Counter.vbrazor.css scopes Counter.vbrazor: its file name less .css. -->
       <_BasaltVbRazorWithScope Include="@(_BasaltVbRazorScopedCss->'%(RelativeDir)%(Filename)')" CssScope="%(_BasaltVbRazorScopedCss.CssScope)" />
+
+      <!--
+        Without this, the Remove/Include below drops whatever BasaltRelativePath
+        the matching .vbrazor AdditionalFiles item already carried: this item is
+        built from the .vbrazor.css item's own metadata, which never had it, not
+        from the .vbrazor item. Computed exactly as the package's props compute
+        it for AdditionalFiles itself (Basalt.Razor.Vb.props), so a component with
+        CSS isolation is namespaced the same as one without when the project is
+        reached through a symlink. %(Identity) here is "%(RelativeDir)%(Filename)"
+        of the .vbrazor.css item above, relative exactly when that item's own
+        Include was, for the same reason the props comment explains.
+      -->
+      <_BasaltVbRazorWithScope Update="@(_BasaltVbRazorWithScope)">
+        <BasaltRelativePath Condition="!$([System.IO.Path]::IsPathRooted('%(Identity)'))">%(Identity)</BasaltRelativePath>
+        <BasaltRelativePath Condition="$([System.IO.Path]::IsPathRooted('%(Identity)'))">$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), %(FullPath)))</BasaltRelativePath>
+      </_BasaltVbRazorWithScope>
+
       <AdditionalFiles Remove="@(_BasaltVbRazorWithScope)" />
       <AdditionalFiles Include="@(_BasaltVbRazorWithScope)" />
     </ItemGroup>

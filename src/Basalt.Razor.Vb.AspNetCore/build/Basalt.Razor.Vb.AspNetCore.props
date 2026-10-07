@@ -20,24 +20,15 @@
     <BasaltProjectDir Condition="'$(BasaltProjectDir)' == ''">$(MSBuildProjectDirectory)</BasaltProjectDir>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(BasaltRazorVbViewsCollected)' == 'basalt.razor.vb.aspnetcore'">
-    <!-- .vbpage, spelled out: the glob was "*.vbp", which names Visual Basic 6
-         project files, not pages. -->
-    <AdditionalFiles Include="**/*.vbpage"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-    <AdditionalFiles Include="**/*.vbhtml"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-
-    <!-- Blazor components: a .vbrazor is compiled into a render tree rather
-         than into a class that writes markup, which is why it carries its own
-         extension the way .razor does beside .cshtml. -->
-    <AdditionalFiles Include="**/*.vbrazor"
-                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
-    <CompilerVisibleProperty Include="BasaltProjectDir" />
-    <!-- On or Off for the templates alone; unset, they follow OptionStrict. -->
-    <CompilerVisibleProperty Include="VbRazorOptionStrict" />
-    <!-- Legacy for the namespaces components had before they followed their folders. -->
-    <CompilerVisibleProperty Include="VbRazorComponentNamespaces" />
-  </ItemGroup>
+  <!--
+    The same file Basalt.Razor.Vb.props imports, packed here too (see this
+    package's .csproj): collects the templates and, critically, the
+    BasaltRelativePath metadata that keeps a generated namespace correct
+    when the project is reached through a symlink. Without that metadata
+    here, a project referencing only this package — the README's documented
+    setup — namespaced its components correctly only by accident, when the
+    physical build directory happened to match BasaltProjectDir.
+  -->
+  <Import Project="Basalt.Razor.Vb.Templates.props" Condition="'$(BasaltRazorVbViewsCollected)' == 'basalt.razor.vb.aspnetcore'" />
 
 </Project>

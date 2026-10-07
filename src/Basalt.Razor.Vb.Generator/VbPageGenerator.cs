@@ -22,7 +22,8 @@ public sealed class VbPageGenerator : IIncrementalGenerator
     {
         var pages = context.AdditionalTextsProvider
             .Where(file => file.Path.EndsWith(".vbpage", StringComparison.OrdinalIgnoreCase))
-            .Select((file, ct) => (file.Path, Text: file.GetText(ct)?.ToString() ?? ""));
+            .Combine(context.AnalyzerConfigOptionsProvider)
+            .Select((pair, ct) => Read(pair.Left, pair.Right.GetOptions(pair.Left), ct));
 
         var rootNamespace = context.AnalyzerConfigOptionsProvider.Select((options, _) =>
             options.GlobalOptions.TryGetValue("build_property.RootNamespace", out var value)
@@ -40,14 +41,25 @@ public sealed class VbPageGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(everything, (production, data) =>
         {
             Emit(production,
-                data.Left.Left.Path, data.Left.Left.Text,
+                data.Left.Left.Path, data.Left.Left.Text, data.Left.Left.RelativePath,
                 data.Left.Right, data.Right);
         });
     }
 
+    /// <summary>A .vbpage read, with its BasaltRelativePath item metadata when MSBuild set it.</summary>
+    private static (string Path, string Text, string? RelativePath) Read(
+        AdditionalText file, Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions options, CancellationToken ct)
+    {
+        var text = file.GetText(ct)?.ToString() ?? "";
+
+        options.TryGetValue("build_metadata.AdditionalFiles.BasaltRelativePath", out var relativePath);
+
+        return (file.Path, text, RelativePathMetadata.Validate(file.Path, relativePath));
+    }
+
     private static void Emit(
         SourceProductionContext production,
-        string path, string text, string? rootNamespace, string? projectDirectory)
+        string path, string text, string? relativePathHint, string? rootNamespace, string? projectDirectory)
     {
         var page = VbPageParser.Parse(text);
 
@@ -58,7 +70,7 @@ public sealed class VbPageGenerator : IIncrementalGenerator
         }
 
         var className = ViewNaming.MakeClassName(Path.GetFileNameWithoutExtension(path));
-        var folder = FolderOf(path, projectDirectory);
+        var folder = FolderOf(path, projectDirectory, relativePathHint);
 
         // Without the root namespace: Visual Basic prepends RootNamespace to
         // every Namespace statement, so writing it here would produce
@@ -67,7 +79,7 @@ public sealed class VbPageGenerator : IIncrementalGenerator
 
         var code = VbPageWriter.Write(page, className, namespaceName, path);
 
-        var route = RouteFor(path, projectDirectory);
+        var route = RouteFor(path, projectDirectory, relativePathHint);
         var qualified = string.IsNullOrWhiteSpace(rootNamespace)
             ? $"{namespaceName}.{ViewNaming.Escape(className)}"
             : $"{rootNamespace}.{namespaceName}.{ViewNaming.Escape(className)}";
@@ -95,9 +107,9 @@ public sealed class VbPageGenerator : IIncrementalGenerator
     /// different URL to some servers and the same to others. Index is the
     /// folder itself, as every web server since the first one has done.
     /// </remarks>
-    private static string RouteFor(string path, string? projectDirectory)
+    private static string RouteFor(string path, string? projectDirectory, string? relativePathHint = null)
     {
-        var relative = Relative(path, projectDirectory);
+        var relative = Relative(path, projectDirectory, relativePathHint);
 
         var withoutExtension = relative.Substring(0, relative.Length - ".vbpage".Length);
         var segments = withoutExtension.Split('/', '\\')
@@ -117,9 +129,9 @@ public sealed class VbPageGenerator : IIncrementalGenerator
     }
 
     /// <summary>The namespace suffix taken from the folders below Pages.</summary>
-    private static string FolderOf(string path, string? projectDirectory)
+    private static string FolderOf(string path, string? projectDirectory, string? relativePathHint = null)
     {
-        var relative = Relative(path, projectDirectory);
+        var relative = Relative(path, projectDirectory, relativePathHint);
 
         var segments = relative.Split('/', '\\')
             .Where(s => s.Length > 0)
@@ -135,8 +147,15 @@ public sealed class VbPageGenerator : IIncrementalGenerator
         return string.Join(".", segments.Select(ViewNaming.MakeClassName));
     }
 
-    private static string Relative(string path, string? projectDirectory) =>
-        projectDirectory is { Length: > 0 } &&
+    // relativePathHint is MSBuild's BasaltRelativePath item metadata, preferred
+    // over comparing path against projectDirectory: through a symlinked
+    // project path the two are resolved differently, and the page falls back
+    // to its bare file name — the same route and namespace for every page in
+    // the project.
+    private static string Relative(string path, string? projectDirectory, string? relativePathHint = null) =>
+        relativePathHint is { Length: > 0 }
+            ? relativePathHint.Replace('\\', '/').TrimStart('/')
+        : projectDirectory is { Length: > 0 } &&
         path.StartsWith(projectDirectory, StringComparison.OrdinalIgnoreCase)
             ? path.Substring(projectDirectory.Length).TrimStart('/', '\\')
             : Path.GetFileName(path);

@@ -112,6 +112,14 @@ internal static class GeneratorRun
         public string AssemblyName { get; init; } = "Generated";
 
         public string? RootNamespace { get; init; }
+
+        /// <summary>
+        /// Per-template BasaltRelativePath item metadata, keyed by the
+        /// template's path — what the package's .props sets from %(Identity)
+        /// on AdditionalFiles, which the generators read in preference to
+        /// comparing the template's path against ProjectDirectory.
+        /// </summary>
+        public IReadOnlyDictionary<string, string>? RelativePaths { get; init; }
     }
 
     /// <summary>Runs one generator in a project set up as given.</summary>
@@ -143,7 +151,7 @@ internal static class GeneratorRun
 
         var driver = VisualBasicGeneratorDriver.Create(
             [generator], additional, parseOptions: VisualBasicParseOptions.Default,
-            analyzerConfigOptionsProvider: new Options(projectDirectory, properties));
+            analyzerConfigOptionsProvider: new Options(projectDirectory, properties, setup.RelativePaths));
 
         var ran = driver.RunGeneratorsAndUpdateCompilation(compilation, out var updated, out _);
         var result = ran.GetRunResult().Results.Single();
@@ -163,20 +171,26 @@ internal static class GeneratorRun
     }
 
     /// <summary>The build properties the generator reads, as MSBuild hands them over.</summary>
-    private sealed class Options(string? projectDirectory, IReadOnlyDictionary<string, string>? properties)
+    private sealed class Options(
+        string? projectDirectory, IReadOnlyDictionary<string, string>? properties,
+        IReadOnlyDictionary<string, string>? relativePaths)
         : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptionsProvider
     {
         public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GlobalOptions { get; } =
-            new Values(projectDirectory, properties);
+            new Values(projectDirectory, properties, null);
 
         public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GetOptions(SyntaxTree tree) =>
-            new Values(null, null);
+            new Values(null, null, null);
 
         public override Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions GetOptions(AdditionalText textFile) =>
-            new Values(null, null);
+            new Values(null, null,
+                relativePaths is not null && relativePaths.TryGetValue(textFile.Path, out var relative)
+                    ? relative
+                    : null);
     }
 
-    private sealed class Values(string? projectDirectory, IReadOnlyDictionary<string, string>? properties)
+    private sealed class Values(
+        string? projectDirectory, IReadOnlyDictionary<string, string>? properties, string? relativePath)
         : Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions
     {
         public override bool TryGetValue(string key, out string value)
@@ -186,6 +200,12 @@ internal static class GeneratorRun
             if (key == "build_property.BasaltProjectDir" && projectDirectory is not null)
             {
                 value = projectDirectory;
+                return true;
+            }
+
+            if (key == "build_metadata.AdditionalFiles.BasaltRelativePath" && relativePath is not null)
+            {
+                value = relativePath;
                 return true;
             }
 

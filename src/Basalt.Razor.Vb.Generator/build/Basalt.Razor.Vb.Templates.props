@@ -1,0 +1,72 @@
+<Project>
+
+  <!--
+    Shared by Basalt.Razor.Vb.props and Basalt.Razor.Vb.AspNetCore.props: the
+    set of AdditionalFiles a Razor-for-VB project collects, and the
+    BasaltRelativePath metadata that keeps generated routes, namespaces and
+    class identifiers correct when the project is reached through a symlink.
+
+    One definition rather than two, so a fix to how templates are collected
+    does not have to be made twice and agree with itself. Packed into both
+    packages' build/ folder (see each .csproj), because a package's build/
+    .props is imported only for a PackageReference the project makes
+    directly: a project that references Basalt.Razor.Vb.AspNetCore alone
+    never imports Basalt.Razor.Vb's own copy of this file.
+
+    Each importer imports this file only when $(BasaltRazorVbViewsCollected)
+    names it, so a project referencing both packages collects the templates
+    once. The condition sits on the Import, not on the ItemGroup below: item
+    conditions are evaluated after every property, so they would all see the
+    last importer's values, while an Import's condition is evaluated in order.
+  -->
+  <ItemGroup>
+    <!-- .vbpage, spelled out: the glob was "*.vbp", which names Visual Basic 6
+         project files, not pages. -->
+    <AdditionalFiles Include="**/*.vbpage"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+    <AdditionalFiles Include="**/*.vbhtml"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+
+    <!-- Blazor components: a .vbrazor is compiled into a render tree rather
+         than into a class that writes markup, which is why it carries its own
+         extension the way .razor does beside .cshtml. -->
+    <AdditionalFiles Include="**/*.vbrazor"
+                     Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin/**;obj/**" />
+
+    <!--
+      A template's project-relative path, computed here where the item's
+      original Include is still known. The generator needs this: it only sees
+      AdditionalFiles as the compiler resolves them, and a relative glob is
+      resolved against the directory MSBuild is physically running in. When
+      the project is reached through a symlink (the IDE builds that way so an
+      edited file and the one on disk are the same inode), that physical
+      directory differs from BasaltProjectDir, the project directory as given,
+      and comparing one against the other fails for every template.
+
+      %(Identity) is relative exactly when the Include that produced it was
+      (as these three above are): MSBuild records it as matched, never
+      resolving it against the file system. A project that lists a template
+      itself, including with its own relative Include, gets the same
+      metadata for the same reason. Only an item included by an absolute path
+      needs MakeRelative, against %(FullPath) — which, for such an item, is
+      the path as given, not a physically resolved one.
+    -->
+    <AdditionalFiles Update="**/*.vbpage;**/*.vbhtml;**/*.vbrazor">
+      <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and !$([System.IO.Path]::IsPathRooted('%(Identity)'))">%(Identity)</BasaltRelativePath>
+      <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and $([System.IO.Path]::IsPathRooted('%(Identity)'))">$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), %(FullPath)))</BasaltRelativePath>
+    </AdditionalFiles>
+
+    <CompilerVisibleProperty Include="BasaltProjectDir" />
+    <!-- On or Off for the templates alone; unset, they follow OptionStrict. -->
+    <CompilerVisibleProperty Include="VbRazorOptionStrict" />
+    <!-- Legacy for the namespaces components had before they followed their folders. -->
+    <CompilerVisibleProperty Include="VbRazorComponentNamespaces" />
+    <!--
+      Read by RelativeToProject (VbHtmlGenerator), ProjectFolderNamespaceFor
+      (ViewNaming, used by VbComponentGenerator) and Relative (VbPageGenerator)
+      in preference to comparing the template's path against BasaltProjectDir.
+    -->
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="BasaltRelativePath" />
+  </ItemGroup>
+
+</Project>
