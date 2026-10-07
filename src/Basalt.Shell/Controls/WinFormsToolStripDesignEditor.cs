@@ -43,6 +43,12 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
 
     internal event Action<string?>? SelectedItemChanged;
 
+    /// <summary>Raised with the selected item's name by Delete/Backspace (not while typing in a
+    /// TextBox) or by the "Delete" entry its context menu offers for the same action, mirroring
+    /// <see cref="WinFormsMenuDesignEditor"/>'s own DeleteItem action for a flat row of items
+    /// (there is no cascading tree here, so no second enum action is needed).</summary>
+    internal event Action<string>? DeleteItemRequested;
+
     /// <summary>Raised when the nested drop-down panel for the selected DropDownButton/SplitButton
     /// item wants to add, remove or retext one of its own DropDownItems.</summary>
     internal event Action<WinFormsToolStripDropDownChange>? DropDownEditRequested;
@@ -141,6 +147,18 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
         SelectedItemChanged?.Invoke(name);
     }
 
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        // The nested DropDownItems panel (see WinFormsToolStripDropDownPanel) is itself a child
+        // of this Canvas and handles its own Delete/Backspace first, setting e.Handled; this
+        // backstop against a focus corner case otherwise mirrors WinFormsMenuDesignEditor's own.
+        if (e.Handled || e.Source is TextBox || e.Key is not (Key.Delete or Key.Back)
+            || _selectedItemName is not { } name || !_items.Any(item => item.Name == name)) return;
+        DeleteItemRequested?.Invoke(name);
+        e.Handled = true;
+    }
+
     private IEnumerable<(string Display, string TypeName)> Kinds =>
         _statusStrip ? WinFormsToolStripDocument.StatusStripItemKinds : WinFormsToolStripDocument.ToolStripItemKinds;
 
@@ -167,6 +185,13 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
                 SetSelectedItem(item.Name);
                 Rebuild();
             };
+            var delete = new MenuItem { Name = "ToolStripInlineDelete_" + item.Name, Header = Localizer.Get(StringKeys.DesignerDelete) };
+            delete.Click += (_, _) =>
+            {
+                SetSelectedItem(item.Name);
+                DeleteItemRequested?.Invoke(item.Name);
+            };
+            button.ContextMenu = new ContextMenu { ItemsSource = new object[] { delete } };
             bar.Children.Add(button);
         }
 

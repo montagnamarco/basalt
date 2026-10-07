@@ -18,6 +18,10 @@ namespace Basalt.Workspace;
 public sealed record WinFormsMenuItem(string Name, string Parent, string Text, bool IsSeparator = false,
     string TypeName = "ToolStripMenuItem");
 
+/// <summary>The outcome of <see cref="WinFormsMenuDocument.RemoveItem"/>: the edited source and
+/// every name (the deleted item plus its whole subtree) it no longer declares.</summary>
+public sealed record WinFormsMenuItemRemoval(string Source, IReadOnlySet<string> RemovedNames);
+
 /// <summary>Reads and edits built-in menu trees using the shared VB syntax model.</summary>
 public sealed partial class WinFormsMenuDocument
 {
@@ -248,6 +252,76 @@ public sealed partial class WinFormsMenuDocument
             changes.Add(new(new TextSpan(WinFormsInitializeComponentSyntax.InsertionPoint(_initialize), 0), string.Join(newline, initializers) + newline));
         if (fields.Count > 0)
             changes.Add(new(new TextSpan(_class.EndClassStatement.FullSpan.Start, 0), string.Join(newline, fields) + newline));
+        return _source.WithChanges(changes).ToString();
+    }
+
+    /// <summary>Names removed by deleting itemName from strip: itemName itself plus every item
+    /// nested under it, however deep. Works whether strip is a MenuStrip/ContextMenuStrip's own
+    /// Items root or a ToolStripDropDownButton/SplitButton's own DropDownItems root: both are
+    /// read through the same recursive walk in <see cref="Read"/>.</summary>
+    public IReadOnlySet<string> DescendantNames(string strip, string itemName)
+    {
+        var items = Read(strip);
+        if (!items.Any(item => item.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException(Localizer.Get(StringKeys.WinFormsMenuItemNotInMenu), nameof(itemName));
+        var removed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { itemName };
+        bool changed;
+        do
+        {
+            changed = false;
+            foreach (var item in items)
+                if (removed.Contains(item.Parent) && removed.Add(item.Name)) changed = true;
+        } while (changed);
+        return removed;
+    }
+
+    /// <summary>
+    /// Deletes itemName and its whole subtree the way Visual Studio's Delete does: every
+    /// Items/DropDownItems entry, Friend WithEvents field, Me.X.* statement and Handles clause
+    /// (the handler method itself stays; only the clause naming the deleted item is trimmed) for
+    /// every removed name. Set() alone does not do this - see its own remarks on the detached
+    /// fields it deliberately leaves behind; this is the explicit opposite operation for a
+    /// caller that wants every trace of the removed names gone.
+    /// </summary>
+    public WinFormsMenuItemRemoval RemoveItem(string strip, string itemName)
+    {
+        var removed = DescendantNames(strip, itemName);
+        var survivors = Read(strip).Where(item => !removed.Contains(item.Name)).ToList();
+        var source = Set(strip, survivors);
+        return new(new WinFormsMenuDocument(source).RemoveDeclarations(removed), removed);
+    }
+
+    /// <summary>
+    /// Removes every "Me.X" statement, "Friend WithEvents X" field declaration and Handles
+    /// clause referencing one of <paramref name="names"/>, keeping the handler method itself.
+    /// Used by <see cref="RemoveItem"/> once Set() has already rewritten the Items/DropDownItems
+    /// collections themselves, and reused directly by callers cleaning up a nested DropDownItems
+    /// tree that belonged to a ToolStrip item deleted through
+    /// <see cref="WinFormsToolStripDocument"/> instead of this class.
+    /// </summary>
+    public string RemoveDeclarations(IReadOnlySet<string> names)
+    {
+        var changes = new List<TextChange>();
+        foreach (var statement in _initialize.Statements)
+            if (statement.DescendantNodesAndSelf().OfType<MemberAccessExpressionSyntax>()
+                .Any(member => member.Expression is MeExpressionSyntax && names.Contains(member.Name.Identifier.ValueText)))
+                changes.Add(new(statement.FullSpan, ""));
+        foreach (var field in _class.Members.OfType<FieldDeclarationSyntax>())
+        {
+            var declared = field.Declarators.SelectMany(declarator => declarator.Names).ToArray();
+            if (!declared.Any(identifier => names.Contains(identifier.Identifier.ValueText))) continue;
+            if (!declared.All(identifier => names.Contains(identifier.Identifier.ValueText)))
+                throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsMenuSplitSharedFieldDeleteItem));
+            changes.Add(new(field.FullSpan, ""));
+        }
+        foreach (var declaration in _class.DescendantNodes().OfType<MethodStatementSyntax>())
+        {
+            if (declaration.HandlesClause is not { } handles) continue;
+            var remaining = handles.Events.Where(item => !names.Contains(item.EventContainer.ToString())).ToArray();
+            if (remaining.Length == handles.Events.Count) continue;
+            changes.Add(new(handles.Span, remaining.Length == 0 ? ""
+                : handles.WithEvents(SyntaxFactory.SeparatedList(remaining)).ToString()));
+        }
         return _source.WithChanges(changes).ToString();
     }
 

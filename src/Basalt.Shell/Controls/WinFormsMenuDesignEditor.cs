@@ -14,6 +14,7 @@ internal enum WinFormsMenuDesignAction
     AddItem,
     AddSeparator,
     ChangeText,
+    DeleteItem,
 }
 
 internal sealed record WinFormsMenuDesignChange(
@@ -155,11 +156,8 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
         };
         back.Click += (_, _) =>
         {
-            _openParent = _items.FirstOrDefault(item => item.Name == _openParent)?.Parent;
-            if (_openParent == _strip)
-            {
-                _openParent = null;
-            }
+            var parent = WinFormsMenuTreeHelpers.Back(_items, _openParent, _strip);
+            _openParent = parent.Equals(_strip, StringComparison.OrdinalIgnoreCase) ? null : parent;
             Rebuild();
         };
         header.Children.Add(back);
@@ -215,7 +213,10 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
         separator.Click += (_, _) => EditRequested?.Invoke(new(
             WinFormsMenuDesignAction.AddSeparator, _openParent));
         rows.Children.Add(separator);
-        AddCaptionEditor(rows);
+        WinFormsMenuTreeHelpers.AddCaptionEditor(rows, _items, _selectedItemName,
+            selected => !selected.IsSeparator, "MenuInline",
+            (selected, text) => EditRequested?.Invoke(new(WinFormsMenuDesignAction.ChangeText,
+                selected.Parent, selected.Name, text)));
 
         _dropdown.Child = new ScrollViewer
         {
@@ -226,78 +227,16 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
         _dropdown.IsVisible = true;
     }
 
-    private void AddCaptionEditor(StackPanel rows)
-    {
-        var selected = _items.FirstOrDefault(item => item.Name == _selectedItemName);
-        if (selected is null || selected.IsSeparator)
-        {
-            return;
-        }
-
-        rows.Children.Add(new TextBlock { Text = Localizer.Get(StringKeys.MenuInlineEditText) });
-        var caption = new TextBox
-        {
-            Name = "MenuInlineCaption",
-            Text = selected.Text,
-        };
-        void CommitCaption()
-        {
-            if (caption.Text is { } text && text != selected.Text)
-            {
-                EditRequested?.Invoke(new(WinFormsMenuDesignAction.ChangeText,
-                    selected.Parent, selected.Name, text));
-            }
-        }
-
-        caption.KeyDown += (_, args) =>
-        {
-            if (args.Key != Key.Enter)
-            {
-                return;
-            }
-            CommitCaption();
-            args.Handled = true;
-        };
-        rows.Children.Add(caption);
-
-        var apply = new Button
-        {
-            Name = "MenuInlineApplyCaption",
-            Content = Localizer.Get(StringKeys.ResourceEditorApply),
-        };
-        apply.Click += (_, _) => CommitCaption();
-        rows.Children.Add(apply);
-    }
-
-    private TextBox Placeholder(string name, string parent)
-    {
-        var input = new TextBox
-        {
-            Name = name,
-            PlaceholderText = Localizer.Get(StringKeys.MenuInlineTypeHere),
-            MinWidth = 90,
-        };
-        input.KeyDown += (_, args) =>
-        {
-            if (args.Key != Key.Enter || string.IsNullOrWhiteSpace(input.Text))
-            {
-                return;
-            }
-
-            var text = input.Text.Trim();
-            input.Text = "";
-            EditRequested?.Invoke(new(WinFormsMenuDesignAction.AddItem, parent, Text: text));
-            args.Handled = true;
-        };
-        return input;
-    }
+    private TextBox Placeholder(string name, string parent) =>
+        WinFormsMenuTreeHelpers.TypeHereInput(name, text =>
+            EditRequested?.Invoke(new(WinFormsMenuDesignAction.AddItem, parent, Text: text)));
 
     private Button MenuButton(WinFormsMenuItem item)
     {
         var button = new Button
         {
             Name = "MenuInlineItem_" + item.Name,
-            Content = item.IsSeparator ? "────────" : DisplayText(item.Text),
+            Content = item.IsSeparator ? "────────" : WinFormsMenuTreeHelpers.DisplayText(item.Text),
             Background = item.Name == _selectedItemName ? Brushes.LightBlue : Brushes.Transparent,
         };
         if (!item.IsSeparator)
@@ -309,29 +248,38 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
                 args.Handled = true;
             };
         }
+        var delete = new MenuItem { Name = "MenuInlineDelete_" + item.Name, Header = Localizer.Get(StringKeys.DesignerDelete) };
+        delete.Click += (_, _) => RequestDelete(item);
+        button.ContextMenu = new ContextMenu { ItemsSource = new object[] { delete } };
         return button;
+    }
+
+    /// <summary>Deletes item and its whole subtree: Visual Studio's Delete key with the
+    /// selected item's own tree, and the "Delete" entry its context menu offers for the same
+    /// action without touching the keyboard.</summary>
+    private void RequestDelete(WinFormsMenuItem item)
+    {
+        SetSelectedItem(item.Name);
+        EditRequested?.Invoke(new(WinFormsMenuDesignAction.DeleteItem, item.Parent, item.Name));
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        // A TextBox (the caption editor, "Type Here") consumes its own Backspace/Delete while
+        // editing text; this check is only a backstop against a focus corner case, not the
+        // primary guard, so Backspace inside one of those never deletes the selected item.
+        if (e.Handled || e.Source is TextBox || e.Key is not (Key.Delete or Key.Back)
+            || _selectedItemName is not { } name) return;
+        if (_items.FirstOrDefault(item => item.Name == name) is not { } selected) return;
+        RequestDelete(selected);
+        e.Handled = true;
     }
 
     private IEnumerable<WinFormsMenuItem> ChildrenOf(string parent) =>
         _items.Where(item => item.Parent.Equals(parent, StringComparison.OrdinalIgnoreCase));
 
-    private string OpenPath()
-    {
-        var path = new List<string>();
-        var current = _openParent;
-        while (current is not null && !current.Equals(_strip, StringComparison.OrdinalIgnoreCase))
-        {
-            var item = _items.FirstOrDefault(candidate => candidate.Name == current);
-            if (item is null)
-            {
-                break;
-            }
-            path.Add(DisplayText(item.Text));
-            current = item.Parent;
-        }
-        path.Reverse();
-        return string.Join(" › ", path);
-    }
+    private string OpenPath() => WinFormsMenuTreeHelpers.OpenPath(_items, _openParent, _strip);
 
     private void SetSelectedItem(string? name)
     {
@@ -343,21 +291,4 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
         SelectedItemChanged?.Invoke(name);
     }
 
-    private static string DisplayText(string source)
-    {
-        var result = new System.Text.StringBuilder(source.Length);
-        for (var index = 0; index < source.Length; index++)
-        {
-            if (source[index] == '&' && index + 1 < source.Length && source[index + 1] == '&')
-            {
-                result.Append('&');
-                index++;
-            }
-            else if (source[index] != '&')
-            {
-                result.Append(source[index]);
-            }
-        }
-        return result.ToString();
-    }
 }

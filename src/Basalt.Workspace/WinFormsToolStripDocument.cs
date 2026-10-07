@@ -9,6 +9,12 @@ namespace Basalt.Workspace;
 /// <summary>One item directly owned by a ToolStrip or StatusStrip's own Items collection.</summary>
 public sealed record WinFormsToolStripItem(string Name, string TypeName, string Text);
 
+/// <summary>The outcome of <see cref="WinFormsToolStripDocument.RemoveItem"/>: the edited source
+/// and the removed item's name. A ToolStripDropDownButton/SplitButton's own DropDownItems tree
+/// is not this document's concern (see <see cref="WinFormsMenuDocument"/>), so callers that also
+/// need that subtree's names gather them separately before calling RemoveItem.</summary>
+public sealed record WinFormsToolStripItemRemoval(string Source, IReadOnlySet<string> RemovedNames);
+
 /// <summary>
 /// Reads and edits the flat Items collection a ToolStrip or StatusStrip owns directly, the
 /// shape Visual Studio's "Type Here" box edits. Unlike <see cref="WinFormsMenuDocument"/> this
@@ -231,6 +237,60 @@ public sealed partial class WinFormsToolStripDocument
             changes.Add(new(new TextSpan(WinFormsInitializeComponentSyntax.InsertionPoint(_initialize), 0), string.Join(newline, initializers) + newline));
         if (fields.Count > 0)
             changes.Add(new(new TextSpan(_class.EndClassStatement.FullSpan.Start, 0), string.Join(newline, fields) + newline));
+        return _source.WithChanges(changes).ToString();
+    }
+
+    /// <summary>
+    /// Deletes itemName the way Visual Studio's Delete does: its Items entry, Friend WithEvents
+    /// field, every Me.X.* statement and Handles clause (the handler method itself stays).
+    /// A ToolStripDropDownButton/SplitButton's own cascading DropDownItems tree lives in
+    /// <see cref="WinFormsMenuDocument"/>, rooted at itemName: the caller that found this item
+    /// owns a drop-down of its own is responsible for also removing that tree's own
+    /// declarations (see <see cref="WinFormsMenuDocument.RemoveDeclarations"/>), the same way
+    /// <see cref="WinFormsMenuDocument.RemoveItem"/> does for a nested item removed directly.
+    /// </summary>
+    public WinFormsToolStripItemRemoval RemoveItem(string strip, string itemName)
+    {
+        var old = Read(strip);
+        if (!old.Any(item => item.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException(Localizer.Get(StringKeys.WinFormsToolStripItemNotInStrip), nameof(itemName));
+        var survivors = old.Where(item => !item.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase)).ToList();
+        var source = Set(strip, survivors);
+        var removed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { itemName };
+        return new(new WinFormsToolStripDocument(source).RemoveDeclarations(removed), removed);
+    }
+
+    /// <summary>
+    /// Removes every "Me.X" statement, "Friend WithEvents X" field declaration and Handles
+    /// clause referencing one of <paramref name="names"/>, keeping the handler method itself.
+    /// Duplicated from <see cref="WinFormsMenuDocument.RemoveDeclarations"/> rather than shared:
+    /// the two document types already keep their own, separate copies of the smaller Quote/Name
+    /// helpers below for the same reason - each parses and edits its own unrelated collection
+    /// shape, so sharing just this one post-Set() cleanup step would couple them for no benefit.
+    /// </summary>
+    public string RemoveDeclarations(IReadOnlySet<string> names)
+    {
+        var changes = new List<TextChange>();
+        foreach (var statement in _initialize.Statements)
+            if (statement.DescendantNodesAndSelf().OfType<MemberAccessExpressionSyntax>()
+                .Any(member => member.Expression is MeExpressionSyntax && names.Contains(member.Name.Identifier.ValueText)))
+                changes.Add(new(statement.FullSpan, ""));
+        foreach (var field in _class.Members.OfType<FieldDeclarationSyntax>())
+        {
+            var declared = field.Declarators.SelectMany(declarator => declarator.Names).ToArray();
+            if (!declared.Any(identifier => names.Contains(identifier.Identifier.ValueText))) continue;
+            if (!declared.All(identifier => names.Contains(identifier.Identifier.ValueText)))
+                throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsMenuSplitSharedFieldDeleteItem));
+            changes.Add(new(field.FullSpan, ""));
+        }
+        foreach (var declaration in _class.DescendantNodes().OfType<MethodStatementSyntax>())
+        {
+            if (declaration.HandlesClause is not { } handles) continue;
+            var remaining = handles.Events.Where(item => !names.Contains(item.EventContainer.ToString())).ToArray();
+            if (remaining.Length == handles.Events.Count) continue;
+            changes.Add(new(handles.Span, remaining.Length == 0 ? ""
+                : handles.WithEvents(SyntaxFactory.SeparatedList(remaining)).ToString()));
+        }
         return _source.WithChanges(changes).ToString();
     }
 

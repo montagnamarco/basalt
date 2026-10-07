@@ -520,6 +520,7 @@
   <data name="WinFormsMenu_NamesMustBeUniqueIdentifiers" xml:space="preserve"><value>Menu names must be unique VB identifiers.</value></data>
   <data name="WinFormsMenu_OneConstantArgument" xml:space="preserve"><value>A menu collection requires one constant argument.</value></data>
   <data name="WinFormsMenu_PropertyMustBeIdentifier" xml:space="preserve"><value>The property must be a Visual Basic identifier.</value></data>
+  <data name="WinFormsMenu_SplitSharedFieldDeleteItem" xml:space="preserve"><value>Split a shared field declaration before deleting this item.</value></data>
   <data name="WinFormsMenu_TextMustFitOnOneLine" xml:space="preserve"><value>Menu text must fit on one line.</value></data>
   <data name="WinFormsMenu_UnknownParent" xml:space="preserve"><value>Unknown menu parent.</value></data>
   <data name="WinFormsToolStrip_ConstantInitializationOnly" xml:space="preserve"><value>Only constant Items Add/AddRange initialization is supported.</value></data>

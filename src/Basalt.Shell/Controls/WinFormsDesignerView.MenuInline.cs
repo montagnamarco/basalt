@@ -95,6 +95,11 @@ internal sealed partial class WinFormsDesignerView
         var menu = original.Menus;
         var items = menu.Read(stripName).ToList();
 
+        if (change.Action == WinFormsMenuDesignAction.DeleteItem)
+        {
+            return DeleteInlineMenuItemAsync(session, stripName, change.Name!, items);
+        }
+
         switch (change.Action)
         {
             case WinFormsMenuDesignAction.AddItem:
@@ -124,6 +129,54 @@ internal sealed partial class WinFormsDesignerView
             }
             return current.Menus.Set(stripName, items);
         });
+    }
+
+    /// <summary>Deletes a menu item (and its whole subtree) through <see
+    /// cref="WinFormsDesignerSession.DeleteMenuItemAsync"/>: one undo step covering the
+    /// Designer.vb declarations, any resx entries they owned, and (when a companion code file is
+    /// open) the companion's own Handles clauses for every removed name, the same pattern <see
+    /// cref="DeleteSelectedControlsAsync"/> already uses for a deleted control. Selects the
+    /// neighbouring item - Visual Studio's own rule - before the deletion commits, so the
+    /// Properties panel already targets it once the editor's next Show() call arrives.</summary>
+    private Task DeleteInlineMenuItemAsync(WinFormsDesignerSession session, string stripName, string itemName,
+        List<WinFormsMenuItem> itemsBeforeRemoval)
+    {
+        _inlineMenuEditor?.SelectPendingItem(
+            WinFormsMenuTreeHelpers.SelectionAfterRemoval(itemsBeforeRemoval, itemName, stripName));
+
+        if (_getCode is null || (!File.Exists(CompanionPath) && _findCode?.Invoke(CompanionPath) is null))
+        {
+            return session.DeleteMenuItemAsync(stripName, itemName);
+        }
+
+        return DeleteInlineMenuItemWithCompanionAsync(session, stripName, itemName);
+    }
+
+    private async Task DeleteInlineMenuItemWithCompanionAsync(WinFormsDesignerSession session, string stripName, string itemName)
+    {
+        var removedNames = session.Document.Menus.DescendantNames(stripName, itemName);
+        var className = session.Document.ClassName;
+        var code = await _getCode!(CompanionPath);
+        var before = code.Text;
+        var after = await Task.Run(() => WinFormsEventHandlers.RemoveControls(before, className, removedNames));
+
+        var originalBindings = new Dictionary<string, IReadOnlyDictionary<string, string>>(_handlers, StringComparer.OrdinalIgnoreCase);
+        var updatedBindings = new Dictionary<string, IReadOnlyDictionary<string, string>>(originalBindings, StringComparer.OrdinalIgnoreCase);
+        foreach (var name in removedNames) updatedBindings.Remove(name);
+
+        void Restore(string expected, string replacement, IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> bindings)
+        {
+            var current = ResolveTransactionDocument(code);
+            if (current.Text != expected) throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+            current.Text = replacement;
+            _handlers.Clear();
+            foreach (var (field, handlers) in bindings) _handlers[field] = handlers;
+        }
+
+        await session.DeleteMenuItemAsync(stripName, itemName,
+            () => Restore(before, after, updatedBindings),
+            () => Restore(after, before, originalBindings),
+            () => Restore(before, after, updatedBindings));
     }
 
     private static string NewMenuItemName(WinFormsMenuDocument document, bool separator)

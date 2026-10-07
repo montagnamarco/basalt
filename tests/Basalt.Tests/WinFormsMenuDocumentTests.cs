@@ -151,6 +151,81 @@ public sealed class WinFormsMenuDocumentTests
     }
 
     [Fact]
+    public void RemoveItemDeletesTheWholeSubtreeAndTrimsOnlyMatchingHandlesClauses()
+    {
+        var withItems = new WinFormsMenuDocument(Source).Set("MenuStrip1",
+        [
+            new("FileMenu", "MenuStrip1", "&File"),
+            new("OpenMenu", "FileMenu", "&Open"),
+            new("ExitMenu", "FileMenu", "E&xit"),
+            new("HelpMenu", "MenuStrip1", "&Help"),
+        ]);
+        withItems = withItems.Replace("End Class",
+            "Private Sub Shared_Click(sender As Object, e As System.EventArgs) " +
+            "Handles OpenMenu.Click, HelpMenu.Click\nEnd Sub\nEnd Class", StringComparison.Ordinal);
+
+        var removal = new WinFormsMenuDocument(withItems).RemoveItem("MenuStrip1", "FileMenu");
+
+        Assert.Equal(new HashSet<string> { "FileMenu", "OpenMenu", "ExitMenu" }, removal.RemovedNames);
+        var result = removal.Source;
+        Assert.DoesNotContain("FileMenu", result);
+        Assert.DoesNotContain("OpenMenu", result);
+        Assert.DoesNotContain("ExitMenu", result);
+        Assert.Contains("HelpMenu", result);
+        Assert.Contains("Private Sub Shared_Click", result);
+        Assert.DoesNotContain("OpenMenu.Click", result);
+        Assert.Contains("Handles HelpMenu.Click", result);
+        Assert.Equal(new[] { new WinFormsMenuItem("HelpMenu", "MenuStrip1", "&Help") },
+            new WinFormsMenuDocument(result).Read("MenuStrip1"));
+    }
+
+    /// <summary>
+    /// One declaration naming a removed item and a surviving one cannot be deleted
+    /// line-wise without losing the survivor's field: the delete is refused with the
+    /// reason, before anything is rewritten.
+    /// </summary>
+    [Fact]
+    public void DeletingAnItemDeclaredTogetherWithASurvivorIsRefused()
+    {
+        var withItems = new WinFormsMenuDocument(Source).Set("MenuStrip1", [
+            new("FileMenu", "MenuStrip1", "&File"),
+            new("HelpMenu", "MenuStrip1", "&Help"),
+        ]);
+        var shared = System.Text.RegularExpressions.Regex.Replace(withItems,
+            @"\s*Friend WithEvents FileMenu As (?<type>[\w.]+)\s*Friend WithEvents HelpMenu As [\w.]+",
+            m => $"\n    Friend WithEvents FileMenu, HelpMenu As {m.Groups["type"].Value}");
+        Assert.Contains("Friend WithEvents FileMenu, HelpMenu As", shared);
+
+        var refused = Assert.Throws<NotSupportedException>(
+            () => new WinFormsMenuDocument(shared).RemoveItem("MenuStrip1", "FileMenu"));
+
+        Assert.Equal(Basalt.Core.Localization.Localizer.Get(
+            Basalt.Core.Localization.StringKeys.WinFormsMenuSplitSharedFieldDeleteItem), refused.Message);
+    }
+
+    [Fact]
+    public void RemoveItemLeavesASeparatorAloneWhenOnlyItsSiblingIsDeleted()
+    {
+        var withItems = new WinFormsMenuDocument(Source).Set("MenuStrip1",
+        [
+            new("FileMenu", "MenuStrip1", "&File"),
+            new("OpenMenu", "FileMenu", "&Open"),
+            new("Separator1", "FileMenu", "", true, "ToolStripSeparator"),
+            new("ExitMenu", "FileMenu", "E&xit"),
+        ]);
+
+        var removal = new WinFormsMenuDocument(withItems).RemoveItem("MenuStrip1", "OpenMenu");
+
+        Assert.Equal(new HashSet<string> { "OpenMenu" }, removal.RemovedNames);
+        Assert.Equal(
+        [
+            new WinFormsMenuItem("FileMenu", "MenuStrip1", "&File"),
+            new WinFormsMenuItem("Separator1", "FileMenu", "", true, "ToolStripSeparator"),
+            new WinFormsMenuItem("ExitMenu", "FileMenu", "E&xit"),
+        ], new WinFormsMenuDocument(removal.Source).Read("MenuStrip1"));
+    }
+
+    [Fact]
     public void RejectsCyclesAndDynamicTextWithoutRewritingSource()
     {
         var menu = new WinFormsMenuDocument(Source);

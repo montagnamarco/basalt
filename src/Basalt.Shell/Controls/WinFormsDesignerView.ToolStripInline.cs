@@ -90,6 +90,13 @@ internal sealed partial class WinFormsDesignerView
             }
         };
         editor.DropDownSelectedItemChanged += ShowToolStripDropDownItemProperties;
+        editor.DeleteItemRequested += itemName =>
+        {
+            if (!_busy)
+            {
+                RunEditAsync(() => DeleteInlineToolStripItemAsync(itemName));
+            }
+        };
         return editor;
     }
 
@@ -129,5 +136,77 @@ internal sealed partial class WinFormsDesignerView
             suffix++;
         }
         return typeName + suffix;
+    }
+
+    /// <summary>Deletes a flat ToolStrip/StatusStrip item - a DropDownButton/SplitButton takes
+    /// its own cascading DropDownItems subtree with it, see <see
+    /// cref="WinFormsDesignerSession.DeleteToolStripItemAsync"/> - through the same one-undo-step
+    /// companion Handles cleanup <see cref="DeleteInlineMenuItemAsync"/> uses for a MenuStrip
+    /// item. Selects the neighbouring item before the deletion commits, Visual Studio's own rule.</summary>
+    private Task DeleteInlineToolStripItemAsync(string itemName)
+    {
+        if (_session is not { } session || _inlineToolStripName is not { } stripName ||
+            !ReferenceEquals(_inlineToolStripSnapshot, session.Document) ||
+            _surface.SelectedControl is not Forms.ToolStrip selectedStrip ||
+            session.NameOf(selectedStrip) != stripName)
+        {
+            throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+        }
+
+        var items = session.Document.ToolStripItems.Read(stripName).ToList();
+        _inlineToolStripEditor?.SelectPendingItem(SelectionAfterToolStripRemoval(items, itemName, stripName));
+
+        if (_getCode is null || (!File.Exists(CompanionPath) && _findCode?.Invoke(CompanionPath) is null))
+        {
+            return session.DeleteToolStripItemAsync(stripName, itemName);
+        }
+
+        return DeleteInlineToolStripItemWithCompanionAsync(session, stripName, itemName);
+    }
+
+    private async Task DeleteInlineToolStripItemWithCompanionAsync(WinFormsDesignerSession session, string stripName, string itemName)
+    {
+        // A DropDownButton/SplitButton's own cascading DropDownItems tree (if any) must be read
+        // before DeleteToolStripItemAsync below removes the "Me.<itemName>.DropDownItems.AddRange"
+        // statement that is its only link back to itemName - see that method's own remarks.
+        var removedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { itemName };
+        foreach (var nested in session.Document.Menus.Read(itemName)) removedNames.Add(nested.Name);
+        var className = session.Document.ClassName;
+        var code = await _getCode!(CompanionPath);
+        var before = code.Text;
+        var after = await Task.Run(() => WinFormsEventHandlers.RemoveControls(before, className, removedNames));
+
+        var originalBindings = new Dictionary<string, IReadOnlyDictionary<string, string>>(_handlers, StringComparer.OrdinalIgnoreCase);
+        var updatedBindings = new Dictionary<string, IReadOnlyDictionary<string, string>>(originalBindings, StringComparer.OrdinalIgnoreCase);
+        foreach (var name in removedNames) updatedBindings.Remove(name);
+
+        void Restore(string expected, string replacement, IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> bindings)
+        {
+            var current = ResolveTransactionDocument(code);
+            if (current.Text != expected) throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+            current.Text = replacement;
+            _handlers.Clear();
+            foreach (var (field, handlers) in bindings) _handlers[field] = handlers;
+        }
+
+        await session.DeleteToolStripItemAsync(stripName, itemName,
+            () => Restore(before, after, updatedBindings),
+            () => Restore(after, before, originalBindings),
+            () => Restore(before, after, updatedBindings));
+    }
+
+    /// <summary>Visual Studio's own rule for which item a Delete picks up next, applied to a
+    /// flat row of items (a ToolStrip/StatusStrip's own Items has no cascading tree, so there is
+    /// no parent item to fall back to - only the strip itself, which is never one of its own
+    /// items, so the editor's selection simply clears): the next sibling, else the previous.</summary>
+    private static string SelectionAfterToolStripRemoval(IReadOnlyList<WinFormsToolStripItem> itemsBeforeRemoval,
+        string removedName, string strip)
+    {
+        var index = itemsBeforeRemoval.ToList().FindIndex(item => item.Name == removedName);
+        if (index < 0) return strip;
+        var next = itemsBeforeRemoval.Skip(index + 1).FirstOrDefault();
+        if (next is not null) return next.Name;
+        var previous = itemsBeforeRemoval.Take(index).LastOrDefault();
+        return previous?.Name ?? strip;
     }
 }

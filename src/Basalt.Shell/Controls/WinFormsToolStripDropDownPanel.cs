@@ -120,13 +120,13 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
             var back = new Button { Name = "ToolStripDropDownBack", Content = Localizer.Get(StringKeys.MenuInlineBack) };
             back.Click += (_, _) =>
             {
-                _openParent = _items.FirstOrDefault(item => item.Name == _openParent)?.Parent ?? _owner;
+                _openParent = WinFormsMenuTreeHelpers.Back(_items, _openParent, _owner);
                 Rebuild();
             };
             header.Children.Add(back);
             header.Children.Add(new TextBlock
             {
-                Text = OpenPath(),
+                Text = WinFormsMenuTreeHelpers.OpenPath(_items, _openParent, _owner),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Width = 140,
@@ -141,7 +141,7 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
             var button = new Button
             {
                 Name = "ToolStripDropDownItem_" + item.Name,
-                Content = item.IsSeparator ? "────────" : DisplayText(item.Text),
+                Content = item.IsSeparator ? "────────" : WinFormsMenuTreeHelpers.DisplayText(item.Text),
                 Background = item.Name == _selectedItemName ? Brushes.LightBlue : Brushes.Transparent,
                 Width = canNest ? 183 : 208,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
@@ -151,6 +151,9 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
                 SetSelectedItem(item.Name);
                 Rebuild();
             };
+            var delete = new MenuItem { Name = "ToolStripDropDownDelete_" + item.Name, Header = Localizer.Get(StringKeys.DesignerDelete) };
+            delete.Click += (_, _) => RequestDelete(item);
+            button.ContextMenu = new ContextMenu { ItemsSource = new object[] { delete } };
             row.Children.Add(button);
 
             if (canNest)
@@ -170,7 +173,10 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
         }
 
         rows.Children.Add(TypeHereRow());
-        AddCaptionEditor(rows);
+        WinFormsMenuTreeHelpers.AddCaptionEditor(rows, _items, _selectedItemName,
+            selected => !selected.IsSeparator && selected.TypeName.Equals("ToolStripMenuItem", StringComparison.OrdinalIgnoreCase),
+            "ToolStripDropDown",
+            (selected, text) => EditRequested?.Invoke(new(WinFormsMenuDesignAction.ChangeText, selected.Parent, selected.Name, text)));
 
         Children.Add(new ScrollViewer
         {
@@ -186,25 +192,10 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
     {
         var stack = new StackPanel { Spacing = Spacing.Tight };
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Spacing.Tight };
-        var input = new TextBox
-        {
-            Name = "ToolStripDropDownTypeHere",
-            PlaceholderText = Localizer.Get(StringKeys.MenuInlineTypeHere),
-            MinWidth = 90,
-            Width = 150,
-        };
         var parent = _openParent;
-        input.KeyDown += (_, args) =>
-        {
-            if (args.Key != Key.Enter || string.IsNullOrWhiteSpace(input.Text))
-            {
-                return;
-            }
-            var text = input.Text.Trim();
-            input.Text = "";
-            EditRequested?.Invoke(new(WinFormsMenuDesignAction.AddItem, parent, Text: text, TypeName: "ToolStripMenuItem"));
-            args.Handled = true;
-        };
+        var input = WinFormsMenuTreeHelpers.TypeHereInput("ToolStripDropDownTypeHere", text =>
+            EditRequested?.Invoke(new(WinFormsMenuDesignAction.AddItem, parent, Text: text, TypeName: "ToolStripMenuItem")));
+        input.Width = 150;
         row.Children.Add(input);
 
         var arrow = new ToggleButton { Name = "ToolStripDropDownTypeArrow", Content = "▾", IsChecked = _typePickerOpen };
@@ -242,57 +233,27 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
         return stack;
     }
 
-    private void AddCaptionEditor(StackPanel rows)
+    /// <summary>Deletes item and its own nested subtree (if it owns one): Visual Studio's Delete
+    /// key with the selected item's own tree, and the "Delete" entry its context menu offers for
+    /// the same action without touching the keyboard, mirroring <see
+    /// cref="WinFormsMenuDesignEditor.RequestDelete"/> for this panel's own cascading tree.</summary>
+    private void RequestDelete(WinFormsMenuItem item)
     {
-        var selected = _items.FirstOrDefault(item => item.Name == _selectedItemName);
-        if (selected is null || selected.IsSeparator ||
-            !selected.TypeName.Equals("ToolStripMenuItem", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        rows.Children.Add(new TextBlock { Text = Localizer.Get(StringKeys.MenuInlineEditText) });
-        var caption = new TextBox { Name = "ToolStripDropDownCaption", Text = selected.Text };
-        void CommitCaption()
-        {
-            if (caption.Text is { } text && text != selected.Text)
-            {
-                EditRequested?.Invoke(new(WinFormsMenuDesignAction.ChangeText, selected.Parent, selected.Name, text));
-            }
-        }
-
-        caption.KeyDown += (_, args) =>
-        {
-            if (args.Key != Key.Enter)
-            {
-                return;
-            }
-            CommitCaption();
-            args.Handled = true;
-        };
-        rows.Children.Add(caption);
-
-        var apply = new Button { Name = "ToolStripDropDownApplyCaption", Content = Localizer.Get(StringKeys.ResourceEditorApply) };
-        apply.Click += (_, _) => CommitCaption();
-        rows.Children.Add(apply);
+        SetSelectedItem(item.Name);
+        EditRequested?.Invoke(new(WinFormsMenuDesignAction.DeleteItem, item.Parent, item.Name));
     }
 
-    private string OpenPath()
+    protected override void OnKeyDown(KeyEventArgs e)
     {
-        var path = new List<string>();
-        var current = _openParent;
-        while (current is not null && !current.Equals(_owner, StringComparison.OrdinalIgnoreCase))
-        {
-            var item = _items.FirstOrDefault(candidate => candidate.Name == current);
-            if (item is null)
-            {
-                break;
-            }
-            path.Add(DisplayText(item.Text));
-            current = item.Parent;
-        }
-        path.Reverse();
-        return string.Join(" › ", path);
+        base.OnKeyDown(e);
+        // A TextBox (the caption editor, "Type Here") consumes its own Backspace/Delete while
+        // editing text; this check is only a backstop against a focus corner case, not the
+        // primary guard, mirroring WinFormsMenuDesignEditor's own comment on the same pattern.
+        if (e.Handled || e.Source is TextBox || e.Key is not (Key.Delete or Key.Back)
+            || _selectedItemName is not { } name) return;
+        if (_items.FirstOrDefault(item => item.Name == name) is not { } selected) return;
+        RequestDelete(selected);
+        e.Handled = true;
     }
 
     private static string DisplayKey(string typeName) => typeName switch
@@ -303,22 +264,4 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
         "ToolStripTextBox" => StringKeys.WinFormsToolStripTextBox,
         _ => StringKeys.WinFormsToolStripMenuItem,
     };
-
-    private static string DisplayText(string source)
-    {
-        var result = new System.Text.StringBuilder(source.Length);
-        for (var index = 0; index < source.Length; index++)
-        {
-            if (source[index] == '&' && index + 1 < source.Length && source[index + 1] == '&')
-            {
-                result.Append('&');
-                index++;
-            }
-            else if (source[index] != '&')
-            {
-                result.Append(source[index]);
-            }
-        }
-        return result.ToString();
-    }
 }

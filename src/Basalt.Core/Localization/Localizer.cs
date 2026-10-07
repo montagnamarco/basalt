@@ -447,6 +447,7 @@ public static class StringKeys
     public const string WinFormsMenuNamesMustBeUniqueIdentifiers = "WinFormsMenu_NamesMustBeUniqueIdentifiers";
     public const string WinFormsMenuOneConstantArgument = "WinFormsMenu_OneConstantArgument";
     public const string WinFormsMenuPropertyMustBeIdentifier = "WinFormsMenu_PropertyMustBeIdentifier";
+    public const string WinFormsMenuSplitSharedFieldDeleteItem = "WinFormsMenu_SplitSharedFieldDeleteItem";
     public const string WinFormsMenuTextMustFitOnOneLine = "WinFormsMenu_TextMustFitOnOneLine";
     public const string WinFormsMenuUnknownParent = "WinFormsMenu_UnknownParent";
     public const string WinFormsToolStripConstantInitializationOnly = "WinFormsToolStrip_ConstantInitializationOnly";

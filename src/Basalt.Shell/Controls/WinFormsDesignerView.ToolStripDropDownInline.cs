@@ -66,6 +66,11 @@ internal sealed partial class WinFormsDesignerView
         var menu = original.Menus;
         var items = menu.Read(ownerName).ToList();
 
+        if (change.Action == WinFormsMenuDesignAction.DeleteItem)
+        {
+            return DeleteInlineDropDownItemAsync(session, ownerName, change.Name!, items);
+        }
+
         switch (change.Action)
         {
             case WinFormsMenuDesignAction.AddItem:
@@ -96,6 +101,52 @@ internal sealed partial class WinFormsDesignerView
             }
             return current.Menus.Set(ownerName, items);
         });
+    }
+
+    /// <summary>Deletes a nested item inside a DropDownButton/SplitButton's own cascading
+    /// DropDownItems tree through <see cref="WinFormsDesignerSession.DeleteDropDownItemAsync"/>,
+    /// the same one-undo-step companion Handles cleanup <see
+    /// cref="WinFormsDesignerView.DeleteInlineMenuItemAsync"/> uses for a MenuStrip item. Selects
+    /// the neighbouring nested item before the deletion commits, Visual Studio's own rule.</summary>
+    private Task DeleteInlineDropDownItemAsync(WinFormsDesignerSession session, string ownerName, string itemName,
+        List<WinFormsMenuItem> itemsBeforeRemoval)
+    {
+        _inlineToolStripEditor?.SelectPendingDropDownItem(
+            WinFormsMenuTreeHelpers.SelectionAfterRemoval(itemsBeforeRemoval, itemName, ownerName));
+
+        if (_getCode is null || (!File.Exists(CompanionPath) && _findCode?.Invoke(CompanionPath) is null))
+        {
+            return session.DeleteDropDownItemAsync(ownerName, itemName);
+        }
+
+        return DeleteInlineDropDownItemWithCompanionAsync(session, ownerName, itemName);
+    }
+
+    private async Task DeleteInlineDropDownItemWithCompanionAsync(WinFormsDesignerSession session, string ownerName, string itemName)
+    {
+        var removedNames = session.Document.Menus.DescendantNames(ownerName, itemName);
+        var className = session.Document.ClassName;
+        var code = await _getCode!(CompanionPath);
+        var before = code.Text;
+        var after = await Task.Run(() => WinFormsEventHandlers.RemoveControls(before, className, removedNames));
+
+        var originalBindings = new Dictionary<string, IReadOnlyDictionary<string, string>>(_handlers, StringComparer.OrdinalIgnoreCase);
+        var updatedBindings = new Dictionary<string, IReadOnlyDictionary<string, string>>(originalBindings, StringComparer.OrdinalIgnoreCase);
+        foreach (var name in removedNames) updatedBindings.Remove(name);
+
+        void Restore(string expected, string replacement, IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> bindings)
+        {
+            var current = ResolveTransactionDocument(code);
+            if (current.Text != expected) throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
+            current.Text = replacement;
+            _handlers.Clear();
+            foreach (var (field, handlers) in bindings) _handlers[field] = handlers;
+        }
+
+        await session.DeleteDropDownItemAsync(ownerName, itemName,
+            () => Restore(before, after, updatedBindings),
+            () => Restore(after, before, originalBindings),
+            () => Restore(before, after, updatedBindings));
     }
 
     // Same prefix+suffix convention WinFormsDesignerView.MenuInline's NewMenuItemName already

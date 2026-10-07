@@ -63,6 +63,31 @@ public sealed class WinFormsToolStripDocumentTests
     }
 
     [Fact]
+    public void RemoveItemDeletesTheFieldStatementsAndMatchingHandlesClause()
+    {
+        var withItems = new WinFormsToolStripDocument(ToolStripSource).Set("ToolStrip1",
+        [
+            new WinFormsToolStripItem("ToolStripButton1", "ToolStripButton", "&Save"),
+            new WinFormsToolStripItem("ToolStripButton2", "ToolStripButton", "&Open"),
+        ]);
+        withItems = withItems.Replace("End Class",
+            "Private Sub Shared_Click(sender As Object, e As System.EventArgs) " +
+            "Handles ToolStripButton1.Click, ToolStripButton2.Click\nEnd Sub\nEnd Class", StringComparison.Ordinal);
+
+        var removal = new WinFormsToolStripDocument(withItems).RemoveItem("ToolStrip1", "ToolStripButton1");
+
+        Assert.Equal(new HashSet<string> { "ToolStripButton1" }, removal.RemovedNames);
+        var result = removal.Source;
+        Assert.DoesNotContain("ToolStripButton1", result);
+        Assert.Contains("ToolStripButton2", result);
+        Assert.Contains("Private Sub Shared_Click", result);
+        Assert.DoesNotContain("ToolStripButton1.Click", result);
+        Assert.Contains("Handles ToolStripButton2.Click", result);
+        Assert.Equal([new WinFormsToolStripItem("ToolStripButton2", "ToolStripButton", "&Open")],
+            new WinFormsToolStripDocument(result).Read("ToolStrip1"));
+    }
+
+    [Fact]
     public void NewToolStripStartsEmpty()
     {
         var document = new WinFormsToolStripDocument(ToolStripSource);
