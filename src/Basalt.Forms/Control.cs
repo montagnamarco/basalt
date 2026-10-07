@@ -106,6 +106,7 @@ public partial class Control : Component, IWin32Window, IArrangedElement
     [Localizable(true)]
     [Bindable(true)]
     [AllowNull]
+    [Category("Appearance")]
     public virtual string Text
     {
         get => _text ?? string.Empty;
@@ -123,6 +124,7 @@ public partial class Control : Component, IWin32Window, IArrangedElement
     [Bindable(true)]
     [DefaultValue(null)]
     [TypeConverter(typeof(StringConverter))]
+    [Category("Data")]
     public object? Tag { get; set; }
 
     [Browsable(false)]

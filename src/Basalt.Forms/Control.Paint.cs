@@ -118,6 +118,7 @@ public partial class Control
     /// <summary>The window this control is the top of was told something needs painting.</summary>
     internal virtual void RequestPaint() => Canvas?.RequestFrame();
 
+    [Category("Appearance")]
     public event PaintEventHandler? Paint
     {
         add => Events.AddHandler(s_paintEvent, value);

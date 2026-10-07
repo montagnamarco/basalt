@@ -1,8 +1,11 @@
+using System.ComponentModel;
+
 namespace System.Windows.Forms;
 
 /// <summary>Help requests, which go up to the parent until a handler handles them.</summary>
 public partial class Control
 {
+    [Category("Behavior")]
     public event HelpEventHandler? HelpRequested
     {
         add => Events.AddHandler(s_helpRequestedEvent, value);

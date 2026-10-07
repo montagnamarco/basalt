@@ -65,6 +65,7 @@ public abstract partial class ButtonBase : Control
 
     [DefaultValue(ContentAlignment.MiddleCenter)]
     [Localizable(true)]
+    [Category("Appearance")]
     public virtual ContentAlignment TextAlign
     {
         get => _textAlign;
@@ -76,6 +77,7 @@ public abstract partial class ButtonBase : Control
     }
 
     [DefaultValue(FlatStyle.Standard)]
+    [Category("Appearance")]
     public FlatStyle FlatStyle
     {
         get => _flatStyle;
@@ -87,6 +89,7 @@ public abstract partial class ButtonBase : Control
     }
 
     [DefaultValue(true)]
+    [Category("Behavior")]
     public bool UseMnemonic
     {
         get => _useMnemonic;

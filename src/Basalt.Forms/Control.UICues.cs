@@ -16,6 +16,7 @@ public partial class Control
 
     protected virtual bool ShowKeyboardCues => true;
 
+    [Category("Behavior")]
     public event UICuesEventHandler? ChangeUICues
     {
         add => Events.AddHandler(s_changeUICuesEvent, value);

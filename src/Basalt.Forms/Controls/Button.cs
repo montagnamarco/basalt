@@ -13,6 +13,7 @@ public partial class Button : ButtonBase, IButtonControl
     }
 
     [DefaultValue(DialogResult.None)]
+    [Category("Behavior")]
     public virtual DialogResult DialogResult
     {
         get => _dialogResult;

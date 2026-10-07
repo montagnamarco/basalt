@@ -18,6 +18,7 @@ public partial class Control : IDropTarget
     private bool _allowDrop;
 
     [DefaultValue(false)]
+    [Category("Behavior")]
     public virtual bool AllowDrop
     {
         get => _allowDrop;
@@ -180,36 +181,42 @@ public partial class Control : IDropTarget
 
     void IDropTarget.OnDragOver(DragEventArgs e) => OnDragOver(e);
 
+    [Category("DragDrop")]
     public event DragEventHandler? DragDrop
     {
         add => Events.AddHandler(s_dragDropEvent, value);
         remove => Events.RemoveHandler(s_dragDropEvent, value);
     }
 
+    [Category("DragDrop")]
     public event DragEventHandler? DragEnter
     {
         add => Events.AddHandler(s_dragEnterEvent, value);
         remove => Events.RemoveHandler(s_dragEnterEvent, value);
     }
 
+    [Category("DragDrop")]
     public event EventHandler? DragLeave
     {
         add => Events.AddHandler(s_dragLeaveEvent, value);
         remove => Events.RemoveHandler(s_dragLeaveEvent, value);
     }
 
+    [Category("DragDrop")]
     public event DragEventHandler? DragOver
     {
         add => Events.AddHandler(s_dragOverEvent, value);
         remove => Events.RemoveHandler(s_dragOverEvent, value);
     }
 
+    [Category("DragDrop")]
     public event GiveFeedbackEventHandler? GiveFeedback
     {
         add => Events.AddHandler(s_giveFeedbackEvent, value);
         remove => Events.RemoveHandler(s_giveFeedbackEvent, value);
     }
 
+    [Category("DragDrop")]
     public event QueryContinueDragEventHandler? QueryContinueDrag
     {
         add => Events.AddHandler(s_queryContinueDragEvent, value);

@@ -36,6 +36,7 @@ public partial class Control
         }
     }
 
+    [Category("Property Changed")]
     public event EventHandler? RegionChanged
     {
         add => Events.AddHandler(s_regionChangedEvent, value);

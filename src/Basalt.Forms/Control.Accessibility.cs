@@ -26,6 +26,7 @@ public partial class Control
 
     [DefaultValue(null)]
     [Localizable(true)]
+    [Category("Accessibility")]
     public string? AccessibleDefaultActionDescription
     {
         get => _accessibleDefaultActionDescription;
@@ -34,6 +35,7 @@ public partial class Control
 
     [DefaultValue(null)]
     [Localizable(true)]
+    [Category("Accessibility")]
     public string? AccessibleDescription
     {
         get => _accessibleDescription;
@@ -42,6 +44,7 @@ public partial class Control
 
     [DefaultValue(null)]
     [Localizable(true)]
+    [Category("Accessibility")]
     public string? AccessibleName
     {
         get => _accessibleName;
@@ -49,6 +52,7 @@ public partial class Control
     }
 
     [DefaultValue(AccessibleRole.Default)]
+    [Category("Accessibility")]
     public AccessibleRole AccessibleRole
     {
         get => _accessibleRole;
@@ -61,6 +65,7 @@ public partial class Control
     }
 
     [DefaultValue(true)]
+    [Category("Accessibility")]
     public bool IsAccessible
     {
         get => _isAccessible;
@@ -68,6 +73,7 @@ public partial class Control
     }
 
     /// <summary>Raised when assistive technology (or AccessibleObject.Help) asks this control to describe itself.</summary>
+    [Category("Behavior")]
     public event QueryAccessibilityHelpEventHandler? QueryAccessibilityHelp
     {
         add => Events.AddHandler(s_queryAccessibilityHelpEvent, value);

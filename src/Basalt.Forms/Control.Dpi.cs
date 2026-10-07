@@ -35,12 +35,14 @@ public partial class Control
         logicalBitmap = new Bitmap(logicalBitmap, LogicalToDeviceUnits(logicalBitmap.Size));
     }
 
+    [Category("Behavior")]
     public event EventHandler? DpiChangedBeforeParent
     {
         add => Events.AddHandler(s_dpiChangedBeforeParentEvent, value);
         remove => Events.RemoveHandler(s_dpiChangedBeforeParentEvent, value);
     }
 
+    [Category("Behavior")]
     public event EventHandler? DpiChangedAfterParent
     {
         add => Events.AddHandler(s_dpiChangedAfterParentEvent, value);

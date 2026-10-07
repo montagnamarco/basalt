@@ -31,6 +31,7 @@ public partial class Control
         }
     }
 
+    [Category("Data")]
     public event EventHandler? DataContextChanged
     {
         add => Events.AddHandler(s_dataContextChangedEvent, value);

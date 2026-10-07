@@ -11,6 +11,7 @@ public partial class Control
 
     /// <summary>The control's own cursor, else the one its kind shows by default, else its parent's.</summary>
     [AmbientValue(null)]
+    [Category("Appearance")]
     public virtual Cursor Cursor
     {
         get
@@ -40,6 +41,7 @@ public partial class Control
     [DefaultValue(false)]
     [Browsable(true)]
     [EditorBrowsable(EditorBrowsableState.Always)]
+    [Category("Behavior")]
     public bool UseWaitCursor
     {
         get => _useWaitCursor;
@@ -77,6 +79,7 @@ public partial class Control
         if (_cursor is null) OnCursorChanged(e);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? CursorChanged
     {
         add => Events.AddHandler(s_cursorEvent, value);

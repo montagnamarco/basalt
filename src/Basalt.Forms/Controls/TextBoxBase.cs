@@ -813,6 +813,14 @@ public abstract partial class TextBoxBase : Control
 
 
 
+    /// <summary>
+    /// Visual Studio shows an unset BackColor as "Window", the usual edit box
+    /// shade, rather than the generic control colour every other control
+    /// declares. Painting still goes through <see cref="EffectiveBackColor"/>,
+    /// which additionally greys out a disabled or read-only box.
+    /// </summary>
+    internal override Color DeclaredDefaultBackColor => SystemColors.Window;
+
     /// <summary>Window white normally; the control colour when disabled or read-only, unless a colour was set.</summary>
     private Color EffectiveBackColor
     {

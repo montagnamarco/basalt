@@ -89,6 +89,40 @@ public class WinFormsPropertyInspectorTests
         }
     }
 
+    /// <summary>
+    /// Visual Studio groups a Button's properties under Appearance/Behavior/Layout/etc., not one
+    /// "Misc" bucket: Basalt.Forms carries [Category] on Control's members (Control.Ambient.cs,
+    /// Control.Bounds.cs, Control.Focus.cs, ...) the same way real WinForms' SRCategory does, and
+    /// WinFormsPropertyInspector.DescribeDesigner must surface it through CategoryName.
+    /// </summary>
+    [Fact]
+    public void GroupsAButtonsDesignerPropertiesLikeVisualStudio()
+    {
+        using var button = new System.Windows.Forms.Button();
+        var properties = WinFormsPropertyInspector.DescribeDesigner(button);
+
+        Assert.Equal("Appearance", Assert.Single(properties, property => property.Name == "BackColor").CategoryName);
+        Assert.Equal("Behavior", Assert.Single(properties, property => property.Name == "Enabled").CategoryName);
+        Assert.Equal("Layout", Assert.Single(properties, property => property.Name == "Location").CategoryName);
+
+        // Before Control carried [Category], TypeDescriptor's default (CategoryAttribute.Default)
+        // put every one of these under "Misc": the defect this guards against.
+        Assert.DoesNotContain(properties, property =>
+            property.Name is "BackColor" or "Enabled" or "Location" && property.CategoryName == "Misc");
+    }
+
+    /// <summary>
+    /// Visual Studio's Events window groups Click under "Action", not "Misc".
+    /// </summary>
+    [Fact]
+    public void GroupsAButtonsClickEventUnderAction()
+    {
+        var events = System.ComponentModel.TypeDescriptor.GetEvents(typeof(System.Windows.Forms.Button));
+        var click = events["Click"];
+        Assert.NotNull(click);
+        Assert.Equal("Action", click!.Category);
+    }
+
     public sealed class TestControl
     {
         [Category("Layout"), DefaultValue(120), Description("The client width.")]

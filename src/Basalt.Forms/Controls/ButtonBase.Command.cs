@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace System.Windows.Forms;
@@ -14,6 +15,7 @@ public abstract partial class ButtonBase
     private ICommand? _command;
     private object? _commandParameter;
 
+    [Category("Behavior")]
     public ICommand? Command
     {
         get => _command;
@@ -32,6 +34,7 @@ public abstract partial class ButtonBase
         }
     }
 
+    [Category("Behavior")]
     public object? CommandParameter
     {
         get => _commandParameter;
@@ -45,18 +48,21 @@ public abstract partial class ButtonBase
         }
     }
 
+    [Category("Property Changed")]
     public event EventHandler? CommandChanged
     {
         add => Events.AddHandler(s_commandChangedEvent, value);
         remove => Events.RemoveHandler(s_commandChangedEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? CommandCanExecuteChanged
     {
         add => Events.AddHandler(s_commandCanExecuteChangedEvent, value);
         remove => Events.RemoveHandler(s_commandCanExecuteChangedEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? CommandParameterChanged
     {
         add => Events.AddHandler(s_commandParameterChangedEvent, value);

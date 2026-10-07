@@ -134,6 +134,7 @@ public partial class Control
 
     /// <summary>The menu shown when the user right-clicks the control. A menu that is disposed stops being the control's menu.</summary>
     [DefaultValue(null)]
+    [Category("Behavior")]
     public virtual ContextMenuStrip? ContextMenuStrip
     {
         get => ContextMenuStripInternal as ContextMenuStrip;
@@ -157,6 +158,7 @@ public partial class Control
         if (ContextMenuStrip is { } menu) menu.Disposed -= OnContextMenuStripDisposed;
     }
 
+    [Category("Property Changed")]
     public event EventHandler? ContextMenuStripChanged
     {
         add => Events.AddHandler(s_contextMenuStripChangedEvent, value);
@@ -194,42 +196,49 @@ public partial class Control
     /// <summary>Raises Click on another control, as a control that forwards its clicks does.</summary>
     protected void InvokeOnClick(Control? toInvoke, EventArgs e) => toInvoke?.OnClick(e);
 
+    [Category("Action")]
     public event EventHandler? Click
     {
         add => Events.AddHandler(s_clickEvent, value);
         remove => Events.RemoveHandler(s_clickEvent, value);
     }
 
+    [Category("Action")]
     public event EventHandler? DoubleClick
     {
         add => Events.AddHandler(s_doubleClickEvent, value);
         remove => Events.RemoveHandler(s_doubleClickEvent, value);
     }
 
+    [Category("Mouse")]
     public event MouseEventHandler? MouseClick
     {
         add => Events.AddHandler(s_mouseClickEvent, value);
         remove => Events.RemoveHandler(s_mouseClickEvent, value);
     }
 
+    [Category("Mouse")]
     public event MouseEventHandler? MouseDoubleClick
     {
         add => Events.AddHandler(s_mouseDoubleClickEvent, value);
         remove => Events.RemoveHandler(s_mouseDoubleClickEvent, value);
     }
 
+    [Category("Mouse")]
     public event MouseEventHandler? MouseDown
     {
         add => Events.AddHandler(s_mouseDownEvent, value);
         remove => Events.RemoveHandler(s_mouseDownEvent, value);
     }
 
+    [Category("Mouse")]
     public event MouseEventHandler? MouseUp
     {
         add => Events.AddHandler(s_mouseUpEvent, value);
         remove => Events.RemoveHandler(s_mouseUpEvent, value);
     }
 
+    [Category("Mouse")]
     public event MouseEventHandler? MouseMove
     {
         add => Events.AddHandler(s_mouseMoveEvent, value);
@@ -238,30 +247,35 @@ public partial class Control
 
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Advanced)]
+    [Category("Mouse")]
     public event MouseEventHandler? MouseWheel
     {
         add => Events.AddHandler(s_mouseWheelEvent, value);
         remove => Events.RemoveHandler(s_mouseWheelEvent, value);
     }
 
+    [Category("Mouse")]
     public event EventHandler? MouseEnter
     {
         add => Events.AddHandler(s_mouseEnterEvent, value);
         remove => Events.RemoveHandler(s_mouseEnterEvent, value);
     }
 
+    [Category("Mouse")]
     public event EventHandler? MouseLeave
     {
         add => Events.AddHandler(s_mouseLeaveEvent, value);
         remove => Events.RemoveHandler(s_mouseLeaveEvent, value);
     }
 
+    [Category("Mouse")]
     public event EventHandler? MouseHover
     {
         add => Events.AddHandler(s_mouseHoverEvent, value);
         remove => Events.RemoveHandler(s_mouseHoverEvent, value);
     }
 
+    [Category("Mouse")]
     public event EventHandler? MouseCaptureChanged
     {
         add => Events.AddHandler(s_mouseCaptureChangedEvent, value);

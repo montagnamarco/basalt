@@ -104,6 +104,7 @@ public partial class Control
     [EditorBrowsable(EditorBrowsableState.Never)]
     public void ResetBindings() => _dataBindings?.Clear();
 
+    [Category("Property Changed")]
     public event EventHandler? SystemColorsChanged
     {
         add => Events.AddHandler(s_systemColorsChangedEvent, value);

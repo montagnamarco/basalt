@@ -181,6 +181,7 @@ public partial class Control
         PerformLayout(new LayoutEventArgs(cause, property));
     }
 
+    [Category("Layout")]
     public event LayoutEventHandler? Layout
     {
         add => Events.AddHandler(s_layoutEvent, value);
@@ -192,6 +193,7 @@ public partial class Control
     [Localizable(true)]
     [DefaultValue(DockStyle.None)]
     [RefreshProperties(RefreshProperties.Repaint)]
+    [Category("Layout")]
     public virtual DockStyle Dock
     {
         get => _layout.Dock;
@@ -228,6 +230,7 @@ public partial class Control
     [Localizable(true)]
     [DefaultValue(AnchorStyles.Top | AnchorStyles.Left)]
     [RefreshProperties(RefreshProperties.Repaint)]
+    [Category("Layout")]
     public virtual AnchorStyles Anchor
     {
         get => _layout.Anchor;
@@ -247,6 +250,7 @@ public partial class Control
 
     protected virtual void OnDockChanged(EventArgs e) => ((EventHandler?)Events[s_dockEvent])?.Invoke(this, e);
 
+    [Category("Property Changed")]
     public event EventHandler? DockChanged
     {
         add => Events.AddHandler(s_dockEvent, value);
@@ -261,6 +265,7 @@ public partial class Control
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Category("Layout")]
     public virtual bool AutoSize
     {
         get => _layout.AutoSize;
@@ -296,6 +301,7 @@ public partial class Control
 
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
+    [Category("Property Changed")]
     public event EventHandler? AutoSizeChanged
     {
         add => Events.AddHandler(s_autoSizeEvent, value);
@@ -305,6 +311,7 @@ public partial class Control
     private static readonly object s_autoSizeEvent = new();
 
     [Localizable(true)]
+    [Category("Layout")]
     public Padding Margin
     {
         get => _layout.Margin;
@@ -321,6 +328,7 @@ public partial class Control
     }
 
     [Localizable(true)]
+    [Category("Layout")]
     public Padding Padding
     {
         get => _layout.Padding;
@@ -366,12 +374,14 @@ public partial class Control
         ((EventHandler?)Events[s_paddingEvent])?.Invoke(this, e);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? MarginChanged
     {
         add => Events.AddHandler(s_marginEvent, value);
         remove => Events.RemoveHandler(s_marginEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? PaddingChanged
     {
         add => Events.AddHandler(s_paddingEvent, value);
@@ -383,6 +393,7 @@ public partial class Control
 
     /// <summary>The smallest size the control takes; raising it above the maximum raises the maximum too.</summary>
     [Localizable(true)]
+    [Category("Layout")]
     public virtual Size MinimumSize
     {
         get => _layout.MinimumSize;
@@ -405,6 +416,7 @@ public partial class Control
 
     /// <summary>The largest size the control takes, zero meaning none; lowering it below the minimum lowers the minimum too.</summary>
     [Localizable(true)]
+    [Category("Layout")]
     public virtual Size MaximumSize
     {
         get => _layout.MaximumSize;

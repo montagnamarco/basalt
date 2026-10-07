@@ -24,6 +24,7 @@ public partial class Control
 
     /// <summary>The control's place in its container's tab order; one added without one goes after the others.</summary>
     [Localizable(true)]
+    [Category("Behavior")]
     public int TabIndex
     {
         get => _tabIndex == -1 ? 0 : _tabIndex;
@@ -39,6 +40,7 @@ public partial class Control
     }
 
     [DefaultValue(true)]
+    [Category("Behavior")]
     public bool TabStop
     {
         get => GetState(States.TabStop);
@@ -52,6 +54,7 @@ public partial class Control
     }
 
     [DefaultValue(true)]
+    [Category("Behavior")]
     public bool CausesValidation
     {
         get => GetState(States.CausesValidation);
@@ -357,18 +360,21 @@ public partial class Control
 
     protected void InvokeLostFocus(Control? toInvoke, EventArgs e) => toInvoke?.OnLostFocus(e);
 
+    [Category("Property Changed")]
     public event EventHandler? TabIndexChanged
     {
         add => Events.AddHandler(s_tabIndexEvent, value);
         remove => Events.RemoveHandler(s_tabIndexEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? TabStopChanged
     {
         add => Events.AddHandler(s_tabStopEvent, value);
         remove => Events.RemoveHandler(s_tabStopEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? CausesValidationChanged
     {
         add => Events.AddHandler(s_causesValidationEvent, value);
@@ -377,6 +383,7 @@ public partial class Control
 
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Advanced)]
+    [Category("Focus")]
     public event EventHandler? GotFocus
     {
         add => Events.AddHandler(s_gotFocusEvent, value);
@@ -385,30 +392,35 @@ public partial class Control
 
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Advanced)]
+    [Category("Focus")]
     public event EventHandler? LostFocus
     {
         add => Events.AddHandler(s_lostFocusEvent, value);
         remove => Events.RemoveHandler(s_lostFocusEvent, value);
     }
 
+    [Category("Focus")]
     public event EventHandler? Enter
     {
         add => Events.AddHandler(s_enterEvent, value);
         remove => Events.RemoveHandler(s_enterEvent, value);
     }
 
+    [Category("Focus")]
     public event EventHandler? Leave
     {
         add => Events.AddHandler(s_leaveEvent, value);
         remove => Events.RemoveHandler(s_leaveEvent, value);
     }
 
+    [Category("Focus")]
     public event CancelEventHandler? Validating
     {
         add => Events.AddHandler(s_validatingEvent, value);
         remove => Events.RemoveHandler(s_validatingEvent, value);
     }
 
+    [Category("Focus")]
     public event EventHandler? Validated
     {
         add => Events.AddHandler(s_validatedEvent, value);

@@ -63,6 +63,7 @@ public partial class Control : IBindableComponent
     /// <summary>A disposed control lets go of its data sources: the bindings stop listening to them.</summary>
     internal virtual void ReleaseBindings() => _dataBindings?.Clear();
 
+    [Category("Property Changed")]
     public event EventHandler? BindingContextChanged
     {
         add => Events.AddHandler(s_bindingContextEvent, value);

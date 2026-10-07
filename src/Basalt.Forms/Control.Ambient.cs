@@ -16,6 +16,7 @@ public partial class Control
     private RightToLeft _rightToLeft = RightToLeft.Inherit;
 
     /// <summary>The control's background colour: its own, else its parent's, else the system's.</summary>
+    [Category("Appearance")]
     public virtual Color BackColor
     {
         get
@@ -46,6 +47,7 @@ public partial class Control
 
     internal bool ShouldSerializeBackColor() => !_backColor.IsEmpty;
 
+    [Category("Appearance")]
     public virtual Color ForeColor
     {
         get
@@ -68,6 +70,7 @@ public partial class Control
     internal bool ShouldSerializeForeColor() => !_foreColor.IsEmpty;
 
     /// <summary>The font: the control's own, else its parent's, else the designer's ambient one, else the default.</summary>
+    [Category("Appearance")]
     [Localizable(true)]
     public virtual Font Font
     {
@@ -112,6 +115,7 @@ public partial class Control
         set => _fontHeight = value;
     }
 
+    [Category("Appearance")]
     [Localizable(true)]
     [AmbientValue(RightToLeft.Inherit)]
     public virtual RightToLeft RightToLeft
@@ -140,6 +144,31 @@ public partial class Control
     public static Color DefaultBackColor => SystemColors.Control;
 
     public static Color DefaultForeColor => SystemColors.ControlText;
+
+    /// <summary>
+    /// The WinForms-declared default for BackColor when the property is unset: the
+    /// value Visual Studio's Properties grid names ("Control", "Window"...), not the
+    /// plain RGB <see cref="BackColor"/>'s getter blends in from the portable visual
+    /// styles palette so painting stays faithful without a real system theme. A
+    /// subclass whose unset background differs from the ordinary control colour
+    /// (TextBoxBase's "Window", for instance) overrides this, not the getter.
+    /// </summary>
+    internal virtual Color DeclaredDefaultBackColor => DefaultBackColor;
+
+    /// <summary>The declared default for ForeColor; see <see cref="DeclaredDefaultBackColor"/>.</summary>
+    internal virtual Color DeclaredDefaultForeColor => DefaultForeColor;
+
+    /// <summary>
+    /// <see cref="DeclaredDefaultBackColor"/> or <see cref="DeclaredDefaultForeColor"/> by
+    /// property name, for callers that only have the name from a PropertyDescriptor.
+    /// Color.Empty for any other property: there is nothing declared to show.
+    /// </summary>
+    internal Color GetDeclaredDefaultColor(string propertyName) => propertyName switch
+    {
+        nameof(BackColor) => DeclaredDefaultBackColor,
+        nameof(ForeColor) => DeclaredDefaultForeColor,
+        _ => Color.Empty,
+    };
 
     /// <summary>
     /// The font of controls that set none: the application's, set with
@@ -230,24 +259,28 @@ public partial class Control
         if (_rightToLeft == RightToLeft.Inherit) OnRightToLeftChanged(e);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? BackColorChanged
     {
         add => Events.AddHandler(s_backColorEvent, value);
         remove => Events.RemoveHandler(s_backColorEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? ForeColorChanged
     {
         add => Events.AddHandler(s_foreColorEvent, value);
         remove => Events.RemoveHandler(s_foreColorEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? FontChanged
     {
         add => Events.AddHandler(s_fontEvent, value);
         remove => Events.RemoveHandler(s_fontEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? RightToLeftChanged
     {
         add => Events.AddHandler(s_rightToLeftEvent, value);
@@ -262,6 +295,7 @@ public partial class Control
     private Image? _backgroundImage;
     private ImageLayout _backgroundImageLayout = ImageLayout.Tile;
 
+    [Category("Appearance")]
     [DefaultValue(null)]
     [Localizable(true)]
     public virtual Image? BackgroundImage
@@ -276,6 +310,7 @@ public partial class Control
         }
     }
 
+    [Category("Appearance")]
     [DefaultValue(ImageLayout.Tile)]
     [Localizable(true)]
     public virtual ImageLayout BackgroundImageLayout
@@ -320,12 +355,14 @@ public partial class Control
         if (BackColor.A < 255) Invalidate();
     }
 
+    [Category("Property Changed")]
     public event EventHandler? BackgroundImageChanged
     {
         add => Events.AddHandler(s_backgroundImageEvent, value);
         remove => Events.RemoveHandler(s_backgroundImageEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? BackgroundImageLayoutChanged
     {
         add => Events.AddHandler(s_backgroundImageLayoutEvent, value);
@@ -336,6 +373,7 @@ public partial class Control
     private static readonly object s_backgroundImageLayoutEvent = new();
 
     /// <summary>Visible when the control and every ancestor are; a top-level control answers for itself.</summary>
+    [Category("Behavior")]
     [Localizable(true)]
     public bool Visible
     {
@@ -395,6 +433,7 @@ public partial class Control
         if (DesiredVisibility) OnVisibleChanged(e);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? VisibleChanged
     {
         add => Events.AddHandler(s_visibleEvent, value);
@@ -402,6 +441,7 @@ public partial class Control
     }
 
     /// <summary>Enabled when the control and every ancestor are.</summary>
+    [Category("Behavior")]
     [Localizable(true)]
     [DefaultValue(true)]
     public bool Enabled
@@ -437,6 +477,7 @@ public partial class Control
         if (GetState(States.Enabled)) OnEnabledChanged(e);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? EnabledChanged
     {
         add => Events.AddHandler(s_enabledEvent, value);
@@ -450,6 +491,7 @@ public partial class Control
 
     protected virtual void OnTextChanged(EventArgs e) => ((EventHandler?)Events[s_textEvent])?.Invoke(this, e);
 
+    [Category("Property Changed")]
     public event EventHandler? TextChanged
     {
         add => Events.AddHandler(s_textEvent, value);

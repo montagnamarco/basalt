@@ -17,6 +17,7 @@ public partial class Control
     /// <summary>OnHalf reads back as On, as in WinForms, where the two only differ for the Korean IME.</summary>
     [Localizable(true)]
     [AmbientValue(ImeMode.Inherit)]
+    [Category("Behavior")]
     public ImeMode ImeMode
     {
         get => ImeModeBase is ImeMode.OnHalf ? ImeMode.On : ImeModeBase;
@@ -52,6 +53,7 @@ public partial class Control
     /// <summary>The mode carried from one control to the next on focus changes; without a Windows IME it is never set.</summary>
     protected static ImeMode PropagatingImeMode => ImeMode.Inherit;
 
+    [Category("Property Changed")]
     public event EventHandler? ImeModeChanged
     {
         add => Events.AddHandler(s_imeModeChangedEvent, value);

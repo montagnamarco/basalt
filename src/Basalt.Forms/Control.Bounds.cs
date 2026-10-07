@@ -23,6 +23,7 @@ public partial class Control
     }
 
     [Localizable(true)]
+    [Category("Layout")]
     public Point Location
     {
         get => new(_x, _y);
@@ -30,6 +31,7 @@ public partial class Control
     }
 
     [Localizable(true)]
+    [Category("Layout")]
     public Size Size
     {
         get => new(_width, _height);
@@ -297,30 +299,35 @@ public partial class Control
 
     protected virtual void OnClientSizeChanged(EventArgs e) => ((EventHandler?)Events[s_clientSizeEvent])?.Invoke(this, e);
 
+    [Category("Property Changed")]
     public event EventHandler? LocationChanged
     {
         add => Events.AddHandler(s_locationEvent, value);
         remove => Events.RemoveHandler(s_locationEvent, value);
     }
 
+    [Category("Layout")]
     public event EventHandler? Move
     {
         add => Events.AddHandler(s_moveEvent, value);
         remove => Events.RemoveHandler(s_moveEvent, value);
     }
 
+    [Category("Property Changed")]
     public event EventHandler? SizeChanged
     {
         add => Events.AddHandler(s_sizeEvent, value);
         remove => Events.RemoveHandler(s_sizeEvent, value);
     }
 
+    [Category("Layout")]
     public event EventHandler? Resize
     {
         add => Events.AddHandler(s_resizeEvent, value);
         remove => Events.RemoveHandler(s_resizeEvent, value);
     }
 
+    [Category("Layout")]
     public event EventHandler? ClientSizeChanged
     {
         add => Events.AddHandler(s_clientSizeEvent, value);

@@ -165,7 +165,39 @@ public sealed partial class WinFormsPropertyPanel : UserControl
             return Localizer.Get(StringKeys.PropertyGridNone);
         }
 
+        if (component is Forms.Control control && property.ValueType == typeof(System.Drawing.Color))
+        {
+            var declared = DeclaredAmbientColorValue(control, property.Name);
+            if (declared is not null)
+            {
+                return declared;
+            }
+        }
+
         return WinFormsPropertyInspector.ReadDesignerValue(component, property.Name);
+    }
+
+    /// <summary>
+    /// BackColor and ForeColor read live through a getter that, when unset, blends in
+    /// the portable visual styles palette so the design surface paints faithfully
+    /// without a real system theme (<c>Control.PortableVisualStylesEnabled</c>); that
+    /// plain RGB is not what Visual Studio's Properties grid names for an unset
+    /// ambient colour ("Control", "Window"...). When the property has not been
+    /// assigned, show the control's declared WinForms default instead, named by the
+    /// same converter a set value would use. Returns null for a set property, or one
+    /// with no declared default, so the caller falls back to the live value.
+    /// </summary>
+    private static string? DeclaredAmbientColorValue(Forms.Control control, string propertyName)
+    {
+        var descriptor = System.ComponentModel.TypeDescriptor.GetProperties(control)[propertyName];
+        if (descriptor is null || descriptor.ShouldSerializeValue(control))
+        {
+            return null;
+        }
+
+        var declared = control.GetDeclaredDefaultColor(propertyName);
+        return declared.IsEmpty ? null
+            : System.ComponentModel.TypeDescriptor.GetConverter(typeof(System.Drawing.Color)).ConvertToInvariantString(declared);
     }
 
     /// <summary>Shows only properties shared by a selected control group.</summary>

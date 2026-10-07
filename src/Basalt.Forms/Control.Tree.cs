@@ -139,6 +139,7 @@ public partial class Control
 
     protected virtual void OnControlRemoved(ControlEventArgs e) => ((ControlEventHandler?)Events[s_controlRemovedEvent])?.Invoke(this, e);
 
+    [Category("Property Changed")]
     public event EventHandler? ParentChanged
     {
         add => Events.AddHandler(s_parentEvent, value);
@@ -147,6 +148,7 @@ public partial class Control
 
     [Browsable(true)]
     [EditorBrowsable(EditorBrowsableState.Always)]
+    [Category("Behavior")]
     public event ControlEventHandler? ControlAdded
     {
         add => Events.AddHandler(s_controlAddedEvent, value);
@@ -155,6 +157,7 @@ public partial class Control
 
     [Browsable(true)]
     [EditorBrowsable(EditorBrowsableState.Always)]
+    [Category("Behavior")]
     public event ControlEventHandler? ControlRemoved
     {
         add => Events.AddHandler(s_controlRemovedEvent, value);

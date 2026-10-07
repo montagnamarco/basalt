@@ -16,24 +16,28 @@ public partial class Control
 
     private bool _inputChar;
 
+    [Category("Key")]
     public event KeyEventHandler? KeyDown
     {
         add => Events.AddHandler(s_keyDownEvent, value);
         remove => Events.RemoveHandler(s_keyDownEvent, value);
     }
 
+    [Category("Key")]
     public event KeyEventHandler? KeyUp
     {
         add => Events.AddHandler(s_keyUpEvent, value);
         remove => Events.RemoveHandler(s_keyUpEvent, value);
     }
 
+    [Category("Key")]
     public event KeyPressEventHandler? KeyPress
     {
         add => Events.AddHandler(s_keyPressEvent, value);
         remove => Events.RemoveHandler(s_keyPressEvent, value);
     }
 
+    [Category("Key")]
     public event PreviewKeyDownEventHandler? PreviewKeyDown
     {
         add => Events.AddHandler(s_previewKeyDownEvent, value);

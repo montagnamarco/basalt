@@ -74,7 +74,14 @@ public sealed class WinFormsDesignerModalPropertyViewTests
                 });
                 Dispatcher.UIThread.RunJobs();
                 Assert.NotEqual(propertyName, grid.SelectedPropertyName);
-                Assert.True(scroll.Offset.Y < before - 1);
+                // Whether the grid had to scroll depends on where the categories put the row above;
+                // what must hold is that the row the Up key selected is the one the user can see.
+                owner.UpdateLayout();
+                Dispatcher.UIThread.RunJobs();
+                var selected = FindRow(grid, grid.SelectedPropertyName!);
+                var top = selected.TranslatePoint(new Avalonia.Point(0, 0), scroll)!.Value.Y;
+                Assert.InRange(top, -1, scroll.Viewport.Height - selected.Bounds.Height + 1);
+                Assert.True(scroll.Offset.Y <= before);
             }
         }
         finally
