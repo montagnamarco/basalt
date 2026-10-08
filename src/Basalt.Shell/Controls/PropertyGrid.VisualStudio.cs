@@ -12,6 +12,9 @@ namespace Basalt.Shell.Controls;
 public sealed partial class PropertyGrid
 {
     private readonly StackPanel _visualStudioRows = new();
+
+    /// <summary>The rows as the scroll viewer shows them: inside the scrollbar gap (see InitializeVisualStudioGrid).</summary>
+    private Border _visualStudioRowsHost = null!;
     private readonly List<VisualStudioEntry> _visualStudioEntries = [];
     private readonly HashSet<string> _expandedProperties = new(StringComparer.Ordinal);
     private readonly TextBlock _visualStudioName = new()
@@ -60,7 +63,7 @@ public sealed partial class PropertyGrid
             _eventsMode = value;
             _visualStudioProperties.IsChecked = !value;
             _visualStudioEvents.IsChecked = value;
-            _visualStudioScroll.Content = value ? _eventsContent : _visualStudioRows;
+            _visualStudioScroll.Content = value ? _eventsContent : _visualStudioRowsHost;
             _visualStudioDescriptionPane.IsVisible = !value;
             EventsModeChanged?.Invoke(value);
         }
@@ -170,7 +173,15 @@ public sealed partial class PropertyGrid
         };
         var scroll = _visualStudioScroll = new ScrollViewer
         {
-            Content = _visualStudioRows,
+            // The theme's vertical scrollbar floats over the content rather than
+            // reserving its own column (an "overlay" scrollbar): without this gap, a
+            // real pointer click on the "…" button flush against the right edge of a
+            // row - which every row with a custom editor draws there - lands on the
+            // scrollbar's hit-test area instead of the button underneath it whenever
+            // the list is tall enough to scroll (nearly always, for a real control).
+            // 16: Avalonia's default ScrollBarThickness, the track's full hit-test
+            // width even while the thumb itself is faded out.
+            Content = _visualStudioRowsHost = new Border { Child = _visualStudioRows, Padding = new Thickness(0, 0, 16, 0) },
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
         _visualStudioLayout = new Grid
