@@ -4580,11 +4580,12 @@ public partial class MainWindow : Window
             async () =>
             {
                 await ViewModel.OpenFileAsync(diagnostic.FilePath);
+                if (ViewModel.ActiveDocument is not { } opened) return;
 
                 // The editor is created by the document change, so moving the
                 // caret waits until after that has happened.
                 Dispatcher.UIThread.Post(
-                    () => GoToLine(diagnostic.Line, diagnostic.Column),
+                    () => GoToLineWhenReady(opened, diagnostic.Line, diagnostic.Column),
                     DispatcherPriority.Background);
             },
             ViewModel.WriteOutput, "ide");
