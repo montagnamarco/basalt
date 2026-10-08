@@ -576,21 +576,44 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         var document = ActiveDocument;
         if (document is null) return;
 
+        await SaveDocumentAsync(document).ConfigureAwait(true);
+        StatusMessage = Localizer.Get(StringKeys.StatusSaved, document.FileName);
+    }
+
+    /// <summary>
+    /// Writes one document to disk, with every step a save needs: designer
+    /// write-back, format-on-save and keeping the language service in sync.
+    /// </summary>
+    /// <remarks>
+    /// Shared by <see cref="SaveAsync"/> and <see cref="SaveAllAsync"/> so
+    /// Save All cannot drift from what a single Save does to the active
+    /// document — it used to call <see cref="EditorDocumentViewModel.SaveAsync"/>
+    /// directly, which only writes the file: every other document saved this
+    /// way kept its unformatted text, a stale Roslyn copy, and (for a WinForms
+    /// designer tab that was not the active one) markup drawn but never
+    /// written back from its session.
+    /// </remarks>
+    private async Task SaveDocumentAsync(EditorDocumentViewModel document)
+    {
         // In the designer the source of truth is the XAML document, not the
         // tab's text: it must be realigned before writing to disk. Through the
         // same path as an edit, because this is the one that reaches the file
         // — writing markup here would leave Avalonia XAML in a .frm.
+        //
+        // Looked up per document, not through ActiveDesigner: that only
+        // describes whichever document is active, and Save All walks every
+        // modified document, active or not.
         //
         // Only while the session still describes the text: the same tab can be
         // switched to its text view and edited by hand, and the session does
         // not follow that. Writing it back then would overwrite what was typed
         // with the markup from before; the text is what gets saved, and the
         // designer is rebuilt from it next time it is shown.
-        if (ActiveDesigner is not null)
+        if (_designerSessions.TryGetValue(document, out var session))
         {
             if (_designerSessionText.TryGetValue(document, out var produced) && produced == document.Text)
             {
-                document.Text = WriteBack(document, ActiveDesigner);
+                document.Text = WriteBack(document, session);
                 _designerSessionText[document] = document.Text;
             }
             else
@@ -600,12 +623,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
 
         if (FormatOnSave && !document.OpenInDesigner)
-            await FormatDocumentAsync().ConfigureAwait(true);
+            await FormatDocumentAsync(document).ConfigureAwait(true);
 
         await document.SaveAsync().ConfigureAwait(true);
         await _languageService.UpdateDocumentAsync(document.FilePath, document.Text).ConfigureAwait(true);
         await SaveWinFormsCompanionAsync(document).ConfigureAwait(true);
-        StatusMessage = Localizer.Get(StringKeys.StatusSaved, document.FileName);
     }
 
     /// <summary>
@@ -628,7 +650,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         var pending = OpenDocuments.Where(d => d.IsModified).ToList();
 
-        foreach (var document in pending) await document.SaveAsync().ConfigureAwait(true);
+        foreach (var document in pending)
+        {
+            // A form's companion files are saved together with whichever of them comes first;
+            // saving one again here would write it twice.
+            if (!document.IsModified) continue;
+
+            await SaveDocumentAsync(document).ConfigureAwait(true);
+        }
 
         StatusMessage = pending.Count switch
         {
@@ -942,6 +971,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private async Task FormatDocumentAsync()
     {
         if (ActiveDocument is not { OpenInDesigner: false } document) return;
+
+        await FormatDocumentAsync(document).ConfigureAwait(true);
+    }
+
+    /// <summary>Formats a given document in place, active or not.</summary>
+    private async Task FormatDocumentAsync(EditorDocumentViewModel document)
+    {
         if (document.Language is not SourceLanguage.VisualBasic) return;
 
         var result = await _formattingService

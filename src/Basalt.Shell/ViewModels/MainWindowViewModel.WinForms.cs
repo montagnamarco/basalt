@@ -49,6 +49,11 @@ public sealed partial class MainWindowViewModel
             {
                 continue;
             }
+            // Formatted like a save of its own: Save All skips a companion saved here, so this is
+            // the only save it gets.
+            if (FormatOnSave && !companion.OpenInDesigner)
+                await FormatDocumentAsync(companion).ConfigureAwait(true);
+
             await companion.SaveAsync().ConfigureAwait(true);
             if (companion.FilePath.EndsWith(".vb", StringComparison.OrdinalIgnoreCase))
             {
