@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using System.ComponentModel;
 using System.IO.Ports;
 using Basalt.Core.Localization;
@@ -66,7 +67,9 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
                     .Where(item => !typeof(Forms.Form).IsAssignableFrom(item.ControlType)
                         && item.ControlType != typeof(Forms.WebBrowser) && item.ControlType != typeof(Forms.AxHost)
                         && item.ControlType != typeof(Forms.ContextMenuStrip))
-                    .Concat(new[] { typeof(Forms.Timer), typeof(Forms.ImageList), typeof(Forms.ToolTip), typeof(Forms.ContextMenuStrip), typeof(SerialPort) }
+                    .Concat(new[] { typeof(Forms.Timer), typeof(Forms.ImageList), typeof(Forms.ToolTip), typeof(Forms.ContextMenuStrip),
+                            typeof(Forms.OpenFileDialog), typeof(Forms.SaveFileDialog), typeof(Forms.FolderBrowserDialog),
+                            typeof(Forms.ColorDialog), typeof(Forms.FontDialog), typeof(SerialPort) }
                         .Select(type => new WinFormsToolboxItem(type)))
                     .Append(WinFormsToolboxCatalog.Pointer)),
             item => item.Category,
@@ -217,6 +220,14 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
     {
         if (_busy || _session is null) return;
         _editSelectionNames = _surface.SelectedControls.Select(_session.NameOf).ToArray();
+
+        // Disabling the view below takes keyboard focus away from whatever in it had it, and
+        // re-enabling does not give it back: after dragging a control the arrow keys, Delete and
+        // the clipboard shortcuts went nowhere until the form was clicked again.
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;
+        Visual[] disabled = [this, _toolboxPanel, _properties, _events];
+        var refocus = focused is not null && disabled.Any(panel => panel.IsVisualAncestorOf(focused)) ? focused : null;
+
         _busy = true;
         IsEnabled = false;
         _toolboxPanel.IsEnabled = false;
@@ -232,6 +243,10 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
             _toolboxPanel.IsEnabled = true;
             _properties.IsEnabled = true;
             _events.IsEnabled = true;
+            // Only when nothing else took focus meanwhile: an edit that opens the code (a
+            // double-clicked event) leaves it in the editor, where the user goes on typing.
+            var focusedNow = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+            if (focusedNow is null && refocus is { IsEffectivelyVisible: true }) refocus.Focus();
         }
     }
 

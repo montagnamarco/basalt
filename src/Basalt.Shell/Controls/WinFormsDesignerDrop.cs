@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -6,17 +7,31 @@ using DrawingPoint = System.Drawing.Point;
 
 namespace Basalt.Shell.Controls;
 
+/// <param name="Parent">
+/// Where a visual control lands. A non-visual component (<see cref="Forms.Timer"/>,
+/// <see cref="Forms.OpenFileDialog"/>, ...) has nowhere on the form to land - it always
+/// goes to the component tray, the same place double-clicking it in the toolbox sends
+/// it - so this is the root form for one of those, a sentinel rather than a real target.
+/// </param>
 public sealed record WinFormsControlDrop(Type ControlType, FormsControl Parent, DrawingPoint Location);
 
 /// <summary>Resolves a drop in the receiving Forms container's client coordinates.</summary>
 internal static class WinFormsDesignerDrop
 {
     internal static WinFormsControlDrop? Resolve(Type type, Point at,
-        Func<Point, FormsControl?> hitTest, Func<FormsControl, Rect> boundsOnHost)
+        Func<Point, FormsControl?> hitTest, Func<FormsControl, Rect> boundsOnHost, FormsControl root)
     {
-        if (!typeof(FormsControl).IsAssignableFrom(type) || type.Assembly != typeof(FormsControl).Assembly
+        if (!typeof(Component).IsAssignableFrom(type) || type.Assembly != typeof(FormsControl).Assembly
             || type.IsAbstract || type == typeof(System.Windows.Forms.Form)
             || type == typeof(System.Windows.Forms.ContextMenuStrip)) return null;
+
+        // A toolbox item that is not itself a Control - Timer, OpenFileDialog, and the
+        // rest of the "Components" and "Dialogs" toolbox groups - drops straight into
+        // the tray wherever the pointer happens to be over the form: there is no visual
+        // bounds to compute, and VB6/Visual Studio accept the drop anywhere on the form
+        // for exactly this reason.
+        if (!typeof(FormsControl).IsAssignableFrom(type))
+            return new(type, root, DrawingPoint.Empty);
 
         var parent = hitTest(at);
         while (parent is not null && !CanContain(parent)) parent = parent.Parent;
@@ -34,7 +49,8 @@ internal static class WinFormsDesignerDrop
         Func<FormsControl, Rect> boundsOnHost)
     {
         adorners.Children.Clear();
-        if (drop is null) return;
+        // A non-visual component has no bounds to preview - see Resolve above.
+        if (drop is null || !typeof(FormsControl).IsAssignableFrom(drop.ControlType)) return;
 
         var parent = drop.Parent;
         var bounds = boundsOnHost(parent);

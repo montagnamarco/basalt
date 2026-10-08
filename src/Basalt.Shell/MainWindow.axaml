@@ -19,6 +19,9 @@
     <KeyBinding Gesture="F6" Command="{Binding BuildCommand}" />
     <!-- F5 debugs and Ctrl+F5 runs without debugging, as in Visual Basic. -->
     <KeyBinding Gesture="Ctrl+F5" Command="{Binding RunCommand}" />
+    <!-- View Code / View Designer, as in Visual Studio's own Forms designer. -->
+    <KeyBinding Gesture="F7" Command="{Binding ViewCodeCommand}" />
+    <KeyBinding Gesture="Shift+F7" Command="{Binding ViewDesignerCommand}" />
   </Window.KeyBindings>
 
   <DockPanel>

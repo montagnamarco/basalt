@@ -83,6 +83,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         {
             if (ReferenceEquals(_rootForm, value)) return;
 
+            CancelBand();
             CancelGesture();
             _guides.Clear();
             _rootForm = value;
@@ -325,6 +326,16 @@ public sealed partial class WinFormsDesignSurface : ContentControl
                                 || e.KeyModifiers.HasFlag(KeyModifiers.Meta)
                                 || e.KeyModifiers.HasFlag(KeyModifiers.Shift)))
         {
+            // On the form's own background a modifier does not toggle the form: it starts a band
+            // that adds what it sweeps to the selection, as Ctrl+drag does in Visual Studio.
+            if (ReferenceEquals(hit, _rootForm))
+            {
+                StartBand(at, additive: true);
+                e.Pointer.Capture(this);
+                e.Handled = true;
+                return;
+            }
+
             ToggleSelection(hit);
             e.Handled = true;
             return;
@@ -341,6 +352,15 @@ public sealed partial class WinFormsDesignSurface : ContentControl
                 e.Pointer, group, collapse);
             e.Pointer.Capture(this);
         }
+        else if (handle is null && hit is not null && ReferenceEquals(hit, _rootForm))
+        {
+            // The form itself cannot be moved, so a press on its own background
+            // (rather than on a child) is the gesture that becomes a rubber band
+            // once the pointer travels, the same way an empty click there already
+            // selects the form without one.
+            StartBand(at);
+            e.Pointer.Capture(this);
+        }
 
         e.Handled = true;
     }
@@ -348,6 +368,12 @@ public sealed partial class WinFormsDesignSurface : ContentControl
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
+        if (_bandOrigin is not null)
+        {
+            UpdateBand(e.GetPosition(_host));
+            e.Handled = true;
+            return;
+        }
         if (_gesture is not { } gesture) return;
 
         var offset = e.GetPosition(_host) - gesture.Origin;
@@ -411,6 +437,15 @@ public sealed partial class WinFormsDesignSurface : ContentControl
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
+        if (_bandOrigin is not null)
+        {
+            // Finished before the capture is released: releasing it raises CaptureLost,
+            // which cancels a band still running, and the selection never happened.
+            EndBand();
+            e.Pointer.Capture(null);
+            e.Handled = true;
+            return;
+        }
         if (_gesture is not { } gesture) return;
 
         _gesture = null;
@@ -430,11 +465,13 @@ public sealed partial class WinFormsDesignSurface : ContentControl
     protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
     {
         base.OnPointerCaptureLost(e);
+        CancelBand();
         CancelGesture();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        CancelBand();
         CancelGesture();
         base.OnDetachedFromVisualTree(e);
     }
@@ -452,8 +489,9 @@ public sealed partial class WinFormsDesignSurface : ContentControl
             }
             return;
         }
-        if (_gesture is not null && e.Key == Key.Escape)
+        if ((_gesture is not null || _bandOrigin is not null) && e.Key == Key.Escape)
         {
+            CancelBand();
             CancelGesture();
             e.Handled = true;
             return;
@@ -577,7 +615,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
             e.DataTransfer.TryGetValue(WinFormsToolboxDrag.Format) is not { } item)
             return null;
         var drop = WinFormsDesignerDrop.Resolve(item.ControlType, e.GetPosition(_host),
-            HitTest, BoundsOnHost);
+            HitTest, BoundsOnHost, _rootForm);
         if (drop is null || !SnapToGrid || e.KeyModifiers.HasFlag(KeyModifiers.Alt)) return drop;
         return drop with { Location = WinFormsDesignerSnap.SnapPoint(drop.Location, GridSize) };
     }

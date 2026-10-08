@@ -35,6 +35,21 @@ internal sealed partial class WinFormsDesignerView
         _surface.PasteRequested += () => RunEditAsync(PasteSelectionAsync);
     }
 
+    /// <summary>
+    /// Cut, Copy or Paste chosen through the window's own commands (the Edit menu, the palette or
+    /// their shortcuts), which reach the window before this designer's surface sees the key.
+    /// </summary>
+    internal void RunClipboardCommand(bool cut, bool paste)
+    {
+        if (paste)
+        {
+            if (s_controlClipboard is not null) RunEditAsync(PasteSelectionAsync);
+            return;
+        }
+
+        RunEditAsync(() => CopySelectionAsync(cut));
+    }
+
     /// <summary>Drives the Copy/Cut command directly, bypassing the keyboard gesture, for tests.</summary>
     internal Task CopySelectionForTestsAsync(bool cut) => CopySelectionAsync(cut);
 

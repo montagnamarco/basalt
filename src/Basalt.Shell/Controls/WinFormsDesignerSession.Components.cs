@@ -151,5 +151,7 @@ internal sealed partial class WinFormsDesignerSession
     internal static bool IsSupportedComponentType(Type type) =>
         type == typeof(Forms.Timer) || type == typeof(Forms.ImageList)
         || type == typeof(Forms.ToolTip) || type == typeof(Forms.ContextMenuStrip)
-        || type == typeof(SerialPort);
+        || type == typeof(Forms.OpenFileDialog) || type == typeof(Forms.SaveFileDialog)
+        || type == typeof(Forms.FolderBrowserDialog) || type == typeof(Forms.ColorDialog)
+        || type == typeof(Forms.FontDialog) || type == typeof(SerialPort);
 }

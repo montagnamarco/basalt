@@ -124,18 +124,25 @@ public sealed partial class WinFormsDesignerDocument
         return components.Values.ToArray();
     }
 
+    /// <summary>
+    /// The Forms types that live in the component tray: the Components group of Visual Studio's
+    /// toolbox and its Dialogs group, which a form keeps as fields to show when it needs them.
+    /// </summary>
+    private static readonly string[] TrayTypeNames =
+    [
+        "Timer", "ImageList", "ToolTip", "ContextMenuStrip",
+        "OpenFileDialog", "SaveFileDialog", "FolderBrowserDialog", "ColorDialog", "FontDialog",
+    ];
+
     internal static bool IsTrayTypeName(string typeName)
     {
         var name = typeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase);
-        return IsSerialPortTypeName(name)
-            || name.Equals("System.Windows.Forms.Timer", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("System.Windows.Forms.ImageList", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("System.Windows.Forms.ToolTip", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("System.Windows.Forms.ContextMenuStrip", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("Timer", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("ImageList", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("ToolTip", StringComparison.OrdinalIgnoreCase)
-            || name.Equals("ContextMenuStrip", StringComparison.OrdinalIgnoreCase);
+        if (IsSerialPortTypeName(name)) return true;
+
+        const string formsNamespace = "System.Windows.Forms.";
+        if (name.StartsWith(formsNamespace, StringComparison.OrdinalIgnoreCase)) name = name[formsNamespace.Length..];
+
+        return TrayTypeNames.Contains(name, StringComparer.OrdinalIgnoreCase);
     }
 
     private static bool IsSerialPortTypeName(string typeName)

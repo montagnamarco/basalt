@@ -3028,6 +3028,11 @@ public partial class MainWindow : Window
             // To the designer when one is in front, since there the same keys
             // mean controls rather than text. The session has had cut, copy
             // and paste all along with nothing able to call them.
+            case IdeCommands.EditCut or IdeCommands.EditCopy or IdeCommands.EditPaste
+                when WinFormsDesignerInFront is { } forms:
+                forms.RunClipboardCommand(commandId == IdeCommands.EditCut, commandId == IdeCommands.EditPaste);
+                break;
+
             case IdeCommands.EditCut when DesignerInFront is { } cutting:
                 cutting.CutSelection();
                 AfterDesignerClipboard(cutting);

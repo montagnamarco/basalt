@@ -5,6 +5,26 @@ namespace Basalt.Shell;
 
 public partial class MainWindow
 {
+    /// <summary>
+    /// The WinForms designer the user is looking at, if any: Cut, Copy and Paste then mean its
+    /// controls. The window runs those shortcuts before the designer sees the key, so without this
+    /// they went to a text editor that was not there and the designer never copied anything.
+    /// </summary>
+    private Basalt.Shell.Controls.WinFormsDesignerView? WinFormsDesignerInFront
+    {
+        get
+        {
+            var document = ViewModel.ActiveDocument;
+            var host = document is not null
+                && _documents.TryGetValue(document, out var dockable)
+                && _contents.TryGetValue(dockable, out var content)
+                    ? content as Basalt.Shell.Controls.DesignerHost : null;
+
+            return host is { ShowingDesigner: true, DesignerView: Basalt.Shell.Controls.WinFormsDesignerView forms }
+                && forms.IsEffectivelyVisible ? forms : null;
+        }
+    }
+
     private EditorDocumentViewModel? FindWinFormsCode(string path) => ViewModel.OpenDocuments.FirstOrDefault(document =>
         string.Equals(document.FilePath, path, StringComparison.Ordinal) && !document.OpenInDesigner);
 
