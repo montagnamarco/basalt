@@ -116,10 +116,10 @@ public partial class ToolStrip : ScrollableControl
     public ToolStripGripDisplayStyle GripDisplayStyle => Orientation == Orientation.Horizontal ? ToolStripGripDisplayStyle.Vertical : ToolStripGripDisplayStyle.Horizontal;
 
     /// <summary>
-    /// Whether items stack top-to-bottom instead of left-to-right. A drop-down
-    /// (always a vertical list of items, whatever its LayoutStyle) overrides
-    /// this instead of Orientation, which plain ToolStrip computes from
-    /// LayoutStyle alone and does not expose as virtual.
+    /// Whether items stack top-to-bottom instead of left-to-right. A drop-down (always a vertical list
+    /// of items, whatever its LayoutStyle) overrides this instead of the public, non-virtual
+    /// Orientation: internal layout and painting code (a separator's own line direction, an overflow
+    /// arrow's direction) reads this, not Orientation, so it answers correctly for a drop-down too.
     /// </summary>
     internal virtual bool StacksVertically => Orientation == Orientation.Vertical;
 
@@ -717,6 +717,12 @@ public partial class ToolStrip : ScrollableControl
         var leading = display.Top + LeadingGripSpace();
         var trailing = _overflowActive ? display.Bottom - OverflowButtonThickness : display.Bottom;
 
+        // A drop-down (a menu's own popup, a context menu, a drop-down button's list) stretches every
+        // row to its full width: that is what lets a selection highlight, a shortcut-key column and a
+        // submenu arrow line up edge to edge down the whole menu, instead of each row only being as wide
+        // as its own text and sitting centred under whichever row happens to be widest.
+        var stretchToFullWidth = this is ToolStripDropDown;
+
         var items = DisplayedItems;
         foreach (ToolStripItem item in items)
         {
@@ -730,8 +736,8 @@ public partial class ToolStrip : ScrollableControl
             var size = MeasureItem(item);
             var margin = item.Margin;
             leading += margin.Top;
-            var x = display.Left + Math.Max((display.Width - size.Width) / 2, 0);
-            PlaceShown(item, new Rectangle(x, leading, size.Width, size.Height));
+            var (x, width) = HorizontalSpan(display, size.Width, stretchToFullWidth);
+            PlaceShown(item, new Rectangle(x, leading, width, size.Height));
             leading += size.Height + margin.Bottom;
         }
 
@@ -743,12 +749,24 @@ public partial class ToolStrip : ScrollableControl
             var size = MeasureItem(item);
             var margin = item.Margin;
             trailing -= margin.Bottom + size.Height;
-            var x = display.Left + Math.Max((display.Width - size.Width) / 2, 0);
-            PlaceShown(item, new Rectangle(x, trailing, size.Width, size.Height));
+            var (x, width) = HorizontalSpan(display, size.Width, stretchToFullWidth);
+            PlaceShown(item, new Rectangle(x, trailing, width, size.Height));
             trailing -= margin.Top;
         }
 
         PlaceOverflowButton(display, horizontal: false);
+    }
+
+    /// <summary>
+    /// A vertically-stacked item's horizontal placement: centred at its own preferred width ordinarily,
+    /// or spanning the whole row (never narrower than its own preferred width, for the rare item wider
+    /// than the strip's own measured size) when the strip stretches its rows.
+    /// </summary>
+    private static (int X, int Width) HorizontalSpan(Rectangle display, int preferredWidth, bool stretchToFullWidth)
+    {
+        if (stretchToFullWidth) return (display.Left, Math.Max(display.Width, preferredWidth));
+
+        return (display.Left + Math.Max((display.Width - preferredWidth) / 2, 0), preferredWidth);
     }
 
     /// <summary>Places an item this strip shows, taking it back from the overflow drop-down if it was lent there.</summary>

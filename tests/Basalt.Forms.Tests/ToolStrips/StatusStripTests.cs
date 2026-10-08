@@ -48,7 +48,10 @@ public class StatusStripTests
     [Fact]
     public void The_sizing_grip_paints_in_the_trailing_bottom_corner_and_can_be_turned_off()
     {
-        var strip = new StatusStrip { Font = Font, AutoSize = false, Size = new Size(200, 22), BackColor = Color.White };
+        // Pinned to System: Professional (the manager's own default) shades the strip's background with
+        // its own gradient regardless of BackColor, so "without the grip, this corner is plain white"
+        // would no longer hold once that gradient, not BackColor verbatim, paints the corner.
+        var strip = new StatusStrip { Font = Font, AutoSize = false, Size = new Size(200, 22), BackColor = Color.White, RenderMode = ToolStripRenderMode.System };
 
         using var withGrip = Draw(strip);
         var gripArea = strip.SizeGripBounds;
@@ -108,7 +111,10 @@ public class StatusStripTests
     [Fact]
     public void BorderSides_paints_a_line_only_on_the_requested_edges()
     {
-        var strip = new StatusStrip { Font = Font, AutoSize = false, Size = new Size(200, 22), BackColor = Color.White };
+        // The System renderer paints a label's plain BackColor verbatim; Professional (the manager's
+        // own default) always shades a status label with its own gradient regardless of BackColor, so
+        // this test - about the border, not the fill - pins to System explicitly.
+        var strip = new StatusStrip { Font = Font, AutoSize = false, Size = new Size(200, 22), BackColor = Color.White, RenderMode = ToolStripRenderMode.System };
         var label = new ToolStripStatusLabel("Item") { AutoSize = false, Size = new Size(100, 20), BorderSides = ToolStripStatusLabelBorderSides.Left, BorderStyle = Border3DStyle.Sunken };
         strip.Items.Add(label);
         strip.PerformLayout();

@@ -25,15 +25,27 @@ public class ToolStripSystemRenderer : ToolStripRenderer
     {
         base.OnRenderToolStripBorder(e);
 
-        // A single dark line along the edge the strip meets the rest of the form, as the classic toolbar has.
         var bounds = e.ToolStrip.ClientRectangle;
         var border = e.ToolStrip.PortableVisualStylesEnabled
             ? PortableVisualStyles.Palette(e.ToolStrip.PortableVisualStylePlatform).Border
             : SystemColors.ControlDark;
         using var pen = new Pen(border);
 
-        if (e.ToolStrip.Dock == DockStyle.Bottom) e.Graphics.DrawLine(pen, bounds.Left, bounds.Top, bounds.Right, bounds.Top);
-        else e.Graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
+        // A drop-down (a menu's own popup, a context menu, a drop-down list) floats free of any other
+        // surface, so every edge needs a border; a docked toolbar only meets the rest of the form along
+        // one edge, so only that single line is drawn, as the classic toolbar has.
+        if (e.ToolStrip is ToolStripDropDown && bounds.Width > 0 && bounds.Height > 0)
+        {
+            e.Graphics.DrawRectangle(pen, bounds.Left, bounds.Top, bounds.Width - 1, bounds.Height - 1);
+        }
+        else if (e.ToolStrip.Dock == DockStyle.Bottom)
+        {
+            e.Graphics.DrawLine(pen, bounds.Left, bounds.Top, bounds.Right, bounds.Top);
+        }
+        else
+        {
+            e.Graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
+        }
     }
 
     protected override void OnRenderGrip(ToolStripGripRenderEventArgs e)
@@ -59,7 +71,7 @@ public class ToolStripSystemRenderer : ToolStripRenderer
             return;
         }
 
-        ToolStripClassicPainting.DrawEtchedSeparator(e.Graphics, e.Item.Bounds, e.Vertical);
+        ToolStripClassicPainting.DrawEtchedSeparator(e.Graphics, SeparatorBounds(e.Item), e.Vertical);
     }
 
     protected override void OnRenderButtonBackground(ToolStripItemRenderEventArgs e)

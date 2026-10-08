@@ -68,11 +68,18 @@ public class ProfessionalColorTable
 
     public virtual Color GripLight => SystemColors.ControlLightLight;
 
-    public virtual Color ImageMarginGradientBegin => SystemColors.Control;
+    // Windows 10/11's own Professional renderer shades the image margin a near-neutral light grey next
+    // to the drop-down's near-white body, not SystemColors.Control: on every platform this runs on but
+    // Windows itself, SystemColors.Control (and ControlLight derived from it) hold .NET's fixed classic
+    // fallback values - a beige, Windows-2000-era "Control" face - because there is no live desktop theme
+    // to query, which is what gave every drop-down's margin column its dated, beige cast instead of the
+    // light grey a real Windows 10 menu shows. Literal, not SystemColors- or accent-derived, is correct
+    // here for the same reason ButtonSelectedGradientBegin et al. correctly derive from SystemColors.Highlight.
+    public virtual Color ImageMarginGradientBegin => Color.FromArgb(0xF6, 0xF6, 0xF6);
 
-    public virtual Color ImageMarginGradientEnd => SystemColors.ControlLight;
+    public virtual Color ImageMarginGradientEnd => Color.FromArgb(0xE8, 0xE8, 0xE8);
 
-    public virtual Color ImageMarginGradientMiddle => ControlPaint.Light(SystemColors.Control, 0.3f);
+    public virtual Color ImageMarginGradientMiddle => Color.FromArgb(0xF0, 0xF0, 0xF0);
 
     public virtual Color ImageMarginRevealedGradientBegin => Light(0.9f);
 

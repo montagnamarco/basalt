@@ -100,7 +100,12 @@ public partial class TreeView
         if (e.Clicks >= 2) OnNodeMouseDoubleClick(arguments);
         else OnNodeMouseClick(arguments);
 
-        if (e.Button == MouseButtons.Right) node.ContextMenuStrip?.Show(this, e.Location);
+        if (e.Button == MouseButtons.Right && node.ContextMenuStrip is { } nodeMenu)
+        {
+            // Same fresh mouse session as Control's own right-click path: no keyboard cues.
+            ToolStripDropDown.KeyboardCuesVisible = false;
+            nodeMenu.Show(this, e.Location);
+        }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

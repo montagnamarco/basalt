@@ -15,6 +15,25 @@ public class ToolStripMenuItem : ToolStripDropDownItem
 
     private const int ImageMarginWidth = 22;
 
+    /// <summary>The air between the image margin and the caption text that OnPaint's own textLeft reserves (see there): not part of ImageMarginWidth itself, but DefaultPadding.Left below must still budget for it, or a caption exactly as wide as its row clips its own last few pixels against the shortcut/arrow column.</summary>
+    private const int TextLeadingGap = 4;
+
+    /// <summary>The air between the widest shortcut text in a menu's shortcut column and its submenu arrow (or the row's trailing edge, when there is none).</summary>
+    private const int ShortcutColumnGap = 10;
+
+    /// <summary>
+    /// The air Windows leaves after a right-aligned shortcut when no sibling has a submenu arrow to
+    /// sit beside it: without it "Ctrl+X" ran into the drop-down's border.
+    /// </summary>
+    private const int ShortcutTrailingGap = 8;
+
+    // Windows 10's submenu glyph, measured off a real screenshot at 100% scaling: a small triangle, not
+    // one sized to fill whatever column the layout happens to reserve for it.
+    private const int SubmenuArrowWidth = 4;
+    private const int SubmenuArrowHeight = 7;
+    private const int SubmenuArrowRightPadding = 6;
+    private static readonly Color SubmenuArrowColor = Color.FromArgb(0x40, 0x40, 0x40);
+
     private bool _checkOnClick;
     private CheckState _checkState = CheckState.Unchecked;
     private Keys _shortcutKeys = Keys.None;
@@ -92,7 +111,7 @@ public class ToolStripMenuItem : ToolStripDropDownItem
 
     protected override Padding DefaultMargin => Padding.Empty;
 
-    protected override Padding DefaultPadding => new(ImageMarginWidth, 3, 28, 3);
+    protected override Padding DefaultPadding => new(ImageMarginWidth + TextLeadingGap, 3, 28, 3);
 
     protected override Size DefaultSize => new(32, 22);
 
@@ -169,8 +188,23 @@ public class ToolStripMenuItem : ToolStripDropDownItem
 
         if (!HasDropDownItems) return;
 
-        if (HasDropDown && IsDropDownOpen) HideDropDown();
-        else ShowDropDown();
+        if (HasDropDown && IsDropDownOpen)
+        {
+            HideDropDown();
+            return;
+        }
+
+        // A click directly on a menu bar's own top item (or a stand-alone drop-down button), with
+        // nothing of this chain already open, starts a brand new interaction: Windows hides mnemonic
+        // underlines again until the keyboard drives this fresh session. A click on a row already
+        // inside an open drop-down (opening its own submenu) is still mid-session, so whatever this
+        // session's cues state already is stays as it was.
+        if (ParentInternal is not ToolStripDropDown && Owner is not MenuStrip { IsMenuModeActive: true })
+        {
+            ToolStripDropDown.KeyboardCuesVisible = false;
+        }
+
+        ShowDropDown();
     }
 
     /// <summary>Hovering a sibling item with a submenu swaps which submenu is open, after a short delay.</summary>
@@ -268,6 +302,9 @@ public class ToolStripMenuItem : ToolStripDropDownItem
     {
         if (!Enabled || !Available || !Control.IsMnemonic(charCode, Text)) return false;
 
+        // A mnemonic is unambiguously the keyboard driving this item: show underlines from here on.
+        ToolStripDropDown.KeyboardCuesVisible = true;
+
         if (HasDropDownItems) ShowDropDown();
         else PerformClick();
 
@@ -363,17 +400,29 @@ public class ToolStripMenuItem : ToolStripDropDownItem
             leftMargin = topImage.Width + 2;
         }
 
-        var arrowWidth = HasDropDownItems && !onMenuBar ? contentHeight : 0;
-        var shortcutText = ShowShortcutKeys ? EffectiveShortcutDisplayString() : null;
-        var shortcutWidth = !string.IsNullOrEmpty(shortcutText) ? TextRenderer.MeasureText(shortcutText, Font).Width + 10 : 0;
+        // A submenu arrow or a shortcut's column is reserved the same width on every row of this menu,
+        // not just on the rows that happen to have one themselves: that is what keeps "Ctrl+N", "Ctrl+O"
+        // and "Alt+F4" right-aligned under one another instead of each hugging its own row's text.
+        var (sharedShortcutColumnWidth, anySiblingHasSubmenu) = !onMenuBar && owner is ToolStripDropDownMenu dropDownMenu
+            ? dropDownMenu.MeasureTrailingColumns()
+            : (0, false);
 
-        var textLeft = bounds.Left + leftMargin + (onMenuBar ? 0 : 4);
-        var textRight = contentRight - arrowWidth - shortcutWidth;
+        var arrowReserve = !onMenuBar && anySiblingHasSubmenu ? contentHeight : 0;
+        var shortcutText = ShowShortcutKeys ? EffectiveShortcutDisplayString() : null;
+        var shortcutWidth = sharedShortcutColumnWidth > 0 ? sharedShortcutColumnWidth + ShortcutColumnGap : 0;
+
+        var trailingGap = !onMenuBar && arrowReserve == 0 && shortcutWidth > 0 ? ShortcutTrailingGap : 0;
+        var textLeft = bounds.Left + leftMargin + (onMenuBar ? 0 : TextLeadingGap);
+        var textRight = contentRight - arrowReserve - trailingGap - shortcutWidth;
         var textRect = new Rectangle(textLeft, contentTop, Math.Max(textRight - textLeft, 0), contentHeight);
 
         // Professional menu selection uses a pale fill, so white highlight text disappears.
         var textColor = ForeColor;
-        var format = TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | (onMenuBar ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left);
+
+        // Windows hides a mnemonic's underline (but still shows its letter) until the keyboard has
+        // driven this menu session: see ToolStripDropDown.KeyboardCuesVisible for where that flips.
+        var mnemonicFlag = ToolStripDropDown.KeyboardCuesVisible ? TextFormatFlags.Default : TextFormatFlags.HidePrefix;
+        var format = mnemonicFlag | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | (onMenuBar ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left);
 
         if (Enabled || Owner is { PortableVisualStylesEnabled: true })
         {
@@ -386,24 +435,54 @@ public class ToolStripMenuItem : ToolStripDropDownItem
 
         if (!string.IsNullOrEmpty(shortcutText))
         {
-            var shortcutRect = new Rectangle(contentRight - arrowWidth - shortcutWidth, contentTop, shortcutWidth, contentHeight);
+            var shortcutRect = new Rectangle(contentRight - arrowReserve - trailingGap - shortcutWidth, contentTop, shortcutWidth, contentHeight);
             renderer.DrawItemText(new ToolStripItemTextRenderEventArgs(e.Graphics, this, shortcutText, shortcutRect, textColor, Font, TextFormatFlags.VerticalCenter | TextFormatFlags.Right | TextFormatFlags.SingleLine));
         }
 
-        if (arrowWidth > 0)
+        if (HasDropDownItems && !onMenuBar)
         {
-            var arrowRect = Shrink(new Rectangle(contentRight - arrowWidth, contentTop, arrowWidth, contentHeight), 5);
-            renderer.DrawArrow(new ToolStripArrowRenderEventArgs(e.Graphics, this, arrowRect, textColor, ArrowDirection.Right));
+            // Windows 10's own submenu glyph is small (about 4x7 px at 100% scaling) and dark grey, not
+            // a big triangle filling the whole reserved arrow column in the item's own caption colour:
+            // arrowReserve above only keeps the text and shortcut columns clear of this corner, it is not
+            // the glyph's own size.
+            var arrowRect = new Rectangle(
+                contentRight - SubmenuArrowRightPadding - SubmenuArrowWidth,
+                contentTop + (contentHeight - SubmenuArrowHeight) / 2,
+                SubmenuArrowWidth, SubmenuArrowHeight);
+            var arrowColor = Enabled ? SubmenuArrowColor : SystemColors.GrayText;
+            renderer.DrawArrow(new ToolStripArrowRenderEventArgs(e.Graphics, this, arrowRect, arrowColor, ArrowDirection.Right));
         }
 
         base.OnPaint(e);
     }
 
-    // Sizing is left to the base ToolStripItem.GetPreferredSize (text + image + Padding.Horizontal):
-    // Microsoft's own ToolStripMenuItem does not override GetPreferredSize either, it tunes
-    // DefaultMargin/DefaultPadding/DefaultSize instead, which is why they reserve generous room
-    // on the trailing edge for a shortcut and a submenu arrow (an approximation: this does not
-    // shrink to fit when there is neither).
+    /// <summary>
+    /// Base sizing (text + image + Padding.Horizontal) reserves a fixed, generous amount of trailing
+    /// room for a shortcut and a submenu arrow, which is enough for a short shortcut like "Ctrl+N" but
+    /// not for a longer one like "Ctrl+Shift+End": that row's shortcut text would overrun its own
+    /// bounds and get clipped by the next column. <see cref="ToolStripDropDownMenu.GetPreferredSizeCore"/>
+    /// adds this on top of the strip's own measured width, so the drop-down autosizes wide enough for
+    /// whatever its widest shortcut or its arrow actually needs (not a public GetPreferredSize override:
+    /// Microsoft's own ToolStripMenuItem does not have one, and every row already shares one on-screen
+    /// column width through <see cref="ToolStripDropDownMenu.MeasureTrailingColumns"/> painting it).
+    /// </summary>
+    internal int ExtraWidthForSharedTrailingColumns()
+    {
+        if (Owner is not ToolStripDropDownMenu dropDownMenu) return 0;
+
+        var (shortcutColumnWidth, anySiblingHasSubmenu) = dropDownMenu.MeasureTrailingColumns();
+        // The same row height OnPaint reserves the arrow column from, so a taller item (larger font or
+        // image) is not measured narrower than it then paints.
+        var rowHeight = Height > 0 ? Height : DefaultSize.Height;
+        var reserved = (anySiblingHasSubmenu ? rowHeight : 0)
+            + (shortcutColumnWidth > 0 ? shortcutColumnWidth + ShortcutColumnGap : 0)
+            + (!anySiblingHasSubmenu && shortcutColumnWidth > 0 ? ShortcutTrailingGap : 0);
+
+        return Math.Max(0, reserved - Padding.Right);
+    }
+
+    /// <summary>The shortcut text this item contributes to its menu's shared shortcut column; null when it shows none.</summary>
+    internal string? ShortcutTextForColumnMeasurement => ShowShortcutKeys ? EffectiveShortcutDisplayString() : null;
 
     /// <summary>The text shown for the shortcut: the explicit override string, else one derived from ShortcutKeys.</summary>
     private string? EffectiveShortcutDisplayString()

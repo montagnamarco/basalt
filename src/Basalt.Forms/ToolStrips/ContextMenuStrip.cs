@@ -48,6 +48,9 @@ public partial class ContextMenuStrip : ToolStripDropDownMenu, IContextMenuSourc
     /// </summary>
     void IContextMenuSource.ShowFromControl(Control control, Point location)
     {
+        // A right-click is a fresh mouse session: Windows hides mnemonic underlines again even when
+        // an earlier menu was driven from the keyboard.
+        KeyboardCuesVisible = false;
         var anchor = control.RectangleToScreen(new Rectangle(location, Size.Empty));
         ShowAt(anchor, ToolStripDropDownDirection.BelowRight, control);
     }

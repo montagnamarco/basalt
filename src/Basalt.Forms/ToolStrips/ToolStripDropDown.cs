@@ -31,6 +31,16 @@ public partial class ToolStripDropDown : ToolStrip
     [DefaultValue(true)]
     public bool AutoClose { get; set; } = true;
 
+    /// <summary>
+    /// Whether a mnemonic's underline should currently paint. Windows keeps every menu's underlines
+    /// hidden until the keyboard drives one - a mnemonic opening it (<see cref="ToolStripMenuItem.ProcessMnemonic"/>),
+    /// or an arrow/Enter/Space navigating one already open (<see cref="ProcessNavigationKey"/>) - and
+    /// then leaves them visible for the rest of that session, even once the mouse takes over moving the
+    /// selection. A plain, unrelated mouse click that starts a brand new session (nothing of this chain
+    /// already open) hides them again, in <see cref="ToolStripMenuItem.OnMouseDown"/>.
+    /// </summary>
+    internal static bool KeyboardCuesVisible { get; set; }
+
     /// <summary>The item this drop-down belongs to, so keyboard navigation can walk back up a menu chain.</summary>
     [DefaultValue(null)]
     [Browsable(false)]
@@ -48,7 +58,12 @@ public partial class ToolStripDropDown : ToolStrip
 
     protected override bool DefaultShowItemToolTips => true;
 
-    /// <summary>A drop-down is always a vertical list, whatever LayoutStyle says.</summary>
+    /// <summary>
+    /// A drop-down is always a vertical list, whatever LayoutStyle says: without this, a context menu
+    /// or a submenu (whose LayoutStyle stays the ordinary horizontal default) would report itself as a
+    /// horizontal strip, which left its own <see cref="ToolStripSeparator"/> drawn and stretched as a
+    /// vertical divider running the drop-down's full height instead of a horizontal line under one row.
+    /// </summary>
     internal override bool StacksVertically => true;
 
     internal override bool ClosesOnOutsideClick => AutoClose;
@@ -270,6 +285,10 @@ public partial class ToolStripDropDown : ToolStrip
 
     internal override bool ProcessNavigationKey(Keys keyData)
     {
+        // Any arrow, Enter, Space, Escape or Tab reaching an open drop-down is unambiguously the
+        // keyboard driving the menu: from here on, mnemonic underlines show for the rest of the session.
+        KeyboardCuesVisible = true;
+
         switch (keyData & Keys.KeyCode)
         {
             case Keys.Down:

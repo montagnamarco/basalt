@@ -59,16 +59,55 @@ public partial class ToolStripDropDownMenu : ToolStripDropDown
         }
     }
 
-    /// <summary>The strip's own preferred width grows by the image margin: items are measured within DisplayRectangle alone.</summary>
+    /// <summary>
+    /// The strip's own preferred width grows by the image margin (items are measured within
+    /// DisplayRectangle alone) and, for whichever row needs the most, by the room a shared shortcut
+    /// column or submenu arrow column still needs beyond each row's own default trailing padding: see
+    /// <see cref="ToolStripMenuItem.ExtraWidthForSharedTrailingColumns"/>.
+    /// </summary>
     internal override Size GetPreferredSizeCore(Size proposedSize)
     {
         var size = base.GetPreferredSizeCore(proposedSize);
 
-        return new Size(size.Width + ImageMarginWidth, size.Height);
+        var extra = 0;
+        foreach (ToolStripItem item in Items)
+        {
+            if (item is ToolStripMenuItem menuItem) extra = Math.Max(extra, menuItem.ExtraWidthForSharedTrailingColumns());
+        }
+
+        return new Size(size.Width + ImageMarginWidth + extra, size.Height);
     }
 
     protected internal override ToolStripItem CreateDefaultItem(string? text, Image? image, EventHandler? onClick) =>
         new ToolStripMenuItem(text, image, onClick);
+
+    /// <summary>
+    /// The shortcut-key column's width (the widest shortcut text among this menu's own
+    /// <see cref="ToolStripMenuItem"/>s, zero when none shows one) and whether any of them owns a
+    /// submenu. Every row reserves the same trailing space for these, which is what keeps every row's
+    /// shortcut text and every row's arrow lined up in one column down the menu, exactly as Windows
+    /// does, rather than each row only reserving room for its own shortcut.
+    /// </summary>
+    internal (int ShortcutColumnWidth, bool AnyItemHasSubmenu) MeasureTrailingColumns()
+    {
+        var shortcutWidth = 0;
+        var anyHasSubmenu = false;
+
+        foreach (ToolStripItem item in Items)
+        {
+            if (item is not ToolStripMenuItem menuItem) continue;
+
+            if (menuItem.HasDropDownItems) anyHasSubmenu = true;
+
+            var text = menuItem.ShortcutTextForColumnMeasurement;
+            if (string.IsNullOrEmpty(text)) continue;
+
+            var width = TextRenderer.MeasureText(text, menuItem.Font).Width;
+            if (width > shortcutWidth) shortcutWidth = width;
+        }
+
+        return (shortcutWidth, anyHasSubmenu);
+    }
 
     /// <summary>
     /// The image margin's own look, painted right after the strip's ordinary

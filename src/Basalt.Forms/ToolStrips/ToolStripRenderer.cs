@@ -14,6 +14,16 @@ public abstract partial class ToolStripRenderer
 
     protected static int Offset2Y;
 
+    /// <summary>
+    /// A separator's own bounds, unchanged: for a drop-down menu, <see cref="ToolStripSeparator.SetBounds"/>
+    /// already positions and sizes it to <see cref="ToolStrip.DisplayRectangle"/>, which itself starts
+    /// after the image margin for a <see cref="ToolStripDropDownMenu"/> (see its own
+    /// <c>DisplayRectangle</c> override). Trimming the margin again here, on top of that, pushed the
+    /// etched line a second margin-width too far right, off into the row's own trailing padding, instead
+    /// of right after the icon column where Windows draws it.
+    /// </summary>
+    internal static Rectangle SeparatorBounds(ToolStripItem item) => item.Bounds;
+
     protected ToolStripRenderer()
     {
     }

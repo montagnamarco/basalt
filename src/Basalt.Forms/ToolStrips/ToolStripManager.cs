@@ -9,7 +9,13 @@ namespace System.Windows.Forms;
 public static partial class ToolStripManager
 {
     private static ToolStripRenderer? _renderer;
-    private static ToolStripManagerRenderMode _renderMode = ToolStripManagerRenderMode.System;
+
+    // Real WinForms' own default is Professional, not System: a brand new MenuStrip or ToolStrip,
+    // with nothing set anywhere, already paints the flat Office/Windows-10-ish look (a pale blue
+    // hover, a near-white drop-down) rather than the classic Windows 2000 raised bevels. Defaulting
+    // to System here instead left every menu looking dated unless an application opted into
+    // Professional explicitly, which the real framework never asks for.
+    private static ToolStripManagerRenderMode _renderMode = ToolStripManagerRenderMode.Professional;
 
     private static readonly ToolStripSystemRenderer SystemRendererInstance = new();
     private static readonly ToolStripProfessionalRenderer ProfessionalRendererInstance = new();

@@ -66,7 +66,7 @@ public class ToolStripOverflowButton : ToolStripDropDownButton
 
         renderer.DrawOverflowButtonBackground(new ToolStripItemRenderEventArgs(e.Graphics, this));
 
-        var direction = Owner?.Orientation == Orientation.Vertical ? ArrowDirection.Right : ArrowDirection.Down;
+        var direction = Owner is { StacksVertically: true } ? ArrowDirection.Right : ArrowDirection.Down;
         renderer.DrawArrow(new ToolStripArrowRenderEventArgs(e.Graphics, this, Rectangle.Inflate(Bounds, -3, -3), ForeColor, direction));
     }
 }

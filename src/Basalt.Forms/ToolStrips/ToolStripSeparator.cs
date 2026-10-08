@@ -204,7 +204,10 @@ public class ToolStripSeparator : ToolStripItem
         var owner = Owner;
         if (owner is null) return;
 
-        var vertical = owner.Orientation == Orientation.Horizontal;
+        // StacksVertically (not the public, LayoutStyle-derived Orientation) answers correctly for a
+        // drop-down: its Orientation stays "Horizontal" unless LayoutStyle was explicitly changed, even
+        // though its items always stack top to bottom.
+        var vertical = !owner.StacksVertically;
         owner.Renderer.DrawSeparator(new ToolStripSeparatorRenderEventArgs(e.Graphics, this, vertical));
 
         base.OnPaint(e);
@@ -217,7 +220,7 @@ public class ToolStripSeparator : ToolStripItem
         {
             var display = owner.DisplayRectangle;
 
-            bounds = owner.Orientation == Orientation.Horizontal
+            bounds = !owner.StacksVertically
                 ? new Rectangle(bounds.X, display.Top, bounds.Width, display.Height)
                 : new Rectangle(display.Left, bounds.Y, display.Width, bounds.Height);
         }

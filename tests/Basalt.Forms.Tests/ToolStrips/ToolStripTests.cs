@@ -116,7 +116,10 @@ public class ToolStripTests
     [Fact]
     public void The_classic_renderer_paints_the_strips_face_and_an_etched_separator()
     {
-        var strip = new ToolStrip { Font = Font, AutoSize = false, Size = new Size(100, 25), BackColor = Color.FromArgb(255, 200, 200, 200) };
+        // Named for, and pinned to, the classic System renderer specifically: ToolStripManager's own
+        // default is Professional (so is real WinForms'), so a strip that cares which one paints it
+        // says so explicitly instead of relying on whatever the manager's default happens to be.
+        var strip = new ToolStrip { Font = Font, AutoSize = false, Size = new Size(100, 25), BackColor = Color.FromArgb(255, 200, 200, 200), RenderMode = ToolStripRenderMode.System };
         var separator = new ToolStripSeparator();
         strip.Items.Add(separator);
 
@@ -134,7 +137,9 @@ public class ToolStripTests
     [Fact]
     public void An_idle_button_has_no_bevel_but_a_hovered_one_is_raised_and_a_pressed_one_is_sunken()
     {
-        var strip = new ToolStrip { Font = Font, AutoSize = false, Size = new Size(100, 25) };
+        // The raised/sunken bevel is the classic System renderer's own look (Professional, the
+        // manager's default, shows a flat pale fill instead): pin this strip to System explicitly.
+        var strip = new ToolStrip { Font = Font, AutoSize = false, Size = new Size(100, 25), RenderMode = ToolStripRenderMode.System };
         var button = new ToolStripButton("B") { AutoSize = false, Size = new Size(40, 23) };
         strip.Items.Add(button);
 
@@ -153,7 +158,9 @@ public class ToolStripTests
     [Fact]
     public void The_grip_draws_dots_when_visible_and_leaves_the_background_plain_when_hidden()
     {
-        var strip = new ToolStrip { Font = Font, AutoSize = false, Size = new Size(100, 25), BackColor = Color.White, GripStyle = ToolStripGripStyle.Visible };
+        // The classic renderer's own grip dots (ControlDark/ControlLightLight); pin to System rather
+        // than the manager's default, which is now Professional.
+        var strip = new ToolStrip { Font = Font, AutoSize = false, Size = new Size(100, 25), BackColor = Color.White, GripStyle = ToolStripGripStyle.Visible, RenderMode = ToolStripRenderMode.System };
 
         using var visible = Draw(strip);
         var dotX = strip.GripRectangle.Left + Math.Max(strip.GripRectangle.Width / 2 - 1, 0);

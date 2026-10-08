@@ -39,6 +39,18 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
             return;
         }
 
+        // A drop-down (a menu's own popup, a context menu, a drop-down list) gets a flat, near-white
+        // fill of its own, ColorTable.ToolStripDropDownBackground: Windows does not shade a menu's body
+        // with the same vertical gradient a docked toolbar or menu bar gets, and painting it with that
+        // gradient regardless (as if ToolStripDropDownBackground did not exist) is what gave every
+        // drop-down the toolbar's flat-grey, "classic" cast instead of the near-white a real menu has.
+        if (e.ToolStrip is ToolStripDropDown)
+        {
+            using var dropDownBrush = new SolidBrush(ColorTable.ToolStripDropDownBackground);
+            e.Graphics.FillRectangle(dropDownBrush, e.AffectedBounds);
+            return;
+        }
+
         FillVerticalGradient(e.Graphics, e.AffectedBounds, ColorTable.ToolStripGradientBegin, ColorTable.ToolStripGradientEnd);
     }
 
@@ -49,9 +61,20 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
         var bounds = e.ToolStrip.ClientRectangle;
         var border = _usePortablePalette && e.ToolStrip.PortableVisualStylesEnabled
             ? Internal.Rendering.PortableVisualStyles.Palette(e.ToolStrip.PortableVisualStylePlatform).Border
-            : ColorTable.ToolStripBorder;
+            : e.ToolStrip is ToolStripDropDown ? ColorTable.MenuBorder : ColorTable.ToolStripBorder;
         using var pen = new Pen(border);
-        e.Graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
+
+        // A drop-down (a menu's own popup, a context menu, a drop-down list) is a free-floating
+        // rectangle, so every edge needs a border; an ordinary bar only meets the rest of the form
+        // along its bottom edge, so only that one line is drawn.
+        if (e.ToolStrip is ToolStripDropDown && bounds.Width > 0 && bounds.Height > 0)
+        {
+            e.Graphics.DrawRectangle(pen, bounds.Left, bounds.Top, bounds.Width - 1, bounds.Height - 1);
+        }
+        else
+        {
+            e.Graphics.DrawLine(pen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
+        }
     }
 
     protected override void OnRenderGrip(ToolStripGripRenderEventArgs e)
@@ -81,7 +104,7 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
 
         using var dark = new Pen(ColorTable.SeparatorDark);
         using var light = new Pen(ColorTable.SeparatorLight);
-        var bounds = e.Item.Bounds;
+        var bounds = SeparatorBounds(e.Item);
 
         if (e.Vertical)
         {
@@ -158,9 +181,20 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
             return;
         }
 
-        if (!e.Item.Selected) return;
+        // Disabled items never highlight, even if some leftover hover kept Selected true: Windows greys
+        // a disabled caption instead (ToolStripMenuItem.OnPaint already draws it that way) and never
+        // paints a selection fill under it.
+        if (!e.Item.Selected || !e.Item.Enabled) return;
 
-        FillGradientButton(e.Graphics, e.Item.Bounds, ColorTable.MenuItemSelectedGradientBegin, ColorTable.MenuItemSelected, ColorTable.MenuItemSelectedGradientEnd, ColorTable.MenuItemBorder);
+        // A flat fill (not the three-stop gradient a hovered ToolStripButton gets): Windows 10/11 shows
+        // a hovered menu item as a single pale blue with a slightly darker 1-px border, not a raised or
+        // shaded button face.
+        var bounds = e.Item.Bounds;
+        using var fill = new SolidBrush(ColorTable.MenuItemSelected);
+        e.Graphics.FillRectangle(fill, bounds);
+
+        using var border = new Pen(ColorTable.MenuItemBorder);
+        e.Graphics.DrawRectangle(border, bounds.Left, bounds.Top, bounds.Width - 1, bounds.Height - 1);
     }
 
     /// <summary>The item's own image, drawn at the rectangle the layout (or a menu item's own paint) worked out.</summary>
@@ -237,7 +271,7 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
             return;
         }
 
-        FillVerticalGradient(e.Graphics, e.AffectedBounds, ColorTable.ImageMarginGradientBegin, ColorTable.ImageMarginGradientEnd);
+        FillVerticalGradient3(e.Graphics, e.AffectedBounds, ColorTable.ImageMarginGradientBegin, ColorTable.ImageMarginGradientMiddle, ColorTable.ImageMarginGradientEnd);
     }
 
     /// <summary>The band a strip is dragged into: the same soft gradient as the strip itself, unless a handler already painted it.</summary>
@@ -276,16 +310,19 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
         var bounds = e.ArrowRectangle;
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-        var cx = bounds.Left + bounds.Width / 2;
-        var cy = bounds.Top + bounds.Height / 2;
-        var half = Math.Max(Math.Min(bounds.Width, bounds.Height) / 2, 1);
+        // The full rectangle, not a square confined to its smaller dimension: a submenu's own glyph is
+        // narrower than it is tall (about 4x7 px at 100% scaling on Windows 10), and squashing it into a
+        // symmetric square around its centre (as a single "half" radius for both axes would) is what drew
+        // every arrow this renderer painted - submenu included - as a fat, equilateral triangle instead.
+        var midY = bounds.Top + bounds.Height / 2;
+        var midX = bounds.Left + bounds.Width / 2;
 
         Point[] points = e.Direction switch
         {
-            ArrowDirection.Up => [new Point(cx - half, cy + half), new Point(cx + half, cy + half), new Point(cx, cy - half)],
-            ArrowDirection.Down => [new Point(cx - half, cy - half), new Point(cx + half, cy - half), new Point(cx, cy + half)],
-            ArrowDirection.Left => [new Point(cx + half, cy - half), new Point(cx + half, cy + half), new Point(cx - half, cy)],
-            _ => [new Point(cx - half, cy - half), new Point(cx - half, cy + half), new Point(cx + half, cy)],
+            ArrowDirection.Up => [new Point(bounds.Left, bounds.Bottom), new Point(bounds.Right, bounds.Bottom), new Point(midX, bounds.Top)],
+            ArrowDirection.Down => [new Point(bounds.Left, bounds.Top), new Point(bounds.Right, bounds.Top), new Point(midX, bounds.Bottom)],
+            ArrowDirection.Left => [new Point(bounds.Right, bounds.Top), new Point(bounds.Right, bounds.Bottom), new Point(bounds.Left, midY)],
+            _ => [new Point(bounds.Left, bounds.Top), new Point(bounds.Left, bounds.Bottom), new Point(bounds.Right, midY)],
         };
 
         var arrowColor = e.ArrowColor;
@@ -338,6 +375,23 @@ public class ToolStripProfessionalRenderer : ToolStripRenderer
 
         using var brush = new LinearGradientBrush(bounds, begin, end, LinearGradientMode.Vertical);
         graphics.FillRectangle(brush, bounds);
+    }
+
+    /// <summary>
+    /// The image margin's own three-stop gradient (begin at the top, middle at the centre, end at the
+    /// bottom): the only column this renderer paints from all three of a colour table's
+    /// ImageMarginGradientBegin/Middle/End, rather than just the two-stop Begin/End every other gradient
+    /// here uses.
+    /// </summary>
+    private static void FillVerticalGradient3(Graphics graphics, Rectangle bounds, Color begin, Color middle, Color end)
+    {
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+
+        var topHalf = new Rectangle(bounds.Left, bounds.Top, bounds.Width, Math.Max(bounds.Height / 2, 1));
+        var bottomHalf = new Rectangle(bounds.Left, topHalf.Bottom, bounds.Width, Math.Max(bounds.Bottom - topHalf.Bottom, 1));
+
+        FillVerticalGradient(graphics, topHalf, begin, middle);
+        FillVerticalGradient(graphics, bottomHalf, middle, end);
     }
 
     private static void DrawGripDots(Graphics graphics, Rectangle bounds, ToolStripGripDisplayStyle displayStyle, Brush dark, Brush light)
