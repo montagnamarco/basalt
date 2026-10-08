@@ -62,6 +62,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         _buildService.OutputReceived += (_, line) => AppendOutput(line);
         Diagnostics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ErrorSummary));
         OpenDocuments.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsWelcomeVisible));
+        OpenDocuments.CollectionChanged += ForwardSavesOfOpenDocuments;
         _runService.OutputReceived += (_, line) => AppendOutput(line);
     }
 
@@ -430,6 +431,38 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public event EventHandler? ActiveDocumentChanged;
 
     /// <summary>
+    /// Raised whenever an open document is written to disk, by any path (see
+    /// <see cref="EditorDocumentViewModel.Saved"/>); possibly off the interface thread.
+    ///
+    /// A file just saved can be a file git has not seen yet: without this,
+    /// the Git Changes panel kept showing whatever it last read, blind to an
+    /// edit the user had just written to disk, until some unrelated git
+    /// command happened to refresh it.
+    /// </summary>
+    public event EventHandler? DocumentSaved;
+
+    private readonly HashSet<EditorDocumentViewModel> _forwardingSaves = [];
+
+    /// <summary>
+    /// Follows the open documents by comparing with what is followed, not from the change's old and
+    /// new items: Clear (closing a solution) reports a reset with no old items, and the closed
+    /// documents would have gone on reporting their saves.
+    /// </summary>
+    private void ForwardSavesOfOpenDocuments(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        foreach (var closed in _forwardingSaves.Where(document => !OpenDocuments.Contains(document)).ToArray())
+        {
+            closed.Saved -= OnOpenDocumentSaved;
+            _forwardingSaves.Remove(closed);
+        }
+
+        foreach (var opened in OpenDocuments.Where(_forwardingSaves.Add))
+            opened.Saved += OnOpenDocumentSaved;
+    }
+
+    private void OnOpenDocumentSaved(object? sender, EventArgs e) => DocumentSaved?.Invoke(sender, e);
+
+    /// <summary>
     /// Active design sessions, one per document open in the designer.
     ///
     /// With dockable panels several designers can stay visible at the same
@@ -665,6 +698,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             1 => Localizer.Get(StringKeys.StatusSaved, pending[0].FileName),
             _ => Localizer.Get(StringKeys.StatusSavedMany, pending.Count)
         };
+
     }
 
     /// <summary>

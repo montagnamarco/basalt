@@ -103,6 +103,12 @@ public sealed partial class EditorDocumentViewModel : ObservableObject
     /// <summary>How many times a save waits out a file another program has open.</summary>
     private const int SaveAttempts = 10;
 
+    /// <summary>
+    /// Raised once the file is written, by whichever path saved it: Save, Save All, a designer
+    /// writing a form's code, or a run that saves first. Possibly off the interface thread.
+    /// </summary>
+    public event EventHandler? Saved;
+
     public async Task SaveAsync(CancellationToken ct = default)
     {
         var text = Text;
@@ -126,6 +132,7 @@ public sealed partial class EditorDocumentViewModel : ObservableObject
 
         OriginalText = text;
         IsModified = !string.Equals(Text, text, StringComparison.Ordinal);
+        Saved?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>A sharing or lock violation: the file is open elsewhere, not missing or read-only.</summary>

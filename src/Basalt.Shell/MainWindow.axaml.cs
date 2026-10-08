@@ -4103,6 +4103,9 @@ public partial class MainWindow : Window
         ViewModel.RepositoryChanged += (_, _) => Guarded.Run(
             () => RefreshGitAsync(),
             ViewModel.WriteOutput, "ide");
+
+        // A file just saved can be a file git has not seen yet.
+        ViewModel.DocumentSaved += (_, _) => RefreshGitAfterSave();
     }
 
     /// <summary>
