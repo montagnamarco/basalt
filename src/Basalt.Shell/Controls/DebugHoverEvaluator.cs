@@ -44,9 +44,13 @@ public sealed class DebugHoverEvaluator
 
         _popup = new Popup
         {
-            PlacementTarget = editor,
-            Placement = PlacementMode.Pointer,
-            IsLightDismissEnabled = true,
+            // Anchored under the word, as Visual Studio's data tips sit, and without light dismiss:
+            // that lays an input layer over the whole window, the text view then reports the
+            // pointer as gone, and the tip closed the moment it opened. Moving to another word or
+            // out of the text view already closes it.
+            PlacementTarget = editor.TextArea.TextView,
+            Placement = PlacementMode.BottomEdgeAlignedLeft,
+            IsLightDismissEnabled = false,
             Child = new Border
             {
                 Background = new SolidColorBrush(Color.FromRgb(0xF3, 0xF3, 0xF3)),
@@ -57,9 +61,18 @@ public sealed class DebugHoverEvaluator
             }
         };
 
-        editor.TextArea.TextView.PointerMoved += OnPointerMoved;
-        editor.TextArea.TextView.PointerExited += (_, _) => Hide();
+        var view = editor.TextArea.TextView;
+        view.PointerMoved += OnPointerMoved;
+        view.PointerExited += (_, _) => Hide();
+
+        // The tip describes one word at one place: scrolling moves the word out from under it, and a
+        // closed tab would otherwise leave it floating over whatever replaced the editor.
+        view.ScrollOffsetChanged += (_, _) => Hide();
+        view.DetachedFromVisualTree += (_, _) => Hide();
     }
+
+    /// <summary>The text editor this tip watches, so the window can tell which file it belongs to.</summary>
+    internal TextEditor Editor => _editor;
 
     /// <summary>The expression currently shown, for tests.</summary>
     internal string? Showing => _showing;
@@ -97,7 +110,9 @@ public sealed class DebugHoverEvaluator
             return;
         }
 
-        var position = _editor.GetPositionFromPoint(e.GetPosition(_editor.TextArea.TextView));
+        // TextEditor.GetPositionFromPoint takes a point relative to the whole editor, margins
+        // included; one relative to the text view lands a margin's width to the right of the pointer.
+        var position = _editor.GetPositionFromPoint(e.GetPosition(_editor));
 
         if (position is null)
         {
@@ -106,15 +121,19 @@ public sealed class DebugHoverEvaluator
         }
 
         var offset = _editor.Document.GetOffset(position.Value.Location);
-        var word = WordAt(_editor.Document, offset);
+        var span = WordSpanAt(_editor.Document, offset);
 
-        if (word is null)
+        if (span is not var (start, length))
         {
             Hide();
             return;
         }
 
+        var word = _editor.Document.GetText(start, length);
+
         if (word == _showing) return;
+
+        _popup.PlacementRect = WordBounds(start, length);
 
         await ShowAsync(word).ConfigureAwait(true);
     }
@@ -160,7 +179,11 @@ public sealed class DebugHoverEvaluator
     /// Dotted names are taken whole, so resting on "Name" in "customer.Name"
     /// evaluates the property rather than a variable that does not exist.
     /// </summary>
-    internal static string? WordAt(TextDocument document, int offset)
+    internal static string? WordAt(TextDocument document, int offset) =>
+        WordSpanAt(document, offset) is var (start, length) ? document.GetText(start, length) : null;
+
+    /// <summary>Where <see cref="WordAt"/>'s word starts and how long it is, so the tip can sit under it.</summary>
+    private static (int Start, int Length)? WordSpanAt(TextDocument document, int offset)
     {
         if (offset < 0 || offset > document.TextLength) return null;
 
@@ -172,10 +195,23 @@ public sealed class DebugHoverEvaluator
 
         if (start == end) return null;
 
-        // A leading dot would come from resting just after a member access.
-        var word = document.GetText(start, end - start).Trim('.');
+        // A leading or trailing dot would come from resting just after a member access.
+        while (start < end && document.GetCharAt(start) == '.') start++;
+        while (end > start && document.GetCharAt(end - 1) == '.') end--;
 
-        return word.Length == 0 || char.IsDigit(word[0]) ? null : word;
+        return start == end || char.IsDigit(document.GetCharAt(start)) ? null : (start, end - start);
+    }
+
+    /// <summary>The word's rectangle in text-view coordinates, the anchor the tip opens under.</summary>
+    private Rect WordBounds(int start, int length)
+    {
+        var view = _editor.TextArea.TextView;
+        var first = _editor.Document.GetLocation(start);
+        var last = _editor.Document.GetLocation(start + length);
+        var topLeft = view.GetVisualPosition(new AvaloniaEdit.TextViewPosition(first), AvaloniaEdit.Rendering.VisualYPosition.LineTop) - view.ScrollOffset;
+        var bottomRight = view.GetVisualPosition(new AvaloniaEdit.TextViewPosition(last), AvaloniaEdit.Rendering.VisualYPosition.LineBottom) - view.ScrollOffset;
+
+        return new Rect(new Point(topLeft.X, topLeft.Y), new Point(bottomRight.X, bottomRight.Y));
     }
 
     private static bool IsWordCharacter(char c) =>

@@ -1322,6 +1322,8 @@ public sealed partial class CodeEditor : UserControl
     /// <summary>Asks what the symbol under a point is, and says so.</summary>
     private async Task ShowHoverAsync(Avalonia.Point point)
     {
+        if (HoverYieldsToDebugger?.Invoke() == true) return;
+
         var view = _editor.TextArea.TextView;
 
         var position = view.GetPositionFloor(point + view.ScrollOffset);

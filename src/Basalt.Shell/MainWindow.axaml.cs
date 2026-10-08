@@ -775,6 +775,10 @@ public partial class MainWindow : Window
 
         RefreshBreakpointDisplay(editor.FilePath);
 
+        // Hovering a variable while stopped reads its value, the same way
+        // the Locals panel below does.
+        ConnectDebugHover(editor);
+
         // While stopped in this file, mark the line execution is on.
         if (_debug.CurrentFrame is { } frame &&
             string.Equals(frame.FilePath, editor.FilePath, StringComparison.Ordinal))
