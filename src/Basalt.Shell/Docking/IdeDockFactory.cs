@@ -75,7 +75,7 @@ public sealed class IdeDockFactory : Factory
             Id = "Sinistra",
             Title = "Sinistra",
             Alignment = Alignment.Left,
-            Proportion = 0.11,
+            Proportion = 0.16,
             VisibleDockables = CreateList<IDockable>(Toolbox, ElementTree, Outline),
             ActiveDockable = Toolbox
         };

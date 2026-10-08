@@ -160,8 +160,13 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
             var node = new SolutionTreeNode(name, subdirectory, NodeKind.Folder);
             PopulateFrom(node, subdirectory);
 
-            // A folder with no interesting files adds nothing to the tree.
-            if (node.Children.Count > 0) parent.Children.Add(node);
+            // Shown even with nothing in it yet: a folder the user just
+            // created from "New Folder…" has no files the moment it exists,
+            // and hiding it the instant Explorer.Refresh() ran left nowhere
+            // obvious to add anything into — Visual Studio keeps an empty
+            // folder visible too, exactly so it can receive what is dropped
+            // or created into it next.
+            parent.Children.Add(node);
         }
 
         var files = Directory.EnumerateFiles(directory)

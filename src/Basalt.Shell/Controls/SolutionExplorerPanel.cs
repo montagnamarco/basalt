@@ -48,16 +48,29 @@ public sealed class SolutionExplorerPanel : UserControl
                 FileOpened?.Invoke(this, form);
         };
 
-        // Alt+Enter on the selection, as everywhere else.
+        // Enter opens the selected file, the same as a double-click;
+        // Alt+Enter opens the selected project's Properties, as everywhere
+        // else in the IDE.
         _tree.KeyDown += (_, e) =>
         {
-            if (e.Key != Avalonia.Input.Key.Enter
-                || !e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Alt))
-                return;
+            if (e.Key != Avalonia.Input.Key.Enter) return;
 
-            if (SelectedNode is { Kind: NodeKind.Project })
+            if (e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Alt))
             {
-                CommandChosen?.Invoke(this, (ExplorerCommand.Properties, SelectedNode));
+                if (SelectedNode is { Kind: NodeKind.Project })
+                {
+                    CommandChosen?.Invoke(this, (ExplorerCommand.Properties, SelectedNode));
+                    e.Handled = true;
+                }
+
+                return;
+            }
+
+            if (e.KeyModifiers != Avalonia.Input.KeyModifiers.None) return;
+
+            if (SelectedNode is { IsOpenable: true } node)
+            {
+                FileOpened?.Invoke(this, node);
                 e.Handled = true;
             }
         };

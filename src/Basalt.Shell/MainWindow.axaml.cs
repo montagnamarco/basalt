@@ -1710,8 +1710,8 @@ public partial class MainWindow : Window
 
         var answered = false;
 
-        var ok = new Button { Content = "OK", IsDefault = true };
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var ok = new Button { Content = Localizer.Get(StringKeys.ButtonOk), IsDefault = true };
+        var cancel = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsCancel = true };
 
         var dialog = new Window
         {
@@ -5152,7 +5152,7 @@ public partial class MainWindow : Window
     {
         if (ViewModel.StartupProject is null)
         {
-            ViewModel.StatusMessage = "Aprire prima un progetto.";
+            ViewModel.StatusMessage = Localizer.Get(StringKeys.StatusOpenProjectFirst);
             return;
         }
 
