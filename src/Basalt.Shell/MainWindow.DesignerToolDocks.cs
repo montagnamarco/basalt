@@ -67,6 +67,16 @@ public partial class MainWindow
         CancelInactivePropertyFocus(null);
         var session = host is { ShowingDesigner: true } && document is not null
             ? ViewModel.DesignerSessionFor(document) : null;
+
+        // DesignerHost caches its own drawing and rebuilds it - with a fresh
+        // DesignerSessionFor call of its own - only when the markup no longer
+        // matches what it last drew: switching to the text half, editing by
+        // hand, and switching back is exactly that case. Without this,
+        // ActiveDesigner (what Undo/Redo and every other designer-wide
+        // command act on) kept pointing at the session from before the
+        // switch, which the screen no longer agreed with.
+        if (session is not null) ViewModel.ActiveDesigner = session;
+
         _designerToolboxDock.Content = session is null ? null : _toolbox;
         _designerPropertiesDock.Content = session is null ? null : _properties;
         _properties?.Show(session);

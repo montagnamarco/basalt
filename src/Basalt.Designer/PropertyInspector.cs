@@ -126,7 +126,7 @@ public static class PropertyInspector
     private static readonly HashSet<string> Hidden =
     [
         "Name", "DataContext", "Parent", "TemplatedParent", "Bounds",
-        "IsInitialized", "IsLoaded", "Content", "Child", "Children", "Items"
+        "IsInitialized", "IsLoaded", "Child", "Children", "Items"
     ];
 
     private static readonly HashSet<string> LayoutProperties =
@@ -145,7 +145,24 @@ public static class PropertyInspector
     ];
 
     /// <summary>Lists the designable properties of a control type.</summary>
-    public static IReadOnlyList<DesignableProperty> Describe(Type controlType, Func<string, string?>? currentValue = null)
+    /// <param name="contentIsText">
+    /// Whether the selected element's Content, if it has one, is worth
+    /// showing as a plain text field.
+    /// </param>
+    /// <remarks>
+    /// Content is declared as <see cref="object"/> so a <c>ContentControl</c>
+    /// can hold a nested layout as well as a caption, and <see cref="ClassifyEditor"/>
+    /// has no editor for a bare object - rightly so for a Window or a
+    /// ScrollViewer, whose Content is an entire tree that a text box would
+    /// overwrite with a literal string. But a Button, a CheckBox or anything
+    /// else whose content is already written as a plain attribute has no
+    /// nested XAML to lose, and typing its caption is the single most common
+    /// edit there is. The caller knows which case it is - it can see whether
+    /// the element has any child elements - so it says so here rather than
+    /// this method guessing from the type alone.
+    /// </remarks>
+    public static IReadOnlyList<DesignableProperty> Describe(
+        Type controlType, Func<string, string?>? currentValue = null, bool contentIsText = false)
     {
         var results = new List<DesignableProperty>();
 
@@ -153,8 +170,12 @@ public static class PropertyInspector
         {
             if (property.IsReadOnly || Hidden.Contains(property.Name)) continue;
 
+            var isTextContent = contentIsText && property.Name == "Content";
+
+            if (!isTextContent && property.Name == "Content") continue;
+
             var valueType = property.PropertyType;
-            var kind = ClassifyEditor(valueType);
+            var kind = isTextContent ? PropertyEditorKind.Text : ClassifyEditor(valueType);
             if (kind is null) continue;
 
             results.Add(new DesignableProperty(

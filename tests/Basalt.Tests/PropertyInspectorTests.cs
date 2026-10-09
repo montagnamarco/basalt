@@ -37,7 +37,8 @@ public class PropertyInspectorTests
     {
         var names = PropertyInspector.Describe(typeof(Button)).Select(p => p.Name).ToList();
 
-        // Content is edited on the design surface, the name in its dedicated field.
+        // Content is offered only when the caller says it is plain text
+        // (contentIsText); the name has its dedicated field.
         Assert.DoesNotContain("Content", names);
         Assert.DoesNotContain("Name", names);
         Assert.DoesNotContain("Bounds", names);

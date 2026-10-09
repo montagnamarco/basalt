@@ -38,6 +38,15 @@ public sealed class ElementTreePanel : UserControl
             BorderThickness = default,
         };
 
+        // Expands every row as its container is realised. TreeView builds
+        // containers lazily, so ExpandAll right after Show finds no container
+        // the first time and a row two levels down stayed collapsed. Each
+        // TreeViewItem prepares its own children's containers, which is why
+        // the handler is attached at every level, not only to the TreeView.
+        // A branch the user closes stays closed, even though every edit
+        // rebuilds the rows: Show reads which rows were closed first.
+        _tree.ContainerPrepared += ExpandWhenPrepared;
+
         // A drag begins once the pointer has travelled: pressing alone is how
         // a row is selected, and starting a drag on the press would make
         // clicking a control feel like it moved.
@@ -166,9 +175,25 @@ public sealed class ElementTreePanel : UserControl
 
     private IReadOnlyList<Node> _roots = [];
 
+    /// <summary>Elements whose branch the user closed, for the session shown.</summary>
+    private readonly HashSet<XElement> _collapsed = [];
+
+    private DesignerSession? _shown;
+
+    /// <summary>Rows prepared since the last Show: only their state is the user's.</summary>
+    private readonly HashSet<TreeViewItem> _prepared = [];
+
     /// <summary>Shows the controls of the given session.</summary>
     public void Show(DesignerSession? session)
     {
+        if (ReferenceEquals(session, _shown)) RememberCollapsedRows();
+        else _collapsed.Clear();
+
+        // A deleted control's element no longer belongs to any document.
+        _collapsed.RemoveWhere(element => element.Document is null);
+        _shown = session;
+        _prepared.Clear();
+
         if (session is null)
         {
             _roots = [];
@@ -414,14 +439,48 @@ public sealed class ElementTreePanel : UserControl
     /// before it shows anything is one more step between wanting a control
     /// and reaching it.
     /// </remarks>
+    private void ExpandWhenPrepared(object? sender, ContainerPreparedEventArgs e)
+    {
+        if (e.Container is not TreeViewItem item) return;
+
+        item.ContainerPrepared -= ExpandWhenPrepared;
+        item.ContainerPrepared += ExpandWhenPrepared;
+        ApplyExpansion(item);
+        _prepared.Add(item);
+    }
+
+    /// <summary>
+    /// Notes the branches the user has closed, before Show replaces the rows.
+    /// </summary>
+    /// <remarks>
+    /// Read from the rows rather than from TreeViewItem's Collapsed event:
+    /// tearing the old rows down raises Collapsed too, and recorded that way
+    /// every rebuild closed the whole tree.
+    /// </remarks>
+    private void RememberCollapsedRows()
+    {
+        // A row created by a Show still being laid out has not been prepared:
+        // its IsExpanded is the default, not something the user chose.
+        foreach (var row in _prepared)
+        {
+            if (row.DataContext is not Node { Children.Count: > 0 } node) continue;
+
+            if (row.IsExpanded) _collapsed.Remove(node.Element);
+            else _collapsed.Add(node.Element);
+        }
+    }
+
+    private void ApplyExpansion(TreeViewItem item) =>
+        item.IsExpanded = item.DataContext is not Node node || !_collapsed.Contains(node.Element);
+
     private void ExpandAll()
     {
+        // Null before the tree has built its containers, which is the case on
+        // the very first show: ExpandWhenPrepared covers those as they appear.
         foreach (var root in _roots)
         {
-            // Null before the tree has built its containers, which is the
-            // case on the very first show; the next one catches it.
             if (_tree.TreeContainerFromItem(root) is TreeViewItem item)
-                _tree.ExpandSubTree(item);
+                ApplyExpansion(item);
         }
     }
 

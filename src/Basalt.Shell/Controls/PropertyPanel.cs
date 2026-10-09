@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Basalt.Core.Localization;
 using Basalt.Designer;
+using Basalt.Designer.Model;
 
 namespace Basalt.Shell.Controls;
 
@@ -157,8 +158,20 @@ public sealed class PropertyPanel : UserControl
             return;
         }
 
-        _grid.Properties =
-            PropertyInspector.Describe(type, name => selection.Attribute(name)?.Value);
+        // Content is worth a text editor only when it is already a plain
+        // attribute: an element with child elements of its own - a Window
+        // full of a Grid, say - keeps its Content hidden, because a caption
+        // typed over a nested layout would collide with it rather than
+        // replace it.
+        // Text written between the tags (<Button>Go</Button>) or a
+        // <Button.Content> element is Content too: writing a Content
+        // attribute beside it would set it twice.
+        var contentIsText = !XamlDocument.ControlChildren(selection).Any()
+            && !selection.Nodes().OfType<System.Xml.Linq.XText>().Any(text => !string.IsNullOrWhiteSpace(text.Value))
+            && !selection.Elements().Any(child => child.Name.LocalName.EndsWith(".Content", StringComparison.Ordinal));
+
+        _grid.Properties = PropertyInspector.Describe(
+            type, name => selection.Attribute(name)?.Value, contentIsText);
     }
 
     /// <summary>
