@@ -154,7 +154,6 @@ public sealed class WinFormsPropertyGridEllipsisPointerTests : IDisposable
     {
         var bounds = Raster.BoundsIn(row, window.Window);
         var point = new Point(bounds.X + 10, bounds.Y + bounds.Height / 2.0);
-        Log($"ClickRowLabel bounds={bounds} point={point} rowVisible={row.IsEffectivelyVisible} windowSize={window.Window.Bounds}");
         window.Window.MouseDown(point, MouseButton.Left);
         window.Window.MouseUp(point, MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
@@ -168,18 +167,10 @@ public sealed class WinFormsPropertyGridEllipsisPointerTests : IDisposable
         var ellipsis = Assert.Single(row.GetVisualDescendants().OfType<Button>(), b => b.Name == "PropertyGridEllipsis");
         var bounds = Raster.BoundsIn(ellipsis, window.Window);
         var centre = new Point(bounds.X + bounds.Width / 2.0, bounds.Y + bounds.Height / 2.0);
-        var hit = window.Window.InputHitTest(centre);
-        var chain = new List<string>();
-        for (var v = hit as Avalonia.Visual; v is not null; v = v.GetVisualParent())
-            chain.Add(v.GetType().Name + (v is Control c ? $"[{c.Name}]" : ""));
-        Log($"ClickEllipsis bounds={bounds} centre={centre} visible={ellipsis.IsEffectivelyVisible} hit={hit?.GetType().FullName} chain={string.Join(" > ", chain)}");
         window.Window.MouseDown(centre, MouseButton.Left);
         window.Window.MouseUp(centre, MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
     }
-
-    private const string LogPath = "/private/tmp/claude-501/-Users-marco-Sources-my-ide/1170799a-8c3c-4087-a4a7-6ce6990271a7/scratchpad/live.log";
-    private static void Log(string message) => File.AppendAllText(LogPath, "[TESTDIAG] " + message + "\n");
 
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
