@@ -390,6 +390,94 @@ public sealed class UserJourneyEditorTests : IDisposable
         Assert.False(form.IsModified || designer.IsModified, "Save All left a document marked as modified.");
     }
 
+    // ---- journey: undo and redo in the code editor ---------------------
+
+    /// <summary>
+    /// Ctrl+Z undoes what was just typed in the code editor and the redo
+    /// shortcut puts it back, the same as the Edit menu.
+    /// </summary>
+    /// <remarks>
+    /// Before the fix, the window-level shortcut handler matched Ctrl+Z to
+    /// Edit &gt; Undo and marked the key handled, but
+    /// <c>MainWindowViewModel.Undo</c> only reached a designer: in a code
+    /// editor the key was swallowed and nothing was undone.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task ControlZUndoesTypingInTheCodeEditorAndTheRedoShortcutRestoresIt()
+    {
+        var project = WriteProject();
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+
+        await vm.OpenFileAsync(ProgramPath);
+        await host.SettleAsync(5);
+
+        var editor = TextEditorFor(w, ProgramPath);
+        editor.CaretOffset = ProgramSource.IndexOf("Helper.Greet()", StringComparison.Ordinal) + "Helper.Greet()".Length;
+        editor.TextArea.Focus();
+
+        w.KeyTextInput(" ' later");
+        var typed = ProgramSource.Replace("Helper.Greet()", "Helper.Greet() ' later", StringComparison.Ordinal);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == typed), editor.Text);
+
+        PressKey(w, Key.Z, RawInputModifiers.Control, PhysicalKey.Z);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == ProgramSource),
+            $"Ctrl+Z left:\n{editor.Text}");
+
+        PressKey(w, Key.Z, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.Z);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == typed),
+            $"Ctrl+Shift+Z left:\n{editor.Text}");
+    }
+
+    /// <summary>
+    /// Editing shortcuts pressed in a text box belong to that text box: Ctrl+X
+    /// in the search term cuts the term, and leaves the code editor's own
+    /// selection alone.
+    /// </summary>
+    /// <remarks>
+    /// Before the fix, the window-level shortcut handler ran Edit &gt; Cut on
+    /// the active code editor whatever had the keyboard focus, so the
+    /// selected code vanished and the text box kept its text.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task EditingShortcutsInATextBoxActOnTheTextBoxNotTheCodeEditor()
+    {
+        var project = WriteProject();
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+
+        await vm.OpenFileAsync(ProgramPath);
+        await host.SettleAsync(5);
+
+        var editor = TextEditorFor(w, ProgramPath);
+        editor.Select(ProgramSource.IndexOf("Helper", StringComparison.Ordinal), "Helper".Length);
+
+        PressKey(w, Key.H, RawInputModifiers.Control, PhysicalKey.H);
+        await host.SettleAsync(5);
+        var search = Field<SearchPanel>(w, "_search");
+        search.TermBox.Focus();
+        search.TermBox.Text = "Greet";
+        search.TermBox.SelectAll();
+        await host.SettleAsync(2);
+
+        PressKey(w, Key.X, RawInputModifiers.Control, PhysicalKey.X);
+        await host.SettleAsync(5);
+
+        Assert.Equal(ProgramSource, editor.Text);
+        Assert.Equal("", search.TermBox.Text ?? "");
+
+        w.KeyTextInput("Main");
+        PressKey(w, Key.Z, RawInputModifiers.Control, PhysicalKey.Z);
+        await host.SettleAsync(5);
+
+        Assert.Equal(ProgramSource, editor.Text);
+        Assert.NotEqual("Main", search.TermBox.Text);
+    }
+
     private static T Field<T>(object o, string name) =>
         (T)o.GetType().GetField(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(o)!;

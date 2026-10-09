@@ -14,8 +14,6 @@
 
   <Window.KeyBindings>
     <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
-    <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
-    <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
     <KeyBinding Gesture="F6" Command="{Binding BuildCommand}" />
     <!-- F5 debugs and Ctrl+F5 runs without debugging, as in Visual Basic. -->
     <KeyBinding Gesture="Ctrl+F5" Command="{Binding RunCommand}" />

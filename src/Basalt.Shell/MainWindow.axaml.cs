@@ -2803,10 +2803,22 @@ public partial class MainWindow : Window
 
         if (_commands.ForGesture(gesture) is not { } command) return false;
 
+        // A text box edits its own text: run as Edit commands, these keys
+        // would cut, paste or undo in the code editor behind it instead.
+        if (IsTextBoxEditingCommand(command.Id)
+            && FocusManager?.GetFocusedElement() is TextBox)
+        {
+            return false;
+        }
+
         await RunCommandAsync(command.Id);
 
         return true;
     }
+
+    private static bool IsTextBoxEditingCommand(string commandId) =>
+        commandId is IdeCommands.EditUndo or IdeCommands.EditRedo
+            or IdeCommands.EditCut or IdeCommands.EditCopy or IdeCommands.EditPaste;
 
     /// <summary>Opens the palette and runs whatever was chosen.</summary>
     private async Task ShowCommandPaletteAsync()
@@ -2837,12 +2849,24 @@ public partial class MainWindow : Window
                 await ViewModel.SaveCommand.ExecuteAsync(null);
                 break;
 
-            case IdeCommands.EditUndo:
+            // The designers keep their own undo history; anywhere else the
+            // command belongs to the code editor in front. A focused text box
+            // (a Properties value being typed, as in Visual Studio) never gets
+            // here: TryRunShortcutAsync leaves the key to its own undo.
+            case IdeCommands.EditUndo when WinFormsDesignerInFront is not null || DesignerInFront is not null:
                 ViewModel.UndoCommand.Execute(null);
                 break;
 
-            case IdeCommands.EditRedo:
+            case IdeCommands.EditUndo:
+                CurrentEditor()?.Undo();
+                break;
+
+            case IdeCommands.EditRedo when WinFormsDesignerInFront is not null || DesignerInFront is not null:
                 ViewModel.RedoCommand.Execute(null);
+                break;
+
+            case IdeCommands.EditRedo:
+                CurrentEditor()?.Redo();
                 break;
 
             case IdeCommands.EditFind:
@@ -4798,9 +4822,13 @@ public partial class MainWindow : Window
         ]),
         new(Localizer.Get(StringKeys.MenuEdit), Children:
         [
-            new(Localizer.Get(StringKeys.MenuEditUndo), vm.UndoCommand,
+            // Through the command, not the view model's: undo belongs to the
+            // designer in front, or else to the code editor.
+            new(Localizer.Get(StringKeys.MenuEditUndo),
+                Action: () => _ = RunCommandAsync(IdeCommands.EditUndo),
                 Gesture: new KeyGesture(Key.Z, PlatformCommandModifier)) { Icon = IconKind.Undo },
-            new(Localizer.Get(StringKeys.MenuEditRedo), vm.RedoCommand,
+            new(Localizer.Get(StringKeys.MenuEditRedo),
+                Action: () => _ = RunCommandAsync(IdeCommands.EditRedo),
                 Gesture: new KeyGesture(Key.Z, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Redo },
             MenuEntry.Separator,
             // Same shortcut Visual Studio and VS Code use for formatting.
