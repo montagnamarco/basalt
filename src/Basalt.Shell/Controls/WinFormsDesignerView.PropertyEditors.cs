@@ -1,11 +1,13 @@
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Design;
 using System.IO;
 using Avalonia.Controls;
 using Basalt.Core.Localization;
 using Basalt.Designer;
 using Basalt.Workspace;
 using Forms = System.Windows.Forms;
+using FormsDesign = System.Windows.Forms.Design;
 
 namespace Basalt.Shell.Controls;
 
@@ -95,6 +97,15 @@ internal sealed partial class WinFormsDesignerView
                 }
 
                 selectedValue = selection.Value;
+            }
+            else if (TryGetDesignTimeEditor(descriptor) is { } editor)
+            {
+                if (!TryInvokeDesignTimeEditor(editor, component, descriptor, currentValue, session.Form, out var edited))
+                {
+                    return;
+                }
+
+                selectedValue = edited;
             }
             else
             {
@@ -224,5 +235,109 @@ internal sealed partial class WinFormsDesignerView
     private sealed record ComponentReferenceChoice(string Name, object? Value)
     {
         public override string ToString() => Name;
+    }
+
+    /// <summary>
+    /// The first <c>[Editor(..., typeof(UITypeEditor))]</c> whose edit style is not
+    /// None: a Modal one shows a "..." dialog, a DropDown one a popup under the row.
+    /// <see cref="Basalt.Designer.WinFormsPropertyInspector"/> decides whether the row
+    /// gets a "..." button from the same attribute, by reflection (it has no reference
+    /// to this assembly); here, with the reference, the real type can be asked directly.
+    /// </summary>
+    internal static UITypeEditor? TryGetDesignTimeEditor(PropertyDescriptor descriptor) =>
+        descriptor.GetEditor(typeof(UITypeEditor)) is UITypeEditor editor
+            && editor.GetEditStyle() != UITypeEditorEditStyle.None ? editor : null;
+
+    /// <summary>
+    /// Runs a UITypeEditor's EditValue with a working IWindowsFormsEditorService, the
+    /// same contract a real Windows Forms designer offers: a Modal editor calls
+    /// ShowDialog on its own dialog Form, a DropDown editor calls DropDownControl with
+    /// the control to host under the row. Both block synchronously until the editor is
+    /// done, the same way Basalt.Forms's own Form.ShowDialog already does.
+    /// </summary>
+    internal static bool TryInvokeDesignTimeEditor(UITypeEditor editor, object component, PropertyDescriptor descriptor,
+        object? currentValue, Forms.Form owner, out object? value)
+    {
+        var context = new DesignTimeEditorContext(component, descriptor);
+        using var service = new DesignTimeEditorService(owner);
+        value = editor.EditValue(context, service, currentValue);
+        return !Equals(value, currentValue);
+    }
+
+    /// <summary>
+    /// The borderless host form for a drop-down editor's control, opened at <paramref name="location"/>
+    /// (screen coordinates). Kept separate from <see cref="DesignTimeEditorService.DropDownControl"/>
+    /// so the placement can be asserted without showing a window.
+    /// </summary>
+    internal static Forms.Form CreateDropDownForm(Forms.Control control, Point location)
+    {
+        var form = new Forms.Form
+        {
+            FormBorderStyle = Forms.FormBorderStyle.None,
+            StartPosition = Forms.FormStartPosition.Manual,
+            ShowInTaskbar = false,
+            ClientSize = control.Size,
+            Location = location,
+        };
+        form.Controls.Add(control);
+        return form;
+    }
+
+    /// <summary>
+    /// Top-left corner for a drop-down of <paramref name="size"/> opened at the screen
+    /// <paramref name="pointer"/>, moved back inside <paramref name="workingArea"/> when it would
+    /// run off the right or bottom edge (or the left or top edge for a pointer outside it). When
+    /// the drop-down is larger than the area, it is pinned to the area's top-left corner.
+    /// </summary>
+    internal static Point DropDownLocation(Point pointer, Size size, Rectangle workingArea)
+    {
+        var maxX = Math.Max(workingArea.Left, workingArea.Right - size.Width);
+        var maxY = Math.Max(workingArea.Top, workingArea.Bottom - size.Height);
+        return new Point(
+            Math.Clamp(pointer.X, workingArea.Left, maxX),
+            Math.Clamp(pointer.Y, workingArea.Top, maxY));
+    }
+
+    private sealed class DesignTimeEditorContext(object instance, PropertyDescriptor descriptor) : ITypeDescriptorContext
+    {
+        public IContainer? Container => null;
+        public object Instance => instance;
+        public PropertyDescriptor PropertyDescriptor => descriptor;
+        public object? GetService(Type serviceType) => null;
+        public void OnComponentChanged() { }
+        public bool OnComponentChanging() => true;
+    }
+
+    /// <summary>
+    /// Hosts a UITypeEditor's dialog or drop-down control inside the Basalt.Forms Form
+    /// being designed. Only editors whose types live in an assembly the host can load are
+    /// reachable here at all - EditValue is called with the real control, never a stub -
+    /// which today means editors shipped with Basalt.Forms (src/Basalt.Forms/Design).
+    /// </summary>
+    private sealed class DesignTimeEditorService(Forms.Form owner)
+        : IServiceProvider, FormsDesign.IWindowsFormsEditorService, IDisposable
+    {
+        private Forms.Form? _dropDown;
+
+        public object? GetService(Type serviceType) =>
+            serviceType == typeof(FormsDesign.IWindowsFormsEditorService) ? this : null;
+
+        public Forms.DialogResult ShowDialog(Forms.Form dialog) => dialog.ShowDialog(owner);
+
+        public void DropDownControl(Forms.Control control)
+        {
+            // The editor is opened synchronously by the click on the row's "..." button, so the
+            // pointer's last recorded position is that click. Opening there, rather than at the
+            // form's default (0,0), keeps the drop-down beside the row that asked for it.
+            var pointer = Forms.Control.MousePosition;
+            var workingArea = Forms.Screen.FromPoint(pointer).WorkingArea;
+            _dropDown = CreateDropDownForm(control, DropDownLocation(pointer, control.Size, workingArea));
+            _dropDown.ShowDialog(owner);
+            _dropDown = null;
+        }
+
+        public void CloseDropDown() => _dropDown?.Close();
+
+        public void Dispose() => _dropDown?.Dispose();
     }
 }

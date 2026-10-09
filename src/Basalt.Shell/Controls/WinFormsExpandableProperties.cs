@@ -65,9 +65,82 @@ internal static class WinFormsExpandableProperties
                 Add(nameof(Color.G), color.G);
                 Add(nameof(Color.B), color.B);
                 break;
+
+            default:
+                // Any other expandable value: Point, Size, Padding, Font and Color are
+                // listed by hand above because each rebuilds its own constructor
+                // arguments, but a type with the same TypeConverter contract - override
+                // GetPropertiesSupported, list its own members - gets the same rows
+                // generically, the way Visual Studio's PropertyGrid does for any
+                // ExpandableObjectConverter.
+                if (value is not null)
+                    foreach (var child in GenericChildren(descriptor, value, parentName, isExplicit))
+                        rows.Add(child);
+                break;
         }
 
         return rows;
+    }
+
+    private static IEnumerable<DesignableProperty> GenericChildren(
+        PropertyDescriptor parent, object value, string parentName, bool isExplicit)
+    {
+        // The parent descriptor's own Converter, not TypeDescriptor.GetConverter(value):
+        // a TypeConverterAttribute can sit on the property alone, overriding the value
+        // type's own default converter for this one property only, and only the
+        // descriptor that was actually asked for sees that override.
+        var converter = parent.Converter;
+        if (!converter.GetPropertiesSupported())
+            yield break;
+
+        // Rebuild only reconstructs a new value when the converter also supports
+        // CreateInstance (the pattern FontConverter and PointConverter use for their own
+        // immutable values). Without it, the designer has no safe way to write a changed
+        // member back, so the row is shown but not editable rather than failing on commit.
+        var canRebuild = converter.GetCreateInstanceSupported();
+        var properties = converter.GetProperties(value);
+        if (properties is null) yield break;
+
+        foreach (PropertyDescriptor child in properties)
+        {
+            if (!child.IsBrowsable) continue;
+
+            // A null member (a nullable reference such as a string? property) keeps its row, with
+            // no value text, the way the panel shows a null property. Dropping it would hide a
+            // member the user can still set from the top-level grid.
+            // A null member is not "set" even when the parent is explicit: Reset of a child rebuilds
+            // from the default instance's child, which is null too, so SetNestedPropertyAsync would
+            // throw "The child has no default value." Offering Reset here would offer a failing command.
+            var childValue = child.GetValue(value);
+            var text = childValue is null ? null : Format(childValue);
+            yield return new DesignableProperty(child.Name, child.PropertyType, GenericChildKind(child.PropertyType),
+                Category(parent.Category),
+                child.PropertyType.IsEnum && !child.PropertyType.IsDefined(typeof(FlagsAttribute), false)
+                    ? Enum.GetNames(child.PropertyType) : [],
+                isExplicit ? text : null)
+            {
+                ParentName = parentName,
+                Depth = 1,
+                CategoryName = parent.Category,
+                DefaultValue = text,
+                IsReadOnly = parent.IsReadOnly || child.IsReadOnly || !canRebuild,
+                WasSet = isExplicit && childValue is not null,
+            };
+        }
+    }
+
+    private static PropertyEditorKind GenericChildKind(Type type)
+    {
+        var actual = Nullable.GetUnderlyingType(type) ?? type;
+
+        if (actual == typeof(bool)) return PropertyEditorKind.Boolean;
+        if (actual.IsEnum) return PropertyEditorKind.Enumeration;
+        if (actual == typeof(byte) || actual == typeof(sbyte) || actual == typeof(short) ||
+            actual == typeof(ushort) || actual == typeof(int) || actual == typeof(uint) ||
+            actual == typeof(long) || actual == typeof(ulong) || actual == typeof(float) ||
+            actual == typeof(double) || actual == typeof(decimal)) return PropertyEditorKind.Number;
+
+        return PropertyEditorKind.Text;
     }
 
     /// <summary>Returns a new value. The caller serializes it through one undoable parent assignment.</summary>
@@ -90,8 +163,35 @@ internal static class WinFormsExpandableProperties
             Forms.Padding padding => RebuildPadding(padding, childName, text),
             Font font => RebuildFont(font, childName, text),
             Color color => RebuildColor(color, childName, text),
-            _ => throw new NotSupportedException("This property has no built-in child editor."),
+            _ => GenericRebuild(descriptor.Converter, value, childName, text),
         };
+    }
+
+    /// <summary>
+    /// Rebuilds any other expandable value through its own TypeConverter, the same
+    /// CreateInstance contract FontConverter and PointConverter use: read every member's
+    /// current value, replace the one that changed, and let the converter reconstruct a
+    /// fresh instance. <see cref="GenericChildren"/> never lets this run for a converter
+    /// that does not support CreateInstance, so reaching here with one is a program error.
+    /// The parent property's own descriptor.Converter is passed in rather than
+    /// re-derived from the bare value, for the same reason <see cref="GenericChildren"/>
+    /// does: a TypeConverterAttribute can override the converter for this property alone.
+    /// </summary>
+    private static object GenericRebuild(TypeConverter converter, object value, string childName, string text)
+    {
+        if (!converter.GetPropertiesSupported() || !converter.GetCreateInstanceSupported())
+            throw new NotSupportedException("This property has no built-in child editor.");
+
+        var properties = converter.GetProperties(value) ?? throw UnknownChild(childName);
+        var target = properties[childName] ?? throw UnknownChild(childName);
+        var newValue = target.Converter.ConvertFromInvariantString(text);
+
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (PropertyDescriptor property in properties)
+            values[property.Name] = property.Name == childName ? newValue : property.GetValue(value);
+
+        return converter.CreateInstance(null, values)
+            ?? throw new InvalidOperationException("The converter did not rebuild a value.");
     }
 
     private static Point RebuildPoint(Point point, string childName, string text) => childName switch

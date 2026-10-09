@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Reflection;
 
 namespace Basalt.Designer;
 
@@ -51,13 +52,34 @@ public static class WinFormsPropertyResetMetadata
             return new(true, true);
         }
 
-        if (!IsBuiltInFormsComponent(component, descriptor))
+        if (!IsTrustedDesignerComponent(component, descriptor))
         {
             // TypeDescriptor hooks on application classes can execute arbitrary code.
             // Preserve the source assignment when its metadata is not trusted.
             return new(true, true);
         }
 
+        try
+        {
+            return DescribeTrusted(component, descriptor, sourceValue, resourceCanReset);
+        }
+        catch (Exception) when (ShouldContainHookFailure(component, descriptor))
+        {
+            // A user subclass's own getter, ShouldSerializeX or CanResetX threw. The row
+            // must still render, so the designer reports the property as modified (its
+            // source assignment is preserved) and not resettable, rather than failing.
+            // A failure in a built-in Forms or SerialPort hook is not user code and is not
+            // caught here: the filter lets it propagate, so Basalt's own bugs stay visible.
+            return new(true, false);
+        }
+    }
+
+    private static WinFormsPropertyResetState DescribeTrusted(
+        object component,
+        PropertyDescriptor descriptor,
+        WinFormsSourceValueState sourceValue,
+        bool resourceCanReset)
+    {
         var defaultAttribute = descriptor.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
         var value = descriptor.GetValue(component);
         bool modified;
@@ -82,11 +104,57 @@ public static class WinFormsPropertyResetMetadata
         return new(modified, canReset);
     }
 
-    private static bool IsBuiltInFormsComponent(object component, PropertyDescriptor descriptor)
+    /// <summary>
+    /// Whether the component's type and the property's declaring type both descend from an
+    /// assembly the designer already trusts: System.Windows.Forms (the reimplemented Basalt.Forms
+    /// every built-in control comes from) and System.IO.Ports (SerialPort; see
+    /// WinFormsDesignerSession.IsSupportedComponentType). Each base chain is walked, so a user
+    /// control - a subclass of a Control or a Component, declared in the user's own assembly -
+    /// is trusted too.
+    /// <para>
+    /// That trust covers the user subclass's own hooks, not only the members it inherits: its
+    /// own property getters, ShouldSerializeX and ResetX methods run during metadata inspection.
+    /// This is a deliberate owner decision, the same one Visual Studio makes: user controls run
+    /// in-process. They already run that code in the same process through their constructor and
+    /// OnPaint, so reading their property metadata adds no new trust boundary.
+    /// </para>
+    /// <para>
+    /// Exceptions thrown by a user subclass's hooks are contained by <see cref="Describe"/>, which reports the
+    /// property as modified and not resettable, and <see cref="Basalt.Designer.WinFormsPropertyInspector.ResetValue"/>,
+    /// which reports it as not reset. An exception from a hook declared on a built-in Forms or SerialPort
+    /// type is not contained: it propagates, because it is a bug in Basalt's own controls and must stay
+    /// visible (see <see cref="ShouldContainHookFailure"/>). A type with no such ancestor - a genuinely
+    /// unrelated application type - stays untrusted, and its hooks never run.
+    /// </para>
+    /// </summary>
+    internal static bool IsTrustedDesignerComponent(object component, PropertyDescriptor descriptor) =>
+        DerivesFromTrustedAssembly(component.GetType()) && DerivesFromTrustedAssembly(descriptor.ComponentType);
+
+    /// <summary>
+    /// Whether an exception from the component's own hooks is contained as user code's failure. Only a
+    /// trusted component (see <see cref="IsTrustedDesignerComponent"/>) whose own type, or whose property's
+    /// declaring type, is declared outside System.Windows.Forms and System.IO.Ports qualifies: that is a user
+    /// subclass. A component and property both from the built-in assemblies do not qualify, so their
+    /// exceptions propagate.
+    /// </summary>
+    internal static bool ShouldContainHookFailure(object component, PropertyDescriptor descriptor) =>
+        IsTrustedDesignerComponent(component, descriptor) &&
+        (!IsTrustedAssembly(component.GetType().Assembly) || !IsTrustedAssembly(descriptor.ComponentType.Assembly));
+
+    private static bool DerivesFromTrustedAssembly(Type? type)
     {
-        const string formsAssembly = "System.Windows.Forms";
-        return component.GetType().Assembly.GetName().Name == formsAssembly
-            && descriptor.ComponentType.Assembly.GetName().Name == formsAssembly;
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            if (IsTrustedAssembly(current.Assembly)) return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsTrustedAssembly(Assembly assembly)
+    {
+        var name = assembly.GetName().Name;
+        return name is "System.Windows.Forms" or "System.IO.Ports";
     }
 
     private static bool IsControlText(object component, PropertyDescriptor descriptor)

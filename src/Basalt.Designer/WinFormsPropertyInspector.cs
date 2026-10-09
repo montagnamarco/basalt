@@ -54,11 +54,29 @@ public static class WinFormsPropertyInspector
             var editableCollection = CanEditCollection(descriptor, componentType);
             var collection = editableCollection || type != typeof(string) && typeof(IList).IsAssignableFrom(type);
             var componentReference = typeof(IComponent).IsAssignableFrom(type);
-            var expandable = IsExpandable(type);
             var image = IsImageType(type);
-            var kind = BuiltInEditorKind(type);
+            // A picture keeps the single row with its Select Resource button: ImageConverter
+            // and IconConverter report GetPropertiesSupported, and the generic expandable
+            // row they would get instead broke the "…" click (measured by
+            // WinFormsPropertyGridEllipsisPointerTests).
+            var expandable = !image && IsExpandable(descriptor, type);
+            var hasEditor = HasDesignTimeEditor(descriptor);
+            var kind = BuiltInEditorKind(descriptor, type);
+            string[]? allowedValues = null;
+
+            if (kind is null or PropertyEditorKind.Text)
+            {
+                // TypeConverter.GetStandardValues gives the designer a closed set to
+                // show as a drop-down even when the value is not a real enum - a font
+                // name, a culture, or any other application choice list. Only an
+                // exclusive set becomes one: a non-exclusive set is suggestions over
+                // free text, and this grid's drop-down editor cannot mix the two.
+                allowedValues = StandardValueChoices(descriptor);
+                if (allowedValues is not null) kind = PropertyEditorKind.Enumeration;
+            }
+
             var readOnly = descriptor.IsReadOnly && !editableCollection
-                || kind is null && !expandable && !componentReference && !editableCollection && !image;
+                || kind is null && !componentReference && !editableCollection && !image && !hasEditor;
             var defaultValue = descriptor.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
 
             properties.Add(new DesignableProperty(
@@ -66,9 +84,9 @@ public static class WinFormsPropertyInspector
                 descriptor.PropertyType,
                 kind ?? PropertyEditorKind.Text,
                 Category(descriptor.Category),
-                type.IsEnum && !type.IsDefined(typeof(FlagsAttribute), false)
+                allowedValues ?? (type.IsEnum && !type.IsDefined(typeof(FlagsAttribute), false)
                     ? Enum.GetNames(type)
-                    : [],
+                    : []),
                 currentValue?.Invoke(descriptor.Name))
             {
                 CategoryName = descriptor.Category,
@@ -80,7 +98,7 @@ public static class WinFormsPropertyInspector
                 IsCollection = collection,
                 IsComponentReference = componentReference,
                 HasCustomEditor = type.FullName is "System.Drawing.Font" or "System.Drawing.Color"
-                    || editableCollection || image,
+                    || editableCollection || image || hasEditor,
             });
         }
 
@@ -101,9 +119,30 @@ public static class WinFormsPropertyInspector
                     && componentType.FullName == "System.Windows.Forms.MenuStrip");
     }
 
-    private static bool IsExpandable(Type type) => type.FullName is
+    /// <summary>
+    /// Point, Size, Padding, Font and Color are always expandable: Basalt reimplements
+    /// their real .NET converters, which all override TypeConverter.GetPropertiesSupported.
+    /// Any other property gets the same row generically when its own resolved converter
+    /// does too - an application's struct with an ExpandableObjectConverter-derived one,
+    /// whether declared on the type or, like <see cref="TypeConverterAttribute"/> allows,
+    /// only on this one property. That is why the check reads descriptor.Converter rather
+    /// than re-deriving a converter from the bare type: only the descriptor knows about a
+    /// property-level override.
+    /// </summary>
+    private static bool IsExpandable(PropertyDescriptor descriptor, Type type) => type.FullName is
         "System.Drawing.Point" or "System.Drawing.Size" or "System.Windows.Forms.Padding"
-        or "System.Drawing.Font" or "System.Drawing.Color";
+        or "System.Drawing.Font" or "System.Drawing.Color" || HasExpandableConverter(descriptor.Converter);
+
+    private static bool HasExpandableConverter(TypeConverter converter)
+    {
+        try { return converter.GetPropertiesSupported(); }
+        catch
+        {
+            // A converter that fails to report support is treated the same as one
+            // that reports none: the property simply stays a single row.
+            return false;
+        }
+    }
 
     /// <summary>
     /// Image, BackgroundImage, InitialImage, ErrorImage and Icon: picture properties
@@ -112,7 +151,7 @@ public static class WinFormsPropertyInspector
     private static bool IsImageType(Type type) => type.FullName is
         "System.Drawing.Image" or "System.Drawing.Bitmap" or "System.Drawing.Icon";
 
-    private static PropertyEditorKind? BuiltInEditorKind(Type type)
+    private static PropertyEditorKind? BuiltInEditorKind(PropertyDescriptor descriptor, Type type)
     {
         if (type == typeof(bool)) return PropertyEditorKind.Boolean;
         if (type.IsEnum) return type.IsDefined(typeof(FlagsAttribute), false)
@@ -121,7 +160,92 @@ public static class WinFormsPropertyInspector
             type == typeof(ushort) || type == typeof(int) || type == typeof(uint) ||
             type == typeof(long) || type == typeof(ulong) || type == typeof(float) ||
             type == typeof(double) || type == typeof(decimal)) return PropertyEditorKind.Number;
-        return type == typeof(string) || IsExpandable(type) ? PropertyEditorKind.Text : null;
+        if (type == typeof(string)) return PropertyEditorKind.Text;
+
+        // Font, Point, Size, Padding, Color and any custom value with the same shape -
+        // an expandable TypeConverter that also round-trips a one-line string - show
+        // that string at the top row, with their members underneath when expanded. One
+        // that cannot convert a string is still expandable (IsExpandable, set by the
+        // caller), just without a top-row text box: ConvertFromInvariantString would
+        // have nothing to parse back into the object the sub-rows just edited.
+        return IsExpandable(descriptor, type) && CanConvertToText(descriptor.Converter) ? PropertyEditorKind.Text : null;
+    }
+
+    private static bool CanConvertToText(TypeConverter converter)
+    {
+        try { return converter.CanConvertFrom(typeof(string)) && converter.CanConvertTo(typeof(string)); }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Converter-driven choices for a property that is not a real enum: TypeConverter's
+    /// GetStandardValues gives the designer a closed set to show as a drop-down, as a
+    /// FontFamily name list or a culture list would. GetStandardValuesExclusive must also
+    /// say the set is closed: otherwise the values are suggestions over free text, which
+    /// this grid's drop-down editor has no way to offer alongside typing.
+    /// </summary>
+    private static string[]? StandardValueChoices(PropertyDescriptor descriptor)
+    {
+        try
+        {
+            var converter = descriptor.Converter;
+            if (!converter.GetStandardValuesSupported() || !converter.GetStandardValuesExclusive())
+                return null;
+
+            var values = converter.GetStandardValues();
+            if (values is null) return null;
+
+            var choices = new List<string>();
+            foreach (var value in values)
+            {
+                if (value is null) continue;
+                choices.Add((CanConvertToText(converter) ? converter.ConvertToInvariantString(value) : value.ToString()) ?? "");
+            }
+
+            return choices.Count == 0 ? null : choices.ToArray();
+        }
+        catch
+        {
+            // A converter that throws computing its standard values leaves the
+            // property a plain row instead of failing the whole panel.
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Whether the property carries an <c>[Editor(..., typeof(UITypeEditor))]</c>
+    /// attribute whose edit style is not None: Visual Studio shows a "..." button or a
+    /// drop-down arrow for exactly this. PropertyDescriptor.GetEditor needs the actual
+    /// UITypeEditor Type to look for, and Basalt.Designer has no compile-time reference
+    /// to the assembly that defines it (the reimplemented System.Windows.Forms, which
+    /// also carries System.Drawing.Design) - so the base type the attribute itself names
+    /// is resolved from its own assembly-qualified name instead.
+    /// </summary>
+    private static bool HasDesignTimeEditor(PropertyDescriptor descriptor)
+    {
+        foreach (var attribute in descriptor.Attributes.OfType<EditorAttribute>())
+        {
+            try
+            {
+                if (attribute.EditorBaseTypeName is not { Length: > 0 } baseTypeName
+                    || Type.GetType(baseTypeName) is not { FullName: "System.Drawing.Design.UITypeEditor" } baseType)
+                    continue;
+
+                var editor = descriptor.GetEditor(baseType);
+                if (editor is null) continue;
+
+                var style = baseType.GetMethod("GetEditStyle", Type.EmptyTypes)?.Invoke(editor, null)?.ToString();
+                if (style is not null and not "None") return true;
+            }
+            catch
+            {
+                // An editor attribute naming a type that fails to load or construct
+                // leaves the property without a "..." button instead of failing the
+                // whole panel.
+            }
+        }
+
+        return false;
     }
 
     private static string? SafeFormat(object? value) => value switch
@@ -169,10 +293,13 @@ public static class WinFormsPropertyInspector
             if (kind is null)
                 continue;
 
+            var allowedValues = kind == PropertyEditorKind.Text ? StandardValueChoices(descriptor) : null;
+            if (allowedValues is not null) kind = PropertyEditorKind.Enumeration;
+
             var defaultValue = descriptor.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
             properties.Add(new DesignableProperty(
                 descriptor.Name, descriptor.PropertyType, kind.Value, Category(descriptor.Category),
-                type.IsEnum && !type.IsDefined(typeof(FlagsAttribute), false) ? Enum.GetNames(type) : [],
+                allowedValues ?? (type.IsEnum && !type.IsDefined(typeof(FlagsAttribute), false) ? Enum.GetNames(type) : []),
                 currentValue?.Invoke(descriptor.Name))
             {
                 Description = string.IsNullOrEmpty(descriptor.Description) ? null : descriptor.Description,
@@ -202,15 +329,33 @@ public static class WinFormsPropertyInspector
         descriptor.SetValue(component, converted);
     }
 
-    /// <summary>Uses Reset methods and default attributes provided by the component.</summary>
+    /// <summary>
+    /// Uses Reset methods and default attributes provided by the component. For a user subclass of a
+    /// built-in control (see <see cref="WinFormsPropertyResetMetadata.ShouldContainHookFailure"/>), an
+    /// exception from its own CanResetX or ResetX is contained and reported as "not reset", matching
+    /// <see cref="WinFormsPropertyResetMetadata.Describe"/> reporting the property as not resettable.
+    /// An exception from a built-in Forms or SerialPort hook propagates, so a bug in Basalt's own
+    /// controls stays visible.
+    /// </summary>
     public static bool ResetValue(object component, string propertyName)
     {
         var descriptor = Find(component, propertyName);
-        if (descriptor.IsReadOnly || !descriptor.CanResetValue(component))
+        if (descriptor.IsReadOnly)
             return false;
 
-        descriptor.ResetValue(component);
-        return true;
+        var containFailure = WinFormsPropertyResetMetadata.ShouldContainHookFailure(component, descriptor);
+        try
+        {
+            if (!descriptor.CanResetValue(component))
+                return false;
+
+            descriptor.ResetValue(component);
+            return true;
+        }
+        catch (Exception) when (containFailure)
+        {
+            return false;
+        }
     }
 
     private static PropertyDescriptor Find(object component, string propertyName) =>
