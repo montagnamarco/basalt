@@ -4395,9 +4395,23 @@ public partial class MainWindow : Window
 
         var first = editor.Document.GetLineByOffset(editor.SelectionStart);
 
-        var last = editor.SelectionLength > 0
-            ? editor.Document.GetLineByOffset(editor.SelectionStart + editor.SelectionLength)
-            : first;
+        var last = first;
+
+        if (editor.SelectionLength > 0)
+        {
+            var endOffset = editor.SelectionStart + editor.SelectionLength;
+            last = editor.Document.GetLineByOffset(endOffset);
+
+            // Selecting whole lines by dragging or Shift+Down lands the
+            // selection's end at the very start of the next line: nothing on
+            // that line was actually selected, so it must not be commented
+            // along with the lines that were, as Visual Studio does not.
+            if (last.Offset == endOffset && last.PreviousLine is { } previous &&
+                previous.LineNumber >= first.LineNumber)
+            {
+                last = previous;
+            }
+        }
 
         var lines = new List<AvaloniaEdit.Document.DocumentLine>();
 

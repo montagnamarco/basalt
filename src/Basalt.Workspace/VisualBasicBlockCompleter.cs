@@ -74,6 +74,25 @@ public static class VisualBasicBlockCompleter
         return HasRealClosingToken(block) ? null : closing;
     }
 
+    /// <summary>
+    /// Whether the Try block opened on the given line already has a Catch or Finally. Pressing
+    /// Enter after a bare Try writes "Catch ex As Exception" too, as Visual Studio does; with a
+    /// handler already below, writing another would duplicate it.
+    /// </summary>
+    public static bool TryBlockHasHandlers(string text, int lineIndex)
+    {
+        var source = SourceText.From(text);
+        if (lineIndex < 0 || lineIndex >= source.Lines.Count) return false;
+
+        var line = source.Lines[lineIndex];
+        var root = VisualBasicSyntaxTree.ParseText(text).GetRoot();
+        var tryBlock = root.FindToken(line.Span.Start).Parent?.FirstAncestorOrSelf<TryBlockSyntax>();
+
+        return tryBlock is not null
+            && source.Lines.GetLineFromPosition(tryBlock.SpanStart).LineNumber == lineIndex
+            && (tryBlock.CatchBlocks.Count > 0 || tryBlock.FinallyBlock is not null);
+    }
+
     /// <summary>Canonical closing line for each kind of block.</summary>
     private static string? ClosingFor(SyntaxNode block) => block.Kind() switch
     {

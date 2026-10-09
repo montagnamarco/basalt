@@ -1137,6 +1137,13 @@ public sealed partial class CodeEditor : UserControl
     internal int SignatureHelpCountForTests => _signatureWindow?.Provider?.Count ?? 0;
 
     /// <summary>
+    /// Which parameter signature help is showing bold, or -1 when nothing is
+    /// showing: what tells a user with five arguments typed where they are.
+    /// </summary>
+    internal int SignatureActiveParameterForTests =>
+        (_signatureWindow?.Provider as DescriptionOverloads)?.ActiveParameterForTests ?? -1;
+
+    /// <summary>
     /// Shows what the call being written expects.
     ///
     /// Typing an open bracket used to show nothing at all, so the parameters
@@ -1235,6 +1242,9 @@ public sealed partial class CodeEditor : UserControl
         }
 
         public int Count => _set.Overloads.Count;
+
+        /// <summary>Which parameter of the shown overload is bold, for a test to read.</summary>
+        internal int ActiveParameterForTests => _set.Overloads[_selected].ActiveParameter;
 
         /// <summary>"1 of 3", so more overloads are known to exist.</summary>
         public string CurrentIndexText => Count > 1 ? $"{_selected + 1} of {Count}" : "";

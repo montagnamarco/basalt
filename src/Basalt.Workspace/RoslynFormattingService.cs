@@ -338,6 +338,14 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             var statement = token?.Parent?.FirstAncestorOrSelf<Microsoft.CodeAnalysis.VisualBasic.Syntax.StatementSyntax>();
             var continuation = token?.Span.Start == probePosition && statement?.Span.Start < probePosition;
 
+            // Directly under "Select Case" no statement is valid until a Case
+            // label, so the probe below would be recovered as invalid syntax
+            // and measured at column zero: End Select then landed there too.
+            // The body sits one level inside the Select Case, as in Visual Studio.
+            if (!continuation
+                && await SelectCaseColumnBeforeAsync(CreateScratchDocument(text, language), at, ct).ConfigureAwait(false) is { } selectColumn)
+                return selectColumn + _workspace.Options.GetOption(FormattingOptions.IndentationSize, language.ToRoslynName());
+
             // A declaration cannot be used as an operand or argument: Roslyn
             // would recover it as invalid syntax and report column zero. Keep
             // the identifier when it belongs to a statement on an earlier line.
@@ -386,6 +394,26 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             var lineStart = result.LastIndexOf('\n', Math.Max(0, index - 1)) + 1;
             return Math.Max(0, index - lineStart - keywordLength);
         }, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The column of the "Select Case" statement a new line directly follows, comments and blank
+    /// lines aside, or null. Asked of the parser: the last token before the position belongs to a
+    /// SelectStatement only when nothing (no Case yet) came after it.
+    /// </summary>
+    private static async Task<int?> SelectCaseColumnBeforeAsync(Document document, int position, CancellationToken ct)
+    {
+        var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+        if (root is null || position <= 0) return null;
+
+        var token = root.FindToken(position - 1);
+        while (token != default && token.SpanStart >= position) token = token.GetPreviousToken();
+
+        var select = token.Parent?.FirstAncestorOrSelf<Microsoft.CodeAnalysis.VisualBasic.Syntax.SelectStatementSyntax>();
+        if (select is null) return null;
+
+        var source = await document.GetTextAsync(ct).ConfigureAwait(false);
+        return select.SpanStart - source.Lines.GetLineFromPosition(select.SpanStart).Start;
     }
 
     public void Dispose() => _workspace.Dispose();

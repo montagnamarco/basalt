@@ -67,7 +67,20 @@ internal static class VisualBasicEnterInput
             var insertion = newline + new string(' ', indentation);
             var finalCaret = correctedPosition + insertion.Length;
             if (closing is not null)
-                insertion += newline + new string(' ', Math.Max(0, indentation - indentationSize)) + closing;
+            {
+                var dedented = new string(' ', Math.Max(0, indentation - indentationSize));
+
+                // Visual Studio does not leave a bare Try with nothing to
+                // catch: it writes the Catch clause along with End Try, the
+                // same as pressing Enter after "Try" has always done in the
+                // VB6 and VB.NET editors.
+                insertion += closing == "End Try"
+                    && !Basalt.Workspace.VisualBasicBlockCompleter.TryBlockHasHandlers(corrected, line.LineNumber)
+                    ? newline + dedented + "Catch ex As Exception" +
+                      newline + new string(' ', indentation) +
+                      newline + dedented + closing
+                    : newline + dedented + closing;
+            }
             return new Plan(corrected, correctedPosition, insertion, finalCaret);
         });
 
