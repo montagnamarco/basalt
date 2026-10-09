@@ -379,4 +379,305 @@ public sealed class UserJourneyVbCodingTests : IDisposable
         Assert.True(await WaitUntilAsync(host, () => code!.SelectedCompletionForTests == expected),
             $"expected '{expected}' selected after typing '{filter}', got '{code!.SelectedCompletionForTests}'.");
     }
+
+    // ---- journey: pretty listing when the caret leaves a line -----------
+
+    private async Task<(TestWindow Host, MainWindow Window, TextEditor Editor)> OpenProgramAsync(string source)
+    {
+        var project = WriteProject(source);
+        var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+
+        await vm.OpenFileAsync(ProgramPath);
+        await host.SettleAsync(5);
+
+        return (host, w, TextEditorFor(w, ProgramPath));
+    }
+
+    /// <summary>
+    /// Typing a line in lower case without spaces and pressing the Down arrow
+    /// tidies it the way Visual Basic's pretty listing does: keywords cased,
+    /// operators spaced, while comments and string literals stay exactly as
+    /// typed.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("dim total as integer=1+2", "Dim total As Integer = 1 + 2")]
+    [InlineData("dim a = 1 ' keep dim lowercase", "Dim a = 1 ' keep dim lowercase")]
+    [InlineData("dim s = \"as integer\"", "Dim s = \"as integer\"")]
+    public async Task LeavingALineWithTheArrowKeyPrettyListsIt(string typed, string expected)
+    {
+        var source = "Module Program\n    Sub Main()\n        " + typed + "\n        Return\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf(typed, StringComparison.Ordinal) + typed.Length;
+        editor.TextArea.Focus();
+
+        PressKey(w, Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown);
+
+        var tidied = source.Replace(typed, expected, StringComparison.Ordinal);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == tidied),
+            $"leaving the line produced:\n{editor.Text}");
+    }
+
+    /// <summary>
+    /// A use of a local typed in the wrong case takes the declaration's
+    /// casing once the caret leaves its line.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task LeavingALineFixesTheCasingOfADeclaredName()
+    {
+        const string source =
+            "Module Program\n    Sub Main()\n        Dim myValue As Integer\n        myvalue = 3\n        Return\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf("myvalue = 3", StringComparison.Ordinal) + "myvalue = 3".Length;
+        editor.TextArea.Focus();
+
+        PressKey(w, Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown);
+
+        var expected = source.Replace("myvalue = 3", "myValue = 3", StringComparison.Ordinal);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == expected),
+            $"leaving the line produced:\n{editor.Text}");
+    }
+
+    // ---- journey: Enter closes the block the line opens -----------------
+
+    /// <summary>
+    /// Pressing the real Enter key at the end of a line that opens a block
+    /// writes its end construct, indented with the opener, and leaves the
+    /// caret on an empty line inside it.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("If n > 0 Then", "End If")]
+    [InlineData("For i = 1 To 3", "Next")]
+    [InlineData("While n > 0", "End While")]
+    [InlineData("Do", "Loop")]
+    [InlineData("Using stream As New System.IO.MemoryStream()", "End Using")]
+    [InlineData("With stream", "End With")]
+    public async Task EnterAfterABlockOpenerInAMethodWritesItsEnd(string opener, string end)
+    {
+        var source = "Module Program\n    Sub Main()\n        Dim n = 1\n        Dim stream As New System.IO.MemoryStream()\n        " +
+            opener + "\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf(opener, StringComparison.Ordinal) + opener.Length;
+        editor.TextArea.Focus();
+
+        PressKey(w, Key.Enter, RawInputModifiers.None, PhysicalKey.Enter);
+
+        var expected = source.Replace(opener + "\n", opener + "\n            \n        " + end + "\n", StringComparison.Ordinal);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == expected),
+            $"Enter after '{opener}' produced:\n{editor.Text}");
+        var caretLine = editor.Document.GetLineByOffset(editor.CaretOffset);
+        Assert.Equal(6, caretLine.LineNumber);
+        Assert.Equal(caretLine.EndOffset, editor.CaretOffset);
+    }
+
+    /// <summary>
+    /// Enter after a member declaration writes its End, but an auto-implemented
+    /// Property line is complete on its own: Visual Studio adds nothing.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("Function Twice(x As Integer) As Integer", "    End Function\n")]
+    [InlineData("Sub Helper()", "    End Sub\n")]
+    [InlineData("Property Count As Integer", "")]
+    public async Task EnterAfterAMemberDeclarationWritesOnlyTheEndItNeeds(string declaration, string end)
+    {
+        var source = "Module Program\n    " + declaration + "\n    Sub Main()\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf(declaration, StringComparison.Ordinal) + declaration.Length;
+        editor.TextArea.Focus();
+
+        PressKey(w, Key.Enter, RawInputModifiers.None, PhysicalKey.Enter);
+
+        var body = end.Length == 0 ? "    " : "        ";
+        var expected = source.Replace(declaration + "\n", declaration + "\n" + body + "\n" + end, StringComparison.Ordinal);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == expected),
+            $"Enter after '{declaration}' produced:\n{editor.Text}");
+    }
+
+    // ---- journey: Ctrl+. offers and applies a fix -----------------------
+
+    /// <summary>
+    /// Ctrl+. on a type the file has not imported offers the Imports fix, and
+    /// choosing it writes the Imports line at the top of the file.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task ControlDotOnAnUnimportedTypeAddsTheImportsLine()
+    {
+        const string source =
+            "Module Program\n    Sub Main()\n        Dim text As New StringBuilder()\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+        var code = w.CodeEditorForTests(ProgramPath)!;
+
+        editor.CaretOffset = source.IndexOf("StringBuilder", StringComparison.Ordinal) + 3;
+        editor.TextArea.Focus();
+        await host.SettleAsync(5);
+
+        PressKey(w, Key.OemPeriod, RawInputModifiers.Control, PhysicalKey.Period);
+
+        MenuItem? fix = null;
+        Assert.True(await WaitUntilAsync(host, () =>
+            {
+                fix = code.SmartTagMargin.ContextMenu?.Items.OfType<MenuItem>().FirstOrDefault(item =>
+                    item.Header?.ToString()?.Contains("System.Text", StringComparison.Ordinal) == true);
+                return fix is not null;
+            }),
+            "Ctrl+. did not offer the Imports System.Text fix.");
+
+        await host.SettleAsync(5);
+        Assert.True(code.SmartTagMargin.ContextMenu!.IsOpen, "the quick actions menu closed before it could be clicked.");
+        fix!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+
+        // The change is previewed before it is applied; Apply is the dialog's default button.
+        Assert.True(await WaitUntilAsync(host, () => w.OwnedWindows.OfType<RefactoringPreviewDialog>().Any()),
+            "choosing the fix did not show its preview.");
+        var preview = w.OwnedWindows.OfType<RefactoringPreviewDialog>().Single();
+        var apply = preview.GetVisualDescendants().OfType<Button>().Single(button => button.IsDefault);
+        apply.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.True(await WaitUntilAsync(host, () => editor.Text.StartsWith("Imports System.Text", StringComparison.Ordinal)),
+            $"applying the fix produced:\n{editor.Text}");
+        Assert.Contains("Dim text As New StringBuilder()", editor.Text, StringComparison.Ordinal);
+    }
+
+    // ---- journey: Enter on a type or region opener at file level ---------
+
+    /// <summary>
+    /// Enter after a file-level opener writes its end construct with the body
+    /// indented one level, except a #Region, whose contents Visual Studio
+    /// keeps at the directive's own column.
+    /// </summary>
+    /// <remarks>
+    /// Before the fix, the Enum body line and the caret stayed at column zero:
+    /// <c>RoslynFormattingService.GetIndentationAsync</c> measured a
+    /// <c>Dim</c> declaration probe, which is not allowed inside an Enum, so
+    /// Roslyn recovered it as invalid syntax at column zero.
+    /// </remarks>
+    [AvaloniaTheory]
+    [InlineData("Namespace Tools", "    ", "End Namespace")]
+    [InlineData("Structure Point", "    ", "End Structure")]
+    [InlineData("Enum Colour", "    ", "End Enum")]
+    [InlineData("Interface IShape", "    ", "End Interface")]
+    [InlineData("Class Helper", "    ", "End Class")]
+    [InlineData("#Region \"Helpers\"", "", "#End Region")]
+    public async Task EnterAfterAFileLevelOpenerIndentsItsBodyAndWritesItsEnd(string opener, string body, string end)
+    {
+        var source = "Module Program\n    Sub Main()\n    End Sub\nEnd Module\n" + opener + "\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf(opener, StringComparison.Ordinal) + opener.Length;
+        editor.TextArea.Focus();
+
+        PressKey(w, Key.Enter, RawInputModifiers.None, PhysicalKey.Enter);
+
+        var expected = source + body + "\n" + end + "\n";
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == expected),
+            $"Enter after '{opener}' produced:\n{editor.Text}");
+        var caretLine = editor.Document.GetLineByOffset(editor.CaretOffset);
+        Assert.Equal(caretLine.EndOffset, editor.CaretOffset);
+        Assert.Equal(body.Length, editor.CaretOffset - caretLine.Offset);
+    }
+
+    /// <summary>Enter inside an If that already has its End If adds only the body line.</summary>
+    [AvaloniaFact]
+    public async Task EnterAfterAnIfAlreadyClosedDoesNotWriteASecondEndIf()
+    {
+        const string source = "Module Program\n    Sub Main()\n        If True Then\n        End If\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf("If True Then", StringComparison.Ordinal) + "If True Then".Length;
+        editor.TextArea.Focus();
+
+        PressKey(w, Key.Enter, RawInputModifiers.None, PhysicalKey.Enter);
+
+        var expected = source.Replace("Then\n", "Then\n            \n", StringComparison.Ordinal);
+        Assert.True(await WaitUntilAsync(host, () => editor.Text == expected),
+            $"Enter produced:\n{editor.Text}");
+    }
+
+    // ---- journey: ''' documentation comment ------------------------------
+
+    /// <summary>
+    /// Typing ''' above a Function writes the XML documentation skeleton,
+    /// with a param tag for each parameter.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task TypingThreeApostrophesAboveAFunctionWritesItsDocumentationComment()
+    {
+        const string source = "Module Program\n    \n    Function Twice(x As Integer) As Integer\n        Return x * 2\n    End Function\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf("    \n", StringComparison.Ordinal) + 4;
+        editor.TextArea.Focus();
+
+        w.KeyTextInput("'");
+        w.KeyTextInput("'");
+        w.KeyTextInput("'");
+
+        Assert.True(await WaitUntilAsync(host, () =>
+                editor.Text.Contains("''' <summary>", StringComparison.Ordinal)
+                && editor.Text.Contains("''' <param name=\"x\">", StringComparison.Ordinal)
+                && editor.Text.Contains("''' <returns>", StringComparison.Ordinal)),
+            $"typing ''' produced:\n{editor.Text}");
+    }
+
+    // ---- journey: changing Sub to Function updates End Sub --------------
+
+    /// <summary>
+    /// Overtyping Sub with Function on a declaration and leaving the line
+    /// turns its End Sub into End Function, as Visual Studio does.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task ChangingSubToFunctionUpdatesTheMatchingEnd()
+    {
+        const string source = "Module Program\n    Sub Helper()\n    End Sub\n    Sub Main()\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.Select(source.IndexOf("Sub Helper", StringComparison.Ordinal), "Sub".Length);
+        editor.TextArea.Focus();
+
+        w.KeyTextInput("Function");
+        PressKey(w, Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown);
+
+        Assert.True(await WaitUntilAsync(host, () =>
+                editor.Text.Contains("Function Helper()\n    End Function\n    Sub Main()\n    End Sub", StringComparison.Ordinal)),
+            $"changing Sub to Function produced:\n{editor.Text}");
+    }
+
+    // ---- journey: brace and quote completion ------------------------------
+
+    /// <summary>
+    /// Typing an opening parenthesis and a quote closes both, so the typed
+    /// argument ends up inside a complete call.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task TypingAParenthesisAndAQuoteClosesBoth()
+    {
+        const string source = "Module Program\n    Sub Main()\n        Console.WriteLine\n    End Sub\nEnd Module\n";
+        var (host, w, editor) = await OpenProgramAsync(source);
+        using var _ = host;
+
+        editor.CaretOffset = source.IndexOf("WriteLine", StringComparison.Ordinal) + "WriteLine".Length;
+        editor.TextArea.Focus();
+
+        w.KeyTextInput("(");
+        w.KeyTextInput("\"");
+        w.KeyTextInput("hi");
+
+        Assert.True(await WaitUntilAsync(host, () => editor.Text.Contains("Console.WriteLine(\"hi\")", StringComparison.Ordinal)),
+            $"typing produced:\n{editor.Text}");
+    }
 }

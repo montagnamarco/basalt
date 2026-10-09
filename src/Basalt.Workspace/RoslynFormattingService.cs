@@ -349,8 +349,11 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             // A declaration cannot be used as an operand or argument: Roslyn
             // would recover it as invalid syntax and report column zero. Keep
             // the identifier when it belongs to a statement on an earlier line.
+            // Inside an Enum the bare identifier is already a valid member,
+            // while "Dim" is not allowed there and would measure column zero.
+            var enumMember = token?.Parent is Microsoft.CodeAnalysis.VisualBasic.Syntax.EnumMemberDeclarationSyntax;
             var keywordLength = 0;
-            if (!continuation)
+            if (!continuation && !enumMember)
             {
                 const string keyword = "Dim ";
                 keywordLength = keyword.Length;
