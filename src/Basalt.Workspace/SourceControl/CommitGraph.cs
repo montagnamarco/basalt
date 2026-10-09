@@ -15,7 +15,19 @@ public sealed record GraphRow(
     CommitInfo Commit,
     int Lane,
     IReadOnlyList<GraphEdge> Edges,
-    int LaneCount);
+    int LaneCount)
+{
+    /// <summary>
+    /// Whether some row above left a line waiting for this one, in this same
+    /// lane.
+    ///
+    /// False for a branch's first commit in the list: nothing above has
+    /// claimed this lane yet, so a line drawn above the dot would dangle from
+    /// nothing. True for every row after it in the same line of descent,
+    /// where the row above really did leave a line to meet.
+    /// </summary>
+    public bool Continues { get; init; }
+}
 
 /// <summary>
 /// Arranges commits into lanes so the history can be drawn.
@@ -37,7 +49,14 @@ public static class CommitGraph
 
         foreach (var commit in commits)
         {
+            // What every lane was waiting for coming into this row: both
+            // whether this commit's own lane continues one from above, and
+            // which other lanes need a line drawn through this row even
+            // though it belongs to none of them.
+            var before = lanes.ToList();
+
             var lane = lanes.IndexOf(commit.Sha);
+            var continues = lane >= 0;
 
             if (lane < 0) lane = Claim(lanes, commit.Sha);
 
@@ -62,9 +81,24 @@ public static class CommitGraph
 
             if (commit.Parents.Count > 0) edges.Add(new GraphEdge(lane, lane));
 
+            // Every other lane that was already carrying a line and still is
+            // after this commit - unrelated to it - needs that line drawn
+            // straight through this row too. Without this, a branch's line
+            // breaks every time another branch's commit falls between two of
+            // its own in the newest-first order.
+            for (var i = 0; i < before.Count; i++)
+            {
+                if (i == lane || before[i] is null) continue;
+                if (i < lanes.Count && lanes[i] is not null)
+                    edges.Add(new GraphEdge(i, i));
+            }
+
             Trim(lanes);
 
-            rows.Add(new GraphRow(commit, lane, edges, Math.Max(lanes.Count, lane + 1)));
+            rows.Add(new GraphRow(commit, lane, edges, Math.Max(lanes.Count, lane + 1))
+            {
+                Continues = continues
+            });
         }
 
         return rows;

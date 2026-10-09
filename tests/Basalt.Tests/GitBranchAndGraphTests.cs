@@ -174,6 +174,42 @@ public sealed class GitBranchTests : IDisposable
     }
 
     [Fact]
+    public async Task DiscardsABrandNewFileNobodyHasStagedYet()
+    {
+        // No commit has ever seen this file, so "restore" - which replays
+        // what HEAD or the index already has - has nothing to replay it to.
+        // The menu offers Discard on it all the same, and the user's intent
+        // is the same as Visual Studio's Delete on an untracked file: throw
+        // the new file away.
+        Commit("A.vb", "one", "first");
+
+        var newFile = Path.Combine(_root, "New.vb");
+        await File.WriteAllTextAsync(newFile, "Module New\nEnd Module");
+
+        await _git.DiscardChangesAsync(["New.vb"]);
+
+        Assert.False(File.Exists(newFile));
+    }
+
+    [Fact]
+    public async Task DiscardsABrandNewFolderAndOnlyThatFolder()
+    {
+        // git status shows a new folder as one "?? Forms/" entry. With that folder named as the
+        // pathspec, clean removes it without -d; this keeps it so, and keeps the rest untouched.
+        Commit("A.vb", "one", "first");
+        var folder = Path.Combine(_root, "Forms");
+        Directory.CreateDirectory(folder);
+        await File.WriteAllTextAsync(Path.Combine(folder, "Form1.vb"), "Public Class Form1\nEnd Class");
+        var bystander = Path.Combine(_root, "Other.vb");
+        await File.WriteAllTextAsync(bystander, "Module Other\nEnd Module");
+
+        await _git.DiscardChangesAsync(["Forms/"]);
+
+        Assert.False(Directory.Exists(folder));
+        Assert.True(File.Exists(bystander), "Discard on one folder removed another untracked file.");
+    }
+
+    [Fact]
     public async Task ReadsTheParentsOfEachCommit()
     {
         Commit("A.vb", "one", "first");
@@ -375,6 +411,55 @@ public class CommitGraphTests
         var rows = CommitGraph.Build([Commit("only")]);
 
         Assert.Empty(rows[0].Edges);
+    }
+
+    [Fact]
+    public void KeepsALaneLineDrawnThroughARowThatBelongsToAnotherBranch()
+    {
+        // main: base -> a -> c (c newest). A feature commit "b", off base,
+        // falls between "a" and "c" in the newest-first order - the usual
+        // case once two branches' commits interleave by date.
+        var rows = CommitGraph.Build([
+            Commit("c", "a"),
+            Commit("b", "base"),
+            Commit("a", "base"),
+            Commit("base")
+        ]);
+
+        // Row 1 is "b", on its own lane; main's lane (0, still waiting for
+        // "a") must still carry a line through this row. Without it, the
+        // main branch's line breaks every time another branch's commit
+        // happens to fall between two of its own.
+        Assert.Contains(rows[1].Edges, e => e.FromLane == 0 && e.ToLane == 0);
+    }
+
+    [Fact]
+    public void MarksARowsOwnLineAsContinuingOnlyWhenSomethingAboveWasWaitingForIt()
+    {
+        var rows = CommitGraph.Build([
+            Commit("c", "b"),
+            Commit("b", "a"),
+            Commit("a")
+        ]);
+
+        // Nothing is above the newest commit to have left a line for it.
+        Assert.False(rows[0].Continues);
+
+        // Each older commit's lane was left waiting by the row above it.
+        Assert.True(rows[1].Continues);
+        Assert.True(rows[2].Continues);
+    }
+
+    [Fact]
+    public void MarksAFreshBranchTipAsNotContinuingFromAbove()
+    {
+        var rows = CommitGraph.Build([
+            Commit("c", "a"),
+            Commit("b", "a"), // a second child of "a": a branch tip, nothing above it
+            Commit("a")
+        ]);
+
+        Assert.False(rows[1].Continues);
     }
 
     [Fact]

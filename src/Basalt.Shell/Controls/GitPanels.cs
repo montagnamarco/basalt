@@ -868,14 +868,25 @@ public sealed class GitHistoryPanel : UserControl
             {
                 var pen = new Pen(new SolidColorBrush(ColourForLane(edge.ToLane)), 1.5);
 
-                var from = new Point(X(edge.FromLane), centre);
-                var to = new Point(X(edge.ToLane), RowHeight);
-
                 if (edge.FromLane == edge.ToLane)
                 {
-                    context.DrawLine(pen, from, to);
+                    // A straight line through this row. Its own lane's line
+                    // starts at the dot rather than the top when nothing
+                    // above left a line to meet - a fresh branch tip has
+                    // nothing to connect to there - but every other lane
+                    // merely passing through runs the row's full height, or
+                    // the line would break wherever another branch's commit
+                    // happens to land between two of this one's own.
+                    var startY = edge.FromLane == _row.Lane && !_row.Continues ? centre : 0;
+
+                    context.DrawLine(
+                        pen, new Point(X(edge.FromLane), startY), new Point(X(edge.ToLane), RowHeight));
+
                     continue;
                 }
+
+                var from = new Point(X(edge.FromLane), centre);
+                var to = new Point(X(edge.ToLane), RowHeight);
 
                 // A branch or merge bends rather than cutting the corner, which
                 // is what makes the two lanes readable as separate lines.

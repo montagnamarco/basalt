@@ -219,6 +219,7 @@ public static class StringKeys
     public const string GitNothingToCommit = "Git_NothingToCommit";
     public const string GitNothingStaged = "Git_NothingStaged";
     public const string GitNoRepository = "Git_NoRepository";
+    public const string GitCannotStart = "Git_CannotStart";
     public const string DesignerSurfaceSize = "Designer_SurfaceSize";
     public const string DesignerCut = "Designer_Cut";
     public const string DesignerCopy = "Designer_Copy";

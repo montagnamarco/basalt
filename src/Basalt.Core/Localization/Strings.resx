@@ -115,6 +115,7 @@
   <data name="Git_NothingToCommit" xml:space="preserve"><value>No changes — the working tree is clean</value></data>
   <data name="Git_NothingStaged" xml:space="preserve"><value>Nothing staged yet</value></data>
   <data name="Git_NoRepository" xml:space="preserve"><value>This folder is not a git repository</value></data>
+  <data name="Git_CannotStart" xml:space="preserve"><value>Git could not be started. Check that it is installed.</value></data>
   <data name="Designer_SurfaceSize" xml:space="preserve"><value>{0} × {1}</value></data>
   <data name="Designer_Cut" xml:space="preserve"><value>Cut</value></data>
   <data name="Designer_Copy" xml:space="preserve"><value>Copy</value></data>

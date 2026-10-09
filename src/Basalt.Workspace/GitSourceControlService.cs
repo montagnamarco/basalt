@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Basalt.Core.Localization;
 using Basalt.Core.Services;
 
 namespace Basalt.Workspace;
@@ -389,8 +390,39 @@ public sealed class GitSourceControlService : ISourceControlService
     /// Both the index and the working tree are restored, so this undoes a
     /// staged change as well as an unstaged one.
     /// </summary>
-    public Task DiscardChangesAsync(IReadOnlyList<string> paths, CancellationToken ct = default) =>
-        RunOrThrowAsync(["restore", "--staged", "--worktree", "--", .. paths], ct);
+    /// <summary>
+    /// Undoes changes to a file, in the working tree and the index.
+    ///
+    /// A file nobody has ever staged is not in git's index or in any commit,
+    /// so "restore" - which replays what is already there - has nothing to
+    /// replay it from and simply refuses the path. The menu offers Discard on
+    /// such a file all the same, and the only sensible meaning left for it is
+    /// what Visual Studio's own Delete does to an untracked file: remove it.
+    /// </summary>
+    public async Task DiscardChangesAsync(IReadOnlyList<string> paths, CancellationToken ct = default)
+    {
+        if (paths.Count == 0) return;
+
+        var untracked = new List<string>();
+        var tracked = new List<string>();
+
+        foreach (var path in paths)
+        {
+            var status = await RunAsync(["status", "--porcelain=v1", "--", path], ct: ct)
+                .ConfigureAwait(false);
+
+            (status.Output.TrimStart().StartsWith("??", StringComparison.Ordinal)
+                ? untracked
+                : tracked).Add(path);
+        }
+
+        if (untracked.Count > 0)
+            await RunOrThrowAsync(["clean", "-f", "--", .. untracked], ct).ConfigureAwait(false);
+
+        if (tracked.Count > 0)
+            await RunOrThrowAsync(
+                ["restore", "--staged", "--worktree", "--", .. tracked], ct).ConfigureAwait(false);
+    }
 
     public async Task<UpstreamState> GetUpstreamStateAsync(CancellationToken ct = default)
     {
@@ -491,7 +523,7 @@ public sealed class GitSourceControlService : ISourceControlService
         foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
 
         using var process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Impossibile avviare git. Verificare che sia installato.");
+            ?? throw new InvalidOperationException(Localizer.Get(StringKeys.GitCannotStart));
 
         // Both streams are read in parallel: waiting for exit before draining
         // them can deadlock the process on large output.
