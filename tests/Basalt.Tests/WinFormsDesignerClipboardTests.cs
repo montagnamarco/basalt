@@ -161,6 +161,104 @@ public sealed class WinFormsDesignerClipboardTests
         Assert.NotNull(target.FindControl("Button2"));
     }
 
+    /// <summary>A non-localizable form whose PictureBox1 reads its picture from the Form.resx through GetObject.</summary>
+    private const string NonLocalizedPicture = """
+        Partial Class MainForm
+            Inherits System.Windows.Forms.Form
+            Private Sub InitializeComponent()
+                Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(MainForm))
+                Me.PictureBox1 = New System.Windows.Forms.PictureBox()
+                Me.SuspendLayout()
+                '
+                'PictureBox1
+                '
+                Me.PictureBox1.Image = CType(resources.GetObject("PictureBox1.Image"), System.Drawing.Image)
+                Me.PictureBox1.Location = New System.Drawing.Point(40, 50)
+                Me.PictureBox1.Name = "PictureBox1"
+                Me.PictureBox1.Size = New System.Drawing.Size(120, 35)
+                '
+                'MainForm
+                '
+                Me.ClientSize = New System.Drawing.Size(300, 200)
+                Me.Controls.Add(Me.PictureBox1)
+                Me.Name = "MainForm"
+                Me.ResumeLayout(False)
+            End Sub
+            Friend WithEvents PictureBox1 As System.Windows.Forms.PictureBox
+        End Class
+        """;
+
+    /// <summary>A Form.resx holding one picture under <paramref name="key"/>, the way Visual Studio writes it.</summary>
+    private static string ResourcesWithPicture(string key) => $"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <root>
+          <resheader name="resmimetype">text/microsoft-resx</resheader>
+          <resheader name="version">2.0</resheader>
+          <data name="{key}" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+            <value>{WinFormsDesignerLocalizedClipboardTests.OnePixelPng}</value>
+          </data>
+        </root>
+        """;
+
+    /// <remarks>
+    /// Defect reintroduced once (the clipboard carried no picture entry and the paste kept the copied key): red without the
+    /// fix, failing with Assert.Contains "Sub-string not found" on the pasted PictureBox2 read. Green with it.
+    /// </remarks>
+    [Fact]
+    public async Task CopyingAPictureWithinANonLocalizableFormGivesTheNewControlItsOwnResxEntry()
+    {
+        using var session = new WinFormsDesignerSession(
+            new WinFormsDesignerDocument(NonLocalizedPicture), new WinFormsResourceDocument(ResourcesWithPicture("PictureBox1.Image")));
+        var original = session.ResourceSource;
+        var clipboard = session.CopyControls([session.FindControl("PictureBox1")!]);
+
+        var added = await session.PasteControlsAsync(clipboard, session.Form);
+
+        Assert.Equal(["PictureBox2"], added);
+        Assert.Contains("Me.PictureBox2.Image = CType(resources.GetObject(\"PictureBox2.Image\"), System.Drawing.Image)",
+            session.Document.Source);
+        var resources = new WinFormsResourceDocument(session.ResourceSource!);
+        var copied = resources.TryGet("PictureBox2.Image")!;
+        Assert.Equal(WinFormsDesignerLocalizedClipboardTests.OnePixelPng, copied.Value);
+        Assert.Equal(new WinFormsResourceDocument(original!).TryGet("PictureBox1.Image")!.Value, resources.TryGet("PictureBox1.Image")!.Value);
+        Assert.NotNull(((System.Windows.Forms.PictureBox)session.FindControl("PictureBox2")!).Image);
+        Assert.DoesNotContain(session.PreviewProblems, problem => problem.StartsWith("PictureBox2", StringComparison.Ordinal));
+        AssertCompiles(session.Document.Source);
+
+        // The paste is one undo step: undo takes the control and its entry away together, redo gives them back.
+        await session.UndoAsync();
+        Assert.Null(session.FindControl("PictureBox2"));
+        Assert.Null(new WinFormsResourceDocument(session.ResourceSource!).TryGet("PictureBox2.Image"));
+        await session.RedoAsync();
+        Assert.NotNull(session.FindControl("PictureBox2"));
+        Assert.Equal(WinFormsDesignerLocalizedClipboardTests.OnePixelPng,
+            new WinFormsResourceDocument(session.ResourceSource!).TryGet("PictureBox2.Image")!.Value);
+    }
+
+    /// <remarks>
+    /// The target declares its own manager local under another name. Red without the fix (the paste did not rewrite the
+    /// read or carry the entry): failing with Assert.Contains "Sub-string not found" on the read through res. Green with it.
+    /// </remarks>
+    [Fact]
+    public void PastingAPictureReadsItThroughTheTargetsOwnResourceManagerAndDeclaresNoSecondOne()
+    {
+        var source = new WinFormsDesignerDocument(NonLocalizedPicture);
+        var clipboard = source.CopyControls(["PictureBox1"], null,
+            new WinFormsResourceDocument(ResourcesWithPicture("PictureBox1.Image")));
+        var target = new WinFormsDesignerDocument(NonLocalizedPicture.Replace("resources", "res", StringComparison.Ordinal));
+
+        var paste = target.PasteControls(clipboard, "Me");
+
+        Assert.Contains("Me.PictureBox2.Image = CType(res.GetObject(\"PictureBox2.Image\"), System.Drawing.Image)", paste.Source);
+        Assert.DoesNotContain("resources", paste.Source, StringComparison.Ordinal);
+        // One declaration of the manager in the target: the one it already had. Each declaration constructs one manager.
+        Assert.Equal(1, paste.Source.Split("= New System.ComponentModel.ComponentResourceManager(", StringSplitOptions.None).Length - 1);
+        var picture = Assert.Single(paste.Resources);
+        Assert.Equal("PictureBox2.Image", picture.Name);
+        Assert.Equal(WinFormsDesignerLocalizedClipboardTests.OnePixelPng, picture.Value);
+        AssertCompiles(paste.Source);
+    }
+
     private static void AssertCompiles(string source)
     {
         var platformPaths = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)

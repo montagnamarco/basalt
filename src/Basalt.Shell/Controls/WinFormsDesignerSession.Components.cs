@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO.Ports;
 using System.Reflection;
+using Basalt.Core.Localization;
 using Basalt.Designer;
 using Basalt.Workspace;
 using Forms = System.Windows.Forms;
@@ -67,8 +68,8 @@ internal sealed partial class WinFormsDesignerSession
 
     public Task AddComponentAsync(Type type)
     {
-        if (!IsSupportedComponentType(type))
-            throw new NotSupportedException("Only built-in Forms tray components are available in this toolbox.");
+        if (!AcceptsComponent(type))
+            throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsDesignerNotDesignable));
         var number = 1;
         var name = type.Name + number;
         var used = Document.DeclaredNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -91,8 +92,8 @@ internal sealed partial class WinFormsDesignerSession
             // Resolve that exact built-in type without loading anything named by the project.
             var type = qualifiedName.Equals(typeof(SerialPort).FullName, StringComparison.OrdinalIgnoreCase)
                 ? typeof(SerialPort)
-                : typeof(Forms.Control).Assembly.GetType(qualifiedName, false, true);
-            if (type is null || !IsSupportedComponentType(type))
+                : WinFormsDesignTypes.Find(qualifiedName, _designContext);
+            if (type is null || !AcceptsComponent(type))
             {
                 problems.Add(model.Name + ": " + model.TypeName);
                 continue;
@@ -125,6 +126,7 @@ internal sealed partial class WinFormsDesignerSession
             catch (Exception exception)
             {
                 problems.Add(model.Name + ": " + exception.GetBaseException().Message);
+                RecordComponentFailure(model, type, exception);
             }
         }
     }

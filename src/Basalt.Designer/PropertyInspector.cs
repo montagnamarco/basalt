@@ -33,6 +33,12 @@ public enum PropertyCategory
     Layout,
     Appearance,
     Behavior,
+
+    /// <summary>
+    /// Settings of the form itself that the designer adds to the grid, such as Localizable and Language.
+    /// Visual Studio groups them under Design, after the component's own categories.
+    /// </summary>
+    Design,
 }
 
 /// <summary>Editable property of a control selected in the designer.</summary>

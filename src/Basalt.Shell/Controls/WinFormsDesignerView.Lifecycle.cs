@@ -66,11 +66,13 @@ internal sealed partial class WinFormsDesignerView
 
             if (retainedSession is null)
             {
-                _session = new WinFormsDesignerSession(parsed, resources, WinFormsProjectResources.FindProject(_document.FilePath));
+                _session = new WinFormsDesignerSession(parsed, resources, WinFormsProjectResources.FindProject(_document.FilePath),
+                    _designContext);
                 BindResourceEditing(_session);
                 BindImageResourceCreation(_session);
                 _session.SourceChanging += ValidateDesignerBuffer;
                 _session.Changed += SessionChanged;
+                LogUserCodeFailures();
             }
             else
             {
@@ -150,8 +152,14 @@ internal sealed partial class WinFormsDesignerView
         _disposed = true;
         _attached = false;
         ++_loadGeneration;
+        UnsubscribeFromBuilds();
         TrackResourceBuffer(null);
         ReleaseDesignerSession();
+
+        // Released after the session: its controls came from this context.
+        var designContext = _designContext;
+        _designContext = null;
+        designContext?.Unload();
         _handlers.Clear();
         _properties.Show(null);
         _events.Show(null);

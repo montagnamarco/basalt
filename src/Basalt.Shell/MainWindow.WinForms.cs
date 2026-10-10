@@ -47,11 +47,15 @@ public partial class MainWindow
     /// <summary>
     /// Writes a file the project does not have yet, such as the .resx a form
     /// gains the first time it needs one, and opens it the same way any other
-    /// companion file is opened.
+    /// companion file is opened. A file that already exists on disk is never
+    /// overwritten: the designer creates a resx only when it could not read one,
+    /// and an empty template written over it would destroy its values.
     /// </summary>
     private async Task<EditorDocumentViewModel> CreateWinFormsCodeAsync(string path, string content)
     {
         if (FindWinFormsCode(path) is { } existing) return existing;
+        if (File.Exists(path))
+            throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerResourcesNotReplaced));
         await File.WriteAllTextAsync(path, content);
         var document = new EditorDocumentViewModel(path, content);
         ViewModel.OpenDocuments.Add(document);

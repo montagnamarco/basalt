@@ -180,6 +180,9 @@ public sealed partial class WinFormsDesignSurface : ContentControl
 
     public event Action<WinFormsControlDrop>? ControlDropRequested;
 
+    /// <summary>The project's own design context, whose controls a drop may place; set by the designer view after each build.</summary>
+    internal WinFormsDesignAssemblyContext? DesignContext { get; set; }
+
     public void Select(FormsControl? control)
     {
         if (control is not null && !BelongsToRoot(control)) return;
@@ -615,7 +618,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
             e.DataTransfer.TryGetValue(WinFormsToolboxDrag.Format) is not { } item)
             return null;
         var drop = WinFormsDesignerDrop.Resolve(item.ControlType, e.GetPosition(_host),
-            HitTest, BoundsOnHost, _rootForm);
+            HitTest, BoundsOnHost, _rootForm, DesignContext);
         if (drop is null || !SnapToGrid || e.KeyModifiers.HasFlag(KeyModifiers.Alt)) return drop;
         return drop with { Location = WinFormsDesignerSnap.SnapPoint(drop.Location, GridSize) };
     }

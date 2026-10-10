@@ -16,6 +16,8 @@ internal sealed partial class WinFormsDesignerView
 
     private void BindResourceEditing(WinFormsDesignerSession session)
     {
+        // The culture files are bound with the neutral one: a delete or rename reaches them before any language is shown.
+        BindCultureResourceEditing(session);
         session.PrepareResourceEdit = async expected =>
         {
             var path = Path.ChangeExtension(CompanionPath, ".resx");

@@ -8,6 +8,35 @@ public sealed partial class MainWindowViewModel
 {
     private string? _builtAssemblyPath;
 
+    // The last build that succeeded, so a designer opened after it still gets the project's output.
+    private (string Project, string Assembly, long BuildId)? _lastSuccessfulBuild;
+
+    // Numbers the successful builds. A designer applies each id once, so the same build replayed to it is
+    // not loaded twice, while a later build is loaded even when its output file has not changed.
+    private long _successfulBuildCount;
+    private event Action<string, string, long>? ProjectBuilt;
+
+    /// <summary>
+    /// Calls <paramref name="handler"/> with the project, the output assembly and the build id of each successful
+    /// build, and at once with the last one that succeeded before the subscription, under the id it had then. A
+    /// failed build calls nobody, so a designer keeps the controls of the build it already has.
+    /// </summary>
+    public IDisposable SubscribeToSuccessfulBuilds(Action<string, string, long> handler)
+    {
+        ProjectBuilt += handler;
+        if (_lastSuccessfulBuild is { } last) handler(last.Project, last.Assembly, last.BuildId);
+        return new Unsubscription(() => ProjectBuilt -= handler);
+    }
+
+    /// <summary>Raises a successful build as the build step does, for the designer's tests that replay or repeat one.</summary>
+    internal void RaiseProjectBuiltForTests(string project, string assembly, long buildId) =>
+        ProjectBuilt?.Invoke(project, assembly, buildId);
+
+    private sealed class Unsubscription(Action unsubscribe) : IDisposable
+    {
+        public void Dispose() => unsubscribe();
+    }
+
     [RelayCommand]
     private async Task BuildAsync()
     {
@@ -86,6 +115,15 @@ public sealed partial class MainWindowViewModel
                 .ConfigureAwait(true);
 
             _builtAssemblyPath = result.Succeeded ? result.OutputAssemblyPath : null;
+
+            // The designer reloads the project's own controls from this output (see
+            // WinFormsDesignerView.DesignContext). Only a success is raised: a failed build keeps them.
+            if (_builtAssemblyPath is { } builtAssembly)
+            {
+                var buildId = ++_successfulBuildCount;
+                _lastSuccessfulBuild = (projectPath, builtAssembly, buildId);
+                ProjectBuilt?.Invoke(projectPath, builtAssembly, buildId);
+            }
 
             foreach (var diagnostic in result.Diagnostics) Diagnostics.Add(diagnostic);
 

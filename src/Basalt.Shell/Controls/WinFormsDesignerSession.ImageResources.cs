@@ -71,6 +71,7 @@ internal sealed partial class WinFormsDesignerSession
     private async Task SetProjectImageResourceCoreAsync(string ownerName, string property, string? stripName,
         string rootNamespace, string resourceName, bool isMenu = false)
     {
+        RefuseImageInLanguage();
         var original = Document;
         var beforeResources = _resources;
         var key = ResourceKeyFor(ownerName, property);
@@ -118,6 +119,7 @@ internal sealed partial class WinFormsDesignerSession
     private async Task SetImageResourceCoreAsync(string ownerName, string property, string? stripName, byte[] bytes,
         bool isIcon, bool isMenu = false)
     {
+        RefuseImageInLanguage();
         var original = Document;
         var beforeResources = _resources;
         if (beforeResources is null)
@@ -151,6 +153,25 @@ internal sealed partial class WinFormsDesignerSession
     }
 
     /// <summary>
+    /// The refusal an image edit meets while a culture is shown, or null when it may proceed. Visual Studio stores a
+    /// localized image per culture, which Basalt does not do yet, so an image written now would reach every language.
+    /// The view asks before it opens the image dialog, so the user never picks a file that would then be refused.
+    /// </summary>
+    internal string? ImageEditRefusal => _culture is null
+        ? null
+        : Localizer.Get(StringKeys.WinFormsDesignerNotInLanguage);
+
+    /// <summary>
+    /// Refuses an image edit while a culture is shown. The check runs before the neutral .resx is created or opened:
+    /// those writes are not undone by a refusal.
+    /// </summary>
+    private void RefuseImageInLanguage()
+    {
+        if (ImageEditRefusal is { } refusal)
+            throw new InvalidOperationException(refusal);
+    }
+
+    /// <summary>
     /// Creating the file is not itself an undoable step, the same way Visual
     /// Studio never offers to undo "the project gained a .resx": the resx stays
     /// on disk even if the image assignment that prompted it is undone.
@@ -169,6 +190,7 @@ internal sealed partial class WinFormsDesignerSession
 
     private async Task ClearImageResourceCoreAsync(string ownerName, string property, string? stripName, bool isMenu = false)
     {
+        RefuseImageInLanguage();
         var original = Document;
         var beforeResources = _resources;
         var key = ResourceKeyFor(ownerName, property);

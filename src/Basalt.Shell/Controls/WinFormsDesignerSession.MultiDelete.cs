@@ -29,7 +29,7 @@ internal sealed partial class WinFormsDesignerSession
         ArgumentNullException.ThrowIfNull(selectedControls);
         var roots = SelectedDeletionRoots(selectedControls);
         if (roots.Length == 0) return Task.CompletedTask;
-        return ApplyAsync(document =>
+        return ApplyControlEditAsync(document =>
         {
             foreach (var name in roots)
                 document = new(document.RemoveControl(name));

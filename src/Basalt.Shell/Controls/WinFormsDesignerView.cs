@@ -42,7 +42,9 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
         Func<string, string, int, string, Task<Basalt.Workspace.Refactoring.RefactoringPreview>>? rename = null,
         bool dockTools = false,
         Func<string, string, Task<EditorDocumentViewModel>>? createCode = null,
-        Func<Task<string?>>? importImageFile = null)
+        Func<Task<string?>>? importImageFile = null,
+        Func<Action<string, string, long>, IDisposable>? subscribeToBuilds = null,
+        Action<string>? writeOutput = null)
     {
         _document = document;
         _openCode = openCode;
@@ -50,6 +52,8 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
         _getCode = getCode;
         _createCode = createCode;
         _importImageFile = importImageFile;
+        _subscribeToBuilds = subscribeToBuilds;
+        _writeOutput = writeOutput;
         _rename = rename;
         var undo = new Button { Content = Localizer.Get(StringKeys.MenuEditUndo) };
         var redo = new Button { Content = Localizer.Get(StringKeys.MenuEditRedo) };
@@ -61,23 +65,7 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
             Spacing = 6,
             Children = { undo, redo, _layoutToolbar }
         };
-        _toolboxPanel.Show(
-            WinFormsToolboxCatalog.Order(
-                WinFormsToolboxCatalog.Describe(typeof(Forms.Control).Assembly, typeof(Forms.Control))
-                    .Where(item => !typeof(Forms.Form).IsAssignableFrom(item.ControlType)
-                        && item.ControlType != typeof(Forms.WebBrowser) && item.ControlType != typeof(Forms.AxHost)
-                        && item.ControlType != typeof(Forms.ContextMenuStrip))
-                    .Concat(new[] { typeof(Forms.Timer), typeof(Forms.ImageList), typeof(Forms.ToolTip), typeof(Forms.ContextMenuStrip),
-                            typeof(Forms.OpenFileDialog), typeof(Forms.SaveFileDialog), typeof(Forms.FolderBrowserDialog),
-                            typeof(Forms.ColorDialog), typeof(Forms.FontDialog), typeof(SerialPort) }
-                        .Select(type => new WinFormsToolboxItem(type)))
-                    .Append(WinFormsToolboxCatalog.Pointer)),
-            item => item.Category,
-            item => [item.DisplayName],
-            WinFormsToolboxVisuals.CreateRow);
-        // Pointer is the toolbox's resting state: nothing is pending to place
-        // until a control is chosen, just as VB6 and Visual Studio start out.
-        _toolbox.SelectedItem = WinFormsToolboxCatalog.Pointer;
+        RebuildToolbox();
         _toolboxPanel.ItemActivated += (_, activated) => AddTool(activated as WinFormsToolboxItem);
         var body = CreateDesignerBody(dockTools);
         var layout = new DockPanel { Margin = new Thickness(8), Children = { toolbar, _status, body } };
@@ -110,12 +98,14 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
     {
         base.OnAttachedToVisualTree(args);
         _attached = true;
+        SubscribeToBuilds();
         AttachDesignerSession();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs args)
     {
         _attached = false;
+        UnsubscribeFromBuilds();
         ++_loadGeneration;
         TrackResourceBuffer(null);
         _retainedSelectionNames = _session is null ? []
@@ -127,6 +117,9 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
     private void SessionChanged()
     {
         if (_session is null) return;
+
+        // A control that failed while it was placed reaches Output now, not at the next build.
+        LogUserCodeFailures();
         var selected = _selectedName;
         _document.Text = _session.Document.Source;
         ReplaceSurfaceRoot();
@@ -178,7 +171,8 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
             (property, value) => RunEditAsync(() => _session.SetNestedPropertyAsync(control, property.ParentName!, property.Name, value)),
             property => OpenPropertyEditor(control, property),
             _session.ReferenceNames, name => _session.SourceValueState(control, name),
-            name => _session.CanResetResourceProperty(control, name));
+            name => _session.CanResetResourceProperty(control, name),
+            formRows: ReferenceEquals(control, _session.Form) ? FormDesignRows() : null);
         var fieldName = _selectedName;
         _events.Show(control, name => _handlers.GetValueOrDefault(fieldName)?.GetValueOrDefault(name),
             (name, handler) => RunEditAsync(() => SetHandlerAsync(control, fieldName, name, handler)),
@@ -216,7 +210,16 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
         });
     }
 
-    private async void RunEditAsync(Func<Task> edit)
+    private async void RunEditAsync(Func<Task> edit) => await RunEditCoreAsync(edit);
+
+    /// <summary>The edit as a task, for the designer's tests, which hold an edit open to show what waits for it.</summary>
+    internal Task RunEditForTestsAsync(Func<Task> edit) => RunEditCoreAsync(edit);
+
+    /// <remarks>
+    /// The view is busy from the first await of the edit until it completes. A design context loaded meanwhile
+    /// waits, and is applied in the finally block, once the view is idle again (see ApplyPendingDesignContext).
+    /// </remarks>
+    private async Task RunEditCoreAsync(Func<Task> edit)
     {
         if (_busy || _session is null) return;
         _editSelectionNames = _surface.SelectedControls.Select(_session.NameOf).ToArray();
@@ -247,6 +250,9 @@ internal sealed partial class WinFormsDesignerView : UserControl, IDisposable
             // double-clicked event) leaves it in the editor, where the user goes on typing.
             var focusedNow = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
             if (focusedNow is null && refocus is { IsEffectivelyVisible: true }) refocus.Focus();
+
+            // The edit has written its result to the session; a context loaded meanwhile is swapped in now.
+            ApplyPendingDesignContext();
         }
     }
 

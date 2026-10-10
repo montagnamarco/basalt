@@ -34,6 +34,11 @@ public sealed partial class WinFormsPropertyPanel : UserControl
         _grid.PropertyEdited += (name, value) =>
         {
             MarkEditFocus(name, value);
+            if (TryEditFormDesignRow(name, value))
+            {
+                return;
+            }
+
             _edit?.Invoke(name, value);
         };
         _grid.PropertyExpansionRequested += OnPropertyExpansionRequested;
@@ -97,7 +102,8 @@ public sealed partial class WinFormsPropertyPanel : UserControl
         Func<Type, IReadOnlyList<string>>? referenceNames = null,
         Func<string, WinFormsSourceValueState>? sourceState = null,
         Func<string, bool>? canResetResource = null,
-        IReadOnlySet<string>? readOnlyProperties = null)
+        IReadOnlySet<string>? readOnlyProperties = null,
+        WinFormsFormDesignRows? formRows = null)
     {
         var identity = componentName ?? (control as Forms.Control)?.Name;
         var preserveView = control is not null && identity is not null &&
@@ -115,6 +121,7 @@ public sealed partial class WinFormsPropertyPanel : UserControl
 
         _componentName = componentName;
         _collectionRequested = collectionRequested;
+        _formRows = formRows;
         var properties = control is null ? [] : WinFormsPropertyInspector.DescribeDesigner(control, explicitValue)
             .Select(property =>
             {
@@ -141,6 +148,12 @@ public sealed partial class WinFormsPropertyPanel : UserControl
                     IsReadOnly = readOnlyProperties?.Contains("Name") == true,
                     CanResetOverride = false,
                 }, .. properties.Where(property => property.Name != "Name")];
+        if (formRows is not null)
+        {
+            _rootProperties = [.. _rootProperties.Where(property => !IsFormDesignRowName(property.Name)),
+                .. FormDesignProperties(formRows)];
+        }
+
         RebuildProperties(preserveView);
     }
 
@@ -207,6 +220,7 @@ public sealed partial class WinFormsPropertyPanel : UserControl
         _displayedObjectIdentity = null;
         _edit = edit;
         _collectionRequested = null;
+        _formRows = null;
         _component = null;
         _nestedEdit = null;
         _openEditor = null;

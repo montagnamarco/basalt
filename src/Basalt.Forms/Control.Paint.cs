@@ -252,7 +252,19 @@ public partial class Control
         }
     }
 
-    /// <summary>Runs the paint of the invalid part into a new recording that keeps the rest of the old one.</summary>
+    /// <summary>
+    /// Runs the paint of the invalid part into a new recording that keeps the rest of the old one.
+    /// </summary>
+    /// <remarks>
+    /// This is the one boundary where a single control's painting is recorded, so a failure is
+    /// contained here: the siblings, which are recorded in their own calls, still draw. In design
+    /// mode a throwing paint becomes the error frame over the whole client area, and the next paint
+    /// of the control runs its handlers again. The design mode is that of the control or of any of
+    /// its ancestors: a child of a designed control is painted by the designer too, and a transparent
+    /// child also re-runs its parent's paint inside its own, so a failure there is contained at the
+    /// child. Outside design mode the exception propagates, as in WinForms: the exception filter does
+    /// not catch it, so the stack is left as it was thrown.
+    /// </remarks>
     private void RecordClient()
     {
         var client = ClientRectangle;
@@ -277,20 +289,50 @@ public partial class Control
             canvas.Restore();
         }
 
+        // Everything below is undone to this depth, whatever a failing handler left on the canvas's stack.
+        var depth = canvas.SaveCount;
         canvas.Save();
         canvas.ClipRect(ToSkia(invalid));
 
-        using (var graphics = Graphics.FromCanvas(canvas))
+        Exception? failure = null;
+        try
         {
+            using var graphics = Graphics.FromCanvas(canvas);
             using var arguments = new PaintEventArgs(graphics, invalid);
             PaintClient(arguments);
         }
+        catch (Exception exception) when (IsAncestorSiteInDesignMode)
+        {
+            // What the failing paint drew is discarded with its clip: the frame replaces the whole control.
+            canvas.RestoreToCount(depth);
+            DesignTimeErrorFrame.Draw(canvas, ToSkia(client), exception);
+            failure = exception;
+        }
 
-        canvas.Restore();
+        canvas.RestoreToCount(depth);
 
         _clientPicture?.Dispose();
         _clientPicture = recorder.EndRecording();
         _pictureLayers = partial ? _pictureLayers + 1 : 0;
+
+        if (failure is not null) NotifyDesignTimePaintFailed(failure);
+    }
+
+    /// <summary>
+    /// Tells the designer that this control's paint failed, through the site of the nearest control that has one. A
+    /// child of a designed control usually has no site of its own, and its failure is contained by the same design
+    /// mode the ancestor's site reports; without this walk the failure of such a child never reached Output.
+    /// </summary>
+    private void NotifyDesignTimePaintFailed(Exception exception)
+    {
+        for (var control = this; control is not null; control = control._parent)
+        {
+            if (control.Site is not { } site) continue;
+
+            if (site.GetService(typeof(IDesignTimePaintFailureSink)) is IDesignTimePaintFailureSink sink)
+                sink.PaintFailed(this, exception);
+            return;
+        }
     }
 
     /// <summary>Background then foreground, each with the graphics as the paint found it.</summary>

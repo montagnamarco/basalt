@@ -1,16 +1,24 @@
 using System.ComponentModel;
 using System.Drawing;
+using Basalt.Core.Localization;
 using Basalt.Designer;
 using Basalt.Workspace;
 using Forms = System.Windows.Forms;
 
 namespace Basalt.Shell.Controls;
 
-/// <summary>Builds previews from supported constants, never from compiled application code.</summary>
+/// <summary>
+/// Builds previews from supported constants. Project controls are the exception: they are
+/// created from the project's own build output in a design context (see WinFormsDesignAssemblyContext).
+/// </summary>
 internal sealed partial class WinFormsDesignerSession : IDisposable
 {
+    /// <summary>
+    /// One undo step. <see cref="Culture"/> is the language the edit was made in (null for "(Default)"): undo and
+    /// redo show that language before they apply the edit, because Designer.vb is shared by every language.
+    /// </summary>
     private sealed record HistoryEntry(string Source, Action? Restore = null, Action? Reverse = null,
-        Func<Task>? Prepare = null, Func<Task>? ReversePrepare = null);
+        Func<Task>? Prepare = null, Func<Task>? ReversePrepare = null, string? Culture = null);
     private readonly Stack<HistoryEntry> _undo = [];
     private readonly Stack<HistoryEntry> _redo = [];
     private readonly Dictionary<string, Forms.Control> _controls = new(StringComparer.OrdinalIgnoreCase);
@@ -31,12 +39,19 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
     /// </summary>
     private readonly string? _projectPath;
 
+    /// <summary>
+    /// The build output the project's own controls come from, or null before the first successful
+    /// build. The designer owns it; <see cref="UseDesignContext"/> swaps it after a rebuild.
+    /// </summary>
+    private WinFormsDesignAssemblyContext? _designContext;
+
     public WinFormsDesignerSession(WinFormsDesignerDocument document, WinFormsResourceDocument? resources = null,
-        string? projectPath = null)
+        string? projectPath = null, WinFormsDesignAssemblyContext? designContext = null)
     {
         Document = document;
         _resources = resources;
         _projectPath = projectPath;
+        _designContext = designContext;
         BuildPreview();
     }
 
@@ -71,17 +86,17 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
 
     public async Task AddControlAsync(Type type, string parentName)
     {
-        if (!typeof(Forms.Control).IsAssignableFrom(type) || type.Assembly != typeof(Forms.Control).Assembly)
-            throw new NotSupportedException("Only built-in Forms controls are available in this toolbox.");
+        if (!typeof(Forms.Control).IsAssignableFrom(type) || !WinFormsDesignTypes.IsDesignable(type, _designContext))
+            throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsDesignerNotDesignable));
         var number = 1;
         var name = type.Name + number;
         while (Document.DeclaredNames.Contains(name, StringComparer.OrdinalIgnoreCase)) name = type.Name + ++number;
-        await ApplyAsync(document => document.AddControl(name, "Global." + type.FullName, parentName));
+        await ApplyControlEditAsync(document => document.AddControl(name, "Global." + type.FullName, parentName));
     }
 
     public Task DeleteAsync(Forms.Control control, Action? commitCompanion = null,
         Action? undoCompanion = null, Action? redoCompanion = null) =>
-        ApplyAsync(document => document.RemoveControl(NameOf(control)), commitCompanion, undoCompanion, redoCompanion);
+        ApplyControlEditAsync(document => document.RemoveControl(NameOf(control)), commitCompanion, undoCompanion, redoCompanion);
     public Task SetBoundsBatchAsync(IReadOnlyList<WinFormsBoundsEdit> edits)
     {
         var changes = new List<PropertyChange>();
@@ -94,6 +109,8 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         }
         return ApplyPropertyChangesAsync(changes);
     }
+    /// <summary>The undo steps the session holds. Tests read it to prove that a refused or failed edit adds none.</summary>
+    internal int UndoDepth => _undo.Count;
     public Task UndoAsync() => RestoreAsync(_undo, _redo);
     public Task RedoAsync() => RestoreAsync(_redo, _undo);
 
@@ -102,6 +119,8 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         if (from.Count == 0) return;
         var entry = from.Peek();
         var original = Document;
+        // Designer.vb is shared by every language, so the edit is applied only while the language it was made in is shown.
+        await ShowEditCultureAsync(entry.Culture);
         if (entry.Prepare is not null) await entry.Prepare();
         var parsed = await Task.Run(() => new WinFormsDesignerDocument(entry.Source));
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -110,40 +129,126 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         SourceChanging?.Invoke();
         entry.Restore?.Invoke();
         ObjectDisposedException.ThrowIf(_disposed, this);
+        // The step moves to the other stack before the rebuild, so Changed listeners see the new state, and moves back if the
+        // rebuild fails. The companion edits are reverted by the same failure, so the step and its files stay in agreement.
         from.Pop();
-        to.Push(new(Document.Source, entry.Reverse, entry.Restore, entry.ReversePrepare, entry.Prepare));
-        Replace(parsed);
+        to.Push(new(original.Source, entry.Reverse, entry.Restore, entry.ReversePrepare, entry.Prepare, entry.Culture));
+        try
+        {
+            ReplaceWithCompanion(parsed, entry.Reverse);
+        }
+        catch
+        {
+            to.Pop();
+            from.Push(entry);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Shows <paramref name="document"/>. A rebuild that throws puts the shown preview back (see <see cref="Replace"/>) and
+    /// then runs <paramref name="revert"/>, the companion edit that goes with the step, so the files the step wrote are
+    /// put back with the document. The exception of the rebuild is rethrown; a revert that also fails is reported with it.
+    /// </summary>
+    private void ReplaceWithCompanion(WinFormsDesignerDocument document, Action? revert)
+    {
+        try
+        {
+            Replace(document);
+        }
+        catch (Exception rebuildFailure)
+        {
+            if (revert is not null)
+            {
+                try
+                {
+                    revert();
+                }
+                catch (Exception revertFailure)
+                {
+                    throw new AggregateException(rebuildFailure, revertFailure);
+                }
+            }
+            throw;
+        }
     }
 
     private async Task ApplyAsync(Func<WinFormsDesignerDocument, string> edit, Action? commit = null,
         Action? undo = null, Action? redo = null, bool commitUnchangedSource = false,
         Func<Task>? undoPrepare = null, Func<Task>? redoPrepare = null)
     {
+        // Captured before the first await: the language this edit is made in, which its undo and redo show again.
+        var culture = _culture;
         var original = Document;
         var parsed = await Task.Run(() => new WinFormsDesignerDocument(edit(original)));
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!ReferenceEquals(original, Document)) throw new InvalidOperationException("The document changed during the edit.");
+        // Designer.vb is shared by every language: a structural or component edit made while a culture is
+        // shown would change every language, so it is refused before anything is written. The culture's own
+        // resx writes keep Designer.vb unchanged and reach this method only through commitUnchangedSource.
+        if (_culture is not null && parsed.Source != original.Source)
+            throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerNotInLanguage));
         if (parsed.Source == original.Source && !commitUnchangedSource) return;
         SourceChanging?.Invoke();
         commit?.Invoke();
         ObjectDisposedException.ThrowIf(_disposed, this);
-        _undo.Push(new(original.Source, undo, redo, undoPrepare, redoPrepare));
+        // The step is pushed before the rebuild so that Changed listeners already see it. A rebuild that fails rolls the
+        // document back, so the step and the redo steps it cleared are taken back too: Undo must never revert an edit
+        // that did not reach the document.
+        var redoBefore = _redo.ToArray();
+        _undo.Push(new(original.Source, undo, redo, undoPrepare, redoPrepare, culture));
         _redo.Clear();
-        Replace(parsed);
+        try
+        {
+            // The commit ran the companion edit, so a failed rebuild reverts it through the undo companion.
+            ReplaceWithCompanion(parsed, commit is null ? null : undo);
+        }
+        catch
+        {
+            _undo.Pop();
+            RestoreRedoSteps(redoBefore);
+            throw;
+        }
     }
 
+    /// <summary>Puts back the redo steps a failed edit had cleared. <paramref name="steps"/> is in stack order, top first.</summary>
+    private void RestoreRedoSteps(IReadOnlyList<HistoryEntry> steps)
+    {
+        _redo.Clear();
+        // Pushed from the bottom up, so the step that was on top before the edit is on top again.
+        for (var index = steps.Count - 1; index >= 0; index--) _redo.Push(steps[index]);
+    }
+
+    /// <summary>
+    /// Shows the preview built from <paramref name="document"/>. BuildPreview fills the session's own state as it goes,
+    /// and a project control's Controls.Add can throw partway, so the shown preview is captured first. A failed build
+    /// puts it back: the Document, the Form the surface holds, the control map and the rest stay as they were, and the
+    /// build's own controls are disposed. Only a built preview is shown, and only then is the previous one disposed.
+    /// </summary>
     private void Replace(WinFormsDesignerDocument document)
     {
-        var previous = Form;
-        var previousFonts = _previewFonts.ToArray();
-        var previousComponents = TakeComponentPreviewsForDisposal();
+        var previousDocument = Document;
+        var shown = CapturePreview();
+        // The components and fonts of the shown preview leave the session for the build to make its own. They are
+        // disposed once the new preview is shown; a failed build gives them back from the snapshot.
+        TakeComponentPreviewsForDisposal();
         _previewFonts.Clear();
         Document = document;
-        BuildPreview();
+        try
+        {
+            BuildPreview();
+        }
+        catch
+        {
+            Document = previousDocument;
+            ReleasePartialPreview(shown);
+            RestoreFailureRecords(shown);
+            throw;
+        }
         Changed?.Invoke();
-        previous.Dispose();
-        DisposeComponentPreviews(previousComponents);
-        foreach (var font in previousFonts) font.Dispose();
+        shown.Form.Dispose();
+        DisposeComponentPreviews(shown.Components.Values);
+        foreach (var font in shown.Fonts) font.Dispose();
     }
 
     private WinFormsDesignerControl Model(Forms.Control control) => ReferenceEquals(control, Form)
@@ -154,6 +259,7 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         _controls.Clear();
         _unresolvedProperties.Clear();
         _resourceProperties.Clear();
+        _userCodeFailures.Clear();
         var problems = new List<string>();
         Form = new Forms.Form
         {
@@ -166,7 +272,7 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         foreach (var model in Document.Controls)
         {
             var name = model.TypeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase);
-            var type = typeof(Forms.Control).Assembly.GetType(name, false, true);
+            var type = WinFormsDesignTypes.Find(name, _designContext);
             if (type is null || !typeof(Forms.Control).IsAssignableFrom(type) || type.IsAbstract)
             {
                 problems.Add(model.Name + ": " + model.TypeName);
@@ -174,9 +280,7 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
             }
             try
             {
-                var control = (Forms.Control)Activator.CreateInstance(type)!;
-                control.Name = model.Name;
-                _controls[model.Name] = control;
+                _controls[model.Name] = CreateControl(model, type);
             }
             catch (Exception exception) { problems.Add(model.Name + ": " + exception.GetBaseException().Message); }
         }

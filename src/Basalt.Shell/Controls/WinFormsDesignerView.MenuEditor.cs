@@ -9,6 +9,8 @@ internal sealed partial class WinFormsDesignerView
 {
     private async Task EditMenuAsync(WinFormsDesignerSession session, Forms.MenuStrip menu, Window owner)
     {
+        // Held while the menu editor is open, as for the other designer modals (see BeginModal).
+        using var modal = BeginModal();
         var original = session.Document;
         var name = session.NameOf(menu);
         var document = await Task.Run(() => new WinFormsMenuDocument(original.Source));

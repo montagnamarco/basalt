@@ -166,6 +166,9 @@ internal sealed partial class WinFormsDesignerView
         {
             return;
         }
+
+        // Held until the editor has closed and its edit, if any, has started (see BeginModal).
+        using var modal = BeginModal();
         var offset = _properties.CapturePropertyEditorOffset();
         var generation = _toolStripItemPropertyGeneration;
         Font? selectedFont = null;
@@ -175,6 +178,11 @@ internal sealed partial class WinFormsDesignerView
             var value = descriptor?.GetValue(item);
             if (descriptor is not null && IsImageProperty(descriptor.PropertyType))
             {
+                if (RefuseImageEditBeforeDialog(session))
+                {
+                    return;
+                }
+
                 var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
                 var projectPath = WinFormsProjectResources.FindProject(_document.FilePath);
                 var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(value), isIcon, _importImageFile, projectPath);

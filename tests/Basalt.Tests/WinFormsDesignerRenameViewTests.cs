@@ -78,6 +78,165 @@ public class WinFormsDesignerRenameViewTests
         Assert.Equal(Companion, fixture.Code.Text);
     }
 
+    /// <summary>
+    /// Undo, redo and undo of a rename in a Localizable form, through the real view and the real Roslyn rename. The form's
+    /// files are on disk, because the view lists the culture .resx files from the folder: Designer.vb, the companion, the
+    /// neutral resx and the Italian resx.
+    /// </summary>
+    /// <remarks>
+    /// Defect reintroduced once (the undo checked the designer against the plain Roslyn rename, which keeps the old key): the
+    /// undo threw CodeChanged after the resx files had been rewritten, and the test failed on the first undo's Designer text.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task RenamingALocalizableControlUndoesAndRedoesEveryFileIncludingTheItalianResx()
+    {
+        using var fixture = new LocalizedRenameFixture();
+        await fixture.StartAsync();
+        await fixture.RenameAsync();
+        var renamed = fixture.Texts();
+        Assert.Contains("resources.ApplyResources(Me.SaveButton, \"SaveButton\")", renamed.Designer);
+        Assert.Contains("SaveButton.Text", renamed.Italian);
+
+        fixture.ClickHistory(StringKeys.MenuEditUndo);
+        await WaitUntilAsync(() => fixture.Designer.Text == fixture.Original);
+        Assert.Equal(Companion, fixture.Code.Text);
+        Assert.Equal(WinFormsDesignerLocalizationSessionTests.NeutralResources, fixture.Neutral.Text);
+        Assert.Equal(WinFormsDesignerLocalizationSessionTests.ItalianResources, fixture.Italian.Text);
+        Assert.Equal("Button1", fixture.Surface.SelectedControl!.Name);
+
+        fixture.ClickHistory(StringKeys.MenuEditRedo);
+        await WaitUntilAsync(() => fixture.Designer.Text == renamed.Designer);
+        Assert.Equal(renamed.Code, fixture.Code.Text);
+        Assert.Equal(renamed.Neutral, fixture.Neutral.Text);
+        Assert.Equal(renamed.Italian, fixture.Italian.Text);
+        Assert.Equal("SaveButton", fixture.Surface.SelectedControl!.Name);
+
+        fixture.ClickHistory(StringKeys.MenuEditUndo);
+        await WaitUntilAsync(() => fixture.Designer.Text == fixture.Original);
+        Assert.Equal(WinFormsDesignerLocalizationSessionTests.NeutralResources, fixture.Neutral.Text);
+        Assert.Equal(WinFormsDesignerLocalizationSessionTests.ItalianResources, fixture.Italian.Text);
+    }
+
+    /// <remarks>
+    /// Defect reintroduced once (the undo wrote every resx file before the companion edit): the companion edit threw on the
+    /// changed Form code, and the neutral and Italian resx had already been rewritten, so the test failed on the resx texts.
+    /// </remarks>
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UndoOfALocalizableRenameRejectsALaterEditWithoutWritingAnyResxFile(bool editDesigner)
+    {
+        using var fixture = new LocalizedRenameFixture();
+        await fixture.StartAsync();
+        await fixture.RenameAsync();
+        var renamed = fixture.Texts();
+        var changed = editDesigner ? fixture.Designer : fixture.Code;
+        changed.Text += Environment.NewLine + "' Later unsaved edit";
+        var laterText = changed.Text;
+
+        fixture.ClickHistory(StringKeys.MenuEditUndo);
+        await WaitUntilAsync(() => fixture.View.GetVisualDescendants().OfType<TextBlock>()
+            .Any(block => block.Text?.Contains(Localizer.Get("WinFormsDesigner_CodeChanged"), StringComparison.Ordinal) == true));
+
+        Assert.Equal(laterText, changed.Text);
+        Assert.Equal(editDesigner ? renamed.Code : renamed.Designer, editDesigner ? fixture.Code.Text : fixture.Designer.Text);
+        Assert.Equal(renamed.Neutral, fixture.Neutral.Text);
+        Assert.Equal(renamed.Italian, fixture.Italian.Text);
+        Assert.Equal("SaveButton", fixture.Surface.SelectedControl!.Name);
+
+        changed.Text = editDesigner ? renamed.Designer : renamed.Code;
+        fixture.ClickHistory(StringKeys.MenuEditUndo);
+        await WaitUntilAsync(() => fixture.Designer.Text == fixture.Original);
+        Assert.Equal(WinFormsDesignerLocalizationSessionTests.NeutralResources, fixture.Neutral.Text);
+        Assert.Equal(WinFormsDesignerLocalizationSessionTests.ItalianResources, fixture.Italian.Text);
+    }
+
+    private sealed class LocalizedRenameFixture : IDisposable
+    {
+        private readonly string _folder = Directory.CreateTempSubdirectory("basalt-localized-rename-").FullName;
+        private readonly Dictionary<string, EditorDocumentViewModel> _buffers = new(StringComparer.Ordinal);
+        private readonly Window _window;
+
+        public LocalizedRenameFixture()
+        {
+            Original = WinFormsDesignerLocalizationDocumentTests.Localized;
+            Designer = new EditorDocumentViewModel(Path.Combine(_folder, "MainForm.Designer.vb"), Original, true);
+            Code = new EditorDocumentViewModel(Path.Combine(_folder, "MainForm.vb"), Companion);
+            Neutral = new EditorDocumentViewModel(Path.Combine(_folder, "MainForm.resx"),
+                WinFormsDesignerLocalizationSessionTests.NeutralResources);
+            Italian = new EditorDocumentViewModel(Path.Combine(_folder, "MainForm.it.resx"),
+                WinFormsDesignerLocalizationSessionTests.ItalianResources);
+            foreach (var buffer in new[] { Designer, Code, Neutral, Italian })
+            {
+                File.WriteAllText(buffer.FilePath, buffer.Text);
+                if (!ReferenceEquals(buffer, Designer)) _buffers[buffer.FilePath] = buffer;
+            }
+            View = new WinFormsDesignerView(Designer, findCode: path => _buffers.GetValueOrDefault(path),
+                getCode: path => Task.FromResult(_buffers[path]), rename: PreviewRenameAsync);
+            _window = new Window { Content = View, Width = 1100, Height = 700 };
+        }
+
+        public string Original { get; }
+        public EditorDocumentViewModel Designer { get; }
+        public EditorDocumentViewModel Code { get; }
+        public EditorDocumentViewModel Neutral { get; }
+        public EditorDocumentViewModel Italian { get; }
+        public WinFormsDesignerView View { get; }
+        public WinFormsDesignSurface Surface { get; private set; } = null!;
+
+        public (string Designer, string Code, string Neutral, string Italian) Texts() =>
+            (Designer.Text, Code.Text, Neutral.Text, Italian.Text);
+
+        private Task<RefactoringPreview> PreviewRenameAsync(string path, string source, int position, string name)
+        {
+            var companion = Code.Text;
+            return Task.Run(async () =>
+            {
+                using var workspace = new AdhocWorkspace();
+                var project = workspace.AddProject("RenameView", LanguageNames.VisualBasic)
+                    .WithCompilationOptions(new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                var paths = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
+                    .Concat([typeof(System.Windows.Forms.Form).Assembly.Location, typeof(System.Drawing.Font).Assembly.Location]).Distinct();
+                project = project.AddMetadataReferences(paths.Select(reference => MetadataReference.CreateFromFile(reference)));
+                project = project.AddDocument("MainForm.Designer.vb", SourceText.From(source), filePath: path).Project;
+                project = project.AddDocument("MainForm.vb", SourceText.From(companion), filePath: Code.FilePath).Project;
+                return await new RenameRefactoring(project.Solution).PreviewAsync(path, position, name);
+            });
+        }
+
+        public async Task StartAsync()
+        {
+            _window.Show();
+            Surface = View.GetVisualDescendants().OfType<WinFormsDesignSurface>().Single();
+            await WaitUntilAsync(() => Surface.RootForm is not null);
+            Surface.Select(Surface.RootForm!.Controls[0]);
+            Assert.Equal("Button1", Surface.SelectedControl!.Name);
+        }
+
+        public async Task RenameAsync()
+        {
+            var panel = View.GetVisualDescendants().OfType<WinFormsPropertyPanel>().Single();
+            var grid = panel.GetVisualDescendants().OfType<PropertyGrid>().Single();
+            var row = Assert.Single(grid.Rows, row => row.GetVisualDescendants().OfType<TextBlock>()
+                .Any(label => label.Text == Localizer.Get("PropertyGrid_Name")));
+            var editor = Assert.Single(row.GetVisualDescendants().OfType<TextBox>());
+            editor.Text = "SaveButton";
+            editor.RaiseEvent(new FocusChangedEventArgs(InputElement.LostFocusEvent));
+            await WaitUntilAsync(() => Surface.SelectedControl?.Name == "SaveButton");
+        }
+
+        public void ClickHistory(string key) => View.GetVisualDescendants().OfType<Button>()
+            .Single(button => Equals(button.Content, Localizer.Get(key)))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        public void Dispose()
+        {
+            View.Dispose();
+            _window.Close();
+            Directory.Delete(_folder, recursive: true);
+        }
+    }
+
     private sealed class RenameFixture : IDisposable
     {
         public string Original { get; } = WinFormsDesignerDocumentTests.Source

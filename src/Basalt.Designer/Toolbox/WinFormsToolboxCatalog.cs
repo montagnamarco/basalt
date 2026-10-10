@@ -52,10 +52,28 @@ public static class WinFormsToolboxCatalog
         return category.Title ?? Components;
     }
 
-    /// <summary>Items grouped by category in toolbox order, then by name within each group.</summary>
+    /// <summary>
+    /// The same items under another group: a project's own controls are listed under
+    /// "&lt;Project&gt; Components", a group no built-in category names.
+    /// </summary>
+    public static IReadOnlyList<WinFormsToolboxItem> UnderCategory(IEnumerable<WinFormsToolboxItem> items, string category) =>
+        items.Select(item => item with { CategoryOverride = category }).ToArray();
+
+    /// <summary>
+    /// Items grouped by category in toolbox order, then by name within each group. A category that
+    /// is not one of <see cref="CategoryOrder"/> (a project's own group) follows all of them, so the
+    /// built-in groups keep their places whatever the project is called.
+    /// </summary>
     public static IReadOnlyList<WinFormsToolboxItem> Order(IEnumerable<WinFormsToolboxItem> items) =>
-        items.OrderBy(item => CategoryOrder.ToList().IndexOf(item.Category))
+        items.OrderBy(item => CategoryRank(item.Category))
+            .ThenBy(item => item.Category, StringComparer.OrdinalIgnoreCase)
             .ThenBy(item => item.DisplayName, StringComparer.OrdinalIgnoreCase).ToArray();
+
+    private static int CategoryRank(string category)
+    {
+        var index = CategoryOrder.ToList().IndexOf(category);
+        return index < 0 ? CategoryOrder.Count : index;
+    }
 
     public const string Common = "Common Controls";
     public const string Containers = "Containers";

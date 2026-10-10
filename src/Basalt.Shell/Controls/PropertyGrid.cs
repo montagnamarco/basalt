@@ -256,6 +256,7 @@ public sealed partial class PropertyGrid : UserControl
         PropertyCategory.Layout => StringKeys.PropertiesCategoryLayout,
         PropertyCategory.Appearance => StringKeys.PropertiesCategoryAppearance,
         PropertyCategory.Behavior => StringKeys.PropertiesCategoryBehavior,
+        PropertyCategory.Design => StringKeys.PropertiesCategoryDesign,
         _ => StringKeys.PropertiesCategoryCommon,
     });
 

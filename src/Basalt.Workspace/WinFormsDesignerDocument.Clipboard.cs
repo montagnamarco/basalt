@@ -14,7 +14,8 @@ public sealed class WinFormsControlClipboard
         ImmutableArray<WinFormsClipboardAuxiliary> auxiliaries,
         ImmutableArray<StatementSyntax> statements, ImmutableArray<string> topLevelNames,
         ImmutableDictionary<string, string?> requiredFields,
-        ImmutableHashSet<string> requiredMethods)
+        ImmutableHashSet<string> requiredMethods,
+        ImmutableArray<WinFormsClipboardResource> resources)
     {
         Controls = controls;
         Auxiliaries = auxiliaries;
@@ -22,6 +23,7 @@ public sealed class WinFormsControlClipboard
         TopLevelNames = topLevelNames;
         RequiredFields = requiredFields;
         RequiredMethods = requiredMethods;
+        Resources = resources;
     }
 
     internal ImmutableArray<WinFormsClipboardControl> Controls { get; }
@@ -29,6 +31,7 @@ public sealed class WinFormsControlClipboard
     internal ImmutableArray<StatementSyntax> Statements { get; }
     internal ImmutableDictionary<string, string?> RequiredFields { get; }
     internal ImmutableHashSet<string> RequiredMethods { get; }
+    internal ImmutableArray<WinFormsClipboardResource> Resources { get; }
 
     public IReadOnlyList<string> TopLevelNames { get; }
 }
@@ -36,12 +39,37 @@ public sealed class WinFormsControlClipboard
 internal sealed record WinFormsClipboardControl(string Name, string TypeName, string ParentName);
 internal sealed record WinFormsClipboardAuxiliary(string Name, string TypeName);
 
+/// <summary>
+/// A resx entry a copied statement reads through GetObject or GetString, with the copied control that reads it. A picture
+/// is one of them: it stays a GetObject call in code, so the paste needs the stored entry under the key it now reads.
+/// </summary>
+internal sealed record WinFormsClipboardResource(string Owner, string Key, WinFormsResourceEntry Entry);
+
 public sealed record WinFormsControlPasteResult(string Source,
-    IReadOnlyList<string> TopLevelNames, IReadOnlyList<string> AllNames);
+    IReadOnlyList<string> TopLevelNames, IReadOnlyList<string> AllNames, IReadOnlyList<WinFormsResourceEntry> Resources);
 
 public sealed partial class WinFormsDesignerDocument
 {
-    public WinFormsControlClipboard CopyControls(IEnumerable<string> selectedNames)
+    /// <summary>
+    /// Copies the selected controls of a form whose values are all in code. A copied ApplyResources call is refused, as
+    /// it reads a neutral .resx this method does not have; use the overload with the resolved values for a Localizable form.
+    /// </summary>
+    public WinFormsControlClipboard CopyControls(IEnumerable<string> selectedNames) =>
+        CopyControls(selectedNames, localizedValues: null);
+
+    /// <summary>
+    /// Copies the selected controls. <paramref name="localizedValues"/> are the values a Localizable form's ApplyResources
+    /// calls read from its neutral .resx, resolved by the caller. Each copied ApplyResources call is replaced by literal
+    /// assignments of its control's values, so the fragment pastes into a form that is not localizable, and a Localizable
+    /// form pastes it through its own localizable path. Null means the caller did not resolve them, so a copied
+    /// ApplyResources call is refused. <paramref name="resources"/> is the form's own .resx: the entries the copied
+    /// GetObject and GetString reads name are carried with the fragment, so a picture pastes with its bytes.
+    /// <paramref name="carriedEntries"/> names further entries of <paramref name="resources"/> to carry, the ones a
+    /// read-only property owns; an entry whose owner is not copied is left out.
+    /// </summary>
+    public WinFormsControlClipboard CopyControls(IEnumerable<string> selectedNames,
+        IReadOnlyCollection<WinFormsLocalizedAssignment>? localizedValues, WinFormsResourceDocument? resources = null,
+        IReadOnlyCollection<string>? carriedEntries = null)
     {
         ArgumentNullException.ThrowIfNull(selectedNames);
         var selected = selectedNames.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
@@ -58,7 +86,7 @@ public sealed partial class WinFormsDesignerDocument
         var topLevel = selected.Where(name => copied.Any(control =>
             control.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
             && !names.Contains(control.ParentName))).ToImmutableArray();
-        var controlStatements = CaptureInitializationStatements(names);
+        var controlStatements = CaptureInitializationStatements(names, localizedValues);
         var auxiliaries = controlStatements.SelectMany(ReferencedFields)
             .Where(name => !names.Contains(name))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -66,7 +94,7 @@ public sealed partial class WinFormsDesignerDocument
             .OfType<WinFormsClipboardAuxiliary>()
             .ToImmutableArray();
         foreach (var auxiliary in auxiliaries) names.Add(auxiliary.Name);
-        var statements = CaptureInitializationStatements(names);
+        var statements = CaptureInitializationStatements(names, localizedValues);
         var requiredFields = ImmutableDictionary.CreateBuilder<string, string?>(StringComparer.OrdinalIgnoreCase);
         var requiredMethods = ImmutableHashSet.CreateBuilder<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var statement in statements)
@@ -85,7 +113,8 @@ public sealed partial class WinFormsDesignerDocument
             copied.Select(control => new WinFormsClipboardControl(
                 control.Name, control.TypeName, control.ParentName)).ToImmutableArray(),
             auxiliaries,
-            statements, topLevel, requiredFields.ToImmutable(), requiredMethods.ToImmutable());
+            statements, topLevel, requiredFields.ToImmutable(), requiredMethods.ToImmutable(),
+            CopiedResources(statements, resources, carriedEntries ?? [], names));
     }
 
     public WinFormsControlPasteResult PasteControls(WinFormsControlClipboard clipboard, string targetParent)
@@ -93,6 +122,16 @@ public sealed partial class WinFormsDesignerDocument
         ArgumentNullException.ThrowIfNull(clipboard);
         targetParent = FindControl(targetParent).Name;
         ValidateClipboardDependencies(clipboard);
+
+        string? managerName = null;
+        if (clipboard.Statements.Any(ReadsResources))
+        {
+            // A picture is read through the ComponentResourceManager local InitializeComponent declares. The target
+            // declares one when it has none, and the paste then runs against the document that declares it.
+            var (withManager, existingManager) = EnsureComponentResourceManager();
+            if (!ReferenceEquals(withManager, this)) return withManager.PasteControls(clipboard, targetParent);
+            managerName = existingManager;
+        }
 
         var used = DeclaredNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
         used.Add(ClassName);
@@ -110,6 +149,8 @@ public sealed partial class WinFormsDesignerDocument
         {
             var statement = RenameNameProperty(original, renamed);
             statement = (StatementSyntax)rewriter.Visit(statement)!;
+            if (managerName is not null && StatementOwner(statement) is { } owner)
+                statement = (StatementSyntax)new ClipboardResourceRewriter(managerName, owner).Visit(statement)!;
             statements.Add(statement.ToString());
         }
 
@@ -132,8 +173,88 @@ public sealed partial class WinFormsDesignerDocument
         var topLevelNames = clipboard.TopLevelNames.Select(name => renamed[name]).ToArray();
         var allNames = clipboard.Controls.Select(control => renamed[control.Name])
             .Concat(clipboard.Auxiliaries.Select(auxiliary => renamed[auxiliary.Name])).ToArray();
-        return new WinFormsControlPasteResult(source, topLevelNames, allNames);
+        var resources = clipboard.Resources
+            .Select(resource => resource.Entry with
+            {
+                Name = PastedResourceKey(renamed[resource.Owner], resource.Key),
+            })
+            .ToArray();
+        return new WinFormsControlPasteResult(source, topLevelNames, allNames, resources);
     }
+
+    /// <summary>
+    /// The key a copied resource is written under and read from once it is pasted: the new name of the control that reads
+    /// it, then the part of the old key after its first dot. "Button1.Image" read by Button1 becomes "Button2.Image" when
+    /// Button1 is renamed, and "$this.Font" read by Button1 becomes "Button1.Font". The new key always starts with a name
+    /// the paste gave its control, so it cannot take the key of a control the target already has.
+    /// </summary>
+    internal static string PastedResourceKey(string newOwner, string oldKey)
+    {
+        var dot = oldKey.IndexOf('.', StringComparison.Ordinal);
+        return newOwner + "." + (dot < 0 ? oldKey : oldKey[(dot + 1)..]);
+    }
+
+    /// <summary>The copied control a statement assigns or calls on, or null when the statement is not one.</summary>
+    private static string? StatementOwner(StatementSyntax statement) => statement switch
+    {
+        AssignmentStatementSyntax assignment => RootField(assignment.Left),
+        ExpressionStatementSyntax { Expression: InvocationExpressionSyntax invocation } => RootField(invocation.Expression),
+        _ => null,
+    };
+
+    /// <summary>
+    /// The resx entries the copied statements read, each with the control that reads it. The entries are the stored values
+    /// as they are: nothing is decoded, so a copied picture keeps its exact bytes.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="carriedEntries"/> are entries no statement reads, such as a read-only property's (ListBox.Items): the
+    /// copy carries them under their owner when the owner is copied, so the paste writes them under the new owner's name.
+    /// </remarks>
+    private static ImmutableArray<WinFormsClipboardResource> CopiedResources(IEnumerable<StatementSyntax> statements,
+        WinFormsResourceDocument? resources, IReadOnlyCollection<string> carriedEntries, IReadOnlySet<string> copiedNames)
+    {
+        if (resources is null) return [];
+        var statementReads = statements
+            .Select(statement => (Owner: StatementOwner(statement), Keys: ResourceKeysRead(statement)))
+            .Where(reads => reads.Owner is not null)
+            .SelectMany(reads => reads.Keys.Select(key => (Owner: reads.Owner!, Key: key)));
+        var carried = carriedEntries
+            .Where(key => key.IndexOf('.', StringComparison.Ordinal) > 0)
+            .Select(key => (Owner: key[..key.IndexOf('.', StringComparison.Ordinal)], Key: key))
+            .Where(entry => copiedNames.Contains(entry.Owner));
+        return statementReads.Concat(carried)
+            .Distinct()
+            .Select(entry => resources.TryGet(entry.Key) is { } stored
+                ? new WinFormsClipboardResource(entry.Owner, entry.Key, stored)
+                : null)
+            .OfType<WinFormsClipboardResource>()
+            .ToImmutableArray();
+    }
+
+    private static bool ReadsResources(StatementSyntax statement) =>
+        statement.DescendantNodesAndSelf().OfType<InvocationExpressionSyntax>()
+            .Any(invocation => ResourceReadReceiver(invocation) is not null);
+
+    /// <summary>The literal keys of the GetObject and GetString calls in a statement.</summary>
+    private static IEnumerable<string> ResourceKeysRead(SyntaxNode statement) =>
+        statement.DescendantNodesAndSelf().OfType<InvocationExpressionSyntax>()
+            .Where(invocation => ResourceReadReceiver(invocation) is not null)
+            .Select(invocation => FirstArgument(invocation))
+            .OfType<LiteralExpressionSyntax>()
+            .Select(literal => literal.Token.ValueText);
+
+    private static ExpressionSyntax? FirstArgument(InvocationExpressionSyntax invocation) =>
+        invocation.ArgumentList?.Arguments.OfType<SimpleArgumentSyntax>().FirstOrDefault()?.Expression;
+
+    /// <summary>
+    /// The manager a GetObject or GetString call reads through, or null when the invocation is not such a call. The receiver
+    /// must be a plain name, which is what InitializeComponent declares its ComponentResourceManager local as.
+    /// </summary>
+    private static IdentifierNameSyntax? ResourceReadReceiver(InvocationExpressionSyntax invocation) =>
+        invocation.Expression is MemberAccessExpressionSyntax { Expression: IdentifierNameSyntax receiver } member
+        && member.Name.Identifier.ValueText is "GetObject" or "GetString"
+            ? receiver
+            : null;
 
     private bool IsSelectedOrDescendant(WinFormsDesignerControl control, IReadOnlyCollection<string> selected)
     {
@@ -146,7 +267,8 @@ public sealed partial class WinFormsDesignerDocument
         }
     }
 
-    private ImmutableArray<StatementSyntax> CaptureInitializationStatements(IReadOnlySet<string> names)
+    private ImmutableArray<StatementSyntax> CaptureInitializationStatements(IReadOnlySet<string> names,
+        IReadOnlyCollection<WinFormsLocalizedAssignment>? localizedValues)
     {
         var statements = ImmutableArray.CreateBuilder<StatementSyntax>();
         foreach (var statement in _initialize.Statements)
@@ -164,6 +286,12 @@ public sealed partial class WinFormsDesignerDocument
             if (statement is ExpressionStatementSyntax { Expression: InvocationExpressionSyntax invocation })
             {
                 if (IsControlAdd(invocation, names)) continue;
+                if (localizedValues is not null && ApplyResourcesOwner(statement) is { } applied && names.Contains(applied))
+                {
+                    // The control's values leave the .resx as literals, so the call that read them has no place in the fragment.
+                    statements.AddRange(LiteralStatements(applied, localizedValues));
+                    continue;
+                }
                 if (RootField(invocation.Expression) is { } owner && names.Contains(owner))
                 {
                     statements.Add(statement);
@@ -176,6 +304,25 @@ public sealed partial class WinFormsDesignerDocument
 
         return statements.ToImmutable();
     }
+
+    /// <summary>The control an ApplyResources statement applies its resources to, or null when the statement is not one.</summary>
+    private string? ApplyResourcesOwner(StatementSyntax statement)
+    {
+        foreach (var (candidate, operation) in ReadResourceOperationStatements())
+        {
+            if (ReferenceEquals(candidate, statement) && operation.PropertyName is null && operation.ResourceKey is not null)
+                return operation.ControlName;
+        }
+        return null;
+    }
+
+    /// <summary>The literal assignments of one control's resolved values, parsed as the statements the fragment carries.</summary>
+    private static IEnumerable<StatementSyntax> LiteralStatements(string controlName,
+        IReadOnlyCollection<WinFormsLocalizedAssignment> localizedValues) =>
+        localizedValues
+            .Where(value => value.ControlName.Equals(controlName, StringComparison.OrdinalIgnoreCase))
+            .Select(value => SyntaxFactory.ParseExecutableStatement(
+                $"Me.{controlName}.{value.PropertyName} = {value.Expression}"));
 
     private void ValidateClipboardDependencies(WinFormsControlClipboard clipboard)
     {
@@ -276,6 +423,33 @@ public sealed partial class WinFormsDesignerDocument
         {
             var candidate = stem + number;
             if (used.Add(candidate)) return candidate;
+        }
+    }
+
+    /// <summary>
+    /// Points a copied GetObject or GetString read at the target's ComponentResourceManager local and at the key the pasted
+    /// control reads from (see <see cref="PastedResourceKey"/>). The read is rebuilt rather than patched node by node, so
+    /// the rest of the statement keeps its text.
+    /// </summary>
+    private sealed class ClipboardResourceRewriter(string managerName, string newOwner) : VisualBasicSyntaxRewriter
+    {
+        public override SyntaxNode? VisitInvocationExpression(InvocationExpressionSyntax node)
+        {
+            var visited = (InvocationExpressionSyntax)base.VisitInvocationExpression(node)!;
+            if (ResourceReadReceiver(visited) is not { } receiver || visited.Expression is not MemberAccessExpressionSyntax member)
+                return visited;
+            var manager = SyntaxFactory.IdentifierName(managerName).WithTriviaFrom(receiver);
+            var rebuilt = visited.WithExpression(member.WithExpression(manager));
+            if (visited.ArgumentList is not { } argumentList
+                || argumentList.Arguments.FirstOrDefault() is not SimpleArgumentSyntax { Expression: LiteralExpressionSyntax key } firstArgument)
+                return rebuilt;
+
+            var newKey = SyntaxFactory.StringLiteralExpression(
+                SyntaxFactory.Literal(PastedResourceKey(newOwner, key.Token.ValueText))).WithTriviaFrom(key);
+            ArgumentSyntax replacement = firstArgument.WithExpression(newKey);
+            ArgumentSyntax original = firstArgument;
+            var arguments = argumentList.Arguments.Replace(original, replacement);
+            return rebuilt.WithArgumentList(argumentList.WithArguments(arguments));
         }
     }
 

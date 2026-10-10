@@ -105,6 +105,9 @@ internal sealed partial class WinFormsDesignerView
             return;
         }
 
+        // Held until the editor has closed and its result has started to be written, so a build finishing
+        // meanwhile waits instead of swapping the controls under the editor (see BeginModal).
+        using var modal = BeginModal();
         var name = session.NameOf(control);
         var selectedName = _selectedName;
         var propertyOffset = _properties.CapturePropertyEditorOffset();

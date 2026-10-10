@@ -17,7 +17,15 @@ public sealed partial class WinFormsDesignerDocument
     /// </summary>
     public IReadOnlyList<WinFormsDesignerResourceOperation> ResourceOperations { get; }
 
-    private IReadOnlyList<WinFormsDesignerResourceOperation> ReadResourceOperations()
+    private IReadOnlyList<WinFormsDesignerResourceOperation> ReadResourceOperations() =>
+        ReadResourceOperationStatements().Select(entry => entry.Operation).ToArray();
+
+    /// <summary>
+    /// The same operations paired with the statement that wrote them, so a writer that
+    /// rewrites a line (Localizable, see <c>WinFormsDesignerDocument.Localization.cs</c>)
+    /// can find it without repeating the trust rules above.
+    /// </summary>
+    private List<(StatementSyntax Statement, WinFormsDesignerResourceOperation Operation)> ReadResourceOperationStatements()
     {
         var controlNames = Controls.Select(control => control.Name)
             .Append("Me")
@@ -28,7 +36,7 @@ public sealed partial class WinFormsDesignerDocument
             .Select(name => name.Identifier.ValueText)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var managers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var operations = new List<WinFormsDesignerResourceOperation>();
+        var operations = new List<(StatementSyntax Statement, WinFormsDesignerResourceOperation Operation)>();
 
         foreach (var statement in _initialize.Statements)
         {
@@ -53,8 +61,8 @@ public sealed partial class WinFormsDesignerDocument
                     && DeclaredNames.Contains(propertyName))
                     continue;
 
-                operations.Add(new WinFormsDesignerResourceOperation(
-                    owner, propertyName, ResourceLookupKey(assignment.Right, managers), assignment.Right));
+                operations.Add((assignment, new WinFormsDesignerResourceOperation(
+                    owner, propertyName, ResourceLookupKey(assignment.Right, managers), assignment.Right)));
                 continue;
             }
 
@@ -68,7 +76,7 @@ public sealed partial class WinFormsDesignerDocument
                 && TryApplyResources(invocation, managers, controlNames, localNames,
                     out var controlName, out var prefix))
             {
-                operations.Add(new WinFormsDesignerResourceOperation(controlName, null, prefix, null));
+                operations.Add((statement, new WinFormsDesignerResourceOperation(controlName, null, prefix, null)));
             }
         }
 

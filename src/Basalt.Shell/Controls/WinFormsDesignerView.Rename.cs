@@ -35,7 +35,6 @@ internal sealed partial class WinFormsDesignerView
         var fieldsAfter = fieldsBefore.Select(field => field.Equals(name, StringComparison.OrdinalIgnoreCase) ? newName : field).ToArray();
         var companionEdit = edits.FirstOrDefault(edit => string.Equals(edit.Document.FilePath, CompanionPath, StringComparison.OrdinalIgnoreCase));
         var beforeBindings = _handlers.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
-        var renamedDesignerSource = await Task.Run(() => WinFormsDesignerSession.RenamedDesignerSource(designerChange.NewText, newName));
         var afterBindings = companionEdit.Document is null
             ? beforeBindings.ToDictionary(pair => pair.Key.Equals(name, StringComparison.OrdinalIgnoreCase) ? newName : pair.Key,
                 pair => pair.Value, StringComparer.OrdinalIgnoreCase)
@@ -44,8 +43,10 @@ internal sealed partial class WinFormsDesignerView
 
         void Restore(bool forward)
         {
-            // Check every participating buffer before changing any of them.
-            if (_document.Text != (forward ? original.Source : renamedDesignerSource))
+            // The designer buffer must show the text the session holds. The session committed the rename, ApplyResources key
+            // renames included, and every step restores from that text: a plain Roslyn rename text would never match after
+            // an undo's rewrite of the keys. Checked before any buffer changes.
+            if (_document.Text != session.Document.Source)
                 throw new InvalidOperationException(Localizer.Get(StringKeys.WinFormsDesignerCodeChanged));
             var currentEdits = edits.Select(edit => (Document: ResolveTransactionDocument(edit.Document), edit.Change)).ToArray();
             foreach (var (document, change) in currentEdits)

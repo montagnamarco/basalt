@@ -42,22 +42,42 @@ internal sealed partial class WinFormsDesignerSession
                     problems.Add(model.Name + ": " + Localizer.Get(StringKeys.WinFormsDesignerUnsupportedExpression));
                     continue;
                 }
-                foreach (var entry in _resources.Entries.Where(entry =>
-                    entry.Name.StartsWith(prefix + ".", StringComparison.Ordinal)))
+                foreach (var key in EntryNamesUnder(prefix))
                 {
-                    var name = entry.Name[(prefix.Length + 1)..];
+                    var name = key[(prefix.Length + 1)..];
                     if (TypeDescriptor.GetProperties(control)[name] is not { IsReadOnly: false } descriptor)
                         continue;
                     ApplyPreviewAssignment(model, control, name,
-                        () => ReadResourceValue(entry.Name, descriptor.PropertyType), true, problems);
+                        () => ReadResourceValue(key, descriptor.PropertyType), true, problems);
                 }
             }
         }
     }
 
+    /// <summary>
+    /// The entry names under a prefix. While a culture is shown its own entries count too, so a value
+    /// the culture adds where the neutral resource has none still reaches the surface.
+    /// </summary>
+    private IEnumerable<string> EntryNamesUnder(string prefix)
+    {
+        var dotted = prefix + ".";
+        IEnumerable<string> names = _resources is null
+            ? []
+            : _resources.Entries.Select(entry => entry.Name);
+        if (_culture is not null && _cultureResources is not null)
+            names = names.Concat(_cultureResources.Entries.Select(entry => entry.Name));
+        return names.Where(name => name.StartsWith(dotted, StringComparison.Ordinal)).Distinct(StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// The entry the surface shows for a key: the culture's own when the culture overrides it, else the neutral one.
+    /// </summary>
+    private WinFormsResourceEntry? VisibleResourceEntry(string key) =>
+        (_culture is null ? null : _cultureResources?.TryGet(key)) ?? _resources?.TryGet(key);
+
     private object? ReadResourceValue(string key, Type expectedType)
     {
-        var entry = _resources?.TryGet(key);
+        var entry = VisibleResourceEntry(key);
         if (entry is null || !WinFormsDesignerResources.TryRead(entry, expectedType, out var value))
             throw new FormatException(Localizer.Get(StringKeys.WinFormsDesignerUnsupportedExpression));
         return value;

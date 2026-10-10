@@ -356,6 +356,7 @@
   <data name="Properties_Category_Layout" xml:space="preserve"><value>Layout</value></data>
   <data name="Properties_Category_Appearance" xml:space="preserve"><value>Appearance</value></data>
   <data name="Properties_Category_Behavior" xml:space="preserve"><value>Behavior</value></data>
+  <data name="Properties_Category_Design" xml:space="preserve"><value>Design</value></data>
 
   <!-- File pickers -->
   <data name="Picker_OpenSolution" xml:space="preserve"><value>Open solution or project</value></data>
@@ -378,6 +379,11 @@
   <data name="WinFormsDesigner_Toolbox" xml:space="preserve"><value>Toolbox — double-click to add</value></data>
   <data name="WinFormsDesigner_Properties" xml:space="preserve"><value>Properties</value></data>
   <data name="WinFormsDesigner_PreviewProblems" xml:space="preserve"><value>Some expressions cannot be previewed and are preserved: {0}</value></data>
+  <data name="WinFormsDesigner_ProjectComponents" xml:space="preserve"><value>{0} Components</value></data>
+  <data name="WinFormsDesigner_NotDesignable" xml:space="preserve"><value>Only Forms controls and components, and those of this project, can be placed in the designer.</value></data>
+  <data name="WinFormsDesigner_UserCodeFailed" xml:space="preserve"><value>Designer: {0} ({1}) failed in the project code: {2}</value></data>
+  <data name="WinFormsDesigner_Placeholder" xml:space="preserve"><value>{0} did not load: {1}</value></data>
+  <data name="WinFormsDesigner_DesignContextFailed" xml:space="preserve"><value>The project controls could not be loaded into the designer: {0}</value></data>
   <data name="WinFormsDesigner_Error" xml:space="preserve"><value>Designer: {0}</value></data>
   <data name="WinFormsDesigner_Event" xml:space="preserve"><value>Event</value></data>
   <data name="WinFormsDesigner_Handler" xml:space="preserve"><value>Handler</value></data>
@@ -606,6 +612,13 @@
   <data name="WinFormsDesigner_GenericEventArgumentsUnsupported" xml:space="preserve"><value>Generic event argument types are not supported yet.</value></data>
   <data name="WinFormsDesigner_HandlerParameterCountMismatch" xml:space="preserve"><value>The existing handler has a different parameter count.</value></data>
   <data name="WinFormsDesigner_PartialClassNotFound" xml:space="preserve"><value>The form's partial class was not found.</value></data>
+  <data name="WinFormsDesigner_LocalizableNeedsDefaultLanguage" xml:space="preserve"><value>Localizable can be changed only while the (Default) language is shown.</value></data>
+  <data name="WinFormsDesigner_Localizable" xml:space="preserve"><value>Localizable</value></data>
+  <data name="WinFormsDesigner_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="WinFormsDesigner_LanguageDefault" xml:space="preserve"><value>(Default)</value></data>
+  <data name="WinFormsDesigner_NotInLanguage" xml:space="preserve"><value>This value is not localizable, so it can change only while the (Default) language is shown.</value></data>
+  <data name="WinFormsDesigner_ResourcesUnreadable" xml:space="preserve"><value>Localizable cannot be turned off: the form's resource file could not be read, so its values would be lost.</value></data>
+  <data name="WinFormsDesigner_ResourcesNotReplaced" xml:space="preserve"><value>The form's resource file exists but could not be read, so Basalt will not replace it with an empty one. Fix the .resx file and try again.</value></data>
   <data name="Editor_OnlyVbHtmlGenerated" xml:space="preserve"><value>Only a .vbhtml template is generated into Visual Basic.</value></data>
   <data name="Editor_SelectStatementsFirst" xml:space="preserve"><value>Select the statements to extract first.</value></data>
   <data name="Editor_SelectExpressionFirst" xml:space="preserve"><value>Select the expression to extract first.</value></data>

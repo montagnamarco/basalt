@@ -13,6 +13,43 @@ namespace Basalt.Shell.Controls;
 
 internal sealed partial class WinFormsDesignerView
 {
+    /// <summary>The modals opened from the designer that are open now; see <see cref="BeginModal"/>.</summary>
+    private int _openModals;
+
+    /// <summary>
+    /// Holds the view busy for design-context swaps while a modal opened from the designer is open. The modal's
+    /// result is written to the session it started on, so a build that finishes meanwhile waits until the modal
+    /// closes (see <see cref="ApplyPendingDesignContext"/>). Without this a build swapped the controls under the
+    /// open editor, and the edit then failed or was lost.
+    /// </summary>
+    private IDisposable BeginModal()
+    {
+        _openModals++;
+        return new ModalScope(this);
+    }
+
+    private void EndModal()
+    {
+        _openModals--;
+        if (_openModals == 0) ApplyPendingDesignContext();
+    }
+
+    /// <summary>Opens a modal as an open property editor does, until the returned scope is disposed; for the designer's tests.</summary>
+    internal IDisposable HoldModalForTests() => BeginModal();
+
+    /// <summary>Ends a modal's hold on the view once, however many times it is disposed.</summary>
+    private sealed class ModalScope(WinFormsDesignerView view) : IDisposable
+    {
+        private WinFormsDesignerView? _view = view;
+
+        public void Dispose()
+        {
+            var owner = _view;
+            _view = null;
+            owner?.EndModal();
+        }
+    }
+
     private async void OpenPropertyEditor(object component, DesignableProperty property)
     {
         if (_busy || _session is not { } session || TopLevel.GetTopLevel(this) is not Window owner)
@@ -20,6 +57,8 @@ internal sealed partial class WinFormsDesignerView
             return;
         }
 
+        // Held until the editor has closed and its edit, if any, has started: the edit then holds the view itself.
+        using var modal = BeginModal();
         Font? selectedFont = null;
         var selectedName = _selectedName;
         var propertyOffset = _properties.CapturePropertyEditorOffset();
@@ -38,6 +77,11 @@ internal sealed partial class WinFormsDesignerView
 
             if (IsImageProperty(descriptor.PropertyType) && component is Forms.Control imageControl)
             {
+                if (RefuseImageEditBeforeDialog(session))
+                {
+                    return;
+                }
+
                 var isIcon = descriptor.PropertyType.FullName == "System.Drawing.Icon";
                 var projectPath = WinFormsProjectResources.FindProject(_document.FilePath);
                 var editor = new WinFormsImageResourceDialog(EncodeCurrentImage(currentValue), isIcon, _importImageFile, projectPath);

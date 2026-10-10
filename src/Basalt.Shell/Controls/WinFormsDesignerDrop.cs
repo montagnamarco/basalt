@@ -18,10 +18,15 @@ public sealed record WinFormsControlDrop(Type ControlType, FormsControl Parent, 
 /// <summary>Resolves a drop in the receiving Forms container's client coordinates.</summary>
 internal static class WinFormsDesignerDrop
 {
+    /// <remarks>
+    /// The type is accepted by the same rule as a double-click in the toolbox: a Forms type, or a type of
+    /// the project's own design context (see <see cref="WinFormsDesignTypes.IsDesignable"/>).
+    /// </remarks>
     internal static WinFormsControlDrop? Resolve(Type type, Point at,
-        Func<Point, FormsControl?> hitTest, Func<FormsControl, Rect> boundsOnHost, FormsControl root)
+        Func<Point, FormsControl?> hitTest, Func<FormsControl, Rect> boundsOnHost, FormsControl root,
+        WinFormsDesignAssemblyContext? context = null)
     {
-        if (!typeof(Component).IsAssignableFrom(type) || type.Assembly != typeof(FormsControl).Assembly
+        if (!typeof(Component).IsAssignableFrom(type) || !WinFormsDesignTypes.IsDesignable(type, context)
             || type.IsAbstract || type == typeof(System.Windows.Forms.Form)
             || type == typeof(System.Windows.Forms.ContextMenuStrip)) return null;
 
