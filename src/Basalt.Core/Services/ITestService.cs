@@ -12,12 +12,12 @@ public enum TestOutcome { NotRun, Running, Passed, Failed, Skipped }
 /// </summary>
 public sealed record TestCase(string FullyQualifiedName, string ProjectPath)
 {
-    /// <summary>The part after the last dot: the method's own name.</summary>
+    /// <summary>The method's own name, with its arguments when it is a theory.</summary>
     public string DisplayName
     {
         get
         {
-            var dot = FullyQualifiedName.LastIndexOf('.');
+            var dot = MethodDot;
 
             return dot < 0 ? FullyQualifiedName : FullyQualifiedName[(dot + 1)..];
         }
@@ -28,9 +28,29 @@ public sealed record TestCase(string FullyQualifiedName, string ProjectPath)
     {
         get
         {
-            var dot = FullyQualifiedName.LastIndexOf('.');
+            var dot = MethodDot;
 
             return dot < 0 ? "" : FullyQualifiedName[..dot];
+        }
+    }
+
+    /// <summary>
+    /// The dot that separates the class from the method, or -1 when there is none.
+    /// </summary>
+    /// <remarks>
+    /// A theory's name carries its arguments, and an argument can hold a dot:
+    /// <c>Ns.Calc.Adds(x: 1.5, y: 2)</c>. The last dot of the whole name would
+    /// fall inside the arguments and split the class wrongly, so the search
+    /// stops at the first '(' that opens them.
+    /// </remarks>
+    private int MethodDot
+    {
+        get
+        {
+            var argumentsStart = FullyQualifiedName.IndexOf('(');
+            var name = argumentsStart < 0 ? FullyQualifiedName : FullyQualifiedName[..argumentsStart];
+
+            return name.LastIndexOf('.');
         }
     }
 }

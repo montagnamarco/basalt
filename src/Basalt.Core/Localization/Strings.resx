@@ -727,6 +727,12 @@
   <data name="Tests_RunSelected" xml:space="preserve"><value>Run Selected</value></data>
   <data name="Tests_RunAll" xml:space="preserve"><value>Run All</value></data>
   <data name="Tests_NoneDiscovered" xml:space="preserve"><value>No tests discovered.</value></data>
+  <data name="Tests_FilterWatermark" xml:space="preserve"><value>Filter by name, class or namespace</value></data>
+  <data name="Tests_FilterPassed" xml:space="preserve"><value>Passed</value></data>
+  <data name="Tests_FilterFailed" xml:space="preserve"><value>Failed</value></data>
+  <data name="Tests_FilterNotRun" xml:space="preserve"><value>Not run</value></data>
+  <data name="Tests_Shown" xml:space="preserve"><value>{0} shown.</value></data>
+  <data name="Tests_FilterSkipped" xml:space="preserve"><value>Skipped</value></data>
   <data name="Ai_Apply" xml:space="preserve"><value>Apply</value></data>
   <data name="Ai_Assistant" xml:space="preserve"><value>Assistant</value></data>
   <data name="Ai_You" xml:space="preserve"><value>You</value></data>

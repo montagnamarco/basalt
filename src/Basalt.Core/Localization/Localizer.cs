@@ -755,6 +755,12 @@ public static class StringKeys
     public const string TestsRunSelected = "Tests_RunSelected";
     public const string TestsRunAll = "Tests_RunAll";
     public const string TestsNoneDiscovered = "Tests_NoneDiscovered";
+    public const string TestsFilterWatermark = "Tests_FilterWatermark";
+    public const string TestsFilterPassed = "Tests_FilterPassed";
+    public const string TestsFilterFailed = "Tests_FilterFailed";
+    public const string TestsFilterNotRun = "Tests_FilterNotRun";
+    public const string TestsShown = "Tests_Shown";
+    public const string TestsFilterSkipped = "Tests_FilterSkipped";
     public const string AiApply = "Ai_Apply";
     public const string AiAssistant = "Ai_Assistant";
     public const string AiYou = "Ai_You";

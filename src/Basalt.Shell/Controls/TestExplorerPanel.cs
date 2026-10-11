@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Basalt.Core.Localization;
 using Basalt.Core.Services;
 
@@ -33,6 +35,28 @@ public sealed class TestNode
     public TestOutcome Outcome { get; set; } = TestOutcome.NotRun;
 
     public TestResult? Result { get; set; }
+
+    /// <summary>
+    /// Whether the search and toggles leave this node visible. Set by
+    /// <see cref="TestFilter.Apply"/>; a node is shown when a test under it is.
+    /// </summary>
+    public bool IsShown { get; set; } = true;
+
+    /// <summary>
+    /// Whether the user has opened this container. Kept across redraws, and
+    /// untouched by a search, so clearing the search puts back what the user
+    /// left.
+    /// </summary>
+    public bool IsExpanded { get; set; }
+
+    /// <summary>
+    /// Whether the tree shows this container open right now: while a search is
+    /// active, when it holds a match; otherwise as the user left it.
+    /// </summary>
+    public bool IsOpen { get; set; }
+
+    /// <summary>The children the tree draws: the ones the filter leaves visible.</summary>
+    public IEnumerable<TestNode> ShownChildren => Children.Where(c => c.IsShown);
 
     /// <summary>Every test at or below this node.</summary>
     public IEnumerable<TestNode> Leaves =>
@@ -81,13 +105,44 @@ public sealed class TestExplorerPanel : UserControl
     private readonly TextBox _details;
     private readonly Button _runAll;
     private readonly Button _runFailed;
+    private readonly Button _runSelected;
     private readonly EmptyState _empty;
+    private readonly TextBox _search;
+    private readonly ToggleButton _showPassed;
+    private readonly ToggleButton _showFailed;
+    private readonly ToggleButton _showNotRun;
+    private readonly ToggleButton _showSkipped;
+    private readonly DispatcherTimer _searchDelay;
+
+    /// <summary>The rows created since the last redraw, read by <see cref="RememberExpansion"/>.</summary>
+    private readonly HashSet<TreeViewItem> _preparedRows = [];
+
+    /// <summary>How long typing must pause before the search applies.</summary>
+    private static readonly TimeSpan DefaultSearchDelay = TimeSpan.FromMilliseconds(150);
 
     private IReadOnlyList<TestCase> _tests = [];
+    private List<TestNode> _roots = [];
+    private TestFilter _filter = TestFilter.None;
     private readonly Dictionary<string, TestNode> _byName = new(StringComparer.Ordinal);
 
-    public TestExplorerPanel()
+    public TestExplorerPanel() : this(DefaultSearchDelay)
     {
+    }
+
+    /// <summary>
+    /// Builds the panel with the given pause before a typed search applies.
+    /// </summary>
+    /// <remarks>
+    /// Re-filtering on every keystroke rebuilds the whole tree on the UI thread
+    /// once per letter. The pause lets a word land first, and each keystroke
+    /// restarts it. The delay is a parameter so a test can read a pending search
+    /// without waiting out the default.
+    /// </remarks>
+    internal TestExplorerPanel(TimeSpan searchDelay)
+    {
+        _searchDelay = new DispatcherTimer { Interval = searchDelay };
+        _searchDelay.Tick += (_, _) => FilterChanged();
+
         _summary = new TextBlock
         {
             Text = Localizer.Get(StringKeys.TestsNoneDiscovered),
@@ -102,8 +157,9 @@ public sealed class TestExplorerPanel : UserControl
         _runFailed = new Button { Content = Localizer.Get(StringKeys.TestsRunFailed), IsEnabled = false };
         _runFailed.Click += (_, _) => RunRequested?.Invoke(this, RunScope.Failed);
 
-        var runSelected = new Button { Content = Localizer.Get(StringKeys.TestsRunSelected) };
-        runSelected.Click += (_, _) => RunRequested?.Invoke(this, RunScope.Selected);
+        // Disabled while nothing visible is selected: with nothing to run it does nothing.
+        _runSelected = new Button { Content = Localizer.Get(StringKeys.TestsRunSelected), IsEnabled = false };
+        _runSelected.Click += (_, _) => RunRequested?.Invoke(this, RunScope.Selected);
 
         var debugSelected = new Button { Content = Localizer.Get(StringKeys.TestsDebug) };
         debugSelected.Click += (_, _) => DebugRequested?.Invoke(this, EventArgs.Empty);
@@ -116,7 +172,7 @@ public sealed class TestExplorerPanel : UserControl
         };
 
         buttons.Children.Add(_runAll);
-        buttons.Children.Add(runSelected);
+        buttons.Children.Add(_runSelected);
         buttons.Children.Add(_runFailed);
         buttons.Children.Add(debugSelected);
 
@@ -124,10 +180,15 @@ public sealed class TestExplorerPanel : UserControl
         {
             ItemTemplate = new FuncTreeDataTemplate<TestNode>(
                 (node, _) => BuildRow(node),
-                node => node?.Children ?? [])
+                node => node?.ShownChildren ?? [])
         };
 
-        _tree.SelectionChanged += (_, _) => ShowDetails(_tree.SelectedItem as TestNode);
+        _tree.ContainerPrepared += OpenPreparedRow;
+        _tree.SelectionChanged += (_, _) =>
+        {
+            ShowDetails(_tree.SelectedItem as TestNode);
+            UpdateRunSelected();
+        };
 
         _tree.DoubleTapped += (_, _) =>
         {
@@ -150,13 +211,38 @@ public sealed class TestExplorerPanel : UserControl
             IsVisible = false
         };
 
+        _search = new TextBox
+        {
+            PlaceholderText = Localizer.Get(StringKeys.TestsFilterWatermark),
+            FontSize = PanelMetrics.FontSize
+        };
+
+        _showPassed = OutcomeToggle(Localizer.Get(StringKeys.TestsFilterPassed));
+        _showFailed = OutcomeToggle(Localizer.Get(StringKeys.TestsFilterFailed));
+        _showNotRun = OutcomeToggle(Localizer.Get(StringKeys.TestsFilterNotRun));
+        _showSkipped = OutcomeToggle(Localizer.Get(StringKeys.TestsFilterSkipped));
+
+        // TextChanging, not TextChanged: TextChanged is raised after the next
+        // render, which would add a frame of lag before the pause even starts.
+        _search.TextChanging += (_, _) => RestartSearchDelay();
+
+        // A toggle is a click, not typing: it applies at once, to the search as it stands.
+        _showPassed.IsCheckedChanged += (_, _) => FilterChanged();
+        _showFailed.IsCheckedChanged += (_, _) => FilterChanged();
+        _showNotRun.IsCheckedChanged += (_, _) => FilterChanged();
+        _showSkipped.IsCheckedChanged += (_, _) => FilterChanged();
+
+        var filterRow = BuildFilterRow();
+
         var layout = new DockPanel();
 
         DockPanel.SetDock(buttons, Avalonia.Controls.Dock.Top);
+        DockPanel.SetDock(filterRow, Avalonia.Controls.Dock.Top);
         DockPanel.SetDock(_summary, Avalonia.Controls.Dock.Top);
         DockPanel.SetDock(_details, Avalonia.Controls.Dock.Bottom);
 
         layout.Children.Add(buttons);
+        layout.Children.Add(filterRow);
         layout.Children.Add(_summary);
         layout.Children.Add(_details);
         layout.Children.Add(_tree);
@@ -168,6 +254,45 @@ public sealed class TestExplorerPanel : UserControl
 
         Content = layout;
     }
+
+    /// <summary>
+    /// The search box, with the outcome toggles at its right end.
+    /// </summary>
+    /// <remarks>
+    /// Every keystroke and toggle rebuilds the tree from the controls' current
+    /// state, so the filter never holds a copy that could disagree with them.
+    /// </remarks>
+    private DockPanel BuildFilterRow()
+    {
+        var toggles = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Spacing.Tight
+        };
+
+        toggles.Children.Add(_showPassed);
+        toggles.Children.Add(_showFailed);
+        toggles.Children.Add(_showNotRun);
+        toggles.Children.Add(_showSkipped);
+
+        DockPanel.SetDock(toggles, Avalonia.Controls.Dock.Right);
+
+        var row = new DockPanel
+        {
+            Margin = new Thickness(Spacing.Small, Spacing.Tight)
+        };
+
+        row.Children.Add(toggles);
+        row.Children.Add(_search);
+
+        return row;
+    }
+
+    private static ToggleButton OutcomeToggle(string text) => new()
+    {
+        Content = text,
+        FontSize = PanelMetrics.SecondaryFontSize
+    };
 
     /// <summary>Which tests the user asked to run.</summary>
     public enum RunScope { All, Selected, Failed }
@@ -196,9 +321,9 @@ public sealed class TestExplorerPanel : UserControl
     /// </summary>
     private void BuildContextMenu()
     {
-        bool OneTest() => _tree.SelectedItem is TestNode { Test: not null };
-        bool AnySelection() => _tree.SelectedItem is TestNode;
-        bool Failed() => _tree.SelectedItem is TestNode { Result.Outcome: TestOutcome.Failed };
+        bool OneTest() => SelectedNode is { Test: not null };
+        bool AnySelection() => SelectedNode is not null;
+        bool Failed() => SelectedNode is { Result.Outcome: TestOutcome.Failed };
 
         void Choose(TestCommand command) => CommandChosen?.Invoke(this, command);
 
@@ -219,35 +344,53 @@ public sealed class TestExplorerPanel : UserControl
         ]);
     }
 
-    /// <summary>The test the menu applies to, or null when a class is selected.</summary>
-    public TestCase? SelectedTest => (_tree.SelectedItem as TestNode)?.Test;
+    /// <summary>
+    /// The node the user has selected, unless the search now hides it.
+    /// </summary>
+    /// <remarks>
+    /// Every command reads the selection through here, so a hidden selection
+    /// is no selection for the menu, the Run buttons and Copy or Open alike.
+    /// Otherwise Copy Name could act on a test the user cannot see.
+    /// </remarks>
+    private TestNode? SelectedNode => _tree.SelectedItem is TestNode { IsShown: true } node ? node : null;
 
-    /// <summary>What the selected test reported, when it has run.</summary>
-    public TestResult? SelectedResult => (_tree.SelectedItem as TestNode)?.Result;
+    /// <summary>The test the menu applies to, or null when a class is selected or hidden.</summary>
+    public TestCase? SelectedTest => SelectedNode?.Test;
 
-    internal IReadOnlyList<TestNode> Roots =>
-        (_tree.ItemsSource as IEnumerable<TestNode>)?.ToList() ?? [];
+    /// <summary>What the selected test reported, when it has run and is shown.</summary>
+    public TestResult? SelectedResult => SelectedNode?.Result;
+
+    /// <summary>Every project in the tree, whether the filter shows it or not.</summary>
+    internal IReadOnlyList<TestNode> Roots => _roots;
 
     internal string Summary => _summary.Text ?? "";
 
     internal string Details => _details.Text ?? "";
 
-    /// <summary>The tests the user has selected, or all of them when none is.</summary>
+    /// <summary>
+    /// The visible tests under the selected node: none when nothing is selected.
+    /// </summary>
+    /// <remarks>
+    /// "Run Selected" runs what the user picked and nothing else. Running
+    /// everything when nothing is picked would be a second meaning of the same
+    /// button, and "Run All" is the command for everything.
+    /// </remarks>
     public IReadOnlyList<TestCase> SelectedTests
     {
         get
         {
-            if (_tree.SelectedItem is not TestNode node) return _tests;
+            if (SelectedNode is not { } node) return [];
 
-            return [.. node.Leaves.Select(l => l.Test!).Where(t => t is not null)];
+            return [.. node.Leaves.Where(l => l.IsShown).Select(l => l.Test!)];
         }
     }
 
     /// <summary>
-    /// Every test discovered, regardless of selection.
+    /// Every test discovered, regardless of selection or search.
     ///
     /// "Run All" means all: a selection in the tree must not narrow it to one
-    /// class or project the way <see cref="SelectedTests"/> does.
+    /// class or project the way <see cref="SelectedTests"/> does, and a search
+    /// that hides tests must not hide them from the run either.
     /// </summary>
     public IReadOnlyList<TestCase> AllTests => _tests;
 
@@ -260,7 +403,8 @@ public sealed class TestExplorerPanel : UserControl
     /// <summary>
     /// Builds the tree from the discovered tests.
     ///
-    /// Grouped by project, then by the class part of each name.
+    /// Grouped by project, then by the class part of each name. A search or
+    /// toggle the user has set stays in force across a rediscovery.
     /// </summary>
     public void Show(IReadOnlyList<TestCase> tests)
     {
@@ -292,8 +436,9 @@ public sealed class TestExplorerPanel : UserControl
             roots.Add(project);
         }
 
-        _tree.ItemsSource = roots;
+        _roots = roots;
 
+        RebuildTree();
         UpdateSummary();
     }
 
@@ -316,7 +461,7 @@ public sealed class TestExplorerPanel : UserControl
             node.Result = null;
         }
 
-        Refresh();
+        RebuildTree();
         _summary.Text = Localizer.Get(StringKeys.TestsRunning);
     }
 
@@ -336,12 +481,20 @@ public sealed class TestExplorerPanel : UserControl
         foreach (var node in _byName.Values.Where(n => n.Outcome == TestOutcome.Running))
             node.Outcome = TestOutcome.NotRun;
 
-        Refresh();
+        // The outcomes have changed, so a Failed toggle must now pick different tests.
+        RebuildTree();
         UpdateSummary();
 
         _runFailed.IsEnabled = FailedTests.Count > 0;
     }
 
+    /// <summary>
+    /// Totals for every test, then how many the search leaves showing.
+    /// </summary>
+    /// <remarks>
+    /// The totals never narrow: "Run All" and the counts are about the whole
+    /// suite, and the shown count is an extra fact beside them.
+    /// </remarks>
     private void UpdateSummary()
     {
         if (_tests.Count == 0)
@@ -357,12 +510,70 @@ public sealed class TestExplorerPanel : UserControl
         var failed = counted.Count(n => n.Outcome == TestOutcome.Failed);
         var skipped = counted.Count(n => n.Outcome == TestOutcome.Skipped);
 
-        _summary.Text = passed + failed + skipped == 0
+        var text = passed + failed + skipped == 0
             ? string.Format(Localizer.Get(StringKeys.TestsCount), _tests.Count)
             : string.Format(Localizer.Get(StringKeys.TestsSummary), passed, failed, skipped, _tests.Count);
 
+        if (_filter.IsActive)
+        {
+            var shown = counted.Count(n => n.IsShown);
+
+            text += " " + string.Format(Localizer.Get(StringKeys.TestsShown), shown);
+        }
+
+        _summary.Text = text;
+
         UpdateEmpty();
     }
+
+    /// <summary>
+    /// Starts, or restarts, the pause that ends a burst of typing.
+    /// </summary>
+    private void RestartSearchDelay()
+    {
+        _searchDelay.Stop();
+        _searchDelay.Start();
+    }
+
+    /// <summary>
+    /// Applies the search and toggles now: the pause ended, or a toggle was clicked.
+    /// </summary>
+    /// <remarks>
+    /// Reads the controls rather than a saved copy, so a toggle also applies a
+    /// search still waiting on its pause, and the pause is cancelled.
+    /// </remarks>
+    private void FilterChanged()
+    {
+        _searchDelay.Stop();
+        RebuildTree();
+        UpdateSummary();
+    }
+
+    /// <summary>
+    /// Reads the search box and toggles, applies them to every node, and redraws.
+    /// </summary>
+    private void RebuildTree()
+    {
+        // Before the filter reopens or closes anything: what the user did to the
+        // rows since the last redraw must be kept.
+        RememberExpansion();
+
+        _filter = CurrentFilter();
+        _filter.Apply(_roots);
+
+        Refresh();
+        UpdateRunSelected();
+    }
+
+    /// <summary>"Run Selected" is available only while a visible test or class is selected.</summary>
+    private void UpdateRunSelected() => _runSelected.IsEnabled = SelectedNode is not null;
+
+    private TestFilter CurrentFilter() => new(
+        _search.Text?.Trim() ?? "",
+        _showPassed.IsChecked == true,
+        _showFailed.IsChecked == true,
+        _showNotRun.IsChecked == true,
+        _showSkipped.IsChecked == true);
 
     private void UpdateEmpty()
     {
@@ -388,17 +599,57 @@ public sealed class TestExplorerPanel : UserControl
     }
 
     /// <summary>
-    /// Redraws the tree.
+    /// Redraws the tree with the projects the filter shows.
     ///
     /// The nodes are the same objects; reassigning the source is what makes
-    /// the view read their new state.
+    /// the view read their new state. The selection survives the reassignment
+    /// (a headless test keeps a selected test across a search), so the
+    /// filter needs no step of its own to keep it.
     /// </summary>
     private void Refresh()
     {
-        var roots = Roots;
-
         _tree.ItemsSource = null;
-        _tree.ItemsSource = roots;
+        _tree.ItemsSource = _roots.Where(r => r.IsShown).ToList();
+    }
+
+    /// <summary>
+    /// Opens each row as the tree shows its node, as the row is created.
+    /// </summary>
+    /// <remarks>
+    /// Rows are created lazily, so a flag set on a node only takes effect when
+    /// its row appears. A row also raises ContainerPrepared for its own
+    /// children, which is why the handler subscribes again for each row.
+    /// </remarks>
+    private void OpenPreparedRow(object? sender, ContainerPreparedEventArgs e)
+    {
+        if (e.Container is not TreeViewItem row) return;
+
+        row.IsExpanded = row.DataContext is TestNode { IsOpen: true };
+        _preparedRows.Add(row);
+
+        row.ContainerPrepared -= OpenPreparedRow;
+        row.ContainerPrepared += OpenPreparedRow;
+    }
+
+    /// <summary>
+    /// Records each container the user opened or closed, before the rows are redrawn.
+    /// </summary>
+    /// <remarks>
+    /// Read from the rows, not from their Expanded and Collapsed events: tearing
+    /// rows down raises Collapsed too, so an event-driven record closed the whole
+    /// tree on every redraw (ElementTreePanel found the same). A row that differs
+    /// from what the tree showed was changed by the user.
+    /// </remarks>
+    private void RememberExpansion()
+    {
+        foreach (var row in _preparedRows)
+        {
+            if (row.DataContext is not TestNode { Test: null } node) continue;
+
+            if (row.IsExpanded != node.IsOpen) node.IsExpanded = row.IsExpanded;
+        }
+
+        _preparedRows.Clear();
     }
 
     private static Control BuildRow(TestNode? node)
@@ -439,4 +690,30 @@ public sealed class TestExplorerPanel : UserControl
     };
 
     internal void SelectForTests(TestNode node) => _tree.SelectedItem = node;
+
+    /// <summary>Types in the search box and lets the pause run out. For tests.</summary>
+    internal void SearchForTests(string text)
+    {
+        TypeForTests(text);
+        FilterChanged();
+    }
+
+    /// <summary>Types in the search box without waiting out the pause. For tests.</summary>
+    internal void TypeForTests(string text) => _search.Text = text;
+
+    /// <summary>Whether a typed search is still waiting on its pause. For tests.</summary>
+    internal bool SearchPendingForTests => _searchDelay.IsEnabled;
+
+    /// <summary>Turns an outcome toggle on or off, as clicking it does. For tests.</summary>
+    internal void SetOutcomeToggleForTests(TestOutcome outcome, bool isOn) =>
+        OutcomeToggleFor(outcome).IsChecked = isOn;
+
+    private ToggleButton OutcomeToggleFor(TestOutcome outcome) => outcome switch
+    {
+        TestOutcome.Passed => _showPassed,
+        TestOutcome.Failed => _showFailed,
+        TestOutcome.NotRun => _showNotRun,
+        TestOutcome.Skipped => _showSkipped,
+        _ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, "The explorer has no toggle for this outcome.")
+    };
 }
