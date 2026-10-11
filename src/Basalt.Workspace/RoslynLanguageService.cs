@@ -2041,7 +2041,11 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
             metadataReferences: FrameworkReferences.Value)
             .WithCompilationOptions(ScratchOptions));
 
-        return workspace.AddDocument(project.Id, "Scratch.vb", SourceText.From(text));
+        // The same name as the in-project scratch above, so callers that drop
+        // answers about the generated view (VbHtmlNavigationProvider.IsGeneratedView)
+        // recognise this one too: named "Scratch.vb", F12 in a view opened before the
+        // solution finished loading jumped into a file that does not exist.
+        return workspace.AddDocument(project.Id, "__BasaltScratch.vb", SourceText.From(text));
     }
 
     private Document? GetDocument(string filePath)

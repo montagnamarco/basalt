@@ -27,6 +27,7 @@ public static class IdeCommands
     public const string EditCopy = "edit.copy";
     public const string EditPaste = "edit.paste";
     public const string EditFind = "edit.find";
+    public const string EditFindInFiles = "edit.findInFiles";
     public const string EditReplace = "edit.replace";
     public const string EditFormatDocument = "edit.formatDocument";
     public const string EditFormatSelection = "edit.formatSelection";
@@ -160,6 +161,9 @@ public static class IdeCommands
             new(EditCopy, "Copy", CommandCategory.Edit) { DefaultGesture = "Ctrl+C" },
             new(EditPaste, "Paste", CommandCategory.Edit) { DefaultGesture = "Ctrl+V" },
             new(EditFind, "Find", CommandCategory.Edit) { DefaultGesture = "Ctrl+F" },
+            // The Search panel over the whole solution: what Edit > Find shows in the
+            // menu, so the shortcut the menu names is the one that works.
+            new(EditFindInFiles, "Find in Files", CommandCategory.Edit) { DefaultGesture = "Ctrl+Shift+F" },
             new(EditReplace, "Replace", CommandCategory.Edit)
                 { DefaultGesture = code ? "Ctrl+H" : "Ctrl+H" },
             new(EditFormatDocument, "Format Document", CommandCategory.Edit)

@@ -191,6 +191,26 @@ public class HtmlTagScannerTests
 
         Assert.Single(tags);
     }
+
+    [Fact]
+    public void ReadsNoTagsFromInsideAScript()
+    {
+        var tags = HtmlTagScanner.Scan("<script>x = \"<div>\"</script>").ToList();
+
+        Assert.Equal(["script", "script"], tags.Select(t => t.Name).ToList());
+        Assert.False(tags[0].Closing);
+        Assert.True(tags[1].Closing);
+    }
+
+    [Fact]
+    public void ReportsTheTagsAfterAScriptWhereTheyAre()
+    {
+        // The lines inside the script are passed over, and still counted.
+        var tags = HtmlTagScanner.Scan("<script>\na\n</script>\n<p>").ToList();
+
+        Assert.Equal(4, tags[^1].Line);
+        Assert.Equal(1, tags[^1].Column);
+    }
 }
 
 /// <summary>Structural problems in markup.</summary>
@@ -251,6 +271,55 @@ public class HtmlDiagnosticProviderTests
         var diagnostics = await CheckAsync("<div>");
 
         Assert.All(diagnostics, d => Assert.Equal(DiagnosticSeverity.Warning, d.Severity));
+    }
+
+    [Fact]
+    public async Task AcceptsAComparisonInAScript()
+    {
+        // The "<" is a comparison, not a tag. Read as a tag, it runs on to the
+        // next ">", which is the end of the script, so the script looks unclosed.
+        Assert.Empty(await CheckAsync("<script>if (a < b) { x = 1; }</script>"));
+    }
+
+    [Fact]
+    public async Task AcceptsMarkupLikeAStringInAScript()
+    {
+        // "<div>" inside a string is text, so it is not an element left open.
+        Assert.Empty(await CheckAsync("<script>document.write(\"<div>\");</script>"));
+    }
+
+    [Fact]
+    public async Task AcceptsASelectorAndMarkupLikeStringInAStyle()
+    {
+        const string page = """
+            <html>
+            <head>
+            <style>
+            ul > li { color: red; }
+            p::before { content: "<em>"; }
+            </style>
+            </head>
+            </html>
+            """;
+
+        Assert.Empty(await CheckAsync(page));
+    }
+
+    [Fact]
+    public async Task EndsARawTextElementAtItsEndTagWhateverTheCase()
+    {
+        Assert.Empty(await CheckAsync("<SCRIPT>if (a<b) { x = \"<p>\"; }</Script>"));
+    }
+
+    [Fact]
+    public async Task StillReportsAnUnclosedTagOutsideAScript()
+    {
+        // The script's text is skipped; the markup around it is still checked,
+        // and the one problem left is the div, not anything inside the script.
+        var diagnostics = await CheckAsync("<div><script>document.write(\"<p>\");</script>");
+
+        var problem = Assert.Single(diagnostics);
+        Assert.Contains("'<div>' is never closed", problem.Message);
     }
 }
 

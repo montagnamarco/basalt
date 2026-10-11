@@ -4,6 +4,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Basalt.Core.Localization;
 using Basalt.Extensibility;
 
 namespace Basalt.Shell;
@@ -62,7 +63,7 @@ public sealed class GoToSymbolDialog : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         CanResize = false;
 
-        _query = new TextBox { PlaceholderText = "Type part of a name" };
+        _query = new TextBox { PlaceholderText = Localizer.Get(StringKeys.GoToSymbolPlaceholder) };
         _query.TextChanged += async (_, _) => await OnQueryChangedAsync();
         _query.KeyDown += OnQueryKeyDown;
 
@@ -192,8 +193,8 @@ public sealed class GoToSymbolDialog : Window
         if (shown.Count > 0) _list.SelectedIndex = 0;
 
         _summary.Text = matches.Count > shown.Count
-            ? $"{shown.Count} of {matches.Count} shown"
-            : $"{shown.Count} symbols";
+            ? Localizer.Get(StringKeys.GoToSymbolShownOf, shown.Count, matches.Count)
+            : Localizer.Get(StringKeys.GoToSymbolShown, shown.Count);
     }
 
     private void OnQueryKeyDown(object? sender, KeyEventArgs e)

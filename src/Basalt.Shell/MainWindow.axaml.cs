@@ -80,7 +80,7 @@ public partial class MainWindow : Window
     /// One registry behind the menus, the toolbar, the keyboard and the
     /// palette, so none of them can disagree about what a key does.
     /// </summary>
-    private readonly CommandRegistry _commands = LoadCommands();
+    private CommandRegistry _commands = LoadCommands(new SettingsStore().Load());
 
     /// <summary>
     /// Builds the registry from what the user chose.
@@ -88,17 +88,17 @@ public partial class MainWindow : Window
     /// The scheme decides the defaults; what the user assigned by hand is
     /// applied on top, so a later change to the defaults still reaches them.
     /// </summary>
-    private static CommandRegistry LoadCommands()
+    private static CommandRegistry LoadCommands(IdeSettings settings)
     {
-        var settings = new SettingsStore().Load().Keyboard;
+        var keyboard = settings.Keyboard;
 
-        var scheme = Enum.TryParse<KeyboardScheme>(settings.Scheme, out var chosen)
+        var scheme = Enum.TryParse<KeyboardScheme>(keyboard.Scheme, out var chosen)
             ? chosen
             : KeyboardScheme.Basalt;
 
         var registry = IdeCommands.CreateRegistry(scheme);
 
-        registry.ApplyCustomisations(settings.Shortcuts.ToDictionary(
+        registry.ApplyCustomisations(keyboard.Shortcuts.ToDictionary(
             pair => pair.Key,
             pair => pair.Value.Length == 0 ? null : pair.Value,
             StringComparer.Ordinal));
@@ -327,7 +327,7 @@ public partial class MainWindow : Window
         _contents[_factory.Search] = _search;
 
         _outline = new OutlinePanel();
-        _outline.SymbolActivated += (_, symbol) => GoToLine(symbol.Range.Start.Line);
+        _outline.SymbolActivated += (_, symbol) => JumpWithinDocument(symbol.Range.Start.Line);
         _contents[_factory.Outline] = _outline;
 
         _references = new ReferencesPanel();
@@ -841,14 +841,14 @@ public partial class MainWindow : Window
         // queued until after that has happened. The opened file is the active
         // document by then, so CurrentEditor() resolves to its editor rather
         // than whichever document happened to be first in the tab list.
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (CurrentEditor() is not { } editor) return;
+        // A single posted move was dropped whenever the editor was not realised
+        // yet, which left the caret on line 1: the helper retries until it is.
+        if (ViewModel.ActiveDocument is not { } target) return;
 
-            editor.CaretOffset = Math.Clamp(hit.Offset, 0, editor.Document.TextLength);
-            editor.ScrollToLine(hit.Line);
-            editor.Select(editor.CaretOffset, hit.Length);
-        }, DispatcherPriority.Background);
+        GoToLineWhenReady(target, hit.Line, hit.Column, landed: () =>
+        {
+            CurrentEditor()?.Select(hit.Offset, hit.Length);
+        });
     }
 
     /// <summary>Rebuilds the outline for the document now in front.</summary>
@@ -887,7 +887,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        await OpenAtAsync(found.FilePath, found.Line, found.Column);
+        await JumpToAsync(found.FilePath, found.Line, found.Column);
     }
 
     /// <summary>
@@ -1764,7 +1764,7 @@ public partial class MainWindow : Window
         if (CurrentEditor() is not { } editor) return;
 
         var line = await AskForNumberAsync(
-            "Go to Line", "Line number:", editor.TextArea.Caret.Line);
+            Localizer.Get(StringKeys.GoToLineTitle), Localizer.Get(StringKeys.GoToLinePrompt), editor.TextArea.Caret.Line);
 
         if (line is { } wanted) GoToLine(Math.Clamp(wanted, 1, editor.Document.LineCount));
     }
@@ -2503,7 +2503,10 @@ public partial class MainWindow : Window
     {
         public void AddCommand(string id, string title, Action invoke)
         {
-            window._commands.Register(new IdeCommand(id, title, CommandCategory.Tools));
+            var definition = new IdeCommand(id, title, CommandCategory.Tools);
+
+            window._pluginDefinitions[id] = definition;
+            window._commands.Register(definition);
             window._pluginCommands[id] = invoke;
         }
 
@@ -2519,6 +2522,12 @@ public partial class MainWindow : Window
 
     /// <summary>What the plugins added, so the commands can be run.</summary>
     private readonly Dictionary<string, Action> _pluginCommands = [];
+
+    /// <summary>
+    /// The commands the plugins named, kept apart from the registry: a rebuilt
+    /// registry is made from the settings, which know nothing of them.
+    /// </summary>
+    private readonly Dictionary<string, IdeCommand> _pluginDefinitions = [];
 
     /// <summary>The plugins found at startup, loaded or not.</summary>
     private readonly PluginLoader _plugins = new();
@@ -2749,6 +2758,15 @@ public partial class MainWindow : Window
     /// </summary>
     private void ApplySettings(IdeSettings settings)
     {
+        // The keyboard scheme decides the gestures the window answers to, so the
+        // registry is rebuilt rather than left as the window was opened with it.
+        _commands = LoadCommands(settings);
+
+        // The settings name only the built-in commands, so a plugin's would be
+        // lost here. Registering them again keeps them in the palette and under
+        // their shortcuts, which are applied by name and so apply to them too.
+        _commands.RegisterAll(_pluginDefinitions.Values);
+
         foreach (var editor in _contents.Values.OfType<CodeEditor>())
             editor.ApplySettings(settings);
 
@@ -2871,6 +2889,7 @@ public partial class MainWindow : Window
                 break;
 
             case IdeCommands.EditFind:
+            case IdeCommands.EditFindInFiles:
             case IdeCommands.EditReplace:
                 ShowSearch();
                 break;
@@ -2924,7 +2943,7 @@ public partial class MainWindow : Window
                 break;
 
             case IdeCommands.NavigateGoToFile:
-                await GoToSymbolInFileAsync();
+                await GoToFileAsync();
                 break;
 
             case IdeCommands.NavigateGoToSymbol:
@@ -3278,7 +3297,7 @@ public partial class MainWindow : Window
                     if (chosen.Command == OutlinePanel.OutlineCommand.GoTo
                         && chosen.Symbol is { } symbol)
                     {
-                        GoToLine(symbol.Range.Start.Line);
+                        JumpWithinDocument(symbol.Range.Start.Line);
                     }
                     else if (chosen.Command == OutlinePanel.OutlineCommand.CopyName
                              && chosen.Symbol is { } named)
@@ -4303,8 +4322,7 @@ public partial class MainWindow : Window
 
         if (chosen is not null)
         {
-            RecordCurrentPosition();
-            GoToLine(chosen.Line);
+            JumpWithinDocument(chosen.Line);
         }
     }
 
@@ -4326,14 +4344,17 @@ public partial class MainWindow : Window
         var dialog = new GoToSymbolDialog(
             async query =>
             {
-                var found = await ViewModel.SearchSymbolsAsync(query).ConfigureAwait(true);
+                // The names come from the language service: a location alone
+                // carries no name, and offering the file name in its place
+                // made every symbol search come up empty.
+                var found = await ViewModel.SearchSymbolDetailsAsync(query).ConfigureAwait(true);
 
                 return found
-                    .Select(l => new SymbolChoice(
-                        Path.GetFileNameWithoutExtension(l.FilePath),
-                        Basalt.Extensibility.SymbolKind.Unknown,
-                        l.FilePath,
-                        l.Range.Start.Line))
+                    .Select(symbol => new SymbolChoice(
+                        symbol.Name,
+                        symbol.Kind,
+                        symbol.Location.FilePath,
+                        symbol.Location.Range.Start.Line))
                     .ToList();
             },
             Localizer.Get(StringKeys.MenuNavigateGoToSolutionSymbol));
@@ -4342,15 +4363,13 @@ public partial class MainWindow : Window
 
         if (chosen is not null)
         {
-            RecordCurrentPosition();
-            await OpenAtAsync(chosen.FilePath, chosen.Line, 1);
+            await JumpToAsync(chosen.FilePath, chosen.Line, 1);
         }
     }
 
     private async Task OpenLocationAsync(Basalt.Extensibility.SourceLocation location)
     {
-        RecordCurrentPosition();
-        await OpenAtAsync(location.FilePath, location.Range.Start.Line, location.Range.Start.Column);
+        await JumpToAsync(location.FilePath, location.Range.Start.Line, location.Range.Start.Column);
     }
 
     /// <summary>Opens a file and puts the caret on a line.</summary>
@@ -4359,11 +4378,13 @@ public partial class MainWindow : Window
         if (!File.Exists(filePath)) return;
 
         await ViewModel.OpenFileAsync(filePath);
+        if (ViewModel.ActiveDocument is not { } opened) return;
 
         // The editor is created by the document change, so moving the caret
-        // waits until that has happened.
+        // waits until it exists: a single posted GoToLine ran before it did and
+        // left the caret on line 1 (Test Explorer, Object Browser, breakpoints).
         Dispatcher.UIThread.Post(
-            () => GoToLine(line, column), DispatcherPriority.Background);
+            () => GoToLineWhenReady(opened, line, column), DispatcherPriority.Background);
     }
 
     private void GoToLine(int line, int column = 1)
@@ -4508,10 +4529,10 @@ public partial class MainWindow : Window
         if (CurrentEditor() is not { } editor) return;
 
         var line = await AskForNumberAsync(
-            "Go to Line", "Line number:", editor.TextArea.Caret.Line);
+            Localizer.Get(StringKeys.GoToLineTitle), Localizer.Get(StringKeys.GoToLinePrompt), editor.TextArea.Caret.Line);
 
         if (line is { } wanted)
-            GoToLine(Math.Clamp(wanted, 1, editor.Document.LineCount));
+            JumpWithinDocument(Math.Clamp(wanted, 1, editor.Document.LineCount));
     }
 
     /// <summary>
@@ -4594,7 +4615,12 @@ public partial class MainWindow : Window
         if (point is not { } target) return;
 
         await ViewModel.OpenFileAsync(target.FilePath);
-        Dispatcher.UIThread.Post(() => GoToLine(target.Line), DispatcherPriority.Background);
+        if (ViewModel.ActiveDocument is not { } opened) return;
+
+        // A reopened tab gets its editor from a later layout pass, so the caret
+        // waits for it rather than being placed once and dropped.
+        Dispatcher.UIThread.Post(
+            () => PlaceCaretWhenReady(opened, target), DispatcherPriority.Background);
     }
 
     /// <summary>Brings up the search panel, ready for a term.</summary>
@@ -4758,6 +4784,13 @@ public partial class MainWindow : Window
     /// <summary>The editor a refactoring would act on.</summary>
     internal AvaloniaEdit.TextEditor? CurrentEditorForTests() => CurrentEditor();
 
+    /// <summary>Adds a command as a plugin would, through the same host.</summary>
+    internal void AddPluginCommandForTests(string id, string title, Action invoke) =>
+        new ShellPluginHost(this).AddCommand(id, title, invoke);
+
+    /// <summary>Applies settings as saving them in the Settings window does.</summary>
+    internal void ApplySettingsForTests(IdeSettings settings) => ApplySettings(settings);
+
     /// <summary>The code editor showing a file, for the tests.</summary>
     internal CodeEditor? CodeEditorForTests(string filePath)
     {
@@ -4895,9 +4928,12 @@ public partial class MainWindow : Window
                 Action: () => _ = FindReferencesAsync(),
                 Gesture: new KeyGesture(Key.F12, KeyModifiers.Shift)) { Icon = IconKind.FindReferences },
             MenuEntry.Separator,
+            new(Localizer.Get(StringKeys.MenuNavigateGoToFile),
+                Action: () => _ = GoToFileAsync(),
+                Gesture: new KeyGesture(Key.O, PlatformCommandModifier | KeyModifiers.Shift)),
+            // No gesture of its own: Ctrl+Shift+O is Go to File.
             new(Localizer.Get(StringKeys.MenuNavigateGoToFileSymbol),
-                Action: () => _ = GoToSymbolInFileAsync(),
-                Gesture: new KeyGesture(Key.O, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.GoToSymbol },
+                Action: () => _ = GoToSymbolInFileAsync()) { Icon = IconKind.GoToSymbol },
             new(Localizer.Get(StringKeys.MenuNavigateGoToSolutionSymbol),
                 Action: () => _ = GoToSymbolInSolutionAsync(),
                 Gesture: new KeyGesture(Key.T, PlatformCommandModifier)) { Icon = IconKind.GoToSymbol },
@@ -5206,14 +5242,17 @@ public partial class MainWindow : Window
     /// <summary>Creates a new Avalonia window in the selected project and opens it in the designer.</summary>
     private async Task ShowAddWindowDialogAsync()
     {
-        if (ViewModel.StartupProject is null)
+        // The window goes into the project the tree shows, the same one Project >
+        // Properties and References act on, falling back to the startup project.
+        var project = SelectedProjectPath();
+        if (project is null)
         {
             ViewModel.StatusMessage = Localizer.Get(StringKeys.StatusOpenProjectFirst);
             return;
         }
 
-        var directory = Path.GetDirectoryName(Path.GetFullPath(ViewModel.StartupProject))!;
-        var language = SourceLanguageExtensions.FromPath(ViewModel.StartupProject);
+        var directory = Path.GetDirectoryName(Path.GetFullPath(project))!;
+        var language = SourceLanguageExtensions.FromPath(project);
 
         var dialog = new NewWindowDialog(directory, language);
         var created = await dialog.ShowDialog<NewFormResult?>(this);
@@ -5223,7 +5262,7 @@ public partial class MainWindow : Window
         if (ViewModel.SolutionPath is not null) ViewModel.Explorer.Load(ViewModel.SolutionPath);
 
         await ViewModel.OpenFileAsync(created.XamlPath, inDesigner: true);
-        ViewModel.StatusMessage = $"Creata {Path.GetFileName(created.XamlPath)}";
+        ViewModel.StatusMessage = Localizer.Get(StringKeys.StatusWindowCreated, Path.GetFileName(created.XamlPath));
     }
 
     /// <summary>Creates a new solution with an initial project and opens it.</summary>

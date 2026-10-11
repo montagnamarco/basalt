@@ -1,3 +1,4 @@
+using System.Security;
 using System.Text;
 
 namespace Basalt.Vb6;
@@ -36,6 +37,7 @@ public static class ProjectConversion
         var target = Path.Combine(directory, project.Name + ".vbproj");
 
         File.WriteAllText(target, Markup(project, sources));
+        StartupModule.Write(project, directory);
 
         return new Result(target, sources, project.Objects);
     }
@@ -65,10 +67,37 @@ public static class ProjectConversion
         builder.AppendLine("    <OptionStrict>Off</OptionStrict>");
         builder.AppendLine("    <OptionExplicit>On</OptionExplicit>");
 
-        if (project.Startup is { Length: > 0 } startup)
-            builder.AppendLine($"    <StartupObject>{Identifier(project.Name)}.{startup}</StartupObject>");
+        // A form cannot be a startup object: it has no Sub Main. The module the
+        // converter writes beside the project stands for VB6's startup form, and
+        // is the entry point instead.
+        //
+        // Startup="Sub Main" writes no StartupObject at all. A StartupObject names
+        // a type, and "Sub Main" is a procedure: naming it as Project.Sub Main
+        // fails the build. Left unset, the compiler takes the one Sub Main in the
+        // project, whichever module it is in; with two, it reports the ambiguity.
+        if (StartupModule.StartsFromForm(project))
+            builder.AppendLine($"    <StartupObject>{Identifier(project.Name)}.{StartupModule.Name}</StartupObject>");
 
         builder.AppendLine("  </PropertyGroup>");
+        builder.AppendLine();
+
+        // The forms are written against the runtime and compiled by the
+        // generator, and neither is on NuGet: both come from the sources, the
+        // same way the Razor template reaches its generator.
+        builder.AppendLine("  <!--");
+        builder.AppendLine("    The runtime the forms are written against, and the generator that");
+        builder.AppendLine("    writes them. Point BasaltVb6Path at the src folder of Basalt if this");
+        builder.AppendLine("    project is moved; an empty path is reported by the build.");
+        builder.AppendLine("  -->");
+        builder.AppendLine("  <PropertyGroup>");
+        builder.AppendLine($"    <BasaltVb6Path>{SecurityElement.Escape(BasaltSourceFolder() ?? "")}</BasaltVb6Path>");
+        builder.AppendLine("  </PropertyGroup>");
+        builder.AppendLine();
+        builder.AppendLine("  <ItemGroup>");
+        builder.AppendLine("    <ProjectReference Include=\"$(BasaltVb6Path)/Basalt.Vb6/Basalt.Vb6.csproj\" />");
+        builder.AppendLine("    <ProjectReference Include=\"$(BasaltVb6Path)/Basalt.Vb6.Generator/Basalt.Vb6.Generator.csproj\"");
+        builder.AppendLine("                      OutputItemType=\"Analyzer\" ReferenceOutputAssembly=\"false\" />");
+        builder.AppendLine("  </ItemGroup>");
         builder.AppendLine();
         builder.AppendLine("  <ItemGroup>");
 
@@ -96,6 +125,26 @@ public static class ProjectConversion
         builder.AppendLine("</Project>");
 
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// The src folder that holds Basalt.Vb6 and its generator, found from where
+    /// this build runs. Null when the build has no sources (an installed IDE),
+    /// and the converted project then names the empty path in its build error.
+    /// </summary>
+    private static string? BasaltSourceFolder()
+    {
+        var directory = AppContext.BaseDirectory;
+
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory, "src", "Basalt.Vb6", "Basalt.Vb6.csproj")))
+                return Path.Combine(directory, "src");
+
+            directory = Path.GetDirectoryName(directory);
+        }
+
+        return null;
     }
 
     /// <summary>A project name as a namespace.</summary>

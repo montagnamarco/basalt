@@ -56,6 +56,17 @@
   <data name="Menu_Navigate_FindReferences" xml:space="preserve"><value>Find All References</value></data>
   <data name="Menu_Navigate_GoToFileSymbol" xml:space="preserve"><value>Go to Symbol in File…</value></data>
   <data name="Menu_Navigate_GoToSolutionSymbol" xml:space="preserve"><value>Go to Symbol in Solution…</value></data>
+  <data name="Menu_Navigate_GoToFile" xml:space="preserve"><value>Go to File…</value></data>
+  <data name="GoToFile_Placeholder" xml:space="preserve"><value>Type part of a file name</value></data>
+  <data name="GoToSymbol_Placeholder" xml:space="preserve"><value>Type part of a name</value></data>
+  <data name="GoToSymbol_Shown" xml:space="preserve"><value>{0} symbols</value></data>
+  <data name="GoToSymbol_ShownOf" xml:space="preserve"><value>{0} of {1} shown</value></data>
+  <data name="GoToFile_Shown" xml:space="preserve"><value>{0} files</value></data>
+  <data name="GoToFile_ShownOf" xml:space="preserve"><value>{0} of {1} shown</value></data>
+  <data name="CommandPalette_Title" xml:space="preserve"><value>Command Palette</value></data>
+  <data name="CommandPalette_Placeholder" xml:space="preserve"><value>Type a command…</value></data>
+  <data name="GoToLine_Title" xml:space="preserve"><value>Go to Line</value></data>
+  <data name="GoToLine_Prompt" xml:space="preserve"><value>Line number:</value></data>
   <data name="Menu_Navigate_Back" xml:space="preserve"><value>Navigate Backward</value></data>
   <data name="Menu_Navigate_Forward" xml:space="preserve"><value>Navigate Forward</value></data>
   <data name="Menu_View_ResetLayout" xml:space="preserve"><value>Reset Layout</value></data>

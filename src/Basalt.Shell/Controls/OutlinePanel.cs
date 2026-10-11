@@ -38,6 +38,15 @@ public sealed class OutlinePanel : UserControl
                 SymbolActivated?.Invoke(this, symbol);
         };
 
+        // A double-click on the member that is already selected changes no
+        // selection, so the selection handler above never runs for it. The
+        // member must still be reached: the caret may have moved away since.
+        _tree.DoubleTapped += (_, _) =>
+        {
+            if (_tree.SelectedItem is DocumentSymbol symbol)
+                SymbolActivated?.Invoke(this, symbol);
+        };
+
         BuildContextMenu();
 
         Content = _empty;

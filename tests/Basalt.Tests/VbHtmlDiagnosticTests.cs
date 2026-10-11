@@ -65,6 +65,21 @@ public class VbHtmlDiagnosticProviderTests
     }
 
     [Fact]
+    public async Task ReadsNoMarkupInsideAScriptInTheView()
+    {
+        // The markup half is HTML, so the script rules apply to it too.
+        const string view = """
+            @Code
+                Dim name = "world"
+            End Code
+            <script>if (a < b) { x = "<div>"; }</script>
+            <p>Hello @name</p>
+            """;
+
+        Assert.Empty(await CheckAsync(view));
+    }
+
+    [Fact]
     public async Task IsReachedThroughTheLanguageRegistry()
     {
         // Registered like any other language: the shell asks the registry and

@@ -1,5 +1,7 @@
 using System.Xml.Linq;
+using Basalt.Core.Platform;
 using Basalt.Vb6;
+using Basalt.Workspace;
 
 namespace Basalt.Tests;
 
@@ -202,11 +204,179 @@ public class Vb6FormTests
             // written against it assigns freely between types: left on,
             // nothing would compile at all.
             Assert.Contains("<OptionStrict>Off</OptionStrict>", markup);
-            Assert.Contains("Anagrafica.Form1", markup);
+            // A form cannot be the startup object: the module stands in for it.
+            Assert.Contains("Anagrafica.Vb6Startup", markup);
 
             // Cliente.cls is listed by the project and not on disk, so it is
             // left out rather than named in a project that will not restore.
             Assert.DoesNotContain("Cliente.cls", markup);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <remarks>
+    /// Red-proof: with the StartupObject line reverted to the form's own name
+    /// (<c>Anagrafica.Form1</c>, the line before this change), this test and
+    /// the VisualBasic6 row of TemplateBuildTests both failed. The build said
+    /// BC30420: 'Sub Main' was not found in 'TplVisualBasic6.Form1'.
+    /// </remarks>
+    [Fact]
+    public void AFormStartupGetsAGeneratedStartupModule()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "Anagrafica.vbp"), Project);
+            File.WriteAllText(Path.Combine(directory, "Form1.frm"), Form);
+
+            var result = ProjectConversion.Convert(Path.Combine(directory, "Anagrafica.vbp"));
+            var markup = File.ReadAllText(result.ProjectPath);
+
+            // A form has no Sub Main, so the project starts from the module
+            // that stands for VB6's startup form, not from the form itself.
+            Assert.Contains("<StartupObject>Anagrafica.Vb6Startup</StartupObject>", markup);
+            Assert.DoesNotContain("<StartupObject>Anagrafica.Form1</StartupObject>", markup);
+
+            var module = File.ReadAllText(Path.Combine(directory, "Vb6Startup.vb"));
+
+            Assert.Contains("Module Vb6Startup", module);
+            Assert.Contains("Public Sub Main(args As String())", module);
+            Assert.Contains("Vb6Application.Run(Of Form1)(Function() New Form1(), args)", module);
+
+            // Readable VB that says what it stands for, not just what it does.
+            Assert.Contains("stands for that startup form", module);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void AConvertedProjectReferencesTheRuntimeAndItsGenerator()
+    {
+        // Neither is on NuGet, so the converted project names them the way the
+        // Razor template does. Without them the form is not compiled at all and
+        // the startup module names a type that does not exist.
+        var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "Anagrafica.vbp"), Project);
+            File.WriteAllText(Path.Combine(directory, "Form1.frm"), Form);
+
+            var markup = File.ReadAllText(
+                ProjectConversion.Convert(Path.Combine(directory, "Anagrafica.vbp")).ProjectPath);
+
+            Assert.Contains("ProjectReference Include=\"$(BasaltVb6Path)/Basalt.Vb6/Basalt.Vb6.csproj\"", markup);
+            Assert.Contains("Basalt.Vb6.Generator/Basalt.Vb6.Generator.csproj", markup);
+            Assert.Contains("OutputItemType=\"Analyzer\"", markup);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ASubMainStartupKeepsTheProjectsOwnEntryPoint()
+    {
+        // Startup="Sub Main" names a procedure the project already has. No
+        // module is generated for it, and a module an earlier conversion wrote
+        // is removed, because it would be a second entry point.
+        var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "Form1.frm"), Form);
+
+            var vbp = Project.Replace("Startup=\"Form1\"", "Startup=\"Sub Main\"");
+            File.WriteAllText(Path.Combine(directory, "Anagrafica.vbp"), vbp);
+
+            var target = Path.Combine(directory, "Anagrafica.vbp");
+            var markup = File.ReadAllText(ProjectConversion.Convert(target).ProjectPath);
+
+            Assert.DoesNotContain("Vb6Startup", markup);
+            Assert.False(File.Exists(Path.Combine(directory, "Vb6Startup.vb")));
+
+            // Sub Main is a procedure, not a type, so it is never a StartupObject:
+            // the compiler finds the one the project declares.
+            Assert.DoesNotContain("StartupObject", markup);
+
+            // A module from an earlier conversion, when the .vbp has since
+            // changed to Sub Main, goes with it.
+            File.WriteAllText(Path.Combine(directory, "Vb6Startup.vb"), StartupModule.Text("Form1"));
+
+            ProjectConversion.Convert(target);
+
+            Assert.False(File.Exists(Path.Combine(directory, "Vb6Startup.vb")));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>A project whose startup is the Sub Main in one of its modules.</summary>
+    private const string SubMainProject = """
+        Type=Exe
+        Module=Module1; Module1.bas
+        Startup="Sub Main"
+        Name="SubMainApp"
+        MajorVer=1
+        MinorVer=0
+        RevisionVer=0
+        """;
+
+    private const string SubMainModule = """
+        Attribute VB_Name = "Module1"
+        Option Explicit
+
+        Public Sub Main()
+            Debug.Print "started"
+        End Sub
+        """;
+
+    /// <remarks>
+    /// Red-proof: with the StartupObject written as the procedure
+    /// (<c>SubMainApp.Sub Main</c>, the line before this change), the build
+    /// failed with <c>BC30420: 'Sub Main' was not found in 'SubMainApp.Sub Main'</c>,
+    /// and <see cref="ASubMainStartupKeepsTheProjectsOwnEntryPoint"/> failed on
+    /// the StartupObject line it now asserts is absent.
+    /// </remarks>
+    [Fact]
+    public async Task ASubMainProjectBuildsWithTheSubMainItDeclares()
+    {
+        Assert.SkipUnless(
+            BasaltSourceRoot.TryFind() is not null,
+            "The Basalt.Vb6 sources were not found (set BASALT_FORMS_PATH or run from the repository).");
+
+        var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "SubMainApp.vbp"), SubMainProject);
+            File.WriteAllText(Path.Combine(directory, "Module1.bas"), SubMainModule);
+
+            var projectPath = ProjectConversion.Convert(Path.Combine(directory, "SubMainApp.vbp")).ProjectPath;
+
+            var build = await new MsBuildBuildService().BuildAsync(
+                projectPath, ct: TestContext.Current.CancellationToken);
+
+            Assert.True(build.Succeeded,
+                string.Join("\n", build.Diagnostics.Select(d => d.ToString())));
+
+            // A build that "succeeds" without an assembly would not run.
+            Assert.True(File.Exists(build.OutputAssemblyPath),
+                $"no assembly was produced: {build.OutputAssemblyPath}");
         }
         finally
         {

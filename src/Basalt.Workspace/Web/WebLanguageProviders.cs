@@ -188,6 +188,13 @@ public readonly record struct HtmlTag(
 /// </summary>
 public static class HtmlTagScanner
 {
+    /// <summary>
+    /// Elements whose content is raw text, not markup. The HTML specification
+    /// reads everything up to the end tag as text, so "a &lt; b" in a script is
+    /// a comparison and "&lt;div&gt;" in a style's string is not an element.
+    /// </summary>
+    private static readonly string[] RawTextElements = ["script", "style"];
+
     public static IEnumerable<HtmlTag> Scan(string text)
     {
         var line = 1;
@@ -232,6 +239,7 @@ public static class HtmlTagScanner
             if (end < 0) yield break;
 
             var inner = text[(i + 1)..end];
+            string? rawTextElement = null;
 
             if (inner.Length > 0)
             {
@@ -243,7 +251,13 @@ public static class HtmlTagScanner
                 if (space >= 0) name = name[..space];
 
                 if (name.Length > 0 && (char.IsLetter(name[0])))
+                {
                     yield return new HtmlTag(name, closing, selfClosing, line, column);
+
+                    if (!closing && !selfClosing)
+                        rawTextElement = RawTextElements.FirstOrDefault(
+                            raw => raw.Equals(name, StringComparison.OrdinalIgnoreCase));
+                }
             }
 
             // Line and column must follow the text skipped over.
@@ -254,6 +268,46 @@ public static class HtmlTagScanner
             }
 
             i = end;
+
+            if (rawTextElement is null) continue;
+
+            // The text is skipped whole, and counted for line and column, so
+            // that the tags after it are still reported where they are. An
+            // unclosed script runs to the end of the document, as it does in a
+            // browser; its opening tag is then reported as never closed.
+            var close = FindEndTag(text, end + 1, rawTextElement);
+            var stop = close < 0 ? text.Length : close;
+
+            for (var j = end + 1; j < stop; j++)
+            {
+                if (text[j] == '\n') { line++; column = 1; }
+                else column++;
+            }
+
+            i = stop - 1;
+        }
+    }
+
+    /// <summary>
+    /// Where the end tag of a raw-text element begins, or -1 when the document
+    /// ends first. The name is matched without regard to case, and only as a
+    /// whole name: "&lt;/scripts&gt;" does not end a script.
+    /// </summary>
+    private static int FindEndTag(string text, int from, string element)
+    {
+        var search = from;
+
+        while (true)
+        {
+            var at = text.IndexOf($"</{element}", search, StringComparison.OrdinalIgnoreCase);
+            if (at < 0) return -1;
+
+            var after = at + 2 + element.Length;
+
+            if (after < text.Length && ((text[after] is '>' or '/') || char.IsWhiteSpace(text[after])))
+                return at;
+
+            search = after;
         }
     }
 }

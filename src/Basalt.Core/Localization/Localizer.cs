@@ -135,6 +135,17 @@ public static class StringKeys
     public const string MenuNavigateFindReferences = "Menu_Navigate_FindReferences";
     public const string MenuNavigateGoToFileSymbol = "Menu_Navigate_GoToFileSymbol";
     public const string MenuNavigateGoToSolutionSymbol = "Menu_Navigate_GoToSolutionSymbol";
+    public const string MenuNavigateGoToFile = "Menu_Navigate_GoToFile";
+    public const string GoToFilePlaceholder = "GoToFile_Placeholder";
+    public const string GoToSymbolPlaceholder = "GoToSymbol_Placeholder";
+    public const string GoToSymbolShown = "GoToSymbol_Shown";
+    public const string GoToSymbolShownOf = "GoToSymbol_ShownOf";
+    public const string GoToFileShown = "GoToFile_Shown";
+    public const string GoToFileShownOf = "GoToFile_ShownOf";
+    public const string CommandPaletteTitle = "CommandPalette_Title";
+    public const string CommandPalettePlaceholder = "CommandPalette_Placeholder";
+    public const string GoToLineTitle = "GoToLine_Title";
+    public const string GoToLinePrompt = "GoToLine_Prompt";
     public const string MenuNavigateBack = "Menu_Navigate_Back";
     public const string MenuNavigateForward = "Menu_Navigate_Forward";
     public const string MenuViewResetLayout = "Menu_View_ResetLayout";

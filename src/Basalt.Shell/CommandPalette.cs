@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Basalt.Core.Commands;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell;
 
@@ -29,7 +30,7 @@ public sealed class CommandPalette : Window
     {
         _registry = registry;
 
-        Title = "Command Palette";
+        Title = Localizer.Get(StringKeys.CommandPaletteTitle);
         Width = 620;
         Height = 420;
 
@@ -44,7 +45,7 @@ public sealed class CommandPalette : Window
 
         _query = new TextBox
         {
-            PlaceholderText = "Type a command…",
+            PlaceholderText = Localizer.Get(StringKeys.CommandPalettePlaceholder),
             Margin = new Thickness(12, 12, 12, 8),
             FontSize = 14
         };

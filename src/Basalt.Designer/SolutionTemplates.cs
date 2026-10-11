@@ -590,19 +590,27 @@ public static partial class SolutionTemplates
     }
 
     /// <summary>
-    /// Writes a page-based web application.
-    ///
-    /// ASP.NET Core's Razor Pages cannot be used: the Razor generator emits
-    /// C# only, so the pages are .vbhtml templates compiled by our own
-    /// generator and served from mapped routes.
+    /// Writes a Razor Pages web application.
     /// </summary>
+    /// <remarks>
+    /// The page is a .vbhtml under Pages, marked @Page, with its PageModel
+    /// beside it. Razor Pages finds the page through AddVbViews, the one call
+    /// that makes .vbhtml views visible to ASP.NET Core, and maps it with
+    /// MapRazorPages, exactly as it maps a .cshtml page.
+    ///
+    /// The view is never instantiated here: a generated view is a class whose
+    /// Model is ReadOnly and which has no Render method, so driving it by hand
+    /// is not the integration, and the project did not build (BC30526,
+    /// BC30456) when it tried.
+    /// </remarks>
     private static async Task WriteRazorPagesAsync(
         string directory, string name, CancellationToken ct)
     {
-        var pages = Path.Combine(directory, "Views");
+        var pages = Path.Combine(directory, "Pages");
         Directory.CreateDirectory(pages);
 
         await File.WriteAllTextAsync(Path.Combine(pages, "Index.vbhtml"), $$"""
+            @Page
             @ModelType {{name}}.IndexModel
             <!DOCTYPE html>
             <html>
@@ -622,30 +630,46 @@ public static partial class SolutionTemplates
 
             """, ct).ConfigureAwait(false);
 
-        await File.WriteAllTextAsync(Path.Combine(directory, "Program.vb"), $$"""
-            Imports Microsoft.AspNetCore.Builder
-            Imports Microsoft.AspNetCore.Http
+        await File.WriteAllTextAsync(Path.Combine(pages, "IndexModel.vb"), $$"""
+            Imports Microsoft.AspNetCore.Mvc.RazorPages
 
             Namespace {{name}}
 
                 Public Class IndexModel
+                    Inherits PageModel
+
                     Public Property Title As String = "{{name}}"
                     Public Property Items As String() = {"first", "second", "third"}
+
+                    Public Sub OnGet()
+                    End Sub
+
                 End Class
+
+            End Namespace
+
+            """, ct).ConfigureAwait(false);
+
+        await File.WriteAllTextAsync(Path.Combine(directory, "Program.vb"), $$"""
+            Imports Microsoft.AspNetCore.Builder
+            Imports Microsoft.Extensions.DependencyInjection
+            Imports Basalt.Razor.Vb.AspNetCore
+
+            Namespace {{name}}
 
                 Module Program
 
                     Sub Main(args As String())
                         Dim builder = WebApplication.CreateBuilder(args)
+
+                        builder.Services.AddRazorPages()
+                        ' The single call that makes .vbhtml pages visible to ASP.NET Core.
+                        builder.Services.AddVbViews()
+
                         Dim app = builder.Build()
 
-                        app.MapGet("/", Function()
-                                            ' Fully qualified: "Index" alone is ambiguous
-                                            ' against ASP.NET Core's own members.
-                                            Dim view As New Global.Views.Index()
-                                            view.Model = New IndexModel()
-                                            Return Results.Content(view.Render(), "text/html")
-                                        End Function)
+                        app.UseStaticFiles()
+                        app.MapRazorPages()
 
                         app.Run()
                     End Sub
@@ -661,10 +685,12 @@ public static partial class SolutionTemplates
 
     /// <summary>
     /// Writes a web application with controllers and views.
-    ///
-    /// The controllers render .vbhtml templates directly, since MVC's view
-    /// engine only knows how to locate and compile C# Razor views.
     /// </summary>
+    /// <remarks>
+    /// The controller returns its view by name, as any MVC controller does:
+    /// AddVbViews lets MVC find Views/Home/Index.vbhtml beside a .cshtml one,
+    /// so the controller does not construct the view or call Render on it.
+    /// </remarks>
     private static async Task WriteMvcAsync(
         string directory, string name, CancellationToken ct)
     {
@@ -709,10 +735,7 @@ public static partial class SolutionTemplates
                     Inherits Controller
 
                     Public Function Index() As IActionResult
-                        Dim view As New Global.Views.Home.Index()
-                        view.Model = New HomeViewModel()
-
-                        Return Content(view.Render(), "text/html")
+                        Return View(New HomeViewModel())
                     End Function
 
                 End Class
@@ -724,6 +747,7 @@ public static partial class SolutionTemplates
         await File.WriteAllTextAsync(Path.Combine(directory, "Program.vb"), $$"""
             Imports Microsoft.AspNetCore.Builder
             Imports Microsoft.Extensions.DependencyInjection
+            Imports Basalt.Razor.Vb.AspNetCore
 
             Namespace {{name}}
 
@@ -731,7 +755,10 @@ public static partial class SolutionTemplates
 
                     Sub Main(args As String())
                         Dim builder = WebApplication.CreateBuilder(args)
-                        builder.Services.AddControllers()
+
+                        builder.Services.AddControllersWithViews()
+                        ' The single call that makes .vbhtml views visible to MVC.
+                        builder.Services.AddVbViews()
 
                         Dim app = builder.Build()
                         app.UseStaticFiles()
@@ -831,6 +858,14 @@ public static partial class SolutionTemplates
         // published to NuGet, so the generated project points at wherever this
         // IDE was installed. RazorVbPath is written into the project so the
         // paths stay in one place and are easy to retarget.
+        //
+        // AddVbViews lives in the AspNetCore package, which MVC and Razor Pages
+        // need to find the compiled views. Blazor has no such call: its
+        // components are mapped by MapRazorComponents.
+        var aspNetCore = template is ProjectTemplate.Blazor
+            ? ""
+            : """<ProjectReference Include="$(RazorVbPath)/Basalt.Razor.Vb.AspNetCore/Basalt.Razor.Vb.AspNetCore.csproj" />""";
+
         return $"""
 
           <!--
@@ -850,9 +885,11 @@ public static partial class SolutionTemplates
           <ItemGroup>
             <CompilerVisibleProperty Include="BasaltProjectDir" />
             <ProjectReference Include="$(RazorVbPath)/Basalt.Razor.Vb/Basalt.Razor.Vb.csproj" />
+            {aspNetCore}
             <ProjectReference Include="$(RazorVbPath)/Basalt.Razor.Vb.Generator/Basalt.Razor.Vb.Generator.csproj"
                               OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
             <AdditionalFiles Include="Views/**/*.vbhtml" />
+            <AdditionalFiles Include="Pages/**/*.vbhtml" />
 
             <!--
               Declared here rather than coming from the package's props: those
@@ -872,7 +909,7 @@ public static partial class SolutionTemplates
               never match, every view is reported outside the project
               (VBH103), and every component gets the wrong namespace.
             -->
-            <AdditionalFiles Update="Views/**/*.vbhtml;Components/**/*.vbrazor">
+            <AdditionalFiles Update="Views/**/*.vbhtml;Pages/**/*.vbhtml;Components/**/*.vbrazor">
               <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and !$([System.IO.Path]::IsPathRooted('%(Identity)'))">%(Identity)</BasaltRelativePath>
               <BasaltRelativePath Condition="'%(BasaltRelativePath)' == '' and $([System.IO.Path]::IsPathRooted('%(Identity)'))">$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), %(FullPath)))</BasaltRelativePath>
             </AdditionalFiles>

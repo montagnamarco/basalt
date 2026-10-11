@@ -190,6 +190,12 @@ public sealed partial class CodeEditor : UserControl
             _ => null
         };
 
+        // A language the extension list above does not name, such as
+        // QuickBASIC, colours itself: its provider declares the built-in
+        // definition it wants. Nothing asked the provider before, so a .bas
+        // file opened with no colours at all.
+        name ??= _shell.Languages.ForFile(_document.FilePath)?.Highlighting?.BuiltInDefinitionName;
+
         if (name is null) return;
 
         _editor.SyntaxHighlighting = AvaloniaEdit.Highlighting

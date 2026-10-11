@@ -221,10 +221,14 @@ public sealed class SearchEngine
 
         // Word boundaries only make sense next to word characters; adding them
         // around punctuation would match nothing.
+        // The boundaries go around the whole pattern, in a group. Beside only the
+        // first and last branch, "Greet|Shout" became \bGreet|Shout\b and matched
+        // inside "Greeting".
         if (options.WholeWord)
         {
-            if (body.Length > 0 && char.IsLetterOrDigit(term[0])) body = @"\b" + body;
-            if (body.Length > 0 && char.IsLetterOrDigit(term[^1])) body += @"\b";
+            var leading = body.Length > 0 && IsWordCharacter(term[0]) ? @"\b" : "";
+            var trailing = body.Length > 0 && IsWordCharacter(term[^1]) ? @"\b" : "";
+            body = leading + "(?:" + body + ")" + trailing;
         }
 
         var flags = RegexOptions.Multiline;
@@ -232,6 +236,8 @@ public sealed class SearchEngine
 
         return new Regex(body, flags, TimeSpan.FromSeconds(2));
     }
+
+    private static bool IsWordCharacter(char c) => char.IsLetterOrDigit(c) || c == '_';
 
     private static List<int> BuildLineIndex(string text)
     {

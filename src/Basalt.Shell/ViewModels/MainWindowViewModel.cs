@@ -1135,11 +1135,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         WithUpdatedDocumentAsync(filePath, text,
             () => _languageService.GetDocumentSymbolsAsync(filePath));
 
-    /// <summary>Where the symbol at a position is declared.</summary>
+    /// <summary>
+    /// Where the symbol at a position is declared. A Razor view's model member
+    /// goes to the .vb file declaring it, as the language that owns the file
+    /// says; Visual Basic is answered by the compiler.
+    /// </summary>
     public Task<(string FilePath, int Line, int Column)?> GoToDefinitionAsync(
         string filePath, string text, int position) =>
-        WithUpdatedDocumentAsync(filePath, text,
-            () => _languageService.GoToDefinitionAsync(filePath, position));
+        RoutedProviderFor(filePath) is { } provider
+            ? ProviderDefinitionAsync(provider, filePath, position, text)
+            : WithUpdatedDocumentAsync(filePath, text,
+                () => _languageService.GoToDefinitionAsync(filePath, position));
 
     /// <summary>Everywhere the symbol at a position is used.</summary>
     public Task<IReadOnlyList<Extensibility.SourceLocation>> FindReferencesAsync(
@@ -1150,6 +1156,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// <summary>Symbols across the solution matching a query.</summary>
     public Task<IReadOnlyList<Extensibility.SourceLocation>> SearchSymbolsAsync(string query) =>
         _languageService.SearchSymbolsAsync(query);
+
+    /// <summary>
+    /// The same search, with each symbol's name and kind, for a list that shows them.
+    /// </summary>
+    public Task<IReadOnlyList<RoslynLanguageService.FoundSymbol>> SearchSymbolDetailsAsync(string query) =>
+        _languageService.SearchSymbolDetailsAsync(query);
 
     /// <summary>
     /// Pushes the editor's current text to the language service before asking
@@ -1165,10 +1177,15 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         return await ask().ConfigureAwait(true);
     }
 
-    /// <summary>Completions for the editor, delegated to Roslyn.</summary>
+    /// <summary>
+    /// Completions for the editor: Roslyn for Visual Basic, the file's own
+    /// language for everything else.
+    /// </summary>
     public Task<IReadOnlyList<CompletionItem>> GetCompletionsAsync(
         string filePath, int offset, string? currentText = null, char? typed = null) =>
-        _languageService.GetCompletionsAsync(filePath, offset, currentText, typed: typed);
+        RoutedProviderFor(filePath) is { } provider
+            ? ProviderCompletionsAsync(provider, filePath, offset, currentText ?? TextOf(filePath))
+            : _languageService.GetCompletionsAsync(filePath, offset, currentText, typed: typed);
 
     /// <summary>Whether typing a character opens the list there, as Roslyn decides.</summary>
     public Task<bool> ShouldTriggerCompletionAsync(string filePath, int offset, string currentText, char typed) =>
@@ -1220,8 +1237,22 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         string filePath, int offset, string currentText) =>
         _languageService.GetSignatureHelpAsync(filePath, offset, currentText);
 
+    /// <summary>
+    /// Recomputes the problems of one document. A Razor view's problems come
+    /// from the Razor provider, already placed on the template; Visual Basic
+    /// keeps the compiler path it always had.
+    /// </summary>
     public async Task RefreshDiagnosticsAsync(EditorDocumentViewModel document)
     {
+        if (RoutedProviderFor(document.FilePath) is { } provider)
+        {
+            var found = await ProviderDiagnosticsAsync(provider, document.FilePath, document.Text)
+                .ConfigureAwait(true);
+
+            ReplaceDiagnosticsOf(document.FilePath, found);
+            return;
+        }
+
         await _languageService.UpdateDocumentAsync(document.FilePath, document.Text).ConfigureAwait(true);
         var diagnostics = await _languageService.GetDiagnosticsAsync(document.FilePath).ConfigureAwait(true);
 

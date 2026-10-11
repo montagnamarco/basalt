@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.VisualTree;
 using Basalt.Workspace.Projects;
 
 namespace Basalt.Shell;
@@ -282,7 +283,12 @@ public partial class ProjectPropertiesDialog : Window
 
         // Applied when the box loses focus, so a half-typed value is never
         // written to the project file.
-        box.LostFocus += (_, _) => apply(box.Text ?? "");
+        Action commit = () => apply(box.Text ?? "");
+        box.LostFocus += (_, _) => commit();
+
+        // Save commits every box too, whether or not it still holds the focus
+        // (Enter on the default button leaves the focus where it was).
+        box.Tag = commit;
 
         return Labelled(label, box, hint);
     }
@@ -354,6 +360,7 @@ public partial class ProjectPropertiesDialog : Window
             // Focus is moved first so an editor still holding a change applies
             // it before the file is written.
             SaveFocusedEditor();
+            CommitEditors();
 
             await _properties.SaveAsync();
             await _launch.SaveAsync();
@@ -377,7 +384,15 @@ public partial class ProjectPropertiesDialog : Window
         if (FocusManager?.GetFocusedElement() is Control focused)
             focused.Focus();
 
-        PageHost.Focus();
+        // PageHost is a ContentControl and cannot take focus; the category list can,
+        // and moving focus there is what raises LostFocus on the box.
+        this.FindControl<ListBox>("CategoryList")?.Focus();
+    }
+
+    private void CommitEditors()
+    {
+        foreach (var box in PageHost.GetVisualDescendants().OfType<TextBox>())
+            (box.Tag as Action)?.Invoke();
     }
 
     private void OnCancel(object? sender, RoutedEventArgs e) => Close(false);
