@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using AvaloniaEdit;
 using Basalt.Core.Localization;
 using Basalt.Data;
@@ -129,6 +130,19 @@ public sealed class DatabasePanel : UserControl, IDisposable
         split.Children.Add(new GridSplitter { Width = 4, [Grid.ColumnProperty] = 1 });
         split.Children.Add(right);
 
+        // Double-clicking a table reads its rows: the question a person asks of
+        // a table is usually "what is in it", and typing SELECT * FROM first is
+        // the step this skips.
+        _tables.DoubleTapped += (_, e) =>
+        {
+            // The row that was tapped, found from the element that took the
+            // tap: the selection is not a reliable stand-in for it.
+            var tapped = (e.Source as Visual)?.GetSelfAndVisualAncestors()
+                .OfType<TreeViewItem>().FirstOrDefault()?.DataContext as TableNode;
+
+            if ((tapped ?? _tables.SelectedItem as TableNode) is { } table) _ = ShowRowsOfAsync(table.Name);
+        };
+
         Content = split;
 
         ShowNothingOpen();
@@ -234,6 +248,19 @@ public sealed class DatabasePanel : UserControl, IDisposable
             _stop.IsVisible = false;
             _running = null;
         }
+    }
+
+    /// <summary>
+    /// Shows every row of a table, as a SELECT of it would, and leaves that
+    /// query in the box so it can be edited and run again.
+    /// </summary>
+    private Task ShowRowsOfAsync(string table)
+    {
+        // The name is quoted as an identifier, so a table with a space or a
+        // keyword for a name is read as that table and nothing else.
+        _query.Text = $"SELECT * FROM \"{table.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
+
+        return RunAsync();
     }
 
     /// <summary>Puts a result into the grid.</summary>
