@@ -103,6 +103,81 @@ public static class VbHtmlCodeRegions
         return at;
     }
 
+    /// <summary>
+    /// The extents of the Visual Basic half of a template: expressions, block
+    /// clauses, statement bodies and member blocks, as offsets into the text.
+    /// </summary>
+    /// <remarks>
+    /// What a markup check must not read as markup: inside a code block
+    /// <c>&lt;Parameter&gt;</c> is an attribute and <c>a &lt; b</c> a comparison,
+    /// and scanned as HTML they were reported as tags never closed. Taken from
+    /// the same parse tree <see cref="IsInCode"/> walks. The extents differ on purpose: here
+    /// an expression runs from "@" to the end of its own text (Html.Raw and Await wrappers
+    /// included) and clause lines to their end, which is what a markup scan must skip.
+    /// </remarks>
+    public static IReadOnlyList<(int Start, int Length)> CodeSpans(string text)
+    {
+        var spans = new List<(int Start, int Length)>();
+        Collect(VbHtmlParser.Parse(text).Nodes, text, spans);
+        return spans;
+    }
+
+    private static void Collect(
+        IReadOnlyList<VbHtmlNode> nodes, string text, List<(int Start, int Length)> spans)
+    {
+        foreach (var node in nodes)
+        {
+            switch (node)
+            {
+                case ExpressionNode expression:
+                    // From the "@" to the end of the expression's own text: for
+                    // @Html.Raw(…) and @Await the text starts after the wrapper,
+                    // so ExpressionPosition, not Position, is where it is measured
+                    // from; the member chain typed after it counts too.
+                    var end = EndOfChain(text, expression.ExpressionPosition + expression.Expression.Length);
+                    spans.Add((expression.Position, Math.Max(0, end - expression.Position)));
+                    break;
+
+                case StatementNode statement:
+                    var bodyAt = text.IndexOf(statement.Code, statement.Position, StringComparison.Ordinal);
+                    if (bodyAt >= 0) spans.Add((bodyAt, statement.Code.Length));
+                    break;
+
+                case BlockNode block:
+                    // The opening clause and every later one (ElseIf, Case Is < 5)
+                    // are Visual Basic to the end of their line.
+                    spans.Add(ToEndOfLine(text, block.Position));
+                    Collect(block.Body, text, spans);
+                    foreach (var clause in block.Clauses)
+                    {
+                        if (clause.Position >= 0) spans.Add(ToEndOfLine(text, clause.Position));
+                        Collect(clause.Body, text, spans);
+                    }
+                    break;
+
+                case DirectiveNode directive:
+                    // @Attribute <Authorize>, @Imports, @ModelType: one line each.
+                    spans.Add(ToEndOfLine(text, directive.Position));
+                    break;
+
+                case SectionNode section:
+                    Collect(section.Body, text, spans);
+                    break;
+
+                case FunctionsNode functions:
+                    spans.Add((functions.BodyPosition, functions.Code.Length));
+                    break;
+            }
+        }
+    }
+
+    private static (int Start, int Length) ToEndOfLine(string text, int start)
+    {
+        var end = text.IndexOf('\n', Math.Max(0, start));
+        if (end < 0) end = text.Length;
+        return (start, Math.Max(0, end - start));
+    }
+
     private static bool Covers(
         IReadOnlyList<VbHtmlNode> nodes, int position, string text)
     {

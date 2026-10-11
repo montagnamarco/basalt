@@ -88,7 +88,7 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
 
         // The markup checks apply too: an unclosed tag is worth reporting
         // whether or not the code around it parses.
-        diagnostics.AddRange(await _markup.GetDiagnosticsAsync(document, ct).ConfigureAwait(false));
+        diagnostics.AddRange(await _markup.GetDiagnosticsAsync(MarkupOnly(document), ct).ConfigureAwait(false));
 
         // What the compiler says about the code half, mapped back to the
         // template. Only where the structure held: compiling a template the
@@ -101,6 +101,45 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
         }
 
         return diagnostics;
+    }
+
+    /// <summary>
+    /// The template with its Visual Basic blanked out, for the markup check.
+    /// </summary>
+    /// <remarks>
+    /// Spaces keep every offset, line and column where they were, so what the
+    /// markup check reports still lands on the right character; only the code
+    /// it must not read as tags is gone. Without this, an attribute such as
+    /// &lt;Parameter&gt; in a component's code block was reported as an
+    /// element never closed.
+    /// </remarks>
+    private static LanguageDocument MarkupOnly(LanguageDocument document)
+    {
+        // A .vbpage is read by its own parser; the spans below are the .vbhtml one's.
+        if (TemplateGeneration.IsPage(document.FilePath)) return document;
+
+        IReadOnlyList<(int Start, int Length)> spans;
+        try
+        {
+            spans = VbHtmlCodeRegions.CodeSpans(document.Text);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The parser's own failure is reported above; the markup check
+            // then reads the text as it stands.
+            return document;
+        }
+
+        if (spans.Count == 0) return document;
+
+        var characters = document.Text.ToCharArray();
+        foreach (var (start, length) in spans)
+        {
+            for (var i = Math.Max(0, start); i < Math.Min(characters.Length, start + length); i++)
+                if (characters[i] is not ('\n' or '\r')) characters[i] = ' ';
+        }
+
+        return document with { Text = new string(characters) };
     }
 
     /// <summary>
