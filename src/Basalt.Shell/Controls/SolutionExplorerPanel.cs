@@ -222,7 +222,7 @@ public sealed class SolutionExplorerPanel : UserControl
     {
         Open, OpenInDesigner, ViewCode, Rename, Delete,
         NewFile, NewFolder, RevealInFinder, CopyPath, CopyRelativePath, Refresh,
-        Properties, References
+        Properties, References, AddNewItem
     }
 
     /// <summary>Raised when the user picks something from the menu.</summary>
@@ -272,6 +272,10 @@ public sealed class SolutionExplorerPanel : UserControl
             new(Localizer.Get(StringKeys.WinFormsDesignerViewCode), () => Choose(ExplorerCommand.ViewCode))
                 { IsAvailable = IsForm, Icon = IconKind.VisualBasicFile },
             MenuAction.Separator,
+            // Not the New icon: that one is New File's and New Solution's, and
+            // the menu tests keep an icon from standing for two unrelated commands.
+            new(Localizer.Get(StringKeys.ExplorerAddNewItem), () => Choose(ExplorerCommand.AddNewItem))
+                { Icon = IconKind.TextFile },
             new("New File…", () => Choose(ExplorerCommand.NewFile)) { Icon = IconKind.New },
             new("New Folder…", () => Choose(ExplorerCommand.NewFolder))
                 { Icon = IconKind.Folder },

@@ -155,6 +155,7 @@ public static class StringKeys
     public const string MenuProjectAddWindow = "Menu_Project_AddWindow";
     public const string MenuProjectReferences = "Menu_Project_References";
     public const string MenuProjectProperties = "Menu_Project_Properties";
+    public const string MenuProjectAddItem = "Menu_Project_AddItem";
 
     public const string ReferencesTitle = "References_Title";
     public const string ReferencesTabProjects = "References_Tab_Projects";
@@ -913,6 +914,7 @@ public static class StringKeys
     public const string ExplorerNameInvalid = "Explorer_NameInvalid";
     public const string ExplorerOperationFailed = "Explorer_OperationFailed";
     public const string ExplorerBlockedWhileDebugging = "Explorer_BlockedWhileDebugging";
+    public const string ExplorerAddNewItem = "Explorer_AddNewItem";
 
     // Save/Don't Save/Cancel, asked whenever a dirty document is about to be
     // closed: a tab's own close, Close All and friends, opening another
@@ -961,4 +963,18 @@ public static class StringKeys
     public const string NewWindowWindowTitlePlaceholder = "NewWindow_WindowTitlePlaceholder";
     public const string NewWindowNameRequired = "NewWindow_NameRequired";
     public const string NewWindowNameInvalid = "NewWindow_NameInvalid";
+
+    // Add New Item (Solution Explorer and Project), and the File > Open filter.
+    public const string AddItemTitle = "AddItem_Title";
+    public const string AddItemTemplates = "AddItem_Templates";
+    public const string AddItemName = "AddItem_Name";
+    public const string AddItemCreate = "AddItem_Create";
+    public const string AddItemNameInvalid = "AddItem_NameInvalid";
+    public const string AddItemClass = "AddItem_Class";
+    public const string AddItemModule = "AddItem_Module";
+    public const string AddItemInterface = "AddItem_Interface";
+    public const string AddItemWindowsForm = "AddItem_WindowsForm";
+    public const string AddItemUserControl = "AddItem_UserControl";
+    public const string AddItemEmptyFile = "AddItem_EmptyFile";
+    public const string OpenFilterSolutions = "Open_Filter_Solutions";
 }

@@ -2778,6 +2778,13 @@ public partial class MainWindow : Window
         // their shortcuts, which are applied by name and so apply to them too.
         _commands.RegisterAll(_pluginDefinitions.Values);
 
+        // The menus print the registry's gestures, so they are built again from
+        // the new one: otherwise a scheme change alters what the keys do while
+        // the menus go on showing the old shortcuts. Only once there is a view
+        // model to build them from; a settings push before the window is
+        // complete has nothing to refresh yet, and InstallMenu will read it.
+        if (DataContext is MainWindowViewModel) InstallMenu(ViewModel);
+
         foreach (var editor in _contents.Values.OfType<CodeEditor>())
             editor.ApplySettings(settings);
 
@@ -3359,6 +3366,10 @@ public partial class MainWindow : Window
 
             case SolutionExplorerPanel.ExplorerCommand.References when node is not null:
                 await ReferencesDialog.ShowForProjectAsync(this, ViewModel, node.Path);
+                break;
+
+            case SolutionExplorerPanel.ExplorerCommand.AddNewItem:
+                await AddNewItemAsync(DirectoryFor(node));
                 break;
 
             case SolutionExplorerPanel.ExplorerCommand.NewFile:
@@ -4868,10 +4879,10 @@ public partial class MainWindow : Window
         [
             new(Localizer.Get(StringKeys.MenuFileNewSolution),
                 Action: () => _ = ShowNewSolutionDialogAsync(),
-                Gesture: new KeyGesture(Key.N, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.New },
+                Gesture: Shortcut(IdeCommands.FileNewSolution)) { Icon = IconKind.New },
             new(Localizer.Get(StringKeys.MenuFileOpenSolution),
                 Action: () => _ = ShowOpenSolutionDialogAsync(),
-                Gesture: new KeyGesture(Key.O, PlatformCommandModifier)) { Icon = IconKind.Open },
+                Gesture: Shortcut(IdeCommands.FileOpenSolution)) { Icon = IconKind.Open },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuFileRecentSolutions),
                 Children: RecentEntries(isSolutions: true)) { Icon = IconKind.Solution },
@@ -4879,7 +4890,7 @@ public partial class MainWindow : Window
                 Children: RecentEntries(isSolutions: false)) { Icon = IconKind.History },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuFileSave), vm.SaveCommand,
-                Gesture: new KeyGesture(Key.S, PlatformCommandModifier)) { Icon = IconKind.Save },
+                Gesture: Shortcut(IdeCommands.FileSave)) { Icon = IconKind.Save },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuFileMakeExecutable),
                 Action: RunMakeExecutable) { Icon = IconKind.Publish },
@@ -4892,21 +4903,21 @@ public partial class MainWindow : Window
             // designer in front, or else to the code editor.
             new(Localizer.Get(StringKeys.MenuEditUndo),
                 Action: () => _ = RunCommandAsync(IdeCommands.EditUndo),
-                Gesture: new KeyGesture(Key.Z, PlatformCommandModifier)) { Icon = IconKind.Undo },
+                Gesture: Shortcut(IdeCommands.EditUndo)) { Icon = IconKind.Undo },
             new(Localizer.Get(StringKeys.MenuEditRedo),
                 Action: () => _ = RunCommandAsync(IdeCommands.EditRedo),
-                Gesture: new KeyGesture(Key.Z, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Redo },
+                Gesture: Shortcut(IdeCommands.EditRedo)) { Icon = IconKind.Redo },
             MenuEntry.Separator,
-            // Same shortcut Visual Studio and VS Code use for formatting.
+            // The registry's shortcut for the scheme in force, which is what the key handler answers to.
             // No icon: the only one that fit was the hammer that means Build,
             // and formatting is not building.
             new(Localizer.Get(StringKeys.MenuEditFormatDocument), vm.FormatDocumentCommand,
-                Gesture: new KeyGesture(Key.D, PlatformCommandModifier | KeyModifiers.Alt)),
+                Gesture: Shortcut(IdeCommands.EditFormatDocument)),
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuEditFind), Action: ShowSearch,
-                Gesture: new KeyGesture(Key.F, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Find },
+                Gesture: Shortcut(IdeCommands.EditFind)) { Icon = IconKind.Find },
             new(Localizer.Get(StringKeys.MenuEditReplace), Action: ShowSearch,
-                Gesture: new KeyGesture(Key.H, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Replace }
+                Gesture: Shortcut(IdeCommands.EditReplace)) { Icon = IconKind.Replace }
         ]),
         new(Localizer.Get(StringKeys.MenuView), Children:
         [
@@ -4947,7 +4958,7 @@ public partial class MainWindow : Window
                 Action: () => ShowTool(_factory.Immediate)) { Icon = IconKind.Immediate },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuViewNewTerminal), Action: OpenNewTerminal,
-                Gesture: new KeyGesture(Key.OemBackslash, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Terminal },
+                Gesture: Shortcut(IdeCommands.ViewTerminal)) { Icon = IconKind.Terminal },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuViewResetLayout), Action: ResetLayout) { Icon = IconKind.Layout }
         ]),
@@ -4955,32 +4966,34 @@ public partial class MainWindow : Window
         [
             new(Localizer.Get(StringKeys.MenuNavigateGoToDefinition),
                 Action: () => _ = GoToDefinitionAsync(),
-                Gesture: new KeyGesture(Key.F12)) { Icon = IconKind.GoToDefinition },
+                Gesture: Shortcut(IdeCommands.NavigateGoToDefinition)) { Icon = IconKind.GoToDefinition },
             new(Localizer.Get(StringKeys.MenuNavigateFindReferences),
                 Action: () => _ = FindReferencesAsync(),
-                Gesture: new KeyGesture(Key.F12, KeyModifiers.Shift)) { Icon = IconKind.FindReferences },
+                Gesture: Shortcut(IdeCommands.NavigateFindReferences)) { Icon = IconKind.FindReferences },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuNavigateGoToFile),
                 Action: () => _ = GoToFileAsync(),
-                Gesture: new KeyGesture(Key.O, PlatformCommandModifier | KeyModifiers.Shift)),
+                Gesture: Shortcut(IdeCommands.NavigateGoToFile)),
             // No gesture of its own: Ctrl+Shift+O is Go to File.
             new(Localizer.Get(StringKeys.MenuNavigateGoToFileSymbol),
                 Action: () => _ = GoToSymbolInFileAsync()) { Icon = IconKind.GoToSymbol },
             new(Localizer.Get(StringKeys.MenuNavigateGoToSolutionSymbol),
                 Action: () => _ = GoToSymbolInSolutionAsync(),
-                Gesture: new KeyGesture(Key.T, PlatformCommandModifier)) { Icon = IconKind.GoToSymbol },
+                Gesture: Shortcut(IdeCommands.NavigateGoToSymbol)) { Icon = IconKind.GoToSymbol },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuNavigateBack),
                 Action: () => _ = NavigateAsync(ViewModel.History.GoBack()),
-                Gesture: new KeyGesture(Key.OemMinus, PlatformCommandModifier)) { Icon = IconKind.Back },
+                Gesture: Shortcut(IdeCommands.NavigateBack)) { Icon = IconKind.Back },
             new(Localizer.Get(StringKeys.MenuNavigateForward),
                 Action: () => _ = NavigateAsync(ViewModel.History.GoForward()),
-                Gesture: new KeyGesture(Key.OemMinus, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Forward }
+                Gesture: Shortcut(IdeCommands.NavigateForward)) { Icon = IconKind.Forward }
         ]),
         new(Localizer.Get(StringKeys.MenuProject), Children:
         [
             new(Localizer.Get(StringKeys.MenuProjectAddWindow),
                 Action: () => _ = ShowAddWindowDialogAsync()) { Icon = IconKind.Window },
+            new(Localizer.Get(StringKeys.MenuProjectAddItem),
+                Action: () => _ = AddNewItemFromMenuAsync()) { Icon = IconKind.TextFile },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuProjectReferences),
                 Action: () => _ = ShowReferencesDialogAsync()) { Icon = IconKind.AddReference },
@@ -4992,13 +5005,13 @@ public partial class MainWindow : Window
         new(Localizer.Get(StringKeys.MenuBuild), Children:
         [
             new(Localizer.Get(StringKeys.MenuBuildBuildSolution), vm.BuildCommand,
-                Gesture: new KeyGesture(Key.F6)) { Icon = IconKind.Build }
+                Gesture: Shortcut(IdeCommands.BuildSolution)) { Icon = IconKind.Build }
         ]),
         new(Localizer.Get(StringKeys.MenuTest), Children:
         [
             new(Localizer.Get(StringKeys.MenuTestRunAll),
                 Action: () => _ = RunTestsAsync(TestExplorerPanel.RunScope.All),
-                Gesture: new KeyGesture(Key.T, PlatformCommandModifier | KeyModifiers.Alt))
+                Gesture: Shortcut(IdeCommands.TestRunAll))
                 { Icon = IconKind.Run },
             new(Localizer.Get(StringKeys.ToolTests),
                 Action: () => ShowTool(_factory.Tests)) { Icon = IconKind.Tests }
@@ -5028,11 +5041,11 @@ public partial class MainWindow : Window
         [
             new(Localizer.Get(StringKeys.MenuToolsAssistant),
                 Action: () => ShowTool(_factory.Assistant),
-                Gesture: new KeyGesture(Key.I, PlatformCommandModifier | KeyModifiers.Shift)) { Icon = IconKind.Assistant },
+                Gesture: Shortcut(IdeCommands.ViewAssistant)) { Icon = IconKind.Assistant },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuToolsSettings),
                 Action: () => _ = ShowSettingsAsync(),
-                Gesture: new KeyGesture(Key.OemComma, PlatformCommandModifier)) { Icon = IconKind.Settings }
+                Gesture: Shortcut(IdeCommands.ToolsSettings)) { Icon = IconKind.Settings }
         ]),
         // The designer's own menu. Aligning and zooming were implemented and
         // reachable from nowhere; a command nothing can invoke is a feature
@@ -5048,16 +5061,16 @@ public partial class MainWindow : Window
                 Action: () => { if (_activeSurface is { } s) s.Zoom /= 1.25; }),
             new(Localizer.Get(StringKeys.MenuDesignerZoomReset),
                 Action: () => _activeSurface?.ResetView(),
-                Gesture: new KeyGesture(Key.D0, PlatformCommandModifier)),
+                Gesture: Shortcut(IdeCommands.DesignerZoomReset)),
             new(Localizer.Get(StringKeys.MenuDesignerZoomToFit),
                 Action: () => _activeSurface?.ZoomToFit(),
-                Gesture: new KeyGesture(Key.D9, PlatformCommandModifier)),
+                Gesture: Shortcut(IdeCommands.DesignerZoomToFit)),
             new(Localizer.Get(StringKeys.MenuDesignerRulers),
                 Action: () => { if (_activeSurface is { } s) s.ShowRulers = !s.ShowRulers; }),
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDesignerSelectParent),
                 Action: SelectContainer,
-                Gesture: new KeyGesture(Key.Escape)),
+                Gesture: Shortcut(IdeCommands.DesignerSelectParent)),
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDesignerAlignLeft),
                 Action: () => AlignSelection(AlignmentCommand.Left)),
@@ -5077,34 +5090,34 @@ public partial class MainWindow : Window
         [
             new(Localizer.Get(StringKeys.MenuDebugStart),
                 Action: () => _ = StartOrContinueDebuggingAsync(),
-                Gesture: new KeyGesture(Key.F5)) { Icon = IconKind.Debug },
+                Gesture: Shortcut(IdeCommands.DebugStart)) { Icon = IconKind.Debug },
             new(Localizer.Get(StringKeys.MenuDebugContinue),
                 Action: () => _ = _debug.ContinueAsync(),
-                Gesture: new KeyGesture(Key.F5)) { Icon = IconKind.Continue },
+                Gesture: Shortcut(IdeCommands.DebugContinue)) { Icon = IconKind.Continue },
             new(Localizer.Get(StringKeys.MenuDebugPause),
                 Action: () => _ = _debug.PauseAsync()) { Icon = IconKind.Pause },
             new(Localizer.Get(StringKeys.MenuDebugStop),
                 Action: () => _ = StopDebuggingAsync(),
-                Gesture: new KeyGesture(Key.F5, KeyModifiers.Shift)) { Icon = IconKind.Stop },
+                Gesture: Shortcut(IdeCommands.DebugStop)) { Icon = IconKind.Stop },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDebugStepOver),
                 Action: () => _ = _debug.StepOverAsync(),
-                Gesture: new KeyGesture(Key.F10)) { Icon = IconKind.StepOver },
+                Gesture: Shortcut(IdeCommands.DebugStepOver)) { Icon = IconKind.StepOver },
             new(Localizer.Get(StringKeys.MenuDebugStepInto),
                 Action: () => _ = _debug.StepIntoAsync(),
-                Gesture: new KeyGesture(Key.F11)) { Icon = IconKind.StepInto },
+                Gesture: Shortcut(IdeCommands.DebugStepInto)) { Icon = IconKind.StepInto },
             new(Localizer.Get(StringKeys.MenuDebugStepOut),
                 Action: () => _ = _debug.StepOutAsync(),
-                Gesture: new KeyGesture(Key.F11, KeyModifiers.Shift)) { Icon = IconKind.StepOut },
+                Gesture: Shortcut(IdeCommands.DebugStepOut)) { Icon = IconKind.StepOut },
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDebugToggleBreakpoint),
                 Action: () => _ = ToggleBreakpointAtCaretAsync(),
-                Gesture: new KeyGesture(Key.F9)) { Icon = IconKind.Breakpoint }
+                Gesture: Shortcut(IdeCommands.DebugToggleBreakpoint)) { Icon = IconKind.Breakpoint }
         ]),
         new(Localizer.Get(StringKeys.MenuRun), Children:
         [
             new(Localizer.Get(StringKeys.MenuRunWithoutDebugging), vm.RunCommand,
-                Gesture: new KeyGesture(Key.F5, PlatformCommandModifier))
+                Gesture: Shortcut(IdeCommands.DebugStartWithout))
                 { Icon = IconKind.Run },
             new(Localizer.Get(StringKeys.MenuRunStop), vm.StopRunCommand)
                 { Icon = IconKind.Stop }
@@ -5135,6 +5148,14 @@ public partial class MainWindow : Window
     /// </summary>
     private static KeyModifiers PlatformCommandModifier =>
         OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
+
+    /// <summary>
+    /// The shortcut the registry gives a command under the keyboard scheme in
+    /// force, as a menu shows it. Null when the command has none, or only a
+    /// chord, which a menu item cannot show.
+    /// </summary>
+    private KeyGesture? Shortcut(string commandId) =>
+        MenuShortcuts.ToGesture(_commands.GestureFor(commandId), PlatformCommandModifier);
 
     private void ShowTool(IDockable tool)
     {
@@ -5250,21 +5271,7 @@ public partial class MainWindow : Window
         {
             Title = "Open solution or project",
             AllowMultiple = false,
-            FileTypeFilter =
-            [
-                new FilePickerFileType(".NET solutions and projects")
-                {
-                    Patterns = ["*.sln", "*.slnx", "*.csproj", "*.vbproj"]
-                },
-
-                // A Visual Basic 6 project opens by being converted, and a
-                // filter that does not offer it means nobody finds out that
-                // it can be.
-                new FilePickerFileType("Visual Basic 6 projects")
-                {
-                    Patterns = ["*.vbp"]
-                }
-            ]
+            FileTypeFilter = SolutionOpenFilters()
         });
 
         var path = files.FirstOrDefault()?.TryGetLocalPath();

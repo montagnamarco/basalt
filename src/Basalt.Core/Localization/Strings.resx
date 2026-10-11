@@ -77,6 +77,7 @@
   <data name="Menu_Project_AddWindow" xml:space="preserve"><value>Add Window…</value></data>
   <data name="Menu_Project_References" xml:space="preserve"><value>References…</value></data>
   <data name="Menu_Project_Properties" xml:space="preserve"><value>Properties…</value></data>
+  <data name="Menu_Project_AddItem" xml:space="preserve"><value>Add New Item…</value></data>
 
   <!-- References dialog -->
   <data name="References_Title" xml:space="preserve"><value>{0} References</value></data>
@@ -888,6 +889,7 @@
   <data name="Explorer_NameInvalid" xml:space="preserve"><value>[explorer] '{0}' is not a valid name.</value></data>
   <data name="Explorer_OperationFailed" xml:space="preserve"><value>[explorer] {0}</value></data>
   <data name="Explorer_BlockedWhileDebugging" xml:space="preserve"><value>Rename and Delete are disabled while debugging.</value></data>
+  <data name="Explorer_AddNewItem" xml:space="preserve"><value>Add New Item…</value></data>
 
   <!-- Save/Don't Save/Cancel, asked before a dirty document closes -->
   <data name="SaveChanges_Title" xml:space="preserve"><value>Save Changes?</value></data>
@@ -925,4 +927,18 @@
   <data name="NewWindow_WindowTitlePlaceholder" xml:space="preserve"><value>Title shown in the title bar</value></data>
   <data name="NewWindow_NameRequired" xml:space="preserve"><value>Enter a name for the window.</value></data>
   <data name="NewWindow_NameInvalid" xml:space="preserve"><value>The name must start with a letter and contain only letters, digits or underscores.</value></data>
+
+  <!-- Add New Item, and the File > Open filter -->
+  <data name="AddItem_Title" xml:space="preserve"><value>Add New Item</value></data>
+  <data name="AddItem_Templates" xml:space="preserve"><value>Templates:</value></data>
+  <data name="AddItem_Name" xml:space="preserve"><value>Name:</value></data>
+  <data name="AddItem_Create" xml:space="preserve"><value>Add</value></data>
+  <data name="AddItem_NameInvalid" xml:space="preserve"><value>Enter a name: it must start with a letter, contain only letters, digits or underscores, and not be a Visual Basic keyword.</value></data>
+  <data name="AddItem_Class" xml:space="preserve"><value>Class</value></data>
+  <data name="AddItem_Module" xml:space="preserve"><value>Module</value></data>
+  <data name="AddItem_Interface" xml:space="preserve"><value>Interface</value></data>
+  <data name="AddItem_WindowsForm" xml:space="preserve"><value>Windows Form</value></data>
+  <data name="AddItem_UserControl" xml:space="preserve"><value>Windows Forms User Control</value></data>
+  <data name="AddItem_EmptyFile" xml:space="preserve"><value>Empty File</value></data>
+  <data name="Open_Filter_Solutions" xml:space="preserve"><value>Solutions, projects and programs</value></data>
 </root>

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis.VisualBasic;
 
 namespace Basalt.Workspace;
 
@@ -11,6 +12,15 @@ namespace Basalt.Workspace;
 /// </summary>
 public static class ExplorerFileOperations
 {
+    /// <summary>
+    /// Whether a name is a Visual Basic reserved word. Such a name cannot
+    /// declare a type unescaped (a Class named End would not compile), so the
+    /// new-item commands refuse it. Asked of the compiler's own lexer, so the
+    /// answer is the one the compiler gives, not a list kept here.
+    /// </summary>
+    public static bool IsVisualBasicReservedWord(string name) =>
+        SyntaxFacts.IsReservedKeyword(SyntaxFacts.GetKeywordKind(name));
+
     /// <summary>What is wrong with a name the user typed, or <see cref="None"/> when it is fine.</summary>
     public enum NameProblem
     {
