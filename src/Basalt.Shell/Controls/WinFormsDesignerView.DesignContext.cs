@@ -113,6 +113,7 @@ internal sealed partial class WinFormsDesignerView
         }
 
         _appliedBuildId = buildId;
+        LogLibraryFailures(context);
 
         // The preview has disposed the controls of the previous context by now.
         try
@@ -120,7 +121,13 @@ internal sealed partial class WinFormsDesignerView
             RebuildToolbox();
             LogUserCodeFailures();
         }
-        catch (Exception exception) { ShowError(exception); }
+        catch (Exception exception)
+        {
+            // The previous context is unloaded below. A toolbox that still lists its items would hold types of an
+            // unloaded assembly, so it is shown with the Forms entries only until the next build.
+            ShowToolbox([]);
+            ShowError(exception);
+        }
         finally { previous?.Unload(); }
     }
 
@@ -130,6 +137,18 @@ internal sealed partial class WinFormsDesignerView
         var message = Localizer.Get(StringKeys.WinFormsDesignerDesignContextFailed, exception.GetBaseException().Message);
         _status.Text = message;
         _writeOutput?.Invoke(message);
+    }
+
+    /// <summary>
+    /// Writes each library the build could not read or describe, and why the build's library list could not be read,
+    /// to Output once for the build. The other libraries and the project's controls are listed as usual.
+    /// </summary>
+    private void LogLibraryFailures(WinFormsDesignAssemblyContext context)
+    {
+        if (_writeOutput is null) return;
+        if (context.DependencyListProblem is { } problem) _writeOutput(problem);
+        foreach (var failure in context.FailedLibraries)
+            _writeOutput(Localizer.Get(StringKeys.WinFormsDesignerLibraryNotListed, failure.Name, failure.Message));
     }
 
     /// <summary>
@@ -168,12 +187,23 @@ internal sealed partial class WinFormsDesignerView
     }
 
     /// <summary>
-    /// The toolbox: the Forms entries, then the project's own controls under "&lt;Project&gt; Components",
-    /// refreshed after every build.
+    /// The toolbox: the Forms entries, then the project's own controls under "&lt;Project&gt; Components" and each
+    /// library's under "&lt;Library&gt; Components", refreshed after every build.
     /// </summary>
+    /// <remarks>
+    /// Reads only what the context described when it was opened (see <see cref="WinFormsDesignAssemblyContext.Open"/>),
+    /// so no assembly is read on the interface thread here.
+    /// </remarks>
     private void RebuildToolbox()
     {
-        var items = WinFormsToolboxCatalog.Order(BuiltInToolboxItems.Concat(ProjectToolboxItems()));
+        BeforeToolboxRebuildForTests?.Invoke();
+        ShowToolbox(ProjectToolboxItems());
+    }
+
+    /// <summary>Shows the Forms entries and the given project items, and selects Pointer.</summary>
+    private void ShowToolbox(IReadOnlyList<WinFormsToolboxItem> projectItems)
+    {
+        var items = WinFormsToolboxCatalog.Order(BuiltInToolboxItems.Concat(projectItems));
         _toolboxPanel.Show(items, item => item.Category, item => [item.DisplayName], WinFormsToolboxVisuals.CreateRow);
 
         // Pointer is the toolbox's resting state: nothing is pending to place
@@ -182,23 +212,28 @@ internal sealed partial class WinFormsDesignerView
     }
 
     /// <summary>
-    /// The project's public controls, which have a public parameterless constructor and are not forms. Empty
-    /// until a build of the project has loaded.
+    /// The controls the project and the libraries it uses define: the project's own under "&lt;Project&gt; Components",
+    /// and each referenced library's under "&lt;Library&gt; Components". Empty until a build of the project has loaded.
     /// </summary>
     /// <remarks>
-    /// Components are not listed yet. The designer cannot place one: WinFormsDesignerDocument.Components accepts
-    /// only the names of the tray, so a component listed here would be offered and then refused. They are listed
-    /// once the designer can place them.
+    /// Only controls are listed. Components are not listed yet: the designer's document reads a component as a
+    /// control unless the tray names it, so a component listed here would be placed and then not found again
+    /// (see WinFormsDesignerDocument.Components). They are listed once the document can tell them apart.
     /// </remarks>
     private IReadOnlyList<WinFormsToolboxItem> ProjectToolboxItems()
     {
         if (_designContext is null || WinFormsProjectResources.FindProject(_document.FilePath) is not { } project)
             return [];
 
-        var category = Localizer.Get(StringKeys.WinFormsDesignerProjectComponents, Path.GetFileNameWithoutExtension(project));
-        var described = WinFormsToolboxCatalog.Describe(_designContext.ProjectAssembly, typeof(Forms.Control))
-            .Where(item => !typeof(Forms.Form).IsAssignableFrom(item.ControlType));
-        return WinFormsToolboxCatalog.UnderCategory(described, category);
+        var items = new List<WinFormsToolboxItem>();
+        var projectCategory = Localizer.Get(StringKeys.WinFormsDesignerProjectComponents, Path.GetFileNameWithoutExtension(project));
+        items.AddRange(WinFormsToolboxCatalog.UnderCategory(_designContext.ProjectControls, projectCategory));
+        foreach (var library in _designContext.ReferencedLibraries())
+        {
+            var category = Localizer.Get(StringKeys.WinFormsDesignerLibraryComponents, library.Name);
+            items.AddRange(WinFormsToolboxCatalog.UnderCategory(library.Controls, category));
+        }
+        return items;
     }
 
     /// <summary>Writes each failure of the project's code to Output once, however many times the preview was rebuilt.</summary>
@@ -210,6 +245,12 @@ internal sealed partial class WinFormsDesignerView
 
     /// <summary>The context the preview is built on; for the designer's tests.</summary>
     internal WinFormsDesignAssemblyContext? CurrentDesignContextForTests => _designContext;
+
+    /// <summary>Runs first in every toolbox rebuild, so a test can make the rebuild fail; for the designer's tests.</summary>
+    internal Action? BeforeToolboxRebuildForTests { get; set; }
+
+    /// <summary>Rebuilds the toolbox from the current context, as a build does; for the designer's tests.</summary>
+    internal void RebuildToolboxForTests() => RebuildToolbox();
 
     /// <summary>Whether a context waits for the running edit to complete; for the designer's tests.</summary>
     internal bool HasPendingDesignContextForTests => _pendingDesignContext is not null;

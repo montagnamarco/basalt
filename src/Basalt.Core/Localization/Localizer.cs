@@ -639,6 +639,10 @@ public static class StringKeys
     public const string WinFormsDesignerNotInLanguage = "WinFormsDesigner_NotInLanguage";
     public const string WinFormsDesignerResourcesUnreadable = "WinFormsDesigner_ResourcesUnreadable";
     public const string WinFormsDesignerResourcesNotReplaced = "WinFormsDesigner_ResourcesNotReplaced";
+    public const string WinFormsDesignerLibraryComponents = "WinFormsDesigner_LibraryComponents";
+    public const string WinFormsDesignerLibraryNotListed = "WinFormsDesigner_LibraryNotListed";
+    public const string WinFormsDesignerDependencyListMissing = "WinFormsDesigner_DependencyListMissing";
+    public const string WinFormsDesignerDependencyListUnreadable = "WinFormsDesigner_DependencyListUnreadable";
     public const string WinFormsEditorCancel = "WinFormsEditor_Cancel";
     public const string WinFormsEditorInvalidColor = "WinFormsEditor_InvalidColor";
     public const string WinFormsEditorInvalidFont = "WinFormsEditor_InvalidFont";

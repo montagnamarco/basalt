@@ -1,3 +1,4 @@
+using System.Runtime.Loader;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -94,6 +95,31 @@ public sealed class WinFormsUserControlDesignTests
             "The designer file does not name the project's type.");
 
         // The project still builds with the control in its designer file.
+        await BuildAsync(journey.Vm);
+    }
+
+    /// <summary>
+    /// A library control is placed as the project's own controls are: the designer file names it with Global and the
+    /// full name of its type, and the surface draws the library's real type.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof: with the placement written from the type's short name instead of its full name, the designer file
+    /// does not contain "New Global.Widgets.LibraryControl()" and the wait for it times out.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task PlacingALibraryControlWritesTheGlobalNameOfItsTypeAndDrawsIt()
+    {
+        RequireUnix();
+        using var journey = await OpenAsync(buildFirst: true);
+
+        await DoubleClickToolboxItemAsync(journey, "LibraryControl");
+        await WaitUntilAsync(() => PlacedControl(journey, "LibraryControl1") is not null, "LibraryControl1 was not placed.");
+
+        Assert.Equal("Widgets.LibraryControl", PlacedTypeName(journey, "LibraryControl1"));
+        await WaitUntilAsync(() => journey.DesignerText.Contains("New Global.Widgets.LibraryControl()", StringComparison.Ordinal),
+            "The designer file does not name the library's type.");
+
+        // The project still builds with the library control in its designer file.
         await BuildAsync(journey.Vm);
     }
 
@@ -506,6 +532,141 @@ public sealed class WinFormsUserControlDesignTests
     }
 
     /// <summary>
+    /// A control of a class library the project references is listed under the library's own group, beside the
+    /// project's group, and a library control marked [ToolboxItem(false)] is not listed.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof: with the referenced libraries removed from ProjectToolboxItems, LibraryControl is not listed and
+    /// Assert.Single fails (no item named LibraryControl).
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task AControlOfAReferencedLibraryIsListedUnderTheLibrarysOwnGroup()
+    {
+        RequireUnix();
+        using var journey = await OpenAsync(buildFirst: true);
+
+        var items = ToolboxItems(journey);
+        var library = Assert.Single(items, item => item.DisplayName == "LibraryControl");
+        Assert.Equal("SharedControls Components", library.Category);
+        Assert.Equal("Widgets.LibraryControl", library.ControlType.FullName);
+        Assert.Equal("App Components", Assert.Single(items, item => item.DisplayName == "GaugeControl").Category);
+        Assert.DoesNotContain(items, item => item.DisplayName == "HiddenLibraryControl");
+    }
+
+    /// <summary>
+    /// A library whose types do not describe is skipped and written to Output once for the build. The project's
+    /// controls and the other libraries are listed as before.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof: with the containment narrowed back to the four exception types the designer caught before, the
+    /// TypeInitializationException of BrokenLibraryControl escapes the build's context, so the skipped-library line never
+    /// reaches Output and the wait for it fails (measured).
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task ALibraryThatDoesNotDescribeIsSkippedWithOneOutputLineAndTheOthersAreStillListed()
+    {
+        RequireUnix();
+        using var journey = await OpenAsync(buildFirst: true);
+        var message = Localizer.Get(StringKeys.WinFormsDesignerLibraryNotListed, "BrokenLibrary", "Static constructor failed on purpose.");
+        await WaitUntilAsync(() => CountOutputLinesWith(journey, message) > 0, "The skipped library was not written to Output.");
+
+        var items = ToolboxItems(journey);
+        Assert.Contains(items, item => item.DisplayName == "GaugeControl");
+        Assert.Contains(items, item => item.DisplayName == "LibraryControl");
+        Assert.DoesNotContain(items, item => item.DisplayName == "BrokenLibraryControl");
+        Assert.Equal(1, CountOutputLinesWith(journey, message));
+    }
+
+    /// <summary>
+    /// The interface thread reads no assembly of the design context: the context is opened and described on a background
+    /// thread, and the designer, its toolbox and its rebuilds only read what is already in memory. Counted from the moment
+    /// the test starts, so the first build and the first toolbox rebuild are included.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof: with ReferencedLibraries reading each library's file again on every call (the earlier behaviour, once
+    /// per build), the reads on the interface thread are not zero after RebuildToolboxForTests and the Assert.Equal fails
+    /// (measured: expected 0, actual 8).
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task TheInterfaceThreadReadsNoAssemblyOfTheDesignContext()
+    {
+        RequireUnix();
+        var interfaceThread = Environment.CurrentManagedThreadId;
+        Assert.True(Dispatcher.UIThread.CheckAccess(), "The test does not run on the interface thread.");
+
+        using var journey = await OpenAsync(buildFirst: true);
+        var view = DesignerView(journey);
+        await WaitUntilAsync(() => ToolboxItems(journey).Any(item => item.DisplayName == "LibraryControl"),
+            "The toolbox did not list the library's control.");
+
+        var context = view.CurrentDesignContextForTests!;
+        view.RebuildToolboxForTests();
+
+        Assert.True(context.AssemblyReadsForTests > 0, "The context read no assembly at all.");
+        Assert.Equal(0, context.AssemblyReadsOnThreadForTests(interfaceThread));
+        Assert.Contains(ToolboxItems(journey), item => item.DisplayName == "LibraryControl");
+    }
+
+    /// <summary>
+    /// A rebuild of the toolbox that fails leaves no item of the previous build's context on it: the toolbox shows the
+    /// Forms entries until the next build, and the previous context is then collected.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof: with the fallback in ApplyDesignContext removed, the failed rebuild leaves the previous build's items on
+    /// the toolbox, and the Assert.All on the items' contexts fails with "BrokenControl is listed from a design context"
+    /// (measured).
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task AToolboxRebuildThatFailsListsNoItemOfThePreviousContext()
+    {
+        RequireUnix();
+        using var journey = await OpenAsync(buildFirst: true);
+        await WaitUntilAsync(() => ToolboxItems(journey).Any(item => item.DisplayName == "GaugeControl"),
+            "The toolbox did not list the project's control.");
+        var view = DesignerView(journey);
+        var previous = CurrentContextReference(journey);
+
+        view.BeforeToolboxRebuildForTests = () => throw new InvalidOperationException("The toolbox failed on purpose.");
+        await BuildAsync(journey.Vm);
+        await WaitUntilAsync(() => !ReferenceEquals(view.CurrentDesignContextForTests, previous.Target),
+            "The rebuilt context was not applied.");
+
+        // A design context is collectible; the host (the Forms entries, Pointer and the framework's types) is not.
+        Assert.All(ToolboxItems(journey), item => Assert.False(
+            AssemblyLoadContext.GetLoadContext(item.ControlType.Assembly)?.IsCollectible == true,
+            item.DisplayName + " is listed from a design context."));
+        Assert.DoesNotContain(ToolboxItems(journey), item => item.DisplayName == "GaugeControl");
+        Assert.True(await IsCollectedAsync(previous), "The toolbox kept the previous context alive.");
+    }
+
+    /// <summary>
+    /// A dependency list that does not parse after the build does not stop the designer: its project controls are listed,
+    /// no library group is, and Output says why once.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof: with the fallback in DependencyLibraryNames rethrowing instead of recording, Open throws the
+    /// JsonReaderException, the reason never reaches Output and the wait for it fails (measured).
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task ACorruptDependencyListAfterTheBuildKeepsTheProjectControlsAndSaysWhy()
+    {
+        RequireUnix();
+        using var journey = await OpenAsync(buildFirst: true, afterBuild: project =>
+        {
+            foreach (var file in Directory.EnumerateFiles(project.Root, "App.deps.json", SearchOption.AllDirectories))
+                File.WriteAllText(file, "{ not json");
+        });
+        var message = Localizer.Get(StringKeys.WinFormsDesignerDependencyListUnreadable, "App.deps.json", "");
+        await WaitUntilAsync(() => CountOutputLinesWith(journey, message) > 0, "The unreadable dependency list was not written to Output.");
+
+        var items = ToolboxItems(journey);
+        Assert.Contains(items, item => item.DisplayName == "GaugeControl");
+        Assert.DoesNotContain(items, item => item.DisplayName == "LibraryControl");
+        Assert.DoesNotContain(items, item => item.Category == Localizer.Get(StringKeys.WinFormsDesignerLibraryComponents, "SharedControls"));
+        Assert.Equal(1, CountOutputLinesWith(journey, message));
+    }
+
+    /// <summary>
     /// The designer is shown again and its subscription replays the last build: the build is not loaded a second
     /// time, so the designer keeps the context it has.
     /// </summary>
@@ -821,7 +982,7 @@ public sealed class WinFormsUserControlDesignTests
         return !reference.IsAlive;
     }
 
-    private static async Task<Journey> OpenAsync(bool buildFirst, WinFormsUserControlProject? project = null)
+    private static async Task<Journey> OpenAsync(bool buildFirst, WinFormsUserControlProject? project = null, Action<WinFormsUserControlProject>? afterBuild = null)
     {
         project ??= WinFormsUserControlProject.Create();
         var host = new TestWindow(project.ProjectPath);
@@ -840,6 +1001,7 @@ public sealed class WinFormsUserControlDesignTests
             // Built before the designer opens for one journey, after it for the other: the designer
             // takes the output of a build it did not see as well as one it did.
             if (buildFirst) await BuildAsync(vm);
+            if (buildFirst) afterBuild?.Invoke(project);
             await vm.OpenFileAsync(project.DesignerPath, inDesigner: true);
             await host.SettleAsync(10);
 

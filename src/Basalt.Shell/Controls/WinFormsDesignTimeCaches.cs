@@ -29,11 +29,25 @@ internal static class WinFormsDesignTimeCaches
     private const BindingFlags InstanceFields = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
     /// <summary>
+    /// The one lock for TypeDescriptor's tables as the designer's design contexts use them. A context is described on a
+    /// background thread when it is opened (TypeDescriptor.GetAttributes runs the attributes' constructors), and released
+    /// on the interface thread when a newer build replaces it. Both take this lock, so a release never removes an entry
+    /// while a description is adding to the same table. The race is not reproducible in a test: it needs the two calls to
+    /// interleave in the framework's private tables.
+    /// </summary>
+    internal static readonly object TypeDescriptorGate = new();
+
+    /// <summary>
     /// Removes the context's keys from every table this class finds. It never throws: it runs inside
     /// <see cref="AssemblyLoadContext"/>.Unloading, and an exception there escapes Unload and stops it, which is
     /// worse than the leak. Each table and each provider is handled on its own, so a failure skips only that one.
     /// </summary>
     public static void Release(AssemblyLoadContext context)
+    {
+        lock (TypeDescriptorGate) ReleaseLocked(context);
+    }
+
+    private static void ReleaseLocked(AssemblyLoadContext context)
     {
         var owners = new[]
         {

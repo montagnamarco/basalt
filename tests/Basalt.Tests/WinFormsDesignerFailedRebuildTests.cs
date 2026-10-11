@@ -84,9 +84,10 @@ public sealed class WinFormsDesignerFailedRebuildTests
     }
 
     /// <summary>
-    /// A project control whose type lives in an output folder the test deletes before the edit. Every rebuild looks the type
-    /// up in that folder, so each rebuild after the deletion throws IOException: a rebuild that fails on purpose, after the
-    /// edit has written its resource files.
+    /// A design context whose output folder the test removes after the edit. The libraries are read when the context is
+    /// opened, so removing the folder alone no longer fails a rebuild (a missing output folder does not crash the designer).
+    /// Removing it also makes the context's next type lookup throw IOException, which is the failing rebuild these tests need:
+    /// a rebuild that fails on purpose, after the edit has written its resource files.
     /// </summary>
     private sealed class DeletedOutputFolder : IDisposable
     {
@@ -100,7 +101,11 @@ public sealed class WinFormsDesignerFailedRebuildTests
 
         private string Folder { get; }
 
-        public void Remove() => Directory.Delete(Folder, recursive: true);
+        public void Remove()
+        {
+            Directory.Delete(Folder, recursive: true);
+            Context.ResolutionFaultForTests = new IOException("The build output folder was removed on purpose.");
+        }
 
         public void Dispose()
         {
@@ -209,7 +214,7 @@ public sealed class WinFormsDesignerFailedRebuildTests
     {
         using var output = new DeletedOutputFolder();
         // Button1 has entries in both files, so deleting it rewrites the neutral and the Italian resx. Thing1 is a project
-        // control: it is not built while the folder exists, but every rebuild after the folder is gone looks it up and throws.
+        // control: once DeletedOutputFolder has set the context's ResolutionFaultForTests, every rebuild looks it up and throws.
         var neutral = WinFormsDesignerLocalizationSessionTests.NeutralResources;
         var italian = WinFormsDesignerLocalizationSessionTests.ItalianResources;
         using var session = new WinFormsDesignerSession(

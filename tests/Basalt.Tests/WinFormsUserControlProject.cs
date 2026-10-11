@@ -5,7 +5,10 @@ namespace Basalt.Tests;
 /// <c>GaugeControl</c> (paints, has a public property), <c>HiddenControl</c> (hidden from the toolbox),
 /// <c>BrokenControl</c> (its constructor throws), <c>PaintBrokenControl</c> (its OnPaint throws),
 /// <c>ReadingsControl</c> (properties of a constructed generic and of an array of its own type),
-/// <c>ProjectComponent</c> (a component, not a control), and <c>Form1</c>. It is an executable that targets Windows Forms, so the view model treats it as the startup project;
+/// <c>ProjectComponent</c> (a component, not a control), <c>Form1</c>, and two class libraries it references: <c>SharedControls</c>
+/// (<c>Widgets.LibraryControl</c> and a hidden <c>Widgets.HiddenLibraryControl</c>) and <c>BrokenLibrary</c>, whose one control
+/// carries an attribute with a throwing static constructor, so describing it fails while the other libraries still list.
+/// It is an executable that targets Windows Forms, so the view model treats it as the startup project;
 /// the retargeting is the same one <see cref="WinFormsProjectResourceBuildTests"/> exercises.
 /// </summary>
 public sealed class WinFormsUserControlProject : IDisposable
@@ -29,9 +32,17 @@ public sealed class WinFormsUserControlProject : IDisposable
                 <UseWindowsForms>true</UseWindowsForms>
                 <RootNamespace>App</RootNamespace>
               </PropertyGroup>
+              <ItemGroup>
+                <ProjectReference Include="SharedControls/SharedControls.vbproj" />
+                <ProjectReference Include="BrokenLibrary/BrokenLibrary.vbproj" />
+                <Compile Remove="SharedControls/**" />
+                <Compile Remove="BrokenLibrary/**" />
+              </ItemGroup>
             </Project>
             """);
         project.WriteGauge(42);
+        project.WriteSharedControls();
+        project.WriteBrokenLibrary();
         File.WriteAllText(Path.Combine(project.Root, "HiddenControl.vb"), """
             <System.ComponentModel.ToolboxItem(False)>
             Public Class HiddenControl
@@ -102,6 +113,73 @@ public sealed class WinFormsUserControlProject : IDisposable
             End Class
             """);
         return project;
+    }
+
+    /// <summary>
+    /// Writes the class library the project references, in a folder of its own: <c>LibraryControl</c> (a visible
+    /// UserControl whose namespace is the library's root namespace <c>Widgets</c>) and <c>HiddenLibraryControl</c> (hidden from the toolbox). Its build
+    /// copies <c>SharedControls.dll</c> into the project's output, as a ProjectReference does.
+    /// </summary>
+    public void WriteSharedControls()
+    {
+        Directory.CreateDirectory(Path.Combine(Root, "SharedControls"));
+        File.WriteAllText(Path.Combine(Root, "SharedControls", "SharedControls.vbproj"), """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <OutputType>Library</OutputType>
+                <TargetFramework>net8.0-windows</TargetFramework>
+                <UseWindowsForms>true</UseWindowsForms>
+                <RootNamespace>Widgets</RootNamespace>
+              </PropertyGroup>
+            </Project>
+            """);
+        // The namespace is the project's RootNamespace: a Namespace statement here would be prefixed with it again.
+        File.WriteAllText(Path.Combine(Root, "SharedControls", "LibraryControl.vb"), """
+            Public Class LibraryControl
+                Inherits System.Windows.Forms.UserControl
+            End Class
+            """);
+        File.WriteAllText(Path.Combine(Root, "SharedControls", "HiddenLibraryControl.vb"), """
+            <System.ComponentModel.ToolboxItem(False)>
+            Public Class HiddenLibraryControl
+                Inherits System.Windows.Forms.UserControl
+            End Class
+            """);
+    }
+
+    /// <summary>
+    /// Writes the second class library the project references, in a folder of its own. Its <c>BrokenLibraryControl</c> is
+    /// a visible UserControl marked with <c>ThrowingAttribute</c>, whose static constructor throws. Describing the control
+    /// instantiates its attributes, so the description fails with a <c>TypeInitializationException</c> and nothing else
+    /// of the library, nor of the other libraries, is affected.
+    /// </summary>
+    public void WriteBrokenLibrary()
+    {
+        Directory.CreateDirectory(Path.Combine(Root, "BrokenLibrary"));
+        File.WriteAllText(Path.Combine(Root, "BrokenLibrary", "BrokenLibrary.vbproj"), """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <OutputType>Library</OutputType>
+                <TargetFramework>net8.0-windows</TargetFramework>
+                <UseWindowsForms>true</UseWindowsForms>
+                <RootNamespace>Broken</RootNamespace>
+              </PropertyGroup>
+            </Project>
+            """);
+        File.WriteAllText(Path.Combine(Root, "BrokenLibrary", "BrokenLibraryControl.vb"), """
+            Public Class ThrowingAttribute
+                Inherits System.Attribute
+
+                Shared Sub New()
+                    Throw New System.InvalidOperationException("Static constructor failed on purpose.")
+                End Sub
+            End Class
+
+            <Throwing>
+            Public Class BrokenLibraryControl
+                Inherits System.Windows.Forms.UserControl
+            End Class
+            """);
     }
 
     /// <summary>

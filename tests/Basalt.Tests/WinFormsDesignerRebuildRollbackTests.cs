@@ -6,8 +6,9 @@ namespace Basalt.Tests;
 
 /// <summary>
 /// A rebuild that fails in the middle of an undo, an edit or a language switch. The failure comes from a type the form names
-/// that is not built in: the designer looks it up in the build output folder, and the test has deleted that folder, so the
-/// lookup throws the way it does when a user removes the output. The session must keep the step, the document, the shown
+/// that is not built in: the designer looks it up in the design context, and the test sets the context's
+/// ResolutionFaultForTests so that lookup throws an IOException, as an unreadable build output does. (A deleted output
+/// folder no longer makes the lookup fail: library loading tolerates it.) The session must keep the step, the document, the shown
 /// preview and the resource files exactly as they were before the failed operation.
 /// </summary>
 /// <remarks>
@@ -25,9 +26,9 @@ public sealed class WinFormsDesignerRebuildRollbackTests
     private static string Italian => WinFormsDesignerLocalizationSessionTests.ItalianResources;
 
     /// <summary>
-    /// A design context over a build output folder that the test may delete. The context's project assembly is not in the folder,
-    /// so a type the form names that is not built in is searched for in the folder: found nothing while the folder exists, and
-    /// a lookup that throws once it is gone.
+    /// A design context over a build output folder that the test may remove. The context's project assembly is not in the
+    /// folder, and the libraries are read when the context is opened, so removing the folder alone does not fail a lookup.
+    /// Removing it also makes the context's next type lookup throw IOException, the failing rebuild these tests need.
     /// </summary>
     private sealed class OutputFolder : IDisposable
     {
@@ -41,7 +42,11 @@ public sealed class WinFormsDesignerRebuildRollbackTests
 
         public WinFormsDesignAssemblyContext Context { get; }
 
-        public void Remove() => Directory.Delete(Folder, recursive: true);
+        public void Remove()
+        {
+            Directory.Delete(Folder, recursive: true);
+            Context.ResolutionFaultForTests = new IOException("The build output folder was removed on purpose.");
+        }
 
         public void Dispose()
         {
