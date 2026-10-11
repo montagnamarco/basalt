@@ -83,6 +83,30 @@ public sealed partial class MainWindowViewModel
     }
 
     /// <summary>
+    /// The tooltip a provider gives for the symbol at an offset, when it has
+    /// no describer of its own. A Razor view's quick info is the signature the
+    /// compiler gives the generated member, which is the signature a .vb file
+    /// shows for the same property.
+    /// </summary>
+    private static async Task<Basalt.Extensibility.SymbolDescription?> ProviderQuickInfoAsync(
+        Basalt.Extensibility.ILanguageProvider provider, string filePath, int offset, string text)
+    {
+        if (provider.Navigation is not { } source) return null;
+
+        var document = new Basalt.Extensibility.LanguageDocument(filePath, text);
+        var found = await Task.Run(() => source.GetQuickInfoAsync(document, offset))
+            .ConfigureAwait(true);
+
+        if (found is not { } info || string.IsNullOrWhiteSpace(info.Signature)) return null;
+
+        return new Basalt.Extensibility.SymbolDescription(
+            [Basalt.Extensibility.SymbolPart.Plain(info.Signature)])
+        {
+            Documentation = info.Documentation
+        };
+    }
+
+    /// <summary>
     /// The text a completion or navigation request is about when the caller
     /// did not supply it: the open editor's buffer, else the file on disk.
     /// </summary>

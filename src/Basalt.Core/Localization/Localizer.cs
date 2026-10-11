@@ -200,6 +200,7 @@ public static class StringKeys
     public const string WelcomeNewProjectDescription = "Welcome_NewProject_Description";
     public const string WelcomeOpenProject = "Welcome_OpenProject";
     public const string WelcomeOpenProjectDescription = "Welcome_OpenProject_Description";
+    public const string WelcomeRecentMissing = "Welcome_Recent_Missing";
 
     public const string ExplorerShowAllFiles = "Explorer_ShowAllFiles";
     public const string ExplorerCollapseAll = "Explorer_CollapseAll";
@@ -981,4 +982,230 @@ public static class StringKeys
     public const string AddItemUserControl = "AddItem_UserControl";
     public const string AddItemEmptyFile = "AddItem_EmptyFile";
     public const string OpenFilterSolutions = "Open_Filter_Solutions";
+
+    // Project Properties dialog
+    public const string ProjectPropertiesTitle = "ProjectProperties_Title";
+    public const string ProjectPropertiesSave = "ProjectProperties_Save";
+    // Project Properties: categories
+    public const string ProjectPropertiesCategoryApplication = "ProjectProperties_Category_Application";
+    public const string ProjectPropertiesCategoryCompile = "ProjectProperties_Category_Compile";
+    public const string ProjectPropertiesCategoryAdvanced = "ProjectProperties_Category_Advanced";
+    public const string ProjectPropertiesCategoryReferences = "ProjectProperties_Category_References";
+    public const string ProjectPropertiesCategoryDebug = "ProjectProperties_Category_Debug";
+    public const string ProjectPropertiesCategoryPublish = "ProjectProperties_Category_Publish";
+    // Project Properties: fields
+    public const string ProjectPropertiesAssemblyName = "ProjectProperties_AssemblyName";
+    public const string ProjectPropertiesRootNamespace = "ProjectProperties_RootNamespace";
+    public const string ProjectPropertiesRootNamespaceHelp = "ProjectProperties_RootNamespaceHelp";
+    public const string ProjectPropertiesOutputType = "ProjectProperties_OutputType";
+    public const string ProjectPropertiesStartupObject = "ProjectProperties_StartupObject";
+    public const string ProjectPropertiesStartupObjectHelp = "ProjectProperties_StartupObjectHelp";
+    public const string ProjectPropertiesTargetFramework = "ProjectProperties_TargetFramework";
+    public const string ProjectPropertiesOptionStrict = "ProjectProperties_OptionStrict";
+    public const string ProjectPropertiesOptionStrictHelp = "ProjectProperties_OptionStrictHelp";
+    public const string ProjectPropertiesOptionExplicit = "ProjectProperties_OptionExplicit";
+    public const string ProjectPropertiesOptionExplicitHelp = "ProjectProperties_OptionExplicitHelp";
+    public const string ProjectPropertiesOptionInfer = "ProjectProperties_OptionInfer";
+    public const string ProjectPropertiesOptionInferHelp = "ProjectProperties_OptionInferHelp";
+    public const string ProjectPropertiesOptionCompare = "ProjectProperties_OptionCompare";
+    public const string ProjectPropertiesOptionCompareHelp = "ProjectProperties_OptionCompareHelp";
+    public const string ProjectPropertiesConditionalConstants = "ProjectProperties_ConditionalConstants";
+    public const string ProjectPropertiesConditionalConstantsHelp = "ProjectProperties_ConditionalConstantsHelp";
+    public const string ProjectPropertiesSuppressedWarnings = "ProjectProperties_SuppressedWarnings";
+    public const string ProjectPropertiesSuppressedWarningsHelp = "ProjectProperties_SuppressedWarningsHelp";
+    public const string ProjectPropertiesTreatWarningsAsErrors = "ProjectProperties_TreatWarningsAsErrors";
+    public const string ProjectPropertiesGenerateXmlDocumentation = "ProjectProperties_GenerateXmlDocumentation";
+    public const string ProjectPropertiesNullable = "ProjectProperties_Nullable";
+    public const string ProjectPropertiesPackages = "ProjectProperties_Packages";
+    public const string ProjectPropertiesPackageId = "ProjectProperties_PackageId";
+    public const string ProjectPropertiesVersion = "ProjectProperties_Version";
+    public const string ProjectPropertiesAddPackage = "ProjectProperties_AddPackage";
+    public const string ProjectPropertiesRemovePackage = "ProjectProperties_RemovePackage";
+    public const string ProjectPropertiesProjects = "ProjectProperties_Projects";
+    public const string ProjectPropertiesCommandLineArguments = "ProjectProperties_CommandLineArguments";
+    public const string ProjectPropertiesWorkingDirectory = "ProjectProperties_WorkingDirectory";
+    public const string ProjectPropertiesApplicationUrl = "ProjectProperties_ApplicationUrl";
+    public const string ProjectPropertiesApplicationUrlHelp = "ProjectProperties_ApplicationUrlHelp";
+    public const string ProjectPropertiesLaunchBrowser = "ProjectProperties_LaunchBrowser";
+    public const string ProjectPropertiesEnvironmentVariables = "ProjectProperties_EnvironmentVariables";
+    public const string ProjectPropertiesEnvironmentVariablesHelp = "ProjectProperties_EnvironmentVariablesHelp";
+    public const string ProjectPropertiesRuntimeIdentifier = "ProjectProperties_RuntimeIdentifier";
+    public const string ProjectPropertiesRuntimeIdentifierHelp = "ProjectProperties_RuntimeIdentifierHelp";
+    public const string ProjectPropertiesSelfContained = "ProjectProperties_SelfContained";
+    public const string ProjectPropertiesSelfContainedHelp = "ProjectProperties_SelfContainedHelp";
+    public const string ProjectPropertiesTrimUnusedCode = "ProjectProperties_TrimUnusedCode";
+    // About window
+    public const string AboutVersion = "About_Version";
+    public const string AboutDescription = "About_Description";
+    public const string AboutLicence = "About_Licence";
+    public const string AboutCopyDetails = "About_CopyDetails";
+    // Change Signature dialog
+    public const string ChangeSignatureTitle = "ChangeSignature_Title";
+    public const string ChangeSignatureAddParameter = "ChangeSignature_AddParameter";
+    public const string ChangeSignatureApply = "ChangeSignature_Apply";
+    public const string ChangeSignatureNamePlaceholder = "ChangeSignature_NamePlaceholder";
+    public const string ChangeSignatureAdd = "ChangeSignature_Add";
+    public const string ChangeSignaturePass = "ChangeSignature_Pass";
+    // Breakpoint condition dialog
+    public const string BreakpointConditionEveryTime = "BreakpointCondition_EveryTime";
+    public const string BreakpointConditionStopWhenTrue = "BreakpointCondition_StopWhenTrue";
+    public const string BreakpointConditionStopWhenTrueHelp = "BreakpointCondition_StopWhenTrueHelp";
+    public const string BreakpointConditionHitCount = "BreakpointCondition_HitCount";
+    public const string BreakpointConditionHitCountHelp = "BreakpointCondition_HitCountHelp";
+    public const string BreakpointConditionEvaluates = "BreakpointCondition_Evaluates";
+    // Breakpoint margin menu
+    public const string BreakpointRemoveMenu = "Breakpoint_RemoveMenu";
+    public const string BreakpointAddMenu = "Breakpoint_AddMenu";
+    public const string BreakpointCondition = "Breakpoint_Condition";
+    public const string BreakpointRunToHere = "Breakpoint_RunToHere";
+    // Refactoring preview dialog
+    public const string RefactoringPreviewDefaultTitle = "RefactoringPreview_DefaultTitle";
+    public const string RefactoringPreviewApply = "RefactoringPreview_Apply";
+    public const string DebugBannerStop = "Debug_BannerStop";
+
+    // MainWindow: operations, designer and debug banner
+    public const string OperationStopping = "Operation_Stopping";
+    public const string DesignerCannotShow = "Designer_CannotShow";
+    public const string DebugBannerPaused = "Debug_BannerPaused";
+    public const string DebugBannerRunning = "Debug_BannerRunning";
+    public const string DebugExited = "Debug_Exited";
+    public const string DebugTheProgram = "Debug_TheProgram";
+    public const string DebugInputOnInterfaceThread = "Debug_InputOnInterfaceThread";
+    // MainWindow: refactoring prompts
+    public const string RefactorExtractPartialTitle = "Refactor_ExtractPartial_Title";
+    public const string RefactorExtractPartialPrompt = "Refactor_ExtractPartial_Prompt";
+    public const string RefactorExtractPartialName = "Refactor_ExtractPartial_Name";
+    public const string RefactorExtractConstantTitle = "Refactor_ExtractConstant_Title";
+    public const string RefactorExtractConstantPrompt = "Refactor_ExtractConstant_Prompt";
+    public const string RefactorExtractConstantName = "Refactor_ExtractConstant_Name";
+    public const string RefactorExtractMethodTitle = "Refactor_ExtractMethod_Title";
+    public const string RefactorExtractMethodPrompt = "Refactor_ExtractMethod_Prompt";
+    public const string RefactorExtractMethodName = "Refactor_ExtractMethod_Name";
+    public const string RefactorExtractVariableTitle = "Refactor_ExtractVariable_Title";
+    public const string RefactorExtractVariablePrompt = "Refactor_ExtractVariable_Prompt";
+    public const string RefactorExtractVariableName = "Refactor_ExtractVariable_Name";
+    public const string RefactorRenameTitle = "Refactor_Rename_Title";
+    public const string RefactorRenamePrompt = "Refactor_Rename_Prompt";
+    public const string EditorNeedsSubOrFunction = "Editor_NeedsSubOrFunction";
+    public const string EditorMappedRegions = "Editor_MappedRegions";
+    public const string EditorNoNameUnderCaret = "Editor_NoNameUnderCaret";
+    public const string EditorPartialOnlyFromTemplate = "Editor_PartialOnlyFromTemplate";
+    public const string EditorSelectMarkupFirst = "Editor_SelectMarkupFirst";
+    public const string EditorTreatingAs = "Editor_TreatingAs";
+    public const string EditorReopenedAs = "Editor_ReopenedAs";
+    public const string RenameCaretOnNameFirst = "Rename_CaretOnNameFirst";
+    public const string RenameNotWritten = "Rename_NotWritten";
+    public const string TestNothingToRun = "Test_NothingToRun";
+    public const string TestSelectSingleToDebug = "Test_SelectSingleToDebug";
+    public const string TestDebugging = "Test_Debugging";
+    public const string PluginLoaded = "Plugin_Loaded";
+    public const string PluginDidNotLoad = "Plugin_DidNotLoad";
+    public const string CommandNotImplemented = "Command_NotImplemented";
+    // MainWindow: indentation, line endings, encoding, language
+    public const string IndentTitle = "Indent_Title";
+    public const string IndentUse = "Indent_Use";
+    public const string IndentSpaces = "Indent_Spaces";
+    public const string IndentTabs = "Indent_Tabs";
+    public const string IndentLabel = "Indent_Label";
+    public const string LineEndingTitle = "LineEnding_Title";
+    public const string LineEndingPrompt = "LineEnding_Prompt";
+    public const string EncodingReopenTitle = "Encoding_ReopenTitle";
+    public const string EncodingReopenPrompt = "Encoding_ReopenPrompt";
+    public const string LanguageTitle = "Language_Title";
+    public const string LanguagePrompt = "Language_Prompt";
+    public const string StatusCaret = "Status_Caret";
+    public const string StatusCaretSelected = "Status_CaretSelected";
+    // MainWindow: toolbar and dialog labels
+    public const string ToolbarBuildConfiguration = "Toolbar_BuildConfiguration";
+    public const string ToolbarStartupProject = "Toolbar_StartupProject";
+    public const string OpenFilterSqlite = "Open_Filter_Sqlite";
+    public const string OpenFilterAllFiles = "Open_Filter_AllFiles";
+    public const string RevertTitle = "Revert_Title";
+    public const string RevertMessage = "Revert_Message";
+    public const string RevertDiscard = "Revert_Discard";
+    public const string DialogGo = "Dialog_Go";
+
+    // Solution Explorer context menu
+    public const string SolutionExplorerOpen = "SolutionExplorer_Open";
+    public const string SolutionExplorerOpenInDesigner = "SolutionExplorer_OpenInDesigner";
+    public const string SolutionExplorerNewFile = "SolutionExplorer_NewFile";
+    public const string SolutionExplorerNewFolder = "SolutionExplorer_NewFolder";
+    public const string SolutionExplorerRename = "SolutionExplorer_Rename";
+    public const string SolutionExplorerDelete = "SolutionExplorer_Delete";
+    public const string SolutionExplorerCopyPath = "SolutionExplorer_CopyPath";
+    public const string SolutionExplorerCopyRelativePath = "SolutionExplorer_CopyRelativePath";
+    public const string SolutionExplorerRefresh = "SolutionExplorer_Refresh";
+    public const string SolutionExplorerProperties = "SolutionExplorer_Properties";
+    // Code editor context menu
+    public const string EditorMenuCut = "EditorMenu_Cut";
+    public const string EditorMenuCopy = "EditorMenu_Copy";
+    public const string EditorMenuPaste = "EditorMenu_Paste";
+    public const string EditorMenuGoToDefinition = "EditorMenu_GoToDefinition";
+    public const string EditorMenuFindReferences = "EditorMenu_FindReferences";
+    public const string EditorMenuRename = "EditorMenu_Rename";
+    public const string EditorMenuQuickActions = "EditorMenu_QuickActions";
+    public const string EditorMenuExtractVariable = "EditorMenu_ExtractVariable";
+    public const string EditorMenuExtractConstant = "EditorMenu_ExtractConstant";
+    public const string EditorMenuInlineVariable = "EditorMenu_InlineVariable";
+    public const string EditorMenuConvertConditional = "EditorMenu_ConvertConditional";
+    public const string EditorMenuGenerateConstructor = "EditorMenu_GenerateConstructor";
+    public const string EditorMenuGenerateProperty = "EditorMenu_GenerateProperty";
+    public const string EditorMenuMoveTypeToFile = "EditorMenu_MoveTypeToFile";
+    public const string EditorMenuChangeSignature = "EditorMenu_ChangeSignature";
+    public const string EditorMenuExtractMethod = "EditorMenu_ExtractMethod";
+    public const string EditorMenuAddImport = "EditorMenu_AddImport";
+    public const string EditorMenuExtractPartial = "EditorMenu_ExtractPartial";
+    public const string EditorMenuTidyImports = "EditorMenu_TidyImports";
+    public const string EditorMenuFormatSelection = "EditorMenu_FormatSelection";
+    public const string EditorMenuFormatDocument = "EditorMenu_FormatDocument";
+    public const string EditorMenuToggleBreakpoint = "EditorMenu_ToggleBreakpoint";
+    public const string EditorMenuRunToHere = "EditorMenu_RunToHere";
+    public const string EditorMenuExplainWithAssistant = "EditorMenu_ExplainWithAssistant";
+    public const string EditorMenuAskAssistant = "EditorMenu_AskAssistant";
+    // Terminal context menu
+    public const string TerminalCopy = "Terminal_Copy";
+    public const string TerminalPaste = "Terminal_Paste";
+    public const string TerminalClear = "Terminal_Clear";
+    public const string TerminalCloseTerminal = "Terminal_CloseTerminal";
+    // Document tab context menu
+    public const string DocumentTabClose = "DocumentTab_Close";
+    public const string DocumentTabCloseOthers = "DocumentTab_CloseOthers";
+    public const string DocumentTabCloseAll = "DocumentTab_CloseAll";
+    public const string DocumentTabCloseToTheRight = "DocumentTab_CloseToTheRight";
+    public const string DocumentTabCopyPath = "DocumentTab_CopyPath";
+    public const string DocumentTabOpenContainingFolder = "DocumentTab_OpenContainingFolder";
+    // Dock titles (the Id values stay as they are)
+    public const string DockDocuments = "Dock_Documents";
+    public const string DockLeft = "Dock_Left";
+    public const string DockRightTop = "Dock_RightTop";
+    public const string DockRightBottom = "Dock_RightBottom";
+    public const string DockRight = "Dock_Right";
+    public const string DockBottom = "Dock_Bottom";
+    public const string DockRoot = "Dock_Root";
+    // Status bar
+    public const string LineEndingMixed = "LineEnding_Mixed";
+    public const string ShortcutRecorderPlaceholder = "ShortcutRecorder_Placeholder";
+    // Designer problems
+    public const string DesignerCannotShowAt = "Designer_CannotShowAt";
+    public const string DesignerCannotShowMessage = "Designer_CannotShowMessage";
+    public const string DesignerOcxPlaceholders = "Designer_OcxPlaceholders";
+    public const string DebugAdapterNotFound = "Debug_AdapterNotFound";
+
+    // Change Signature: the preview row for a new parameter
+    public const string ChangeSignatureNewParameter = "ChangeSignature_NewParameter";
+    // Code editor and Output messages
+    public const string EditorCopied = "Editor_Copied";
+    public const string InputTitle = "Input_Title";
+    public const string BreakpointConditionTitle = "BreakpointCondition_Title";
+    // Theme names shown in Settings
+    public const string ThemeLight = "Theme_Light";
+    public const string ThemeDark = "Theme_Dark";
+    public const string ThemeSystem = "Theme_System";
+    public const string ThemeVisualStudioBlue = "Theme_VisualStudioBlue";
+    public const string ThemeHighContrastLight = "Theme_HighContrastLight";
+    public const string ThemeHighContrastDark = "Theme_HighContrastDark";
+    public const string ThemeSolarizedLight = "Theme_SolarizedLight";
+    public const string ThemeSolarizedDark = "Theme_SolarizedDark";
+
+    public const string LanguagePlainText = "Language_PlainText";
 }

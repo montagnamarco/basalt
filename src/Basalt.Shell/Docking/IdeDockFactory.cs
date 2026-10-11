@@ -3,6 +3,7 @@ using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Model.Mvvm;
 using Dock.Model.Mvvm.Controls;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Docking;
 
@@ -57,7 +58,7 @@ public sealed class IdeDockFactory : Factory
         DocumentArea = new DocumentDock
         {
             Id = "Documenti",
-            Title = "Documenti",
+            Title = Localizer.Get(StringKeys.DockDocuments),
             IsCollapsable = false,
             CanCreateDocument = false,
             VisibleDockables = CreateList<IDockable>()
@@ -73,7 +74,7 @@ public sealed class IdeDockFactory : Factory
         var toolboxColumn = new ToolDock
         {
             Id = "Sinistra",
-            Title = "Sinistra",
+            Title = Localizer.Get(StringKeys.DockLeft),
             Alignment = Alignment.Left,
             Proportion = 0.16,
             VisibleDockables = CreateList<IDockable>(Toolbox, ElementTree, Outline),
@@ -87,7 +88,7 @@ public sealed class IdeDockFactory : Factory
         var projectPanel = new ToolDock
         {
             Id = "DestraSopra",
-            Title = "DestraSopra",
+            Title = Localizer.Get(StringKeys.DockRightTop),
             Alignment = Alignment.Right,
             Proportion = 0.35,
             VisibleDockables = CreateList<IDockable>(SolutionExplorer, GitChanges, GitBranches),
@@ -102,7 +103,7 @@ public sealed class IdeDockFactory : Factory
         var propertiesPanel = new ToolDock
         {
             Id = "DestraSotto",
-            Title = "DestraSotto",
+            Title = Localizer.Get(StringKeys.DockRightBottom),
             Alignment = Alignment.Right,
             Proportion = 0.65,
             VisibleDockables = CreateList<IDockable>(Properties, Assistant),
@@ -114,7 +115,7 @@ public sealed class IdeDockFactory : Factory
         var rightColumn = new ProportionalDock
         {
             Id = "Destra",
-            Title = "Destra",
+            Title = Localizer.Get(StringKeys.DockRight),
             Orientation = Orientation.Vertical,
             Proportion = 0.24,
             VisibleDockables = CreateList<IDockable>(
@@ -128,7 +129,7 @@ public sealed class IdeDockFactory : Factory
         BottomArea = new ToolDock
         {
             Id = "Inferiore",
-            Title = "Inferiore",
+            Title = Localizer.Get(StringKeys.DockBottom),
             Alignment = Alignment.Bottom,
             Proportion = 0.28,
             // Visual Studio keeps this strip small while editing: the Error
@@ -168,7 +169,7 @@ public sealed class IdeDockFactory : Factory
 
         var radice = CreateRootDock();
         radice.Id = "Radice";
-        radice.Title = "Radice";
+        radice.Title = Localizer.Get(StringKeys.DockRoot);
         radice.IsCollapsable = false;
         radice.VisibleDockables = CreateList<IDockable>(corpo);
         radice.ActiveDockable = corpo;

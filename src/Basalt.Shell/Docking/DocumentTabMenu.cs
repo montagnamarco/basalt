@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Basalt.Shell.Controls;
 using Dock.Model.Core;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Docking;
 
@@ -45,13 +46,13 @@ public static class DocumentTabMenu
 
         menu.ItemsSource = new Control[]
         {
-            Item("Close", DocumentTabCommand.Close),
-            Item("Close Others", DocumentTabCommand.CloseOthers),
-            Item("Close All", DocumentTabCommand.CloseAll),
-            Item("Close to the Right", DocumentTabCommand.CloseToTheRight),
+            Item(Localizer.Get(StringKeys.DocumentTabClose), DocumentTabCommand.Close),
+            Item(Localizer.Get(StringKeys.DocumentTabCloseOthers), DocumentTabCommand.CloseOthers),
+            Item(Localizer.Get(StringKeys.DocumentTabCloseAll), DocumentTabCommand.CloseAll),
+            Item(Localizer.Get(StringKeys.DocumentTabCloseToTheRight), DocumentTabCommand.CloseToTheRight),
             new Separator(),
-            Item("Copy Path", DocumentTabCommand.CopyPath),
-            Item("Open Containing Folder", DocumentTabCommand.OpenContainingFolder)
+            Item(Localizer.Get(StringKeys.DocumentTabCopyPath), DocumentTabCommand.CopyPath),
+            Item(Localizer.Get(StringKeys.DocumentTabOpenContainingFolder), DocumentTabCommand.OpenContainingFolder)
         };
 
         return menu;

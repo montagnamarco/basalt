@@ -80,8 +80,14 @@ public partial class MainWindow : Window
     /// <summary>The conversation with the assistant, which outlives one question.</summary>
     private AiAssistantController? _assistantController;
 
+    /// <summary>The vendor and model the assistant panel last described.</summary>
+    private (string Vendor, string Model)? _shownAssistant;
+
     /// <summary>Where the assistants' API keys are kept.</summary>
-    private readonly ApiKeyStore _apiKeys = new();
+    private readonly IApiKeyStore _apiKeys;
+
+    /// <summary>What the assistant talks through when a test replaces it; null in the IDE.</summary>
+    private readonly AiAssistantServices? _aiServices;
 
     /// <summary>
     /// Every command the IDE offers, and the keys assigned to them.
@@ -151,8 +157,18 @@ public partial class MainWindow : Window
     /// The path comes from the command-line arguments, so the IDE can be
     /// launched directly on a project.
     /// </summary>
-    public MainWindow(string? solutionToOpen)
+    public MainWindow(string? solutionToOpen) : this(solutionToOpen, null) { }
+
+    /// <summary>
+    /// The window with its assistant's key store and backend chosen by the
+    /// caller. Tests pass an in-memory store and a fake backend, so nothing
+    /// reaches the OS keychain or a model provider.
+    /// </summary>
+    internal MainWindow(string? solutionToOpen, AiAssistantServices? assistant)
     {
+        _aiServices = assistant;
+        _apiKeys = assistant?.Keys ?? new ApiKeyStore();
+
         InitializeComponent();
 
         // ApplySettings (below) only runs once the Settings window pushes a
@@ -178,6 +194,10 @@ public partial class MainWindow : Window
         // model a way to remember what was open.
         viewModel.LoadSettings = () => _settingsStore.Load();
         viewModel.SaveSettings = settings => _settingsStore.Save(settings);
+
+        // Read here as well as on every change in Settings: a window opened on
+        // a file that says "don't format on save" must not format on save.
+        viewModel.FormatOnSave = _settingsStore.Load().Editor.FormatOnSave;
 
         // The tree is a control here; what was unfolded in it belongs to the
         // session, which the view model keeps.
@@ -413,7 +433,7 @@ public partial class MainWindow : Window
     {
         ViewModel.Operations.CancelCurrent();
 
-        CancelOperationLabel.Text = "Stopping…";
+        CancelOperationLabel.Text = Localizer.Get(StringKeys.OperationStopping);
     }
 
     /// <summary>
@@ -493,7 +513,7 @@ public partial class MainWindow : Window
         {
             case Basalt.Shell.Docking.DocumentTabCommand.CopyPath:
                 await CopyToClipboardAsync(path);
-                ViewModel.WriteOutput($"[editor] Copied {path}");
+                ViewModel.WriteOutput($"[editor] {Localizer.Get(StringKeys.EditorCopied, path)}");
                 break;
 
             case Basalt.Shell.Docking.DocumentTabCommand.OpenContainingFolder:
@@ -654,7 +674,7 @@ public partial class MainWindow : Window
     {
         var reason = ViewModel.DesignerProblems.TryGetValue(document, out var problem)
             ? problem
-            : "This file cannot be shown in the designer.";
+            : Localizer.Get(StringKeys.DesignerCannotShow);
 
         var banner = new Border
         {
@@ -997,7 +1017,7 @@ public partial class MainWindow : Window
             // Which is the whole of what a run without breakpoints has to
             // say: without it a program that started and ended looks the
             // same as one that never started.
-            ViewModel.WriteOutput($"[debug] {_debugTarget ?? "The program"} exited with code {code}.");
+            ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugExited, _debugTarget ?? Localizer.Get(StringKeys.DebugTheProgram), code)}");
 
             _debugTarget = null;
             ShowDebugState();
@@ -1044,15 +1064,14 @@ public partial class MainWindow : Window
         if (Dispatcher.UIThread.CheckAccess())
         {
             ViewModel.WriteOutput(
-                "[debug] A program asked for input from the interface thread, "
-              + "which cannot be answered without stopping it.");
+                "[debug] " + Localizer.Get(StringKeys.DebugInputOnInterfaceThread));
 
             request.Response = "";
             return;
         }
 
         request.Response = Dispatcher.UIThread.InvokeAsync(
-            async () => await AskForTextAsync("Input", request.Prompt, ""),
+            async () => await AskForTextAsync(Localizer.Get(StringKeys.InputTitle), request.Prompt, ""),
             DispatcherPriority.Normal).GetAwaiter().GetResult();
     }
 
@@ -1217,8 +1236,8 @@ public partial class MainWindow : Window
         DebugBanner.IsVisible = true;
 
         DebugBannerText.Text = _debug.IsPaused
-            ? "Debugging — paused"
-            : "Debugging — running";
+            ? Localizer.Get(StringKeys.DebugBannerPaused)
+            : Localizer.Get(StringKeys.DebugBannerRunning);
 
         // Where it stopped, which is the one thing worth reading at a glance;
         // while running there is nothing truer to say than what is running.
@@ -1269,7 +1288,7 @@ public partial class MainWindow : Window
 
         if (name.Length == 0)
         {
-            ViewModel.WriteOutput("[editor] There is no name under the caret.");
+            ViewModel.WriteOutput("[editor] " + Localizer.Get(StringKeys.EditorNoNameUnderCaret));
             return;
         }
 
@@ -1289,13 +1308,13 @@ public partial class MainWindow : Window
 
         if (!document.FilePath.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase))
         {
-            ViewModel.WriteOutput("[editor] A partial view can only come from a template.");
+            ViewModel.WriteOutput("[editor] " + Localizer.Get(StringKeys.EditorPartialOnlyFromTemplate));
             return;
         }
 
         if (editor.SelectionLength <= 0)
         {
-            ViewModel.WriteOutput("[editor] Select the markup to extract first.");
+            ViewModel.WriteOutput("[editor] " + Localizer.Get(StringKeys.EditorSelectMarkupFirst));
             return;
         }
 
@@ -1304,7 +1323,7 @@ public partial class MainWindow : Window
         var text = editor.Text;
 
         var name = await AskForTextAsync(
-            "Extract to Partial View", "Name the partial:", "Row");
+            Localizer.Get(StringKeys.RefactorExtractPartialTitle), Localizer.Get(StringKeys.RefactorExtractPartialPrompt), Localizer.Get(StringKeys.RefactorExtractPartialName));
 
         if (name is not { Length: > 0 }) return;
 
@@ -1345,7 +1364,7 @@ public partial class MainWindow : Window
 
         await ViewModel.SyncActiveDocumentAsync();
 
-        var name = await AskForTextAsync("Extract Constant", "Name the constant:", "Value");
+        var name = await AskForTextAsync(Localizer.Get(StringKeys.RefactorExtractConstantTitle), Localizer.Get(StringKeys.RefactorExtractConstantPrompt), Localizer.Get(StringKeys.RefactorExtractConstantName));
 
         if (name is not { Length: > 0 }) return;
 
@@ -1463,7 +1482,7 @@ public partial class MainWindow : Window
         if (parameters.Count == 0)
         {
             ViewModel.WriteOutput(
-                "[editor] Put the caret in a Sub or a Function that takes parameters.");
+                "[editor] " + Localizer.Get(StringKeys.EditorNeedsSubOrFunction));
             return;
         }
 
@@ -1518,9 +1537,7 @@ public partial class MainWindow : Window
             await ViewModel.OpenFileAsync(path);
 
             ViewModel.WriteOutput(
-                $"[editor] {generated.Map.Mappings.Count} mapped region"
-              + $"{(generated.Map.Mappings.Count == 1 ? "" : "s")} between the template "
-              + "and the generated code.");
+                $"[editor] {Localizer.Get(StringKeys.EditorMappedRegions, generated.Map.Mappings.Count, generated.Map.Mappings.Count == 1 ? "" : "s")}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -1594,7 +1611,7 @@ public partial class MainWindow : Window
 
         await ViewModel.SyncActiveDocumentAsync();
 
-        var name = await AskForTextAsync("Extract Method", "Name the method:", "Helper");
+        var name = await AskForTextAsync(Localizer.Get(StringKeys.RefactorExtractMethodTitle), Localizer.Get(StringKeys.RefactorExtractMethodPrompt), Localizer.Get(StringKeys.RefactorExtractMethodName));
 
         if (name is not { Length: > 0 }) return;
 
@@ -1627,7 +1644,7 @@ public partial class MainWindow : Window
 
         await ViewModel.SyncActiveDocumentAsync();
 
-        var name = await AskForTextAsync("Extract Variable", "Name the expression:", "value");
+        var name = await AskForTextAsync(Localizer.Get(StringKeys.RefactorExtractVariableTitle), Localizer.Get(StringKeys.RefactorExtractVariablePrompt), Localizer.Get(StringKeys.RefactorExtractVariableName));
 
         if (name is not { Length: > 0 }) return;
 
@@ -1652,11 +1669,11 @@ public partial class MainWindow : Window
 
         if (currentName.Length == 0)
         {
-            ViewModel.WriteOutput("[rename] Put the caret on a name first.");
+            ViewModel.WriteOutput("[rename] " + Localizer.Get(StringKeys.RenameCaretOnNameFirst));
             return;
         }
 
-        var newName = await AskForTextAsync("Rename", $"Rename '{currentName}' to:", currentName);
+        var newName = await AskForTextAsync(Localizer.Get(StringKeys.RefactorRenameTitle), Localizer.Get(StringKeys.RefactorRenamePrompt, currentName), currentName);
 
         if (newName is not { Length: > 0 } || newName == currentName) return;
 
@@ -1683,7 +1700,7 @@ public partial class MainWindow : Window
 
         if (!await MainWindowViewModel.ApplyRefactoringAsync(preview))
         {
-            ViewModel.WriteOutput("[rename] The change could not be written.");
+            ViewModel.WriteOutput("[rename] " + Localizer.Get(StringKeys.RenameNotWritten));
             return;
         }
 
@@ -1790,16 +1807,16 @@ public partial class MainWindow : Window
 
         var settings = _settingsStore.Load();
 
-        var chosen = await AskForChoiceAsync("Indentation", "Use:",
+        var chosen = await AskForChoiceAsync(Localizer.Get(StringKeys.IndentTitle), Localizer.Get(StringKeys.IndentUse),
         [
-            "Spaces: 2", "Spaces: 4", "Spaces: 8", "Tabs: 4", "Tabs: 8"
+            IndentLabel(true, 2), IndentLabel(true, 4), IndentLabel(true, 8), IndentLabel(false, 4), IndentLabel(false, 8)
         ]);
 
         if (chosen is not { Length: > 0 }) return;
 
         var parts = chosen.Split(':', StringSplitOptions.TrimEntries);
 
-        settings.Editor.ConvertTabsToSpaces = parts[0] == "Spaces";
+        settings.Editor.ConvertTabsToSpaces = parts[0] == Localizer.Get(StringKeys.IndentSpaces);
         settings.Editor.IndentationSize = int.TryParse(parts[1], out var width) ? width : 4;
 
         _settingsStore.Save(settings);
@@ -1807,13 +1824,22 @@ public partial class MainWindow : Window
         ShowCaretPosition();
     }
 
+    /// <summary>
+    /// The indentation choice as the palette and the status bar show it, for
+    /// example "Spaces: 4". The word comes from the resources, and the palette
+    /// reads the same word back, so a translated interface stays consistent.
+    /// </summary>
+    private static string IndentLabel(bool spaces, int width) =>
+        Localizer.Get(StringKeys.IndentLabel,
+            Localizer.Get(spaces ? StringKeys.IndentSpaces : StringKeys.IndentTabs), width);
+
     /// <summary>Converts the document's line endings.</summary>
     private async void OnStatusLineEnding(object? sender, RoutedEventArgs e)
     {
         if (CurrentEditor() is not { } editor) return;
 
         var chosen = await AskForChoiceAsync(
-            "Line Endings", "Convert to:", ["LF", "CRLF"]);
+            Localizer.Get(StringKeys.LineEndingTitle), Localizer.Get(StringKeys.LineEndingPrompt), ["LF", "CRLF"]);
 
         if (chosen is not { Length: > 0 }) return;
 
@@ -1840,8 +1866,8 @@ public partial class MainWindow : Window
 
         var answered = false;
 
-        var ok = new Button { Content = "Go", IsDefault = true };
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var ok = new Button { Content = Localizer.Get(StringKeys.DialogGo), IsDefault = true };
+        var cancel = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsCancel = true };
 
         var dialog = new Window
         {
@@ -1883,8 +1909,8 @@ public partial class MainWindow : Window
 
         var answered = false;
 
-        var ok = new Button { Content = "OK", IsDefault = true };
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var ok = new Button { Content = Localizer.Get(StringKeys.ButtonOk), IsDefault = true };
+        var cancel = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsCancel = true };
 
         var dialog = new Window
         {
@@ -2192,7 +2218,7 @@ public partial class MainWindow : Window
         ViewModel.Configuration = _settingsStore.Load().Build.Configuration;
 
         toolbar.Add(new ToolbarChooser(
-            "Build configuration",
+            Localizer.Get(StringKeys.ToolbarBuildConfiguration),
             ["Debug", "Release"],
             _settingsStore.Load().Build.Configuration,
             chosen => Apply(() =>
@@ -2312,7 +2338,7 @@ public partial class MainWindow : Window
             : names[0];
 
         toolbar.Add(new ToolbarChooser(
-            "Startup project",
+            Localizer.Get(StringKeys.ToolbarStartupProject),
             names,
             selected,
             chosen =>
@@ -2557,11 +2583,11 @@ public partial class MainWindow : Window
         _plugins.LoadFrom(PluginLoader.DefaultFolder, new ShellPluginHost(this));
 
         foreach (var failed in _plugins.Failed)
-            ViewModel.WriteOutput($"[plugin] {failed.Manifest.Name} did not load: {failed.Error}");
+            ViewModel.WriteOutput($"[plugin] {Localizer.Get(StringKeys.PluginDidNotLoad, failed.Manifest.Name, failed.Error)}");
 
         var loaded = _plugins.Plugins.Count(p => p.IsLoaded);
 
-        if (loaded > 0) ViewModel.WriteOutput($"[plugin] {loaded} loaded.");
+        if (loaded > 0) ViewModel.WriteOutput($"[plugin] {Localizer.Get(StringKeys.PluginLoaded, loaded)}");
     }
 
     /// <summary>Asks for a database file and opens it in the panel.</summary>
@@ -2573,11 +2599,11 @@ public partial class MainWindow : Window
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("SQLite databases")
+                new FilePickerFileType(Localizer.Get(StringKeys.OpenFilterSqlite))
                 {
                     Patterns = ["*.db", "*.sqlite", "*.sqlite3", "*.db3"]
                 },
-                new FilePickerFileType("All files") { Patterns = ["*"] }
+                new FilePickerFileType(Localizer.Get(StringKeys.OpenFilterAllFiles)) { Patterns = ["*"] }
             ]
         });
 
@@ -2608,8 +2634,8 @@ public partial class MainWindow : Window
         }
 
         IndentationLabel.Text = editor.Options.ConvertTabsToSpaces
-            ? $"Spaces: {editor.Options.IndentationSize}"
-            : $"Tabs: {editor.Options.IndentationSize}";
+            ? IndentLabel(true, editor.Options.IndentationSize)
+            : IndentLabel(false, editor.Options.IndentationSize);
 
         LanguageLabel.Text = ViewModel.ActiveDocument is { } document
             ? _languages.TryGetValue(document.FilePath, out var told)
@@ -2621,8 +2647,8 @@ public partial class MainWindow : Window
         var selected = editor.SelectionLength;
 
         CaretPositionLabel.Text = selected > 0
-            ? $"Ln {caret.Line}, Col {caret.Column} ({selected} selected)"
-            : $"Ln {caret.Line}, Col {caret.Column}";
+            ? Localizer.Get(StringKeys.StatusCaretSelected, caret.Line, caret.Column, selected)
+            : Localizer.Get(StringKeys.StatusCaret, caret.Line, caret.Column);
 
         LineEndingLabel.Text = IdeStatusBar.DescribeLineEnding(editor.Text);
 
@@ -2665,7 +2691,7 @@ public partial class MainWindow : Window
         if (ActingDocument is not { } document) return;
 
         var chosen = await AskForChoiceAsync(
-            "Encoding", "Reopen this file as:", [.. Basalt.Core.Text.FileEncoding.Names]);
+            Localizer.Get(StringKeys.EncodingReopenTitle), Localizer.Get(StringKeys.EncodingReopenPrompt), [.. Basalt.Core.Text.FileEncoding.Names]);
 
         if (chosen is not { Length: > 0 }) return;
 
@@ -2683,7 +2709,7 @@ public partial class MainWindow : Window
 
             ShowCaretPosition();
 
-            ViewModel.WriteOutput($"[editor] Reopened as {chosen}.");
+            ViewModel.WriteOutput($"[editor] {Localizer.Get(StringKeys.EditorReopenedAs, chosen)}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -2701,10 +2727,10 @@ public partial class MainWindow : Window
     {
         if (ActingDocument is not { } document) return;
 
-        var languages = new List<string> { "Visual Basic", "C#", "QuickBASIC", "Plain Text" };
+        var languages = new List<string> { "Visual Basic", "C#", "QuickBASIC", Localizer.Get(StringKeys.LanguagePlainText) };
 
         var chosen = await AskForChoiceAsync(
-            "Language", "Treat this file as:", [.. languages]);
+            Localizer.Get(StringKeys.LanguageTitle), Localizer.Get(StringKeys.LanguagePrompt), [.. languages]);
 
         if (chosen is not { Length: > 0 }) return;
 
@@ -2716,8 +2742,7 @@ public partial class MainWindow : Window
         // but the colouring is chosen from the file extension when the editor
         // is built, and re-colouring an open file is not written yet.
         ViewModel.WriteOutput(
-            $"[editor] Treating this file as {chosen}. "
-          + "The syntax colours still follow the file extension.");
+            $"[editor] {Localizer.Get(StringKeys.EditorTreatingAs, chosen)}");
     }
 
     /// <summary>
@@ -2753,10 +2778,16 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task ShowSettingsAsync()
     {
-        var window = new SettingsWindow(_settingsStore, Languages);
+        var window = new SettingsWindow(_settingsStore, Languages, _apiKeys);
 
         window.SettingsChanged += (_, settings) => ApplySettings(settings);
-        window.ApiKeyChanged += (_, _) => OnApiKeyChanged();
+        window.ApiKeyChanged += (_, _) =>
+        {
+            OnApiKeyChanged();
+
+            // A key that was just saved means the assistant is now set up.
+            _assistantController?.ShowStatus();
+        };
 
         await window.ShowDialog(this);
     }
@@ -2797,6 +2828,21 @@ public partial class MainWindow : Window
         _search?.ApplySettings(settings);
 
         ApplyTheme(settings.Appearance.Theme);
+
+        // The document is formatted before saving only when the setting says so.
+        ViewModel.FormatOnSave = settings.Editor.FormatOnSave;
+
+        // The panel says whether an assistant is set up and has its key. Only a
+        // change of vendor or model alters that: asking the key store on every
+        // setting (the font spinner sends one per step) would run a keychain
+        // lookup on the interface thread for nothing.
+        var assistant = (settings.Ai.Vendor, settings.Ai.Model);
+
+        if (assistant != _shownAssistant)
+        {
+            _shownAssistant = assistant;
+            _assistantController?.ShowStatus();
+        }
     }
 
     /// <summary>
@@ -3279,8 +3325,7 @@ public partial class MainWindow : Window
                 // A command in the registry with nothing behind it yet: said
                 // plainly rather than silently doing nothing.
                 ViewModel.WriteOutput(
-                    $"[command] '{_commands.ById(commandId)?.Title ?? commandId}' "
-                  + "is not implemented yet.");
+                    $"[command] {Localizer.Get(StringKeys.CommandNotImplemented, _commands.ById(commandId)?.Title ?? commandId)}");
                 break;
         }
     }
@@ -3459,9 +3504,8 @@ public partial class MainWindow : Window
     private async Task DiscardChangesAsync(FileChange file)
     {
         var confirmed = await ConfirmAsync(
-            "Discard changes?",
-            $"The changes to {Path.GetFileName(file.Path)} will be lost. "
-          + "This cannot be undone.");
+            Localizer.Get(StringKeys.RevertTitle),
+            Localizer.Get(StringKeys.RevertMessage, Path.GetFileName(file.Path)));
 
         if (!confirmed) return;
 
@@ -3473,8 +3517,8 @@ public partial class MainWindow : Window
     {
         var answered = false;
 
-        var yes = new Button { Content = "Discard", Classes = { "primary" }, IsDefault = true };
-        var no = new Button { Content = "Cancel", IsCancel = true };
+        var yes = new Button { Content = Localizer.Get(StringKeys.RevertDiscard), Classes = { "primary" }, IsDefault = true };
+        var no = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsCancel = true };
 
         var dialog = new Window
         {
@@ -3933,7 +3977,7 @@ public partial class MainWindow : Window
 
         if (chosen.Count == 0)
         {
-            ViewModel.WriteOutput("[test] There is nothing to run.");
+            ViewModel.WriteOutput("[test] " + Localizer.Get(StringKeys.TestNothingToRun));
             return;
         }
 
@@ -3996,7 +4040,7 @@ public partial class MainWindow : Window
 
         if (chosen.Count != 1)
         {
-            ViewModel.WriteOutput("[test] Select a single test to debug.");
+            ViewModel.WriteOutput("[test] " + Localizer.Get(StringKeys.TestSelectSingleToDebug));
             return;
         }
 
@@ -4005,7 +4049,7 @@ public partial class MainWindow : Window
 
         var test = chosen[0];
 
-        ViewModel.WriteOutput($"[test] Debugging {test.FullyQualifiedName}.");
+        ViewModel.WriteOutput($"[test] {Localizer.Get(StringKeys.TestDebugging, test.FullyQualifiedName)}");
 
         // VSTEST_HOST_DEBUG makes the runner print its process id and wait,
         // which is the documented way to attach to a test.
@@ -4040,9 +4084,15 @@ public partial class MainWindow : Window
                 var dialog = new RefactoringPreviewDialog(preview);
                 await dialog.ShowDialog(this);
                 return dialog.Accepted;
-            });
+            },
+            _aiServices?.BackendFactory);
 
         _contents[_factory.Assistant] = _assistant;
+
+        // The panel describes the vendor and model it was built with; a later
+        // settings push that leaves them alone does not need to describe them again.
+        var assistant = _settingsStore.Load().Ai;
+        _shownAssistant = (assistant.Vendor, assistant.Model);
     }
 
     /// <summary>Builds the source control panels and connects them to git.</summary>
@@ -5269,7 +5319,7 @@ public partial class MainWindow : Window
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Open solution or project",
+            Title = Localizer.Get(StringKeys.PickerOpenSolution),
             AllowMultiple = false,
             FileTypeFilter = SolutionOpenFilters()
         });

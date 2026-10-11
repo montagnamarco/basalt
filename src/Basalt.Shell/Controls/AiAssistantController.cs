@@ -23,7 +23,7 @@ internal sealed class AiAssistantController
     private readonly AiChatPanel _panel;
     private readonly MainWindowViewModel _viewModel;
     private readonly Func<AiSettings> _settings;
-    private readonly ApiKeyStore _keys;
+    private readonly IApiKeyStore _keys;
     private readonly Func<AvaloniaEdit.TextEditor?> _currentEditor;
     private readonly Action<IEnumerable<string>> _showTabs;
     private readonly Func<RefactoringPreview, Task<bool>> _confirm;
@@ -40,7 +40,7 @@ internal sealed class AiAssistantController
         AiChatPanel panel,
         MainWindowViewModel viewModel,
         Func<AiSettings> settings,
-        ApiKeyStore keys,
+        IApiKeyStore keys,
         Func<AvaloniaEdit.TextEditor?> currentEditor,
         Action<IEnumerable<string>> showTabs,
         Func<RefactoringPreview, Task<bool>> confirm,
@@ -416,6 +416,16 @@ internal sealed class AiAssistantController
         await transaction.ApplyAsync();
     }
 }
+
+/// <summary>
+/// What the assistant talks through: where its key is kept and how a backend
+/// is made for a conversation. The window uses the real ones; a test hands in
+/// an in-memory key store and a fake backend, so no keychain is touched and no
+/// model provider is called.
+/// </summary>
+internal sealed record AiAssistantServices(
+    IApiKeyStore Keys,
+    Func<IAiChatProvider, string, string, IAiChatBackend> BackendFactory);
 
 /// <summary>What the assistant's tools get from the running IDE.</summary>
 internal sealed class AiAssistantHost(MainWindowViewModel viewModel, string root) : IAiWorkspaceHost

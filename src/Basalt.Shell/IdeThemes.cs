@@ -1,5 +1,6 @@
 using Avalonia.Styling;
 using Basalt.Core.Settings;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell;
 
@@ -60,14 +61,14 @@ public static class IdeThemes
     /// <summary>The name to show for a theme.</summary>
     public static string DisplayName(AppTheme theme) => theme switch
     {
-        AppTheme.Light => "Light",
-        AppTheme.Dark => "Dark",
-        AppTheme.System => "Follow the system",
-        AppTheme.VisualStudioBlue => "Visual Studio Blue",
-        AppTheme.HighContrastLight => "High Contrast Light",
-        AppTheme.HighContrastDark => "High Contrast Dark",
-        AppTheme.SolarizedLight => "Solarized Light",
-        AppTheme.SolarizedDark => "Solarized Dark",
+        AppTheme.Light => Localizer.Get(StringKeys.ThemeLight),
+        AppTheme.Dark => Localizer.Get(StringKeys.ThemeDark),
+        AppTheme.System => Localizer.Get(StringKeys.ThemeSystem),
+        AppTheme.VisualStudioBlue => Localizer.Get(StringKeys.ThemeVisualStudioBlue),
+        AppTheme.HighContrastLight => Localizer.Get(StringKeys.ThemeHighContrastLight),
+        AppTheme.HighContrastDark => Localizer.Get(StringKeys.ThemeHighContrastDark),
+        AppTheme.SolarizedLight => Localizer.Get(StringKeys.ThemeSolarizedLight),
+        AppTheme.SolarizedDark => Localizer.Get(StringKeys.ThemeSolarizedDark),
         _ => theme.ToString()
     };
 }

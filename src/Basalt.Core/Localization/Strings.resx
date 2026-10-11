@@ -230,6 +230,7 @@
   <data name="Welcome_NewProject_Description" xml:space="preserve"><value>Create a Windows Forms, Avalonia, web or QuickBASIC project from a template.</value></data>
   <data name="Welcome_OpenProject" xml:space="preserve"><value>Open Project or Solution…</value></data>
   <data name="Welcome_OpenProject_Description" xml:space="preserve"><value>Open an existing .slnx, .vbproj, .csproj or Visual Basic 6 project.</value></data>
+  <data name="Welcome_Recent_Missing" xml:space="preserve"><value>{0} is no longer on disk, so it has been taken off the recent list.</value></data>
 
   <!-- New Solution dialog -->
   <data name="NewSolution_Title" xml:space="preserve"><value>New Solution</value></data>
@@ -945,4 +946,225 @@
   <data name="AddItem_UserControl" xml:space="preserve"><value>Windows Forms User Control</value></data>
   <data name="AddItem_EmptyFile" xml:space="preserve"><value>Empty File</value></data>
   <data name="Open_Filter_Solutions" xml:space="preserve"><value>Solutions, projects and programs</value></data>
+  <!-- Project Properties dialog -->
+  <data name="ProjectProperties_Title" xml:space="preserve"><value>Project Properties</value></data>
+  <data name="ProjectProperties_Save" xml:space="preserve"><value>Save</value></data>
+  <!-- Project Properties: categories -->
+  <data name="ProjectProperties_Category_Application" xml:space="preserve"><value>Application</value></data>
+  <data name="ProjectProperties_Category_Compile" xml:space="preserve"><value>Compile</value></data>
+  <data name="ProjectProperties_Category_Advanced" xml:space="preserve"><value>Advanced</value></data>
+  <data name="ProjectProperties_Category_References" xml:space="preserve"><value>References</value></data>
+  <data name="ProjectProperties_Category_Debug" xml:space="preserve"><value>Debug</value></data>
+  <data name="ProjectProperties_Category_Publish" xml:space="preserve"><value>Publish</value></data>
+  <!-- Project Properties: fields -->
+  <data name="ProjectProperties_AssemblyName" xml:space="preserve"><value>Assembly name</value></data>
+  <data name="ProjectProperties_RootNamespace" xml:space="preserve"><value>Root namespace</value></data>
+  <data name="ProjectProperties_RootNamespaceHelp" xml:space="preserve"><value>Empty is a deliberate setting in Visual Basic: otherwise the project name is prepended to every declared namespace.</value></data>
+  <data name="ProjectProperties_OutputType" xml:space="preserve"><value>Output type</value></data>
+  <data name="ProjectProperties_StartupObject" xml:space="preserve"><value>Startup object</value></data>
+  <data name="ProjectProperties_StartupObjectHelp" xml:space="preserve"><value>Type whose Main runs, when more than one could.</value></data>
+  <data name="ProjectProperties_TargetFramework" xml:space="preserve"><value>Target framework</value></data>
+  <data name="ProjectProperties_OptionStrict" xml:space="preserve"><value>Option Strict</value></data>
+  <data name="ProjectProperties_OptionStrictHelp" xml:space="preserve"><value>On requires explicit conversions and rejects late binding.</value></data>
+  <data name="ProjectProperties_OptionExplicit" xml:space="preserve"><value>Option Explicit</value></data>
+  <data name="ProjectProperties_OptionExplicitHelp" xml:space="preserve"><value>Requires variables to be declared before use.</value></data>
+  <data name="ProjectProperties_OptionInfer" xml:space="preserve"><value>Option Infer</value></data>
+  <data name="ProjectProperties_OptionInferHelp" xml:space="preserve"><value>Lets the compiler infer a variable's type from its initialiser.</value></data>
+  <data name="ProjectProperties_OptionCompare" xml:space="preserve"><value>Option Compare</value></data>
+  <data name="ProjectProperties_OptionCompareHelp" xml:space="preserve"><value>Binary compares by character code; Text ignores case.</value></data>
+  <data name="ProjectProperties_ConditionalConstants" xml:space="preserve"><value>Conditional constants</value></data>
+  <data name="ProjectProperties_ConditionalConstantsHelp" xml:space="preserve"><value>Symbols for #If, separated by semicolons.</value></data>
+  <data name="ProjectProperties_SuppressedWarnings" xml:space="preserve"><value>Suppressed warnings</value></data>
+  <data name="ProjectProperties_SuppressedWarningsHelp" xml:space="preserve"><value>Warning numbers not to report, separated by semicolons.</value></data>
+  <data name="ProjectProperties_TreatWarningsAsErrors" xml:space="preserve"><value>Treat warnings as errors</value></data>
+  <data name="ProjectProperties_GenerateXmlDocumentation" xml:space="preserve"><value>Generate XML documentation</value></data>
+  <data name="ProjectProperties_Nullable" xml:space="preserve"><value>Nullable reference types</value></data>
+  <data name="ProjectProperties_Packages" xml:space="preserve"><value>Packages</value></data>
+  <data name="ProjectProperties_PackageId" xml:space="preserve"><value>Package id</value></data>
+  <data name="ProjectProperties_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="ProjectProperties_AddPackage" xml:space="preserve"><value>Add</value></data>
+  <data name="ProjectProperties_RemovePackage" xml:space="preserve"><value>Remove</value></data>
+  <data name="ProjectProperties_Projects" xml:space="preserve"><value>Projects</value></data>
+  <data name="ProjectProperties_CommandLineArguments" xml:space="preserve"><value>Command line arguments</value></data>
+  <data name="ProjectProperties_WorkingDirectory" xml:space="preserve"><value>Working directory</value></data>
+  <data name="ProjectProperties_ApplicationUrl" xml:space="preserve"><value>Application URL</value></data>
+  <data name="ProjectProperties_ApplicationUrlHelp" xml:space="preserve"><value>Address a web project listens on.</value></data>
+  <data name="ProjectProperties_LaunchBrowser" xml:space="preserve"><value>Launch browser</value></data>
+  <data name="ProjectProperties_EnvironmentVariables" xml:space="preserve"><value>Environment variables</value></data>
+  <data name="ProjectProperties_EnvironmentVariablesHelp" xml:space="preserve"><value>One NAME=value per line.</value></data>
+  <data name="ProjectProperties_RuntimeIdentifier" xml:space="preserve"><value>Runtime identifier</value></data>
+  <data name="ProjectProperties_RuntimeIdentifierHelp" xml:space="preserve"><value>For example osx-arm64, linux-x64, win-x64.</value></data>
+  <data name="ProjectProperties_SelfContained" xml:space="preserve"><value>Self-contained</value></data>
+  <data name="ProjectProperties_SelfContainedHelp" xml:space="preserve"><value>Includes the runtime, so the target machine needs no .NET installed.</value></data>
+  <data name="ProjectProperties_TrimUnusedCode" xml:space="preserve"><value>Trim unused code</value></data>
+  <!-- About window -->
+  <data name="About_Version" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="About_Description" xml:space="preserve"><value>An IDE for Visual Basic and the Basic dialects, on macOS, Windows and Linux.</value></data>
+  <data name="About_Licence" xml:space="preserve"><value>MIT licence</value></data>
+  <data name="About_CopyDetails" xml:space="preserve"><value>Copy details</value></data>
+  <!-- Change Signature dialog -->
+  <data name="ChangeSignature_Title" xml:space="preserve"><value>Change Signature</value></data>
+  <data name="ChangeSignature_AddParameter" xml:space="preserve"><value>Add a parameter</value></data>
+  <data name="ChangeSignature_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="ChangeSignature_NamePlaceholder" xml:space="preserve"><value>name</value></data>
+  <data name="ChangeSignature_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="ChangeSignature_Pass" xml:space="preserve"><value>pass</value></data>
+  <!-- Breakpoint condition dialog -->
+  <data name="BreakpointCondition_EveryTime" xml:space="preserve"><value>Every time</value></data>
+  <data name="BreakpointCondition_StopWhenTrue" xml:space="preserve"><value>Stop only when this is true</value></data>
+  <data name="BreakpointCondition_StopWhenTrueHelp" xml:space="preserve"><value>Written in Visual Basic: "i = 4", "name &lt;&gt; """" AndAlso total &gt; 10".</value></data>
+  <data name="BreakpointCondition_HitCount" xml:space="preserve"><value>Skip this many passes first</value></data>
+  <data name="BreakpointCondition_HitCountHelp" xml:space="preserve"><value>Leave empty to stop every time.</value></data>
+  <data name="BreakpointCondition_Evaluates" xml:space="preserve"><value>The debugger evaluates:  {0}</value></data>
+  <!-- Breakpoint margin menu -->
+  <data name="Breakpoint_RemoveMenu" xml:space="preserve"><value>Remove Breakpoint</value></data>
+  <data name="Breakpoint_AddMenu" xml:space="preserve"><value>Add Breakpoint</value></data>
+  <data name="Breakpoint_Condition" xml:space="preserve"><value>Condition…</value></data>
+  <data name="Breakpoint_RunToHere" xml:space="preserve"><value>Run to Here</value></data>
+  <!-- Refactoring preview dialog -->
+  <data name="RefactoringPreview_DefaultTitle" xml:space="preserve"><value>Preview</value></data>
+  <data name="RefactoringPreview_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Debug_BannerStop" xml:space="preserve"><value>Stop</value></data>
+  <!-- MainWindow: operations, designer and debug banner -->
+  <data name="Operation_Stopping" xml:space="preserve"><value>Stopping…</value></data>
+  <data name="Designer_CannotShow" xml:space="preserve"><value>This file cannot be shown in the designer.</value></data>
+  <data name="Debug_BannerPaused" xml:space="preserve"><value>Debugging — paused</value></data>
+  <data name="Debug_BannerRunning" xml:space="preserve"><value>Debugging — running</value></data>
+  <data name="Debug_Exited" xml:space="preserve"><value>{0} exited with code {1}.</value></data>
+  <data name="Debug_TheProgram" xml:space="preserve"><value>The program</value></data>
+  <data name="Debug_InputOnInterfaceThread" xml:space="preserve"><value>A program asked for input from the interface thread, which cannot be answered without stopping it.</value></data>
+  <!-- MainWindow: refactoring prompts -->
+  <data name="Refactor_ExtractPartial_Title" xml:space="preserve"><value>Extract to Partial View</value></data>
+  <data name="Refactor_ExtractPartial_Prompt" xml:space="preserve"><value>Name the partial:</value></data>
+  <data name="Refactor_ExtractPartial_Name" xml:space="preserve"><value>Row</value></data>
+  <data name="Refactor_ExtractConstant_Title" xml:space="preserve"><value>Extract Constant</value></data>
+  <data name="Refactor_ExtractConstant_Prompt" xml:space="preserve"><value>Name the constant:</value></data>
+  <data name="Refactor_ExtractConstant_Name" xml:space="preserve"><value>Value</value></data>
+  <data name="Refactor_ExtractMethod_Title" xml:space="preserve"><value>Extract Method</value></data>
+  <data name="Refactor_ExtractMethod_Prompt" xml:space="preserve"><value>Name the method:</value></data>
+  <data name="Refactor_ExtractMethod_Name" xml:space="preserve"><value>Helper</value></data>
+  <data name="Refactor_ExtractVariable_Title" xml:space="preserve"><value>Extract Variable</value></data>
+  <data name="Refactor_ExtractVariable_Prompt" xml:space="preserve"><value>Name the expression:</value></data>
+  <data name="Refactor_ExtractVariable_Name" xml:space="preserve"><value>value</value></data>
+  <data name="Refactor_Rename_Title" xml:space="preserve"><value>Rename</value></data>
+  <data name="Refactor_Rename_Prompt" xml:space="preserve"><value>Rename '{0}' to:</value></data>
+  <data name="Editor_NeedsSubOrFunction" xml:space="preserve"><value>Put the caret in a Sub or a Function that takes parameters.</value></data>
+  <data name="Editor_MappedRegions" xml:space="preserve"><value>{0} mapped region{1} between the template and the generated code.</value></data>
+  <data name="Editor_NoNameUnderCaret" xml:space="preserve"><value>There is no name under the caret.</value></data>
+  <data name="Editor_PartialOnlyFromTemplate" xml:space="preserve"><value>A partial view can only come from a template.</value></data>
+  <data name="Editor_SelectMarkupFirst" xml:space="preserve"><value>Select the markup to extract first.</value></data>
+  <data name="Editor_TreatingAs" xml:space="preserve"><value>Treating this file as {0}. The syntax colours still follow the file extension.</value></data>
+  <data name="Editor_ReopenedAs" xml:space="preserve"><value>Reopened as {0}.</value></data>
+  <data name="Rename_CaretOnNameFirst" xml:space="preserve"><value>Put the caret on a name first.</value></data>
+  <data name="Rename_NotWritten" xml:space="preserve"><value>The change could not be written.</value></data>
+  <data name="Test_NothingToRun" xml:space="preserve"><value>There is nothing to run.</value></data>
+  <data name="Test_SelectSingleToDebug" xml:space="preserve"><value>Select a single test to debug.</value></data>
+  <data name="Test_Debugging" xml:space="preserve"><value>Debugging {0}.</value></data>
+  <data name="Plugin_Loaded" xml:space="preserve"><value>{0} loaded.</value></data>
+  <data name="Plugin_DidNotLoad" xml:space="preserve"><value>{0} did not load: {1}</value></data>
+  <data name="Command_NotImplemented" xml:space="preserve"><value>'{0}' is not implemented yet.</value></data>
+  <!-- MainWindow: indentation, line endings, encoding, language -->
+  <data name="Indent_Title" xml:space="preserve"><value>Indentation</value></data>
+  <data name="Indent_Use" xml:space="preserve"><value>Use:</value></data>
+  <data name="Indent_Spaces" xml:space="preserve"><value>Spaces</value></data>
+  <data name="Indent_Tabs" xml:space="preserve"><value>Tabs</value></data>
+  <data name="Indent_Label" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="LineEnding_Title" xml:space="preserve"><value>Line Endings</value></data>
+  <data name="LineEnding_Prompt" xml:space="preserve"><value>Convert to:</value></data>
+  <data name="Encoding_ReopenTitle" xml:space="preserve"><value>Encoding</value></data>
+  <data name="Encoding_ReopenPrompt" xml:space="preserve"><value>Reopen this file as:</value></data>
+  <data name="Language_Title" xml:space="preserve"><value>Language</value></data>
+  <data name="Language_Prompt" xml:space="preserve"><value>Treat this file as:</value></data>
+  <data name="Status_Caret" xml:space="preserve"><value>Ln {0}, Col {1}</value></data>
+  <data name="Status_CaretSelected" xml:space="preserve"><value>Ln {0}, Col {1} ({2} selected)</value></data>
+  <!-- MainWindow: toolbar and dialog labels -->
+  <data name="Toolbar_BuildConfiguration" xml:space="preserve"><value>Build configuration</value></data>
+  <data name="Toolbar_StartupProject" xml:space="preserve"><value>Startup project</value></data>
+  <data name="Open_Filter_Sqlite" xml:space="preserve"><value>SQLite databases</value></data>
+  <data name="Open_Filter_AllFiles" xml:space="preserve"><value>All files</value></data>
+  <data name="Revert_Title" xml:space="preserve"><value>Discard changes?</value></data>
+  <data name="Revert_Message" xml:space="preserve"><value>The changes to {0} will be lost. This cannot be undone.</value></data>
+  <data name="Revert_Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Dialog_Go" xml:space="preserve"><value>Go</value></data>
+  <!-- Solution Explorer context menu -->
+  <data name="SolutionExplorer_Open" xml:space="preserve"><value>Open</value></data>
+  <data name="SolutionExplorer_OpenInDesigner" xml:space="preserve"><value>Open in Designer</value></data>
+  <data name="SolutionExplorer_NewFile" xml:space="preserve"><value>New File…</value></data>
+  <data name="SolutionExplorer_NewFolder" xml:space="preserve"><value>New Folder…</value></data>
+  <data name="SolutionExplorer_Rename" xml:space="preserve"><value>Rename…</value></data>
+  <data name="SolutionExplorer_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="SolutionExplorer_CopyPath" xml:space="preserve"><value>Copy Path</value></data>
+  <data name="SolutionExplorer_CopyRelativePath" xml:space="preserve"><value>Copy Relative Path</value></data>
+  <data name="SolutionExplorer_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="SolutionExplorer_Properties" xml:space="preserve"><value>Properties…</value></data>
+  <!-- Code editor context menu -->
+  <data name="EditorMenu_Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="EditorMenu_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="EditorMenu_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="EditorMenu_GoToDefinition" xml:space="preserve"><value>Go to Definition</value></data>
+  <data name="EditorMenu_FindReferences" xml:space="preserve"><value>Find References</value></data>
+  <data name="EditorMenu_Rename" xml:space="preserve"><value>Rename…</value></data>
+  <data name="EditorMenu_QuickActions" xml:space="preserve"><value>Quick Actions…</value></data>
+  <data name="EditorMenu_ExtractVariable" xml:space="preserve"><value>Extract Variable…</value></data>
+  <data name="EditorMenu_ExtractConstant" xml:space="preserve"><value>Extract Constant…</value></data>
+  <data name="EditorMenu_InlineVariable" xml:space="preserve"><value>Inline Variable</value></data>
+  <data name="EditorMenu_ConvertConditional" xml:space="preserve"><value>Convert If / Select Case</value></data>
+  <data name="EditorMenu_GenerateConstructor" xml:space="preserve"><value>Generate Constructor…</value></data>
+  <data name="EditorMenu_GenerateProperty" xml:space="preserve"><value>Generate Property…</value></data>
+  <data name="EditorMenu_MoveTypeToFile" xml:space="preserve"><value>Move Type to File…</value></data>
+  <data name="EditorMenu_ChangeSignature" xml:space="preserve"><value>Change Signature…</value></data>
+  <data name="EditorMenu_ExtractMethod" xml:space="preserve"><value>Extract Method…</value></data>
+  <data name="EditorMenu_AddImport" xml:space="preserve"><value>Add Imports for This Name</value></data>
+  <data name="EditorMenu_ExtractPartial" xml:space="preserve"><value>Extract to Partial View…</value></data>
+  <data name="EditorMenu_TidyImports" xml:space="preserve"><value>Sort and Remove Imports</value></data>
+  <data name="EditorMenu_FormatSelection" xml:space="preserve"><value>Format Selection</value></data>
+  <data name="EditorMenu_FormatDocument" xml:space="preserve"><value>Format Document</value></data>
+  <data name="EditorMenu_ToggleBreakpoint" xml:space="preserve"><value>Toggle Breakpoint</value></data>
+  <data name="EditorMenu_RunToHere" xml:space="preserve"><value>Run to Here</value></data>
+  <data name="EditorMenu_ExplainWithAssistant" xml:space="preserve"><value>Explain with Assistant</value></data>
+  <data name="EditorMenu_AskAssistant" xml:space="preserve"><value>Ask the Assistant…</value></data>
+  <!-- Terminal context menu -->
+  <data name="Terminal_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Terminal_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="Terminal_Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="Terminal_CloseTerminal" xml:space="preserve"><value>Close Terminal</value></data>
+  <!-- Document tab context menu -->
+  <data name="DocumentTab_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="DocumentTab_CloseOthers" xml:space="preserve"><value>Close Others</value></data>
+  <data name="DocumentTab_CloseAll" xml:space="preserve"><value>Close All</value></data>
+  <data name="DocumentTab_CloseToTheRight" xml:space="preserve"><value>Close to the Right</value></data>
+  <data name="DocumentTab_CopyPath" xml:space="preserve"><value>Copy Path</value></data>
+  <data name="DocumentTab_OpenContainingFolder" xml:space="preserve"><value>Open Containing Folder</value></data>
+  <!-- Dock titles (the Id values stay as they are) -->
+  <data name="Dock_Documents" xml:space="preserve"><value>Documents</value></data>
+  <data name="Dock_Left" xml:space="preserve"><value>Left</value></data>
+  <data name="Dock_RightTop" xml:space="preserve"><value>Right Top</value></data>
+  <data name="Dock_RightBottom" xml:space="preserve"><value>Right Bottom</value></data>
+  <data name="Dock_Right" xml:space="preserve"><value>Right</value></data>
+  <data name="Dock_Bottom" xml:space="preserve"><value>Bottom</value></data>
+  <data name="Dock_Root" xml:space="preserve"><value>Root</value></data>
+  <!-- Status bar -->
+  <data name="LineEnding_Mixed" xml:space="preserve"><value>Mixed</value></data>
+  <data name="ShortcutRecorder_Placeholder" xml:space="preserve"><value>Press a shortcut</value></data>
+  <!-- Designer problems -->
+  <data name="Designer_CannotShowAt" xml:space="preserve"><value>This file cannot be shown in the designer: {0} (line {1}, column {2})</value></data>
+  <data name="Designer_CannotShowMessage" xml:space="preserve"><value>This file cannot be shown in the designer: {0}</value></data>
+  <data name="Designer_OcxPlaceholders" xml:space="preserve"><value>{0} is not available here. Controls from it open as placeholders.</value></data>
+  <data name="Debug_AdapterNotFound" xml:space="preserve"><value>The debugger (netcoredbg) was not found, so there is nothing to debug with. Put a copy in {0}, or on the PATH, or point BASALT_NETCOREDBG at it. Run without debugging works meanwhile.</value></data>
+  <!-- Change Signature: the preview row for a new parameter -->
+  <data name="ChangeSignature_NewParameter" xml:space="preserve"><value>{0} As {1}   (new, passing {2})</value></data>
+  <!-- Code editor and Output messages -->
+  <data name="Editor_Copied" xml:space="preserve"><value>Copied {0}</value></data>
+  <data name="Input_Title" xml:space="preserve"><value>Input</value></data>
+  <data name="BreakpointCondition_Title" xml:space="preserve"><value>Breakpoint — {0}:{1}</value></data>
+  <!-- Theme names shown in Settings -->
+  <data name="Theme_Light" xml:space="preserve"><value>Light</value></data>
+  <data name="Theme_Dark" xml:space="preserve"><value>Dark</value></data>
+  <data name="Theme_System" xml:space="preserve"><value>Follow the system</value></data>
+  <data name="Theme_VisualStudioBlue" xml:space="preserve"><value>Visual Studio Blue</value></data>
+  <data name="Theme_HighContrastLight" xml:space="preserve"><value>High Contrast Light</value></data>
+  <data name="Theme_HighContrastDark" xml:space="preserve"><value>High Contrast Dark</value></data>
+  <data name="Theme_SolarizedLight" xml:space="preserve"><value>Solarized Light</value></data>
+  <data name="Theme_SolarizedDark" xml:space="preserve"><value>Solarized Dark</value></data>
+  <data name="Language_PlainText" xml:space="preserve"><value>Plain Text</value></data>
 </root>

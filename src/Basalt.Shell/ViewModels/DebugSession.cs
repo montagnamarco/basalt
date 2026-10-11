@@ -4,6 +4,7 @@ using Basalt.Extensibility.Interpretation;
 using Basalt.QuickBasic.Interpretation;
 using Basalt.Workspace.Debugging;
 using Basalt.Workspace.Immediate;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.ViewModels;
 
@@ -191,12 +192,8 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
                 // nowhere to go. The three places that are looked in are the
                 // three places a copy can be put, so they are the answer.
                 Failed?.Invoke(this,
-                    "The debugger (netcoredbg) was not found, so there is "
-                  + "nothing to debug with. Put a copy in "
-                  + Path.Combine("~", ".basalt", "debugger",
-                        DebugAdapterLocator.RuntimeIdentifier)
-                  + ", or on the PATH, or point BASALT_NETCOREDBG at it. "
-                  + "Run without debugging works meanwhile.");
+                    Localizer.Get(StringKeys.DebugAdapterNotFound,
+                    Path.Combine("~", ".basalt", "debugger", DebugAdapterLocator.RuntimeIdentifier)));
                 return;
             }
 

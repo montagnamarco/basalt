@@ -117,13 +117,13 @@ public sealed class TerminalView : UserControl, IDisposable
 
         _display.ContextMenu = ContextMenus.Build(
         [
-            new("Copy", () => Choose(TerminalCommand.Copy))
+            new(Localizer.Get(StringKeys.TerminalCopy), () => Choose(TerminalCommand.Copy))
                 { IsAvailable = () => _display.SelectionEnd > _display.SelectionStart },
-            new("Paste", () => Choose(TerminalCommand.Paste)),
+            new(Localizer.Get(StringKeys.TerminalPaste), () => Choose(TerminalCommand.Paste)),
             MenuAction.Separator,
-            new("Clear", () => Choose(TerminalCommand.Clear)),
+            new(Localizer.Get(StringKeys.TerminalClear), () => Choose(TerminalCommand.Clear)),
             MenuAction.Separator,
-            new("Close Terminal", () => Choose(TerminalCommand.Close))
+            new(Localizer.Get(StringKeys.TerminalCloseTerminal), () => Choose(TerminalCommand.Close))
         ]);
     }
 

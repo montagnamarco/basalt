@@ -27,7 +27,7 @@ public sealed class SettingsWindow : Window
     private readonly LanguageRegistry? _languages;
 
     /// <summary>Where the assistants' API keys are kept.</summary>
-    private readonly ApiKeyStore _keys = new();
+    private readonly IApiKeyStore _keys;
 
     /// <summary>
     /// The commands and their shortcuts.
@@ -63,9 +63,17 @@ public sealed class SettingsWindow : Window
     public SettingsWindow() : this(new SettingsStore(), null) { }
 
     public SettingsWindow(SettingsStore store, LanguageRegistry? languages)
+        : this(store, languages, new ApiKeyStore()) { }
+
+    /// <summary>
+    /// The window with its key store chosen by the caller. The window reads and
+    /// writes keys only through it, so a test can pass an in-memory store.
+    /// </summary>
+    internal SettingsWindow(SettingsStore store, LanguageRegistry? languages, IApiKeyStore keys)
     {
         _store = store;
         _languages = languages;
+        _keys = keys;
         _settings = store.Load();
 
         Title = Localizer.Get(StringKeys.SettingsTitle);
@@ -832,17 +840,25 @@ public sealed class SettingsWindow : Window
             Choice("Assistant",
                    ["(none)", .. vendors],
                    chosen?.DisplayName ?? "(none)",
-                   v => Apply(() =>
+                   v =>
                    {
-                       var provider = AiConversation.Providers
-                           .FirstOrDefault(p => p.DisplayName == v);
+                       Apply(() =>
+                       {
+                           var provider = AiConversation.Providers
+                               .FirstOrDefault(p => p.DisplayName == v);
 
-                       _settings.Ai.Vendor = provider?.Vendor.ToString() ?? "";
-                       _settings.Ai.Model = provider?.Models[0].Id ?? "";
+                           _settings.Ai.Vendor = provider?.Vendor.ToString() ?? "";
+                           _settings.Ai.Model = provider?.Models[0].Id ?? "";
 
-                       // A model id of the old assistant means nothing to the new one.
-                       _settings.Ai.InlineModel = "";
-                   }),
+                           // A model id of the old assistant means nothing to the new one.
+                           _settings.Ai.InlineModel = "";
+                       });
+
+                       // The model and key rows belong to the chosen provider, and
+                       // exist only when the page is built: build it again so they
+                       // show now, not when the user has left and come back.
+                       if (_current is { } page) ShowPage(page);
+                   },
                    "Restart the window after changing this to see the models.")
         };
 

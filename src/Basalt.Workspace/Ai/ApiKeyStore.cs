@@ -13,7 +13,7 @@ namespace Basalt.Workspace.Ai;
 /// bills its owner. The platform's own keychain is used where there is one,
 /// and a file readable only by the user where there is not.
 /// </summary>
-public sealed class ApiKeyStore
+public sealed class ApiKeyStore : IApiKeyStore
 {
     private const string ServiceName = "Basalt";
 

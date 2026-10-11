@@ -38,8 +38,21 @@ public sealed class UserJourneyRazorRoutingTests : IDisposable
     /// Journey, so the model is Journey.IndexModel and its Title is declared in
     /// Pages/IndexModel.vb.
     /// </summary>
-    private Task<NewSolutionResult> CreateProjectAsync() =>
-        SolutionTemplates.CreateAsync(_root, "Journey", ProjectTemplate.RazorPages);
+    private Task<NewSolutionResult> CreateProjectAsync(ProjectTemplate template = ProjectTemplate.RazorPages) =>
+        SolutionTemplates.CreateAsync(_root, "Journey", template);
+
+    /// <summary>The completion list's entries, as the editor shows them.</summary>
+    private static IReadOnlyList<string> CompletionTexts(CodeEditor code) =>
+        code.CompletionWindowForTests is { } window
+            ? [.. window.CompletionList.CompletionData.Select(entry => entry.Text)]
+            : [];
+
+    /// <summary>Types each character as the keyboard would, one key at a time.</summary>
+    private static void TypeText(MainWindow window, string text)
+    {
+        foreach (var character in text)
+            window.KeyTextInput(character.ToString());
+    }
 
     private static string ProjectDirectory(NewSolutionResult created) =>
         Path.GetDirectoryName(created.ProjectPath)!;
@@ -254,5 +267,86 @@ public sealed class UserJourneyRazorRoutingTests : IDisposable
 
         Assert.True(model is null || !Path.GetFileName(model.Value.FilePath).Contains("Scratch", StringComparison.OrdinalIgnoreCase),
             $"F12 jumped into {model?.FilePath}.");
+    }
+
+    // ---- journey: a Blazor component's parameter ----------------------------
+
+    private const string ComponentWithParameter =
+        """
+        <h1>@Title</h1>
+        <p></p>
+
+        @Code
+            <Global.Microsoft.AspNetCore.Components.Parameter>
+            Public Property Title As String = "Card"
+
+            Private Sub Describe()
+                Dim length = Title.Length
+            End Sub
+        End Code
+
+        """;
+
+    /// <summary>
+    /// A component's [Parameter] is offered in its markup as the user types
+    /// "@Ti": the component's own members answer the expression, as they do
+    /// in a view's code.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task TypingAtTiInAComponentsMarkupOffersItsParameter()
+    {
+        var created = await CreateProjectAsync(ProjectTemplate.Blazor);
+        var componentPath = WriteView(Path.Combine(ProjectDirectory(created), "Components", "Card.vbrazor"), ComponentWithParameter);
+        using var host = new TestWindow(created.SolutionPath);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        Assert.True(await WaitUntilAsync(host, () => vm.StartupProject is not null && !vm.IsBusy, maxPasses: 600),
+            "the solution never finished loading.");
+        await vm.OpenFileAsync(componentPath);
+        await host.SettleAsync(5);
+
+        var code = w.CodeEditorForTests(componentPath);
+        Assert.NotNull(code);
+        var editor = TextEditorFor(w, componentPath);
+        editor.CaretOffset = ComponentWithParameter.IndexOf("<p>", StringComparison.Ordinal) + "<p>".Length;
+        editor.TextArea.Focus();
+        TypeText(w, "@Ti");
+
+        Assert.True(await WaitUntilAsync(host, () => CompletionTexts(code!).Contains("Title")),
+            $"expected the parameter Title offered for @Ti, got [{string.Join(", ", CompletionTexts(code!))}].");
+    }
+
+    // ---- journey: hover over a model member in a view ------------------------
+
+    /// <summary>
+    /// Hovering Model.Title in a view shows the property's type, as hovering
+    /// the same property in a .vb file does. Quick info is routed through the
+    /// language that owns the file, like the other three answers.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task HoveringAModelMemberInAViewShowsItsType()
+    {
+        var created = await CreateProjectAsync();
+        var viewPath = WriteView(Path.Combine(ProjectDirectory(created), "Pages", "Index.vbhtml"), ViewWithMemberName);
+        using var host = new TestWindow(created.SolutionPath);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        Assert.True(await WaitUntilAsync(host, () => vm.StartupProject is not null && !vm.IsBusy, maxPasses: 600),
+            "the solution never finished loading.");
+        await vm.OpenFileAsync(viewPath);
+        await host.SettleAsync(5);
+
+        var offset = ViewWithMemberName.IndexOf("Model.Title", StringComparison.Ordinal) + "Model.".Length + 2;
+
+        var description = await vm.DescribeSymbolAsync(viewPath, offset, ViewWithMemberName);
+        Assert.NotNull(description);
+        Assert.Contains("String", description!.PlainSignature, StringComparison.Ordinal);
+
+        var code = w.CodeEditorForTests(viewPath);
+        Assert.NotNull(code);
+        Assert.True(await code!.ShowHoverAtAsync(offset),
+            "hovering Model.Title in the view did not show a tooltip.");
     }
 }

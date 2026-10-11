@@ -182,6 +182,146 @@ public class EnglishStringsTests
         Assert.Empty(italian);
     }
 
+    /// <summary>
+    /// Where a user-visible string is written in the source: the property
+    /// assignments a control takes its text from, the Output and status
+    /// writers, the menu entries and the dialog prompts. Each captures the
+    /// literal in group "text".
+    /// </summary>
+    private static readonly Regex[] UiLiteralSinks =
+    [
+        // Header = "…", Content = "…", Text = "…", Title = "…", ToolTip = "…", Watermark, PlaceholderText.
+        new(@"\b(?:Header|Content|Text|Title|Watermark|PlaceholderText|ToolTip|Tooltip)\s*=\s*\$?""(?<text>[^""]*)""",
+            RegexOptions.Compiled),
+        // ToolTip.SetTip(control, "…"), WriteOutput("…"), AppendOutput("…"), Item(command, "…"), AskForTextAsync("…", …).
+        new(@"(?:ToolTip\.SetTip\([^,]+,|\bWriteOutput\(|\bAppendOutput\(|\bItem\((?:[\w.]+,)?|\bAskFor\w*Async\(|\bStatusMessage\s*=)\s*\$?""(?<text>[^""]*)""",
+            RegexOptions.Compiled),
+        // new("…", () => …): a menu entry, as opposed to a font family or a resource key.
+        new(@"\bnew\(\s*\$?""(?<text>[^""]*)""\s*,\s*(?:\(\)|Action\b)", RegexOptions.Compiled),
+    ];
+
+    /// <summary>
+    /// Literals the sinks match that are not prose a user reads. Each entry
+    /// names the file and the exact text, and says why it stays a literal;
+    /// anything else that reads as words must go through Strings.resx.
+    /// </summary>
+    private static readonly (string File, string Literal, string Reason)[] LiteralsThatStayInSource =
+    [
+        // The product name, shown as the brand rather than translated.
+        ("AboutWindow.cs", "Basalt", "product name"),
+        ("MainWindow.axaml", "Basalt", "product name"),
+        // A Visual Basic type name that is the default for a new parameter.
+        ("ChangeSignatureDialog.cs", "Integer", "Visual Basic type name, the default parameter type"),
+        // SQL text the database panel puts into its query box.
+        ("DatabasePanel.cs", "SELECT * FROM ", "SQL text, not interface text"),
+        ("DatabasePanel.cs", "SELECT * FROM \\", "SQL text, not interface text"),
+        // Visual Basic declaration syntax, "name As Type", in a parameter's label.
+        ("ChangeSignatureDialog.cs", "{parameter.Name} As {parameter.Type}", "Visual Basic declaration syntax"),
+        // The platform's name and version in the About text, not a translatable phrase.
+        ("AboutWindow.cs", ".NET {Environment.Version}", "platform name and version"),
+        // Sample Visual Basic expression shown as a placeholder.
+        ("BreakpointConditionDialog.cs", "i = 4", "Visual Basic sample expression"),
+        // A sample project name: a project name is an identifier, not prose.
+        ("NewSolutionDialog.axaml", "MyApplication", "sample identifier"),
+        ("NewSolutionDialog.axaml.cs", "MyApplication", "default project name, an identifier"),
+    ];
+
+    /// <summary>
+    /// The shell files the literal check leaves alone: the WinForms designer
+    /// surfaces, the settings, assistant, start page and Output panels, and
+    /// the Razor glue. Another piece of work owns them, so they are not
+    /// checked here until it lands.
+    /// </summary>
+    private static readonly string[] ExcludedFromLiteralCheck =
+    [
+        "WinFormsDesign", "WinFormsDesigner", "WinFormsComponentTray", "WinFormsPropertyPanel",
+        "Settings", "Assistant", "StartPage", "OutputPanel", "Razor", "VbHtml",
+    ];
+
+    [Fact]
+    public void NoUserVisibleLiteralIsWrittenInTheShellSource()
+    {
+        // The check the navigation test made for three files, applied to the
+        // whole shell: a label, a menu entry, an Output sentence or a dialog
+        // prompt written as a literal cannot be translated, and a Strings.resx
+        // key that is missing shows the key itself. Comment lines are notes
+        // for the maintainer and are not read.
+        var found = new List<string>();
+
+        foreach (var file in SourceFiles("Basalt.Shell")
+                     .Where(f => !ExcludedFromLiteralCheck.Any(e => Path.GetFileName(f).Contains(e, StringComparison.Ordinal))))
+        {
+            var name = Path.GetFileName(file);
+            var lines = File.ReadAllLines(file);
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].TrimStart().StartsWith("//", StringComparison.Ordinal)) continue;
+
+                foreach (var sink in UiLiteralSinks)
+                foreach (Match match in sink.Matches(lines[i]))
+                {
+                    var literal = match.Groups["text"].Value;
+                    if (!ReadsAsWords(literal)) continue;
+                    if (LiteralsThatStayInSource.Any(a => a.File == name && a.Literal == literal)) continue;
+
+                    found.Add($"{name}:{i + 1}: \"{literal}\"");
+                }
+            }
+        }
+
+        Assert.True(found.Count == 0,
+            "User-visible literals that should be keys in Strings.resx:\n" + string.Join("\n", found));
+    }
+
+    [Fact]
+    public void NoUserVisibleLiteralIsWrittenInTheShellXaml()
+    {
+        // The same check for markup: Content="…", Title="…" and the rest as
+        // attribute values. Bindings and markup extensions have a "{" and are
+        // not literals; character references such as &#xE0A0; are not words.
+        var root = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Basalt.Shell"));
+
+        var attribute = new Regex(
+            @"\b(?:Header|Content|Text|Title|Watermark|PlaceholderText|ToolTip\.Tip)=""(?<text>[^""{]*)""");
+
+        var found = new List<string>();
+
+        if (!Directory.Exists(root)) { Assert.Fail($"Basalt.Shell not found at {root}"); return; }
+
+        foreach (var file in Directory.EnumerateFiles(root, "*.axaml", SearchOption.AllDirectories)
+                     .Where(f => !f.Contains("/obj/") && !f.Contains("/bin/"))
+                     .Where(f => !ExcludedFromLiteralCheck.Any(e => Path.GetFileName(f).Contains(e, StringComparison.Ordinal))))
+        {
+            var name = Path.GetFileName(file);
+
+            foreach (Match match in attribute.Matches(File.ReadAllText(file)))
+            {
+                var literal = match.Groups["text"].Value;
+                if (!ReadsAsWords(literal)) continue;
+                if (LiteralsThatStayInSource.Any(a => a.File == name && a.Literal == literal)) continue;
+
+                found.Add($"{name}: \"{literal}\"");
+            }
+        }
+
+        Assert.True(found.Count == 0,
+            "User-visible attribute literals that should be {l:LocalizedString} keys:\n" + string.Join("\n", found));
+    }
+
+    /// <summary>
+    /// True when the text has a run of two or more letters once interpolations,
+    /// log tags such as "[test]" and character references are taken out. An
+    /// interpolation the sink cut short at a nested quote has no closing brace,
+    /// so it is taken to the end of the literal.
+    /// </summary>
+    private static bool ReadsAsWords(string literal)
+    {
+        var prose = Regex.Replace(literal, @"\{[^}]*\}?|\[[^\]]*\]|&#x?[0-9A-Fa-f]+;", " ");
+        return Regex.IsMatch(prose, "[A-Za-z]{2,}");
+    }
+
     [Fact]
     public void EveryToolboxCategoryIsNamedInEnglish()
     {

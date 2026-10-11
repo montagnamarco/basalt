@@ -82,7 +82,7 @@ public sealed class AboutWindow : Window
 
         lines.Children.Add(new SelectableTextBlock
         {
-            Text = $"Version {version}",
+            Text = Localizer.Get(StringKeys.AboutVersion, version),
             FontSize = 12,
             Opacity = 0.6,
             Margin = new Thickness(0, 0, 0, 12)
@@ -90,8 +90,7 @@ public sealed class AboutWindow : Window
 
         lines.Children.Add(new TextBlock
         {
-            Text = "An IDE for Visual Basic and the Basic dialects, "
-                 + "on macOS, Windows and Linux.",
+            Text = Localizer.Get(StringKeys.AboutDescription),
             TextWrapping = TextWrapping.Wrap,
             Opacity = 0.75,
             Margin = new Thickness(0, 0, 0, 12)
@@ -114,7 +113,7 @@ public sealed class AboutWindow : Window
 
         lines.Children.Add(new SelectableTextBlock
         {
-            Text = "MIT licence",
+            Text = Localizer.Get(StringKeys.AboutLicence),
             FontSize = 12,
             Opacity = 0.6,
             Margin = new Thickness(0, 12, 0, 0)
@@ -139,11 +138,11 @@ public sealed class AboutWindow : Window
 
     private Control Footer()
     {
-        var copy = new Button { Content = "Copy details" };
+        var copy = new Button { Content = Localizer.Get(StringKeys.AboutCopyDetails) };
 
         copy.Click += (_, _) => Guarded.Run(CopyDetailsAsync, _ => { }, "about");
 
-        var close = new Button { Content = "Close", IsDefault = true, IsCancel = true };
+        var close = new Button { Content = Localizer.Get(StringKeys.DialogClose), IsDefault = true, IsCancel = true };
 
         close.Click += (_, _) => Close();
 

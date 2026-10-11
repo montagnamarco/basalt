@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using System.Windows.Input;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Controls;
 
@@ -226,8 +227,8 @@ public sealed class IdeStatusBar : UserControl
     public void ShowPosition(int line, int column, int? selectionLength = null)
     {
         _position.Text = selectionLength is > 0
-            ? $"Ln {line}, Col {column} ({selectionLength} selected)"
-            : $"Ln {line}, Col {column}";
+            ? Localizer.Get(StringKeys.StatusCaretSelected, line, column, selectionLength)
+            : Localizer.Get(StringKeys.StatusCaret, line, column);
     }
 
     public void ShowFile(string? encoding, string? lineEnding, string? language)
@@ -264,7 +265,7 @@ public sealed class IdeStatusBar : UserControl
             else unix++;
         }
 
-        if (windows > 0 && unix > 0) return "Mixed";
+        if (windows > 0 && unix > 0) return Localizer.Get(StringKeys.LineEndingMixed);
         if (windows > 0) return "CRLF";
 
         return unix > 0 ? "LF" : "LF";

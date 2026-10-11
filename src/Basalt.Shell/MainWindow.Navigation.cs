@@ -15,6 +15,13 @@ public partial class MainWindow
     /// <summary>
     /// Opens a file at a line and column as a jump Navigate Back can undo.
     /// </summary>
+    /// <remarks>
+    /// The landing is recorded here, with the jump, not when the caret arrives.
+    /// The caret waits for the document's editor, and the tab can be closed
+    /// before that happens: the landing was then dropped, Navigate Back had only
+    /// the starting place, and pressing it did nothing. Measured in the
+    /// UserJourneyNavigationTests journey, that failed 9 of 15 runs.
+    /// </remarks>
     private async Task JumpToAsync(string filePath, int line, int column)
     {
         if (!File.Exists(filePath)) return;
@@ -22,10 +29,29 @@ public partial class MainWindow
         RecordCurrentPosition();
         await ViewModel.OpenFileAsync(filePath);
 
+        if (ViewModel.ActiveDocument is not { } target) return;
+
+        ViewModel.History.Record(LandingPointIn(target, line, column));
+
         // The editor is created by the document change, so the caret moves
-        // once it exists, and the landing is recorded with the move.
-        if (ViewModel.ActiveDocument is { } target)
-            GoToLineWhenReady(target, line, column, landed: RecordCurrentPosition);
+        // once it exists.
+        GoToLineWhenReady(target, line, column);
+    }
+
+    /// <summary>
+    /// The place a line and column of a document stand for, worked out from its text.
+    /// </summary>
+    /// <remarks>
+    /// Clamped the way <see cref="GoToLine"/> clamps the caret, so the place
+    /// recorded is the one the caret reaches.
+    /// </remarks>
+    private static NavigationPoint LandingPointIn(EditorDocumentViewModel target, int line, int column)
+    {
+        var text = new AvaloniaEdit.Document.TextDocument(target.Text);
+        var documentLine = text.GetLineByNumber(Math.Clamp(line, 1, text.LineCount));
+        var offset = Math.Clamp(documentLine.Offset + column - 1, documentLine.Offset, documentLine.EndOffset);
+
+        return new NavigationPoint(target.FilePath, offset, documentLine.LineNumber);
     }
 
     /// <summary>Moves the caret within the document in front, as a jump Navigate Back can undo.</summary>

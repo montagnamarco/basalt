@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:Basalt.Shell"
         x:Class="Basalt.Shell.ProjectPropertiesDialog"
-        Title="Project Properties"
+        Title="{l:LocalizedString ProjectProperties_Title}"
         Width="820" Height="620"
         MinWidth="600" MinHeight="440"
         WindowStartupLocation="CenterOwner"
@@ -28,9 +29,9 @@
       <Grid ColumnDefinitions="*,Auto,Auto">
         <TextBlock x:Name="StatusLabel" Grid.Column="0" VerticalAlignment="Center"
                    FontSize="12" Foreground="{DynamicResource DescriptionForegroundBrush}" />
-        <Button Grid.Column="1" Content="Save" Click="OnSave" Margin="0,0,8,0"
+        <Button Grid.Column="1" Content="{l:LocalizedString ProjectProperties_Save}" Click="OnSave" Margin="0,0,8,0"
                 Classes="primary" IsDefault="True" />
-        <Button Grid.Column="2" Content="Cancel" Click="OnCancel" IsCancel="True" />
+        <Button Grid.Column="2" Content="{l:LocalizedString Button_Cancel}" Click="OnCancel" IsCancel="True" />
       </Grid>
     </Border>
 
@@ -40,12 +41,12 @@
       <ListBox x:Name="CategoryList" Grid.Column="0" SelectedIndex="0"
                Background="{DynamicResource SideBarBackgroundBrush}"
                SelectionChanged="OnCategoryChanged">
-        <ListBoxItem Content="Application" />
-        <ListBoxItem Content="Compile" />
-        <ListBoxItem Content="Advanced" />
-        <ListBoxItem Content="References" />
-        <ListBoxItem Content="Debug" />
-        <ListBoxItem Content="Publish" />
+        <ListBoxItem Content="{l:LocalizedString ProjectProperties_Category_Application}" />
+        <ListBoxItem Content="{l:LocalizedString ProjectProperties_Category_Compile}" />
+        <ListBoxItem Content="{l:LocalizedString ProjectProperties_Category_Advanced}" />
+        <ListBoxItem Content="{l:LocalizedString ProjectProperties_Category_References}" />
+        <ListBoxItem Content="{l:LocalizedString ProjectProperties_Category_Debug}" />
+        <ListBoxItem Content="{l:LocalizedString ProjectProperties_Category_Publish}" />
       </ListBox>
 
       <Border Grid.Column="1" Background="{DynamicResource PanelBorderBrush}" />

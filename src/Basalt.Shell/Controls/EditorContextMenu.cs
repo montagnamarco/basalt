@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using AvaloniaEdit;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Controls;
 
@@ -61,35 +62,35 @@ public sealed class EditorContextMenu
 
         menu.ItemsSource = new object[]
         {
-            Item(EditorCommand.Cut, "Cut", "Ctrl+X"),
-            Item(EditorCommand.Copy, "Copy", "Ctrl+C"),
-            Item(EditorCommand.Paste, "Paste", "Ctrl+V"),
+            Item(EditorCommand.Cut, Localizer.Get(StringKeys.EditorMenuCut), "Ctrl+X"),
+            Item(EditorCommand.Copy, Localizer.Get(StringKeys.EditorMenuCopy), "Ctrl+C"),
+            Item(EditorCommand.Paste, Localizer.Get(StringKeys.EditorMenuPaste), "Ctrl+V"),
             new Separator(),
-            Item(EditorCommand.GoToDefinition, "Go to Definition", "F12"),
-            Item(EditorCommand.FindReferences, "Find References", "Shift+F12"),
-            Item(EditorCommand.Rename, "Rename…", "F2"),
+            Item(EditorCommand.GoToDefinition, Localizer.Get(StringKeys.EditorMenuGoToDefinition), "F12"),
+            Item(EditorCommand.FindReferences, Localizer.Get(StringKeys.EditorMenuFindReferences), "Shift+F12"),
+            Item(EditorCommand.Rename, Localizer.Get(StringKeys.EditorMenuRename), "F2"),
             new Separator(),
-            Item(EditorCommand.QuickActions, "Quick Actions…", "Ctrl+."),
-            Item(EditorCommand.ExtractVariable, "Extract Variable…", "Ctrl+Alt+V"),
-            Item(EditorCommand.ExtractConstant, "Extract Constant…"),
-            Item(EditorCommand.InlineVariable, "Inline Variable", "Ctrl+Alt+N"),
-            Item(EditorCommand.ConvertConditional, "Convert If / Select Case"),
-            Item(EditorCommand.GenerateConstructor, "Generate Constructor…"),
-            Item(EditorCommand.GenerateProperty, "Generate Property…"),
-            Item(EditorCommand.MoveTypeToFile, "Move Type to File…"),
-            Item(EditorCommand.ChangeSignature, "Change Signature…"),
-            Item(EditorCommand.ExtractMethod, "Extract Method…", "Ctrl+Alt+M"),
-            Item(EditorCommand.AddImport, "Add Imports for This Name"),
-            Item(EditorCommand.ExtractPartial, "Extract to Partial View…"),
-            Item(EditorCommand.TidyImports, "Sort and Remove Imports", "Ctrl+Alt+O"),
-            Item(EditorCommand.FormatSelection, "Format Selection"),
-            Item(EditorCommand.FormatDocument, "Format Document"),
+            Item(EditorCommand.QuickActions, Localizer.Get(StringKeys.EditorMenuQuickActions), "Ctrl+."),
+            Item(EditorCommand.ExtractVariable, Localizer.Get(StringKeys.EditorMenuExtractVariable), "Ctrl+Alt+V"),
+            Item(EditorCommand.ExtractConstant, Localizer.Get(StringKeys.EditorMenuExtractConstant)),
+            Item(EditorCommand.InlineVariable, Localizer.Get(StringKeys.EditorMenuInlineVariable), "Ctrl+Alt+N"),
+            Item(EditorCommand.ConvertConditional, Localizer.Get(StringKeys.EditorMenuConvertConditional)),
+            Item(EditorCommand.GenerateConstructor, Localizer.Get(StringKeys.EditorMenuGenerateConstructor)),
+            Item(EditorCommand.GenerateProperty, Localizer.Get(StringKeys.EditorMenuGenerateProperty)),
+            Item(EditorCommand.MoveTypeToFile, Localizer.Get(StringKeys.EditorMenuMoveTypeToFile)),
+            Item(EditorCommand.ChangeSignature, Localizer.Get(StringKeys.EditorMenuChangeSignature)),
+            Item(EditorCommand.ExtractMethod, Localizer.Get(StringKeys.EditorMenuExtractMethod), "Ctrl+Alt+M"),
+            Item(EditorCommand.AddImport, Localizer.Get(StringKeys.EditorMenuAddImport)),
+            Item(EditorCommand.ExtractPartial, Localizer.Get(StringKeys.EditorMenuExtractPartial)),
+            Item(EditorCommand.TidyImports, Localizer.Get(StringKeys.EditorMenuTidyImports), "Ctrl+Alt+O"),
+            Item(EditorCommand.FormatSelection, Localizer.Get(StringKeys.EditorMenuFormatSelection)),
+            Item(EditorCommand.FormatDocument, Localizer.Get(StringKeys.EditorMenuFormatDocument)),
             new Separator(),
-            Item(EditorCommand.ToggleBreakpoint, "Toggle Breakpoint", "F9"),
-            Item(EditorCommand.RunToHere, "Run to Here"),
+            Item(EditorCommand.ToggleBreakpoint, Localizer.Get(StringKeys.EditorMenuToggleBreakpoint), "F9"),
+            Item(EditorCommand.RunToHere, Localizer.Get(StringKeys.EditorMenuRunToHere)),
             new Separator(),
-            Item(EditorCommand.ExplainWithAssistant, "Explain with Assistant"),
-            Item(EditorCommand.AskAssistant, "Ask the Assistant…")
+            Item(EditorCommand.ExplainWithAssistant, Localizer.Get(StringKeys.EditorMenuExplainWithAssistant)),
+            Item(EditorCommand.AskAssistant, Localizer.Get(StringKeys.EditorMenuAskAssistant))
         };
 
         return menu;

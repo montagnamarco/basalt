@@ -71,7 +71,7 @@
                 BorderBrush="{DynamicResource DebugBannerForegroundBrush}"
                 BorderThickness="1"
                 Foreground="{DynamicResource DebugBannerForegroundBrush}"
-                Content="Stop" />
+                Content="{l:LocalizedString Debug_BannerStop}" />
       </Grid>
     </Border>
 

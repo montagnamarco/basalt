@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Basalt.Workspace.Refactoring;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell;
 
@@ -21,7 +22,7 @@ public sealed class ChangeSignatureDialog : Window
 
     public ChangeSignatureDialog(IReadOnlyList<(string Name, string Type)> parameters)
     {
-        Title = "Change Signature";
+        Title = Localizer.Get(StringKeys.ChangeSignatureTitle);
         Width = 460;
         Height = 380;
 
@@ -36,11 +37,11 @@ public sealed class ChangeSignatureDialog : Window
 
         Fill();
 
-        var add = new Button { Content = "Add a parameter" };
+        var add = new Button { Content = Localizer.Get(StringKeys.ChangeSignatureAddParameter) };
         add.Click += (_, _) => AddParameter();
 
-        var ok = new Button { Content = "Apply", IsDefault = true };
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var ok = new Button { Content = Localizer.Get(StringKeys.ChangeSignatureApply), IsDefault = true };
+        var cancel = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsCancel = true };
 
         ok.Click += (_, _) =>
         {
@@ -123,7 +124,7 @@ public sealed class ChangeSignatureDialog : Window
 
             var label = new TextBlock
             {
-                Text = $"{added.Name} As {added.Type}   (new, passing {added.DefaultArgument})",
+                Text = Localizer.Get(StringKeys.ChangeSignatureNewParameter, added.Name, added.Type, added.DefaultArgument),
                 Opacity = 0.8,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -175,11 +176,11 @@ public sealed class ChangeSignatureDialog : Window
     /// </summary>
     private void AddParameter()
     {
-        var name = new TextBox { PlaceholderText = "name", Width = 120 };
+        var name = new TextBox { PlaceholderText = Localizer.Get(StringKeys.ChangeSignatureNamePlaceholder), Width = 120 };
         var type = new TextBox { Text = "Integer", Width = 120 };
         var argument = new TextBox { Text = "0", Width = 120 };
 
-        var confirm = new Button { Content = "Add" };
+        var confirm = new Button { Content = Localizer.Get(StringKeys.ChangeSignatureAdd) };
 
         confirm.Click += (_, _) =>
         {
@@ -197,7 +198,7 @@ public sealed class ChangeSignatureDialog : Window
             Margin = new Thickness(0, 6, 0, 0),
             Children = { name, type, new TextBlock
             {
-                Text = "pass",
+                Text = Localizer.Get(StringKeys.ChangeSignaturePass),
                 VerticalAlignment = VerticalAlignment.Center
             }, argument, confirm }
         });

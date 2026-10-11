@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Controls;
 
@@ -15,7 +16,7 @@ public sealed class ShortcutRecorder : TextBox
     public ShortcutRecorder()
     {
         IsReadOnly = true;
-        PlaceholderText = "Press a shortcut";
+        PlaceholderText = Localizer.Get(StringKeys.ShortcutRecorderPlaceholder);
 
         // The key has to be seen before the editor turns it into text, and
         // before any parent acts on it as a shortcut of its own.

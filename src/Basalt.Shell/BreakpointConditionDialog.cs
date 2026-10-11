@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Basalt.Core.Services;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell;
 
@@ -27,7 +28,7 @@ public sealed class BreakpointConditionDialog : Window
     {
         _filePath = breakpoint.FilePath;
 
-        Title = $"Breakpoint — {Path.GetFileName(breakpoint.FilePath)}:{breakpoint.Line}";
+        Title = Localizer.Get(StringKeys.BreakpointConditionTitle, Path.GetFileName(breakpoint.FilePath), breakpoint.Line);
         Width = 480;
         Height = 300;
 
@@ -55,15 +56,15 @@ public sealed class BreakpointConditionDialog : Window
         _hitCount = new TextBox
         {
             Text = breakpoint.HitCount?.ToString() ?? "",
-            PlaceholderText = "Every time"
+            PlaceholderText = Localizer.Get(StringKeys.BreakpointConditionEveryTime)
         };
 
         UpdatePreview(breakpoint.FilePath);
 
-        var ok = new Button { Content = "OK", IsDefault = true };
+        var ok = new Button { Content = Localizer.Get(StringKeys.ButtonOk), IsDefault = true };
         ok.Click += (_, _) => Accept(breakpoint);
 
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var cancel = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsCancel = true };
         cancel.Click += (_, _) => Close();
 
         // Windows order: the primary action (OK) leads, Cancel follows.
@@ -72,16 +73,16 @@ public sealed class BreakpointConditionDialog : Window
         var layout = new StackPanel { Spacing = 12, Margin = new Thickness(20) };
 
         layout.Children.Add(Labelled(
-            "Stop only when this is true",
+            Localizer.Get(StringKeys.BreakpointConditionStopWhenTrue),
             _condition,
-            "Written in Visual Basic: \"i = 4\", \"name <> \"\"\"\" AndAlso total > 10\"."));
+            Localizer.Get(StringKeys.BreakpointConditionStopWhenTrueHelp)));
 
         layout.Children.Add(_preview);
 
         layout.Children.Add(Labelled(
-            "Skip this many passes first",
+            Localizer.Get(StringKeys.BreakpointConditionHitCount),
             _hitCount,
-            "Leave empty to stop every time."));
+            Localizer.Get(StringKeys.BreakpointConditionHitCountHelp)));
 
         layout.Children.Add(buttons);
 
@@ -144,7 +145,7 @@ public sealed class BreakpointConditionDialog : Window
 
         _preview.Text = translated == condition
             ? ""
-            : $"The debugger evaluates:  {translated}";
+            : Localizer.Get(StringKeys.BreakpointConditionEvaluates, translated);
     }
 
     private static bool IsBasic(string filePath) =>

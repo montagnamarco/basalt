@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Media;
 using Basalt.Workspace.Refactoring;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell;
 
@@ -19,7 +20,7 @@ public sealed class RefactoringPreviewDialog : Window
     public bool Accepted { get; private set; }
 
     public RefactoringPreviewDialog() : this(
-        new RefactoringPreview("Preview", [])) { }
+        new RefactoringPreview(Localizer.Get(StringKeys.RefactoringPreviewDefaultTitle), [])) { }
 
     public RefactoringPreviewDialog(RefactoringPreview preview)
     {
@@ -33,13 +34,13 @@ public sealed class RefactoringPreviewDialog : Window
 
         var apply = new Button
         {
-            Content = "Apply",
+            Content = Localizer.Get(StringKeys.RefactoringPreviewApply),
             IsDefault = true,
             IsEnabled = preview.CanApply,
             Classes = { "primary" }
         };
 
-        var cancel = new Button { Content = "Cancel", IsCancel = true };
+        var cancel = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsCancel = true };
 
         apply.Click += (_, _) => { Accepted = true; Close(); };
         cancel.Click += (_, _) => Close();

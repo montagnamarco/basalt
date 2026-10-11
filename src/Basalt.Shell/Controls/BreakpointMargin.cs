@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell.Controls;
 
@@ -121,13 +122,13 @@ public sealed class BreakpointMargin : AbstractMargin
     /// </summary>
     private ContextMenu BuildContextMenu()
     {
-        var toggle = new MenuItem { Header = "Toggle Breakpoint" };
+        var toggle = new MenuItem { Header = Localizer.Get(StringKeys.MenuDebugToggleBreakpoint) };
         toggle.Click += (_, _) => Toggle(_menuLine);
 
-        var condition = new MenuItem { Header = "Condition…" };
+        var condition = new MenuItem { Header = Localizer.Get(StringKeys.BreakpointCondition) };
         condition.Click += (_, _) => ConditionRequested?.Invoke(this, _menuLine);
 
-        var runTo = new MenuItem { Header = "Run to Here" };
+        var runTo = new MenuItem { Header = Localizer.Get(StringKeys.BreakpointRunToHere) };
         runTo.Click += (_, _) => RunToLineRequested?.Invoke(this, _menuLine);
 
         var menu = new ContextMenu();
@@ -139,8 +140,8 @@ public sealed class BreakpointMargin : AbstractMargin
             condition.IsEnabled = _lines.Contains(_menuLine);
 
             toggle.Header = _lines.Contains(_menuLine)
-                ? "Remove Breakpoint"
-                : "Add Breakpoint";
+                ? Localizer.Get(StringKeys.BreakpointRemoveMenu)
+                : Localizer.Get(StringKeys.BreakpointAddMenu);
         };
 
         menu.ItemsSource = new object[]

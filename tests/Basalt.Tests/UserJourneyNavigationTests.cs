@@ -743,10 +743,12 @@ public sealed class UserJourneyNavigationTests : IDisposable
     /// where it was left, not on line 1.
     /// </summary>
     /// <remarks>
-    /// A guard, not a red-proved regression test: NavigateAsync now waits for the
-    /// reopened tab's editor (PlaceCaretWhenReady), as every other jump does, but in
-    /// the headless test host the editor is realised on the first dispatcher turn,
-    /// so the old single post also passed here. A review found the race by reading.
+    /// Before the fix, the jump's landing was recorded only when the caret moved,
+    /// and the caret waits for the editor. This test closes both tabs right after
+    /// the jump, which can happen before that move: the landing was then dropped,
+    /// Navigate Back had only the starting place, and nothing reopened. Failed 9 of
+    /// 15 runs on the unfixed code, with "Navigate Back did not reopen the closed
+    /// file."; 15 of 15 after the landing is recorded with the jump itself.
     /// </remarks>
     [AvaloniaFact]
     public async Task NavigateBackToAClosedFileReopensItWithTheCaretWhereItWas()

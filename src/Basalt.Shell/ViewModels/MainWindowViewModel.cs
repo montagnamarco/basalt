@@ -1218,12 +1218,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public async Task<Basalt.Extensibility.SymbolDescription?> DescribeSymbolAsync(
         string filePath, int offset, string currentText)
     {
-        if (DescriberFor(filePath) is not { } describer) return null;
+        if (DescriberFor(filePath) is { } describer)
+            return await describer
+                .DescribeAsync(
+                    new Basalt.Extensibility.LanguageDocument(filePath, currentText), offset)
+                .ConfigureAwait(true);
 
-        return await describer
-            .DescribeAsync(
-                new Basalt.Extensibility.LanguageDocument(filePath, currentText), offset)
-            .ConfigureAwait(true);
+        // A language with no describer of its own (Razor) answers hover through
+        // its navigation provider, as the other routed questions do.
+        return RoutedProviderFor(filePath) is { } provider
+            ? await ProviderQuickInfoAsync(provider, filePath, offset, currentText).ConfigureAwait(true)
+            : null;
     }
 
     /// <summary>What the call being written at a position expects.</summary>

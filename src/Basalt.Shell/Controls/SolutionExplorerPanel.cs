@@ -265,9 +265,9 @@ public sealed class SolutionExplorerPanel : UserControl
 
         _tree.ContextMenu = ContextMenus.Build(
         [
-            new("Open", () => Choose(ExplorerCommand.Open))
+            new(Localizer.Get(StringKeys.SolutionExplorerOpen), () => Choose(ExplorerCommand.Open))
                 { IsAvailable = HasFile, Icon = IconKind.Open },
-            new("Open in Designer", () => Choose(ExplorerCommand.OpenInDesigner))
+            new(Localizer.Get(StringKeys.SolutionExplorerOpenInDesigner), () => Choose(ExplorerCommand.OpenInDesigner))
                 { IsAvailable = IsDesignable, Icon = IconKind.DesignerFile },
             new(Localizer.Get(StringKeys.WinFormsDesignerViewCode), () => Choose(ExplorerCommand.ViewCode))
                 { IsAvailable = IsForm, Icon = IconKind.VisualBasicFile },
@@ -276,30 +276,30 @@ public sealed class SolutionExplorerPanel : UserControl
             // the menu tests keep an icon from standing for two unrelated commands.
             new(Localizer.Get(StringKeys.ExplorerAddNewItem), () => Choose(ExplorerCommand.AddNewItem))
                 { Icon = IconKind.TextFile },
-            new("New File…", () => Choose(ExplorerCommand.NewFile)) { Icon = IconKind.New },
-            new("New Folder…", () => Choose(ExplorerCommand.NewFolder))
+            new(Localizer.Get(StringKeys.SolutionExplorerNewFile), () => Choose(ExplorerCommand.NewFile)) { Icon = IconKind.New },
+            new(Localizer.Get(StringKeys.SolutionExplorerNewFolder), () => Choose(ExplorerCommand.NewFolder))
                 { Icon = IconKind.Folder },
             MenuAction.Separator,
-            new("Rename…", () => Choose(ExplorerCommand.Rename))
+            new(Localizer.Get(StringKeys.SolutionExplorerRename), () => Choose(ExplorerCommand.Rename))
                 { IsAvailable = CanRenameOrDelete, Icon = IconKind.Replace },
-            new("Delete", () => Choose(ExplorerCommand.Delete))
+            new(Localizer.Get(StringKeys.SolutionExplorerDelete), () => Choose(ExplorerCommand.Delete))
                 { IsAvailable = CanRenameOrDelete, Icon = IconKind.Exit },
             MenuAction.Separator,
             new(RevealLabel, () => Choose(ExplorerCommand.RevealInFinder))
                 { IsAvailable = HasNode, Icon = IconKind.FolderOpen },
-            new("Copy Path", () => Choose(ExplorerCommand.CopyPath))
+            new(Localizer.Get(StringKeys.SolutionExplorerCopyPath), () => Choose(ExplorerCommand.CopyPath))
                 { IsAvailable = HasNode, Icon = IconKind.Copy },
-            new("Copy Relative Path", () => Choose(ExplorerCommand.CopyRelativePath))
+            new(Localizer.Get(StringKeys.SolutionExplorerCopyRelativePath), () => Choose(ExplorerCommand.CopyRelativePath))
                 { IsAvailable = HasNode, Icon = IconKind.Copy },
             MenuAction.Separator,
-            new("Refresh", () => Choose(ExplorerCommand.Refresh)) { Icon = IconKind.Refresh },
+            new(Localizer.Get(StringKeys.SolutionExplorerRefresh), () => Choose(ExplorerCommand.Refresh)) { Icon = IconKind.Refresh },
             MenuAction.Separator,
 
             // On the project node, which is where anyone looks for them
             // before thinking of the Project menu.
             new(Localizer.Get(StringKeys.ExplorerAddReference), () => Choose(ExplorerCommand.References))
                 { IsAvailable = IsProject, Icon = IconKind.References },
-            new("Properties…", () => Choose(ExplorerCommand.Properties))
+            new(Localizer.Get(StringKeys.SolutionExplorerProperties), () => Choose(ExplorerCommand.Properties))
                 { IsAvailable = IsProject, Icon = IconKind.Properties }
         ]);
     }

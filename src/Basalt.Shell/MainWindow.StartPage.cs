@@ -94,10 +94,39 @@ public partial class MainWindow
             };
 
             button.Click += (_, _) => Guarded.Run(
-                () => OpenSolutionAskingToSaveAsync(target), ViewModel.WriteOutput, "ide");
+                () => OpenRecentSolutionAsync(target), ViewModel.WriteOutput, "ide");
 
             WelcomeRecent.Children.Add(button);
         }
+    }
+
+    /// <summary>
+    /// Opens a solution from the welcome list, or takes it off the list when
+    /// it has gone.
+    ///
+    /// The list was read when the window was built, and a folder can be moved
+    /// or deleted since. Opening such a path would make an empty solution that
+    /// the IDE calls open, so it is checked here, said to the user, and
+    /// dropped from the recent list.
+    /// </summary>
+    private Task OpenRecentSolutionAsync(string path)
+    {
+        if (File.Exists(path))
+            return OpenSolutionAskingToSaveAsync(path);
+
+        ViewModel.WriteOutput(Localizer.Get(StringKeys.WelcomeRecentMissing, path));
+
+        var settings = _settingsStore.Load();
+
+        if (settings.Recent.Prune())
+        {
+            _settingsStore.Save(settings);
+            InstallMenu(ViewModel);
+        }
+
+        ShowRecentOnWelcome();
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
 using Basalt.Workspace.Projects;
+using Basalt.Core.Localization;
 
 namespace Basalt.Shell;
 
@@ -77,17 +78,16 @@ public partial class ProjectPropertiesDialog : Window
         var properties = _properties!;
 
         return Page(
-            Text("Assembly name", properties.AssemblyName, v => properties.AssemblyName = v),
-            Text("Root namespace", properties.RootNamespace, v => properties.RootNamespace = v,
-                 "Empty is a deliberate setting in Visual Basic: otherwise the "
-                 + "project name is prepended to every declared namespace."),
-            Choice("Output type",
+            Text(Localizer.Get(StringKeys.ProjectPropertiesAssemblyName), properties.AssemblyName, v => properties.AssemblyName = v),
+            Text(Localizer.Get(StringKeys.ProjectPropertiesRootNamespace), properties.RootNamespace, v => properties.RootNamespace = v,
+                 Localizer.Get(StringKeys.ProjectPropertiesRootNamespaceHelp)),
+            Choice(Localizer.Get(StringKeys.ProjectPropertiesOutputType),
                    Enum.GetNames<ProjectOutputType>(),
                    properties.OutputType.ToString(),
                    v => properties.OutputType = Enum.Parse<ProjectOutputType>(v)),
-            Text("Startup object", properties.StartupObject ?? "",
+            Text(Localizer.Get(StringKeys.ProjectPropertiesStartupObject), properties.StartupObject ?? "",
                  v => properties.StartupObject = v,
-                 "Type whose Main runs, when more than one could."));
+                 Localizer.Get(StringKeys.ProjectPropertiesStartupObjectHelp)));
     }
 
     private Control BuildCompilePage()
@@ -95,24 +95,24 @@ public partial class ProjectPropertiesDialog : Window
         var properties = _properties!;
 
         return Page(
-            Text("Target framework", properties.TargetFramework,
+            Text(Localizer.Get(StringKeys.ProjectPropertiesTargetFramework), properties.TargetFramework,
                  v => properties.TargetFramework = v),
-            Choice("Option Strict",
+            Choice(Localizer.Get(StringKeys.ProjectPropertiesOptionStrict),
                    Enum.GetNames<OptionStrict>(),
                    properties.OptionStrict.ToString(),
                    v => properties.OptionStrict = Enum.Parse<OptionStrict>(v),
-                   "On requires explicit conversions and rejects late binding."),
-            Switch("Option Explicit", properties.OptionExplicit,
+                   Localizer.Get(StringKeys.ProjectPropertiesOptionStrictHelp)),
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesOptionExplicit), properties.OptionExplicit,
                    v => properties.OptionExplicit = v,
-                   "Requires variables to be declared before use."),
-            Switch("Option Infer", properties.OptionInfer,
+                   Localizer.Get(StringKeys.ProjectPropertiesOptionExplicitHelp)),
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesOptionInfer), properties.OptionInfer,
                    v => properties.OptionInfer = v,
-                   "Lets the compiler infer a variable's type from its initialiser."),
-            Choice("Option Compare",
+                   Localizer.Get(StringKeys.ProjectPropertiesOptionInferHelp)),
+            Choice(Localizer.Get(StringKeys.ProjectPropertiesOptionCompare),
                    Enum.GetNames<OptionCompare>(),
                    properties.OptionCompare.ToString(),
                    v => properties.OptionCompare = Enum.Parse<OptionCompare>(v),
-                   "Binary compares by character code; Text ignores case."));
+                   Localizer.Get(StringKeys.ProjectPropertiesOptionCompareHelp)));
     }
 
     private Control BuildAdvancedPage()
@@ -120,17 +120,17 @@ public partial class ProjectPropertiesDialog : Window
         var properties = _properties!;
 
         return Page(
-            Text("Conditional constants", properties.DefineConstants ?? "",
+            Text(Localizer.Get(StringKeys.ProjectPropertiesConditionalConstants), properties.DefineConstants ?? "",
                  v => properties.DefineConstants = v,
-                 "Symbols for #If, separated by semicolons."),
-            Text("Suppressed warnings", properties.NoWarn ?? "",
+                 Localizer.Get(StringKeys.ProjectPropertiesConditionalConstantsHelp)),
+            Text(Localizer.Get(StringKeys.ProjectPropertiesSuppressedWarnings), properties.NoWarn ?? "",
                  v => properties.NoWarn = v,
-                 "Warning numbers not to report, separated by semicolons."),
-            Switch("Treat warnings as errors", properties.TreatWarningsAsErrors,
+                 Localizer.Get(StringKeys.ProjectPropertiesSuppressedWarningsHelp)),
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesTreatWarningsAsErrors), properties.TreatWarningsAsErrors,
                    v => properties.TreatWarningsAsErrors = v),
-            Switch("Generate XML documentation", properties.GenerateDocumentationFile,
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesGenerateXmlDocumentation), properties.GenerateDocumentationFile,
                    v => properties.GenerateDocumentationFile = v),
-            Switch("Nullable reference types", properties.Nullable,
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesNullable), properties.Nullable,
                    v => properties.Nullable = v));
     }
 
@@ -139,7 +139,7 @@ public partial class ProjectPropertiesDialog : Window
         var properties = _properties!;
         var panel = new StackPanel { Spacing = 16 };
 
-        panel.Children.Add(Heading("Packages"));
+        panel.Children.Add(Heading(Localizer.Get(StringKeys.ProjectPropertiesPackages)));
 
         var packages = new ListBox
         {
@@ -151,10 +151,10 @@ public partial class ProjectPropertiesDialog : Window
         panel.Children.Add(packages);
 
         var packageRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,110,Auto,Auto") };
-        var packageId = new TextBox { PlaceholderText = "Package id" };
-        var packageVersion = new TextBox { PlaceholderText = "Version", Margin = new Avalonia.Thickness(8, 0, 8, 0) };
-        var add = new Button { Content = "Add" };
-        var remove = new Button { Content = "Remove", Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+        var packageId = new TextBox { PlaceholderText = Localizer.Get(StringKeys.ProjectPropertiesPackageId) };
+        var packageVersion = new TextBox { PlaceholderText = Localizer.Get(StringKeys.ProjectPropertiesVersion), Margin = new Avalonia.Thickness(8, 0, 8, 0) };
+        var add = new Button { Content = Localizer.Get(StringKeys.ProjectPropertiesAddPackage) };
+        var remove = new Button { Content = Localizer.Get(StringKeys.ProjectPropertiesRemovePackage), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
 
         Grid.SetColumn(packageVersion, 1);
         Grid.SetColumn(add, 2);
@@ -187,7 +187,7 @@ public partial class ProjectPropertiesDialog : Window
 
         panel.Children.Add(packageRow);
 
-        panel.Children.Add(Heading("Projects"));
+        panel.Children.Add(Heading(Localizer.Get(StringKeys.ProjectPropertiesProjects)));
         panel.Children.Add(new ListBox
         {
             Height = 120,
@@ -202,18 +202,18 @@ public partial class ProjectPropertiesDialog : Window
         var launch = _launch!;
 
         return Page(
-            Text("Command line arguments", launch.CommandLineArguments ?? "",
+            Text(Localizer.Get(StringKeys.ProjectPropertiesCommandLineArguments), launch.CommandLineArguments ?? "",
                  v => launch.CommandLineArguments = v),
-            Text("Working directory", launch.WorkingDirectory ?? "",
+            Text(Localizer.Get(StringKeys.ProjectPropertiesWorkingDirectory), launch.WorkingDirectory ?? "",
                  v => launch.WorkingDirectory = v),
-            Text("Application URL", launch.ApplicationUrl ?? "",
+            Text(Localizer.Get(StringKeys.ProjectPropertiesApplicationUrl), launch.ApplicationUrl ?? "",
                  v => launch.ApplicationUrl = v,
-                 "Address a web project listens on."),
-            Switch("Launch browser", launch.LaunchBrowser, v => launch.LaunchBrowser = v),
-            Text("Environment variables",
+                 Localizer.Get(StringKeys.ProjectPropertiesApplicationUrlHelp)),
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesLaunchBrowser), launch.LaunchBrowser, v => launch.LaunchBrowser = v),
+            Text(Localizer.Get(StringKeys.ProjectPropertiesEnvironmentVariables),
                  string.Join("\n", launch.EnvironmentVariables.Select(p => $"{p.Key}={p.Value}")),
                  ApplyEnvironmentVariables,
-                 "One NAME=value per line.",
+                 Localizer.Get(StringKeys.ProjectPropertiesEnvironmentVariablesHelp),
                  multiline: true));
     }
 
@@ -241,13 +241,13 @@ public partial class ProjectPropertiesDialog : Window
         var properties = _properties!;
 
         return Page(
-            Text("Runtime identifier", properties.RuntimeIdentifier ?? "",
+            Text(Localizer.Get(StringKeys.ProjectPropertiesRuntimeIdentifier), properties.RuntimeIdentifier ?? "",
                  v => properties.RuntimeIdentifier = v,
-                 "For example osx-arm64, linux-x64, win-x64."),
-            Switch("Self-contained", properties.SelfContained,
+                 Localizer.Get(StringKeys.ProjectPropertiesRuntimeIdentifierHelp)),
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesSelfContained), properties.SelfContained,
                    v => properties.SelfContained = v,
-                   "Includes the runtime, so the target machine needs no .NET installed."),
-            Switch("Trim unused code", properties.PublishTrimmed,
+                   Localizer.Get(StringKeys.ProjectPropertiesSelfContainedHelp)),
+            Switch(Localizer.Get(StringKeys.ProjectPropertiesTrimUnusedCode), properties.PublishTrimmed,
                    v => properties.PublishTrimmed = v));
     }
 
