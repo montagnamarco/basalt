@@ -136,9 +136,14 @@ public sealed class VbHtmlDiagnosticProvider : IDiagnosticProvider
 
             if (offset is not { } generatedOffset) continue;
 
-            // Strict: an error the map cannot place is an error about the
+            // The line mapping first, as go-to-definition does: on a multi-line
+            // code block the span arithmetic drifts by the writer's indentation,
+            // and an error on a component's @Code line 8 was reported on line 9.
+            // Strict: an error neither can place is an error about the
             // scaffolding, not about anything the author typed.
-            var original = generated.Map.ToOriginal(generatedOffset);
+            var original = TemplateGeneration.StatementLineOriginal(
+                                document.FilePath, document.Text, generated, generatedOffset)
+                           ?? generated.Map.ToOriginal(generatedOffset);
 
             if (original is not { } templateOffset) continue;
             if (templateOffset < 0 || templateOffset > templateText.Length) continue;
