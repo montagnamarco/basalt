@@ -238,8 +238,16 @@ public sealed class DotnetTestService : ITestService
     internal ProcessStartInfo? LastStartInfo { get; private set; }
 
     private async Task<(int ExitCode, string Output)> RunDotnetAsync(
-        string projectPath, IReadOnlyList<string> arguments, CancellationToken ct)
+        string projectPath, IReadOnlyList<string> arguments, CancellationToken callerToken)
     {
+        // Read now, so that a stop requested after this run began reaches it,
+        // and one requested later does not.
+        CancellationToken stop;
+        lock (_running) stop = _stopRuns.Token;
+
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(callerToken, stop);
+        var ct = linked.Token;
+
         var waited = false;
 
         IDisposable held;
@@ -268,6 +276,54 @@ public sealed class DotnetTestService : ITestService
         }
     }
 
+    /// <summary>
+    /// The dotnet processes started and not yet finished, for the tests that
+    /// check nothing of a run is left behind.
+    /// </summary>
+    internal IReadOnlyList<int> RunningProcessIds
+    {
+        get { lock (_running) return [.. _running.Select(p => p.Id)]; }
+    }
+
+    /// <summary>
+    /// Ends every run in progress, and the processes they started: the
+    /// dotnet test and the test host that dotnet test starts in turn.
+    ///
+    /// Called when the window or the solution goes away. Nothing else would
+    /// end a run, so without this the run goes on in the background after
+    /// the window that asked for it is gone. Runs started after this call
+    /// are not affected.
+    /// </summary>
+    public void StopAll()
+    {
+        CancellationTokenSource stopped;
+
+        lock (_running)
+        {
+            stopped = _stopRuns;
+            _stopRuns = new CancellationTokenSource();
+
+            // Killed here, not only by the cancelled waits: those resume on
+            // the thread pool later, and the caller expects the processes to
+            // be gone when StopAll returns.
+            foreach (var process in _running) KillTree(process);
+        }
+
+        stopped.Cancel();
+
+        // Only runs that read the old token before the swap hold it, and they
+        // were cancelled above; the source itself has no further use.
+        stopped.Dispose();
+    }
+
+    private readonly HashSet<Process> _running = [];
+
+    /// <summary>
+    /// The token every run started now is bound to. <see cref="StopAll"/>
+    /// replaces it, so only the runs already in progress are cancelled.
+    /// </summary>
+    private CancellationTokenSource _stopRuns = new();
+
     private async Task<(int ExitCode, string Output)> RunDotnetCoreAsync(
         string projectPath, IReadOnlyList<string> arguments, CancellationToken ct)
     {
@@ -285,15 +341,70 @@ public sealed class DotnetTestService : ITestService
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("The dotnet CLI could not be started.");
 
-        var output = process.StandardOutput.ReadToEndAsync(ct);
-        var error = process.StandardError.ReadToEndAsync(ct);
+        lock (_running) _running.Add(process);
 
-        await process.WaitForExitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            // Not bound to the token: a cancelled read would fault while the
+            // process it reads from is still being killed below.
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
 
-        var text = await output.ConfigureAwait(false) + await error.ConfigureAwait(false);
+            try
+            {
+                await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // "Cancelled" by the caller, a stop or a closed window. Waiting
+                // alone only abandons the wait: the dotnet test and the test
+                // host it started would keep running.
+                KillTree(process);
+                await DrainAfterKillAsync(output, error).ConfigureAwait(false);
+                throw;
+            }
 
-        if (text.Length > 0) OutputReceived?.Invoke(this, text);
+            var text = await output.ConfigureAwait(false) + await error.ConfigureAwait(false);
 
-        return (process.ExitCode, text);
+            if (text.Length > 0) OutputReceived?.Invoke(this, text);
+
+            return (process.ExitCode, text);
+        }
+        finally
+        {
+            lock (_running) _running.Remove(process);
+        }
+    }
+
+    /// <summary>
+    /// Ends the process and everything it started, while it can still be
+    /// found: a child whose parent has exited is no longer attached to it.
+    /// </summary>
+    private static void KillTree(Process process)
+    {
+        try
+        {
+            if (!process.HasExited) process.Kill(entireProcessTree: true);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            // Exited between the check and the kill.
+        }
+    }
+
+    /// <summary>
+    /// Waits, for a bounded time, for the output pipes to close once the tree
+    /// is killed. A grandchild that escaped the kill can keep them open, and
+    /// cancelling must not hang the caller on it.
+    /// </summary>
+    private static async Task DrainAfterKillAsync(Task output, Task error)
+    {
+        try
+        {
+            await Task.WhenAll(output, error).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+        }
     }
 }

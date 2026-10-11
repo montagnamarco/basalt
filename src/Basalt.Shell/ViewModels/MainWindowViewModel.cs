@@ -341,6 +341,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             if (Path.GetExtension(path).Equals(".vbp", StringComparison.OrdinalIgnoreCase))
                 path = ConvertVisualBasic6Project(path);
 
+            // A single source file that another language claims (QuickBASIC
+            // today) is not a project MSBuild can load. It is opened as a
+            // document and Roslyn is told nothing about it; see
+            // MainWindowViewModel.SourceFiles.cs for how it is run.
+            var sourceFileLanguage = RoutedProviderFor(path);
+
             SolutionPath = path;
             Explorer.Load(path);
             Opened?.Invoke(this, (path, true));
@@ -349,7 +355,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
             // Also makes this the solution Windows desktop projects are
             // retargeted for (see Compatibility).
-            await _languageService.OpenSolutionAsync(path).ConfigureAwait(true);
+            if (sourceFileLanguage is null)
+                await _languageService.OpenSolutionAsync(path).ConfigureAwait(true);
+            else
+                await _languageService.CloseSolutionAsync().ConfigureAwait(true);
 
             foreach (var warning in _languageService.LoadWarnings) AppendOutput($"[warning] {warning}");
             await ReportMissingWindowsDesktopSourcesAsync(path).ConfigureAwait(true);
@@ -361,6 +370,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             if ((SolutionUserSessionStore.Read(path)
                  ?? LoadSettings?.Invoke().Session.For(path)) is { } remembered)
                 await RestoreSessionAsync(remembered).ConfigureAwait(true);
+
+            // The source file is what the user opened, so it is the document
+            // in front; OpenFileAsync leaves it alone when a restored tab has
+            // it already.
+            if (sourceFileLanguage is not null)
+                await OpenFileAsync(path).ConfigureAwait(true);
 
             // Guarded: opening a solution runs in the background from the
             // moment the window loads, and nothing else waits for it. By the
@@ -1518,6 +1533,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        // A single-file program is not owned by the run service, so the run
+        // service's Dispose does not end it: closing the IDE would orphan it.
+        StopSourceFileRun();
+
         _languageService.Dispose();
         _runService.Dispose();
         _formattingService.Dispose();

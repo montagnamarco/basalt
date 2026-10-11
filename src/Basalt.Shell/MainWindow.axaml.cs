@@ -66,6 +66,15 @@ public partial class MainWindow : Window
     private BranchPanel? _branches;
     private DiffView? _diff;
     private TestExplorerPanel? _tests;
+
+    /// <summary>
+    /// From the moment a run of the tests is asked for until its results are
+    /// shown. The runner's own process is not a reliable signal: it starts
+    /// only after the build gate is won, and the toolbar is greyed out in the
+    /// meantime.
+    /// </summary>
+    private bool _testRunInProgress;
+
     private AiChatPanel? _assistant;
 
     /// <summary>The conversation with the assistant, which outlives one question.</summary>
@@ -2121,7 +2130,7 @@ public partial class MainWindow : Window
             new ToolbarAction(IconKind.Stop, Localizer.Get(StringKeys.MenuRunStop),
                 () => _ = StopEverythingAsync())
                 { CommandId = IdeCommands.DebugStop,
-                  IsAvailable = () => _debug.IsRunning || ViewModel.IsRunning },
+                  IsAvailable = () => _debug.IsRunning || ViewModel.IsRunning || _testRunInProgress },
 
             // The stepping buttons only mean anything while the program is
             // stopped. They were always lit, so pressing one during a run did
@@ -2395,6 +2404,8 @@ public partial class MainWindow : Window
         if (_debug.IsRunning) await StopDebuggingAsync();
 
         if (ViewModel.IsRunning) ViewModel.StopRunCommand.Execute(null);
+
+        _testService?.StopAll();
     }
 
     /// <summary>Does what the designer's context menu asked for.</summary>
@@ -3809,6 +3820,10 @@ public partial class MainWindow : Window
             {
                 if (e.PropertyName != nameof(ViewModel.SolutionPath)) return;
 
+                // A run or discovery of the previous solution would otherwise go
+                // on, and its results land in the window of the new one.
+                _testService.StopAll();
+
                 // The runnable projects are not known until a solution is open,
                 // so the toolbar is built again with them.
                 BuildToolbar();
@@ -3912,30 +3927,47 @@ public partial class MainWindow : Window
         }
 
         _tests.MarkRunning(chosen);
+        _testRunInProgress = true;
+        _toolbar?.RefreshAvailability();
 
         var results = new List<TestResult>();
 
-        // A run is per project, so tests spread across projects mean one run
-        // each; the results are gathered before the window is updated.
-        foreach (var byProject in chosen.GroupBy(t => t.ProjectPath, StringComparer.Ordinal))
+        try
         {
-            var filter = scope == TestExplorerPanel.RunScope.All
-                ? null
-                : DotnetTestService.FilterFor(byProject.Select(t => t.FullyQualifiedName));
+            // A run is per project, so tests spread across projects mean one
+            // run each; the results are gathered before the window is updated.
+            foreach (var byProject in chosen.GroupBy(t => t.ProjectPath, StringComparer.Ordinal))
+            {
+                var filter = scope == TestExplorerPanel.RunScope.All
+                    ? null
+                    : DotnetTestService.FilterFor(byProject.Select(t => t.FullyQualifiedName));
 
-            try
-            {
-                results.AddRange(await _testService
-                    .RunAsync(byProject.Key, filter)
-                    .ConfigureAwait(true));
+                try
+                {
+                    results.AddRange(await _testService
+                        .RunAsync(byProject.Key, filter)
+                        .ConfigureAwait(true));
+                }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException)
+                {
+                    ViewModel.WriteOutput($"[test] {ex.Message}");
+                }
+                catch (OperationCanceledException)
+                {
+                    // Stopped by the user, or the window closed: the runs not yet
+                    // started are not started. The rows still have to leave their
+                    // "running" state, which ShowResults below does.
+                    break;
+                }
             }
-            catch (Exception ex) when (ex is IOException or InvalidOperationException)
-            {
-                ViewModel.WriteOutput($"[test] {ex.Message}");
-            }
+        }
+        finally
+        {
+            _testRunInProgress = false;
         }
 
         _tests.ShowResults(results);
+        _toolbar?.RefreshAvailability();
     }
 
     /// <summary>
@@ -5167,6 +5199,10 @@ public partial class MainWindow : Window
         // is nothing left to record, and closing the window is the commonest
         // way a session ends.
         ViewModel.RememberSession();
+
+        // A test run belongs to the window that started it: nothing else ends
+        // it, and its dotnet test and test host would outlive the window.
+        _testService?.StopAll();
 
         foreach (var content in _contents.Values) (content as IDisposable)?.Dispose();
         _contents.Clear();

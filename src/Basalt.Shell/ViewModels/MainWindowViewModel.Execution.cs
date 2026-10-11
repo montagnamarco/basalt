@@ -205,7 +205,10 @@ public sealed partial class MainWindowViewModel
         var configuration = Configuration;
         if (StartupProject is null)
         {
-            StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
+            // Without a project the file being edited is the program, when a
+            // language compiles it (QuickBASIC); MSBuild is not asked for it.
+            if (SourceFileToRun() is { } sourceFile) await RunSourceFileAsync(sourceFile).ConfigureAwait(true);
+            else StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
             return;
         }
 
@@ -370,6 +373,7 @@ public sealed partial class MainWindowViewModel
         // a crash.
         _stoppedRunGeneration = _runGeneration;
         _runService.Stop();
+        StopSourceFileRun();
         IsRunning = false;
         StatusMessage = Localizer.Get(StringKeys.StatusStopped);
     }

@@ -128,6 +128,42 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         SolutionChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Drops the solution the workspace holds, for a session that opened a
+    /// single source file instead: MSBuild has no project to load for it, and
+    /// nothing may keep answering about the solution that was open before.
+    /// </summary>
+    /// <remarks>
+    /// Leaves <see cref="_openedPath"/> empty as well, so
+    /// <see cref="ReloadAsync"/> has nothing to reopen. Without that, a rename
+    /// in Solution Explorer would ask MSBuild to open the .bas file and fail
+    /// the way the open did.
+    /// </remarks>
+    public async Task CloseSolutionAsync(CancellationToken ct = default)
+    {
+        // On the thread pool: an uncontended gate would otherwise complete
+        // here, on the interface thread, and the workspace would be disposed
+        // there. Disposing a workspace is Roslyn work.
+        await Task.Run(async () =>
+        {
+            await _gate.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                _workspace?.Dispose();
+                _workspace = null;
+                _edited = null;
+                _openedPath = null;
+                LoadWarnings = [];
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }, ct).ConfigureAwait(false);
+
+        SolutionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public async Task UpdateDocumentAsync(string filePath, string text, CancellationToken ct = default)
     {
         var applied = false;
