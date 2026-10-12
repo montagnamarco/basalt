@@ -31,8 +31,27 @@ public partial class MainWindow
     /// </summary>
     private async Task<bool> TryRunExplorerShortcutAsync(Key key, KeyModifiers modifiers)
     {
-        if (modifiers != KeyModifiers.None) return false;
         if (_solutionExplorer is not { IsKeyboardFocusWithin: true } explorer) return false;
+
+        // Ctrl+X, Ctrl+C and Ctrl+V act on the tree only while the tree has
+        // focus; the editor's own clipboard gestures are left alone otherwise.
+        if (modifiers == KeyModifiers.Control)
+        {
+            SolutionExplorerPanel.ExplorerCommand? clipboard = key switch
+            {
+                Key.X => SolutionExplorerPanel.ExplorerCommand.Cut,
+                Key.C => SolutionExplorerPanel.ExplorerCommand.Copy,
+                Key.V => SolutionExplorerPanel.ExplorerCommand.Paste,
+                _ => null
+            };
+
+            if (clipboard is not { } command) return false;
+
+            await RunExplorerFileCommandAsync(command, explorer.SelectedNode);
+            return true;
+        }
+
+        if (modifiers != KeyModifiers.None) return false;
 
         switch (key)
         {
@@ -152,7 +171,6 @@ public partial class MainWindow
             return;
         }
 
-        var isDirectory = node.Kind == NodeKind.Folder;
         var oldPath = node.Path;
 
         if (Path.GetDirectoryName(oldPath) is not { Length: > 0 } directory) return;
@@ -166,11 +184,32 @@ public partial class MainWindow
 
         if (name is not { Length: > 0 } || name == currentName) return;
 
-        var problem = ExplorerFileOperations.Validate(name, directory, oldPath);
+        await RelocateInExplorerAsync(oldPath, node.Kind == NodeKind.Folder, directory, name, isRename: true);
+    }
+
+    /// <summary>
+    /// Moves a file or folder to <paramref name="targetDirectory"/> under
+    /// <paramref name="name"/>: the one path Rename, Cut and Paste, and a
+    /// drag all go through. The entry on disk moves, the open tabs and
+    /// breakpoints under it follow, the Roslyn workspace reloads from disk,
+    /// and the tree is read again. Returns whether the entry moved.
+    /// </summary>
+    private async Task<bool> RelocateInExplorerAsync(
+        string oldPath, bool isDirectory, string targetDirectory, string name, bool isRename)
+    {
+        if (_debug.IsRunning)
+        {
+            ViewModel.StatusMessage = Localizer.Get(StringKeys.ExplorerBlockedWhileDebugging);
+            return false;
+        }
+
+        var currentName = Path.GetFileName(oldPath);
+
+        var problem = ExplorerFileOperations.Validate(name, targetDirectory, isRename ? oldPath : null);
         if (problem != ExplorerFileOperations.NameProblem.None)
         {
             ViewModel.WriteOutput(DescribeNameProblem(problem, name));
-            return;
+            return false;
         }
 
         // A form's own .vb file carries its Designer.vb and .resx with it,
@@ -210,11 +249,11 @@ public partial class MainWindow
         {
             if (isDirectory)
             {
-                newPath = ExplorerFileOperations.Rename(oldPath, name, isDirectory: true);
+                newPath = ExplorerFileOperations.Relocate(oldPath, targetDirectory, name, isDirectory: true);
             }
             else
             {
-                var moves = ExplorerFileOperations.RenameFile(oldPath, name);
+                var moves = ExplorerFileOperations.RelocateFile(oldPath, targetDirectory, name);
                 newPath = moves[0].NewPath;
                 ExplorerFileOperations.RewriteProjectItems(moves);
                 foreach (var (old, @new) in moves.Skip(1)) companionRetargets[old] = @new;
@@ -223,7 +262,7 @@ public partial class MainWindow
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerOperationFailed, ex.Message));
-            return;
+            return false;
         }
 
         string Retarget(string oldItemPath) => isDirectory
@@ -257,7 +296,167 @@ public partial class MainWindow
         // to be named like it (a "Program.vb" with "Module Program", say)
         // would ask far more often than Visual Studio's own WinForms rename
         // does.
-        if (!isDirectory && companionOldPaths.Count > 0) await OfferClassRenameAsync(currentName, newPath, name);
+        if (isRename && !isDirectory && companionOldPaths.Count > 0) await OfferClassRenameAsync(currentName, newPath, name);
+
+        return true;
+    }
+
+    /// <summary>
+    /// The file commands of the Solution Explorer: Cut, Copy and Paste, and
+    /// Exclude From Project and Include In Project. The menu and the
+    /// shortcuts both come here, as the rename and delete commands do.
+    /// </summary>
+    internal async Task RunExplorerFileCommandAsync(SolutionExplorerPanel.ExplorerCommand command, SolutionTreeNode? node)
+    {
+        switch (command)
+        {
+            case SolutionExplorerPanel.ExplorerCommand.Cut when node is { CanRenameOrDelete: true }:
+                _explorerClipboard = new ExplorerClipboard(node.Path, node.Kind == NodeKind.Folder, Cut: true);
+                break;
+
+            case SolutionExplorerPanel.ExplorerCommand.Copy when node is { CanRenameOrDelete: true }:
+                _explorerClipboard = new ExplorerClipboard(node.Path, node.Kind == NodeKind.Folder, Cut: false);
+                break;
+
+            case SolutionExplorerPanel.ExplorerCommand.Paste when _explorerClipboard is { } clipboard:
+                await PasteExplorerClipboardAsync(clipboard, DirectoryFor(node));
+                break;
+
+            case SolutionExplorerPanel.ExplorerCommand.DropOn
+                when node is not null && _solutionExplorer?.DraggedNode is { CanRenameOrDelete: true } dragged
+                     && DirectoryFor(node) is { Length: > 0 } folder:
+                // Read from the panel before the first await: the panel clears
+                // DraggedNode as soon as this command has started.
+                await MoveEntryAsync(dragged.Path, dragged.Kind == NodeKind.Folder, folder);
+                break;
+
+            case SolutionExplorerPanel.ExplorerCommand.ExcludeFromProject
+                when node is { CanRenameOrDelete: true, Kind: not NodeKind.Folder }:
+                await ChangeProjectMembershipAsync(node.Path, include: false);
+                break;
+
+            case SolutionExplorerPanel.ExplorerCommand.IncludeInProject
+                when node is { CanRenameOrDelete: true, Kind: not NodeKind.Folder }:
+                await ChangeProjectMembershipAsync(node.Path, include: true);
+                break;
+        }
+    }
+
+    /// <summary>What Cut or Copy holds until a paste: the path, whether it is a folder, and whether it was cut.</summary>
+    private sealed record ExplorerClipboard(string Path, bool IsDirectory, bool Cut);
+
+    private ExplorerClipboard? _explorerClipboard;
+
+    /// <summary>
+    /// Pastes into <paramref name="targetDirectory"/>. A cut entry moves, and
+    /// the clipboard empties once it has; a copied entry is copied under a
+    /// free name, and the clipboard keeps it for the next paste.
+    /// </summary>
+    private async Task PasteExplorerClipboardAsync(ExplorerClipboard clipboard, string? targetDirectory)
+    {
+        if (targetDirectory is not { Length: > 0 }) return;
+
+        // A source renamed or deleted since the Cut or Copy has nothing left to
+        // paste. The clipboard is emptied with the message, so the next Paste
+        // does not repeat it.
+        if (!File.Exists(clipboard.Path) && !Directory.Exists(clipboard.Path))
+        {
+            _explorerClipboard = null;
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerClipboardGone, Path.GetFileName(clipboard.Path)));
+            return;
+        }
+
+        if (clipboard.IsDirectory && IsAtOrUnder(targetDirectory, clipboard.Path))
+        {
+            ViewModel.WriteOutput(Localizer.Get(clipboard.Cut
+                ? StringKeys.ExplorerMoveIntoItself
+                : StringKeys.ExplorerCopyIntoItself));
+            return;
+        }
+
+        if (clipboard.Cut)
+        {
+            if (await MoveEntryAsync(clipboard.Path, clipboard.IsDirectory, targetDirectory))
+                _explorerClipboard = null;
+            return;
+        }
+
+        try
+        {
+            ExplorerFileOperations.CopyEntry(
+                clipboard.Path, targetDirectory, Localizer.Get(StringKeys.ExplorerCopySuffix), clipboard.IsDirectory);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerOperationFailed, ex.Message));
+            return;
+        }
+
+        ViewModel.Explorer.Refresh();
+    }
+
+    /// <summary>
+    /// Moves an entry into a folder of the tree, the way Cut and Paste or a
+    /// drag does. Refuses a folder moved into itself or one of its own
+    /// folders, and a move onto the folder it is already in.
+    /// </summary>
+    internal Task<bool> MoveEntryAsync(string path, bool isDirectory, string targetDirectory)
+    {
+        if (string.Equals(Path.GetFullPath(targetDirectory), Path.GetFullPath(Path.GetDirectoryName(path)!), PathComparison))
+            return Task.FromResult(false);
+
+        if (isDirectory && IsAtOrUnder(targetDirectory, path))
+        {
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerMoveIntoItself));
+            return Task.FromResult(false);
+        }
+
+        return RelocateInExplorerAsync(path, isDirectory, targetDirectory, Path.GetFileName(path), isRename: false);
+    }
+
+    /// <summary>
+    /// Takes a file out of the project, or puts it back, in the .vbproj that
+    /// owns it, then reloads the workspace so the compiler sees the change
+    /// and reads the tree again so the tree shows it. The file stays on disk.
+    /// </summary>
+    private async Task ChangeProjectMembershipAsync(string filePath, bool include)
+    {
+        if (ExplorerFileOperations.ProjectContaining(filePath) is not { } project)
+        {
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerNotInProject, Path.GetFileName(filePath)));
+            return;
+        }
+
+        try
+        {
+            if (!ProjectItemEditor.IsSdkStyle(File.ReadAllText(project)))
+            {
+                ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerNotSdkProject));
+                return;
+            }
+
+            var changed = include
+                ? ProjectItemEditor.Include(project, filePath)
+                : ProjectItemEditor.Exclude(project, filePath);
+
+            // Include refuses an item the user wrote by hand: the file stays
+            // greyed out, and the message says why. The menu offers Include
+            // only on a file out of the project, so any refusal is that one.
+            if (!changed && include)
+            {
+                ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerHandWrittenItem, Path.GetFileName(filePath)));
+                return;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.ExplorerOperationFailed, ex.Message));
+            return;
+        }
+
+        await ViewModel.ReloadLanguageServiceAsync();
+
+        ViewModel.Explorer.Refresh();
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Basalt.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Basalt.Shell.ViewModels;
@@ -78,12 +79,48 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
 
     partial void OnShowAllFilesChanged(bool value) => Refresh();
 
+    /// <summary>The project file each folder belongs to, read once per load.</summary>
+    private readonly Dictionary<string, string?> _projectOfDirectory = new(StringComparer.Ordinal);
+
+    /// <summary>The text of each project file, read once per load; null when it cannot be read.</summary>
+    private readonly Dictionary<string, string?> _projectTexts = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Whether the project a file belongs to includes it. A file in no
+    /// project, or in a project that is not SDK-style, is included.
+    /// </summary>
+    private ProjectItemEditor.Membership MembershipOf(string filePath)
+    {
+        var directory = Path.GetDirectoryName(filePath);
+        if (directory is null) return ProjectItemEditor.Membership.Included;
+
+        if (!_projectOfDirectory.TryGetValue(directory, out var project))
+            _projectOfDirectory[directory] = project = ExplorerFileOperations.ProjectContaining(filePath);
+        if (project is null) return ProjectItemEditor.Membership.Included;
+
+        if (!_projectTexts.TryGetValue(project, out var text))
+        {
+            try { text = File.ReadAllText(project); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { text = null; }
+            _projectTexts[project] = text;
+        }
+
+        return text is null
+            ? ProjectItemEditor.Membership.Included
+            : ProjectItemEditor.MembershipOf(project, text, filePath);
+    }
+
     public void Load(string solutionOrProjectPath)
     {
         LoadedPath = solutionOrProjectPath;
 
         SelectedNode = null;
         Roots.Clear();
+
+        // Read again from the disk on every load, so a project edited since
+        // the last one, by Exclude or by another editor, is seen as it is now.
+        _projectOfDirectory.Clear();
+        _projectTexts.Clear();
 
         var isSolution = Path.GetExtension(solutionOrProjectPath)
             is ".sln" or ".slnx";
@@ -98,6 +135,34 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         if (directory is not null) PopulateFrom(root, directory);
 
         Roots.Add(root);
+        Loaded?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Raised after the tree has been read from disk, so the panel can watch the same folder.</summary>
+    public event EventHandler? Loaded;
+
+    /// <summary>
+    /// Whether a path under the loaded folder is one the tree lists: not
+    /// inside an output or tooling folder, and not a tooling file, unless
+    /// Show All Files is on. A change to anything else cannot change the
+    /// tree, so the disk is not read again for it, which matters because a
+    /// build writes hundreds of files under obj.
+    /// </summary>
+    internal bool IsListed(string path)
+    {
+        if (ShowAllFiles) return true;
+        if (LoadedPath is not { Length: > 0 } loaded) return false;
+
+        var directory = Path.GetDirectoryName(Path.GetFullPath(loaded));
+        if (directory is null) return false;
+
+        var parts = Path.GetRelativePath(directory, Path.GetFullPath(path))
+            .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        for (var i = 0; i < parts.Length - 1; i++)
+            if (Ignored.Contains(parts[i])) return false;
+
+        return !IsNoise(parts[^1]);
     }
 
     public bool SelectPath(string path)
@@ -169,11 +234,21 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
             parent.Children.Add(node);
         }
 
-        var files = Directory.EnumerateFiles(directory)
+        var listed = Directory.EnumerateFiles(directory)
             .Where(file => !IsNoise(Path.GetFileName(file)))
             .Where(file => rootFile is null || Path.GetFullPath(file) != rootFile)
             .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        // A file the project leaves out is hidden, as the tooling files are,
+        // until Show All Files asks for it; then it is greyed out in the tree.
+        var outOfProject = new HashSet<string>(
+            listed.Where(file => MembershipOf(file) != ProjectItemEditor.Membership.Included),
+            StringComparer.OrdinalIgnoreCase);
+
+        var files = ShowAllFiles
+            ? listed
+            : listed.Where(file => !outOfProject.Contains(file)).ToArray();
 
         var visible = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var file in files) visible.TryAdd(file, file);
@@ -197,7 +272,10 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         {
             if (companions.Contains(file)) continue;
 
-            var node = new SolutionTreeNode(Path.GetFileName(file), file, Classify(file));
+            var node = new SolutionTreeNode(Path.GetFileName(file), file, Classify(file))
+            {
+                IsOutOfProject = outOfProject.Contains(file)
+            };
             var stem = file.EndsWith(".vb", StringComparison.OrdinalIgnoreCase)
                 ? file[..^3]
                 : null;

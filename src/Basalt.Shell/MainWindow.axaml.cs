@@ -3451,6 +3451,12 @@ public partial class MainWindow : Window
             case SolutionExplorerPanel.ExplorerCommand.Delete:
                 await DeleteInExplorerAsync(node);
                 break;
+
+            // Cut, Copy, Paste, Exclude and Include live with the other file
+            // operations, where the keyboard shortcuts already reach them.
+            default:
+                await RunExplorerFileCommandAsync(command, node);
+                break;
         }
     }
 

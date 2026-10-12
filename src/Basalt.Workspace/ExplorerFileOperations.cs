@@ -142,14 +142,25 @@ public static class ExplorerFileOperations
     /// most likely — whatever already moved is moved back, so a failure
     /// partway through does not leave the form split across two names.
     /// </summary>
-    public static IReadOnlyList<(string OldPath, string NewPath)> RenameFile(string oldPath, string newName)
+    public static IReadOnlyList<(string OldPath, string NewPath)> RenameFile(string oldPath, string newName) =>
+        RelocateFile(oldPath, Path.GetDirectoryName(oldPath)
+            ?? throw new IOException($"'{oldPath}' has no containing folder."), newName);
+
+    /// <summary>
+    /// Moves a file into <paramref name="targetDirectory"/> under
+    /// <paramref name="newName"/>, with its form companions, as
+    /// <see cref="RenameFile"/> does for a rename. Moving within the file's
+    /// own folder is a rename, so a case-only change keeps working.
+    /// </summary>
+    public static IReadOnlyList<(string OldPath, string NewPath)> RelocateFile(
+        string oldPath, string targetDirectory, string newName)
     {
         var companionsBefore = FormCompanions(oldPath);
         var moves = new List<(string OldPath, string NewPath)>();
 
         try
         {
-            var newPath = Rename(oldPath, newName, isDirectory: false);
+            var newPath = Relocate(oldPath, targetDirectory, newName, isDirectory: false);
             moves.Add((oldPath, newPath));
 
             if (companionsBefore.Count > 0 && IsFormFile(newPath))
@@ -158,25 +169,125 @@ public static class ExplorerFileOperations
 
                 foreach (var companion in companionsBefore)
                 {
-                    var companionNewPath = companion.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase)
-                        ? newBase + ".Designer.vb"
-                        : newBase + ".resx";
+                    var companionNewName = companion.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase)
+                        ? Path.GetFileName(newBase + ".Designer.vb")
+                        : Path.GetFileName(newBase + ".resx");
 
-                    moves.Add((companion, Rename(companion, Path.GetFileName(companionNewPath), isDirectory: false)));
+                    moves.Add((companion, Relocate(companion, targetDirectory, companionNewName, isDirectory: false)));
                 }
             }
         }
         catch
         {
-            // Through Rename, not File.Move: undoing a case-only rename has
-            // the same collision with itself that doing it had.
+            // Back through Relocate, not File.Move: undoing a case-only rename
+            // has the same collision with itself that doing it had.
             foreach (var (old, @new) in Enumerable.Reverse(moves))
-                if (File.Exists(@new)) Rename(@new, Path.GetFileName(old), isDirectory: false);
+                if (File.Exists(@new))
+                    Relocate(@new, Path.GetDirectoryName(old)!, Path.GetFileName(old), isDirectory: false);
 
             throw;
         }
 
         return moves;
+    }
+
+    /// <summary>
+    /// Moves a file or folder into <paramref name="targetDirectory"/> under
+    /// <paramref name="newName"/> and returns the new path. Refuses to
+    /// overwrite: a name already taken there is an IOException. Within the
+    /// entry's own folder this is a <see cref="Rename"/>.
+    /// </summary>
+    public static string Relocate(string oldPath, string targetDirectory, string newName, bool isDirectory)
+    {
+        var currentDirectory = Path.GetDirectoryName(oldPath)
+            ?? throw new IOException($"'{oldPath}' has no containing folder.");
+
+        if (string.Equals(Path.GetFullPath(targetDirectory), Path.GetFullPath(currentDirectory), PathComparison))
+            return Rename(oldPath, newName, isDirectory);
+
+        var newPath = Path.Combine(targetDirectory, newName);
+        if (Exists(newPath, isDirectory)) throw new IOException($"'{newName}' already exists.");
+
+        MoveOne(oldPath, newPath, isDirectory);
+        return newPath;
+    }
+
+    private static bool Exists(string path, bool isDirectory) =>
+        isDirectory ? Directory.Exists(path) : File.Exists(path);
+
+    /// <summary>
+    /// Copies a file (with its form companions) or a folder (with everything
+    /// in it) into <paramref name="directory"/>, under the first free name
+    /// the way Visual Studio names a copy: "Module1 - Copy.vb", then
+    /// "Module1 - Copy (2).vb". Nothing is overwritten: a name is only used
+    /// when none of the copy's files already exists, and a copy that fails
+    /// part way is removed again.
+    /// </summary>
+    /// <returns>The new path of the file or folder itself.</returns>
+    public static string CopyEntry(string source, string directory, string copySuffix, bool isDirectory)
+    {
+        var name = Path.GetFileName(source);
+        var stem = isDirectory ? name : Path.GetFileNameWithoutExtension(source);
+        var extension = isDirectory ? "" : Path.GetExtension(source);
+        var companions = isDirectory ? [] : FormCompanions(source);
+
+        for (var number = 1; ; number++)
+        {
+            var copyStem = number == 1 ? stem + copySuffix : $"{stem}{copySuffix} ({number})";
+            var target = Path.Combine(directory, copyStem + extension);
+
+            var pairs = new List<(string From, string To)> { (source, target) };
+            if (companions.Count > 0 && IsFormFile(target))
+            {
+                foreach (var companion in companions)
+                {
+                    var suffix = companion.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase)
+                        ? ".Designer.vb"
+                        : ".resx";
+                    pairs.Add((companion, Path.Combine(directory, copyStem + suffix)));
+                }
+            }
+
+            if (pairs.Any(pair => Exists(pair.To, isDirectory: false) || Directory.Exists(pair.To))) continue;
+
+            var created = new List<string>();
+            try
+            {
+                foreach (var (from, to) in pairs)
+                {
+                    if (isDirectory) CopyDirectory(from, to, created);
+                    else
+                    {
+                        File.Copy(from, to, overwrite: false);
+                        created.Add(to);
+                    }
+                }
+            }
+            catch
+            {
+                foreach (var path in Enumerable.Reverse(created))
+                    if (File.Exists(path)) File.Delete(path);
+                throw;
+            }
+
+            return pairs[0].To;
+        }
+    }
+
+    /// <summary>Copies a folder tree into a new folder, recording every file it creates.</summary>
+    private static void CopyDirectory(string from, string to, List<string> created)
+    {
+        Directory.CreateDirectory(to);
+
+        foreach (var file in Directory.EnumerateFiles(from))
+        {
+            var target = Path.Combine(to, Path.GetFileName(file));
+            File.Copy(file, target, overwrite: false);
+            created.Add(target);
+        }
+
+        foreach (var folder in Directory.EnumerateDirectories(from))
+            CopyDirectory(folder, Path.Combine(to, Path.GetFileName(folder)), created);
     }
 
     /// <summary>

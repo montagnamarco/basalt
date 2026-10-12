@@ -53,6 +53,12 @@ public sealed partial class SolutionTreeNode : ObservableObject
 
     public bool IsForm => DesignerPath is not null;
 
+    /// <summary>
+    /// The project leaves this file out (Exclude From Project, or a file the
+    /// default globs do not reach). Shown only under Show All Files, greyed.
+    /// </summary>
+    public bool IsOutOfProject { get; internal set; }
+
     public SourceLanguage Language => SourceLanguageExtensions.FromPath(Path);
 
     /// <summary>An .axaml file can be opened in the visual designer.</summary>

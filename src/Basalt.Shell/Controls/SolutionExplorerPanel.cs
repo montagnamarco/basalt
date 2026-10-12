@@ -11,7 +11,7 @@ using Basalt.Shell.ViewModels;
 namespace Basalt.Shell.Controls;
 
 /// <summary>File tree of the currently open solution.</summary>
-public sealed class SolutionExplorerPanel : UserControl
+public sealed partial class SolutionExplorerPanel : UserControl
 {
     private readonly TreeView _tree;
 
@@ -78,9 +78,15 @@ public sealed class SolutionExplorerPanel : UserControl
         DataContext = viewModel;
         BuildContextMenu();
 
+        // A solution opened or refreshed while the panel is on screen is
+        // watched from here on; see SolutionExplorerPanel.Watch.cs.
+        viewModel.Explorer.Loaded += (_, _) => WatchDisk(viewModel);
+
         Tools = BuildTools(viewModel);
 
         Content = _tree;
+
+        ConnectDragAndDrop();
     }
 
     /// <summary>
@@ -222,7 +228,11 @@ public sealed class SolutionExplorerPanel : UserControl
     {
         Open, OpenInDesigner, ViewCode, Rename, Delete,
         NewFile, NewFolder, RevealInFinder, CopyPath, CopyRelativePath, Refresh,
-        Properties, References, AddNewItem
+        Properties, References, AddNewItem,
+        Cut, Copy, Paste, ExcludeFromProject, IncludeInProject,
+
+        /// <summary>A dragged entry dropped on the node: moved into the node's folder.</summary>
+        DropOn
     }
 
     /// <summary>Raised when the user picks something from the menu.</summary>
@@ -250,6 +260,8 @@ public sealed class SolutionExplorerPanel : UserControl
         bool IsDesignable() => SelectedNode is { IsDesignable: true };
         bool IsForm() => SelectedNode is { IsForm: true };
         bool IsProject() => SelectedNode is { Kind: NodeKind.Project };
+        bool IsProjectFile() => SelectedNode is { CanRenameOrDelete: true, Kind: not NodeKind.Folder, IsOutOfProject: false };
+        bool IsOutOfProject() => SelectedNode is { IsOutOfProject: true };
 
         // Off for the solution and for a project, whose own path is the
         // .sln/.vbproj the session is open from: see
@@ -284,6 +296,20 @@ public sealed class SolutionExplorerPanel : UserControl
                 { IsAvailable = CanRenameOrDelete, Icon = IconKind.Replace },
             new(Localizer.Get(StringKeys.SolutionExplorerDelete), () => Choose(ExplorerCommand.Delete))
                 { IsAvailable = CanRenameOrDelete, Icon = IconKind.Exit },
+            MenuAction.Separator,
+            new(Localizer.Get(StringKeys.ExplorerCut), () => Choose(ExplorerCommand.Cut))
+                { IsAvailable = CanRenameOrDelete },
+            new(Localizer.Get(StringKeys.ExplorerCopy), () => Choose(ExplorerCommand.Copy))
+                { IsAvailable = CanRenameOrDelete, Icon = IconKind.Copy },
+            new(Localizer.Get(StringKeys.ExplorerPaste), () => Choose(ExplorerCommand.Paste))
+                { IsAvailable = HasNode },
+            MenuAction.Separator,
+            // Files only: a project's own membership, and a folder's, are not what
+            // Visual Studio's Exclude and Include act on.
+            new(Localizer.Get(StringKeys.ExplorerExcludeFromProject), () => Choose(ExplorerCommand.ExcludeFromProject))
+                { IsAvailable = IsProjectFile },
+            new(Localizer.Get(StringKeys.ExplorerIncludeInProject), () => Choose(ExplorerCommand.IncludeInProject))
+                { IsAvailable = IsOutOfProject },
             MenuAction.Separator,
             new(RevealLabel, () => Choose(ExplorerCommand.RevealInFinder))
                 { IsAvailable = HasNode, Icon = IconKind.FolderOpen },
@@ -328,6 +354,10 @@ public sealed class SolutionExplorerPanel : UserControl
     private static Control BuildTreeRow(SolutionTreeNode? node)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+
+        // Greyed rather than hidden under Show All Files: a file the project
+        // leaves out is still on disk, and the user should see which it is.
+        if (node?.IsOutOfProject == true) row.Opacity = 0.5;
 
         // Drawn icons rather than emoji: an emoji renders differently on every
         // platform, and this IDE runs on three.

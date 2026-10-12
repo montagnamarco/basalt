@@ -911,6 +911,18 @@
   <data name="Explorer_OperationFailed" xml:space="preserve"><value>[explorer] {0}</value></data>
   <data name="Explorer_BlockedWhileDebugging" xml:space="preserve"><value>Rename and Delete are disabled while debugging.</value></data>
   <data name="Explorer_AddNewItem" xml:space="preserve"><value>Add New Item…</value></data>
+  <data name="Explorer_Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="Explorer_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Explorer_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="Explorer_ExcludeFromProject" xml:space="preserve"><value>Exclude From Project</value></data>
+  <data name="Explorer_IncludeInProject" xml:space="preserve"><value>Include In Project</value></data>
+  <data name="Explorer_MoveIntoItself" xml:space="preserve"><value>[explorer] A folder cannot be moved into itself or into one of its own folders.</value></data>
+  <data name="Explorer_CopySuffix" xml:space="preserve"><value> - Copy</value></data>
+  <data name="Explorer_NotInProject" xml:space="preserve"><value>[explorer] '{0}' is not part of the project.</value></data>
+  <data name="Explorer_NotSdkProject" xml:space="preserve"><value>[explorer] Only SDK-style projects record which files are excluded.</value></data>
+  <data name="Explorer_HandWrittenItem" xml:space="preserve"><value>[explorer] '{0}' is excluded by an item written by hand in the project file. Remove that item to include the file.</value></data>
+  <data name="Explorer_ClipboardGone" xml:space="preserve"><value>[explorer] '{0}' no longer exists, so it was not pasted.</value></data>
+  <data name="Explorer_CopyIntoItself" xml:space="preserve"><value>[explorer] A folder cannot be copied into itself or into one of its own folders.</value></data>
 
   <!-- Save/Don't Save/Cancel, asked before a dirty document closes -->
   <data name="SaveChanges_Title" xml:space="preserve"><value>Save Changes?</value></data>

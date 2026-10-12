@@ -936,6 +936,18 @@ public static class StringKeys
     public const string ExplorerOperationFailed = "Explorer_OperationFailed";
     public const string ExplorerBlockedWhileDebugging = "Explorer_BlockedWhileDebugging";
     public const string ExplorerAddNewItem = "Explorer_AddNewItem";
+    public const string ExplorerCut = "Explorer_Cut";
+    public const string ExplorerCopy = "Explorer_Copy";
+    public const string ExplorerPaste = "Explorer_Paste";
+    public const string ExplorerExcludeFromProject = "Explorer_ExcludeFromProject";
+    public const string ExplorerIncludeInProject = "Explorer_IncludeInProject";
+    public const string ExplorerMoveIntoItself = "Explorer_MoveIntoItself";
+    public const string ExplorerCopySuffix = "Explorer_CopySuffix";
+    public const string ExplorerNotInProject = "Explorer_NotInProject";
+    public const string ExplorerNotSdkProject = "Explorer_NotSdkProject";
+    public const string ExplorerHandWrittenItem = "Explorer_HandWrittenItem";
+    public const string ExplorerClipboardGone = "Explorer_ClipboardGone";
+    public const string ExplorerCopyIntoItself = "Explorer_CopyIntoItself";
 
     // Save/Don't Save/Cancel, asked whenever a dirty document is about to be
     // closed: a tab's own close, Close All and friends, opening another
