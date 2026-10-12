@@ -104,6 +104,53 @@ public static class VbHtmlCodeRegions
     }
 
     /// <summary>
+    /// Whether the character before a position is a dot typed right after an
+    /// expression in markup, which Razor reads as markup ("@Model.Name." ending a
+    /// sentence) as much as the start of a member ("@Model." about to be completed).
+    /// </summary>
+    /// <remarks>
+    /// The editor cannot tell the two apart while the user types, so it offers the
+    /// members without selecting one: a space or a full stop must not commit a
+    /// member into prose. Decided from the parse tree like everything here.
+    /// </remarks>
+    public static bool IsTrailingDotOfExpression(string text, int position) =>
+        ExpressionBeforeTrailingDot(text, position) is not null;
+
+    /// <summary>
+    /// The expression a trailing dot was typed after, as the parser read it
+    /// ("Model", "Model.Items"), or null when the dot before the position is
+    /// not one.
+    /// </summary>
+    public static string? ExpressionBeforeTrailingDot(string text, int position)
+    {
+        if (position <= 0 || position > text.Length || text[position - 1] != '.') return null;
+        return EndingAt(VbHtmlParser.Parse(text).Nodes, position - 1)?.Expression;
+    }
+
+    private static ExpressionNode? EndingAt(IReadOnlyList<VbHtmlNode> nodes, int dot)
+    {
+        foreach (var node in nodes)
+        {
+            switch (node)
+            {
+                case ExpressionNode expression
+                    when expression.ExpressionPosition + expression.Expression.Length == dot:
+                    return expression;
+                case BlockNode block:
+                    if (EndingAt(block.Body, dot) is { } inBody) return inBody;
+                    foreach (var clause in block.Clauses)
+                        if (EndingAt(clause.Body, dot) is { } inClause) return inClause;
+                    break;
+                case SectionNode section:
+                    if (EndingAt(section.Body, dot) is { } inSection) return inSection;
+                    break;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// The extents of the Visual Basic half of a template: expressions, block
     /// clauses, statement bodies and member blocks, as offsets into the text.
     /// </summary>

@@ -847,6 +847,22 @@ public sealed partial class CodeEditor : UserControl
         // The native snippet session owns navigation and finishing its fields.
         if (_snippets.IsActive && e.Key is Key.Tab or Key.Enter or Key.Escape) return;
 
+        // A list opened with nothing selected, after a dot that may end a
+        // sentence in a template's markup, is only a suggestion: Enter closes
+        // it and starts the new line. Closing alone is not enough: the list's
+        // own handler is already on this event's route, and it swallowed Enter.
+        // PerformTextInput is what the editor does for Enter, indentation included.
+        // Visual Basic files have their own Enter handling above.
+        if (_document.Language != SourceLanguage.VisualBasic &&
+            e.Key == Key.Enter && e.KeyModifiers == KeyModifiers.None &&
+            _completionWindow is { CompletionList.SelectedItem: null } unselected)
+        {
+            unselected.Close();
+            _editor.TextArea.PerformTextInput("\n");
+            e.Handled = true;
+            return;
+        }
+
         if (_document.Language == SourceLanguage.VisualBasic && _snippets.HandleKey(e) is { } snippetTask)
         {
             // The Tab belongs to the snippet now: the list typing its shortcut
@@ -1414,6 +1430,38 @@ public sealed partial class CodeEditor : UserControl
     private const int CompletionPauseMilliseconds = 40;
 
     /// <summary>
+    /// Whether the caret follows a dot typed right after an expression in a
+    /// template's markup, where it may as well end a sentence ("@Model.Name.").
+    /// </summary>
+    /// <remarks>
+    /// The members are still offered, but none is selected: in a template a
+    /// space, a comma or a full stop commits the selection, and committing a
+    /// member into a sentence is worse than offering nothing. The arrow keys
+    /// or a click select one, and Enter or Tab then commit it.
+    /// </remarks>
+    private bool AfterTrailingDotInMarkup() =>
+        IsTrailingDotInMarkup(_document.FilePath, _editor.Text, _editor.CaretOffset);
+
+    internal static bool IsTrailingDotInMarkup(string path, string text, int caret)
+    {
+        if (!path.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase)
+            && !path.EndsWith(".vbrazor", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (caret <= 0 || caret > text.Length || text[caret - 1] != '.') return false;
+
+        try
+        {
+            return Basalt.Razor.Vb.VbHtmlCodeRegions.IsTrailingDotOfExpression(text, caret);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // A template the parser cannot read keeps the ordinary selection.
+            return false;
+        }
+    }
+
+    /// <summary>
     /// The entry selected when the list opens. With nothing typed yet, the one
     /// the language service preselects — the declared type after "= New " —
     /// and, when it names none after a space, none at all: the list is only a
@@ -1598,8 +1646,9 @@ public sealed partial class CodeEditor : UserControl
         foreach (var match in ranked.Take(200))
             _completionWindow.CompletionList.CompletionData.Add(new EditorCompletionData(match.Item, OnCompletionCommitted));
 
-        _completionWindow.CompletionList.SelectedItem = InitialSelection(
-            _completionWindow.CompletionList.CompletionData, typed, trigger);
+        _completionWindow.CompletionList.SelectedItem = AfterTrailingDotInMarkup()
+            ? null
+            : InitialSelection(_completionWindow.CompletionList.CompletionData, typed, trigger);
 
         window.Closed += (_, _) =>
         {

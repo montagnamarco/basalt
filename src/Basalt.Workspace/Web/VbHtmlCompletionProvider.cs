@@ -37,6 +37,15 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
     public ViewHost Host { get; init; } = ViewHost.Standalone;
 
     /// <summary>
+    /// Whether a dot typed after an expression in markup ("@Model.") offers the
+    /// expression's members. Only for an editor that opens that list with
+    /// nothing selected: the dot may as well end a sentence ("@Model.Name."),
+    /// and a client that selects the first member would commit it into prose
+    /// on Enter. Basalt's editor does; the language server leaves it off.
+    /// </summary>
+    public bool CompletesAfterTrailingDot { get; init; }
+
+    /// <summary>
     /// A way to learn a .vbrazor's component catalog before writing it, so
     /// tags are written the way the build writes them rather than the way
     /// the writer alone can guess.
@@ -135,6 +144,9 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
             return [];
 
         var (code, caret) = WithSpacesBefore(generated.Code, at, spaces);
+        // Not in a .vbpage, whose editor selects the first entry as in any VB file.
+        if (CompletesAfterTrailingDot && !TemplateGeneration.IsPage(document.FilePath))
+            (code, caret) = WithTrailingDot(document.Text, position, code, caret);
 
         return await _ask(code, caret, ct).ConfigureAwait(false);
     }
@@ -373,6 +385,36 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         if (start == 0 || template[start - 1] is '\n' or '\r') return "";
 
         return template[start..position];
+    }
+
+    /// <summary>
+    /// The member dot the user has just typed after an expression in markup,
+    /// put back into the generated code before asking for members.
+    /// </summary>
+    /// <remarks>
+    /// "&lt;p&gt;@Model.&lt;/p&gt;" generates Write(Model): a trailing dot is markup to
+    /// Razor, as in C# Razor, so the code the compiler sees has no dot and
+    /// asking there offered nothing at all. Only when the template has the dot
+    /// right before the caret and the generated code, at the mapped caret, ends
+    /// an identifier or a call without one.
+    /// </remarks>
+    internal static (string Code, int Caret) WithTrailingDot(string template, int position, string code, int at)
+    {
+        if (at <= 0 || at > code.Length || code[at - 1] == '.') return (code, at);
+
+        // The expression the dot was typed after, as the parser read it: "Model",
+        // "Model.Items". None in "@(Model.)", where the dot is inside the expression.
+        if (VbHtmlCodeRegions.ExpressionBeforeTrailingDot(template, position) is not { Length: > 0 } expression)
+            return (code, at);
+
+        // Found in the generated code just before the mapped caret: the mapping ends after
+        // the Write(…) around it, so the dot belongs inside the parenthesis, after the
+        // expression, not after the call.
+        var found = code.LastIndexOf(expression, Math.Min(at, code.Length) - 1, StringComparison.Ordinal);
+        if (found < 0 || at - (found + expression.Length) > 2) return (code, at);
+
+        var after = found + expression.Length;
+        return (code.Insert(after, "."), after + 1);
     }
 
     /// <summary>

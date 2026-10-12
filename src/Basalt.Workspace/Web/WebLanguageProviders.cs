@@ -378,13 +378,16 @@ public static class WebLanguageProviders
         // The tag helpers a view's project offers, for its asp-* attributes.
         Func<string, CancellationToken, Task<TagHelperCatalog?>>? askTagHelpers = null,
         // The controllers, actions and pages a view's asp-* values can name.
-        Func<string, CancellationToken, Task<RouteCatalog?>>? askRoutes = null) =>
+        Func<string, CancellationToken, Task<RouteCatalog?>>? askRoutes = null,
+        // Members after a dot typed in markup ("@Model."): only for an editor
+        // that opens that list with nothing selected (VbHtmlCompletionProvider).
+        bool completesAfterTrailingDot = false) =>
         new WebProvider(
             new LanguageIdentity("vbhtml", "Razor (Visual Basic)", [".vbhtml", ".vbrazor", ".vbpage"],
                 isCaseSensitive: false),
             askSignature is null
-                ? new VbHtmlCompletionProvider(ask) { Host = host, AskCatalog = askCatalog, AskTagHelpers = askTagHelpers, AskRoutes = askRoutes }
-                : new VbHtmlCompletionProvider(ask, askSignature) { Host = host, AskCatalog = askCatalog, AskTagHelpers = askTagHelpers, AskRoutes = askRoutes },
+                ? new VbHtmlCompletionProvider(ask) { Host = host, AskCatalog = askCatalog, AskTagHelpers = askTagHelpers, AskRoutes = askRoutes, CompletesAfterTrailingDot = completesAfterTrailingDot }
+                : new VbHtmlCompletionProvider(ask, askSignature) { Host = host, AskCatalog = askCatalog, AskTagHelpers = askTagHelpers, AskRoutes = askRoutes, CompletesAfterTrailingDot = completesAfterTrailingDot },
             askDiagnostics is null
                 ? new VbHtmlDiagnosticProvider { Host = host, AskCatalog = askCatalog }
                 : new VbHtmlDiagnosticProvider(askDiagnostics) { Host = host, AskCatalog = askCatalog },
@@ -429,7 +432,9 @@ public static class WebLanguageProviders
             ? VbRazor
             : VbRazorAsking(
                 ask, askQuickInfo, askDiagnostics, askDefinition, askReferences,
-                askSignature, askCatalog: askCatalog, askTagHelpers: askTagHelpers, askRoutes: askRoutes));
+                askSignature, askCatalog: askCatalog, askTagHelpers: askTagHelpers, askRoutes: askRoutes,
+                // The IDE's own editor, which opens that list with nothing selected.
+                completesAfterTrailingDot: true));
     }
 
     private sealed class WebProvider : ILanguageProvider

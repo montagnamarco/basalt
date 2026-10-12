@@ -349,4 +349,85 @@ public sealed class UserJourneyRazorRoutingTests : IDisposable
         Assert.True(await code!.ShowHoverAtAsync(offset),
             "hovering Model.Title in the view did not show a tooltip.");
     }
+
+    // ---- journey: a dot typed after an expression in markup -----------------
+
+    /// <summary>
+    /// Typing "@Model." inside a paragraph offers the model's members at once,
+    /// although the dot is still followed by markup.
+    /// </summary>
+    /// <remarks>
+    /// "&lt;p&gt;@Model.&lt;/p&gt;" generates Write(Model): the trailing dot is markup to Razor,
+    /// so the compiler was asked about "Model" and nothing was offered (0 items, while
+    /// "@Model.Ti" and "Model." in a code block offered 57). VbHtmlCompletionProvider
+    /// now puts the dot back into the code it asks about (WithTrailingDot); without
+    /// it this test fails.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task ADotTypedAfterAnExpressionInMarkupOffersTheModelsMembers()
+    {
+        var created = await CreateProjectAsync();
+        const string view = "@ModelType Journey.IndexModel\n<html>\n<body>\n<p>@Model.</p>\n</body>\n</html>\n";
+        var viewPath = WriteView(Path.Combine(ProjectDirectory(created), "Pages", "Index.vbhtml"), view);
+        using var host = new TestWindow(created.SolutionPath);
+        await host.SettleAsync(10);
+        var vm = (MainWindowViewModel)host.Window.DataContext!;
+        Assert.True(await WaitUntilAsync(host, () => vm.StartupProject is not null && !vm.IsBusy, maxPasses: 600),
+            "the solution never finished loading.");
+        await vm.OpenFileAsync(viewPath);
+        await host.SettleAsync(5);
+
+        var position = view.IndexOf("<p>@Model.", StringComparison.Ordinal) + "<p>@Model.".Length;
+        var items = await vm.GetCompletionsAsync(viewPath, position, view);
+
+        Assert.Contains(items, item => item.DisplayText == "Title");
+    }
+
+    /// <summary>
+    /// A sentence in a view's markup that ends on an expression: "Hi @Model.Title."
+    /// The dot may start a member as well, so the list opens, but with nothing
+    /// selected, and Enter then starts the next line instead of committing a member.
+    /// </summary>
+    /// <remarks>
+    /// Defects reintroduced once, each on its own: (1) without IsTrailingDotInMarkup the
+    /// list opened on the first member, and the selection assertion failed; (2) without
+    /// the Enter pass-through in OnKeyDown the list swallowed Enter, and the text
+    /// assertion failed with no new line.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task ADotEndingASentenceInMarkupOffersMembersWithoutCommittingOne()
+    {
+        var created = await CreateProjectAsync();
+        const string view = "@ModelType Journey.IndexModel\n<html>\n<body>\n<p>Hi </p>\n</body>\n</html>\n";
+        var viewPath = WriteView(Path.Combine(ProjectDirectory(created), "Pages", "Index.vbhtml"), view);
+        using var host = new TestWindow(created.SolutionPath);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        Assert.True(await WaitUntilAsync(host, () => vm.StartupProject is not null && !vm.IsBusy, maxPasses: 600),
+            "the solution never finished loading.");
+        await vm.OpenFileAsync(viewPath);
+        await host.SettleAsync(5);
+        var code = w.CodeEditorForTests(viewPath)!;
+        var editor = TextEditorFor(w, viewPath);
+        editor.CaretOffset = view.IndexOf("Hi </p>", StringComparison.Ordinal) + "Hi ".Length;
+        editor.TextArea.Focus();
+        TypeText(w, "@Model.Title");
+        await host.SettleAsync(5);
+        PressKey(w, Key.Escape, RawInputModifiers.None, PhysicalKey.Escape);
+        await host.SettleAsync(2);
+
+        TypeText(w, ".");
+
+        Assert.True(await WaitUntilAsync(host, () => code.CompletionOpenForTests && CompletionTexts(code).Count > 0),
+            "the dot after @Model.Title offered no members.");
+        Assert.Null(code.SelectedCompletionForTests);
+
+        PressKey(w, Key.Enter, RawInputModifiers.None, PhysicalKey.Enter);
+        await host.SettleAsync(3);
+
+        Assert.True(editor.Text.Contains("<p>Hi @Model.Title.\n", StringComparison.Ordinal),
+            $"Enter after the sentence's dot did not start a new line: {editor.Text}");
+        Assert.False(code.CompletionOpenForTests);
+    }
 }
