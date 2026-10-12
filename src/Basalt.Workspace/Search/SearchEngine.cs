@@ -27,6 +27,9 @@ public sealed record SearchHit(
     int Length,
     string LineText);
 
+/// <summary>One change a replacement makes: the span it takes and the text put in its place.</summary>
+public sealed record TextReplacement(int Offset, int Length, string Text);
+
 /// <summary>Hits within one file, kept together for display.</summary>
 public sealed record FileHits(string FilePath, IReadOnlyList<SearchHit> Hits);
 
@@ -59,7 +62,20 @@ public sealed class SearchEngine
         var hits = new List<SearchHit>();
         var lineStarts = BuildLineIndex(text);
 
-        foreach (Match match in pattern.Matches(text))
+        // The matches are read here rather than in the loop: a pattern that
+        // backtracks past its time limit throws while they are being found, and
+        // that must end this file's search, not the whole solution's.
+        List<Match> matches;
+        try
+        {
+            matches = pattern.Matches(text).ToList();
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return [];
+        }
+
+        foreach (var match in matches)
         {
             // Zero-width matches would loop forever over the same position.
             if (match.Length == 0) continue;
@@ -94,7 +110,7 @@ public sealed class SearchEngine
                 ? pattern.Replace(text, replacement)
                 : pattern.Replace(text, replacement.Replace("$", "$$"));
         }
-        catch (ArgumentException)
+        catch (Exception ex) when (ex is ArgumentException or RegexMatchTimeoutException)
         {
             return text;
         }
@@ -112,16 +128,82 @@ public sealed class SearchEngine
     }
 
     /// <summary>
+    /// The replacements a Replace All would make in a piece of text, in document
+    /// order and without applying them. An editor applies them as one undoable
+    /// edit; a file on disk is rewritten by <see cref="ReplaceInFileAsync"/>.
+    /// </summary>
+    public IReadOnlyList<TextReplacement> PlanReplacements(
+        string text, string term, string replacement, SearchOptions options)
+    {
+        if (string.IsNullOrEmpty(term)) return [];
+
+        try
+        {
+            var pattern = BuildPattern(term, options);
+            var plan = new List<TextReplacement>();
+
+            foreach (Match match in pattern.Matches(text))
+            {
+                if (match.Length == 0) continue;
+
+                // Only a regular expression search reads $1 and friends, as in ReplaceInText.
+                var replaced = options.UseRegex ? match.Result(replacement) : replacement;
+                plan.Add(new TextReplacement(match.Index, match.Length, replaced));
+            }
+
+            return plan;
+        }
+        catch (Exception ex) when (ex is ArgumentException or RegexMatchTimeoutException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Why the term cannot be searched for as a regular expression, or null when
+    /// it can. A literal term is always searchable; only a pattern can be invalid.
+    /// </summary>
+    public string? PatternError(string term, SearchOptions options)
+    {
+        if (!options.UseRegex || string.IsNullOrEmpty(term)) return null;
+
+        try
+        {
+            _ = BuildPattern(term, options);
+            return null;
+        }
+        catch (ArgumentException ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    /// <summary>
     /// Searches every file under a directory.
     ///
     /// Results arrive per file rather than as one flat list, because that is
     /// how they are shown and because a caller can start displaying the first
     /// file before the search finishes.
     /// </summary>
-    public async IAsyncEnumerable<FileHits> SearchDirectoryAsync(
+    public IAsyncEnumerable<FileHits> SearchDirectoryAsync(
+        string directory, string term, SearchOptions options, CancellationToken ct = default) =>
+        SearchFilesAsync(directory, term, options, null, ct);
+
+    /// <summary>
+    /// Searches every file under a directory, reading each open file as its
+    /// buffer holds it and every other file as the disk holds it.
+    /// </summary>
+    /// <remarks>
+    /// A file the user has edited but not saved is searched as edited: that is
+    /// the text on screen, and the text a replace changes. Results and
+    /// replacements then agree with what the user sees.
+    /// </remarks>
+    /// <param name="openTexts">Buffer text keyed by full path; null searches the disk only.</param>
+    public async IAsyncEnumerable<FileHits> SearchFilesAsync(
         string directory,
         string term,
         SearchOptions options,
+        IReadOnlyDictionary<string, string>? openTexts,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(term) || !Directory.Exists(directory)) yield break;
@@ -131,9 +213,14 @@ public sealed class SearchEngine
             ct.ThrowIfCancellationRequested();
 
             string text;
-            try
+            var buffered = openTexts is not null && openTexts.TryGetValue(Path.GetFullPath(file), out var buffer)
+                ? buffer
+                : null;
+            if (buffered is not null)
+                text = buffered;
+            else try
             {
-                text = await File.ReadAllTextAsync(file, ct).ConfigureAwait(false);
+                text = (await ReadTextFileAsync(file, ct).ConfigureAwait(false)).Text;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -165,16 +252,98 @@ public sealed class SearchEngine
         await foreach (var file in SearchDirectoryAsync(directory, term, options, ct)
                            .ConfigureAwait(false))
         {
-            var text = await File.ReadAllTextAsync(file.FilePath, ct).ConfigureAwait(false);
-            var updated = ReplaceInText(text, term, replacement, options);
-
-            if (string.Equals(text, updated, StringComparison.Ordinal)) continue;
-
-            await File.WriteAllTextAsync(file.FilePath, updated, ct).ConfigureAwait(false);
-            changed++;
+            if (await ReplaceInFileAsync(file.FilePath, term, replacement, options, ct).ConfigureAwait(false))
+                changed++;
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// Replaces in one file on disk, writing it back in the encoding it was read
+    /// in. Returns whether the file changed.
+    /// </summary>
+    public async Task<bool> ReplaceInFileAsync(
+        string path, string term, string replacement, SearchOptions options, CancellationToken ct = default)
+    {
+        var source = await ReadTextFileAsync(path, ct).ConfigureAwait(false);
+        var updated = ReplaceInText(source.Text, term, replacement, options);
+
+        if (string.Equals(source.Text, updated, StringComparison.Ordinal)) return false;
+
+        await File.WriteAllBytesAsync(path, source.Encode(updated), ct).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <summary>
+    /// A file's text, with what it takes to write the text back unchanged: the
+    /// byte order mark it came with and the encoding its bytes are read in.
+    /// </summary>
+    private sealed record TextFile(string Text, byte[] Preamble, Encoding TextEncoding)
+    {
+        public byte[] Encode(string text)
+        {
+            var body = TextEncoding.GetBytes(text);
+            if (Preamble.Length == 0) return body;
+
+            var bytes = new byte[Preamble.Length + body.Length];
+            Preamble.CopyTo(bytes, 0);
+            body.CopyTo(bytes, Preamble.Length);
+            return bytes;
+        }
+    }
+
+    // Strict, so bytes that are not UTF-8 are noticed rather than replaced with
+    // U+FFFD, which would write a different file back over the user's.
+    private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+    private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
+
+    private static async Task<TextFile> ReadTextFileAsync(string path, CancellationToken ct) =>
+        DecodeText(await File.ReadAllBytesAsync(path, ct).ConfigureAwait(false));
+
+    /// <summary>
+    /// Decodes a file the way the editor opens one: a byte order mark decides
+    /// UTF-8 or UTF-16, otherwise the bytes are UTF-8 when they are valid as it.
+    /// </summary>
+    /// <remarks>
+    /// Anything else, such as a Windows-1252 file with an accented letter in a
+    /// comment, is read as Latin-1. That maps every byte to one character and
+    /// back, so Replace All changes the text it matches and writes every other
+    /// byte back as it was. Before, the accented byte became U+FFFD on the way
+    /// out and the file was corrupted by a replace that did not touch it.
+    /// </remarks>
+    private static TextFile DecodeText(byte[] bytes)
+    {
+        if (HasPrefix(bytes, 0xEF, 0xBB, 0xBF) && TryDecodeUtf8(bytes, 3, out var marked))
+            return new TextFile(marked, [0xEF, 0xBB, 0xBF], Utf8);
+
+        if (HasPrefix(bytes, 0xFF, 0xFE))
+            return new TextFile(Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2), [0xFF, 0xFE], Encoding.Unicode);
+
+        if (HasPrefix(bytes, 0xFE, 0xFF))
+            return new TextFile(Encoding.BigEndianUnicode.GetString(bytes, 2, bytes.Length - 2), [0xFE, 0xFF], Encoding.BigEndianUnicode);
+
+        if (TryDecodeUtf8(bytes, 0, out var plain))
+            return new TextFile(plain, [], Utf8);
+
+        return new TextFile(Encoding.Latin1.GetString(bytes), [], Encoding.Latin1);
+    }
+
+    private static bool HasPrefix(byte[] bytes, params byte[] prefix) =>
+        bytes.Length >= prefix.Length && bytes.AsSpan(0, prefix.Length).SequenceEqual(prefix);
+
+    private static bool TryDecodeUtf8(byte[] bytes, int start, out string text)
+    {
+        try
+        {
+            text = StrictUtf8.GetString(bytes, start, bytes.Length - start);
+            return true;
+        }
+        catch (DecoderFallbackException)
+        {
+            text = "";
+            return false;
+        }
     }
 
     private IEnumerable<string> EnumerateFiles(string directory, SearchOptions options)

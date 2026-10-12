@@ -164,10 +164,14 @@ public sealed class UserJourneyNavigationTests : IDisposable
     private static void DoubleTap(Interactive row) =>
         row.RaiseEvent(new TappedEventArgs(Control.DoubleTappedEvent, null!));
 
+    /// <summary>
+    /// A search is over when Find is back: the panel hides Find while a search
+    /// runs. The summary is not a reliable signal, because it shows progress
+    /// from the first file on and would read as finished too early.
+    /// </summary>
     private static async Task WaitForSearchToFinishAsync(TestWindow host, SearchPanel search)
     {
-        var searching = Localizer.Get(StringKeys.SearchSearching);
-        Assert.True(await WaitUntilAsync(host, () => search.Summary != searching),
+        Assert.True(await WaitUntilAsync(host, () => search.FindButton.IsVisible),
             "The search never finished.");
     }
 

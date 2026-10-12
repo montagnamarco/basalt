@@ -348,7 +348,11 @@ public partial class MainWindow : Window
         _contents[_factory.Output] = new OutputPanel(viewModel);
         _contents[_factory.Immediate] = new ImmediatePanel(viewModel, _debug);
 
-        _search = new SearchPanel();
+        _search = new SearchPanel
+        {
+            EditorFor = path => CodeEditorFor(path) is { } code ? InnerEditor(code) : null,
+            OpenFilePaths = () => viewModel.OpenDocuments.Where(d => !d.OpenInDesigner).Select(d => d.FilePath)
+        };
         if (viewModel.LoadSettings?.Invoke() is { } startupSettings) _search.ApplySettings(startupSettings);
         _search.HitActivated += (_, hit) => Guarded.Run(
             () => OpenHitAsync(hit),
@@ -1955,6 +1959,9 @@ public partial class MainWindow : Window
     /// </summary>
     private async void OnKeyboardShortcut(object? sender, KeyEventArgs e)
     {
+        // Esc closes an open find bar before any command bound to Esc runs.
+        if (EditorFindBar.ClaimsEscape(e)) return;
+
         try
         {
             e.Handled = await TryRunShortcutAsync(e);
@@ -2136,7 +2143,7 @@ public partial class MainWindow : Window
                 { Command = ViewModel.UndoCommand, StartsGroup = true, CommandId = IdeCommands.EditUndo },
             new ToolbarAction(IconKind.Redo, Localizer.Get(StringKeys.MenuEditRedo), () => { })
                 { Command = ViewModel.RedoCommand, CommandId = IdeCommands.EditRedo },
-            new ToolbarAction(IconKind.Find, Localizer.Get(StringKeys.MenuEditFind), ShowSearch)
+            new ToolbarAction(IconKind.Find, Localizer.Get(StringKeys.MenuEditFind), () => ShowFind(replace: false))
                 { CommandId = IdeCommands.EditFind },
             new ToolbarAction(IconKind.Back, Localizer.Get(StringKeys.MenuNavigateBack),
                 () => _ = NavigateAsync(ViewModel.History.GoBack()))
@@ -2959,8 +2966,14 @@ public partial class MainWindow : Window
                 break;
 
             case IdeCommands.EditFind:
-            case IdeCommands.EditFindInFiles:
+                ShowFind(replace: false);
+                break;
+
             case IdeCommands.EditReplace:
+                ShowFind(replace: true);
+                break;
+
+            case IdeCommands.EditFindInFiles:
                 ShowSearch();
                 break;
 
@@ -4724,6 +4737,15 @@ public partial class MainWindow : Window
             () => PlaceCaretWhenReady(opened, target), DispatcherPriority.Background);
     }
 
+    /// <summary>
+    /// Ctrl+F and Ctrl+H act on the editor in front, with its find bar. With no
+    /// editor there is nothing to search in place, so the Search panel opens.
+    /// </summary>
+    private void ShowFind(bool replace)
+    {
+        if (!EditorFindBar.OpenFor(CurrentEditor(), replace)) ShowSearch();
+    }
+
     /// <summary>Brings up the search panel, ready for a term.</summary>
     private void ShowSearch()
     {
@@ -4731,6 +4753,10 @@ public partial class MainWindow : Window
 
         _search.SearchRoot = ViewModel.SolutionPath is { } path
             ? Path.GetDirectoryName(Path.GetFullPath(path))
+            : null;
+        _search.ProjectRoot = ViewModel.ActiveDocument is { } active
+            && Basalt.Workspace.ExplorerFileOperations.ProjectContaining(active.FilePath) is { } owner
+            ? Path.GetDirectoryName(owner)
             : null;
 
         _factory.ShowTool(_factory.Search, _factory.BottomArea);
@@ -4893,7 +4919,14 @@ public partial class MainWindow : Window
     internal void ApplySettingsForTests(IdeSettings settings) => ApplySettings(settings);
 
     /// <summary>The code editor showing a file, for the tests.</summary>
-    internal CodeEditor? CodeEditorForTests(string filePath)
+    internal CodeEditor? CodeEditorForTests(string filePath) => CodeEditorFor(filePath);
+
+    /// <summary>
+    /// The code editor showing an open file, built on demand if the document has
+    /// not been shown yet. Null when the file is not open as code. The Search
+    /// panel reads open files through it, so it is production code.
+    /// </summary>
+    internal CodeEditor? CodeEditorFor(string filePath)
     {
         // Built on demand: a document that has never been shown has no
         // content yet, so it is asked for the way Dock asks for it.
@@ -4972,9 +5005,9 @@ public partial class MainWindow : Window
             new(Localizer.Get(StringKeys.MenuEditFormatDocument), vm.FormatDocumentCommand,
                 Gesture: Shortcut(IdeCommands.EditFormatDocument)),
             MenuEntry.Separator,
-            new(Localizer.Get(StringKeys.MenuEditFind), Action: ShowSearch,
+            new(Localizer.Get(StringKeys.MenuEditFind), Action: () => ShowFind(replace: false),
                 Gesture: Shortcut(IdeCommands.EditFind)) { Icon = IconKind.Find },
-            new(Localizer.Get(StringKeys.MenuEditReplace), Action: ShowSearch,
+            new(Localizer.Get(StringKeys.MenuEditReplace), Action: () => ShowFind(replace: true),
                 Gesture: Shortcut(IdeCommands.EditReplace)) { Icon = IconKind.Replace }
         ]),
         new(Localizer.Get(StringKeys.MenuView), Children:

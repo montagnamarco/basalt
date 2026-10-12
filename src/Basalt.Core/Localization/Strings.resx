@@ -794,6 +794,17 @@
   <data name="Problems_WarningsCountOne" xml:space="preserve"><value>1 Warning</value></data>
   <data name="Problems_MessagesCountOne" xml:space="preserve"><value>1 Message</value></data>
   <data name="Search_FileMatchesOne" xml:space="preserve"><value>1 match</value></data>
+  <data name="Search_InvalidPattern" xml:space="preserve"><value>Not a valid regular expression: {0}</value></data>
+  <data name="Search_Cancelled" xml:space="preserve"><value>Stopped: {0} results in {1} files so far.</value></data>
+  <data name="Search_ScopeSolution" xml:space="preserve"><value>Whole solution</value></data>
+  <data name="Search_ScopeProject" xml:space="preserve"><value>Current project</value></data>
+  <data name="Search_ReplaceOne" xml:space="preserve"><value>Replace</value></data>
+  <data name="Search_FindNext" xml:space="preserve"><value>Next match (F3)</value></data>
+  <data name="Search_FindPrevious" xml:space="preserve"><value>Previous match (Shift+F3)</value></data>
+  <data name="Search_Close" xml:space="preserve"><value>Close (Esc)</value></data>
+  <data name="Search_NoMatches" xml:space="preserve"><value>No matches.</value></data>
+  <data name="Search_MatchPosition" xml:space="preserve"><value>{0} of {1} matches</value></data>
+  <data name="Search_ReplacedMatches" xml:space="preserve"><value>Replaced {0} matches.</value></data>
   <data name="MenuFile_MakeExecutable" xml:space="preserve"><value>Make executable…</value></data>
   <data name="MakeExe_Title" xml:space="preserve"><value>Make {0} executable</value></data>
   <data name="MakeExe_Targets" xml:space="preserve"><value>Platforms</value></data>

@@ -44,6 +44,8 @@ public sealed class SearchPanel : UserControl
     private readonly ToggleButton _useRegex;
     private readonly Button _findButton;
     private readonly Button _replaceButton;
+    private readonly Button _cancelButton;
+    private readonly ComboBox _scope;
     private readonly ContentControl _body = new();
     private readonly EmptyState _hint;
     private readonly EmptyState _noResults;
@@ -74,7 +76,21 @@ public sealed class SearchPanel : UserControl
         _replaceButton = new Button { Content = Localizer.Get(StringKeys.SearchReplaceAll) };
         _replaceButton.Click += async (_, _) => await RunReplaceAsync();
 
-        foreach (var button in new[] { _findButton, _replaceButton })
+        // Cancel takes the place of Find while a search runs, so a large solution
+        // can be stopped without waiting for it to finish.
+        _cancelButton = new Button { Content = Localizer.Get(StringKeys.ButtonCancel), IsVisible = false };
+        _cancelButton.Click += (_, _) => _running?.Cancel();
+
+        _scope = new ComboBox
+        {
+            ItemsSource = new[] { Localizer.Get(StringKeys.SearchScopeSolution), Localizer.Get(StringKeys.SearchScopeProject) },
+            SelectedIndex = 0,
+            FontSize = PanelMetrics.FontSize,
+            MinHeight = Spacing.EditorHeight,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+
+        foreach (var button in new[] { _findButton, _replaceButton, _cancelButton })
         {
             button.MinHeight = Spacing.EditorHeight;
             button.MinWidth = 88;
@@ -130,6 +146,48 @@ public sealed class SearchPanel : UserControl
     /// <summary>Directory the search covers, normally the solution folder.</summary>
     public string? SearchRoot { get; set; }
 
+    /// <summary>
+    /// The folder of the project the user is working in. The "Current project"
+    /// scope searches this folder; without one the scope is the solution.
+    /// </summary>
+    public string? ProjectRoot { get; set; }
+
+    /// <summary>
+    /// The editor showing a file, when one is open. A replacement changes an
+    /// open file in its editor, as one undoable edit, and leaves the disk alone
+    /// until the user saves; a closed file is rewritten on disk.
+    /// </summary>
+    public Func<string, AvaloniaEdit.TextEditor?>? EditorFor { get; set; }
+
+    /// <summary>The paths of the files open in the IDE, whether or not they have unsaved edits.</summary>
+    public Func<IEnumerable<string>>? OpenFilePaths { get; set; }
+
+    /// <summary>
+    /// The text of each open file as its editor holds it, keyed by full path.
+    /// Taken on the interface thread because editors can be read only there;
+    /// the search then runs off it, so an unsaved edit is found and replaced.
+    /// </summary>
+    private Dictionary<string, string> UnsavedTexts()
+    {
+        // Windows and macOS file names ignore case, so an editor opened as
+        // "program.vb" must still stand for "Program.vb" found on disk.
+        var texts = new Dictionary<string, string>(
+            OperatingSystem.IsLinux() ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase);
+        if (OpenFilePaths is null || EditorFor is null) return texts;
+
+        foreach (var path in OpenFilePaths())
+            if (EditorFor(path) is { } editor)
+                texts[Path.GetFullPath(path)] = editor.Text;
+
+        return texts;
+    }
+
+    /// <summary>The folder the search covers for the chosen scope.</summary>
+    private string? ScopeRoot() =>
+        _scope.SelectedIndex == 1 && ProjectRoot is { } project && Directory.Exists(project)
+            ? project
+            : SearchRoot;
+
     /// <summary>The font the matched lines are drawn in.</summary>
     internal FontFamily Font => _font;
 
@@ -161,6 +219,8 @@ public sealed class SearchPanel : UserControl
     /// <summary>The controls the tests read the visible text of.</summary>
     internal Button FindButton => _findButton;
     internal Button ReplaceAllButton => _replaceButton;
+    internal Button CancelButton => _cancelButton;
+    internal ComboBox ScopeBox => _scope;
     internal TextBox TermBox => _term;
     internal TextBox ReplacementBox => _replacement;
     internal TextBox ExtensionsBox => _extensions;
@@ -207,10 +267,11 @@ public sealed class SearchPanel : UserControl
 
         Place(inputs, _term, 0, 0);
         Place(inputs, _findButton, 0, 1);
+        Place(inputs, _cancelButton, 0, 1);
         Place(inputs, _replacement, 1, 0);
         Place(inputs, _replaceButton, 1, 1);
 
-        var options = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = Spacing.Tight };
+        var options = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = Spacing.Tight };
         var toggles = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -220,6 +281,8 @@ public sealed class SearchPanel : UserControl
         Grid.SetColumn(_extensions, 1);
         options.Children.Add(toggles);
         options.Children.Add(_extensions);
+        Grid.SetColumn(_scope, 2);
+        options.Children.Add(_scope);
 
         var top = new StackPanel
         {
@@ -365,8 +428,12 @@ public sealed class SearchPanel : UserControl
     {
         if (string.IsNullOrWhiteSpace(text)) return [];
 
+        // "*.vb" is how people write a file type, so the glob's star is dropped:
+        // without that the suffix became ".*.vb" and matched no file at all.
         return text
             .Split([' ', ',', ';'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(e => e.TrimStart('*'))
+            .Where(e => e.Length > 0)
             .Select(e => e.StartsWith('.') ? e : "." + e)
             .ToList();
     }
@@ -374,7 +441,7 @@ public sealed class SearchPanel : UserControl
     private async Task RunSearchAsync()
     {
         var term = _term.Text;
-        var root = SearchRoot;
+        var root = ScopeRoot();
 
         if (string.IsNullOrEmpty(term) || root is null || !Directory.Exists(root))
         {
@@ -382,11 +449,23 @@ public sealed class SearchPanel : UserControl
             return;
         }
 
+        // A pattern that does not parse cannot find anything, and saying why is
+        // more use than an empty list that looks like "no matches".
+        if (_engine.PatternError(term, CurrentOptions()) is { } error)
+        {
+            _rows.Clear();
+            _results.ItemsSource = null;
+            _body.Content = _hint;
+            _summary.Text = Localizer.Get(StringKeys.SearchInvalidPattern, error);
+            return;
+        }
+
         // A search still running is abandoned: its results are for a term the
         // user has already replaced.
         _running?.Cancel();
-        _running = new CancellationTokenSource();
-        var token = _running.Token;
+        var running = _running = new CancellationTokenSource();
+        var token = running.Token;
+        SetRunning(true);
 
         _rows.Clear();
         _results.ItemsSource = null;
@@ -399,7 +478,7 @@ public sealed class SearchPanel : UserControl
         try
         {
             await foreach (var file in _engine
-                               .SearchDirectoryAsync(root, term, options, token)
+                               .SearchFilesAsync(root, term, options, UnsavedTexts(), token)
                                .ConfigureAwait(true))
             {
                 files++;
@@ -417,16 +496,45 @@ public sealed class SearchPanel : UserControl
                 _summary.Text = Localizer.Get(StringKeys.SearchProgress, hits, files);
             }
 
-            _summary.Text = hits == 0
-                ? Localizer.Get(StringKeys.SearchNoResults)
-                : Localizer.Get(StringKeys.SearchResults, hits, files);
-
-            _body.Content = hits == 0 ? _noResults : _results;
+            ShowOutcome(hits, files);
         }
         catch (OperationCanceledException)
         {
-            // Superseded by a newer search.
+            // Stopped by Cancel, or superseded by a newer search. A superseded
+            // search must not describe itself over the one that replaced it.
+            if (ReferenceEquals(_running, running)) ShowStopped(hits, files);
         }
+        finally
+        {
+            if (ReferenceEquals(_running, running)) SetRunning(false);
+        }
+    }
+
+    /// <summary>Says what a stopped search had found, so the summary never claims it is still going.</summary>
+    private void ShowStopped(int hits, int files)
+    {
+        _summary.Text = Localizer.Get(StringKeys.SearchCancelled, hits, files);
+        _body.Content = hits == 0 ? _noResults : _results;
+    }
+
+    /// <summary>Find while idle; Cancel while a search runs.</summary>
+    private void SetRunning(bool running)
+    {
+        _findButton.IsVisible = !running;
+        _cancelButton.IsVisible = running;
+    }
+
+    /// <summary>
+    /// What the panel says about the results so far. Used both when a search
+    /// runs to the end and when it is stopped part way.
+    /// </summary>
+    private void ShowOutcome(int hits, int files)
+    {
+        _summary.Text = hits == 0
+            ? Localizer.Get(StringKeys.SearchNoResults)
+            : Localizer.Get(StringKeys.SearchResults, hits, files);
+
+        _body.Content = hits == 0 ? _noResults : _results;
     }
 
     /// <summary>The file's folder relative to the searched one; null at the root, where there is nothing to add.</summary>
@@ -443,13 +551,37 @@ public sealed class SearchPanel : UserControl
     private async Task RunReplaceAsync()
     {
         var term = _term.Text;
-        var root = SearchRoot;
+        var root = ScopeRoot();
 
         if (string.IsNullOrEmpty(term) || root is null || !Directory.Exists(root)) return;
 
-        var changed = await _engine
-            .ReplaceInDirectoryAsync(root, term, _replacement.Text ?? "", CurrentOptions())
-            .ConfigureAwait(true);
+        var options = CurrentOptions();
+        if (_engine.PatternError(term, options) is { } error)
+        {
+            _summary.Text = Localizer.Get(StringKeys.SearchInvalidPattern, error);
+            return;
+        }
+
+        var replacement = _replacement.Text ?? "";
+        var changed = 0;
+
+        // Each file is changed where it is open, in its editor, and on disk only
+        // when it is not: the editor holds the text the user is working on.
+        await foreach (var file in _engine.SearchFilesAsync(root, term, options, UnsavedTexts()).ConfigureAwait(true))
+        {
+            if (EditorFor?.Invoke(file.FilePath) is { } editor)
+            {
+                var plan = _engine.PlanReplacements(editor.Text, term, replacement, options);
+                if (plan.Count == 0) continue;
+
+                EditorFindBar.ApplyAsOneEdit(editor, plan);
+                changed++;
+                continue;
+            }
+
+            if (await _engine.ReplaceInFileAsync(file.FilePath, term, replacement, options).ConfigureAwait(true))
+                changed++;
+        }
 
         _summary.Text = Localizer.Get(StringKeys.SearchReplaced, changed);
 

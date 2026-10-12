@@ -242,11 +242,12 @@ public sealed class UserJourneyEditorTests : IDisposable
     }
 
     /// <summary>
-    /// Find/Replace (Ctrl+H) opens the Search panel and Replace All rewrites
-    /// every matching file on disk.
+    /// Find in Files (Ctrl+Shift+F) opens the Search panel and Replace All
+    /// rewrites every matching file on disk. Ctrl+H is the editor's own
+    /// replace bar, as in Visual Studio (UserJourneyFindReplaceTests).
     /// </summary>
     [AvaloniaFact]
-    public async Task ControlHOpensSearchAndReplaceAllRewritesTheFiles()
+    public async Task FindInFilesOpensSearchAndReplaceAllRewritesTheFiles()
     {
         var project = WriteProject();
         using var host = new TestWindow(project);
@@ -257,11 +258,11 @@ public sealed class UserJourneyEditorTests : IDisposable
         await vm.OpenFileAsync(ProgramPath);
         await host.SettleAsync(5);
 
-        PressKey(w, Key.H, RawInputModifiers.Control, PhysicalKey.H);
+        PressKey(w, Key.F, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.F);
         await host.SettleAsync(5);
 
         var search = Field<SearchPanel>(w, "_search");
-        Assert.True(search.IsEffectivelyVisible, "Ctrl+H did not open the Search panel.");
+        Assert.True(search.IsEffectivelyVisible, "Ctrl+Shift+F did not open the Search panel.");
         Assert.Equal(Path.GetFullPath(_root), Path.GetFullPath(search.SearchRoot!));
 
         search.TermBox.Text = "Greet";
@@ -275,6 +276,13 @@ public sealed class UserJourneyEditorTests : IDisposable
             "Replace All did not rewrite Helper.vb.");
 
         Assert.Contains("Sub Hi()", File.ReadAllText(HelperPath));
+
+        // Program.vb is open, so it is changed in its editor and reaches the
+        // disk when saved, as any edit does: Replace All never writes over
+        // what an open editor holds.
+        Assert.Contains("Helper.Hi()", vm.ActiveDocument!.Text);
+        Assert.DoesNotContain("Helper.Hi()", File.ReadAllText(ProgramPath));
+        await vm.SaveAllAsync();
         Assert.Contains("Helper.Hi()", File.ReadAllText(ProgramPath));
     }
 
@@ -456,7 +464,7 @@ public sealed class UserJourneyEditorTests : IDisposable
         var editor = TextEditorFor(w, ProgramPath);
         editor.Select(ProgramSource.IndexOf("Helper", StringComparison.Ordinal), "Helper".Length);
 
-        PressKey(w, Key.H, RawInputModifiers.Control, PhysicalKey.H);
+        PressKey(w, Key.F, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.F);
         await host.SettleAsync(5);
         var search = Field<SearchPanel>(w, "_search");
         search.TermBox.Focus();

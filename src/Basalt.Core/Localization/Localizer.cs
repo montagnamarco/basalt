@@ -851,6 +851,17 @@ public static class StringKeys
     public const string MakeExeNuGetHint = "MakeExe_NuGetHint";
     public const string StatusMakeExeBusy = "Status_MakeExeBusy";
     public const string SearchFileMatchesOne = "Search_FileMatchesOne";
+    public const string SearchInvalidPattern = "Search_InvalidPattern";
+    public const string SearchCancelled = "Search_Cancelled";
+    public const string SearchScopeSolution = "Search_ScopeSolution";
+    public const string SearchScopeProject = "Search_ScopeProject";
+    public const string SearchReplaceOne = "Search_ReplaceOne";
+    public const string SearchFindNext = "Search_FindNext";
+    public const string SearchFindPrevious = "Search_FindPrevious";
+    public const string SearchClose = "Search_Close";
+    public const string SearchNoMatches = "Search_NoMatches";
+    public const string SearchMatchPosition = "Search_MatchPosition";
+    public const string SearchReplacedMatches = "Search_ReplacedMatches";
     public const string ToolObjectBrowser = "Tool_ObjectBrowser";
     public const string ObjectBrowserLibraryTip = "ObjectBrowser_LibraryTip";
     public const string ObjectBrowserRefresh = "ObjectBrowser_Refresh";

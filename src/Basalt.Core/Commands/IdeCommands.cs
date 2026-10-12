@@ -165,7 +165,7 @@ public static class IdeCommands
             // menu, so the shortcut the menu names is the one that works.
             new(EditFindInFiles, "Find in Files", CommandCategory.Edit) { DefaultGesture = "Ctrl+Shift+F" },
             new(EditReplace, "Replace", CommandCategory.Edit)
-                { DefaultGesture = code ? "Ctrl+H" : "Ctrl+H" },
+                { DefaultGesture = "Ctrl+H" },
             new(EditFormatDocument, "Format Document", CommandCategory.Edit)
                 { DefaultGesture = code ? "Ctrl+Shift+I" : "Ctrl+K, Ctrl+D" },
             new(EditFormatSelection, "Format Selection", CommandCategory.Edit),

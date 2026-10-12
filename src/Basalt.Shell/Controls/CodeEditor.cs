@@ -116,7 +116,7 @@ public sealed partial class CodeEditor : UserControl
         _editor.TextArea.AddHandler(TextInputEvent, OnTextInputForBrackets, RoutingStrategies.Tunnel);
 
         InstallSmartTags();
-        Content = CreateNavigationLayout();
+        Content = EditorFindBar.Wrap(_editor, CreateNavigationLayout());
 
         // Roslyn's first formatting call costs a few hundred milliseconds while
         // it builds its caches. Paying that here keeps the first Enter as quick
