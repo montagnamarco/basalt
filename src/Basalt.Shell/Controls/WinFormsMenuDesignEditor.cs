@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Basalt.Core.Localization;
 using Basalt.Workspace;
 
@@ -109,6 +110,7 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
                     _openParent = item.Name;
                 }
                 Rebuild();
+                FocusSelectedItemButton();
             };
             bar.Children.Add(button);
         }
@@ -159,6 +161,7 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
             var parent = WinFormsMenuTreeHelpers.Back(_items, _openParent, _strip);
             _openParent = parent.Equals(_strip, StringComparison.OrdinalIgnoreCase) ? null : parent;
             Rebuild();
+            FocusSelectedItemButton();
         };
         header.Children.Add(back);
         header.Children.Add(new TextBlock
@@ -180,6 +183,7 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
             {
                 SetSelectedItem(item.Name);
                 Rebuild();
+                FocusSelectedItemButton();
             };
             row.Children.Add(button);
 
@@ -197,6 +201,7 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
                     SetSelectedItem(item.Name);
                     _openParent = item.Name;
                     Rebuild();
+                    FocusSelectedItemButton();
                 };
                 row.Children.Add(open);
             }
@@ -289,6 +294,22 @@ internal sealed class WinFormsMenuDesignEditor : Canvas
         }
         _selectedItemName = name;
         SelectedItemChanged?.Invoke(name);
+    }
+
+    /// <summary>Gives keyboard focus back to the rebuilt button of the selected item. A click
+    /// rebuilds the menu editor, which replaces the very button the press had focused: Avalonia drops
+    /// focus with that button, so Delete (see <see cref="OnKeyDown"/>) reached no editor after a plain
+    /// click. Searches the whole editor because a selected sub-item is a button in the drop-down.
+    /// Called only from the item's own click, never from Show(), so a "Type Here" box that is being
+    /// typed in keeps its focus through a rebuild.</summary>
+    private void FocusSelectedItemButton()
+    {
+        if (_selectedItemName is null) return;
+        var name = "MenuInlineItem_" + _selectedItemName;
+        // The drop-down's rows sit inside a ScrollViewer, whose content joins the visual tree only once
+        // its template is applied: without this layout pass a sub-item's button is not found yet.
+        this.UpdateLayout();
+        this.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == name)?.Focus();
     }
 
 }

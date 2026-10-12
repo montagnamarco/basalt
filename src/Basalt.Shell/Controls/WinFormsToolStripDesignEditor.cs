@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Basalt.Core.Localization;
 using Basalt.Workspace;
 
@@ -147,6 +148,18 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
         SelectedItemChanged?.Invoke(name);
     }
 
+    /// <summary>Gives keyboard focus back to the rebuilt button of the selected item. A click
+    /// rebuilds the bar, which replaces the very button the press had focused: Avalonia drops focus
+    /// with that button, so Delete (see <see cref="OnKeyDown"/>) reached no editor after a plain click.
+    /// Called only from the item's own click, never from Show(), so a "Type Here" box that is being
+    /// typed in keeps its focus through a rebuild.</summary>
+    private void FocusSelectedItemButton()
+    {
+        if (_selectedItemName is null) return;
+        var name = "ToolStripInlineItem_" + _selectedItemName;
+        this.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == name)?.Focus();
+    }
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
@@ -184,6 +197,7 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
             {
                 SetSelectedItem(item.Name);
                 Rebuild();
+                FocusSelectedItemButton();
             };
             var delete = new MenuItem { Name = "ToolStripInlineDelete_" + item.Name, Header = Localizer.Get(StringKeys.DesignerDelete) };
             delete.Click += (_, _) =>
@@ -209,6 +223,7 @@ internal sealed class WinFormsToolStripDesignEditor : Canvas
             {
                 _typePickerOpen = !_typePickerOpen;
                 Rebuild();
+                FocusSelectedItemButton();
             };
             bar.Children.Add(arrow);
         }

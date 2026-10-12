@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Basalt.Core.Localization;
 using Basalt.Workspace;
 
@@ -92,6 +93,19 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
         SelectedItemChanged?.Invoke(name);
     }
 
+    /// <summary>Gives keyboard focus back to the rebuilt button of the selected item. A click here
+    /// rebuilds the rows, which replaces the button the press had focused; Avalonia drops focus with
+    /// that button, so Delete (see <see cref="OnKeyDown"/>) reached nothing after a plain click. The
+    /// rows sit in a ScrollViewer whose content joins the visual tree only once its template is
+    /// applied, hence the layout pass. Called only from the panel's own clicks, never from Show().</summary>
+    private void FocusSelectedItemButton()
+    {
+        if (_selectedItemName is null) return;
+        UpdateLayout();
+        var name = "ToolStripDropDownItem_" + _selectedItemName;
+        this.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == name)?.Focus();
+    }
+
     private IEnumerable<WinFormsMenuItem> ChildrenOf(string parent) =>
         _items.Where(item => item.Parent.Equals(parent, StringComparison.OrdinalIgnoreCase));
 
@@ -122,6 +136,7 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
             {
                 _openParent = WinFormsMenuTreeHelpers.Back(_items, _openParent, _owner);
                 Rebuild();
+                FocusSelectedItemButton();
             };
             header.Children.Add(back);
             header.Children.Add(new TextBlock
@@ -150,6 +165,7 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
             {
                 SetSelectedItem(item.Name);
                 Rebuild();
+                FocusSelectedItemButton();
             };
             var delete = new MenuItem { Name = "ToolStripDropDownDelete_" + item.Name, Header = Localizer.Get(StringKeys.DesignerDelete) };
             delete.Click += (_, _) => RequestDelete(item);
@@ -165,6 +181,7 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
                     SetSelectedItem(item.Name);
                     _openParent = item.Name;
                     Rebuild();
+                    FocusSelectedItemButton();
                 };
                 row.Children.Add(open);
             }
@@ -204,6 +221,7 @@ internal sealed class WinFormsToolStripDropDownPanel : Canvas
         {
             _typePickerOpen = !_typePickerOpen;
             Rebuild();
+            FocusSelectedItemButton();
         };
         row.Children.Add(arrow);
         stack.Children.Add(row);
