@@ -37,7 +37,23 @@ public sealed class NetCoreDebugService : IDebugSessionService
     internal NetCoreDebugService(Func<IDapConnection> connect) => _connect = connect;
 
     /// <summary>Whether a debugging session is under way.</summary>
-    public bool IsRunning => _client is { IsRunning: true };
+    public bool IsRunning => _client is { IsRunning: true } && Volatile.Read(ref _debuggeeExited) == 0;
+
+    /// <summary>
+    /// Whether the program being debugged has ended.
+    /// </summary>
+    /// <remarks>
+    /// netcoredbg outlives the program: after "exited" the adapter process is
+    /// still there, so a session judged by the adapter alone stayed "running"
+    /// for good, the banner said so, and F5 did nothing until Stop. Written on
+    /// the adapter's reading thread, read on the interface thread. An int, so
+    /// the "exited" event and the adapter's own exit, which can race on a
+    /// Stop, report the ending only once (MarkExited).
+    /// </remarks>
+    private int _debuggeeExited;
+
+    /// <summary>Records that the program ended; true only for the first caller.</summary>
+    private bool MarkExited() => Interlocked.Exchange(ref _debuggeeExited, 1) == 0;
 
     /// <summary>Whether the program is stopped at a breakpoint or a step.</summary>
     public bool IsPaused { get; private set; }
@@ -127,13 +143,17 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         _hits.Clear();
 
+        Volatile.Write(ref _debuggeeExited, 0);
         _client = _connect();
         _client.EventReceived += OnEvent;
         _client.Exited += (_, code) =>
         {
             Interlocked.Increment(ref _stopGeneration);
             IsPaused = false;
-            Exited?.Invoke(this, code);
+
+            // The program's own "exited" already said it ended; the adapter
+            // closing afterwards is not a second ending to report.
+            if (MarkExited()) Exited?.Invoke(this, code);
         };
 
         // netcoredbg raises "initialized" while it is still answering
@@ -456,7 +476,10 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 v["name"]?.GetValue<string>() ?? "",
                 v["value"]?.GetValue<string>() ?? "",
                 v["type"]?.GetValue<string>() ?? "",
-                (v["variablesReference"]?.GetValue<int>() ?? 0) != 0))
+                (v["variablesReference"]?.GetValue<int>() ?? 0) != 0)
+            {
+                Reference = v["variablesReference"]?.GetValue<int>() ?? 0
+            })
             .ToList();
     }
 
@@ -661,7 +684,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
             case "exited":
                 Interlocked.Increment(ref _stopGeneration);
                 IsPaused = false;
-                Exited?.Invoke(this, dapEvent.Body?["exitCode"]?.GetValue<int>() ?? 0);
+                if (MarkExited()) Exited?.Invoke(this, dapEvent.Body?["exitCode"]?.GetValue<int>() ?? 0);
                 break;
 
             case "output":

@@ -15,7 +15,14 @@ public sealed record Breakpoint(
     int? HitCount = null);
 
 public sealed record StackFrame(string Method, string? FilePath, int Line);
-public sealed record VariableValue(string Name, string Value, string Type, bool HasChildren);
+public sealed record VariableValue(string Name, string Value, string Type, bool HasChildren)
+{
+    /// <summary>
+    /// The debugger's handle for the children, zero when there are none. It is
+    /// only valid while the program stays paused where it was read.
+    /// </summary>
+    public int Reference { get; init; }
+}
 
 /// <summary>
 /// Managed debugging. The intended implementation uses netcoredbg through the

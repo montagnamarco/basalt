@@ -87,7 +87,8 @@ public sealed class CallStackPanel : UserControl
 public sealed class VariableNode
 {
     private readonly Func<VariableNode, Task<IReadOnlyList<VariableNode>>>? _expand;
-    private List<VariableNode>? _children;
+    private bool _loaded;
+    private readonly List<VariableNode> _children = [];
 
     public VariableNode(
         VariableValue value,
@@ -97,7 +98,13 @@ public sealed class VariableNode
         Value = value;
         Reference = reference;
         _expand = expand;
+
+        // A tree shows an expander only for an item that has children, and
+        // these are fetched when it opens: a placeholder stands in until then.
+        if (value.HasChildren && expand is not null) Shown.Add(Placeholder);
     }
+
+    private static readonly VariableNode Placeholder = new(new VariableValue("…", "", "", false));
 
     public VariableValue Value { get; }
 
@@ -114,17 +121,27 @@ public sealed class VariableNode
     /// An object's fields are not fetched until it is opened: a deep object
     /// graph would otherwise mean fetching the whole heap to show one frame.
     /// </summary>
-    public IReadOnlyList<VariableNode> Children => _children ?? [];
+    public IReadOnlyList<VariableNode> Children => _children;
+
+    /// <summary>What the tree shows under this node: the children, or a placeholder until they are fetched.</summary>
+    internal System.Collections.ObjectModel.ObservableCollection<VariableNode> Shown { get; } = [];
 
     public bool HasChildren => Value.HasChildren;
 
     public async Task<IReadOnlyList<VariableNode>> LoadChildrenAsync()
     {
-        if (_children is not null) return _children;
-        if (_expand is null) return [];
+        if (_loaded || _expand is null) return Children;
 
-        _children = [.. await _expand(this).ConfigureAwait(true)];
-        return _children;
+        // Marked loaded only once the children arrived: a fetch that failed
+        // leaves the placeholder, and opening the node again retries it.
+        var children = await _expand(this).ConfigureAwait(true);
+        if (_loaded) return Children;
+        _loaded = true;
+
+        _children.AddRange(children);
+        Shown.Clear();
+        foreach (var child in _children) Shown.Add(child);
+        return Children;
     }
 }
 
@@ -148,8 +165,16 @@ public sealed class VariablesPanel : UserControl
                     FontFamily = new FontFamily("Menlo,Consolas,DejaVu Sans Mono,monospace"),
                     FontSize = PanelMetrics.FontSize
                 },
-                node => node?.Children ?? [])
+                node => node?.Shown ?? [])
         };
+
+        // Opening a variable is what fetches its fields or elements. Nothing
+        // asked for them before, so an array or an object never opened.
+        _tree.AddHandler(TreeViewItem.ExpandedEvent, (_, e) =>
+        {
+            if (e.Source is TreeViewItem { DataContext: VariableNode node })
+                Guarded.Run(() => node.LoadChildrenAsync(), _ => { }, "debug");
+        });
 
         Content = _empty;
     }

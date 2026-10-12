@@ -1119,9 +1119,11 @@ public partial class MainWindow : Window
     /// to show one frame.
     /// </summary>
     private VariableNode ToNode(VariableValue value) =>
-        new(value, 0, async _ =>
+        new(value, value.Reference, async node =>
         {
-            var children = await _debug.ExpandAsync(0).ConfigureAwait(true);
+            // The node's own handle: asking for reference 0 returned nothing,
+            // so no array or object ever opened.
+            var children = await _debug.ExpandAsync(node.Reference).ConfigureAwait(true);
             return (IReadOnlyList<VariableNode>)[.. children.Select(ToNode)];
         });
 
