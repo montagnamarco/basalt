@@ -91,7 +91,9 @@ public sealed class UnixPtyConnection : IPtyConnection
         _ = Task.Run(PumpOutputAsync);
     }
 
-    public bool IsRunning => !_process.HasExited;
+    // A disposed connection has released its process: asking it for HasExited
+    // throws, so a closed terminal reports itself as not running instead.
+    public bool IsRunning => !_disposed && !_process.HasExited;
 
     public event EventHandler<string>? OutputReceived;
     public event EventHandler<int>? Exited;

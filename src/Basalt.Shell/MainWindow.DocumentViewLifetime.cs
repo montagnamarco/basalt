@@ -16,6 +16,15 @@ public partial class MainWindow
         };
         _factory.DockableClosed += (_, args) =>
         {
+            // A closed terminal tab takes its shell with it. Its view used to
+            // stay in _contents, alive and attached to a shell nobody could
+            // see or reach again, until the window closed.
+            if (args.Dockable is TerminalTool terminal)
+            {
+                if (_contents.Remove(terminal, out var view)) (view as IDisposable)?.Dispose();
+                return;
+            }
+
             if (args.Dockable is not IdeDocument dockable || !ViewModel.OpenDocuments.Contains(dockable.Document))
             {
                 return;

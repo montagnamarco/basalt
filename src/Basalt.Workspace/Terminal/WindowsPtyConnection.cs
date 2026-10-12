@@ -76,7 +76,9 @@ public sealed class WindowsPtyConnection : IPtyConnection
         _ = Task.Run(PumpOutputAsync);
     }
 
-    public bool IsRunning => !_process.HasExited;
+    // A disposed connection has released its process: asking it for HasExited
+    // throws, so a closed terminal reports itself as not running instead.
+    public bool IsRunning => !_disposed && !_process.HasExited;
 
     /// <summary>
     /// The id CreateProcessW assigned the shell, captured independently of

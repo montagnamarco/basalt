@@ -534,7 +534,7 @@ public partial class MainWindow : Window
         {
             content = dockable switch
             {
-                TerminalTool terminal => NewTerminal(terminal.WorkingDirectory),
+                TerminalTool terminal => NewTerminal(terminal),
                 IdeDocument ideDocument => CreateDocumentView(ideDocument.Document),
                 _ => null
             };
@@ -2761,13 +2761,17 @@ public partial class MainWindow : Window
     /// The shell is chosen here rather than afterwards: changing it on a
     /// running session would mean killing the shell the user is working in.
     /// </summary>
-    private TerminalView NewTerminal(string workingDirectory)
+    private TerminalView NewTerminal(TerminalTool tool)
     {
         var settings = _settingsStore.Load();
 
-        var terminal = new TerminalView(workingDirectory, settings.Terminal.Shell);
+        var terminal = new TerminalView(tool.WorkingDirectory, settings.Terminal.Shell);
 
         terminal.ApplySettings(settings);
+
+        // Close Terminal in its own menu ends the shell and asks for the tab
+        // to go; closing the tab is what then releases the view.
+        terminal.CloseRequested += (_, _) => _factory.CloseDockable(tool);
 
         return terminal;
     }

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -97,35 +98,85 @@ public sealed class TerminalView : UserControl, IDisposable
     public string Title => Path.GetFileName(
         WorkingDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 
-    /// <summary>What the terminal's menu can ask for.</summary>
-    public enum TerminalCommand { Copy, Paste, Clear, Close }
-
-    /// <summary>Raised when the user picks something from the menu.</summary>
-    public event EventHandler<TerminalCommand>? CommandChosen;
+    /// <summary>
+    /// Raised after Close Terminal has ended this terminal's shell.
+    ///
+    /// The view cannot remove its own tool: only the window's dock factory can,
+    /// as the title bar's close does. The host (MainWindow) must subscribe and
+    /// call <c>IFactory.CloseDockable</c> on the <c>TerminalTool</c> whose
+    /// content is this view. The sender is the terminal.
+    /// </summary>
+    public event EventHandler? CloseRequested;
 
     internal ContextMenu? Menu => _display.ContextMenu;
 
     /// <summary>
     /// Builds the menu.
     ///
-    /// Copying needs a selection; the rest always apply, since a terminal can
-    /// always be cleared or closed.
+    /// Each entry does its work here, in the view that owns the text and the
+    /// shell. Copying needs a selection; the rest always apply, since a
+    /// terminal can always be cleared or closed.
     /// </summary>
     private void BuildContextMenu()
     {
-        void Choose(TerminalCommand command) => CommandChosen?.Invoke(this, command);
-
         _display.ContextMenu = ContextMenus.Build(
         [
-            new(Localizer.Get(StringKeys.TerminalCopy), () => Choose(TerminalCommand.Copy))
+            new(Localizer.Get(StringKeys.TerminalCopy), () => Guarded.Run(CopySelectionAsync, ReportFailure, "terminal copy"))
                 { IsAvailable = () => _display.SelectionEnd > _display.SelectionStart },
-            new(Localizer.Get(StringKeys.TerminalPaste), () => Choose(TerminalCommand.Paste)),
+            new(Localizer.Get(StringKeys.TerminalPaste), () => Guarded.Run(PasteAsync, ReportFailure, "terminal paste")),
             MenuAction.Separator,
-            new(Localizer.Get(StringKeys.TerminalClear), () => Choose(TerminalCommand.Clear)),
+            new(Localizer.Get(StringKeys.TerminalClear), Clear),
             MenuAction.Separator,
-            new(Localizer.Get(StringKeys.TerminalCloseTerminal), () => Choose(TerminalCommand.Close))
+            new(Localizer.Get(StringKeys.TerminalCloseTerminal), RequestClose)
         ]);
     }
+
+    /// <summary>
+    /// Puts the selected text on the clipboard. Only what the person selected
+    /// is copied, not the whole screen.
+    /// </summary>
+    private async Task CopySelectionAsync()
+    {
+        var selected = _display.SelectedText;
+        if (string.IsNullOrEmpty(selected) || TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard) return;
+
+        var transfer = new DataTransfer();
+        transfer.Add(DataTransferItem.CreateText(selected));
+
+        await clipboard.SetDataAsync(transfer);
+    }
+
+    /// <summary>
+    /// Types the clipboard's text into the shell, as if the person had typed it.
+    /// </summary>
+    private async Task PasteAsync()
+    {
+        if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard) return;
+
+        var text = await clipboard.TryGetTextAsync();
+
+        // The clipboard answers asynchronously, and the terminal may have been
+        // closed while it did.
+        if (_disposed || string.IsNullOrEmpty(text)) return;
+
+        // A line break in pasted text is what the Enter key sends: a carriage return.
+        _pty.Write(text.ReplaceLineEndings("\r"));
+    }
+
+    /// <summary>
+    /// Ends the shell, then asks the host to remove the terminal.
+    ///
+    /// The shell is ended here rather than by the host, so the process is gone
+    /// even if the host does not remove the tool.
+    /// </summary>
+    private void RequestClose()
+    {
+        Dispose();
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Said in the panel, where the person is looking, when a menu action fails.</summary>
+    private void ReportFailure(string message) => _screen.Append($"\n{message}\n");
 
     public bool IsRunning => _pty.IsRunning;
 
@@ -253,5 +304,8 @@ public sealed class TerminalView : UserControl, IDisposable
     public void ApplySettings(Basalt.Core.Settings.IdeSettings settings)
     {
         _display.FontSize = settings.Terminal.FontSize;
+
+        // Takes effect on the lines already shown: shrinking drops the oldest.
+        _screen.Scrollback = settings.Terminal.ScrollbackLines;
     }
 }

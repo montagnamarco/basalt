@@ -18,8 +18,33 @@ public sealed class AnsiScreen
     private int _row;
     private int _column;
 
-    /// <summary>Maximum lines kept; older ones scroll away.</summary>
-    public int Scrollback { get; init; } = 5000;
+    private int _scrollback = 5000;
+
+    /// <summary>
+    /// Maximum lines kept; older ones scroll away.
+    ///
+    /// Can change while output is arriving. Shrinking drops the oldest lines at
+    /// once; growing keeps every line from then on, since lines already dropped
+    /// are gone for good.
+    /// </summary>
+    public int Scrollback
+    {
+        get => _scrollback;
+        set
+        {
+            // A setting read from a hand-edited file may be zero or negative; a
+            // buffer must keep at least the line being written.
+            bool trimmed;
+            lock (_lines)
+            {
+                _scrollback = Math.Max(1, value);
+                trimmed = TrimToScrollback() > 0;
+            }
+
+            // Only a change to the lines shown needs the panel redrawn.
+            if (trimmed) Changed?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
     public event EventHandler? Changed;
 
@@ -115,12 +140,24 @@ public sealed class AnsiScreen
 
         if (_row >= _lines.Count) _lines.Add(new StringBuilder());
 
-        // Drop the oldest lines once the buffer is full.
-        while (_lines.Count > Scrollback)
-        {
-            _lines.RemoveAt(0);
-            _row--;
-        }
+        TrimToScrollback();
+    }
+
+    /// <summary>
+    /// Drops the oldest lines beyond <see cref="Scrollback"/> and returns how
+    /// many went. Called with the lock held.
+    /// </summary>
+    private int TrimToScrollback()
+    {
+        var excess = _lines.Count - _scrollback;
+        if (excess <= 0) return 0;
+
+        _lines.RemoveRange(0, excess);
+
+        // The cursor is always on the last line, so it moves up with the
+        // lines it sits on and stays on the last one.
+        _row -= excess;
+        return excess;
     }
 
     /// <summary>
