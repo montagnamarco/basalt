@@ -515,20 +515,20 @@ public sealed class WinFormsUserControlDesignTests
             "ComputerControl1 was not placed as the project's control.");
     }
 
-    /// <summary>A project component is not listed: the designer cannot place one yet, so listing it would offer what it refuses.</summary>
+    /// <summary>A project component is listed beside the controls, so the designer offers it and places it in the tray.</summary>
     /// <remarks>
-    /// Red-proof: with the toolbox described from System.ComponentModel.Component instead of Control, ProjectComponent
-    /// is listed and Assert.DoesNotContain fails.
+    /// Red-proof: with the toolbox described from Forms.Control only (no components in ListedControls), ProjectComponent is
+    /// not listed and Assert.Contains fails.
     /// </remarks>
     [AvaloniaFact]
-    public async Task AProjectComponentIsNotListedInTheToolbox()
+    public async Task AProjectComponentIsListedInTheToolbox()
     {
         RequireUnix();
         using var journey = await OpenAsync(buildFirst: true);
 
         var items = ToolboxItems(journey);
         Assert.Contains(items, item => item.DisplayName == "GaugeControl");
-        Assert.DoesNotContain(items, item => item.DisplayName == "ProjectComponent");
+        Assert.Equal("App Components", Assert.Single(items, item => item.DisplayName == "ProjectComponent").Category);
     }
 
     /// <summary>
@@ -996,7 +996,8 @@ public sealed class WinFormsUserControlDesignTests
             // Opening goes through MSBuild, which on a loaded machine has been seen to take
             // longer than the 30 seconds every other step gets.
             await WaitUntilAsync(() => vm.StartupProject == project.ProjectPath && !vm.IsBusy,
-                "The project did not open in the window.", seconds: 120);
+                () => $"The project did not open in the window (startup '{vm.StartupProject}', busy {vm.IsBusy}, " +
+                      $"status '{vm.StatusMessage}', expected '{project.ProjectPath}').", seconds: 120);
 
             // Built before the designer opens for one journey, after it for the other: the designer
             // takes the output of a build it did not see as well as one it did.
@@ -1076,6 +1077,18 @@ public sealed class WinFormsUserControlDesignTests
     {
         var control = PlacedControl(journey, name);
         return control is null ? null : (int?)control.GetType().GetProperty("Value")!.GetValue(control);
+    }
+
+    /// <summary>Waits as below, describing the state reached when the wait fails.</summary>
+    private static async Task WaitUntilAsync(Func<bool> condition, Func<string> describe, int seconds = 30)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(seconds);
+        while (!condition() && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(10);
+        }
+        Assert.True(condition(), "The designer did not reach the expected state in time: " + describe());
     }
 
     private static async Task WaitUntilAsync(Func<bool> condition, string? what = null, int seconds = 30)

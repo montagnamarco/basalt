@@ -30,11 +30,24 @@ internal static class WinFormsDesignerTabOrder
         }
     }
 
+    /// <summary>
+    /// Whether a control is a container's own panel: a SplitContainer's Panel1 or Panel2, or a ToolStripContainer's panels. A panel
+    /// has no tab order and no badge of its own, so the container's badge is the one a click on that corner finds.
+    /// </summary>
+    internal static bool IsPanelOfContainer(FormsControl control) => control.Parent switch
+    {
+        System.Windows.Forms.SplitContainer split => ReferenceEquals(control, split.Panel1) || ReferenceEquals(control, split.Panel2),
+        System.Windows.Forms.ToolStripContainer container => ReferenceEquals(control, container.ContentPanel)
+            || ReferenceEquals(control, container.TopToolStripPanel) || ReferenceEquals(control, container.BottomToolStripPanel)
+            || ReferenceEquals(control, container.LeftToolStripPanel) || ReferenceEquals(control, container.RightToolStripPanel),
+        _ => false,
+    };
+
     internal static FormsControl? HitBadge(FormsControl root, Point at, Func<FormsControl, Rect> boundsOnHost)
     {
         foreach (var control in Descendants(root).Reverse())
         {
-            if (!control.DesiredVisibility) continue;
+            if (!control.DesiredVisibility || IsPanelOfContainer(control)) continue;
             var box = boundsOnHost(control);
             if (new Rect(box.X + 2, box.Y + 2, BadgeWidth, BadgeHeight).Contains(at)) return control;
         }

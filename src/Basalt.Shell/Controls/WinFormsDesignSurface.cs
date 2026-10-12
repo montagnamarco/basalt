@@ -311,8 +311,8 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         var at = e.GetPosition(_host);
         if (_tabOrderMode)
         {
-            var target = WinFormsDesignerTabOrder.HitBadge(_rootForm, at, BoundsOnHost) ?? HitTest(at);
-            if (target is not null && !ReferenceEquals(target, _rootForm)) AssignTabIndex(target);
+            var target = TabOrderTarget(WinFormsDesignerTabOrder.HitBadge(_rootForm, at, BoundsOnHost) ?? HitTest(at), _rootForm);
+            if (target is not null) AssignTabIndex(target);
             e.Handled = true;
             return;
         }
@@ -320,7 +320,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         var handle = primary is not null
             ? HandleAt(BoundsOnHost(primary), at)
             : null;
-        var hit = handle is null ? HitTest(at) : primary;
+        var hit = handle is null ? SelectableOf(HitTest(at)) : primary;
 
         if (handle is not null && _selection.Count > 1)
             Select(primary);
@@ -623,6 +623,22 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         return drop with { Location = WinFormsDesignerSnap.SnapPoint(drop.Location, GridSize) };
     }
 
+    /// <summary>
+    /// The control a press on it selects. A container's panel is not a control of the designer's own, so a press on it selects
+    /// its container: the property grid shows the container, and the panel's empty area is not an error.
+    /// </summary>
+    private static FormsControl? SelectableOf(FormsControl? hit) => hit is not null && IsPanelOfContainer(hit) ? hit.Parent : hit;
+
+    /// <summary>
+    /// The control a tab-order click assigns a tab index to, or null when the click is refused: the form, nothing, and a container's
+    /// panel, which has no tab order of its own. The refusal is decided before any TabIndex is read or changed.
+    /// </summary>
+    internal static FormsControl? TabOrderTarget(FormsControl? target, FormsControl root) =>
+        target is null || ReferenceEquals(target, root) || IsPanelOfContainer(target) ? null : target;
+
+    /// <summary>A panel of a Forms container: a SplitContainer's Panel1 or Panel2, or a ToolStripContainer's panels.</summary>
+    private static bool IsPanelOfContainer(FormsControl control) => WinFormsDesignerTabOrder.IsPanelOfContainer(control);
+
     private void AssignTabIndex(FormsControl control)
     {
         var parent = control.Parent!;
@@ -732,7 +748,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         {
             if (_rootForm is null) return;
             foreach (var control in WinFormsDesignerTabOrder.Descendants(_rootForm))
-                if (control.DesiredVisibility)
+                if (control.DesiredVisibility && !WinFormsDesignerTabOrder.IsPanelOfContainer(control))
                     _adorners.Children.Add(WinFormsDesignerTabOrder.CreateBadge(
                         control.TabIndex, BoundsOnHost(control)));
             return;

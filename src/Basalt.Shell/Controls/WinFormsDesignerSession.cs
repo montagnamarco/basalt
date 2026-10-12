@@ -52,10 +52,40 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         _resources = resources;
         _projectPath = projectPath;
         _designContext = designContext;
-        BuildPreview();
+        try
+        {
+            BuildPreview();
+        }
+        catch
+        {
+            // A failed build leaves what it made, and nothing shows it. It is released as a failed rebuild releases its own, from
+            // an empty snapshot: the shown preview before the build was nothing.
+            ReleasePartialPreview(new PreviewSnapshot(null!, new(StringComparer.OrdinalIgnoreCase),
+                new(StringComparer.OrdinalIgnoreCase), [], [], [], [], [], [], []));
+            throw;
+        }
     }
 
-    public string NameOf(Forms.Control control) => _controls.First(pair => ReferenceEquals(pair.Value, control)).Key;
+    /// <summary>
+    /// The designer's name of a control: its name, or for a container's panel (SplitContainer1.Panel1) the owner and the panel as
+    /// the designer's code names it. Any other control that is not named throws.
+    /// </summary>
+    public string NameOf(Forms.Control control)
+    {
+        var match = _controls.FirstOrDefault(pair => ReferenceEquals(pair.Value, control));
+        if (match.Key is not null) return match.Key;
+        return PanelKeyOf(control) ?? _controls.First(pair => ReferenceEquals(pair.Value, control)).Key;
+    }
+
+    /// <summary>The owner and panel name of a container's panel that is shown, found through the typed panels only.</summary>
+    private string? PanelKeyOf(Forms.Control control)
+    {
+        foreach (var (owner, ownerControl) in _controls)
+            foreach (var panel in PanelNames)
+                if (ReferenceEquals(HolderOf(ownerControl, panel), control) && !ReferenceEquals(ownerControl, control))
+                    return owner + "." + panel;
+        return null;
+    }
     public Forms.Control? FindControl(string name) => _controls.GetValueOrDefault(name);
     public bool IsExplicit(Forms.Control control, string property) => Model(control).Properties.ContainsKey(property);
     public string? ExplicitValue(Forms.Control control, string property) => IsExplicit(control, property)
@@ -291,7 +321,7 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         {
             if (!_controls.TryGetValue(model.Name, out var control)) continue;
             ApplyProperties(model, control, problems);
-            if (_controls.TryGetValue(model.ParentName, out var parent)) parent.Controls.Add(control);
+            if (_controls.TryGetValue(model.ParentName, out var parent)) AddToPlacement(parent, model, control, problems);
             else problems.Add(model.Name + ": " + model.ParentName);
         }
         ApplyZOrderPreview();

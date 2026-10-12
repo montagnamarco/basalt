@@ -70,11 +70,17 @@ internal sealed partial class WinFormsDesignerSession
     {
         if (!AcceptsComponent(type))
             throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsDesignerNotDesignable));
+        // A constructor with neither a parameterless form nor an IContainer parameter would not compile when written.
+        if (!IsSupportedComponentType(type) && type.GetConstructor(Type.EmptyTypes) is null
+            && !WinFormsDesignTypes.HasContainerConstructor(type))
+            throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsDesignerNotDesignable));
         var number = 1;
         var name = type.Name + number;
         var used = Document.DeclaredNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
         while (used.Contains(name)) name = type.Name + ++number;
-        return ApplyAsync(document => document.AddComponent(name, "Global." + type.FullName));
+        // A constructor that takes the container gets the form's components container, declared first when the form has none.
+        return ApplyAsync(document => document.AddComponent(name, "Global." + type.FullName,
+            WinFormsDesignTypes.HasContainerConstructor(type)));
     }
 
     public Task DeleteComponentAsync(IComponent component, Action? commitCompanion = null,
@@ -101,7 +107,9 @@ internal sealed partial class WinFormsDesignerSession
 
             try
             {
-                var instance = (IComponent)Activator.CreateInstance(type)!;
+                // The constructor is called as the generated code calls it: with the form's components container when it takes one.
+                object[] arguments = model.PassesContainer ? [new Container()] : [];
+                var instance = (IComponent)Activator.CreateInstance(type, arguments)!;
                 if (instance is Forms.Control control) control.Name = model.Name;
                 _components[model.Name] = instance;
                 foreach (var (property, syntax) in model.PropertySyntax)

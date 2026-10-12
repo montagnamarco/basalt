@@ -126,7 +126,7 @@ internal sealed partial class WinFormsDesignerSession
         _userCodeFailures.AddRange(shown.UserCodeFailures);
         PreviewProblems = shown.Problems;
 
-        if (!ReferenceEquals(partialForm, shown.Form)) partialForm.Dispose();
+        if (partialForm is not null && !ReferenceEquals(partialForm, shown.Form)) partialForm.Dispose();
         foreach (var control in partialControls.Where(control => !shown.Controls.ContainsValue(control))) control.Dispose();
         DisposeComponentPreviews(partialComponents.Where(component => !shown.Components.ContainsValue(component)));
         foreach (var font in partialFonts.Where(font => !shown.Fonts.Contains(font))) font.Dispose();

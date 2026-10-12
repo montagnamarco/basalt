@@ -435,4 +435,145 @@ public sealed class WinFormsDesignSurfaceTests
         Assert.True(pixels[pixel] > pixels[pixel + 2] + 100,
             "the Forms panel should paint red at its actual form position");
     }
+
+    /// <summary>
+    /// A press on the empty area of a SplitContainer's panel selects the container, so the property grid can show it, and nothing throws.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof (the press selecting the hit control itself, as before): SelectedControl is the SplitterPanel and the Assert.Same fails.
+    /// </remarks>
+    [AvaloniaFact]
+    public void APressOnAContainersPanelSelectsTheContainer()
+    {
+        var (window, surface, form, _) = Open();
+        var container = new Forms.SplitContainer { Bounds = new Drawing.Rectangle(10, 10, 160, 120) };
+        form.Controls.Add(container);
+        surface.RefreshForm();
+
+        var at = OnForm(10 + 4, 10 + 4);
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(container, surface.SelectedControl);
+    }
+
+    /// <summary>A tab-order click on a container's panel is refused before any TabIndex changes: no tab edit is raised.</summary>
+    /// <remarks>
+    /// Red-proof (the panel guard in the tab-order click removed): the click assigns the panel a TabIndex in its container, and the
+    /// Assert.Equal on the edit count fails.
+    /// </remarks>
+    [AvaloniaFact]
+    public void ATabOrderClickOnAContainersCornerNeverGivesItsPanelATabIndex()
+    {
+        var (window, surface, form, _) = Open();
+        var container = new Forms.SplitContainer { Bounds = new Drawing.Rectangle(10, 10, 160, 120) };
+        form.Controls.Add(container);
+        surface.RefreshForm();
+        // Panel1 is not first in the order, so an assignment to it would change the order of the container's children.
+        container.Panel1.TabIndex = 1;
+        container.Panel2.TabIndex = 0;
+        container.Panel1.TabStop = true;
+        container.Panel2.TabStop = true;
+        var panelIndex = container.Panel1.TabIndex;
+        var edited = new List<Forms.Control>();
+        surface.TabOrderEdits += changes => edited.AddRange(changes.Select(change => change.Control));
+        surface.TabOrderMode = true;
+
+        var at = OnForm(10 + 4, 10 + 4);
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(container.Panel1, edited);
+        Assert.DoesNotContain(container.Panel2, edited);
+        Assert.Equal(panelIndex, container.Panel1.TabIndex);
+    }
+
+    /// <summary>The tab-order refusal: the form and a container's panel are not assigned a tab index; a control is.</summary>
+    /// <remarks>
+    /// Red-proof (TabOrderTarget returning the panel itself, with the panel clause removed): the Assert.Null on the panel fails.
+    /// </remarks>
+    [Fact]
+    public void ATabOrderClickIsRefusedForAContainersPanelAndTheForm()
+    {
+        var form = new Forms.Form();
+        var container = new Forms.SplitContainer();
+        form.Controls.Add(container);
+
+        Assert.Null(WinFormsDesignSurface.TabOrderTarget(container.Panel1, form));
+        Assert.Null(WinFormsDesignSurface.TabOrderTarget(form, form));
+        Assert.Null(WinFormsDesignSurface.TabOrderTarget(null, form));
+        Assert.Same(container, WinFormsDesignSurface.TabOrderTarget(container, form));
+    }
+
+    /// <summary>A ToolStripPanel placed on the form is a control of its own, not a container's panel: a press selects it.</summary>
+    /// <remarks>
+    /// Red-proof (IsPanelOfContainer answering true for every ToolStripPanel): the press selects the form instead, and the
+    /// Assert.Same on the panel fails.
+    /// </remarks>
+    [AvaloniaFact]
+    public void AStandaloneToolStripPanelIsSelectedByAPress()
+    {
+        var (window, surface, form, _) = Open();
+        var strip = new Forms.ToolStripPanel { Bounds = new Drawing.Rectangle(10, 10, 160, 40) };
+        form.Controls.Add(strip);
+        var button = new Forms.Button { Bounds = new Drawing.Rectangle(10, 60, 40, 25), TabIndex = 0 };
+        form.Controls.Add(button);
+        strip.TabIndex = 1;
+        // An empty ToolStripPanel has no height to click, so it hosts a strip, as a designer does.
+        strip.Join(new Forms.ToolStrip());
+        surface.RefreshForm();
+
+        var at = OnForm(10 + 4, 10 + 4);
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Same(strip, surface.SelectedControl);
+
+    }
+
+    /// <summary>A standalone ToolStripPanel is not refused in tab-order mode: it is a control that takes a tab index.</summary>
+    /// <remarks>
+    /// Red-proof (IsPanelOfContainer answering true for every ToolStripPanel): TabOrderTarget returns null and the Assert.Same fails.
+    /// </remarks>
+    [Fact]
+    public void AStandaloneToolStripPanelIsNotRefusedInTabOrderMode()
+    {
+        var form = new Forms.Form();
+        var strip = new Forms.ToolStripPanel();
+        form.Controls.Add(strip);
+
+        Assert.Same(strip, WinFormsDesignSurface.TabOrderTarget(strip, form));
+    }
+
+    /// <summary>
+    /// A click on a container's corner finds the container's badge: the badge of its own panel, drawn at the same place, does not win.
+    /// </summary>
+    /// <remarks>
+    /// Red-proof (HitBadge keeping the panel's badge): the hit is Panel1, and the Assert.Same on the container fails.
+    /// </remarks>
+    [AvaloniaFact]
+    public void TheContainersBadgeWinsOverItsPanelsBadge()
+    {
+        var form = new Forms.Form { ClientSize = new Drawing.Size(220, 160) };
+        var container = new Forms.SplitContainer { Bounds = new Drawing.Rectangle(10, 10, 160, 120) };
+        form.Controls.Add(container);
+
+        var hit = WinFormsDesignerTabOrder.HitBadge(form, new Avalonia.Point(16, 16), AbsoluteBounds);
+
+        Assert.Same(container, hit);
+    }
+
+    private static Avalonia.Rect AbsoluteBounds(Forms.Control control)
+    {
+        var x = 0;
+        var y = 0;
+        for (var current = control; current.Parent is not null; current = current.Parent)
+        {
+            x += current.Left;
+            y += current.Top;
+        }
+        return new Avalonia.Rect(x, y, control.Width, control.Height);
+    }
 }

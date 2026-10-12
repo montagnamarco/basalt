@@ -13,10 +13,20 @@ public sealed partial class WinFormsDesignerDocument
     private readonly ClassBlockSyntax _class;
     private readonly MethodBlockSyntax _initialize;
     private readonly SourceText _text;
+    private readonly IReadOnlyDictionary<string, ControlPlacement> _placements;
+    private readonly IReadOnlySet<string> _items;
+
+    /// <summary>What InitializeComponent does with a field it creates.</summary>
+    private enum FieldRole { None, Control, Component }
 
     public WinFormsMenuDocument Menus { get; }
     public WinFormsToolStripDocument ToolStripItems { get; }
 
+    /// <summary>
+    /// Reads a designer file from its text alone, as Visual Studio's own output allows: a field that InitializeComponent
+    /// adds to a Controls collection is a control, and any other field of a component type is a component of the tray.
+    /// No type is loaded, so every construction site reads a file the same way.
+    /// </summary>
     public WinFormsDesignerDocument(string source)
     {
         _text = SourceText.From(source);
@@ -32,14 +42,17 @@ public sealed partial class WinFormsDesignerDocument
         Menus = new WinFormsMenuDocument(_text, _syntax);
         ToolStripItems = new WinFormsToolStripDocument(_text, _syntax);
 
-        var controls = new Dictionary<string, WinFormsDesignerControl>(StringComparer.OrdinalIgnoreCase);
         var fields = DeclaredNames;
+        var (placements, items) = ReadCollections();
+        _placements = placements;
+        _items = items;
+
+        var controls = new Dictionary<string, WinFormsDesignerControl>(StringComparer.OrdinalIgnoreCase);
         foreach (var assignment in _initialize.Statements.OfType<AssignmentStatementSyntax>())
         {
             if (assignment.Right is ObjectCreationExpressionSyntax creation
-                && !IsTrayTypeName(creation.Type.ToString())
-                && !IsDesignerContainerTypeName(creation.Type.ToString())
-                && ControlName(assignment.Left) is { } name && fields.Contains(name))
+                && ControlName(assignment.Left) is { } name && fields.Contains(name)
+                && ClassifyField(name, creation.Type.ToString()) == FieldRole.Control)
                 controls[name] = new(name, creation.Type.ToString());
         }
 
@@ -60,37 +73,15 @@ public sealed partial class WinFormsDesignerDocument
             }
         }
 
-        foreach (var invocation in _initialize.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        foreach (var (child, placement) in placements)
         {
-            if (invocation.Expression is not MemberAccessExpressionSyntax
-                {
-                    Expression:
-                    MemberAccessExpressionSyntax collection
-                } call
-                || !collection.Name.Identifier.ValueText.Equals("Controls", StringComparison.OrdinalIgnoreCase))
-                continue;
-            var arguments = invocation.ArgumentList?.Arguments.OfType<SimpleArgumentSyntax>().ToArray() ?? [];
-            if (arguments.Length != 1) continue;
-            var method = call.Name.Identifier.ValueText;
-            IEnumerable<ExpressionSyntax> children;
-            if (method.Equals("Add", StringComparison.OrdinalIgnoreCase))
-                children = [arguments[0].Expression];
-            else if (method.Equals("AddRange", StringComparison.OrdinalIgnoreCase)
-                && arguments[0].Expression is ArrayCreationExpressionSyntax { Initializer: { } initializer })
-                children = initializer.Initializers;
-            else
-                continue;
-
-            foreach (var expression in children)
-            {
-                if (ControlName(expression) is { } childName && controls.TryGetValue(childName, out var childControl))
-                    childControl.ParentName = ControlName(collection.Expression) ?? "Me";
-            }
+            if (!controls.TryGetValue(child, out var childControl)) continue;
+            childControl.ParentName = placement.Parent;
+            childControl.ParentPanel = placement.Panel;
+            childControl.Cell = placement.Cell;
         }
         _components = ReadComponents();
-        Controls = controls.Values.Where(control => !WinFormsMenuDocument.IsItemType(control.TypeName) && !IsToolStripItemTypeName(control.TypeName) && !WinFormsCollectionDocument.ColumnTypes.Any(type =>
-            control.TypeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase).Equals(type, StringComparison.OrdinalIgnoreCase)
-            || control.TypeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase).Equals("System.Windows.Forms." + type, StringComparison.OrdinalIgnoreCase))).ToArray();
+        Controls = controls.Values.ToArray();
         ResourceOperations = ReadResourceOperations();
         Collections = new WinFormsCollectionDocument(Source, _syntax);
         ValidateControlHierarchy();
@@ -128,7 +119,7 @@ public sealed partial class WinFormsDesignerDocument
     public string AddControl(string name, string typeName, string parentName = "Me")
     {
         ValidateIdentifier(name);
-        FindControl(parentName);
+        parentName = ResolveParentKey(parentName);
         if (Controls.Any(control => control.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
             || Components.Any(component => component.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException(Localizer.Get(StringKeys.WinFormsDesignerNameAlreadyExists), nameof(name));
@@ -189,7 +180,91 @@ public sealed partial class WinFormsDesignerDocument
             string.Join("", statements.Select(statement => $"        {statement}{NewLine}")))).ToString();
     }
 
+    /// <summary>Where a control sits: its owner's name, the owner's panel when it is a container's panel, and its TableLayoutPanel cell.</summary>
+    internal sealed record ControlPlacement(string Parent, string? Panel, (int Column, int Row)? Cell);
+
+    /// <summary>
+    /// What InitializeComponent adds to collections, keyed by the child's field name. A child of a <c>Controls</c> collection,
+    /// or of a <c>TabPages</c> collection, is a control placed in its owner. A child of any other collection (Items,
+    /// DropDownItems, Columns, Nodes, Groups, ColumnHeaders, ...) is an item of that collection, never a tray component.
+    /// </summary>
+    /// <remarks>
+    /// The owner of <c>Me.SplitContainer1.Panel1.Controls</c> is SplitContainer1 with the panel Panel1, as Visual Studio writes a
+    /// SplitContainer and a ToolStripContainer. <c>X.Controls.Add(Me.F, column, row)</c> takes the cell of a TableLayoutPanel,
+    /// which is kept when both are integer literals.
+    /// </remarks>
+    private (Dictionary<string, ControlPlacement> Placements, HashSet<string> Items) ReadCollections()
+    {
+        var placements = new Dictionary<string, ControlPlacement>(StringComparer.OrdinalIgnoreCase);
+        var items = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var invocation in _initialize.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        {
+            if (invocation.Expression is not MemberAccessExpressionSyntax { Expression: MemberAccessExpressionSyntax collection } call)
+                continue;
+            var method = call.Name.Identifier.ValueText;
+            var isAdd = method.Equals("Add", StringComparison.OrdinalIgnoreCase);
+            if (!isAdd && !method.Equals("AddRange", StringComparison.OrdinalIgnoreCase)) continue;
+            var arguments = invocation.ArgumentList?.Arguments.OfType<SimpleArgumentSyntax>().ToArray() ?? [];
+            IEnumerable<ExpressionSyntax> children = isAdd && arguments.Length >= 1 ? [arguments[0].Expression]
+                : !isAdd && arguments.Length == 1 && arguments[0].Expression is ArrayCreationExpressionSyntax { Initializer: { } initializer }
+                    ? initializer.Initializers : [];
+            var collectionName = collection.Name.Identifier.ValueText;
+            var isControls = collectionName.Equals("Controls", StringComparison.OrdinalIgnoreCase)
+                || collectionName.Equals("TabPages", StringComparison.OrdinalIgnoreCase);
+            var (parent, panel) = OwnerOf(collection.Expression);
+            var cell = isAdd && arguments.Length == 3 && arguments[1].Expression is LiteralExpressionSyntax { Token.Value: int column }
+                && arguments[2].Expression is LiteralExpressionSyntax { Token.Value: int row }
+                ? ((int Column, int Row)?)(column, row) : null;
+            foreach (var child in children)
+            {
+                if (ControlName(child) is not { } childName) continue;
+                if (isControls) placements[childName] = new ControlPlacement(parent, panel, cell);
+                else items.Add(childName);
+            }
+        }
+        return (placements, items);
+    }
+
+    /// <summary>The owner of a Controls collection: the control it belongs to, and the panel of a container that it is; "Me" for the form.</summary>
+    private (string Parent, string? Panel) OwnerOf(ExpressionSyntax expression)
+    {
+        if (ControlName(expression) is { } name) return (name, null);
+        if (expression is MemberAccessExpressionSyntax { Expression: var inner } panel && ControlName(inner) is { } owner)
+            return (owner, panel.Name.Identifier.ValueText);
+        return ("Me", null);
+    }
+
+    /// <summary>
+    /// The role of a field that InitializeComponent creates. The components container is neither, and neither is an item of
+    /// a collection (see <see cref="ReadCollections"/>) or a menu, ToolStrip or grid item, which its own document owns. A
+    /// Forms tray type is a component. Otherwise a field that a Controls collection adds is a control, and any other field
+    /// is a component: how Visual Studio writes a non-visual class of the project.
+    /// </summary>
+    private FieldRole ClassifyField(string name, string typeName)
+    {
+        if (IsDesignerContainerTypeName(typeName) || IsNonVisualItemTypeName(typeName) || _items.Contains(name)) return FieldRole.None;
+        if (IsTrayTypeName(typeName)) return FieldRole.Component;
+        return _placements.ContainsKey(name) ? FieldRole.Control : FieldRole.Component;
+    }
+
+    private static bool IsNonVisualItemTypeName(string typeName) =>
+        WinFormsMenuDocument.IsItemType(typeName) || IsToolStripItemTypeName(typeName)
+        || WinFormsCollectionDocument.ColumnTypes.Any(type =>
+            typeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase).Equals(type, StringComparison.OrdinalIgnoreCase)
+            || typeName.Replace("Global.", "", StringComparison.OrdinalIgnoreCase).Equals("System.Windows.Forms." + type, StringComparison.OrdinalIgnoreCase));
+
     private string NewLine => Source.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+
+    /// <summary>
+    /// The key of a parent as the designer names it: a control, or a container's panel as Owner.Panel (SplitContainer1.Panel1).
+    /// The owner must be a control of the form; the panel is kept as the designer's code names it.
+    /// </summary>
+    private string ResolveParentKey(string key)
+    {
+        var dot = key.IndexOf('.');
+        var owner = FindControl(dot < 0 ? key : key[..dot]).Name;
+        return dot < 0 ? owner : owner + "." + key[(dot + 1)..];
+    }
 
     private WinFormsDesignerControl FindControl(string name) => name.Equals("Me", StringComparison.OrdinalIgnoreCase)
         ? Root : Controls.FirstOrDefault(control => control.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
@@ -217,6 +292,10 @@ public sealed partial class WinFormsDesignerDocument
 public sealed record WinFormsDesignerControl(string Name, string TypeName)
 {
     public string ParentName { get; internal set; } = "Me";
+    /// <summary>The container's panel that holds the control, such as Panel1 of a SplitContainer; null when the owner holds it.</summary>
+    public string? ParentPanel { get; internal set; }
+    /// <summary>The TableLayoutPanel cell of the control, when the designer's code gives its column and row as integer literals.</summary>
+    public (int Column, int Row)? Cell { get; internal set; }
     public Dictionary<string, string> Properties { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, ExpressionSyntax> PropertySyntax { get; } = new(StringComparer.OrdinalIgnoreCase);
 }

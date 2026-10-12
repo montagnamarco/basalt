@@ -559,7 +559,6 @@
   <data name="WinFormsCollection_SplitSharedFieldRemove" xml:space="preserve"><value>Split a shared field declaration before removing this column.</value></data>
   <data name="WinFormsDesigner_ComponentNotFound" xml:space="preserve"><value>The component does not belong to this form.</value></data>
   <data name="WinFormsDesigner_ComponentTypeInvalid" xml:space="preserve"><value>The component type is invalid.</value></data>
-  <data name="WinFormsDesigner_ComponentTypeUnsupported" xml:space="preserve"><value>The type is not a supported Forms tray component.</value></data>
   <data name="WinFormsDesigner_ControlNotFound" xml:space="preserve"><value>The control does not belong to this form.</value></data>
   <data name="WinFormsDesigner_ControlTypeInvalid" xml:space="preserve"><value>The control type is invalid.</value></data>
   <data name="WinFormsDesigner_FieldNameAlreadyExists" xml:space="preserve"><value>A field with that name already exists.</value></data>
@@ -641,6 +640,7 @@
   <data name="Editor_SelectExpressionFirst" xml:space="preserve"><value>Select the expression to extract first.</value></data>
   <data name="Editor_ChangeNotWritten" xml:space="preserve"><value>The change could not be written.</value></data>
   <data name="Editor_SmartTagsNoDocumentArea" xml:space="preserve"><value>The changed documents were opened in memory but there is no document area to show them in. Save or reopen them to see the edit.</value></data>
+  <data name="WinFormsDesigner_PanelNotSelectable" xml:space="preserve"><value>A container's panel is not a control of its own. Select the container instead.</value></data>
   <data name="Status_NoBuildOutput" xml:space="preserve"><value>no build output to run</value></data>
   <data name="Debug_Starting" xml:space="preserve"><value>Starting {0}.</value></data>
   <data name="Debug_Building" xml:space="preserve"><value>Building before debugging…</value></data>

@@ -10,7 +10,7 @@ public sealed partial class WinFormsDesignerDocument
 
     internal IReadOnlyDictionary<string, IReadOnlyList<string>> ReadZOrder()
     {
-        var orders = Controls.GroupBy(control => control.ParentName, StringComparer.OrdinalIgnoreCase)
+        var orders = Controls.GroupBy(OrderKeyOf, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => new List<string>(), StringComparer.OrdinalIgnoreCase);
         foreach (var statement in _initialize.Statements)
         {
@@ -23,14 +23,14 @@ public sealed partial class WinFormsDesignerDocument
                 {
                     continue;
                 }
-                var parent = ControlName(collection.Expression);
+                var parent = OrderKeyOfCollection(collection.Expression);
                 if (parent is null || !orders.TryGetValue(parent, out var order))
                 {
                     continue;
                 }
                 var arguments = invocation.ArgumentList?.Arguments.OfType<SimpleArgumentSyntax>().ToArray() ?? [];
                 var method = call.Name.Identifier.ValueText;
-                if (method.Equals("Add", StringComparison.OrdinalIgnoreCase) && arguments.Length == 1)
+                if (method.Equals("Add", StringComparison.OrdinalIgnoreCase) && arguments.Length >= 1)
                 {
                     AddChild(arguments[0].Expression, parent, order);
                 }
@@ -60,7 +60,7 @@ public sealed partial class WinFormsDesignerDocument
         }
         foreach (var control in Controls)
         {
-            var order = orders[control.ParentName];
+            var order = orders[OrderKeyOf(control)];
             if (!order.Contains(control.Name, StringComparer.OrdinalIgnoreCase))
             {
                 order.Add(control.Name);
@@ -94,11 +94,26 @@ public sealed partial class WinFormsDesignerDocument
     {
         var name = ControlName(expression);
         if (name is not null && Controls.Any(control => control.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
-            && control.ParentName.Equals(parent, StringComparison.OrdinalIgnoreCase))
+            && OrderKeyOf(control).Equals(parent, StringComparison.OrdinalIgnoreCase))
             && !order.Contains(name, StringComparer.OrdinalIgnoreCase))
         {
             order.Add(name);
         }
+    }
+
+    /// <summary>
+    /// The key of a control's z-order: its owner, and the owner's panel when the control sits in one, as "SplitContainer1.Panel1".
+    /// Each panel orders its own children, because a SetChildIndex written on the container would not find a panel's child.
+    /// </summary>
+    internal static string OrderKeyOf(WinFormsDesignerControl control) =>
+        control.ParentPanel is null ? control.ParentName : control.ParentName + "." + control.ParentPanel;
+
+    /// <summary>The key of a Controls collection's owner, read from the collection's receiver: "Me", a control, or a control's panel.</summary>
+    private string? OrderKeyOfCollection(ExpressionSyntax expression)
+    {
+        if (ControlName(expression) is { } name) return name;
+        return expression is MemberAccessExpressionSyntax panel && ControlName(panel.Expression) is { } owner
+            ? owner + "." + panel.Name.Identifier.ValueText : null;
     }
 
     public string SetZOrder(IReadOnlyList<string> names, bool bringToFront)
@@ -108,8 +123,8 @@ public sealed partial class WinFormsDesignerDocument
             return Source;
         }
         var controls = names.Select(FindControl).ToArray();
-        var parent = controls[0].ParentName;
-        if (controls.Any(control => control.Name == "Me" || !control.ParentName.Equals(parent, StringComparison.OrdinalIgnoreCase)))
+        var parent = OrderKeyOf(controls[0]);
+        if (controls.Any(control => control.Name == "Me" || !OrderKeyOf(control).Equals(parent, StringComparison.OrdinalIgnoreCase)))
         {
             throw new ArgumentException(Localizer.Get(StringKeys.WinFormsDesignerZOrderMustSharedParent), nameof(names));
         }
@@ -125,6 +140,7 @@ public sealed partial class WinFormsDesignerDocument
         {
             return Source;
         }
+        // A key names a panel as Owner.Panel, so the receiver is Me.Owner.Panel: the way Visual Studio writes a panel's children.
         var target = parent.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Me" : "Me." + parent;
         return InsertStatements(desired.Select((name, index) =>
             $"{target}.Controls.SetChildIndex(Me.{name}, {index})").ToArray());

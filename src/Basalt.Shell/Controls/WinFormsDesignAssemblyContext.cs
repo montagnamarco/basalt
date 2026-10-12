@@ -96,7 +96,7 @@ internal sealed class WinFormsDesignAssemblyContext : AssemblyLoadContext
     }
 
     /// <summary>
-    /// The public, designable controls of the project's own assembly (a form is not one: the designer adds a form as
+    /// The public, designable controls and components of the project's own assembly (a form is not one: the designer adds a form as
     /// its own surface). Empty when the project's types could not be described; see <see cref="FailedLibraries"/>.
     /// </summary>
     public IReadOnlyList<WinFormsToolboxItem> ProjectControls => _projectControls;
@@ -184,7 +184,7 @@ internal sealed class WinFormsDesignAssemblyContext : AssemblyLoadContext
     {
         var failures = new List<WinFormsDesignFailure>();
 
-        _projectControls = Contained(_projectName, () => ListedControls(ProjectAssembly), failures) ?? [];
+        _projectControls = Contained(_projectName, () => ListedControls(ProjectAssembly, projectOwned: true), failures) ?? [];
 
         var libraries = new List<WinFormsDesignLibrary>();
         foreach (var name in DependencyLibraryNames())
@@ -200,7 +200,7 @@ internal sealed class WinFormsDesignAssemblyContext : AssemblyLoadContext
                 continue;
             }
 
-            var controls = Contained(name, () => ListedControls(assembly), failures) ?? [];
+            var controls = Contained(name, () => ListedControls(assembly, projectOwned: false), failures) ?? [];
             libraries.Add(new WinFormsDesignLibrary(name, assembly, controls));
         }
 
@@ -289,19 +289,24 @@ internal sealed class WinFormsDesignAssemblyContext : AssemblyLoadContext
         ?? Load(new AssemblyName(name))
         ?? throw new FileNotFoundException("The library is not in the build output.", Path.Combine(_folder, name + ".dll"));
 
-    /// <summary>The controls of an assembly that the toolbox lists: public, designable, and not forms.</summary>
+    /// <summary>
+    /// The controls and the components of an assembly that the toolbox lists: public, designable, and not forms. A component
+    /// is a Component that is not a control, such as a project's own non-visual class, which the designer places in the tray.
+    /// </summary>
     /// <remarks>
     /// Runs on the background thread that opens the context, under <see cref="WinFormsDesignTimeCaches.TypeDescriptorGate"/>:
     /// Describe asks TypeDescriptor for attributes, and TypeDescriptor's tables are also cleared by a context's release
     /// on the interface thread. The two must not overlap, and the lock is the only thing that orders them.
     /// </remarks>
-    private static IReadOnlyList<WinFormsToolboxItem> ListedControls(Assembly assembly)
+    private static IReadOnlyList<WinFormsToolboxItem> ListedControls(Assembly assembly, bool projectOwned)
     {
         lock (WinFormsDesignTimeCaches.TypeDescriptorGate)
         {
-            return WinFormsToolboxCatalog.Describe(assembly, typeof(Forms.Control))
-                .Where(item => !typeof(Forms.Form).IsAssignableFrom(item.ControlType))
-                .ToArray();
+            var controls = WinFormsToolboxCatalog.Describe(assembly, typeof(Forms.Control))
+                .Where(item => !typeof(Forms.Form).IsAssignableFrom(item.ControlType));
+            var components = WinFormsToolboxCatalog.Describe(assembly, typeof(System.ComponentModel.Component))
+                .Where(item => WinFormsDesignTypes.IsListedComponent(item.ControlType, projectOwned));
+            return controls.Concat(components).ToArray();
         }
     }
 

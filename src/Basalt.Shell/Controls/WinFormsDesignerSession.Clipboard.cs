@@ -36,6 +36,20 @@ internal sealed partial class WinFormsDesignerSession
                 .ToArray());
     }
 
+    internal async Task CheckPastableAsync(WinFormsControlClipboard payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        var original = Document;
+        // The rewrite and the parse are Roslyn work: they run on a background thread, as the paste does.
+        var pasted = await Task.Run(() => original.PasteControls(payload, "Me"));
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var parsed = await Task.Run(() => new WinFormsDesignerDocument(pasted.Source));
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        // The preview is built on the interface thread, as the paste builds it; a throwing preview refuses the cut here.
+        using var preview = new WinFormsDesignerSession(parsed, null, _projectPath, _designContext);
+        _ = preview.PreviewProblems;
+    }
+
     internal async Task<IReadOnlyList<string>> PasteControlsAsync(
         WinFormsControlClipboard clipboard, Forms.Control parent)
     {

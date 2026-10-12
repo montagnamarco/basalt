@@ -212,13 +212,13 @@ internal sealed partial class WinFormsDesignerView
     }
 
     /// <summary>
-    /// The controls the project and the libraries it uses define: the project's own under "&lt;Project&gt; Components",
+    /// The controls and components the project and the libraries it uses define: the project's own under "&lt;Project&gt; Components",
     /// and each referenced library's under "&lt;Library&gt; Components". Empty until a build of the project has loaded.
     /// </summary>
     /// <remarks>
-    /// Only controls are listed. Components are not listed yet: the designer's document reads a component as a
-    /// control unless the tray names it, so a component listed here would be placed and then not found again
-    /// (see WinFormsDesignerDocument.Components). They are listed once the document can tell them apart.
+    /// A component is listed beside the controls. The designer's document tells them apart from the file alone (a field that
+    /// no Controls collection adds is a tray component, see WinFormsDesignerDocument.ClassifyField), so a component placed
+    /// from here is found again in the tray.
     /// </remarks>
     private IReadOnlyList<WinFormsToolboxItem> ProjectToolboxItems()
     {

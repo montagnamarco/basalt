@@ -46,7 +46,11 @@ internal sealed partial class WinFormsDesignerSession
             if (ReferenceEquals(control, Form))
                 throw new ArgumentException("The root form cannot be deleted.", nameof(selectedControls));
             // NameOf uses instance identity, so a stale control from a previous preview fails here.
-            selected.Add(NameOf(control));
+            var name = NameOf(control);
+            // A container's panel is named Owner.Panel and has no model of its own: it is refused, not looked up.
+            if (name.Contains('.', StringComparison.Ordinal))
+                throw new NotSupportedException(Basalt.Core.Localization.Localizer.Get(Basalt.Core.Localization.StringKeys.WinFormsDesignerPanelNotSelectable));
+            selected.Add(name);
         }
 
         var models = Document.Controls.ToDictionary(control => control.Name, StringComparer.OrdinalIgnoreCase);

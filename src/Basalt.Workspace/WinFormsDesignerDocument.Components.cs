@@ -19,11 +19,15 @@ public sealed partial class WinFormsDesignerDocument
     /// <summary>Designer fields that live in the component tray rather than the form's control tree.</summary>
     public IReadOnlyList<WinFormsDesignerComponent> Components => _components ??= ReadComponents();
 
-    public string AddComponent(string name, string typeName)
+    /// <summary>
+    /// Adds a component the way Visual Studio writes one: a WithEvents field and a constructor call in InitializeComponent.
+    /// A constructor that takes IContainer is given the form's components container. A form that declares none gets one
+    /// first, as Visual Studio declares it: a <c>components</c> field, and its creation at the top of InitializeComponent.
+    /// </summary>
+    /// <param name="takesContainer">Whether the component's constructor takes an IContainer, as reported by the type.</param>
+    public string AddComponent(string name, string typeName, bool takesContainer = false)
     {
         ValidateIdentifier(name);
-        if (!IsTrayTypeName(typeName))
-            throw new ArgumentException(Localizer.Get(StringKeys.WinFormsDesignerComponentTypeUnsupported), nameof(typeName));
         if (_class.Members.OfType<FieldDeclarationSyntax>()
             .SelectMany(field => field.Declarators)
             .SelectMany(declarator => declarator.Names)
@@ -32,14 +36,28 @@ public sealed partial class WinFormsDesignerDocument
 
         var parsedType = SyntaxFactory.ParseTypeName(typeName);
         if (parsedType.ContainsDiagnostics) throw new FormatException(Localizer.Get(StringKeys.WinFormsDesignerComponentTypeInvalid));
-        var constructor = IsSerialPortTypeName(typeName) && HasInitializedComponentContainer()
-            ? $"New {typeName}(Me.components)"
-            : $"New {typeName}()";
-        var source = InsertStatements($"Me.{name} = {constructor}");
-        var updated = new WinFormsDesignerDocument(source);
+
+        // A SerialPort keeps the form the designer has always written: it takes the container only when the form already has
+        // one, and no container is declared for it. Every other component that takes IContainer gets one, as Visual Studio does.
+        var serialPort = IsSerialPortTypeName(typeName);
+        var autoDeclare = takesContainer && !serialPort;
+        var declaresContainer = autoDeclare && !DeclaresComponentsField();
+        var createsContainer = autoDeclare && !HasInitializedComponentContainer();
+        var passesContainer = autoDeclare || serialPort && HasInitializedComponentContainer();
+        var constructor = passesContainer ? $"New {typeName}(Me.components)" : $"New {typeName}()";
+        var changes = new List<TextChange>();
+        // The container is created first, as Visual Studio's own InitializeComponent does, so the component can take it.
+        if (createsContainer)
+            changes.Add(new TextChange(new TextSpan(_initialize.SubOrFunctionStatement.Span.End, 0),
+                $"{NewLine}        Me.components = New System.ComponentModel.Container()"));
+        changes.Add(new TextChange(new TextSpan(WinFormsInitializeComponentSyntax.InsertionPoint(_initialize), 0),
+            $"        Me.{name} = {constructor}{NewLine}"));
+        var updated = new WinFormsDesignerDocument(_text.WithChanges(changes).ToString());
+
+        var fields = (declaresContainer ? $"    Private components As System.ComponentModel.IContainer{NewLine}" : "")
+            + $"    Friend WithEvents {name} As {typeName}{NewLine}";
         var position = updated._class.EndClassStatement.FullSpan.Start;
-        return updated._text.WithChanges(new TextChange(new TextSpan(position, 0),
-            $"    Friend WithEvents {name} As {typeName}{NewLine}")).ToString();
+        return updated._text.WithChanges(new TextChange(new TextSpan(position, 0), fields)).ToString();
     }
 
     public string SetComponentProperty(string componentName, string propertyName, string? expression)
@@ -106,10 +124,13 @@ public sealed partial class WinFormsDesignerDocument
         foreach (var assignment in _initialize.Statements.OfType<AssignmentStatementSyntax>())
         {
             if (assignment.Right is not ObjectCreationExpressionSyntax creation
-                || !IsTrayTypeName(creation.Type.ToString())
-                || ControlName(assignment.Left) is not { } name || !fields.Contains(name))
+                || ControlName(assignment.Left) is not { } name || !fields.Contains(name)
+                || ClassifyField(name, creation.Type.ToString()) != FieldRole.Component)
                 continue;
-            components[name] = new WinFormsDesignerComponent(name, creation.Type.ToString());
+            components[name] = new WinFormsDesignerComponent(name, creation.Type.ToString())
+            {
+                PassesContainer = creation.ArgumentList is { Arguments.Count: > 0 },
+            };
         }
 
         foreach (var assignment in _initialize.Statements.OfType<AssignmentStatementSyntax>())
@@ -152,6 +173,11 @@ public sealed partial class WinFormsDesignerDocument
             || name.Equals("SerialPort", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Whether a field named <c>components</c> is declared, whatever its type: a second declaration would not compile.</summary>
+    private bool DeclaresComponentsField() => _class.Members.OfType<FieldDeclarationSyntax>()
+        .SelectMany(field => field.Declarators)
+        .Any(declarator => declarator.Names.Any(name => name.Identifier.ValueText.Equals("components", StringComparison.OrdinalIgnoreCase)));
+
     private bool HasInitializedComponentContainer()
     {
         var containerField = _class.Members.OfType<FieldDeclarationSyntax>()
@@ -185,4 +211,7 @@ public sealed record WinFormsDesignerComponent(string Name, string TypeName)
 {
     public Dictionary<string, string> Properties { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, ExpressionSyntax> PropertySyntax { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Whether the designer's code passes arguments to the constructor, such as <c>Me.components</c>.</summary>
+    public bool PassesContainer { get; init; }
 }

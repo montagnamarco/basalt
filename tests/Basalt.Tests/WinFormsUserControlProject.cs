@@ -5,7 +5,8 @@ namespace Basalt.Tests;
 /// <c>GaugeControl</c> (paints, has a public property), <c>HiddenControl</c> (hidden from the toolbox),
 /// <c>BrokenControl</c> (its constructor throws), <c>PaintBrokenControl</c> (its OnPaint throws),
 /// <c>ReadingsControl</c> (properties of a constructed generic and of an array of its own type),
-/// <c>ProjectComponent</c> (a component, not a control), <c>Form1</c>, and two class libraries it references: <c>SharedControls</c>
+/// <c>ProjectComponent</c> (a component, not a control), <c>ContainerComponent</c> (a component whose constructor takes the
+/// form's IContainer), <c>BrokenComponent</c> (a component whose constructor throws), <c>Form1</c>, and two class libraries it references: <c>SharedControls</c>
 /// (<c>Widgets.LibraryControl</c> and a hidden <c>Widgets.HiddenLibraryControl</c>) and <c>BrokenLibrary</c>, whose one control
 /// carries an attribute with a throwing static constructor, so describing it fails while the other libraries still list.
 /// It is an executable that targets Windows Forms, so the view model treats it as the startup project;
@@ -66,6 +67,26 @@ public sealed class WinFormsUserControlProject : IDisposable
         File.WriteAllText(Path.Combine(project.Root, "ProjectComponent.vb"), """
             Public Class ProjectComponent
                 Inherits System.ComponentModel.Component
+            End Class
+            """);
+        File.WriteAllText(Path.Combine(project.Root, "ContainerComponent.vb"), """
+            Public Class ContainerComponent
+                Inherits System.ComponentModel.Component
+
+                Public Sub New(container As System.ComponentModel.IContainer)
+                    MyBase.New()
+                    container.Add(Me)
+                End Sub
+            End Class
+            """);
+        File.WriteAllText(Path.Combine(project.Root, "BrokenComponent.vb"), """
+            Public Class BrokenComponent
+                Inherits System.ComponentModel.Component
+
+                Public Sub New()
+                    MyBase.New()
+                    Throw New System.InvalidOperationException("Component constructor failed on purpose.")
+                End Sub
             End Class
             """);
         File.WriteAllText(Path.Combine(project.Root, "BrokenControl.vb"), """
@@ -218,6 +239,28 @@ public sealed class WinFormsUserControlProject : IDisposable
                 End Sub
 
             {parentChanged}
+            End Class
+            """);
+    }
+
+    /// <summary>
+    /// Declares the form's components container as Visual Studio writes it: a <c>components</c> field of type IContainer, created
+    /// first in InitializeComponent. A component whose constructor takes the container is then given <c>Me.components</c>.
+    /// </summary>
+    public void DeclareComponentsContainer()
+    {
+        File.WriteAllText(DesignerPath, """
+            Partial Class Form1
+                Inherits System.Windows.Forms.Form
+
+                Private components As System.ComponentModel.IContainer
+
+                Private Sub InitializeComponent()
+                    Me.components = New System.ComponentModel.Container()
+                    Me.ClientSize = New System.Drawing.Size(500, 400)
+                    Me.Text = "Form1"
+                    Me.ResumeLayout(False)
+                End Sub
             End Class
             """);
     }

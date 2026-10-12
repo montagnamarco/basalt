@@ -485,7 +485,6 @@ public static class StringKeys
     public const string WinFormsCollectionSplitSharedFieldRemove = "WinFormsCollection_SplitSharedFieldRemove";
     public const string WinFormsDesignerComponentNotFound = "WinFormsDesigner_ComponentNotFound";
     public const string WinFormsDesignerComponentTypeInvalid = "WinFormsDesigner_ComponentTypeInvalid";
-    public const string WinFormsDesignerComponentTypeUnsupported = "WinFormsDesigner_ComponentTypeUnsupported";
     public const string WinFormsDesignerControlNotFound = "WinFormsDesigner_ControlNotFound";
     public const string WinFormsDesignerControlTypeInvalid = "WinFormsDesigner_ControlTypeInvalid";
     public const string WinFormsDesignerFieldNameAlreadyExists = "WinFormsDesigner_FieldNameAlreadyExists";
@@ -649,6 +648,7 @@ public static class StringKeys
     public const string WinFormsEditorInvalidFont = "WinFormsEditor_InvalidFont";
     public const string WinFormsEditorOk = "WinFormsEditor_Ok";
     public const string WinFormsFontEditorBold = "WinFormsFontEditor_Bold";
+    public const string WinFormsDesignerPanelNotSelectable = "WinFormsDesigner_PanelNotSelectable";
     public const string WinFormsFontEditorFamily = "WinFormsFontEditor_Family";
     public const string WinFormsFontEditorItalic = "WinFormsFontEditor_Italic";
     public const string WinFormsFontEditorPreview = "WinFormsFontEditor_Preview";

@@ -36,7 +36,8 @@ public sealed class WinFormsControlClipboard
     public IReadOnlyList<string> TopLevelNames { get; }
 }
 
-internal sealed record WinFormsClipboardControl(string Name, string TypeName, string ParentName);
+internal sealed record WinFormsClipboardControl(string Name, string TypeName, string ParentName, string? ParentPanel = null,
+    (int Column, int Row)? Cell = null);
 internal sealed record WinFormsClipboardAuxiliary(string Name, string TypeName);
 
 /// <summary>
@@ -111,7 +112,7 @@ public sealed partial class WinFormsDesignerDocument
 
         return new WinFormsControlClipboard(
             copied.Select(control => new WinFormsClipboardControl(
-                control.Name, control.TypeName, control.ParentName)).ToImmutableArray(),
+                control.Name, control.TypeName, control.ParentName, control.ParentPanel, control.Cell)).ToImmutableArray(),
             auxiliaries,
             statements, topLevel, requiredFields.ToImmutable(), requiredMethods.ToImmutable(),
             CopiedResources(statements, resources, carriedEntries ?? [], names));
@@ -120,7 +121,7 @@ public sealed partial class WinFormsDesignerDocument
     public WinFormsControlPasteResult PasteControls(WinFormsControlClipboard clipboard, string targetParent)
     {
         ArgumentNullException.ThrowIfNull(clipboard);
-        targetParent = FindControl(targetParent).Name;
+        targetParent = ResolveParentKey(targetParent);
         ValidateClipboardDependencies(clipboard);
 
         string? managerName = null;
@@ -157,7 +158,12 @@ public sealed partial class WinFormsDesignerDocument
         foreach (var control in clipboard.Controls)
         {
             var parent = renamed.GetValueOrDefault(control.ParentName) ?? targetParent;
-            statements.Add($"{(parent == "Me" ? "Me" : $"Me.{parent}")}.Controls.Add(Me.{renamed[control.Name]})");
+            // A child of a container's panel keeps its panel when the container is pasted with it: the written Add names the panel.
+            var panel = renamed.ContainsKey(control.ParentName) ? control.ParentPanel : null;
+            // A child of a TableLayoutPanel keeps its cell when the panel is pasted with it: the written Add names the column and row.
+            var cell = renamed.ContainsKey(control.ParentName) ? control.Cell : null;
+            var cellArguments = cell is { } at ? $", {at.Column}, {at.Row}" : "";
+            statements.Add($"{(parent == "Me" ? "Me" : $"Me.{parent}")}{(panel is null ? "" : "." + panel)}.Controls.Add(Me.{renamed[control.Name]}{cellArguments})");
         }
 
         var statementPosition = WinFormsInitializeComponentSyntax.InsertionPoint(_initialize);

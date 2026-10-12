@@ -12,12 +12,16 @@ internal sealed partial class WinFormsDesignerSession
 
     private void ApplyZOrderPreview()
     {
-        foreach (var (parentName, children) in Document.ZOrder)
+        foreach (var (key, children) in Document.ZOrder)
         {
-            if (!_controls.TryGetValue(parentName, out var parent))
+            // A key names a panel as Owner.Panel: each panel orders its own children, as the designer's code does.
+            var dot = key.IndexOf('.');
+            var owner = dot < 0 ? key : key[..dot];
+            if (!_controls.TryGetValue(owner, out var ownerControl))
             {
                 continue;
             }
+            var parent = HolderOf(ownerControl, dot < 0 ? null : key[(dot + 1)..]);
             for (var index = 0; index < children.Count; index++)
             {
                 if (_controls.TryGetValue(children[index], out var child) && ReferenceEquals(child.Parent, parent))

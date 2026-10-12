@@ -62,6 +62,7 @@ internal sealed partial class WinFormsDesignerView
         var generation = Interlocked.Increment(ref s_clipboardGeneration);
         if (cut)
         {
+            await session.CheckPastableAsync(payload);
             if (ClipboardRaceGateForTests is { } gate) await gate();
             await DeleteSelectedControlsAsync(selection);
         }
