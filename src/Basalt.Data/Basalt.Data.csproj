@@ -2,6 +2,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+    <!--
+      DatabaseClient calls SQLitePCL.raw.sqlite3_interrupt to stop a running
+      statement, because Microsoft.Data.Sqlite's Cancel does nothing. Declared
+      here, at the version Microsoft.Data.Sqlite brings, so that call does not
+      rest on a transitive dependency that could change under it.
+    -->
+    <PackageReference Include="SQLitePCLRaw.core" Version="2.1.12" />
     <ProjectReference Include="../Basalt.Core/Basalt.Core.csproj" />
   </ItemGroup>
 
