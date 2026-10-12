@@ -228,6 +228,11 @@ public static class StringKeys
     public const string DatabaseRows = "Database_Rows";
     public const string DatabaseCapped = "Database_Capped";
     public const string DatabaseAffected = "Database_Affected";
+    public const string DatabaseRefresh = "Database_Refresh";
+    public const string DatabaseDisconnect = "Database_Disconnect";
+    public const string DatabaseDisconnected = "Database_Disconnected";
+    public const string DatabaseNoFile = "Database_NoFile";
+    public const string DatabaseNotOpen = "Database_NotOpen";
     public const string ToolDatabase = "Tool_Database";
     public const string GitNothingToCommit = "Git_NothingToCommit";
     public const string GitNothingStaged = "Git_NothingStaged";
@@ -643,12 +648,12 @@ public static class StringKeys
     public const string WinFormsDesignerLibraryNotListed = "WinFormsDesigner_LibraryNotListed";
     public const string WinFormsDesignerDependencyListMissing = "WinFormsDesigner_DependencyListMissing";
     public const string WinFormsDesignerDependencyListUnreadable = "WinFormsDesigner_DependencyListUnreadable";
+    public const string WinFormsDesignerPanelNotSelectable = "WinFormsDesigner_PanelNotSelectable";
     public const string WinFormsEditorCancel = "WinFormsEditor_Cancel";
     public const string WinFormsEditorInvalidColor = "WinFormsEditor_InvalidColor";
     public const string WinFormsEditorInvalidFont = "WinFormsEditor_InvalidFont";
     public const string WinFormsEditorOk = "WinFormsEditor_Ok";
     public const string WinFormsFontEditorBold = "WinFormsFontEditor_Bold";
-    public const string WinFormsDesignerPanelNotSelectable = "WinFormsDesigner_PanelNotSelectable";
     public const string WinFormsFontEditorFamily = "WinFormsFontEditor_Family";
     public const string WinFormsFontEditorItalic = "WinFormsFontEditor_Italic";
     public const string WinFormsFontEditorPreview = "WinFormsFontEditor_Preview";

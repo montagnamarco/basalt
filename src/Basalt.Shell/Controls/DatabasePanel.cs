@@ -39,9 +39,14 @@ public sealed class DatabasePanel : UserControl, IDisposable
     private readonly TextBlock _status;
     private readonly Button _run;
     private readonly Button _stop;
+    private readonly Button _refresh;
+    private readonly Button _disconnect;
     private readonly EmptyState _noTables;
 
     private CancellationTokenSource? _running;
+
+    /// <summary>The run the panel last started, finished or not: a disconnect waits for it.</summary>
+    private Task? _runningQuery;
 
     /// <summary>Raised when the panel wants a database file chosen.</summary>
     public event EventHandler? OpenRequested;
@@ -78,7 +83,7 @@ public sealed class DatabasePanel : UserControl, IDisposable
         }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
         _run = new Button { Content = Localizer.Get(StringKeys.DatabaseRun), FontSize = PanelMetrics.FontSize };
-        _run.Click += (_, _) => _ = RunAsync();
+        _run.Click += (_, _) => _ = StartRunAsync();
 
         // Only while something is running: a stop button with nothing to stop
         // is one the user has to work out the meaning of.
@@ -91,6 +96,14 @@ public sealed class DatabasePanel : UserControl, IDisposable
 
         _stop.Click += (_, _) => _running?.Cancel();
 
+        // Only while something is open: Refresh and Disconnect act on a
+        // database, and with none they would do nothing the user could see.
+        _refresh = new Button { Content = Localizer.Get(StringKeys.DatabaseRefresh), FontSize = PanelMetrics.FontSize };
+        _refresh.Click += (_, _) => _ = RefreshAsync();
+
+        _disconnect = new Button { Content = Localizer.Get(StringKeys.DatabaseDisconnect), FontSize = PanelMetrics.FontSize };
+        _disconnect.Click += (_, _) => _ = DisconnectAsync();
+
         var open = new Button { Content = Localizer.Get(StringKeys.DatabaseOpen), FontSize = PanelMetrics.FontSize };
         open.Click += (_, _) => OpenRequested?.Invoke(this, EventArgs.Empty);
 
@@ -99,7 +112,7 @@ public sealed class DatabasePanel : UserControl, IDisposable
             Orientation = Orientation.Horizontal,
             Spacing = Spacing.Tight,
             Margin = new Thickness(Spacing.Normal, Spacing.Tight),
-            Children = { open, _run, _stop },
+            Children = { open, _refresh, _disconnect, _run, _stop },
         };
 
         // Tables on the left, query above results on the right: the shape
@@ -176,6 +189,8 @@ public sealed class DatabasePanel : UserControl, IDisposable
 
             _status.Text = Localizer.Get(StringKeys.DatabaseOpened, Path.GetFileName(path));
             _run.IsEnabled = true;
+            _refresh.IsEnabled = true;
+            _disconnect.IsEnabled = true;
         }
         catch (Exception ex)
         {
@@ -211,43 +226,112 @@ public sealed class DatabasePanel : UserControl, IDisposable
     /// Cancellable, and the previous run is cancelled first: pressing Run
     /// twice should replace the answer, not queue a second one behind a query
     /// that may take minutes.
+    ///
+    /// A run is tracked by identity. A run that was replaced may still finish
+    /// after the new one has started; it must neither show its answer over the
+    /// new one nor hide the Stop of the run that is still going.
     /// </remarks>
     private async Task RunAsync()
     {
         if (!_client.IsOpen) return;
 
         _running?.Cancel();
-        _running = new CancellationTokenSource();
 
-        var token = _running.Token;
+        var run = new CancellationTokenSource();
+        _running = run;
 
         _run.IsEnabled = false;
         _stop.IsVisible = true;
 
         try
         {
-            var result = await _client.ExecuteAsync(_query.Text, token).ConfigureAwait(true);
+            var result = await _client.ExecuteAsync(_query.Text, run.Token).ConfigureAwait(true);
 
-            Show(result);
+            if (IsCurrent(run)) Show(result);
         }
         catch (OperationCanceledException)
         {
-            _status.Text = Localizer.Get(StringKeys.DatabaseStopped);
+            if (IsCurrent(run)) _status.Text = Localizer.Get(StringKeys.DatabaseStopped);
         }
         catch (Exception ex)
         {
             // While typing, a query is invalid far more often than not: the
-            // message is the answer, not a failure of the panel.
+            // message is the answer, not a failure of the panel. A replaced
+            // run's failure is nobody's answer, so it is dropped rather than
+            // thrown out of a fire-and-forget task.
+            if (!IsCurrent(run)) return;
+
             _results.ItemsSource = null;
             _results.Columns.Clear();
             _status.Text = ex.Message;
         }
         finally
         {
-            _run.IsEnabled = true;
-            _stop.IsVisible = false;
-            _running = null;
+            if (IsCurrent(run))
+            {
+                _run.IsEnabled = true;
+                _stop.IsVisible = false;
+                _running = null;
+            }
         }
+    }
+
+    /// <summary>Whether this run is the one the panel is waiting on, rather than one it has replaced.</summary>
+    private bool IsCurrent(CancellationTokenSource run) => ReferenceEquals(_running, run);
+
+    /// <summary>Rereads the tables, so one created outside the panel since it was opened is listed.</summary>
+    private async Task RefreshAsync()
+    {
+        if (!_client.IsOpen) return;
+
+        try
+        {
+            await RefreshTablesAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            _status.Text = ex.Message;
+            ShowNothingOpen();
+        }
+    }
+
+    /// <summary>Closes the connection, and empties the tree and the results with it.</summary>
+    private async Task DisconnectAsync()
+    {
+        // A query still running is stopped first, and the connection is closed
+        // only once that query has let go of it: closing under a statement that
+        // is still reading would pull the connection away from it. Its answer,
+        // or its failure, is no longer wanted, so the run is no longer current.
+        var query = _runningQuery;
+
+        _running?.Cancel();
+        _running = null;
+
+        if (query is not null) await query.ConfigureAwait(true);
+
+        try
+        {
+            await _client.CloseAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            // Said rather than thrown: this runs from a button, and the panel
+            // has to stay usable whatever the connection did on the way out.
+            _status.Text = ex.Message;
+            ShowNothingOpen();
+            return;
+        }
+
+        ShowNothingOpen();
+        _status.Text = Localizer.Get(StringKeys.DatabaseDisconnected);
+    }
+
+    /// <summary>Starts a run and keeps it, so that a disconnect can wait for it.</summary>
+    private Task StartRunAsync()
+    {
+        _runningQuery = RunAsync();
+
+        return _runningQuery;
     }
 
     /// <summary>
@@ -260,7 +344,7 @@ public sealed class DatabasePanel : UserControl, IDisposable
         // keyword for a name is read as that table and nothing else.
         _query.Text = $"SELECT * FROM \"{table.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
 
-        return RunAsync();
+        return StartRunAsync();
     }
 
     /// <summary>Puts a result into the grid.</summary>
@@ -316,6 +400,9 @@ public sealed class DatabasePanel : UserControl, IDisposable
         _results.ItemsSource = null;
         _results.Columns.Clear();
         _run.IsEnabled = false;
+        _refresh.IsEnabled = false;
+        _disconnect.IsEnabled = false;
+        _stop.IsVisible = false;
 
         if (_status.Text is not { Length: > 0 })
             _status.Text = Localizer.Get(StringKeys.DatabaseNothingOpen);

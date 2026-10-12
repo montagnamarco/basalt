@@ -147,14 +147,27 @@ public sealed class AiChatPanel : UserControl
             TextWrapping = TextWrapping.Wrap
         };
 
-        _input.KeyDown += (_, e) =>
+        // Tunnelling, so this sees Enter before the box does. A multi-line
+        // TextBox takes Enter as a new line in its own bubbling handler, which
+        // marks the key handled first: a bubbling handler here never ran, and
+        // Enter wrote a line break instead of sending the question.
+        _input.AddHandler(InputElement.KeyDownEvent, (_, e) =>
         {
-            // Enter sends; Shift+Enter writes a new line, as every chat does.
+            // Shift+Enter writes a new line, as every chat does, so it is left
+            // to the box. An input method's keys are reported as
+            // Key.ImeProcessed rather than Enter, so the Enter that confirms a
+            // composition is not Key.Enter here and is not sent either.
             if (e.Key != Key.Enter || e.KeyModifiers.HasFlag(KeyModifiers.Shift)) return;
 
             e.Handled = true;
+
+            // Enter while an answer streams does nothing: the question stays in
+            // the box to be sent once the answer is finished. Stopping is the
+            // button's job, so a stray Enter cannot end an answer.
+            if (_running is not null) return;
+
             RequestSend();
-        };
+        }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
 
         _send = new Button { Content = Localizer.Get(StringKeys.AiSend), FontSize = PanelMetrics.FontSize };
         _send.Click += (_, _) => RequestSend();

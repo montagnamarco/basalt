@@ -123,6 +123,11 @@
   <data name="Database_Rows" xml:space="preserve"><value>{0} rows in {1} ms</value></data>
   <data name="Database_Capped" xml:space="preserve"><value>First {0} rows in {1} ms</value></data>
   <data name="Database_Affected" xml:space="preserve"><value>{0} rows changed in {1} ms</value></data>
+  <data name="Database_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Database_Disconnect" xml:space="preserve"><value>Disconnect</value></data>
+  <data name="Database_Disconnected" xml:space="preserve"><value>Disconnected.</value></data>
+  <data name="Database_NoFile" xml:space="preserve"><value>There is no database at {0}.</value></data>
+  <data name="Database_NotOpen" xml:space="preserve"><value>No database is open.</value></data>
   <data name="Tool_Database" xml:space="preserve"><value>Database</value></data>
   <data name="Git_NothingToCommit" xml:space="preserve"><value>No changes — the working tree is clean</value></data>
   <data name="Git_NothingStaged" xml:space="preserve"><value>Nothing staged yet</value></data>
@@ -635,12 +640,12 @@
   <data name="WinFormsDesigner_LibraryNotListed" xml:space="preserve"><value>{0} is not listed in the toolbox: {1}</value></data>
   <data name="WinFormsDesigner_DependencyListMissing" xml:space="preserve"><value>The project's libraries are not listed: {0} was not written by the build.</value></data>
   <data name="WinFormsDesigner_DependencyListUnreadable" xml:space="preserve"><value>The project's libraries are not listed: {0} could not be read: {1}</value></data>
+  <data name="WinFormsDesigner_PanelNotSelectable" xml:space="preserve"><value>A container's panel is not a control of its own. Select the container instead.</value></data>
   <data name="Editor_OnlyVbHtmlGenerated" xml:space="preserve"><value>Only a .vbhtml template is generated into Visual Basic.</value></data>
   <data name="Editor_SelectStatementsFirst" xml:space="preserve"><value>Select the statements to extract first.</value></data>
   <data name="Editor_SelectExpressionFirst" xml:space="preserve"><value>Select the expression to extract first.</value></data>
   <data name="Editor_ChangeNotWritten" xml:space="preserve"><value>The change could not be written.</value></data>
   <data name="Editor_SmartTagsNoDocumentArea" xml:space="preserve"><value>The changed documents were opened in memory but there is no document area to show them in. Save or reopen them to see the edit.</value></data>
-  <data name="WinFormsDesigner_PanelNotSelectable" xml:space="preserve"><value>A container's panel is not a control of its own. Select the container instead.</value></data>
   <data name="Status_NoBuildOutput" xml:space="preserve"><value>no build output to run</value></data>
   <data name="Debug_Starting" xml:space="preserve"><value>Starting {0}.</value></data>
   <data name="Debug_Building" xml:space="preserve"><value>Building before debugging…</value></data>

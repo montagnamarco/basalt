@@ -1,4 +1,5 @@
 using System.Data.Common;
+using Basalt.Core.Localization;
 using Microsoft.Data.Sqlite;
 
 namespace Basalt.Data;
@@ -36,12 +37,22 @@ public sealed record TableInfo(string Name, IReadOnlyList<ResultColumn> Columns)
 /// shape here — open, list, query — is what any other provider would need
 /// too, so adding one later is a second implementation rather than a redesign.
 ///
-/// Every call is cancellable. A query over a large table can take minutes,
-/// and an IDE that cannot be told to stop is one that has hung.
+/// Every call is cancellable, and none of them runs on the interface thread.
+/// A query over a large table can take minutes, and reading a large schema
+/// takes time too; an IDE that waits for either has hung. Cancelling a query
+/// interrupts the statement itself, since SQLite checks for it only between
+/// rows and one step of a large query would otherwise run to its end.
 /// </remarks>
 public sealed class DatabaseClient : IAsyncDisposable
 {
     private DbConnection? _connection;
+
+    /// <summary>
+    /// One operation on the connection at a time. The connection is not made
+    /// for two threads at once, so a read of the schema waits for a query that
+    /// is still running, and a close waits for both.
+    /// </summary>
+    private readonly SemaphoreSlim _gate = new(1, 1);
 
     /// <summary>The file this is connected to, or nothing.</summary>
     public string? Source { get; private set; }
@@ -62,7 +73,7 @@ public sealed class DatabaseClient : IAsyncDisposable
         await CloseAsync().ConfigureAwait(false);
 
         if (!File.Exists(path))
-            throw new FileNotFoundException($"There is no database at {path}.", path);
+            throw new FileNotFoundException(Localizer.Get(StringKeys.DatabaseNoFile, path), path);
 
         var builder = new SqliteConnectionStringBuilder
         {
@@ -100,14 +111,76 @@ public sealed class DatabaseClient : IAsyncDisposable
     /// SQLite's own catalogue, which is a table like any other. The internal
     /// ones it keeps for itself are left out: they are not the user's data
     /// and listing them buries what is.
+    ///
+    /// Read on a worker thread, so a large schema does not hold the window
+    /// while it is listed; the caller's continuation is back on its own thread.
     /// </remarks>
     public async Task<IReadOnlyList<TableInfo>> GetTablesAsync(CancellationToken ct = default)
     {
         if (_connection is null) return [];
 
+        return await OnWorkerAsync(connection => ReadTablesAsync(connection, ct), ct).ConfigureAwait(false);
+    }
+
+    /// <summary>The columns of one table.</summary>
+    public async Task<IReadOnlyList<ResultColumn>> GetColumnsAsync(
+        string table, CancellationToken ct = default)
+    {
+        if (_connection is null) return [];
+
+        return await OnWorkerAsync(connection => ReadColumnsAsync(connection, table, ct), ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Runs a statement and reports what came back.
+    /// </summary>
+    /// <remarks>
+    /// A SELECT gives rows; anything else gives a count. Both are answers, and
+    /// a panel that only understood one of them would say nothing at all
+    /// after an UPDATE.
+    ///
+    /// How long it took is reported because it is the first thing anyone
+    /// wants to know about a slow query.
+    /// </remarks>
+    public Task<QueryResult> ExecuteAsync(string sql, CancellationToken ct = default) =>
+        OnWorkerAsync(connection => ReadResultAsync(connection, sql, ct), ct);
+
+    /// <summary>How many rows are read before the rest are left.</summary>
+    public const int MaximumRows = 5000;
+
+    /// <summary>
+    /// Runs one piece of work on the connection, on a worker thread, after any
+    /// earlier piece has finished with the connection.
+    /// </summary>
+    /// <remarks>
+    /// This provider's reader does its work synchronously even through the
+    /// async methods, so reading on the caller's thread froze the whole window
+    /// until the read finished. The gate is released only when the work has
+    /// really finished, not when it was cancelled: that is what keeps a close
+    /// from pulling the connection away from a statement still running.
+    /// </remarks>
+    private async Task<T> OnWorkerAsync<T>(Func<DbConnection, Task<T>> work, CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+
+        try
+        {
+            var connection = _connection
+                ?? throw new InvalidOperationException(Localizer.Get(StringKeys.DatabaseNotOpen));
+
+            return await Task.Run(() => work(connection), ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private static async Task<IReadOnlyList<TableInfo>> ReadTablesAsync(DbConnection connection, CancellationToken ct)
+    {
         var names = new List<string>();
 
-        await using (var command = _connection.CreateCommand())
+        await using (var command = connection.CreateCommand())
         {
             command.CommandText =
                 """
@@ -125,18 +198,15 @@ public sealed class DatabaseClient : IAsyncDisposable
         var tables = new List<TableInfo>();
 
         foreach (var name in names)
-            tables.Add(new TableInfo(name, await GetColumnsAsync(name, ct).ConfigureAwait(false)));
+            tables.Add(new TableInfo(name, await ReadColumnsAsync(connection, name, ct).ConfigureAwait(false)));
 
         return tables;
     }
 
-    /// <summary>The columns of one table.</summary>
-    public async Task<IReadOnlyList<ResultColumn>> GetColumnsAsync(
-        string table, CancellationToken ct = default)
+    private static async Task<IReadOnlyList<ResultColumn>> ReadColumnsAsync(
+        DbConnection connection, string table, CancellationToken ct)
     {
-        if (_connection is null) return [];
-
-        await using var command = _connection.CreateCommand();
+        await using var command = connection.CreateCommand();
 
         // The table name cannot be a parameter — it is part of the statement,
         // not a value — so it is quoted, with any quote in it doubled.
@@ -152,58 +222,72 @@ public sealed class DatabaseClient : IAsyncDisposable
         return columns;
     }
 
-    /// <summary>
-    /// Runs a statement and reports what came back.
-    /// </summary>
-    /// <remarks>
-    /// A SELECT gives rows; anything else gives a count. Both are answers, and
-    /// a panel that only understood one of them would say nothing at all
-    /// after an UPDATE.
-    ///
-    /// How long it took is reported because it is the first thing anyone
-    /// wants to know about a slow query.
-    /// </remarks>
-    public async Task<QueryResult> ExecuteAsync(string sql, CancellationToken ct = default)
+    private static async Task<QueryResult> ReadResultAsync(DbConnection connection, string sql, CancellationToken ct)
     {
-        if (_connection is null)
-            throw new InvalidOperationException("No database is open.");
+        ct.ThrowIfCancellationRequested();
 
         var started = System.Diagnostics.Stopwatch.StartNew();
 
-        await using var command = _connection.CreateCommand();
-        command.CommandText = sql;
+        // Registered for the length of the read: a Stop after the statement has
+        // finished finds no statement running, and SQLite then has nothing to
+        // interrupt.
+        using var interrupt = ct.Register(() => Interrupt(connection));
 
-        await using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
-
-        var columns = new List<ResultColumn>();
-
-        for (var i = 0; i < reader.FieldCount; i++)
-            columns.Add(new ResultColumn(reader.GetName(i), reader.GetDataTypeName(i)));
-
-        if (columns.Count == 0)
-            return new QueryResult([], [], reader.RecordsAffected, started.Elapsed);
-
-        var rows = new List<IReadOnlyList<string?>>();
-
-        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+        try
         {
-            var row = new string?[columns.Count];
+            await using var command = connection.CreateCommand();
+            command.CommandText = sql;
 
-            for (var i = 0; i < columns.Count; i++)
-                row[i] = reader.IsDBNull(i) ? null : Format(reader.GetValue(i));
+            await using var reader = await command.ExecuteReaderAsync(ct).ConfigureAwait(false);
 
-            rows.Add(row);
+            var columns = new List<ResultColumn>();
 
-            // A query that returns a million rows would fill memory before it
-            // filled the grid; the rest are a page away, not lost.
-            if (rows.Count >= MaximumRows) break;
+            for (var i = 0; i < reader.FieldCount; i++)
+                columns.Add(new ResultColumn(reader.GetName(i), reader.GetDataTypeName(i)));
+
+            if (columns.Count == 0)
+                return new QueryResult([], [], reader.RecordsAffected, started.Elapsed);
+
+            var rows = new List<IReadOnlyList<string?>>();
+
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                var row = new string?[columns.Count];
+
+                for (var i = 0; i < columns.Count; i++)
+                    row[i] = reader.IsDBNull(i) ? null : Format(reader.GetValue(i));
+
+                rows.Add(row);
+
+                // A query that returns a million rows would fill memory before it
+                // filled the grid; the rest are a page away, not lost.
+                if (rows.Count >= MaximumRows) break;
+            }
+
+            return new QueryResult(columns, rows, reader.RecordsAffected, started.Elapsed);
         }
-
-        return new QueryResult(columns, rows, reader.RecordsAffected, started.Elapsed);
+        catch (SqliteException) when (ct.IsCancellationRequested)
+        {
+            // SQLite reports an interrupted statement as an error. The caller
+            // asked for the stop, so it is reported as one.
+            throw new OperationCanceledException(ct);
+        }
     }
 
-    /// <summary>How many rows are read before the rest are left.</summary>
-    public const int MaximumRows = 5000;
+    /// <summary>
+    /// Asks SQLite to stop the statement running on this connection.
+    /// </summary>
+    /// <remarks>
+    /// Microsoft.Data.Sqlite's <c>DbCommand.Cancel</c> does nothing, so the
+    /// native call is made on the connection's handle. sqlite3_interrupt is the
+    /// one SQLite call that is safe to make from another thread than the one
+    /// running the statement.
+    /// </remarks>
+    private static void Interrupt(DbConnection connection)
+    {
+        if (connection is SqliteConnection { Handle: { } handle })
+            SQLitePCL.raw.sqlite3_interrupt(handle);
+    }
 
     /// <summary>
     /// A value as it should read in a grid.
@@ -223,12 +307,23 @@ public sealed class DatabaseClient : IAsyncDisposable
 
     public async Task CloseAsync()
     {
-        if (_connection is null) return;
+        // Waits for a read that is still on the connection. Closing under it
+        // would take the connection away from a statement that is using it.
+        await _gate.WaitAsync().ConfigureAwait(false);
 
-        await _connection.DisposeAsync().ConfigureAwait(false);
+        try
+        {
+            if (_connection is null) return;
 
-        _connection = null;
-        Source = null;
+            await _connection.DisposeAsync().ConfigureAwait(false);
+
+            _connection = null;
+            Source = null;
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     public async ValueTask DisposeAsync() => await CloseAsync().ConfigureAwait(false);

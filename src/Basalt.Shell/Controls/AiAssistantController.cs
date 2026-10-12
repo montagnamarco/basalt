@@ -105,7 +105,7 @@ internal sealed class AiAssistantController
 
         if (!Enum.TryParse<AiVendor>(settings.Vendor, out var vendor))
         {
-            _panel.ShowStatus(Localizer.Get(StringKeys.AiNoAssistant));
+            RefuseQuestion(request, Localizer.Get(StringKeys.AiNoAssistant));
             return;
         }
 
@@ -113,7 +113,7 @@ internal sealed class AiAssistantController
 
         if (_keys.Get(vendor) is not { Length: > 0 } apiKey)
         {
-            _panel.ShowStatus(Localizer.Get(StringKeys.AiNeedsKey, provider.DisplayName));
+            RefuseQuestion(request, Localizer.Get(StringKeys.AiNeedsKey, provider.DisplayName));
             return;
         }
 
@@ -208,6 +208,17 @@ internal sealed class AiAssistantController
             // change it.
             if (_clearAfterReply) ClearConversation();
         }
+    }
+
+    /// <summary>
+    /// A question that cannot be sent, because no assistant or key is set up:
+    /// the panel emptied its box when the question was sent, so the text goes
+    /// back in it, and the status says what to do before it can be asked.
+    /// </summary>
+    private void RefuseQuestion(AiRequest request, string status)
+    {
+        _panel.InputText = request.Question;
+        _panel.ShowStatus(status);
     }
 
     private void ClearConversation()
@@ -306,7 +317,10 @@ internal sealed class AiAssistantController
         if (_viewModel.ActiveDocument is not { } document) return "";
 
         var editor = _currentEditor();
-        var selected = editor is { SelectionLength: > 0 } ? editor.SelectedText : null;
+
+        // The selection is code from the open file, so the switch that keeps
+        // the file out of the question keeps the selection out too.
+        var selected = settings.SendFileContext && editor is { SelectionLength: > 0 } ? editor.SelectedText : null;
 
         var path = root is not null && document.FilePath.StartsWith(root, StringComparison.Ordinal)
             ? Path.GetRelativePath(root, document.FilePath).Replace('\\', '/')
