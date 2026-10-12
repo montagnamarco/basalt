@@ -3509,7 +3509,8 @@ public partial class MainWindow : Window
 
         if (!confirmed) return;
 
-        await RunGitAsync(git => git.DiscardChangesAsync([file.Path]));
+        if (await RunGitAsync(git => git.DiscardChangesAsync([file.Path])))
+            GitPaths.ReloadDiscarded(ViewModel.OpenDocuments, AbsolutePathOf(file.Path));
     }
 
     /// <summary>Asks the user to confirm something that cannot be undone.</summary>
@@ -3583,9 +3584,10 @@ public partial class MainWindow : Window
 
         if (ViewModel.SolutionPath is not { Length: > 0 } solution) return path;
 
-        var root = Path.GetDirectoryName(Path.GetFullPath(solution));
+        var folder = Path.GetDirectoryName(Path.GetFullPath(solution));
+        if (folder is null) return path;
 
-        return root is null ? path : Path.Combine(root, path);
+        return Path.Combine(GitPaths.RepositoryRootOf(folder) ?? folder, path);
     }
 
     /// <summary>

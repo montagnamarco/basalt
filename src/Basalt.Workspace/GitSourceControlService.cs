@@ -124,8 +124,11 @@ public sealed class GitSourceControlService : ISourceControlService
 
         // With -z the records are NUL-separated: no ambiguity for file names
         // that contain spaces or quotes.
-        foreach (var entry in result.Output.Split('\0', StringSplitOptions.RemoveEmptyEntries))
+        var records = result.Output.Split('\0', StringSplitOptions.RemoveEmptyEntries);
+
+        for (var index = 0; index < records.Length; index++)
         {
+            var entry = records[index];
             if (entry.Length < 4) continue;
 
             var indexStatus = entry[0];
@@ -137,6 +140,14 @@ public sealed class GitSourceControlService : ISourceControlService
 
             if (workTreeStatus != ' ')
                 changes.Add(new FileChange(path, MapStatus(workTreeStatus), Staged: false));
+
+            // A rename or a copy is followed by its original path as a record
+            // of its own. That is not a change, and read as a status line it
+            // turned into a bogus row for a file named after the tail of the
+            // original path.
+            // An unstaged rename (a new name added with "git add -N") reports
+            // it in the work tree column, with the same trailing record.
+            if (indexStatus is 'R' or 'C' || workTreeStatus is 'R' or 'C') index++;
         }
 
         return changes;
@@ -144,12 +155,32 @@ public sealed class GitSourceControlService : ISourceControlService
 
     public async Task<string> GetDiffAsync(string filePath, bool staged, CancellationToken ct = default)
     {
+        var rootPath = RootPathspec(filePath);
+
         string[] arguments = staged
-            ? ["diff", "--cached", "--", filePath]
-            : ["diff", "--", filePath];
+            ? ["diff", "--cached", "--", rootPath]
+            : ["diff", "--", rootPath];
 
         return (await RunAsync(arguments, ct: ct).ConfigureAwait(false)).Output;
     }
+
+    /// <summary>
+    /// A path as git reports it: relative to the top of the repository.
+    ///
+    /// The solution is not always at that top. In a solution inside a
+    /// subfolder of its repository, a plain path is read relative to the
+    /// folder git runs in, so "add" and "diff" were given a path that does
+    /// not exist there and did nothing, with no error to show for it. The
+    /// ":(top,literal)" magic anchors the path at the top, and "literal"
+    /// keeps a name such as "Sheet[1].vb" from being read as a pattern.
+    /// </summary>
+    /// <remarks>
+    /// A full path, such as the editor's file for its change margin, is left
+    /// unanchored: git reads an absolute path inside the work tree as it is,
+    /// and anchored at the top it named a file that does not exist.
+    /// </remarks>
+    private static string RootPathspec(string path) =>
+        Path.IsPathRooted(path) ? ":(literal)" + path : ":(top,literal)" + path;
 
     /// <summary>
     /// What a commit changed, or what lies between two of them.
@@ -192,11 +223,38 @@ public sealed class GitSourceControlService : ISourceControlService
             .Where(line => line.Length > 0)];
     }
 
+    /// <summary>
+    /// Stages files. A refusal is thrown, as a commit's is: the caller reports
+    /// it in the output, where a silent refusal left the list unchanged with
+    /// no reason shown.
+    /// </summary>
     public Task StageAsync(IReadOnlyList<string> paths, CancellationToken ct = default) =>
-        RunAsync(["add", "--", .. paths], ct: ct);
+        RunOrThrowAsync(["add", "--", .. paths.Select(RootPathspec)], ct);
 
-    public Task UnstageAsync(IReadOnlyList<string> paths, CancellationToken ct = default) =>
-        RunAsync(["restore", "--staged", "--", .. paths], ct: ct);
+    /// <summary>
+    /// Takes files out of the index, leaving the working files as they are.
+    /// </summary>
+    public async Task UnstageAsync(IReadOnlyList<string> paths, CancellationToken ct = default)
+    {
+        var rootPaths = paths.Select(RootPathspec).ToArray();
+
+        // "restore --staged" copies HEAD back into the index, so it needs a
+        // HEAD. A repository with no commit yet has none: git refused, the
+        // refusal was discarded, and the file stayed staged. There, removing
+        // the index entry is all that unstaging means.
+        if (await HasCommitAsync(ct).ConfigureAwait(false))
+            await RunOrThrowAsync(["restore", "--staged", "--", .. rootPaths], ct).ConfigureAwait(false);
+        else
+            await RunOrThrowAsync(["rm", "--cached", "--quiet", "--", .. rootPaths], ct).ConfigureAwait(false);
+    }
+
+    private async Task<bool> HasCommitAsync(CancellationToken ct)
+    {
+        var result = await RunAsync(["rev-parse", "--verify", "--quiet", "HEAD"], ct: ct)
+            .ConfigureAwait(false);
+
+        return result.ExitCode == 0;
+    }
 
     public async Task CommitAsync(
         string message, bool amend = false, CancellationToken ct = default)
@@ -408,7 +466,7 @@ public sealed class GitSourceControlService : ISourceControlService
 
         foreach (var path in paths)
         {
-            var status = await RunAsync(["status", "--porcelain=v1", "--", path], ct: ct)
+            var status = await RunAsync(["status", "--porcelain=v1", "--", RootPathspec(path)], ct: ct)
                 .ConfigureAwait(false);
 
             (status.Output.TrimStart().StartsWith("??", StringComparison.Ordinal)
@@ -417,11 +475,13 @@ public sealed class GitSourceControlService : ISourceControlService
         }
 
         if (untracked.Count > 0)
-            await RunOrThrowAsync(["clean", "-f", "--", .. untracked], ct).ConfigureAwait(false);
+            await RunOrThrowAsync(["clean", "-f", "--", .. untracked.Select(RootPathspec)], ct)
+                .ConfigureAwait(false);
 
         if (tracked.Count > 0)
             await RunOrThrowAsync(
-                ["restore", "--staged", "--worktree", "--", .. tracked], ct).ConfigureAwait(false);
+                ["restore", "--staged", "--worktree", "--", .. tracked.Select(RootPathspec)], ct)
+                .ConfigureAwait(false);
     }
 
     public async Task<UpstreamState> GetUpstreamStateAsync(CancellationToken ct = default)

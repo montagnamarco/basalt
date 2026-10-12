@@ -99,6 +99,7 @@ public sealed class DiffView : UserControl
         var lines = new List<DiffLine>();
         var oldLine = 0;
         var newLine = 0;
+        var inHunk = false;
 
         foreach (var raw in unifiedDiff.Split('\n'))
         {
@@ -107,17 +108,29 @@ public sealed class DiffView : UserControl
             if (text.StartsWith("@@", StringComparison.Ordinal))
             {
                 (oldLine, newLine) = ParseHunkHeader(text);
+                inHunk = true;
                 lines.Add(new DiffLine(DiffLineKind.Header, text, null, null));
                 continue;
             }
 
-            // Everything before the first hunk is git's own preamble.
-            if (text.StartsWith("diff ", StringComparison.Ordinal) ||
-                text.StartsWith("index ", StringComparison.Ordinal) ||
-                text.StartsWith("--- ", StringComparison.Ordinal) ||
-                text.StartsWith("+++ ", StringComparison.Ordinal) ||
+            // A "diff " line starts a file's own preamble again, so the next
+            // "---" and "+++" are that file's headers and not changed lines.
+            if (text.StartsWith("diff ", StringComparison.Ordinal))
+            {
+                inHunk = false;
+                lines.Add(new DiffLine(DiffLineKind.Header, text, null, null));
+                continue;
+            }
+
+            // The preamble is git's own text. Only the "---" and "+++" lines
+            // need the hunk test: inside a hunk every line starts with a
+            // marker, so a removed line "-- note" is "--- note" and must not
+            // pass for the file header it looks like.
+            if (text.StartsWith("index ", StringComparison.Ordinal) ||
                 text.StartsWith("new file", StringComparison.Ordinal) ||
-                text.StartsWith("deleted file", StringComparison.Ordinal))
+                text.StartsWith("deleted file", StringComparison.Ordinal) ||
+                (!inHunk && (text.StartsWith("--- ", StringComparison.Ordinal) ||
+                             text.StartsWith("+++ ", StringComparison.Ordinal))))
             {
                 lines.Add(new DiffLine(DiffLineKind.Header, text, null, null));
                 continue;

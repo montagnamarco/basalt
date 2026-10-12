@@ -32,6 +32,50 @@ public sealed class GitServiceTests : IDisposable
         System.Diagnostics.Process.Start(info)!.WaitForExit();
     }
 
+    /// <remarks>
+    /// The editor's change margin asks with the file's full path. Paths are
+    /// anchored at the top of the repository so a solution in a subfolder can
+    /// stage, and anchored there a full path named nothing: the margin showed
+    /// no change at all. Reintroduced once (every path anchored): the diff was empty.
+    /// </remarks>
+    [Fact]
+    public async Task TheDiffOfAFileAskedForByItsFullPathFromASubfolderShowsTheChange()
+    {
+        var folder = Directory.CreateDirectory(Path.Combine(_root, "src", "App")).FullName;
+        var file = Path.Combine(folder, "Module1.vb");
+        await File.WriteAllTextAsync(file, "Module Module1\nEnd Module\n");
+        Run("add", ".");
+        Run("commit", "-m", "first");
+        await File.WriteAllTextAsync(file, "Module Module1\n    Sub Main()\n    End Sub\nEnd Module\n");
+        var git = new GitSourceControlService(folder);
+
+        var diff = await git.GetDiffAsync(file, staged: false);
+
+        Assert.Contains("+    Sub Main()", diff, StringComparison.Ordinal);
+    }
+
+    /// <remarks>
+    /// "git status -z" follows a rename with its original path as a record of its
+    /// own, for an unstaged rename (the new name added with "git add -N") too.
+    /// Reintroduced once (only the index column checked): two bogus changes to
+    /// ".vb", the original path read as status lines, came back too.
+    /// </remarks>
+    [Fact]
+    public async Task AnUnstagedRenameIsOneChangeWithoutABogusRowForTheOldName()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_root, "Old.vb"), "Module M\nEnd Module\n");
+        Run("add", ".");
+        Run("commit", "-m", "first");
+        File.Move(Path.Combine(_root, "Old.vb"), Path.Combine(_root, "New.vb"));
+        Run("add", "-N", "New.vb");
+
+        var status = await _git.GetStatusAsync();
+
+        // Read as status lines, the record "Old.vb" became two changes to ".vb".
+        var change = Assert.Single(status);
+        Assert.Equal("New.vb", change.Path);
+    }
+
     [Fact]
     public async Task RiconosceUnRepositoryGit()
     {
