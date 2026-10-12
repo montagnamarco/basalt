@@ -151,12 +151,35 @@ public sealed class BlazorTemplateModesTests : IClassFixture<BlazorTemplateModes
 
 public sealed class BlazorTemplateModesFixture : IAsyncLifetime
 {
-    public string Root { get; } = Path.Combine(Path.GetTempPath(), "basalt-blazor-modes", Guid.NewGuid().ToString("N"));
+    /// <remarks>
+    /// Under the temporary folder's real path. On macOS that folder is reached through
+    /// the /var symlink: the WebAssembly client then reported itself under /var while
+    /// the host's reference to it resolved under /private/var, and the SDK's static web
+    /// assets check failed "Unable to find a project reference". The same solution
+    /// builds when reached through /private/var.
+    /// </remarks>
+    public string Root { get; } = Path.Combine(RealPath(Path.GetTempPath()), "basalt-blazor-modes", Guid.NewGuid().ToString("N"));
     public string Hive => Path.Combine(Root, "template-hive");
     public string NuGetConfig => Path.Combine(Root, "nuget.config");
     public string PackageVersion { get; } = "1.0.0-f12." + Guid.NewGuid().ToString("N");
     private string _repository = "";
     private string _logs = "";
+
+    /// <summary>The path with every symbolic link along it resolved.</summary>
+    private static string RealPath(string path)
+    {
+        var resolved = Path.GetPathRoot(Path.GetFullPath(path))!;
+        foreach (var part in Path.GetFullPath(path).Substring(resolved.Length)
+                     .Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
+        {
+            resolved = Path.Combine(resolved, part);
+            // A link may point at another link; forty hops is the limit Linux sets too.
+            for (var hops = 0; hops < 40 && new DirectoryInfo(resolved).LinkTarget is { } target; hops++)
+                resolved = Path.GetFullPath(target, Path.GetDirectoryName(resolved)!);
+        }
+
+        return resolved;
+    }
 
     public async ValueTask InitializeAsync()
     {
