@@ -69,7 +69,7 @@ public sealed class AddItemDialog : Window
         Content = new StackPanel
         {
             Margin = new Thickness(20),
-            Spacing = 10,
+            Spacing = Spacing.Normal,
             Children =
             {
                 new TextBlock { Text = Localizer.Get(StringKeys.AddItemTemplates) },

@@ -59,8 +59,12 @@ public class MacBundleTests
         var text = File.ReadAllText(
             Path.Combine(RepositoryRoot, "src", "Basalt.Shell", "Info.plist"));
 
-        foreach (var extension in new[] { "vb", "bas", "vbhtml", "slnx" })
+        foreach (var extension in new[] { "vb", "vbhtml", "slnx" })
             Assert.Contains($"<string>{extension}</string>", text, StringComparison.Ordinal);
+
+        // QuickBASIC is hidden behind IdeFeatures.LegacyBasic, off by default, and
+        // the bundle cannot follow a switch: Finder must not offer Basalt for a .bas.
+        Assert.DoesNotContain("<string>bas</string>", text, StringComparison.Ordinal);
     }
 
     [Fact]
