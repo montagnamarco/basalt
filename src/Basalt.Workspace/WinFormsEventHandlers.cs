@@ -101,11 +101,40 @@ public static class WinFormsEventHandlers
             ?? throw new FormatException(Localizer.Get(StringKeys.WinFormsDesignerPartialClassNotFound));
     }
 
+    /// <summary>
+    /// Visual Basic's own names for the framework types it has a keyword for,
+    /// as Visual Studio writes them: "sender As Object", not "sender As
+    /// Global.System.Object". A keyword cannot be shadowed, so it needs no
+    /// qualification; every other type keeps its Global.-qualified name.
+    /// </summary>
+    private static readonly Dictionary<string, string> Keywords = new(StringComparer.Ordinal)
+    {
+        ["System.Object"] = "Object",
+        ["System.String"] = "String",
+        ["System.Boolean"] = "Boolean",
+        ["System.Byte"] = "Byte",
+        ["System.SByte"] = "SByte",
+        ["System.Char"] = "Char",
+        ["System.Int16"] = "Short",
+        ["System.UInt16"] = "UShort",
+        ["System.Int32"] = "Integer",
+        ["System.UInt32"] = "UInteger",
+        ["System.Int64"] = "Long",
+        ["System.UInt64"] = "ULong",
+        ["System.Single"] = "Single",
+        ["System.Double"] = "Double",
+        ["System.Decimal"] = "Decimal",
+        ["System.DateTime"] = "Date",
+    };
+
     private static string TypeName(Type type)
     {
         if (type.IsByRef) return TypeName(type.GetElementType()!);
         if (type.IsArray) return TypeName(type.GetElementType()!) + "(" + new string(',', type.GetArrayRank() - 1) + ")";
         if (type.IsGenericType) throw new NotSupportedException(Localizer.Get(StringKeys.WinFormsDesignerGenericEventArgumentsUnsupported));
+
+        // By name, not by Type identity: the control may come from a design context's own load.
+        if (type.FullName is { } fullName && Keywords.TryGetValue(fullName, out var keyword)) return keyword;
         return "Global." + type.FullName!.Replace('+', '.');
     }
 }
