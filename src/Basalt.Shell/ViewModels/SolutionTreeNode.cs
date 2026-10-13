@@ -51,6 +51,15 @@ public sealed partial class SolutionTreeNode : ObservableObject
     /// <summary>The generated companion opened when this form enters the designer.</summary>
     public string? DesignerPath { get; internal set; }
 
+    /// <summary>
+    /// The folder a project node was built from. A folder under a solution
+    /// that holds exactly one project file is shown as that project, whose
+    /// <see cref="Path"/> is the project file; sessions saved before that
+    /// remember the folder, so the folder path is the alias they restore by.
+    /// Null for every other node.
+    /// </summary>
+    public string? FolderPath { get; internal set; }
+
     public bool IsForm => DesignerPath is not null;
 
     /// <summary>
@@ -77,8 +86,9 @@ public sealed partial class SolutionTreeNode : ObservableObject
     /// Whether Rename and Delete apply to this node.
     ///
     /// False for the solution and for a project: their own path is the
-    /// .sln/.slnx or .csproj/.vbproj the tree was loaded from
-    /// (<see cref="SolutionExplorerViewModel.LoadedPath"/>). Renaming or
+    /// .sln/.slnx or .csproj/.vbproj the node stands for, the one the tree
+    /// was loaded from (<see cref="SolutionExplorerViewModel.LoadedPath"/>)
+    /// or the project file of a folder under a solution. Renaming or
     /// deleting that file out from under the open session leaves
     /// <c>ReloadAsync</c> reopening a path that no longer exists.
     /// </summary>

@@ -357,10 +357,11 @@ public sealed class UserJourneyProjectTests : IDisposable
         var vm = (MainWindowViewModel)w.DataContext!;
         var explorer = w.SolutionExplorerForTests!;
 
-        await WaitUntilAsync(host, () => Flatten(vm.Explorer.Roots).Count(n => n.Name.EndsWith(".vbproj")) >= 2,
+        // Each project is the node of its folder, named by the project, not by its file.
+        await WaitUntilAsync(host, () => Flatten(vm.Explorer.Roots).Count(n => n.Kind == NodeKind.Project) >= 2,
             TimeSpan.FromSeconds(10));
 
-        var appNode = Flatten(vm.Explorer.Roots).Single(n => n.Name == "App.vbproj");
+        var appNode = Flatten(vm.Explorer.Roots).Single(n => n.Kind == NodeKind.Project && n.Path == app);
         explorer.TreeForTests.SelectedItem = appNode;
 
         InvokeMenu(w, L(StringKeys.MenuProject), L(StringKeys.MenuProjectReferences));
@@ -447,10 +448,10 @@ public sealed class UserJourneyProjectTests : IDisposable
         var vm = (MainWindowViewModel)w.DataContext!;
         var explorer = w.SolutionExplorerForTests!;
 
-        await WaitUntilAsync(host, () => Flatten(vm.Explorer.Roots).Any(n => n.Name == "Lib.vbproj"),
+        await WaitUntilAsync(host, () => Flatten(vm.Explorer.Roots).Any(n => n.Kind == NodeKind.Project && n.Name == "Lib"),
             TimeSpan.FromSeconds(10));
 
-        explorer.TreeForTests.SelectedItem = Flatten(vm.Explorer.Roots).Single(n => n.Name == "Lib.vbproj");
+        explorer.TreeForTests.SelectedItem = Flatten(vm.Explorer.Roots).Single(n => n.Kind == NodeKind.Project && n.Name == "Lib");
 
         InvokeMenu(w, L(StringKeys.MenuProject), L(StringKeys.MenuProjectAddWindow));
         var dialog = await WaitForDialogAsync(host);

@@ -233,8 +233,10 @@ public sealed class UserJourneyShellTests : IDisposable
         Assert.Equal(Path.GetFullPath(created.SolutionPath), Path.GetFullPath(vm.SolutionPath!));
         Assert.NotNull(vm.StartupProject);
 
-        var names = Flatten(vm.Explorer.Roots).Select(n => n.Name).ToList();
-        Assert.Contains(Path.GetFileName(created.ProjectPath), names);
+        // The project is the node itself, named as Visual Studio names it, and stands for its file.
+        Assert.Contains(Flatten(vm.Explorer.Roots), n => n.Kind == NodeKind.Project
+            && n.Name == Path.GetFileNameWithoutExtension(created.ProjectPath)
+            && Path.GetFullPath(n.Path) == Path.GetFullPath(created.ProjectPath));
     }
 
     private static IEnumerable<SolutionTreeNode> Flatten(IEnumerable<SolutionTreeNode> nodes)

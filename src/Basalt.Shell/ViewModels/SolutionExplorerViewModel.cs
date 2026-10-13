@@ -143,7 +143,7 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         { IsExpanded = true };
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(solutionOrProjectPath));
-        if (directory is not null) PopulateFrom(root, directory);
+        if (directory is not null) PopulateFrom(root, directory, inSolution: isSolution);
 
         Roots.Add(root);
         Loaded?.Invoke(this, EventArgs.Empty);
@@ -189,7 +189,10 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
 
     private bool SelectPath(SolutionTreeNode node, string path, List<SolutionTreeNode> ancestors)
     {
-        if (string.Equals(node.Path, path, StringComparison.Ordinal))
+        // A project under a solution is also named by its folder, so a
+        // selection saved before it became a project node still finds it.
+        if (string.Equals(node.Path, path, StringComparison.Ordinal)
+            || string.Equals(node.FolderPath, path, StringComparison.Ordinal))
         {
             if (SelectedNode is not null) SelectedNode.IsSelected = false;
             SelectedNode = node;
@@ -220,7 +223,15 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
                 yield return descendant;
     }
 
-    private void PopulateFrom(SolutionTreeNode parent, string directory)
+    /// <summary>
+    /// Lists a folder's subfolders and files under <paramref name="parent"/>.
+    /// </summary>
+    /// <param name="inSolution">
+    /// Whether the tree is a solution's. Only then does a folder holding one
+    /// project file stand for that project; a project opened alone keeps its
+    /// folders as they were.
+    /// </param>
+    private void PopulateFrom(SolutionTreeNode parent, string directory, bool inSolution)
     {
         // The root already stands for the solution or project file itself, so
         // listing it again among its own children would duplicate it.
@@ -233,8 +244,18 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
             var name = Path.GetFileName(subdirectory);
             if (!ShowAllFiles && Ignored.Contains(name)) continue;
 
-            var node = new SolutionTreeNode(name, subdirectory, NodeKind.Folder);
-            PopulateFrom(node, subdirectory);
+            // The folder of one project is that project, as Visual Studio shows
+            // it: its node is the project file, and the file is then not listed
+            // again inside it, as for the root. A folder with none, or with two
+            // or more, stays a folder.
+            var projectFile = inSolution ? SoleProjectFileIn(subdirectory) : null;
+            var node = projectFile is null
+                ? new SolutionTreeNode(name, subdirectory, NodeKind.Folder)
+                : new SolutionTreeNode(Path.GetFileNameWithoutExtension(projectFile), projectFile, NodeKind.Project)
+                {
+                    FolderPath = subdirectory
+                };
+            PopulateFrom(node, subdirectory, inSolution);
 
             // Shown even with nothing in it yet: a folder the user just
             // created from "New Folder…" has no files the moment it exists,
@@ -305,6 +326,24 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
 
             parent.Children.Add(node);
         }
+    }
+
+    /// <summary>
+    /// The project file a folder holds when it holds exactly one, or null when
+    /// it holds none or several: a folder with two projects has no single
+    /// project to stand for it, so both project files stay plain files in it.
+    /// </summary>
+    private static string? SoleProjectFileIn(string directory)
+    {
+        string? found = null;
+        foreach (var file in Directory.EnumerateFiles(directory))
+        {
+            if (Path.GetExtension(file).ToLowerInvariant() is not (".vbproj" or ".csproj")) continue;
+            if (found is not null) return null;
+            found = file;
+        }
+
+        return found;
     }
 
     private static IEnumerable<string> ResourceCompanions(IEnumerable<string> files, string formStem) =>

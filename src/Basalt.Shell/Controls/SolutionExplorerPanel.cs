@@ -202,7 +202,10 @@ public sealed partial class SolutionExplorerPanel : UserControl
 
         void Walk(SolutionTreeNode node)
         {
-            if (node.Path is { Length: > 0 } path && wanted.Contains(path))
+            // A project under a solution was a folder in a session saved before
+            // it became a project node, so its folder path opens it too.
+            if (node.Path is { Length: > 0 } path
+                && (wanted.Contains(path) || (node.FolderPath is { } folder && wanted.Contains(folder))))
                 node.IsExpanded = true;
 
             foreach (var child in node.Children) Walk(child);
