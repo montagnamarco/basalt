@@ -295,6 +295,32 @@
   </Style>
 
   <!--
+    The close button on a document tab.
+
+    Dock templates it with its own button theme, which leaves a grey square
+    and a glyph that is laid out 0 pixels wide: measured in both themes, the
+    tab's close Path arranged to 0 by 12, so only the square showed. This gives
+    the tab the same transparent button and glyph size as the panels' title
+    bars, with the hover fill the rest of the chrome uses.
+  -->
+  <Style Selector="dock|DocumentTabStripItem Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="dock|DocumentTabStripItem Button:pointerover">
+    <Setter Property="Background" Value="{DynamicResource ListHoverBackgroundBrush}" />
+  </Style>
+
+  <Style Selector="dock|DocumentTabStripItem Path#PART_ClosePath">
+    <Setter Property="Width" Value="11" />
+    <Setter Property="Height" Value="11" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Fill" Value="{DynamicResource DockTabForegroundBrush}" />
+  </Style>
+
+  <!--
     The Designer / XAML switch.
 
     Radio buttons for the behaviour, drawn as flat tabs: the native bullet

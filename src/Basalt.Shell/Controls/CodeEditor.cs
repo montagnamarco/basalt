@@ -198,8 +198,11 @@ public sealed partial class CodeEditor : UserControl
 
         if (name is null) return;
 
-        _editor.SyntaxHighlighting = AvaloniaEdit.Highlighting
-            .HighlightingManager.Instance.GetDefinition(name);
+        // VB is the one built-in whose colours must follow the theme: its
+        // stock definition is fixed for a white page. See VisualBasicHighlighting.
+        _editor.SyntaxHighlighting = name == "VB"
+            ? VisualBasicHighlighting.For(IdeThemes.IsDark(_theme))
+            : AvaloniaEdit.Highlighting.HighlightingManager.Instance.GetDefinition(name);
     }
 
     /// <summary>
@@ -1046,7 +1049,11 @@ public sealed partial class CodeEditor : UserControl
         if (theme != _theme)
         {
             _theme = theme;
-            _textMate?.SetTheme(theme);
+
+            // TextMate can be re-themed in place. A built-in definition cannot,
+            // so it is chosen again for the new theme.
+            if (_textMate is not null) _textMate.SetTheme(theme);
+            else ApplySyntaxHighlighting();
         }
 
         _editor.FontFamily = new FontFamily(editor.FontFamily);
