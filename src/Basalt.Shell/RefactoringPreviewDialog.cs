@@ -56,8 +56,14 @@ public sealed class RefactoringPreviewDialog : Window
         };
 
         // Focused when the dialog opens: the user is deciding yes or no, and
-        // should be able to answer from the keyboard.
-        Opened += (_, _) => apply.Focus();
+        // should be able to answer from the keyboard. A refused change has
+        // nothing to apply, and a disabled Apply takes no focus: Cancel does,
+        // so Enter or Esc still closes the dialog.
+        Opened += (_, _) =>
+        {
+            if (preview.CanApply) apply.Focus();
+            else cancel.Focus();
+        };
     }
 
     internal bool CanApply => preview_CanApply;

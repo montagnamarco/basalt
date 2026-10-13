@@ -48,7 +48,11 @@ public sealed partial class MsBuildBuildService : IBuildService
     // WaitForExitAsync waiting for EOF even though the build has finished.
     public async Task<BuildResult> BuildAsync(string projectPath, string configuration = "Debug", CancellationToken ct = default)
         => await RunAsync(projectPath,
-            ["build", projectPath, "-c", configuration, "--nologo", "-v", "normal", "-nr:false",
+            // Minimal, as Visual Studio shows a build: errors, warnings, the
+            // assembly produced and the outcome. "normal" filled the Output
+            // panel with the compiler's whole command line and the compiler
+            // server's pipe messages; the diagnostics are the same lines.
+            ["build", projectPath, "-c", configuration, "--nologo", "-v", "minimal", "-nr:false",
              .. await Compatibility.GetArgumentsAsync(projectPath, ct).ConfigureAwait(false)], ct).ConfigureAwait(false);
 
     public async Task<BuildResult> RestoreAsync(string projectPath, CancellationToken ct = default)

@@ -5,7 +5,8 @@ namespace Basalt.Tests;
 
 /// <summary>
 /// The output samples used here are copied from real runs of
-/// "dotnet build -v normal" on .NET 10, including the indentation and node
+/// "dotnet build" on .NET 10 (once "-v normal", now "-v minimal": the error
+/// lines are the same), including the indentation and node
 /// prefixes that MSBuild inserts.
 /// </summary>
 public class BuildOutputParsingTests

@@ -1775,7 +1775,13 @@ public partial class MainWindow : Window
             }
         };
 
-        dialog.Opened += (_, _) => box.SelectAll();
+        // Focused, not only selected: the answer is typed straight away (F2,
+        // then the new name), and without the focus the keys reached nothing.
+        dialog.Opened += (_, _) =>
+        {
+            box.Focus();
+            box.SelectAll();
+        };
 
         await dialog.ShowDialog(this);
 
@@ -1900,7 +1906,13 @@ public partial class MainWindow : Window
             }
         };
 
-        dialog.Opened += (_, _) => box.SelectAll();
+        // Focused, not only selected: the answer is typed straight away (F2,
+        // then the new name), and without the focus the keys reached nothing.
+        dialog.Opened += (_, _) =>
+        {
+            box.Focus();
+            box.SelectAll();
+        };
 
         await dialog.ShowDialog(this);
 

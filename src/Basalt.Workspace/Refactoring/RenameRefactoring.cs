@@ -18,6 +18,33 @@ public sealed class RenameRefactoring
     public RenameRefactoring(Solution solution) => _solution = solution;
 
     /// <summary>
+    /// The type, when the name under the caret is a type's name used to call
+    /// its constructor.
+    /// </summary>
+    /// <remarks>
+    /// In "Dim p As New Person" the name Person binds to Person's constructor,
+    /// which Visual Basic declares implicitly, so F2 there refused with
+    /// "'.ctor' cannot be renamed". The user is renaming the class, as Visual
+    /// Studio does. Only when the token is the type's name: on the New of an
+    /// explicit Sub New the constructor stays what is found.
+    /// </remarks>
+    private static async Task<ISymbol> TypeNamedByConstructorAsync(
+        Document document, int position, ISymbol symbol, CancellationToken ct)
+    {
+        if (symbol is not IMethodSymbol { MethodKind: MethodKind.Constructor, ContainingType: { } type })
+            return symbol;
+
+        var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+        var token = root?.FindToken(position) ?? default;
+
+        // The caret may sit just after the name, as it does after typing it.
+        if (!string.Equals(token.ValueText, type.Name, StringComparison.OrdinalIgnoreCase) && position > 0)
+            token = root?.FindToken(position - 1) ?? default;
+
+        return string.Equals(token.ValueText, type.Name, StringComparison.OrdinalIgnoreCase) ? type : symbol;
+    }
+
+    /// <summary>
     /// Works out what renaming would change.
     ///
     /// The solution is not modified: what comes back is a description, and
@@ -44,6 +71,8 @@ public sealed class RenameRefactoring
 
         if (symbol is null)
             return RefactoringPreview.Refused(title, "There is nothing to rename here.");
+
+        symbol = await TypeNamedByConstructorAsync(document, position, symbol, ct).ConfigureAwait(false);
 
         if (symbol.IsImplicitlyDeclared)
             return RefactoringPreview.Refused(title, $"'{symbol.Name}' cannot be renamed.");
