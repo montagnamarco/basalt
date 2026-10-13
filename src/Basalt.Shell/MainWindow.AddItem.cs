@@ -138,25 +138,30 @@ public partial class MainWindow
 
     /// <summary>
     /// The file types File &gt; Open offers. The first is the one the dialog
-    /// starts on, so it carries the QuickBASIC extensions the registry claims
-    /// as well as the solutions and projects: a lone .bas file is opened from
-    /// it, the same as from the Recent list.
+    /// starts on: the solutions and projects, and, only with the legacy switch,
+    /// the QuickBASIC extensions the registry claims, so a lone .bas file can be
+    /// opened from it as from the Recent list. The Visual Basic 6 project filter
+    /// is also legacy-only.
     /// </summary>
     internal IReadOnlyList<FilePickerFileType> SolutionOpenFilters()
     {
         var patterns = new List<string> { "*.sln", "*.slnx", "*.csproj", "*.vbproj" };
 
-        var programs = Languages.ById(QuickBasicLanguageId)?.Identity.FileExtensions ?? [];
-        patterns.AddRange(programs.Select(extension => "*" + extension));
+        var filters = new List<FilePickerFileType>();
 
-        return
-        [
-            new FilePickerFileType(Localizer.Get(StringKeys.OpenFilterSolutions)) { Patterns = patterns },
+        if (Features.LegacyBasic)
+        {
+            var programs = Languages.ById(QuickBasicLanguageId)?.Identity.FileExtensions ?? [];
+            patterns.AddRange(programs.Select(extension => "*" + extension));
+        }
 
-            // A Visual Basic 6 project opens by being converted, and a
-            // filter that does not offer it means nobody finds out that
-            // it can be.
-            new FilePickerFileType("Visual Basic 6 projects") { Patterns = ["*.vbp"] }
-        ];
+        filters.Add(new FilePickerFileType(Localizer.Get(StringKeys.OpenFilterSolutions)) { Patterns = patterns });
+
+        // A Visual Basic 6 project opens by being converted, and a filter that
+        // does not offer it means nobody finds out that it can be.
+        if (Features.LegacyBasic)
+            filters.Add(new FilePickerFileType("Visual Basic 6 projects") { Patterns = ["*.vbp"] });
+
+        return filters;
     }
 }

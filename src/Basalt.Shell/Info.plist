@@ -48,7 +48,6 @@
       <key>CFBundleTypeExtensions</key>
       <array>
         <string>vb</string>
-        <string>bas</string>
         <string>vbhtml</string>
       </array>
       <key>CFBundleTypeRole</key>

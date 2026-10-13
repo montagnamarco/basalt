@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Dock.Model.Core;
+using Basalt.Core.Features;
 using Basalt.Core.Localization;
 using Basalt.Core.Model;
 using Basalt.Core.Commands;
@@ -160,12 +161,20 @@ public partial class MainWindow : Window
     public MainWindow(string? solutionToOpen) : this(solutionToOpen, null) { }
 
     /// <summary>
+    /// What this build offers the user. Chosen by the caller, so a test can
+    /// show the legacy Basic dialects without any static switch.
+    /// </summary>
+    public IdeFeatures Features { get; }
+
+    /// <summary>
     /// The window with its assistant's key store and backend chosen by the
     /// caller. Tests pass an in-memory store and a fake backend, so nothing
-    /// reaches the OS keychain or a model provider.
+    /// reaches the OS keychain or a model provider. The features default to
+    /// <see cref="IdeFeatures.Default"/>, which is what a user sees.
     /// </summary>
-    internal MainWindow(string? solutionToOpen, AiAssistantServices? assistant)
+    internal MainWindow(string? solutionToOpen, AiAssistantServices? assistant, IdeFeatures? features = null)
     {
+        Features = features ?? IdeFeatures.Default;
         _aiServices = assistant;
         _apiKeys = assistant?.Keys ?? new ApiKeyStore();
 
@@ -187,7 +196,7 @@ public partial class MainWindow : Window
         if (File.Exists(_settingsStore.FilePath))
             ApplyTheme(_settingsStore.Load().Appearance.Theme);
 
-        var viewModel = new MainWindowViewModel();
+        var viewModel = new MainWindowViewModel(Features);
         _viewModel = viewModel;
 
         // The window owns the settings file, so it is what lends the view
@@ -221,6 +230,7 @@ public partial class MainWindow : Window
 
         InstallMenu(viewModel);
         ShowRecentOnWelcome();
+        ShowWelcomeDescriptions();
         BuildLayout(viewModel);
 
         if (solutionToOpen is not null)
@@ -1177,14 +1187,14 @@ public partial class MainWindow : Window
     /// view model.
     /// </summary>
     /// <summary>The language of a file, as the status bar names it.</summary>
-    private static string DescribeLanguage(string filePath) =>
+    private string DescribeLanguage(string filePath) =>
         Path.GetExtension(filePath).ToLowerInvariant() switch
         {
             ".vb" => "Visual Basic",
             ".cs" => "C#",
             ".vbhtml" => "Razor (VB)",
             ".cshtml" or ".razor" => "Razor (C#)",
-            ".bas" or ".qb" => "QuickBASIC",
+            ".bas" or ".qb" when Features.LegacyBasic => "QuickBASIC",
             ".html" or ".htm" => "HTML",
             ".css" => "CSS",
             ".js" => "JavaScript",
@@ -2012,7 +2022,8 @@ public partial class MainWindow : Window
 
         // A QuickBASIC program is debugged by interpreting its source, so
         // there is nothing to build first: the file itself is what runs.
-        if (ViewModel.ActiveDocument is { FilePath: var path }
+        if (Features.LegacyBasic
+            && ViewModel.ActiveDocument is { FilePath: var path }
             && Path.GetExtension(path).Equals(".bas", StringComparison.OrdinalIgnoreCase))
         {
             // Saved first: the interpreter reads the file from disk, and
@@ -2750,7 +2761,9 @@ public partial class MainWindow : Window
     {
         if (ActingDocument is not { } document) return;
 
-        var languages = new List<string> { "Visual Basic", "C#", "QuickBASIC", Localizer.Get(StringKeys.LanguagePlainText) };
+        var languages = new List<string> { "Visual Basic", "C#" };
+        if (Features.LegacyBasic) languages.Add("QuickBASIC");
+        languages.Add(Localizer.Get(StringKeys.LanguagePlainText));
 
         var chosen = await AskForChoiceAsync(
             Localizer.Get(StringKeys.LanguageTitle), Localizer.Get(StringKeys.LanguagePrompt), [.. languages]);
@@ -5431,7 +5444,7 @@ public partial class MainWindow : Window
         // Save"d while solution and tabs stayed untouched) and not after a
         // solution was already generated on disk (cancelling the prompt
         // then left it there, unopened — critical-review finding).
-        var dialog = new NewSolutionDialog();
+        var dialog = new NewSolutionDialog(Features);
         var parameters = await dialog.ShowDialog<NewSolutionParameters?>(this);
         if (parameters is null) return;
 

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Basalt.Core.Features;
 using Basalt.Core.Model;
 using Basalt.Core.Localization;
 using Basalt.Core.Settings;
@@ -29,6 +30,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// opened once and both code languages read from that one workspace.
     /// </summary>
     public LanguageRegistry Languages { get; }
+
+    /// <summary>What this build offers the user; see <see cref="IdeFeatures"/>.</summary>
+    public IdeFeatures Features { get; }
+
     private GitSourceControlService? _git;
 
     [ObservableProperty] private EditorDocumentViewModel? _activeDocument;
@@ -54,10 +59,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// <summary>The generation Stop most recently asked to end, or none.</summary>
     private int _stoppedRunGeneration = -1;
 
-    public MainWindowViewModel()
+    public MainWindowViewModel() : this(IdeFeatures.Default) { }
+
+    /// <summary>
+    /// The view model with the features the window was built with. What the
+    /// user is offered follows these, and the language catalogue is built from them.
+    /// </summary>
+    public MainWindowViewModel(IdeFeatures features)
     {
+        Features = features;
+        Explorer = new SolutionExplorerViewModel(features);
         ShareCompatibilitySession();
-        Languages = LanguageCatalog.CreateDefault(_languageService, _formattingService);
+        Languages = LanguageCatalog.CreateDefault(_languageService, _formattingService, features);
 
         _buildService.OutputReceived += (_, line) => AppendOutput(line);
         Diagnostics.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ErrorSummary));
@@ -87,7 +100,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
-    public SolutionExplorerViewModel Explorer { get; } = new();
+    public SolutionExplorerViewModel Explorer { get; }
     public ObservableCollection<EditorDocumentViewModel> OpenDocuments { get; } = [];
     public ReplaceableCollection<IdeDiagnostic> Diagnostics { get; } = [];
     public ReplaceableCollection<string> BuildOutput { get; } = [];
@@ -320,6 +333,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public async Task OpenSolutionAsync(string path)
     {
+        // A Visual Basic 6 project is refused while the legacy switch is off,
+        // before anything is closed: the solution being used stays open.
+        if (!Features.LegacyBasic && Path.GetExtension(path).Equals(".vbp", StringComparison.OrdinalIgnoreCase))
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusOpenFailed, Path.GetFileName(path));
+            return;
+        }
+
         // What the solution being left had open, before it is left: after the
         // documents are closed there is nothing to record.
         RememberSession();
@@ -549,6 +570,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         if (!document.OpenInDesigner) return null;
         if (document.FilePath.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase)) return null;
+
+        // A Visual Basic 6 form is edited as text while the legacy switch is
+        // off: the designer would otherwise try to read it as markup.
+        if (!Features.LegacyBasic && document.FilePath.EndsWith(".frm", StringComparison.OrdinalIgnoreCase))
+            return null;
 
         if (_designerSessions.ContainsKey(document)
             && (!_designerSessionText.TryGetValue(document, out var lastSynced)

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Basalt.Core.Features;
 using Basalt.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -8,6 +9,16 @@ namespace Basalt.Shell.ViewModels;
 /// <summary>File tree of the open solution.</summary>
 public sealed partial class SolutionExplorerViewModel : ObservableObject
 {
+    private readonly IdeFeatures _features;
+
+    public SolutionExplorerViewModel() : this(IdeFeatures.Default) { }
+
+    /// <summary>
+    /// The tree the window's features shape: with the legacy switch off a
+    /// .frm is an ordinary file, with no designer and no "Open in Designer".
+    /// </summary>
+    public SolutionExplorerViewModel(IdeFeatures features) => _features = features;
+
     /// <summary>Output folders the user does not care about.</summary>
     /// <summary>
     /// Files that belong to the tooling rather than to the project, and that
@@ -322,13 +333,15 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
     /// that silently drops what it does not know leaves the project looking
     /// half empty, and the user with no way to tell whether the file is there.
     /// </summary>
-    private static NodeKind Classify(string path) =>
+    private NodeKind Classify(string path) =>
         Path.GetExtension(path).ToLowerInvariant() switch
         {
+            ".axaml" or ".xaml" => NodeKind.XamlFile,
+
             // A .frm opens in the designer too: it is read and turned into
             // the markup the designer works on, and the file itself is never
-            // rewritten.
-            ".axaml" or ".xaml" or ".frm" => NodeKind.XamlFile,
+            // rewritten. Only with the legacy switch on; otherwise it is text.
+            ".frm" when _features.LegacyBasic => NodeKind.XamlFile,
             ".cshtml" or ".vbhtml" or ".razor" => NodeKind.RazorFile,
             ".cs" or ".vb" => NodeKind.SourceFile,
             ".csproj" or ".vbproj" or ".sln" or ".slnx" => NodeKind.Project,

@@ -1,3 +1,4 @@
+using Basalt.Core.Features;
 using Basalt.Extensibility;
 using Basalt.QuickBasic;
 using Basalt.Workspace.Languages;
@@ -463,7 +464,7 @@ public class QuickBasicProviderTests
         // The proof that the architecture holds: a language from its own
         // project, reached the same way as the built-in ones.
         using var roslyn = new RoslynLanguageService();
-        var registry = LanguageCatalog.CreateDefault(roslyn, new RoslynFormattingService());
+        var registry = LanguageCatalog.CreateDefault(roslyn, new RoslynFormattingService(), new IdeFeatures { LegacyBasic = true });
 
         Assert.NotNull(registry.ForFile("/a/game.bas"));
     }

@@ -232,9 +232,11 @@
   <data name="Welcome_Recent_Empty" xml:space="preserve"><value>Nothing opened yet. Your recent projects and solutions will show up here.</value></data>
   <data name="Welcome_GetStarted" xml:space="preserve"><value>Get started</value></data>
   <data name="Welcome_NewProject" xml:space="preserve"><value>New Project…</value></data>
-  <data name="Welcome_NewProject_Description" xml:space="preserve"><value>Create a Windows Forms, Avalonia, web or QuickBASIC project from a template.</value></data>
+  <data name="Welcome_NewProject_Description" xml:space="preserve"><value>Create a Windows Forms, Avalonia or web project from a template.</value></data>
+  <data name="Welcome_NewProject_Description_LegacyBasic" xml:space="preserve"><value>Create a Windows Forms, Avalonia, web or QuickBASIC project from a template.</value></data>
   <data name="Welcome_OpenProject" xml:space="preserve"><value>Open Project or Solution…</value></data>
-  <data name="Welcome_OpenProject_Description" xml:space="preserve"><value>Open an existing .slnx, .vbproj, .csproj or Visual Basic 6 project.</value></data>
+  <data name="Welcome_OpenProject_Description" xml:space="preserve"><value>Open an existing .slnx, .vbproj or .csproj project.</value></data>
+  <data name="Welcome_OpenProject_Description_LegacyBasic" xml:space="preserve"><value>Open an existing .slnx, .vbproj, .csproj or Visual Basic 6 project.</value></data>
   <data name="Welcome_Recent_Missing" xml:space="preserve"><value>{0} is no longer on disk, so it has been taken off the recent list.</value></data>
 
   <!-- New Solution dialog -->

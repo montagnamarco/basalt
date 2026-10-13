@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
+using Basalt.Core.Features;
 using Basalt.Core.Model;
 using Basalt.Core.Localization;
 using Basalt.Designer;
@@ -53,15 +54,11 @@ public partial class NewSolutionDialog : Window
     private abstract record TemplateTreeNode;
 
     /// <summary>
-    /// The tree: three dialects, each grouping its leaves directly or under a
-    /// category. Visual Basic .NET is the only dialect with categories —
-    /// Visual Basic 6 and QuickBASIC each produce one kind of project, so a
-    /// category above their single leaf would be a click with nothing to
-    /// choose.
+    /// Visual Basic .NET, the dialect every user is offered: its leaves group
+    /// under categories.
     /// </summary>
-    private static readonly IReadOnlyList<TemplateCategory> Dialects =
-    [
-        new TemplateCategory(StringKeys.NewSolutionDialectVisualBasicNet,
+    private static readonly TemplateCategory VisualBasicNetDialect =
+        new(StringKeys.NewSolutionDialectVisualBasicNet,
         [
             new TemplateCategory(StringKeys.NewSolutionCategoryWindowsDesktop,
             [
@@ -89,7 +86,15 @@ public partial class NewSolutionDialog : Window
                 new TemplateLeaf(ProjectTemplate.Blazor, StringKeys.TemplateBlazor,
                     StringKeys.TemplateBlazorDescription, StringKeys.NewSolutionTargetBlazor, IconKind.RazorFile),
             ]),
-        ]),
+        ]);
+
+    /// <summary>
+    /// The legacy dialects, each a single leaf: a category above a lone
+    /// project kind would be a click with nothing to choose. Offered only with
+    /// <see cref="IdeFeatures.LegacyBasic"/>.
+    /// </summary>
+    private static readonly IReadOnlyList<TemplateCategory> LegacyBasicDialects =
+    [
         new TemplateCategory(StringKeys.NewSolutionDialectVisualBasic6,
         [
             new TemplateLeaf(ProjectTemplate.VisualBasic6, StringKeys.TemplateVisualBasic6,
@@ -101,6 +106,12 @@ public partial class NewSolutionDialog : Window
                 StringKeys.TemplateQuickBasicDescription, StringKeys.NewSolutionTargetQuickBasic, IconKind.ScriptFile),
         ]),
     ];
+
+    /// <summary>The dialects this dialog offers: Visual Basic .NET, and the legacy ones only when switched on.</summary>
+    private static IReadOnlyList<TemplateCategory> DialectsFor(IdeFeatures features) =>
+        features.LegacyBasic
+            ? [VisualBasicNetDialect, .. LegacyBasicDialects]
+            : [VisualBasicNetDialect];
 
     /// <summary>
     /// Characters a solution name cannot contain, so the folder and the
@@ -149,7 +160,13 @@ public partial class NewSolutionDialog : Window
     /// </summary>
     private bool _updatingSolutionName;
 
-    public NewSolutionDialog()
+    public NewSolutionDialog() : this(IdeFeatures.Default) { }
+
+    /// <summary>
+    /// The dialog with the dialects the given features offer. Tests set the
+    /// legacy switch here rather than through a static.
+    /// </summary>
+    public NewSolutionDialog(IdeFeatures features)
     {
         InitializeComponent();
 
@@ -186,7 +203,7 @@ public partial class NewSolutionDialog : Window
         PathBox.TextChanged += (_, _) => UpdatePreview();
         SameDirectoryCheck.IsCheckedChanged += (_, _) => UpdatePreview();
 
-        TemplateTree.ItemsSource = Dialects.Select(BuildNode).ToList();
+        TemplateTree.ItemsSource = DialectsFor(features).Select(BuildNode).ToList();
         TemplateTree.SelectionChanged += (_, _) => UpdateTemplateInfo();
 
         // Windows Forms, in the spirit of Visual Basic 6: the dialog opens

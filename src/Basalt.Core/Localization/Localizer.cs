@@ -198,8 +198,10 @@ public static class StringKeys
     public const string WelcomeGetStarted = "Welcome_GetStarted";
     public const string WelcomeNewProject = "Welcome_NewProject";
     public const string WelcomeNewProjectDescription = "Welcome_NewProject_Description";
+    public const string WelcomeNewProjectDescriptionLegacyBasic = "Welcome_NewProject_Description_LegacyBasic";
     public const string WelcomeOpenProject = "Welcome_OpenProject";
     public const string WelcomeOpenProjectDescription = "Welcome_OpenProject_Description";
+    public const string WelcomeOpenProjectDescriptionLegacyBasic = "Welcome_OpenProject_Description_LegacyBasic";
     public const string WelcomeRecentMissing = "Welcome_Recent_Missing";
 
     public const string ExplorerShowAllFiles = "Explorer_ShowAllFiles";

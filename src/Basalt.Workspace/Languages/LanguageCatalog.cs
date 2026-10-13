@@ -1,3 +1,4 @@
+using Basalt.Core.Features;
 using Basalt.Extensibility;
 using Basalt.QuickBasic;
 using Basalt.Workspace.Web;
@@ -18,9 +19,11 @@ public static class LanguageCatalog
     ///
     /// Visual Basic is the one Roslyn language now: C# was registered here
     /// and has been taken out, since Basalt is for Basic and its dialects.
+    /// QuickBASIC is registered only with <see cref="IdeFeatures.LegacyBasic"/>:
+    /// without it a .bas file is plain text, with no colouring, completion or Run.
     /// </summary>
     public static LanguageRegistry CreateDefault(
-        RoslynLanguageService roslyn, RoslynFormattingService formatting)
+        RoslynLanguageService roslyn, RoslynFormattingService formatting, IdeFeatures? features = null)
     {
         var registry = new LanguageRegistry();
 
@@ -96,8 +99,10 @@ public static class LanguageCatalog
 
         // QuickBASIC comes from its own project, which references only the
         // extensibility contracts: it is the proof that a language can be
-        // added from outside the IDE.
-        registry.Register(new QuickBasicLanguageProvider());
+        // added from outside the IDE. Hidden unless the legacy switch is on;
+        // the project is still built and still tested either way.
+        if ((features ?? IdeFeatures.Default).LegacyBasic)
+            registry.Register(new QuickBasicLanguageProvider());
 
         return registry;
     }

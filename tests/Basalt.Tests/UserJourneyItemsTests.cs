@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using Basalt.Core.Features;
 using Basalt.Core.Localization;
 using Basalt.Core.Settings;
 using Basalt.Designer;
@@ -312,7 +313,7 @@ public sealed class UserJourneyItemsTests : IDisposable
     [AvaloniaFact]
     public async Task FileOpenFilterListsTheQuickBasicExtensionsTheRegistryClaims()
     {
-        using var host = new TestWindow();
+        using var host = new TestWindow(features: new IdeFeatures { LegacyBasic = true });
         await host.SettleAsync(10);
 
         var filters = host.Window.SolutionOpenFilters();

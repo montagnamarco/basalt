@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Basalt.Core.Features;
 using Basalt.Shell;
 
 namespace Basalt.Tests;
@@ -30,7 +31,9 @@ public class ThemeAndDialogTests
         // Every template the generator supports must be reachable as a leaf
         // of the tree: WinForms and Avalonia are now two separate leaves
         // under "Windows Desktop" rather than one item plus a GUI picker.
-        var dialog = new NewSolutionDialog();
+        // The legacy switch is on here because "every" includes the two
+        // legacy templates, which a user sees only with it on.
+        var dialog = new NewSolutionDialog(new Basalt.Core.Features.IdeFeatures { LegacyBasic = true });
         var tree = dialog.FindControl<TreeView>("TemplateTree")!;
 
         var leaves = Flatten(tree.ItemsSource).Select(LeafTemplate).Where(t => t is not null).ToList();
@@ -150,7 +153,7 @@ public class ThemeAndDialogTests
         // Basalt is an IDE for Visual Basic and its dialects, and the first
         // question anyone has is which dialect they are writing — not whether
         // the result is a window or a service.
-        var dialog = new NewSolutionDialog();
+        var dialog = new NewSolutionDialog(new IdeFeatures { LegacyBasic = true });
         var tree = dialog.FindControl<TreeView>("TemplateTree")!;
 
         var headings = tree.ItemsSource!.OfType<TreeViewItem>()

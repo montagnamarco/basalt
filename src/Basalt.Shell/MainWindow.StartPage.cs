@@ -23,6 +23,21 @@ public partial class MainWindow
         _ = ShowOpenSolutionDialogAsync();
 
     /// <summary>
+    /// Sets the two descriptions under the welcome actions. The ones that name
+    /// Visual Basic 6 and QuickBASIC are used only while the legacy switch is on.
+    /// </summary>
+    private void ShowWelcomeDescriptions()
+    {
+        WelcomeNewProjectDescription.Text = Localizer.Get(Features.LegacyBasic
+            ? StringKeys.WelcomeNewProjectDescriptionLegacyBasic
+            : StringKeys.WelcomeNewProjectDescription);
+
+        WelcomeOpenProjectDescription.Text = Localizer.Get(Features.LegacyBasic
+            ? StringKeys.WelcomeOpenProjectDescriptionLegacyBasic
+            : StringKeys.WelcomeOpenProjectDescription);
+    }
+
+    /// <summary>
     /// Fills the list of recent solutions on the welcome screen.
     ///
     /// Always shown, even with nothing to list: a heading with nothing under

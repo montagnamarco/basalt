@@ -240,7 +240,7 @@
                 <controls:IconView Grid.Column="0" Kind="New" IconSize="20" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="2" Spacing="2">
                   <TextBlock Text="{l:LocalizedString Welcome_NewProject}" FontWeight="SemiBold" />
-                  <TextBlock Text="{l:LocalizedString Welcome_NewProject_Description}"
+                  <TextBlock x:Name="WelcomeNewProjectDescription"
                              FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
                 </StackPanel>
               </Grid>
@@ -253,7 +253,7 @@
                 <controls:IconView Grid.Column="0" Kind="Open" IconSize="20" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="2" Spacing="2">
                   <TextBlock Text="{l:LocalizedString Welcome_OpenProject}" FontWeight="SemiBold" />
-                  <TextBlock Text="{l:LocalizedString Welcome_OpenProject_Description}"
+                  <TextBlock x:Name="WelcomeOpenProjectDescription"
                              FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
                 </StackPanel>
               </Grid>

@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
+using Basalt.Core.Features;
 using Basalt.Designer;
 using Basalt.Shell;
 
@@ -17,7 +18,7 @@ public sealed class NewSolutionDialogTreeTests
     [AvaloniaFact]
     public void TheTreeShowsTheThreeDialectsWithTheirLeaves()
     {
-        var dialog = new NewSolutionDialog();
+        var dialog = new NewSolutionDialog(new IdeFeatures { LegacyBasic = true });
         var tree = dialog.FindControl<TreeView>("TemplateTree")!;
 
         var dialects = tree.ItemsSource!.OfType<TreeViewItem>()

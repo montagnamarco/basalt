@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Headless.XUnit;
+using Basalt.Core.Features;
 using Basalt.Core.Localization;
 using Basalt.Designer;
 using Basalt.Shell;
@@ -80,7 +81,7 @@ public sealed class UserJourneyQuickBasicTests : IDisposable
         var created = await SolutionTemplates.CreateAsync(
             _root, "Squares", ProjectTemplate.QuickBasic, TestContext.Current.CancellationToken);
 
-        using var host = new TestWindow(created.SolutionPath);
+        using var host = new TestWindow(created.SolutionPath, new IdeFeatures { LegacyBasic = true });
         await host.SettleAsync(10);
         var w = host.Window;
         var vm = (MainWindowViewModel)w.DataContext!;
@@ -137,7 +138,7 @@ public sealed class UserJourneyQuickBasicTests : IDisposable
             LOOP
             """, TestContext.Current.CancellationToken);
 
-        using var host = new TestWindow(created.SolutionPath);
+        using var host = new TestWindow(created.SolutionPath, new IdeFeatures { LegacyBasic = true });
         await host.SettleAsync(10);
         var w = host.Window;
         var vm = (MainWindowViewModel)w.DataContext!;

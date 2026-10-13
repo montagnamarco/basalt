@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
+using Basalt.Core.Features;
 using Basalt.Core.Localization;
 using Basalt.Shell;
 using Basalt.Shell.Controls;
@@ -262,7 +263,7 @@ public sealed class UserJourneyLanguagesTests : IDisposable
         var basPath = WriteFile(Path.Combine(_root, "game.bas"),
             "DIM score AS INTEGER\nscore = 1\nPRINT score\nEND\n");
 
-        using var host = new TestWindow(project);
+        using var host = new TestWindow(project, new IdeFeatures { LegacyBasic = true });
         await host.SettleAsync(10);
         var w = host.Window;
         var vm = (MainWindowViewModel)w.DataContext!;
@@ -285,7 +286,7 @@ public sealed class UserJourneyLanguagesTests : IDisposable
         var project = WriteVbConsoleProject("Module Program\n    Sub Main()\n    End Sub\nEnd Module\n");
         var basPath = WriteFile(Path.Combine(_root, "hello.bas"), "PRINT \"basalt-quick\"\nEND\n");
 
-        using var host = new TestWindow(project);
+        using var host = new TestWindow(project, new IdeFeatures { LegacyBasic = true });
         await host.SettleAsync(10);
         var w = host.Window;
         var vm = (MainWindowViewModel)w.DataContext!;

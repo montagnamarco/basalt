@@ -1,4 +1,5 @@
 using Avalonia.Headless.XUnit;
+using Basalt.Core.Features;
 using Basalt.Shell.Controls;
 using Basalt.Shell.ViewModels;
 
@@ -75,7 +76,9 @@ public class Vb6OpeningTests
 
         try
         {
-            var explorer = new SolutionExplorerViewModel();
+            // The legacy switch is on: with it off a .frm is plain text (see
+            // LegacyBasicSwitchTests).
+            var explorer = new SolutionExplorerViewModel(new IdeFeatures { LegacyBasic = true });
 
             explorer.Load(Path.Combine(directory, "Anagrafica.vbp"));
 

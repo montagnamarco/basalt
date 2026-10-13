@@ -1,3 +1,4 @@
+using Basalt.Core.Features;
 using Basalt.Shell;
 
 namespace Basalt.Tests;
@@ -11,9 +12,13 @@ namespace Basalt.Tests;
 /// </summary>
 public sealed class TestWindow : IDisposable
 {
-    public TestWindow(string? solutionToOpen = null)
+    /// <param name="features">
+    /// What the window offers. Left out, it is what a user sees; a test of the
+    /// legacy Basic dialects passes <c>new IdeFeatures { LegacyBasic = true }</c>.
+    /// </param>
+    public TestWindow(string? solutionToOpen = null, IdeFeatures? features = null)
     {
-        Window = new MainWindow(solutionToOpen);
+        Window = new MainWindow(solutionToOpen, null, features);
         Window.Show();
     }
 
