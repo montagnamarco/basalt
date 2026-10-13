@@ -226,6 +226,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         ActiveInDesigner = ActiveDocument?.OpenInDesigner ?? false,
         InDesigner = [.. OpenDocuments.Where(d => d.OpenInDesigner).Select(d => d.FilePath)],
         ExpandedFolders = [.. ReadExpandedFolders?.Invoke() ?? []],
+        ExpansionRecorded = ReadExpandedFolders?.Invoke() is not null,
         SelectedPath = Explorer.SelectedNode?.Path,
         PublishRids = [.. MakeExecutableChoice?.Rids ?? []],
         PublishOutputRoot = MakeExecutableChoice?.OutputRoot,
@@ -239,7 +240,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// part of the session and lives here. Two callbacks rather than a
     /// reference to the panel, so this stays testable without one.
     /// </remarks>
-    public Func<IReadOnlyList<string>>? ReadExpandedFolders { get; set; }
+    /// <remarks>Null from the callback means there is no tree to read.</remarks>
+    public Func<IReadOnlyList<string>?>? ReadExpandedFolders { get; set; }
 
     /// <summary>Opens the folders a session remembered.</summary>
     public Action<IReadOnlyList<string>>? WriteExpandedFolders { get; set; }
@@ -273,7 +275,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
         // After the files, so the tree has been rebuilt for whatever they
         // brought with them.
-        WriteExpandedFolders?.Invoke(session.ExpandedFolders);
+        // Only a state the tree recorded: an empty list in an older session, or
+        // one saved with no tree, would otherwise fold every project shut.
+        if (session.ExpansionRecorded) WriteExpandedFolders?.Invoke(session.ExpandedFolders);
         if (session.SelectedPath is { Length: > 0 } selected)
             Explorer.SelectPathQuietly(selected);
 

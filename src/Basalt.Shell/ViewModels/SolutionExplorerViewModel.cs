@@ -82,8 +82,11 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         var selected = SelectedNode?.Path;
         Load(path);
 
+        // Exactly as they were, not only the open ones opened again: Load
+        // opens the root and the projects by default, and a folder the user
+        // had closed must stay closed rather than come back open.
         foreach (var node in EnumerateNodes())
-            if (expanded.Contains(node.Path)) node.IsExpanded = true;
+            node.IsExpanded = expanded.Contains(node.Path);
 
         if (selected is not null) SelectPathQuietly(selected);
     }
@@ -144,6 +147,13 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(solutionOrProjectPath));
         if (directory is not null) PopulateFrom(root, directory, inSolution: isSolution);
+
+        // Visual Studio opens a solution with its projects showing, one level
+        // deep: each project's own folders stay closed. A remembered session
+        // restores its exact expansion afterwards, so this is only the default.
+        if (isSolution)
+            foreach (var project in root.Children.Where(child => child.Kind == NodeKind.Project))
+                project.IsExpanded = true;
 
         Roots.Add(root);
         Loaded?.Invoke(this, EventArgs.Empty);

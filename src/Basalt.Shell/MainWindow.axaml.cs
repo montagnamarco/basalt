@@ -210,7 +210,7 @@ public partial class MainWindow : Window
 
         // The tree is a control here; what was unfolded in it belongs to the
         // session, which the view model keeps.
-        viewModel.ReadExpandedFolders = () => _solutionExplorer?.ExpandedFolders() ?? [];
+        viewModel.ReadExpandedFolders = () => _solutionExplorer?.ExpandedFolders();
         viewModel.WriteExpandedFolders = folders => _solutionExplorer?.ExpandFolders(folders);
 
         viewModel.ActiveDocumentChanged += (_, _) => ShowActiveDocument();

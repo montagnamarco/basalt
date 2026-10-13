@@ -35,6 +35,14 @@ public sealed class SolutionSession
     /// <summary>Folders unfolded in the solution explorer.</summary>
     public List<string> ExpandedFolders { get; set; } = [];
 
+    /// <summary>
+    /// Whether <see cref="ExpandedFolders"/> was read from the tree. Sessions
+    /// saved before the tree's state was followed, or with no tree shown, have
+    /// an empty list that means "unknown", not "all collapsed": they open with
+    /// the explorer's own defaults, the projects unfolded.
+    /// </summary>
+    public bool ExpansionRecorded { get; set; }
+
     /// <summary>The selected solution explorer file or folder.</summary>
     public string? SelectedPath { get; set; }
 

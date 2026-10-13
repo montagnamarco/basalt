@@ -205,9 +205,32 @@ public class ExpandedFolderTests
         await vm.RestoreSessionAsync(new Basalt.Core.Settings.SolutionSession
         {
             ExpandedFolders = ["/repo/src"],
+            ExpansionRecorded = true,
         });
 
         Assert.Equal(["/repo/src"], opened);
+    }
+
+    /// <remarks>
+    /// A session saved before the tree's state was followed, or with no tree
+    /// shown, has an empty list that means unknown. Restoring it folded every
+    /// project shut. Reintroduced once (restored whatever the flag): this failed.
+    /// </remarks>
+    [Fact]
+    public async Task LeavesTheTreeAloneWhenTheSessionNeverRecordedIt()
+    {
+        var written = false;
+
+        var vm = new MainWindowViewModel
+        {
+            LoadSettings = () => new Basalt.Core.Settings.IdeSettings(),
+            SaveSettings = _ => { },
+            WriteExpandedFolders = _ => written = true,
+        };
+
+        await vm.RestoreSessionAsync(new Basalt.Core.Settings.SolutionSession { ExpandedFolders = [] });
+
+        Assert.False(written, "an unrecorded expansion was applied to the tree");
     }
 
     [Fact]
@@ -222,5 +245,6 @@ public class ExpandedFolderTests
         };
 
         Assert.Empty(vm.CaptureSession().ExpandedFolders);
+        Assert.False(vm.CaptureSession().ExpansionRecorded);
     }
 }

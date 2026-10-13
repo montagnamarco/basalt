@@ -61,6 +61,21 @@
     <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
   </Style>
 
+  <!--
+    Text and icons inside a primary button take its foreground. The global
+    TextBlock rule above sets the editor's text colour explicitly, which won
+    over the inherited one: the start page's blue "New Project" button showed
+    near-black text on blue.
+  -->
+  <Style Selector="Button.primary TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
+  </Style>
+
+  <!-- Disabled, its text dims with it: the rule above would keep it at full strength. -->
+  <Style Selector="Button.primary:disabled TextBlock">
+    <Setter Property="Opacity" Value="0.5" />
+  </Style>
+
   <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="#0258A8" />
     <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
@@ -251,6 +266,15 @@
     <Setter Property="Background" Value="{DynamicResource EditorBackgroundBrush}" />
     <Setter Property="GridLinesVisibility" Value="Horizontal" />
     <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!--
+    The cells must carry the panel size too. Fluent's DataGrid theme gives each
+    cell its own content size (15), which overrode the grid's 12 above, so the
+    Problems grid drew larger than every other panel.
+  -->
+  <Style Selector="DataGridCell">
+    <Setter Property="FontSize" Value="{DynamicResource PanelFontSize}" />
   </Style>
 
   <!--
@@ -529,6 +553,20 @@
     <Setter Property="Background" Value="{DynamicResource ListInactiveSelectionBackgroundBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
+  </Style>
+
+  <!--
+    The main toolbar (MainWindow.axaml's ToolbarHost): an icon with no fill of
+    its own. Fluent paints a disabled button's content grey, which reads as a
+    button that is pressed or on, so a disabled one loses that fill and its
+    icon is faded instead. Hover and pressed keep Fluent's own states, and an
+    enabled button is untouched. Scoped to the host, so dialogs keep Fluent's
+    disabled look.
+  -->
+  <Style Selector="#ToolbarHost Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Opacity" Value="0.35" />
   </Style>
 
   <!-- Rows of a data grid: the selection is visible whether or not the grid has the keyboard. -->

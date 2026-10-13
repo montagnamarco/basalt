@@ -462,6 +462,7 @@ public sealed class SolutionExplorerProjectNodeTests : IDisposable
         {
             SolutionPath = solution,
             ExpandedFolders = [folder],
+            ExpansionRecorded = true,
             SelectedPath = folder
         });
 

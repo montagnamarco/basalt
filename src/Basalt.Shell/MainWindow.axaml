@@ -235,26 +235,29 @@
             -->
             <Button x:Name="WelcomeNewProjectButton" Classes="primary"
                     Click="OnNewSolutionClick" HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Left" Padding="10,8">
+                    HorizontalContentAlignment="Left" Padding="12,10">
               <Grid ColumnDefinitions="Auto,10,*">
                 <controls:IconView Grid.Column="0" Kind="New" IconSize="20" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="2" Spacing="2">
                   <TextBlock Text="{l:LocalizedString Welcome_NewProject}" FontWeight="SemiBold" />
+                  <!-- Full strength: dimmed white on the accent blue fell below 4.5:1. -->
                   <TextBlock x:Name="WelcomeNewProjectDescription"
-                             FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
+                             FontSize="11" TextWrapping="Wrap"
+                             MinHeight="28" />
                 </StackPanel>
               </Grid>
             </Button>
 
             <Button x:Name="WelcomeOpenProjectButton"
                     Click="OnOpenSolutionClick" HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Left" Padding="10,8">
+                    HorizontalContentAlignment="Left" Padding="12,10">
               <Grid ColumnDefinitions="Auto,10,*">
                 <controls:IconView Grid.Column="0" Kind="Open" IconSize="20" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="2" Spacing="2">
                   <TextBlock Text="{l:LocalizedString Welcome_OpenProject}" FontWeight="SemiBold" />
                   <TextBlock x:Name="WelcomeOpenProjectDescription"
-                             FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
+                             FontSize="11" Opacity="0.75" TextWrapping="Wrap"
+                             MinHeight="28" />
                 </StackPanel>
               </Grid>
             </Button>

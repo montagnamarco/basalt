@@ -29,6 +29,8 @@ public sealed partial class SolutionExplorerPanel : UserControl
                 node => node?.Children ?? [])
         };
 
+        _tree.ContainerPrepared += BindExpansionWhenPrepared;
+
         _tree.DoubleTapped += (_, _) =>
         {
             if (_tree.SelectedItem is SolutionTreeNode { IsOpenable: true } node)
@@ -142,6 +144,31 @@ public sealed partial class SolutionExplorerPanel : UserControl
         return button;
     }
 
+    /// <summary>
+    /// Ties each row's expansion to its node's IsExpanded, both ways.
+    /// </summary>
+    /// <remarks>
+    /// The tree bound neither, so a folder opened by Load, a restored session
+    /// or Refresh never reached its row, and a solution's root showed closed
+    /// with nothing visible under it. A row prepares its own children's
+    /// containers and raises ContainerPrepared for them, not the tree, so the
+    /// handler is attached at every level, as ElementTreePanel does.
+    /// </remarks>
+    private void BindExpansionWhenPrepared(object? sender, ContainerPreparedEventArgs e)
+    {
+        if (e.Container is not TreeViewItem item) return;
+
+        item.ContainerPrepared -= BindExpansionWhenPrepared;
+        item.ContainerPrepared += BindExpansionWhenPrepared;
+
+        if (item.DataContext is SolutionTreeNode node)
+            item[!TreeViewItem.IsExpandedProperty] = new Binding(nameof(SolutionTreeNode.IsExpanded))
+            {
+                Source = node,
+                Mode = BindingMode.TwoWay
+            };
+    }
+
     /// <summary>Closes every folder, leaving the roots open.</summary>
     internal void CollapseAll()
     {
@@ -186,17 +213,19 @@ public sealed partial class SolutionExplorerPanel : UserControl
     }
 
     /// <summary>
-    /// Opens the folders that were open last time.
+    /// Sets the folders open or closed as they were last time.
     /// </summary>
     /// <remarks>
-    /// A folder that has gone since is simply not found, which is the right
-    /// answer: it was deleted or renamed on purpose, and there is nothing to
-    /// tell the user about it.
+    /// Exact in both directions: Load opens the root and the projects by
+    /// default, so a folder the session left closed must be closed again, and
+    /// an empty list is a tree the user had closed down to the root. A folder
+    /// that has gone since is simply not found, which is the right answer: it
+    /// was deleted or renamed on purpose, and there is nothing to tell the
+    /// user about it.
     /// </remarks>
     public void ExpandFolders(IReadOnlyList<string> folders)
     {
         if (DataContext is not MainWindowViewModel viewModel) return;
-        if (folders.Count == 0) return;
 
         var wanted = folders.ToHashSet(StringComparer.Ordinal);
 
@@ -204,9 +233,8 @@ public sealed partial class SolutionExplorerPanel : UserControl
         {
             // A project under a solution was a folder in a session saved before
             // it became a project node, so its folder path opens it too.
-            if (node.Path is { Length: > 0 } path
-                && (wanted.Contains(path) || (node.FolderPath is { } folder && wanted.Contains(folder))))
-                node.IsExpanded = true;
+            node.IsExpanded = node.Path is { Length: > 0 } path
+                && (wanted.Contains(path) || (node.FolderPath is { } folder && wanted.Contains(folder)));
 
             foreach (var child in node.Children) Walk(child);
         }

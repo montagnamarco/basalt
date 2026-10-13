@@ -24,7 +24,7 @@ public sealed class ProblemsAppearanceTests
         var panel = new ProblemsPanel(vm, _ => { });
         var grid = panel.Grid;
         Assert.Equal(PanelMetrics.FontSize, grid.FontSize);
-        Assert.Equal(24, grid.RowHeight);
+        Assert.Equal(PanelMetrics.RowHeight, grid.RowHeight);
         Assert.IsType<DataGridTemplateColumn>(grid.Columns[0]);
     }
 

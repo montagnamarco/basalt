@@ -112,7 +112,7 @@ public sealed class ProblemsPanel : UserControl
             CanUserResizeColumns = true,
             SelectionMode = DataGridSelectionMode.Single,
             FontSize = PanelMetrics.FontSize,
-            RowHeight = 24,
+            RowHeight = PanelMetrics.RowHeight,
             GridLinesVisibility = DataGridGridLinesVisibility.Horizontal
         };
 
