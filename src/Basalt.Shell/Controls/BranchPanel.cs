@@ -96,8 +96,39 @@ public sealed class BranchPanel : UserControl
         AddRow(layout, Header(Localizer.Get(StringKeys.BranchRemote)), 5);
         AddRow(layout, _remote, 6);
 
-        Content = layout;
+        _repositoryContent = layout;
+        _noRepository = new GitNoRepositoryView(() => InitializeRequested?.Invoke(this, EventArgs.Empty));
+
+        // The repository UI until the host says there is no repository: see
+        // ShowNoRepository.
+        Content = new Grid { Children = { _repositoryContent, _noRepository } };
+        SetRepository(present: true);
     }
+
+    /// <summary>The branch lists and their buttons, shown only in a repository.</summary>
+    private readonly Control _repositoryContent;
+
+    /// <summary>What is shown instead while the folder is not a repository.</summary>
+    private readonly GitNoRepositoryView _noRepository;
+
+    private void SetRepository(bool present)
+    {
+        _repositoryContent.IsVisible = present;
+        _noRepository.IsVisible = !present;
+    }
+
+    /// <summary>Shows the branches, or the offer to start a repository in place of them; see <see cref="ShowNoRepository"/>.</summary>
+    public void ShowNoRepository(GitAbsence absence = GitAbsence.NotARepository)
+    {
+        _noRepository.Show(absence);
+        SetRepository(present: false);
+    }
+
+    /// <summary>
+    /// Raised when the user asks to start a repository in this folder. The
+    /// host runs the same command the Git menu runs.
+    /// </summary>
+    public event EventHandler? InitializeRequested;
 
     public event EventHandler<string>? CreateRequested;
     public event EventHandler<BranchInfo>? CheckoutRequested;
@@ -174,6 +205,7 @@ public sealed class BranchPanel : UserControl
 
     public void Show(IReadOnlyList<BranchInfo> branches)
     {
+        SetRepository(present: true);
         _local.ItemsSource = branches.Where(b => !b.IsRemote).Select(b => new BranchRow(b)).ToList();
         _remote.ItemsSource = branches.Where(b => b.IsRemote).Select(b => new BranchRow(b)).ToList();
     }

@@ -133,7 +133,7 @@ public sealed class DatabasePanel : UserControl, IDisposable
 
         // The tables column says so when no database is open, instead of being
         // an empty white box beside the query.
-        _noTables = new EmptyState(Localizer.Get(StringKeys.DatabaseNothingOpen), IconKind.Information);
+        _noTables = new EmptyState("", IconKind.Information);
         var left = new Grid { Children = { _tables, _noTables } };
 
         Grid.SetColumn(left, 0);
@@ -395,8 +395,10 @@ public sealed class DatabasePanel : UserControl, IDisposable
     private void ShowNothingOpen()
     {
         _tables.ItemsSource = null;
+        // The status line says what to do; here the column keeps its icon only,
+        // so the same sentence is not shown twice.
         _noTables.IsVisible = true;
-        _noTables.Message = Localizer.Get(StringKeys.DatabaseNothingOpen);
+        _noTables.Message = "";
         _results.ItemsSource = null;
         _results.Columns.Clear();
         _run.IsEnabled = false;

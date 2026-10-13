@@ -248,7 +248,10 @@ public sealed class TestExplorerPanel : UserControl
         layout.Children.Add(_tree);
 
         // Nothing discovered: say so where the tree would be, and what to do.
-        _empty = new EmptyState(Localizer.Get(StringKeys.TestsNoneDiscovered), IconKind.Tests);
+        // The sentence is in the summary line above; here the icon alone says there is nothing yet.
+        _empty = new EmptyState("", IconKind.Tests);
+        // Named for a screen reader, which does not see the icon.
+        Avalonia.Automation.AutomationProperties.SetName(_empty, Localizer.Get(StringKeys.TestsNoneDiscovered));
         layout.Children.Add(_empty);
         UpdateEmpty();
 

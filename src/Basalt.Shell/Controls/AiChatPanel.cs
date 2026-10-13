@@ -97,6 +97,8 @@ public sealed class AiChatPanel : UserControl
     private readonly TextBox _input;
     private readonly Button _send;
     private readonly TextBlock _status;
+    private readonly WrapPanel _noAssistant;
+    private readonly Button _openSettings;
     private readonly ComboBox _actions;
 
     private readonly System.Collections.ObjectModel.ObservableCollection<ChatEntry> _entries = [];
@@ -111,6 +113,35 @@ public sealed class AiChatPanel : UserControl
             Margin = new Thickness(Spacing.Normal, Spacing.Tight),
             TextWrapping = TextWrapping.Wrap
         }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
+
+        // "No assistant configured. Choose one in Settings.", with Settings a
+        // button: the sentence is split around it so the word can be pressed.
+        _openSettings = new Button
+        {
+            Content = Localizer.Get(StringKeys.AiOpenSettings),
+            FontSize = PanelMetrics.FontSize,
+            Padding = new Thickness(Spacing.Tight, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        _openSettings.Click += (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty);
+
+        _noAssistant = new WrapPanel
+        {
+            Margin = new Thickness(Spacing.Normal, Spacing.Tight),
+            IsVisible = false,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = Localizer.Get(StringKeys.AiNoAssistantLead),
+                    FontSize = PanelMetrics.SecondaryFontSize,
+                    Margin = new Thickness(0, 0, Spacing.Tight, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap
+                }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush"),
+                _openSettings
+            }
+        };
 
         _history = new ItemsControl
         {
@@ -195,9 +226,11 @@ public sealed class AiChatPanel : UserControl
         var layout = new DockPanel();
 
         DockPanel.SetDock(_status, Avalonia.Controls.Dock.Top);
+        DockPanel.SetDock(_noAssistant, Avalonia.Controls.Dock.Top);
         DockPanel.SetDock(bottom, Avalonia.Controls.Dock.Bottom);
 
         layout.Children.Add(_status);
+        layout.Children.Add(_noAssistant);
         layout.Children.Add(bottom);
         layout.Children.Add(_scroller);
 
@@ -231,7 +264,22 @@ public sealed class AiChatPanel : UserControl
     /// <summary>Which action the user picked beside the question.</summary>
     public AiAction Action => (AiAction)Math.Max(0, _actions.SelectedIndex);
 
-    public void ShowStatus(string message) => _status.Text = message;
+    /// <remarks>
+    /// The sentence that says no assistant is chosen is shown with its
+    /// "Settings" button instead of as plain text. The controller reports the
+    /// same sentence through this method, so the match is on the sentence.
+    /// </remarks>
+    public void ShowStatus(string message)
+    {
+        _status.Text = message;
+
+        var noAssistant = message == Localizer.Get(StringKeys.AiNoAssistant);
+        _status.IsVisible = !noAssistant;
+        _noAssistant.IsVisible = noAssistant;
+    }
+
+    /// <summary>Raised when the user asks to open Settings from the "no assistant" message.</summary>
+    public event EventHandler? SettingsRequested;
 
     /// <summary>Adds a turn to the conversation and shows it.</summary>
     public ChatEntry Append(ChatRole role, string text)

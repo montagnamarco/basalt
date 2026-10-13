@@ -246,12 +246,19 @@ public sealed class GitChangesPanel : UserControl
         // Only the lists scroll, and only once they outgrow the panel: the
         // message box and the Commit button stay put, since a commit button
         // that scrolls out of view is one people stop finding.
-        Content = new ScrollViewer
+        _repositoryContent = new ScrollViewer
         {
             Content = layout,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto
         };
+
+        _noRepository = new GitNoRepositoryView(() => InitializeRequested?.Invoke(this, EventArgs.Empty));
+
+        // The repository UI until the host says there is no repository: see
+        // ShowNoRepository.
+        Content = new Grid { Children = { _repositoryContent, _noRepository } };
+        SetRepository(present: true);
 
         UpdateCommitState();
     }
@@ -259,6 +266,36 @@ public sealed class GitChangesPanel : UserControl
     /// <summary>The two section headings, hidden together with their lists.</summary>
     private readonly Control _stagedHeader;
     private readonly Control _unstagedHeader;
+
+    /// <summary>The panel's own content, shown only in a repository.</summary>
+    private readonly ScrollViewer _repositoryContent;
+
+    /// <summary>What is shown instead while the folder is not a repository.</summary>
+    private readonly GitNoRepositoryView _noRepository;
+
+    /// <summary>Shows the repository's changes and commit box, or the offer to start a repository.</summary>
+    private void SetRepository(bool present)
+    {
+        _repositoryContent.IsVisible = present;
+        _noRepository.IsVisible = !present;
+    }
+
+    /// <summary>
+    /// Shows, in place of the changes, the offer to start a repository. The host
+    /// calls it when the folder is not a repository; a repository reported later
+    /// with <see cref="Show(string?, IReadOnlyList{FileChange}, UpstreamState?)"/> takes over again.
+    /// </summary>
+    public void ShowNoRepository(GitAbsence absence = GitAbsence.NotARepository)
+    {
+        _noRepository.Show(absence);
+        SetRepository(present: false);
+    }
+
+    /// <summary>
+    /// Raised when the user asks to start a repository in this folder. The
+    /// host runs the same command the Git menu runs.
+    /// </summary>
+    public event EventHandler? InitializeRequested;
 
     /// <summary>Says there is nothing to commit, when there is nothing.</summary>
     private readonly EmptyState _nothing = new(Localizer.Get(StringKeys.GitNothingToCommit), IconKind.Commit)
@@ -583,6 +620,7 @@ public sealed class GitChangesPanel : UserControl
     public void Show(
         string? branch, IReadOnlyList<FileChange> changes, UpstreamState? upstream)
     {
+        SetRepository(present: true);
         _branch.Text = branch ?? Localizer.Get(StringKeys.GitNoBranch);
 
         var staged = changes.Where(c => c.Staged).Select(c => new ChangeRow(c)).ToList();

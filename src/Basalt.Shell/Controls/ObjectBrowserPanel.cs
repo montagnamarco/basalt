@@ -56,6 +56,7 @@ public sealed class ObjectBrowserPanel : UserControl
     private CancellationTokenSource? _refreshDebounce;
     private bool _settingSearchText;
     private bool _stale;
+    private bool _descriptionShowsHint = true;
     private bool _restoring;
     private TextBlock _typesHeader = null!;
 
@@ -202,7 +203,10 @@ public sealed class ObjectBrowserPanel : UserControl
         lists.IsVisible = false;
         _empty.PropertyChanged += (_, e) =>
         {
-            if (e.Property == IsVisibleProperty) lists.IsVisible = !_empty.IsVisible;
+            if (e.Property != IsVisibleProperty) return;
+
+            lists.IsVisible = !_empty.IsVisible;
+            RenderDescriptionHint();
         };
 
         var layout = new Grid
@@ -471,11 +475,17 @@ public sealed class ObjectBrowserPanel : UserControl
         list.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
 
     /// <summary>A browser that was out of sight while the solution changed reads again as it comes back.</summary>
+    /// <remarks>
+    /// A browser never read before is read here too. The dock shows a tool
+    /// without going through the View command (a restored layout, a tab
+    /// clicked), and a solution that loaded while the browser was out of
+    /// sight would otherwise never reach it.
+    /// </remarks>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
 
-        if (_stale) Fire(RefreshAsync);
+        if (_stale || _libraries.Count == 0) Fire(RefreshAsync);
     }
 
     /// <summary>
@@ -486,8 +496,8 @@ public sealed class ObjectBrowserPanel : UserControl
     /// </summary>
     public void ScheduleRefresh()
     {
-        if (_libraries.Count == 0) return;
-
+        // A browser that was never read is not returned from here: a solution
+        // that loads after the browser was shown would otherwise never be read.
         // Inactive tabs are taken out of the visual tree by the dock.
         if (!IsEffectivelyVisible || TopLevel.GetTopLevel(this) is null)
         {
@@ -787,6 +797,7 @@ public sealed class ObjectBrowserPanel : UserControl
         if (description.Source is null)
             lines.Add(Localizer.Get(StringKeys.ObjectBrowserFromMetadata));
 
+        _descriptionShowsHint = false;
         _details.Text = string.Join(Environment.NewLine, lines);
         _summary.Text = description.Summary ?? "";
     }
@@ -794,9 +805,20 @@ public sealed class ObjectBrowserPanel : UserControl
     private void ShowDescriptionHint()
     {
         _signature.Text = "";
-        _details.Text = Localizer.Get(StringKeys.ObjectBrowserSelectType);
+        _descriptionShowsHint = true;
         _summary.Text = "";
+        RenderDescriptionHint();
     }
+
+    /// <summary>
+    /// The hint says what to do once there is a list to choose from. While the
+    /// list's own empty state is up it would be a second empty state, so it
+    /// waits for the list to fill.
+    /// </summary>
+    private void RenderDescriptionHint() =>
+        _details.Text = _descriptionShowsHint && !_empty.IsVisible
+            ? Localizer.Get(StringKeys.ObjectBrowserSelectType)
+            : "";
 
     private void ShowEmpty(string message)
     {

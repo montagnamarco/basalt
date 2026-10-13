@@ -1024,27 +1024,55 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         RepositoryChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Looks for the repository again, as opening the solution does, after one
+    /// was started in its folder: until then the Git panels kept saying the
+    /// folder was not a repository, until the solution was reopened.
+    /// </summary>
+    public Task DetectRepositoryAgainAsync() =>
+        SolutionPath is { } solution ? DetectRepositoryAsync(solution) : Task.CompletedTask;
+
+    /// <summary>Whether the last look for a repository could not run git at all.</summary>
+    public bool GitUnavailable { get; private set; }
+
     /// <summary>Detects whether the solution lives inside a git repository.</summary>
+    /// <remarks>
+    /// Forgets the previous solution's repository first, and reports either
+    /// outcome: opening a solution with no repository after one with a
+    /// repository left the Git panels showing the old one.
+    /// </remarks>
     private async Task DetectRepositoryAsync(string solutionPath)
     {
+        // Worked out first and assigned together at the end: cleared up front,
+        // a repository solution showed as none while git was being asked.
+        GitSourceControlService? found = null;
+        string? branch = null;
+        var unavailable = false;
+
         var directory = Path.GetDirectoryName(Path.GetFullPath(solutionPath));
-        if (directory is null) return;
 
         try
         {
-            var git = new GitSourceControlService(directory);
-            if (!await git.IsRepositoryAsync(directory).ConfigureAwait(true)) return;
-
-            _git = git;
-            CurrentBranch = await git.GetCurrentBranchAsync().ConfigureAwait(true);
-
-            RepositoryChanged?.Invoke(this, EventArgs.Empty);
+            var git = directory is null ? null : new GitSourceControlService(directory);
+            if (git is not null && await git.IsRepositoryAsync(directory!).ConfigureAwait(true))
+            {
+                branch = await git.GetCurrentBranchAsync().ConfigureAwait(true);
+                found = git;
+            }
         }
-        catch (InvalidOperationException)
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
-            // git not installed: the IDE stays fully usable without it.
-            _git = null;
+            // git not installed (Process.Start throws Win32Exception): the IDE
+            // stays fully usable without it, and the Git panels say why.
+            found = null;
+            unavailable = true;
         }
+
+        _git = found;
+        CurrentBranch = branch;
+        GitUnavailable = unavailable;
+
+        RepositoryChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

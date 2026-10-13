@@ -345,7 +345,7 @@
   <data name="Status_SavedMany" xml:space="preserve"><value>Saved {0} files.</value></data>
   <data name="Status_Cleaned" xml:space="preserve"><value>Build output removed.</value></data>
   <data name="Status_CleanFailed" xml:space="preserve"><value>The clean did not finish.</value></data>
-  <data name="Menu_Git_Initialize" xml:space="preserve"><value>Start a Repository Here…</value></data>
+  <data name="Menu_Git_Initialize" xml:space="preserve"><value>Start a Repository Here</value></data>
   <data name="Status_RepositoryCreated" xml:space="preserve"><value>Repository started, with a first commit.</value></data>
   <data name="Status_RepositoryExists" xml:space="preserve"><value>This folder is already a repository.</value></data>
   <data name="Menu_File_RecentSolutions" xml:space="preserve"><value>Recent Solutions</value></data>
@@ -727,6 +727,9 @@
   <data name="Git_Commit" xml:space="preserve"><value>Commit</value></data>
   <data name="Git_AmendLast" xml:space="preserve"><value>Amend the last commit</value></data>
   <data name="Git_CommitMessage" xml:space="preserve"><value>Commit message</value></data>
+  <data name="Git_NotARepository" xml:space="preserve"><value>This folder is not a Git repository</value></data>
+  <data name="Git_NoSolution" xml:space="preserve"><value>Open a solution to see its Git changes and branches</value></data>
+  <data name="Git_NotInstalled" xml:space="preserve"><value>Git was not found on this computer. Install it to see changes and branches.</value></data>
   <data name="Tests_Summary" xml:space="preserve"><value>{0} passed, {1} failed, {2} skipped, of {3}.</value></data>
   <data name="Tests_Count" xml:space="preserve"><value>{0} tests.</value></data>
   <data name="Tests_Running" xml:space="preserve"><value>Running…</value></data>
@@ -791,6 +794,8 @@
   <data name="Ai_Apply_NoEditor" xml:space="preserve"><value>Open a file to apply the change to.</value></data>
   <data name="Ai_NeedsKey" xml:space="preserve"><value>{0} needs an API key. Add it in Settings.</value></data>
   <data name="Ai_Status_Model" xml:space="preserve"><value>{0} — {1}</value></data>
+  <data name="Ai_NoAssistantLead" xml:space="preserve"><value>No assistant configured. Choose one in</value></data>
+  <data name="Ai_OpenSettings" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings_Ai_ModelHint" xml:space="preserve"><value>Pick a model, or type any model id the assistant accepts.</value></data>
   <data name="Problems_ErrorsCountOne" xml:space="preserve"><value>1 Error</value></data>
   <data name="Problems_WarningsCountOne" xml:space="preserve"><value>1 Warning</value></data>

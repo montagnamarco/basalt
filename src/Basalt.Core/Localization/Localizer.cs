@@ -755,6 +755,9 @@ public static class StringKeys
     public const string GitCommit = "Git_Commit";
     public const string GitAmendLast = "Git_AmendLast";
     public const string GitCommitMessage = "Git_CommitMessage";
+    public const string GitNotARepository = "Git_NotARepository";
+    public const string GitNoSolution = "Git_NoSolution";
+    public const string GitNotInstalled = "Git_NotInstalled";
     public const string TestsSummary = "Tests_Summary";
     public const string TestsCount = "Tests_Count";
     public const string TestsRunning = "Tests_Running";
@@ -819,6 +822,8 @@ public static class StringKeys
     public const string AiApplyNoEditor = "Ai_Apply_NoEditor";
     public const string AiNeedsKey = "Ai_NeedsKey";
     public const string AiStatusModel = "Ai_Status_Model";
+    public const string AiNoAssistantLead = "Ai_NoAssistantLead";
+    public const string AiOpenSettings = "Ai_OpenSettings";
     public const string SettingsAiModelHint = "Settings_Ai_ModelHint";
     public const string ProblemsErrorsCountOne = "Problems_ErrorsCountOne";
     public const string ProblemsWarningsCountOne = "Problems_WarningsCountOne";

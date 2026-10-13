@@ -595,7 +595,10 @@ public partial class MainWindow : Window
             ? StringKeys.StatusRepositoryCreated
             : StringKeys.StatusRepositoryExists);
 
-        if (started) await RefreshGitAsync();
+        if (!started) return;
+
+        await ViewModel.DetectRepositoryAgainAsync();
+        await RefreshGitAsync();
     }
 
     /// <summary>
@@ -4129,6 +4132,8 @@ public partial class MainWindow : Window
     private void BuildAssistantPanel()
     {
         _assistant = new AiChatPanel();
+        _assistant.SettingsRequested += (_, _) => Guarded.Run(
+            ShowSettingsAsync, ViewModel.WriteOutput, "ide");
 
         _assistantController = new AiAssistantController(
             _assistant, ViewModel, () => _settingsStore.Load().Ai, _apiKeys,
@@ -4245,6 +4250,10 @@ public partial class MainWindow : Window
 
         _contents[_factory.GitChanges] = _gitChanges;
 
+        // A folder that is not a repository offers the command that starts one.
+        _gitChanges.InitializeRequested += (_, _) => Guarded.Run(
+            StartRepositoryAsync, ViewModel.WriteOutput, "git");
+
         _gitChanges.DiffRequested += (_, change) => Guarded.Run(
             () => ShowDiffAsync(change),
             ViewModel.WriteOutput, "ide");
@@ -4291,12 +4300,24 @@ public partial class MainWindow : Window
 
         _contents[_factory.GitBranches] = _branches;
 
+        _branches.InitializeRequested += (_, _) => Guarded.Run(
+            StartRepositoryAsync, ViewModel.WriteOutput, "git");
+
         ViewModel.RepositoryChanged += (_, _) => Guarded.Run(
-            () => RefreshGitAsync(),
+            () =>
+            {
+                // Raised when a repository is found and when one is gone: a
+                // solution with none must not keep showing the last one's.
+                ShowNoRepositoryWhenThereIsNone();
+                return RefreshGitAsync();
+            },
             ViewModel.WriteOutput, "ide");
 
         // A file just saved can be a file git has not seen yet.
         ViewModel.DocumentSaved += (_, _) => RefreshGitAfterSave();
+
+        WireNoRepositoryState();
+
     }
 
     /// <summary>

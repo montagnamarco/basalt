@@ -754,7 +754,11 @@ public sealed class UserJourneyTerminalAndObjectBrowserTests : IDisposable
 
         var browser = await OpenObjectBrowserAsync(host);
 
-        // Select the class library in the selector, as a person does.
+        // Select the class library in the selector, as a person does. The framework's
+        // libraries can be listed before the project's own, which arrives once the
+        // solution has loaded: it is awaited, not assumed.
+        Assert.True(await WaitUntilAsync(host, () => browser.Libraries.Any(l => l.Kind == BrowserLibraryKind.Project), maxPasses: 400),
+            "the Object Browser never listed the project's library.");
         var library = browser.Libraries.Single(l => l.Kind == BrowserLibraryKind.Project);
         browser.LibraryBox.SelectedIndex = browser.Libraries.ToList().IndexOf(library);
 
@@ -779,8 +783,10 @@ public sealed class UserJourneyTerminalAndObjectBrowserTests : IDisposable
         Assert.Contains(browser.MemberRows, row => row.Symbol.Signature == "Public Sub Show(text As String)");
         Assert.Contains(browser.MemberRows, row => row.Symbol.Signature == "Public Function Total(amount As Integer) As Integer");
 
-        // The description pane names the class and carries its XML summary.
-        Assert.Equal("Public Class Customer", browser.SignatureText);
+        // The description pane names the class and carries its XML summary. It is
+        // filled after the selection, like the member list, so it is awaited too.
+        Assert.True(await WaitUntilAsync(host, () => browser.SignatureText == "Public Class Customer"),
+            $"the description pane shows '{browser.SignatureText}', not Customer.");
         Assert.Contains("Namespace Shop", browser.DetailsText);
         Assert.Equal("A person who buys things.", browser.SummaryText);
 
@@ -791,7 +797,8 @@ public sealed class UserJourneyTerminalAndObjectBrowserTests : IDisposable
                 () => browser.MemberRows.Any(row => row.Symbol.Name == "Price")),
             "selecting IPriced did not list its member Price.");
         Assert.Contains("Price()", browser.MemberRows.Single(row => row.Symbol.Name == "Price").Symbol.Signature);
-        Assert.Equal("Something that has a price.", browser.SummaryText);
+        Assert.True(await WaitUntilAsync(host, () => browser.SummaryText == "Something that has a price."),
+            $"the summary shows '{browser.SummaryText}', not IPriced's.");
 
         var status = await TypeRowAsync(host, browser, "Status");
         SelectTypeRow(browser, status);
@@ -874,7 +881,9 @@ public sealed class UserJourneyTerminalAndObjectBrowserTests : IDisposable
             "selecting System.String did not describe it.");
         Assert.Contains("Namespace System", browser.DetailsText);
         Assert.Contains(L(StringKeys.ObjectBrowserFromMetadata), browser.DetailsText, StringComparison.Ordinal);
-        Assert.Contains(browser.MemberRows, row => row.Symbol.Name == "Length");
+        // The members arrive after the description: awaited, as for the project's own types.
+        Assert.True(await WaitUntilAsync(host, () => browser.MemberRows.Any(row => row.Symbol.Name == "Length")),
+            "selecting System.String did not list Length.");
 
         browser.TypeList.RaiseEvent(new TappedEventArgs(Control.DoubleTappedEvent, null!));
         await host.SettleAsync(10);
