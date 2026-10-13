@@ -1777,11 +1777,12 @@ public partial class MainWindow : Window
 
         // Focused, not only selected: the answer is typed straight away (F2,
         // then the new name), and without the focus the keys reached nothing.
-        dialog.Opened += (_, _) =>
-        {
-            box.Focus();
-            box.SelectAll();
-        };
+        // Selected on every focus, not once: opened from the command palette,
+        // the box lost the focus for a moment while the palette closed, a text
+        // box drops its selection when it loses the focus, and "2" typed into
+        // "3" made "23".
+        box.GotFocus += (_, _) => box.SelectAll();
+        dialog.Opened += (_, _) => box.Focus();
 
         await dialog.ShowDialog(this);
 
@@ -1908,11 +1909,12 @@ public partial class MainWindow : Window
 
         // Focused, not only selected: the answer is typed straight away (F2,
         // then the new name), and without the focus the keys reached nothing.
-        dialog.Opened += (_, _) =>
-        {
-            box.Focus();
-            box.SelectAll();
-        };
+        // Selected on every focus, not once: opened from the command palette,
+        // the box lost the focus for a moment while the palette closed, a text
+        // box drops its selection when it loses the focus, and "2" typed into
+        // "3" made "23".
+        box.GotFocus += (_, _) => box.SelectAll();
+        dialog.Opened += (_, _) => box.Focus();
 
         await dialog.ShowDialog(this);
 

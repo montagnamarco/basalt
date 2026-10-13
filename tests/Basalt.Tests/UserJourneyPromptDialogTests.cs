@@ -174,4 +174,37 @@ public sealed class UserJourneyPromptDialogTests : IDisposable
         Assert.True(await WaitUntilAsync(host, () => OpenDialog(w) is null), "Enter did not close the refused preview.");
         Assert.Contains("Console.WriteLine", editor.Text, StringComparison.Ordinal);
     }
+
+    /// <remarks>
+    /// Defect reintroduced once (the box selected only when the dialog opened):
+    /// opened from the command palette, the box lost the focus while the palette
+    /// closed, the selection went with it, "6" typed into "1" made "61", and the
+    /// caret went to the last line.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task GoToLineFromTheCommandPaletteReplacesTheCurrentLineNumber()
+    {
+        var (host, _, editor) = await OpenAsync(WriteProject(), ProgramPath);
+        using var _ = host;
+        var w = host.Window;
+        editor.CaretOffset = 0;
+
+        PressKey(w, Key.P, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.P);
+        Assert.True(await WaitUntilAsync(host, () => OpenDialog(w) is not null), "Ctrl+Shift+P opened no palette.");
+        var palette = OpenDialog(w)!;
+        await host.SettleAsync(3);
+        foreach (var character in "go to line") palette.KeyTextInput(character.ToString());
+        await host.SettleAsync(3);
+        palette.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+
+        Assert.True(await WaitUntilAsync(host, () => OpenDialog(w) is { } d && !ReferenceEquals(d, palette)),
+            "the palette did not open Go to Line.");
+        var dialog = OpenDialog(w)!;
+        await host.SettleAsync(5);
+        dialog.KeyTextInput("6");
+        dialog.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+
+        Assert.True(await WaitUntilAsync(host, () => editor.TextArea.Caret.Line == 6),
+            $"the caret is on line {editor.TextArea.Caret.Line}, not 6.");
+    }
 }

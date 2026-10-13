@@ -330,6 +330,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         CloseAllDocuments();
 
         BeginBusy();
+        _loadingSolution = true;
         StatusMessage = Localizer.Get(StringKeys.StatusOpening, Path.GetFileName(path));
         try
         {
@@ -377,6 +378,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             if (sourceFileLanguage is not null)
                 await OpenFileAsync(path).ConfigureAwait(true);
 
+
             // Guarded: opening a solution runs in the background from the
             // moment the window loads, and nothing else waits for it. By the
             // time every await above finishes, a debug session can already
@@ -395,8 +397,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
         finally
         {
+            _loadingSolution = false;
             EndBusy();
         }
+
+        // The files restored or opened while loading had no project to be
+        // checked against until now. Not awaited: the solution is open, and
+        // the first check pays for the first compilation.
+        _ = RefreshDiagnosticsOfAsync(OpenDocuments);
     }
 
     /// <summary>Opens a file: .axaml files in the designer, everything else in the text editor.</summary>
@@ -417,6 +425,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         ActivateDocument(document);
 
         Opened?.Invoke(this, (path, false));
+
+        // While a solution loads, its end checks every open file at once.
+        if (!_loadingSolution) _ = RefreshDiagnosticsOfAsync([document]);
     }
 
     /// <summary>
@@ -1264,19 +1275,28 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// </summary>
     public async Task RefreshDiagnosticsAsync(EditorDocumentViewModel document)
     {
+        // A closed document is not checked: pushing its text into the
+        // workspace would bring back an edit the user discarded.
+        if (!OpenDocuments.Contains(document) || !IsChecked(document.FilePath)) return;
+
+        // A check that finishes after the text changed describes text that is
+        // gone: a slower, older one (the first, which builds the compilation)
+        // used to overwrite a newer one's result. The newer check reports.
+        var text = document.Text;
+
         if (RoutedProviderFor(document.FilePath) is { } provider)
         {
-            var found = await ProviderDiagnosticsAsync(provider, document.FilePath, document.Text)
+            var found = await ProviderDiagnosticsAsync(provider, document.FilePath, text)
                 .ConfigureAwait(true);
 
-            ReplaceDiagnosticsOf(document.FilePath, found);
+            if (document.Text == text && OpenDocuments.Contains(document)) ReplaceDiagnosticsOf(document.FilePath, found);
             return;
         }
 
-        await _languageService.UpdateDocumentAsync(document.FilePath, document.Text).ConfigureAwait(true);
+        await _languageService.UpdateDocumentAsync(document.FilePath, text).ConfigureAwait(true);
         var diagnostics = await _languageService.GetDiagnosticsAsync(document.FilePath).ConfigureAwait(true);
 
-        ReplaceDiagnosticsOf(document.FilePath, diagnostics);
+        if (document.Text == text && OpenDocuments.Contains(document)) ReplaceDiagnosticsOf(document.FilePath, diagnostics);
     }
 
     /// <summary>

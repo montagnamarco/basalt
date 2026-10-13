@@ -26,6 +26,9 @@ public sealed class DiagnosticSquiggles : IBackgroundRenderer
     public void SetDiagnostics(IReadOnlyList<IdeDiagnostic> diagnostics) =>
         _diagnostics = diagnostics;
 
+    /// <summary>What the next paint underlines.</summary>
+    internal IReadOnlyList<IdeDiagnostic> Shown => _diagnostics;
+
     public void Draw(TextView textView, DrawingContext drawingContext)
     {
         if (_diagnostics.Count == 0) return;
