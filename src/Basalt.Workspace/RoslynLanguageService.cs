@@ -2111,7 +2111,11 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         var span = d.Location.GetLineSpan();
         return new IdeDiagnostic(
             d.Id,
-            d.GetMessage(),
+            // In the language the IDE is shown in, as the build reports it
+            // (DotnetProcess sets DOTNET_CLI_UI_LANGUAGE): the compiler's own
+            // default is the operating system's, which put Italian messages in
+            // an English Problems panel next to English build errors.
+            d.GetMessage(System.Globalization.CultureInfo.GetCultureInfo(Localizer.InterfaceLanguage)),
             d.Severity switch
             {
                 Microsoft.CodeAnalysis.DiagnosticSeverity.Error => Basalt.Core.Model.DiagnosticSeverity.Error,
