@@ -301,7 +301,9 @@ public sealed class ScreenshotProbe : IDisposable
         // no room and report themselves as not visible.
         Save(host.Window, "winforms-designer.png");
 
-        Assert.True(host.Window.GetVisualDescendants().OfType<ToolboxPanel>().Any(p => p.IsEffectivelyVisible),
+        // The WinForms designer shows its own toolbox list in the Toolbox tool, in place of the general panel.
+        Assert.True(host.Window.GetVisualDescendants().OfType<Control>()
+                .Any(p => p is ToolboxPanel or ToolboxList && p.IsEffectivelyVisible),
             "the Toolbox should be visible by default");
         Assert.True(host.Window.GetVisualDescendants().OfType<SolutionExplorerPanel>().Any(p => p.IsEffectivelyVisible),
             "Solution Explorer should be visible by default");
@@ -542,5 +544,78 @@ public sealed class ScreenshotProbe : IDisposable
         await host.SettleAsync(5);
 
         Save(host.Window, "main-dark.png");
+    }
+
+    // ------------------------------------------------------------------
+    // 11. Every tool panel, one picture each, in both themes: the tour a
+    //     reviewer walks to judge spacing, empty states and wording.
+    // ------------------------------------------------------------------
+
+    [AvaloniaTheory]
+    [InlineData(AppTheme.Light)]
+    [InlineData(AppTheme.Dark)]
+    public async Task EveryPanelScreenshots(AppTheme theme)
+    {
+        SkipUnlessRequested();
+
+        var store = new SettingsStore(_settings);
+        var settings = store.Load();
+        settings.Appearance.Theme = theme;
+        store.Save(settings);
+
+        var project = Path.Combine(_root, "Tour.vbproj");
+        File.WriteAllText(project, """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <OutputType>Exe</OutputType>
+                <TargetFramework>net10.0</TargetFramework>
+                <RootNamespace>Tour</RootNamespace>
+              </PropertyGroup>
+            </Project>
+            """);
+        var program = Path.Combine(_root, "Program.vb");
+        File.WriteAllText(program, """
+            Module Program
+                Sub Main()
+                    Dim invoice As New Invoice With {.Total = 100D}
+                    Console.WriteLine(invoice.Tax())
+                    Dim missing As Integer = notDeclared
+                End Sub
+            End Module
+
+            Public Class Invoice
+                Public Property Total As Decimal
+                Public Function Tax() As Decimal
+                    Return Total * 0.22D
+                End Function
+            End Class
+            """);
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var vm = (MainWindowViewModel)host.Window.DataContext!;
+        for (var i = 0; i < 600 && (vm.StartupProject is null || vm.IsBusy); i++) await host.SettleAsync(1);
+        await vm.OpenFileAsync(program);
+        await host.SettleAsync(30);
+
+        var factory = typeof(MainWindow).GetField("_factory",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(host.Window)!;
+        var showTool = typeof(MainWindow).GetMethod("ShowTool",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
+            [typeof(Dock.Model.Core.IDockable)])!;
+
+        foreach (var name in new[]
+        {
+            "SolutionExplorer", "Toolbox", "Properties", "Problems", "Output", "Search", "Outline",
+            "ElementTree", "Database", "References", "ObjectBrowser", "CallStack", "Variables",
+            "Breakpoints", "Watch", "Immediate", "GitChanges", "GitHistory", "GitBranches", "GitDiff",
+            "Tests", "Assistant",
+        })
+        {
+            var tool = factory.GetType().GetProperty(name)!.GetValue(factory)!;
+            showTool.Invoke(host.Window, [tool]);
+            await host.SettleAsync(8);
+            Save(host.Window, $"panel-{theme.ToString().ToLowerInvariant()}-{name}.png");
+        }
     }
 }
