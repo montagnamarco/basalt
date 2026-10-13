@@ -9,6 +9,24 @@
       rest on a transitive dependency that could change under it.
     -->
     <PackageReference Include="SQLitePCLRaw.core" Version="2.1.12" />
+    <!--
+      SQL Server's ADO.NET provider. SqlConnection.InfoMessage carries PRINT
+      output, and SqlException.LineNumber says which batch line failed. Version
+      6.1.7 is the latest stable 6.x published at least two weeks before it was added (2026-09-10).
+    -->
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.7" />
+    <!--
+      PostgreSQL's provider. Its Notice event carries RAISE NOTICE, and
+      PostgresException.Position says where in the batch an error is, which the
+      session turns into a line.
+    -->
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+    <!--
+      MySQL and MariaDB's provider. Used for both servers, which share the wire
+      protocol. Version 2.6.2 is the latest stable 2.x published at least two
+      weeks before it was added (2026-08-11).
+    -->
+    <PackageReference Include="MySqlConnector" Version="2.6.2" />
     <ProjectReference Include="../Basalt.Core/Basalt.Core.csproj" />
   </ItemGroup>
 

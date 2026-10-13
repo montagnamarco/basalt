@@ -128,6 +128,15 @@
   <data name="Database_Disconnected" xml:space="preserve"><value>Disconnected.</value></data>
   <data name="Database_NoFile" xml:space="preserve"><value>There is no database at {0}.</value></data>
   <data name="Database_NotOpen" xml:space="preserve"><value>No database is open.</value></data>
+  <data name="Database_RowsAffected" xml:space="preserve"><value>{0} rows affected</value></data>
+  <data name="Database_EditFailed" xml:space="preserve"><value>Edit {0} was refused, so nothing was changed: {1}</value></data>
+  <data name="Database_RowVanished" xml:space="preserve"><value>The row was changed or removed by someone else since it was read.</value></data>
+  <data name="Database_BadValue" xml:space="preserve"><value>"{0}" is not a valid {1} value for column {2}.</value></data>
+  <data name="Database_NotEditable" xml:space="preserve"><value>{0} cannot be edited: it is a view or has no primary key.</value></data>
+  <data name="Database_NoObject" xml:space="preserve"><value>There is no table or view named {0}.</value></data>
+  <data name="Database_Unsupported" xml:space="preserve"><value>{0} databases are not supported yet.</value></data>
+  <data name="Database_RowAffected" xml:space="preserve"><value>1 row affected</value></data>
+  <data name="Database_CommitFailed" xml:space="preserve"><value>The changes were refused when they were committed, so nothing was changed: {0}</value></data>
   <data name="Tool_Database" xml:space="preserve"><value>Database</value></data>
   <data name="Git_NothingToCommit" xml:space="preserve"><value>No changes — the working tree is clean</value></data>
   <data name="Git_NothingStaged" xml:space="preserve"><value>Nothing staged yet</value></data>

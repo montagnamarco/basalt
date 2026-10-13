@@ -235,6 +235,15 @@ public static class StringKeys
     public const string DatabaseDisconnected = "Database_Disconnected";
     public const string DatabaseNoFile = "Database_NoFile";
     public const string DatabaseNotOpen = "Database_NotOpen";
+    public const string DatabaseRowsAffected = "Database_RowsAffected";
+    public const string DatabaseEditFailed = "Database_EditFailed";
+    public const string DatabaseRowVanished = "Database_RowVanished";
+    public const string DatabaseBadValue = "Database_BadValue";
+    public const string DatabaseNotEditable = "Database_NotEditable";
+    public const string DatabaseNoObject = "Database_NoObject";
+    public const string DatabaseUnsupported = "Database_Unsupported";
+    public const string DatabaseRowAffected = "Database_RowAffected";
+    public const string DatabaseCommitFailed = "Database_CommitFailed";
     public const string ToolDatabase = "Tool_Database";
     public const string GitNothingToCommit = "Git_NothingToCommit";
     public const string GitNothingStaged = "Git_NothingStaged";
