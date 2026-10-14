@@ -30,7 +30,7 @@ public sealed class ThemeTests
         "ListHoverBackground", "ListActiveSelectionBackground",
         "ListActiveSelectionForeground", "ListInactiveSelectionBackground",
         "FocusBorder", "InputBackground", "InputBorder",
-        "ButtonBackground", "ButtonForeground",
+        "ButtonBackgroundColor", "ButtonForegroundColor",
         "ButtonSecondaryBackground", "ButtonSecondaryForeground",
         "ErrorForeground", "WarningForeground", "DescriptionForeground", "ScrollbarSlider",
         "ChromeForeground", "ChromeSecondaryForeground", "SuccessForeground"
@@ -104,8 +104,8 @@ public sealed class ThemeTests
     public void KeepsButtonTextReadable(AppTheme theme)
     {
         var contrast = Contrast(
-            ColourOf(theme, "ButtonBackground")!.Value,
-            ColourOf(theme, "ButtonForeground")!.Value);
+            ColourOf(theme, "ButtonBackgroundColor")!.Value,
+            ColourOf(theme, "ButtonForegroundColor")!.Value);
 
         Assert.True(contrast >= 4.5,
             $"{theme}: button text contrast is {contrast:F1}.");
@@ -121,6 +121,34 @@ public sealed class ThemeTests
 
         Assert.True(Contrast(background, border) >= 1.15,
             $"{theme}: the side bar border does not stand out from the side bar.");
+    }
+
+    /// <remarks>
+    /// The palette named its button colours as Fluent names its button brushes. Leaving Dark for System
+    /// let a lookup reach Fluent's brush where a colour was expected, and the switch threw an invalid cast.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task SwitchingFromDarkToFollowingTheSystemDoesNotThrow()
+    {
+        var application = Application.Current!;
+        var previous = application.RequestedThemeVariant;
+
+        try
+        {
+            using var host = new TestWindow();
+            await host.SettleAsync(3);
+
+            application.RequestedThemeVariant = ThemeVariant.Dark;
+            await host.SettleAsync(3);
+
+            // What choosing "System" in the settings does: the variant goes back to the platform's.
+            application.RequestedThemeVariant = ThemeVariant.Default;
+            await host.SettleAsync(3);
+        }
+        finally
+        {
+            application.RequestedThemeVariant = previous;
+        }
     }
 
     [AvaloniaFact]

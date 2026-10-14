@@ -38,8 +38,8 @@
     <Color x:Key="FocusBorder">#005FB8</Color>
     <Color x:Key="InputBackground">#FFFFFF</Color>
     <Color x:Key="InputBorder">#B0B0B0</Color>
-    <Color x:Key="ButtonBackground">#005FB8</Color>
-    <Color x:Key="ButtonForeground">#FFFFFF</Color>
+    <Color x:Key="ButtonBackgroundColor">#005FB8</Color>
+    <Color x:Key="ButtonForegroundColor">#FFFFFF</Color>
     <Color x:Key="ButtonSecondaryBackground">#DDDDDD</Color>
     <Color x:Key="ButtonSecondaryForeground">#1F1F1F</Color>
     <Color x:Key="ErrorForeground">#C42B1C</Color>
@@ -82,8 +82,8 @@
     <Color x:Key="FocusBorder">#0078D4</Color>
     <Color x:Key="InputBackground">#313131</Color>
     <Color x:Key="InputBorder">#3C3C3C</Color>
-    <Color x:Key="ButtonBackground">#0078D4</Color>
-    <Color x:Key="ButtonForeground">#FFFFFF</Color>
+    <Color x:Key="ButtonBackgroundColor">#0078D4</Color>
+    <Color x:Key="ButtonForegroundColor">#FFFFFF</Color>
     <Color x:Key="ButtonSecondaryBackground">#313131</Color>
     <Color x:Key="ButtonSecondaryForeground">#CCCCCC</Color>
     <Color x:Key="ErrorForeground">#F85149</Color>
@@ -121,8 +121,8 @@
     <Color x:Key="FocusBorder">#007ACC</Color>
     <Color x:Key="InputBackground">#FFFFFF</Color>
     <Color x:Key="InputBorder">#CCCEDB</Color>
-    <Color x:Key="ButtonBackground">#007ACC</Color>
-    <Color x:Key="ButtonForeground">#FFFFFF</Color>
+    <Color x:Key="ButtonBackgroundColor">#007ACC</Color>
+    <Color x:Key="ButtonForegroundColor">#FFFFFF</Color>
     <Color x:Key="ButtonSecondaryBackground">#DDDDDD</Color>
     <Color x:Key="ButtonSecondaryForeground">#000000</Color>
     <Color x:Key="ErrorForeground">#A31515</Color>
@@ -160,8 +160,8 @@
     <Color x:Key="FocusBorder">#0000FF</Color>
     <Color x:Key="InputBackground">#FFFFFF</Color>
     <Color x:Key="InputBorder">#000000</Color>
-    <Color x:Key="ButtonBackground">#000000</Color>
-    <Color x:Key="ButtonForeground">#FFFFFF</Color>
+    <Color x:Key="ButtonBackgroundColor">#000000</Color>
+    <Color x:Key="ButtonForegroundColor">#FFFFFF</Color>
     <Color x:Key="ButtonSecondaryBackground">#FFFFFF</Color>
     <Color x:Key="ButtonSecondaryForeground">#000000</Color>
     <Color x:Key="ErrorForeground">#B50000</Color>
@@ -199,8 +199,8 @@
     <Color x:Key="FocusBorder">#1AEBFF</Color>
     <Color x:Key="InputBackground">#000000</Color>
     <Color x:Key="InputBorder">#FFFFFF</Color>
-    <Color x:Key="ButtonBackground">#1AEBFF</Color>
-    <Color x:Key="ButtonForeground">#000000</Color>
+    <Color x:Key="ButtonBackgroundColor">#1AEBFF</Color>
+    <Color x:Key="ButtonForegroundColor">#000000</Color>
     <Color x:Key="ButtonSecondaryBackground">#000000</Color>
     <Color x:Key="ButtonSecondaryForeground">#FFFFFF</Color>
     <Color x:Key="ErrorForeground">#FF6B6B</Color>
@@ -238,8 +238,8 @@
     <Color x:Key="FocusBorder">#268BD2</Color>
     <Color x:Key="InputBackground">#FDF6E3</Color>
     <Color x:Key="InputBorder">#93A1A1</Color>
-    <Color x:Key="ButtonBackground">#1F6FA8</Color>
-    <Color x:Key="ButtonForeground">#FDF6E3</Color>
+    <Color x:Key="ButtonBackgroundColor">#1F6FA8</Color>
+    <Color x:Key="ButtonForegroundColor">#FDF6E3</Color>
     <Color x:Key="ButtonSecondaryBackground">#EEE8D5</Color>
     <Color x:Key="ButtonSecondaryForeground">#586E75</Color>
     <Color x:Key="ErrorForeground">#DC322F</Color>
@@ -277,8 +277,8 @@
     <Color x:Key="FocusBorder">#268BD2</Color>
     <Color x:Key="InputBackground">#073642</Color>
     <Color x:Key="InputBorder">#586E75</Color>
-    <Color x:Key="ButtonBackground">#1F6FA8</Color>
-    <Color x:Key="ButtonForeground">#FDF6E3</Color>
+    <Color x:Key="ButtonBackgroundColor">#1F6FA8</Color>
+    <Color x:Key="ButtonForegroundColor">#FDF6E3</Color>
     <Color x:Key="ButtonSecondaryBackground">#073642</Color>
     <Color x:Key="ButtonSecondaryForeground">#93A1A1</Color>
     <Color x:Key="ErrorForeground">#DC322F</Color>
@@ -311,8 +311,13 @@
   <SolidColorBrush x:Key="ListHoverBackgroundBrush" Color="{DynamicResource ListHoverBackground}" />
   <SolidColorBrush x:Key="InputBackgroundBrush" Color="{DynamicResource InputBackground}" />
   <SolidColorBrush x:Key="InputBorderBrush" Color="{DynamicResource InputBorder}" />
-  <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="{DynamicResource ButtonBackground}" />
-  <SolidColorBrush x:Key="ButtonForegroundBrush" Color="{DynamicResource ButtonForeground}" />
+  <!--
+    The button colours end in "Color": Fluent names its own button brushes ButtonBackground and
+    ButtonForeground, and a colour under the same key was found in place of the brush whenever a lookup
+    missed these dictionaries (switching from Dark to System threw an invalid cast).
+  -->
+  <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="{DynamicResource ButtonBackgroundColor}" />
+  <SolidColorBrush x:Key="ButtonForegroundBrush" Color="{DynamicResource ButtonForegroundColor}" />
   <SolidColorBrush x:Key="ButtonSecondaryBackgroundBrush" Color="{DynamicResource ButtonSecondaryBackground}" />
   <SolidColorBrush x:Key="ButtonSecondaryForegroundBrush" Color="{DynamicResource ButtonSecondaryForeground}" />
   <SolidColorBrush x:Key="ErrorForegroundBrush" Color="{DynamicResource ErrorForeground}" />
