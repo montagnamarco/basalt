@@ -16,6 +16,9 @@ public sealed class UnavailablePtyConnection(string reason) : IPtyConnection
 
     public bool IsRunning => false;
 
+    /// <summary>No child was ever started, so there is no id.</summary>
+    public int ProcessId => -1;
+
     public event EventHandler<string>? OutputReceived { add { } remove { } }
 
     public event EventHandler<int>? Exited { add { } remove { } }

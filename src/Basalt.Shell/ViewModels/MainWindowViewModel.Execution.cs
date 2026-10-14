@@ -1,5 +1,6 @@
 using Basalt.Core.Localization;
 using Basalt.Core.Model;
+using Basalt.Workspace;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Basalt.Shell.ViewModels;
@@ -237,7 +238,8 @@ public sealed partial class MainWindowViewModel
     /// </summary>
     internal bool ReportIfAlreadyRunning()
     {
-        if (!_runService.IsRunning) return false;
+        // A console program in its terminal tab is a running program too.
+        if (!_runService.IsRunning && !ConsoleRunIsRunning) return false;
 
         StatusMessage = Localizer.Get(StringKeys.StatusAlreadyRunning);
         return true;
@@ -276,13 +278,34 @@ public sealed partial class MainWindowViewModel
             return;
         }
 
+        // A console program runs in a terminal tab, where the person can type to it. Read here, off the interface
+        // thread, as the arguments above are, and only when there is a window to open the tab in.
+        var runInTerminal = RunInTerminal;
+        var startup = StartupProject;
+        var console = runInTerminal is not null
+            && await Task.Run(() => ConsoleProjects.IsConsole(startup)).ConfigureAwait(true);
+
         if (!LaunchTargetIsCurrent(expectedProject ?? StartupProject, expectedConfiguration ?? Configuration)) return;
+
+        // Checked again after the build, not only before it: a run asked for while this build waited on the gate
+        // passed the check in RunAsync, and must not start a second program next to the first. Nothing awaits between
+        // this check and the start below, so no other run can start in the gap.
+        if (ReportIfAlreadyRunning()) return;
 
         if (_builtAssemblyPath is not { } assembly || !File.Exists(assembly))
         {
             // The caller always builds first; this only happens when that
             // build produced no assembly at all, which it already reported.
             StatusMessage = Localizer.Get(StringKeys.StatusStartFailed, Localizer.Get(StringKeys.StatusNoBuildOutput));
+            return;
+        }
+
+        if (console && runInTerminal is not null)
+        {
+            // The generation is taken as the redirected run takes its own below, so an exit from an earlier run is
+            // recognised the same way whichever kind of run it was.
+            await RunConsoleProjectAsync(runInTerminal, startup!, expectedConfiguration ?? Configuration,
+                compatibilityArguments, ++_runGeneration).ConfigureAwait(true);
             return;
         }
 
@@ -373,6 +396,7 @@ public sealed partial class MainWindowViewModel
         // a crash.
         _stoppedRunGeneration = _runGeneration;
         _runService.Stop();
+        StopConsoleRun();
         StopSourceFileRun();
         IsRunning = false;
         StatusMessage = Localizer.Get(StringKeys.StatusStopped);

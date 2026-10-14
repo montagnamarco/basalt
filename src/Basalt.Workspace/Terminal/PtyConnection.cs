@@ -12,6 +12,13 @@ public interface IPtyConnection : IDisposable
 {
     bool IsRunning { get; }
 
+    /// <summary>
+    /// The operating system's id for the child, or -1 when no child was started.
+    /// Asked for so a caller can end the program it started, which the
+    /// connection itself does not do until it is disposed.
+    /// </summary>
+    int ProcessId { get; }
+
     /// <summary>Raw text produced by the child, ANSI escape sequences included.</summary>
     event EventHandler<string>? OutputReceived;
 
@@ -83,6 +90,7 @@ public sealed class UnixPtyConnection : IPtyConnection
         _process = new System.Diagnostics.Process { StartInfo = startInfo, EnableRaisingEvents = true };
         _process.Exited += (_, _) => Exited?.Invoke(this, _process.ExitCode);
         _process.Start();
+        ProcessId = _process.Id;
 
         // The worker end belongs to the child now: holding it open here would
         // stop us from ever seeing end-of-file when the child exits.
@@ -94,6 +102,12 @@ public sealed class UnixPtyConnection : IPtyConnection
     // A disposed connection has released its process: asking it for HasExited
     // throws, so a closed terminal reports itself as not running instead.
     public bool IsRunning => !_disposed && !_process.HasExited;
+
+    /// <summary>
+    /// The child's id. /bin/sh replaces itself with the program, so this is
+    /// the program's own pid, not the shell's.
+    /// </summary>
+    public int ProcessId { get; }
 
     public event EventHandler<string>? OutputReceived;
     public event EventHandler<int>? Exited;

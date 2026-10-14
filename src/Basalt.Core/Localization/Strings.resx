@@ -320,6 +320,8 @@
   <!-- Terminal -->
   <data name="Terminal_InputHint" xml:space="preserve"><value>Type a command and press Enter</value></data>
   <data name="Terminal_CouldNotStart" xml:space="preserve"><value>The terminal could not start: {0}</value></data>
+  <data name="Terminal_ProcessExited" xml:space="preserve"><value>[process exited with code {0}]</value></data>
+  <data name="Terminal_NoPanel" xml:space="preserve"><value>The Terminal panel is not available.</value></data>
 
   <!-- Status messages -->
   <data name="Status_Ready" xml:space="preserve"><value>Ready</value></data>
@@ -342,6 +344,7 @@
   <data name="Status_NoDefinition" xml:space="preserve"><value>No definition found</value></data>
   <data name="Status_NoSymbolHere" xml:space="preserve"><value>No symbol at the caret</value></data>
   <data name="Status_ApplicationExited" xml:space="preserve"><value>[application exited with code {0}]</value></data>
+  <data name="Status_RunInTerminalFailed" xml:space="preserve"><value>The program could not start in the terminal. See the Terminal panel.</value></data>
 
   <!-- Validation messages -->
   <data name="Validation_NameRequired" xml:space="preserve"><value>Enter a name.</value></data>

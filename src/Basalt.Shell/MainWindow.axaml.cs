@@ -225,6 +225,7 @@ public partial class MainWindow : Window
 
         DataContext = viewModel;
         InitializeDocumentViewLifetime();
+        InitializeProgramTerminals();
         InitializeSaveChanges();
         InitializeWindowTitle();
 

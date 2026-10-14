@@ -426,6 +426,8 @@ public static class StringKeys
 
     public const string TerminalInputHint = "Terminal_InputHint";
     public const string TerminalCouldNotStart = "Terminal_CouldNotStart";
+    public const string TerminalProcessExited = "Terminal_ProcessExited";
+    public const string TerminalNoPanel = "Terminal_NoPanel";
 
     public const string StatusReady = "Status_Ready";
     public const string StatusOpening = "Status_Opening";
@@ -448,6 +450,7 @@ public static class StringKeys
     public const string StatusNoSymbolHere = "Status_NoSymbolHere";
     public const string StatusApplicationExited = "Status_ApplicationExited";
     public const string StatusRunExited = "Status_RunExited";
+    public const string StatusRunInTerminalFailed = "Status_RunInTerminalFailed";
 
     public const string ValidationNameRequired = "Validation_NameRequired";
     public const string ValidationInvalidIdentifier = "Validation_InvalidIdentifier";

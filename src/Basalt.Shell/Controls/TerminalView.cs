@@ -26,6 +26,12 @@ public sealed class TerminalView : UserControl, IDisposable
     private readonly ScrollViewer _scroller;
     private bool _disposed;
 
+    // The exit is raised on a threadpool thread, and subscribed to on the interface thread: the lock makes the
+    // handoff between them whole (see ProcessExited).
+    private readonly Lock _exitGate = new();
+    private EventHandler<int>? _processExited;
+    private int? _exitCode;
+
     /// <summary>
     /// Opens a terminal.
     ///
@@ -33,6 +39,22 @@ public sealed class TerminalView : UserControl, IDisposable
     /// what they expect from a terminal they did not configure.
     /// </summary>
     public TerminalView(string workingDirectory, string shell = "")
+        : this(workingDirectory, shell, () => CreateConnection(workingDirectory, shell))
+    {
+    }
+
+    /// <summary>
+    /// Opens a terminal that runs the program <paramref name="connect"/> starts, rather than a shell.
+    ///
+    /// Everything else is the shell terminal: the same panel, the same keys, the same exit line. Only the
+    /// process behind it differs, which is why the caller supplies the connection.
+    /// </summary>
+    public TerminalView(string workingDirectory, Func<IPtyConnection> connect)
+        : this(workingDirectory, "", connect)
+    {
+    }
+
+    private TerminalView(string workingDirectory, string shell, Func<IPtyConnection> connect)
     {
         WorkingDirectory = workingDirectory;
         Shell = shell;
@@ -67,7 +89,7 @@ public sealed class TerminalView : UserControl, IDisposable
 
         try
         {
-            _pty = CreateConnection(workingDirectory, shell);
+            _pty = connect();
         }
         catch (Exception ex) when (ex is IOException or DllNotFoundException or EntryPointNotFoundException
                                        or System.ComponentModel.Win32Exception)
@@ -107,6 +129,51 @@ public sealed class TerminalView : UserControl, IDisposable
     /// content is this view. The sender is the terminal.
     /// </summary>
     public event EventHandler? CloseRequested;
+
+    /// <summary>
+    /// Raised when the process this terminal runs has exited, after the exit line is written. The exit code is
+    /// the process's own. It is not raised when this terminal is disposed, because the process was then ended
+    /// on purpose and the host hears of that through <see cref="Released"/>.
+    /// </summary>
+    /// <remarks>
+    /// A process can exit before anyone subscribes: the terminal starts it when it is built, and the host may
+    /// only attach afterwards. A subscriber that comes after the exit is told at once, with the exit code, so the
+    /// exit cannot be missed. Each subscriber is told once.
+    /// </remarks>
+    public event EventHandler<int>? ProcessExited
+    {
+        add
+        {
+            int? exited;
+            lock (_exitGate)
+            {
+                _processExited += value;
+                exited = _exitCode;
+            }
+
+            if (exited is { } code) value?.Invoke(this, code);
+        }
+        remove
+        {
+            lock (_exitGate) _processExited -= value;
+        }
+    }
+
+    /// <summary>
+    /// Raised as the terminal is disposed, before its process is ended. The process is still alive then, so a host
+    /// that runs a program can end the program's whole tree here: ending only the child the terminal holds would
+    /// leave the programs it started running.
+    /// </summary>
+    public event EventHandler? Closing;
+
+    /// <summary>
+    /// Raised once the terminal has been disposed, which is when its tab closes. The process is already gone
+    /// by then, so a host waiting on it can stop waiting.
+    /// </summary>
+    public event EventHandler? Released;
+
+    /// <summary>The operating system's id for the process, or -1 when none was started.</summary>
+    public int ProcessId => _pty.ProcessId;
 
     internal ContextMenu? Menu => _display.ContextMenu;
 
@@ -230,8 +297,20 @@ public sealed class TerminalView : UserControl, IDisposable
         });
     }
 
-    private void OnExited(object? sender, int exitCode) =>
-        _screen.Append($"\n[process exited with code {exitCode}]\n");
+    private void OnExited(object? sender, int exitCode)
+    {
+        // Recorded and read under one lock with the subscriptions, so a subscriber either sees this exit as an
+        // invocation or as the replay on subscription, and never both.
+        EventHandler<int>? subscribers;
+        lock (_exitGate)
+        {
+            _exitCode = exitCode;
+            subscribers = _processExited;
+        }
+
+        _screen.Append($"\n{Localizer.Get(StringKeys.TerminalProcessExited, exitCode)}\n");
+        subscribers?.Invoke(this, exitCode);
+    }
 
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
@@ -286,12 +365,17 @@ public sealed class TerminalView : UserControl, IDisposable
     public void Dispose()
     {
         if (_disposed) return;
+
+        // Before the flag is set: a host ending its program here asks the terminal whether it is still running.
+        Closing?.Invoke(this, EventArgs.Empty);
         _disposed = true;
 
         _pty.OutputReceived -= OnOutputReceived;
         _pty.Exited -= OnExited;
         _screen.Changed -= OnScreenChanged;
         _pty.Dispose();
+
+        Released?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
