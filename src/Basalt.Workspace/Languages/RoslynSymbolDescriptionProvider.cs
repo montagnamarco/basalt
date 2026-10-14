@@ -45,7 +45,7 @@ internal sealed class RoslynSymbolDescriptionProvider : ISymbolDescriptionProvid
                 .Select(m => Describe(m, ct) with { ActiveParameter = found.ActiveParameter })
                 .ToList();
 
-            return new SymbolDescriptionSet(overloads) { Active = 0 };
+            return new SymbolDescriptionSet(overloads) { Active = found.ActiveMethod };
         }, ct);
 
     /// <summary>

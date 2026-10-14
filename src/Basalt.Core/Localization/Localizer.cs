@@ -1377,4 +1377,15 @@ public static class StringKeys
     public const string PackageVersionRequired = "Package_VersionRequired";
     public const string TestsRefresh = "Tests_Refresh";
     public const string TestDiscoveryFailed = "Test_DiscoveryFailed";
+    public const string RenameConflictMember = "Rename_ConflictMember";
+    public const string RenameConflictCompiler = "Rename_ConflictCompiler";
+    public const string HoverLocalVariable = "Hover_LocalVariable";
+    public const string HoverParameter = "Hover_Parameter";
+    public const string HoverField = "Hover_Field";
+    public const string HoverConstant = "Hover_Constant";
+    public const string RenameBlockedByCSharpProject = "Rename_BlockedByCSharpProject";
+
+    public const string RefactorExtractMethodYield = "Refactor_ExtractMethod_Yield";
+    public const string RefactorExtractMethodAsyncByRef = "Refactor_ExtractMethod_AsyncByRef";
+    public const string RefactorExtractMethodLambdaByRef = "Refactor_ExtractMethod_LambdaByRef";
 }

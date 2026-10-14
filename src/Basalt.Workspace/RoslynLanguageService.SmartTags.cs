@@ -27,6 +27,9 @@ public sealed partial class RoslynLanguageService
 
         var diagnostics = await GetDiagnosticsAtAsync(document, caret, ct).ConfigureAwait(false);
 
+        // Titles are written as the providers register: in the interface language, not the operating system's.
+        RoslynResourceCulture.UseInterfaceLanguage();
+
         var actions = new List<QuickAction>();
 
         foreach (var provider in _codeFixProviders.Value)

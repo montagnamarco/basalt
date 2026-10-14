@@ -389,7 +389,11 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
     /// <summary>What a call at a position could be, and which argument is being written.</summary>
     internal record struct CallAtPosition(
-        IReadOnlyList<IMethodSymbol> Methods, int ActiveParameter);
+        IReadOnlyList<IMethodSymbol> Methods, int ActiveParameter)
+    {
+        /// <summary>The index in <see cref="Methods"/> of the overload the call best matches.</summary>
+        public int ActiveMethod { get; init; }
+    }
 
     /// <summary>
     /// The call the caret sits inside, with its overloads.
@@ -417,19 +421,60 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
         var (target, arguments, listStart) = invocation;
 
-        var candidates = model.GetSymbolInfo(target, ct);
+        var argument = CountArgumentsBefore(arguments, caret, listStart);
 
-        var methods = candidates.Symbol is IMethodSymbol single
-            ? [single]
-            : candidates.CandidateSymbols.OfType<IMethodSymbol>().ToList();
+        if (OverloadsOf(model, target, argument, ct) is not { } overloads) return null;
 
+        return new CallAtPosition(overloads.Methods, argument) { ActiveMethod = overloads.Best };
+    }
+
+    /// <summary>
+    /// Every overload a call could be, in declaration order, and which of them
+    /// the call best matches.
+    /// </summary>
+    /// <remarks>
+    /// Taken from the method group, not from <see cref="SemanticModel.GetSymbolInfo"/>.
+    /// GetSymbolInfo names one overload once the call binds, so "Console.WriteLine()"
+    /// showed a single "1 of 1" while the call was complete, and an unbound call
+    /// shows only the candidates the binder kept. The method group is the full set
+    /// of methods the name can mean, so that is what the user is choosing from.
+    ///
+    /// The best match is the overload the compiler bound, when the call binds;
+    /// otherwise the first overload that takes the arguments typed so far. Only
+    /// accessible overloads are offered, as Roslyn's own signature help does.
+    /// </remarks>
+    private static (List<IMethodSymbol> Methods, int Best)? OverloadsOf(
+        SemanticModel model, SyntaxNode target, int argumentIndex, CancellationToken ct)
+    {
+        var position = target.SpanStart;
+
+        var methods = model.GetMemberGroup(target, ct)
+            .OfType<IMethodSymbol>()
+            .Where(method => model.IsAccessible(position, method))
+            .ToList();
+
+        // A constructor is reached through the type, not through a method.
         if (methods.Count == 0
             && model.GetSymbolInfo(target, ct).Symbol is INamedTypeSymbol type)
-            methods = [.. type.InstanceConstructors];
+        {
+            methods = [.. type.InstanceConstructors.Where(c => model.IsAccessible(position, c))];
+        }
 
         if (methods.Count == 0) return null;
 
-        return new CallAtPosition(methods, CountArgumentsBefore(arguments, caret, listStart));
+        var bound = model.GetSymbolInfo(target, ct).Symbol as IMethodSymbol;
+
+        var best = bound is null ? -1 : methods.FindIndex(method =>
+            SymbolEqualityComparer.Default.Equals(method.OriginalDefinition, bound.OriginalDefinition));
+
+        if (best < 0)
+        {
+            best = methods.FindIndex(method =>
+                argumentIndex < method.Parameters.Length
+                || method.Parameters.Length > 0 && method.Parameters[^1].IsParams);
+        }
+
+        return (methods, Math.Max(best, 0));
     }
 
     public Task<string?> GetQuickInfoAsync(
@@ -454,12 +499,33 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         var symbol = await SymbolFinder.FindSymbolAtPositionAsync(document, position, ct).ConfigureAwait(false);
         if (symbol is null) return null;
 
-        var signature = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var signature = HoverText(symbol);
         var docComment = symbol.GetDocumentationCommentXml(cancellationToken: ct);
 
         return string.IsNullOrWhiteSpace(docComment)
             ? signature
             : $"{signature}\n\n{ExtractSummary(docComment)}";
+    }
+
+    /// <summary>
+    /// The declaration a hover shows, with the kind Visual Studio puts in front
+    /// of a variable: "(local variable) x As Integer", not "x As Integer", which
+    /// does not say whether x is a local, a parameter or a field.
+    /// </summary>
+    private static string HoverText(ISymbol symbol)
+    {
+        var declaration = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+
+        var key = symbol switch
+        {
+            ILocalSymbol => StringKeys.HoverLocalVariable,
+            IParameterSymbol => StringKeys.HoverParameter,
+            IFieldSymbol { IsConst: true } => StringKeys.HoverConstant,
+            IFieldSymbol => StringKeys.HoverField,
+            _ => null
+        };
+
+        return key is null ? declaration : Localizer.Get(key, declaration);
     }
 
     /// <summary>
@@ -921,24 +987,11 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
         var (target, arguments, listStart) = invocation;
 
-        var candidates = model.GetSymbolInfo(target, ct);
+        var argument = CountArgumentsBefore(arguments, caret, listStart);
 
-        var methods = candidates.Symbol is IMethodSymbol single
-            ? [single]
-            : candidates.CandidateSymbols.OfType<IMethodSymbol>().ToList();
+        if (OverloadsOf(model, target, argument, ct) is not { } overloads) return null;
 
-        if (methods.Count == 0)
-        {
-            // A constructor is reached through the type, not through a method.
-            if (model.GetSymbolInfo(target, ct).Symbol is INamedTypeSymbol type)
-                methods = [.. type.InstanceConstructors];
-            else
-                return null;
-        }
-
-        if (methods.Count == 0) return null;
-
-        var signatures = methods
+        var signatures = overloads.Methods
             .Select(method => new SignatureInfo(
                 method.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
                 [.. method.Parameters.Select(p =>
@@ -951,8 +1004,8 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
 
         return new SignatureHelp(
             signatures,
-            ActiveSignature: 0,
-            ActiveParameter: CountArgumentsBefore(arguments, caret, listStart));
+            ActiveSignature: overloads.Best,
+            ActiveParameter: argument);
     }
 
     /// <summary>
@@ -1506,9 +1559,39 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
         // During member completion the caret is after the dot, while an unknown
         // receiver's diagnostic covers only its name. Include that receiver,
         // without picking unrelated errors elsewhere on the same line.
+        var header = TypeHeaderAt(token, position);
+
         return [.. model.GetDiagnostics(cancellationToken: ct)
             .Where(d => d.Location.SourceSpan.Start <= position && position <= d.Location.SourceSpan.End
-                || receiver is { } span && span.Contains(d.Location.SourceSpan))];
+                || receiver is { } span && span.Contains(d.Location.SourceSpan)
+                || header is { } headerSpan && headerSpan.Contains(d.Location.SourceSpan))];
+    }
+
+    /// <summary>
+    /// The header of the type whose name the caret is on: its class statement
+    /// and its Inherits and Implements lines, or null when the caret is not on
+    /// the name.
+    /// </summary>
+    /// <remarks>
+    /// Visual Basic reports a member an Implements line leaves unwritten on that
+    /// line, and the lightbulb is put on the class name, where the caret sits.
+    /// Without the header the implement fix is never offered where it is
+    /// wanted, and "Rename symbol" is all that remains.
+    /// </remarks>
+    private static TextSpan? TypeHeaderAt(SyntaxToken? token, int position)
+    {
+        if (token?.Parent?.FirstAncestorOrSelf<Microsoft.CodeAnalysis.VisualBasic.Syntax.TypeBlockSyntax>() is not { } type)
+            return null;
+
+        var name = type.BlockStatement.Span;
+        if (position < name.Start || position > name.End) return null;
+
+        var end = type.Inherits.Select(statement => statement.Span.End)
+            .Concat(type.Implements.Select(statement => statement.Span.End))
+            .Append(name.End)
+            .Max();
+
+        return TextSpan.FromBounds(type.BlockStatement.SpanStart, end);
     }
 
     /// <summary>

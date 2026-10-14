@@ -1335,4 +1335,14 @@
   <data name="Package_VersionRequired" xml:space="preserve"><value>Enter a version, for example 13.0.3, so the package is pinned.</value></data>
   <data name="Tests_Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="Test_DiscoveryFailed" xml:space="preserve"><value>The tests of {0} could not be discovered. Its build output shows why.</value></data>
+  <data name="Rename_ConflictMember" xml:space="preserve"><value>{0} already has a member named {1}.</value></data>
+  <data name="Rename_ConflictCompiler" xml:space="preserve"><value>Renaming would leave an error: {0}</value></data>
+  <data name="Hover_LocalVariable" xml:space="preserve"><value>(local variable) {0}</value></data>
+  <data name="Hover_Parameter" xml:space="preserve"><value>(parameter) {0}</value></data>
+  <data name="Hover_Field" xml:space="preserve"><value>(field) {0}</value></data>
+  <data name="Hover_Constant" xml:space="preserve"><value>(constant) {0}</value></data>
+  <data name="Rename_BlockedByCSharpProject" xml:space="preserve"><value>This rename cannot be done here. Project {0} is not a Visual Basic project and uses this project, and Basalt cannot compile it to find those uses.</value></data>
+  <data name="Refactor_ExtractMethod_Yield" xml:space="preserve"><value>That selection yields. A method cannot be lifted out of an iterator without changing what it returns.</value></data>
+  <data name="Refactor_ExtractMethod_AsyncByRef" xml:space="preserve"><value>That selection awaits and also changes the parameter {0}. An Async method cannot take a parameter ByRef, so the change could not come back.</value></data>
+  <data name="Refactor_ExtractMethod_LambdaByRef" xml:space="preserve"><value>That selection changes the parameter {0} and uses it in a lambda. A lambda cannot use a ByRef parameter, so the change could not come back.</value></data>
 </root>

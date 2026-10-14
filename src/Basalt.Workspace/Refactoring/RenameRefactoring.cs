@@ -1,3 +1,4 @@
+using Basalt.Core.Localization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Rename;
@@ -85,18 +86,40 @@ public sealed class RenameRefactoring
                 title, $"'{symbol.Name}' is declared outside this solution.");
         }
 
+        // A C# project in the solution cannot be compiled here (see RenameScope), so the renamer runs without the ones that
+        // cannot use the symbol, and a C# project that could use it refuses the rename.
+        var scope = RenameScope.For(_solution, symbol);
+        if (scope.BlockingProject is { } blocking)
+            return RefactoringPreview.Refused(title, Localizer.Get(StringKeys.RenameBlockedByCSharpProject, blocking));
+
+        // A name that is already a member of the container would leave two members: refused before
+        // the renamer edits anything, since the renamer itself applies the collision without a word.
+        if (RenameConflicts.SiblingNamed(symbol, newName) is not null)
+        {
+            return RefactoringPreview.Refused(title, Localizer.Get(StringKeys.RenameConflictMember,
+                symbol.ContainingSymbol?.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat) ?? "", newName));
+        }
+
         Solution renamed;
 
         try
         {
             renamed = await Renamer
-                .RenameSymbolAsync(_solution, symbol, new SymbolRenameOptions(), newName, ct)
+                .RenameSymbolAsync(scope.Solution, symbol,
+                    new SymbolRenameOptions(), newName, ct)
                 .ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
         {
             return RefactoringPreview.Refused(title, ex.Message);
         }
+
+        // What the renamer introduced that the code did not already have: a
+        // duplicate declaration, say, or a use that no longer binds.
+        // Compared with the solution the renamer ran in: the C# projects it left out supplied references (Microsoft.VisualBasic
+        // among them) that the trimmed compile lacks, and comparing with the full solution would blame the rename for them.
+        if (await RenameConflicts.IntroducedErrorAsync(scope.Solution, renamed, symbol.Name, newName, ct).ConfigureAwait(false) is { } error)
+            return RefactoringPreview.Refused(title, Localizer.Get(StringKeys.RenameConflictCompiler, error));
 
         var changes = new List<FileChangePreview>(
             await DescribeChangesAsync(renamed, ct).ConfigureAwait(false));
