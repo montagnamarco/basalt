@@ -319,6 +319,137 @@ public sealed class UserJourneyDebuggerTests : IDisposable
     }
 
     // ==================================================================
+    // Journey 1b. Watches written in Visual Basic. netcoredbg evaluates C#,
+    // so "total Mod 4" or "numbers(1)" all came back "not available" until
+    // the IDE translated them. Stopped on the second pass, total is 6.
+    // ==================================================================
+    [AvaloniaFact]
+    public async Task WatchesWrittenInVisualBasicShowTheirValues()
+    {
+        Assert.SkipWhen(DebugAdapterLocator.Find() is null, "netcoredbg is not installed.");
+
+        using var host = await OpenProgramAsync();
+        var w = host.Window;
+
+        try
+        {
+            ClickMargin(w, ProgramPath, CallLine);
+            PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
+            await PauseAtAsync(host, CallLine);
+
+            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolWatch));
+            var watch = PanelOf<WatchPanel>(w, f => f.Watch);
+
+            string[] expressions =
+            [
+                "total Mod 4", "total <> 2", "numbers(1) * 10", "Not (total = 2)",
+                "total > 1 AndAlso total < 10", "\"t=\" & total", "CStr(total)",
+            ];
+
+            foreach (var expression in expressions) AddWatch(watch, expression);
+
+            Assert.True(await PumpUntilAsync(host,
+                () => watch.Entries.Count == expressions.Length && watch.Entries.All(e => e.Value is not null || e.Failed),
+                TimeSpan.FromSeconds(30)),
+                "The watches were not evaluated.");
+
+            string ValueOf(string expression) => watch.Entries.Single(e => e.Expression == expression).Value ?? "<not available>";
+
+            Assert.Equal("2", ValueOf("total Mod 4"));
+            Assert.Equal("false", ValueOf("total <> 2"));
+            Assert.Equal("40", ValueOf("numbers(1) * 10"));
+            Assert.Equal("false", ValueOf("Not (total = 2)"));
+            Assert.Equal("true", ValueOf("total > 1 AndAlso total < 10"));
+            Assert.Equal("\"t=2\"", ValueOf("\"t=\" & total"));
+            Assert.Equal("\"2\"", ValueOf("CStr(total)"));
+        }
+        finally
+        {
+            await w.StopDebuggingForTests();
+        }
+    }
+
+    // ==================================================================
+    // Journey 1c. An unhandled exception three calls deep. The banner and the
+    // Output say what was thrown, and the Variables panel and the watches
+    // read the frame it was thrown in, and its callers once picked in the
+    // Call Stack. netcoredbg answers for the frame above the one asked for
+    // at such a stop, so the panel showed only $exception and "n" was not
+    // available.
+    // ==================================================================
+    private const string ThrowingProgram = """
+        Module Program
+            Sub Main()
+                Dim marker As Integer = 99
+                Console.WriteLine("before " & marker)
+                Middle(3)
+            End Sub
+
+            Sub Middle(depth As Integer)
+                Dim middleLocal As String = "mid"
+                Fail(depth)
+            End Sub
+
+            Sub Fail(n As Integer)
+                Dim items() As Integer = {1, 2}
+                Console.WriteLine(items(n))
+            End Sub
+        End Module
+        """;
+
+    [AvaloniaFact]
+    public async Task AnUnhandledExceptionStopsWithItsMessageAndTheLocalsOfEachFrame()
+    {
+        Assert.SkipWhen(DebugAdapterLocator.Find() is null, "netcoredbg is not installed.");
+
+        var project = WriteProject();
+        File.WriteAllText(ProgramPath, ThrowingProgram);
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        await vm.OpenFileAsync(ProgramPath);
+        await host.SettleAsync(8);
+
+        try
+        {
+            PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
+            await PauseAtAsync(host, 15);
+
+            const string thrown = "System.IndexOutOfRangeException: Index was outside the bounds of the array.";
+
+            var banner = w.FindControl<TextBlock>("DebugBannerDetail")!;
+            Assert.True(await PumpUntilAsync(host, () => banner.Text?.Contains(thrown, StringComparison.Ordinal) == true,
+                TimeSpan.FromSeconds(10)), $"The banner does not say what was thrown: '{banner.Text}'.");
+            Assert.Contains(vm.BuildOutput, line => line.Contains(thrown, StringComparison.Ordinal));
+
+            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolVariables));
+            var variables = PanelOf<VariablesPanel>(w, f => f.Variables);
+            Assert.True(await PumpUntilAsync(host, () => variables.Nodes.Any(n => n.Value.Name == "n"), TimeSpan.FromSeconds(10)),
+                "Fail's locals are not shown: " + string.Join(", ", variables.Nodes.Select(n => n.Value.Name)));
+            Assert.Equal("3", variables.Nodes.Single(n => n.Value.Name == "n").Value.Value);
+
+            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolWatch));
+            var watch = PanelOf<WatchPanel>(w, f => f.Watch);
+            AddWatch(watch, "n * 2");
+            Assert.True(await PumpUntilAsync(host, () => watch.Entries.Single().Value == "6", TimeSpan.FromSeconds(10)),
+                "The watch was not read in the frame that threw: " + watch.Entries.Single().Display);
+
+            // Main, the last frame, read through the Call Stack.
+            var callStack = PanelOf<CallStackPanel>(w, f => f.CallStack);
+            callStack.SelectForTests(callStack.Frames.Count - 1);
+            Assert.True(await PumpUntilAsync(host, () => variables.Nodes.Any(n => n.Value.Name == "marker"), TimeSpan.FromSeconds(10)),
+                "Main's locals are not shown: " + string.Join(", ", variables.Nodes.Select(n => n.Value.Name)));
+            Assert.Equal("99", variables.Nodes.Single(n => n.Value.Name == "marker").Value.Value);
+        }
+        finally
+        {
+            await w.StopDebuggingForTests();
+        }
+    }
+
+    // ==================================================================
     // Journey 2. A breakpoint set by clicking the margin. F10 steps over the
     // call and the Watch value moves with it; F11 steps into the Sub and the
     // Call Stack lists the Sub above Main.

@@ -17,6 +17,12 @@ public sealed class NetCoreDebugService : IDebugSessionService
     private IDapConnection? _client;
 
     private int _currentThread;
+
+    /// <summary>Why the program last stopped, as the adapter said: "breakpoint", "step", "exception", "pause".</summary>
+    private volatile string? _stopReason;
+
+    /// <inheritdoc />
+    public string? StoppedException { get; private set; }
     private readonly Dictionary<string, IReadOnlyList<Breakpoint>> _breakpoints = new(StringComparer.Ordinal);
 
     /// <summary>
@@ -27,6 +33,13 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// it stopped" finds the file the user already has in front of them.
     /// </summary>
     private readonly Dictionary<string, string> _pathsAsGiven = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The start of a resolved path and the start the IDE spells it with, learnt from the program launched:
+    /// "/private/var/" and "/var/" when the project sits under a linked directory. A file with no breakpoint
+    /// in it, reached by stepping or by an exception, is reported resolved and has no entry above.
+    /// </summary>
+    private (string Resolved, string Given)? _prefixAsGiven;
 
     public NetCoreDebugService(string adapterPath)
         : this(() => new DapClient(adapterPath))
@@ -110,6 +123,8 @@ public sealed class NetCoreDebugService : IDebugSessionService
     public async Task LaunchAsync(
         string assemblyPath, string? workingDirectory = null, CancellationToken ct = default)
     {
+        _prefixAsGiven = LinkedPrefix(Path.GetFullPath(assemblyPath));
+
         await StartAdapterAsync(ct).ConfigureAwait(false);
 
         _client!.Send("launch", new JsonObject
@@ -237,6 +252,45 @@ public sealed class NetCoreDebugService : IDebugSessionService
     }
 
     /// <summary>
+    /// The first linked directory on the way to a path, as the IDE spells it and as it resolves:
+    /// ("/private/var/", "/var/") for a project under /var on macOS. Null when no directory on the way is a link.
+    /// </summary>
+    /// <remarks>
+    /// Found by asking each directory from the root down whether it is a link, not by comparing the two
+    /// spellings: "/var" against "/private/var" have "var" in common, and a comparison of the ends would map
+    /// "/private/" to "/" and rewrite paths that never went through the link.
+    /// </remarks>
+    internal static (string Resolved, string Given)? LinkedPrefix(string givenPath)
+    {
+        try
+        {
+            var full = Path.GetFullPath(givenPath);
+            var root = Path.GetPathRoot(full) ?? "";
+            var directory = root;
+
+            foreach (var part in full[root.Length..].Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries).SkipLast(1))
+            {
+                directory = Path.Combine(directory, part);
+
+                if (new DirectoryInfo(directory).LinkTarget is null) continue;
+
+                var target = Directory.ResolveLinkTarget(directory, returnFinalTarget: true)?.FullName;
+
+                return target is null ? null : (WithSeparator(target), WithSeparator(directory));
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            // Unreadable on the way: paths are reported as the adapter gives them, as before.
+        }
+
+        return null;
+    }
+
+    private static string WithSeparator(string directory) =>
+        directory.EndsWith(Path.DirectorySeparatorChar) ? directory : directory + Path.DirectorySeparatorChar;
+
+    /// <summary>
     /// Resolves links in the directories leading to a file.
     ///
     /// The file itself is usually real while a directory above it is the link,
@@ -274,14 +328,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// </summary>
     private static string TranslateCondition(string condition, string filePath)
     {
-        var extension = Path.GetExtension(filePath);
-
-        var isBasic =
-            extension.Equals(".vb", StringComparison.OrdinalIgnoreCase) ||
-            extension.Equals(".vbhtml", StringComparison.OrdinalIgnoreCase) ||
-            extension.Equals(".bas", StringComparison.OrdinalIgnoreCase);
-
-        return isBasic ? VbConditionTranslator.ToEvaluatorSyntax(condition) : condition;
+        return IsBasicSource(filePath) ? VbConditionTranslator.ToEvaluatorSyntax(condition) : condition;
     }
 
     private async Task SendBreakpointsAsync(
@@ -413,26 +460,33 @@ public sealed class NetCoreDebugService : IDebugSessionService
     {
         if (path is null) return null;
 
-        return _pathsAsGiven.TryGetValue(path, out var original) ? original : path;
+        if (_pathsAsGiven.TryGetValue(path, out var original)) return original;
+
+        return _prefixAsGiven is var (resolved, given) && path.StartsWith(resolved, StringComparison.Ordinal)
+            ? given + path[resolved.Length..]
+            : path;
     }
 
     /// <summary>
-    /// Frame identifiers from the last call stack, needed to ask for locals.
+    /// A frame of the stopped thread: the id to ask the adapter about it by, null when that id cannot be known,
+    /// and its source file or "".
     /// </summary>
-    private readonly List<int> _frameIds = [];
+    private readonly record struct FrameRef(int? Id, string SourcePath);
 
     public async Task<IReadOnlyList<VariableValue>> GetLocalsAsync(
         int frameIndex, CancellationToken ct = default)
     {
-        if (_client is null || !IsPaused) return [];
+        var client = _client;
 
-        await RefreshFrameIdsAsync(ct).ConfigureAwait(false);
+        if (client is null || !IsPaused) return [];
 
-        if (frameIndex < 0 || frameIndex >= _frameIds.Count) return [];
+        var frames = await ReadFramesAsync(client, ct).ConfigureAwait(false);
 
-        var scopes = await _client.SendAsync("scopes", new JsonObject
+        if (frameIndex < 0 || frameIndex >= frames.Count || frames[frameIndex].Id is not { } frameId) return [];
+
+        var scopes = await client.SendAsync("scopes", new JsonObject
         {
-            ["frameId"] = _frameIds[frameIndex]
+            ["frameId"] = frameId
         }, ct).ConfigureAwait(false);
 
         var scopeList = scopes["body"]?["scopes"] as JsonArray;
@@ -445,7 +499,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
             var reference = scope["variablesReference"]?.GetValue<int>() ?? 0;
             if (reference == 0) continue;
 
-            values.AddRange(await ReadVariablesAsync(reference, ct).ConfigureAwait(false));
+            values.AddRange(await ReadVariablesAsync(client, reference, ct).ConfigureAwait(false));
         }
 
         return values;
@@ -455,14 +509,17 @@ public sealed class NetCoreDebugService : IDebugSessionService
     public async Task<IReadOnlyList<VariableValue>> ExpandAsync(
         int variablesReference, CancellationToken ct = default)
     {
-        if (_client is null || !IsPaused || variablesReference == 0) return [];
+        var client = _client;
 
-        return await ReadVariablesAsync(variablesReference, ct).ConfigureAwait(false);
+        if (client is null || !IsPaused || variablesReference == 0) return [];
+
+        return await ReadVariablesAsync(client, variablesReference, ct).ConfigureAwait(false);
     }
 
-    private async Task<List<VariableValue>> ReadVariablesAsync(int reference, CancellationToken ct)
+    /// <summary>The children of a reference, asked on the connection the caller read once: Stop clears the field.</summary>
+    private static async Task<List<VariableValue>> ReadVariablesAsync(IDapConnection client, int reference, CancellationToken ct)
     {
-        var response = await _client!.SendAsync("variables", new JsonObject
+        var response = await client.SendAsync("variables", new JsonObject
         {
             ["variablesReference"] = reference
         }, ct).ConfigureAwait(false);
@@ -483,45 +540,180 @@ public sealed class NetCoreDebugService : IDebugSessionService
             .ToList();
     }
 
-    private async Task RefreshFrameIdsAsync(CancellationToken ct)
+    /// <summary>
+    /// The stopped thread's frames, read fresh for each caller. Each request keeps its own list: a watch, a
+    /// hover and the Variables panel ask at once, on pool threads, and a list shared between them was read
+    /// half rewritten.
+    /// </summary>
+    private async Task<IReadOnlyList<FrameRef>> ReadFramesAsync(IDapConnection client, CancellationToken ct)
     {
-        var response = await _client!.SendAsync("stackTrace", new JsonObject
+        // Read before the stack: a shift measured on these frames must be filed under the stop they belong to.
+        var generation = Volatile.Read(ref _stopGeneration);
+
+        var response = await client.SendAsync("stackTrace", new JsonObject
         {
             ["threadId"] = _currentThread
         }, ct).ConfigureAwait(false);
 
-        _frameIds.Clear();
+        if (response["body"]?["stackFrames"] is not JsonArray frames) return [];
 
-        if (response["body"]?["stackFrames"] is not JsonArray frames) return;
+        var shift = await FrameIdShiftAsync(client, frames, generation, ct).ConfigureAwait(false);
 
-        _frameIds.AddRange(frames
-            .OfType<JsonObject>()
-            .Select(f => f["id"]?.GetValue<int>() ?? 0));
+        return [.. frames.OfType<JsonObject>().Select(f => new FrameRef((f["id"]?.GetValue<int>() ?? 0) + shift, SourcePathOf(f)))];
+
+    }
+
+    /// <summary>The shift measured at one stop. A whole object, swapped at once: callers on several threads read it.</summary>
+    private sealed record MeasuredShift(int Generation, int? Shift);
+
+    private volatile MeasuredShift? _measuredShift;
+
+    /// <summary>
+    /// What to add to a frame's id to reach that frame's locals and evaluation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Stopped on an unhandled exception, netcoredbg 3.2.0 lists only the program's own frames, without a module
+    /// or column, but numbers its ids from the throw site, through the library frames it hides: the listed
+    /// frame k answers to id k plus the number of hidden frames. Measured: a throw in user code three calls deep
+    /// gave Fail, Middle and Main at ids 1, 2 and 3; a FormatException from Integer.Parse gave Middle and Main
+    /// at 2 and 3, the hidden ids holding only $exception. At any other stop the ids are right, and the frames
+    /// carry a module, which is how the two are told apart.
+    /// </para>
+    /// <para>
+    /// The number is found once per stop, from the bottom: the last id the adapter answers for is Main's, so
+    /// the ids past the listed frames are the hidden ones. Measured on both cases above: the last ids were 3,
+    /// for three and for two listed frames. Hidden frames between listed ones (a lambda run by a library
+    /// method) cannot be placed this way; the frames below them stay right.
+    /// </para>
+    /// </remarks>
+    /// <returns>The shift, or null when it cannot be measured.</returns>
+    private async Task<int?> FrameIdShiftAsync(IDapConnection client, JsonArray frames, int generation, CancellationToken ct)
+    {
+        if (_stopReason != "exception"
+            || frames.FirstOrDefault() is not JsonObject top
+            || top["moduleId"]?.GetValue<string>() is not (null or ""))
+        {
+            return 0;
+        }
+
+        if (_measuredShift is { } measured && measured.Generation == generation) return measured.Shift;
+
+        var listed = frames.OfType<JsonObject>().ToList();
+        var firstId = listed[0]["id"]?.GetValue<int>() ?? 0;
+
+        // The last id the adapter knows is the outermost frame, Main; the hidden frames are the ones above the
+        // listed, at the throw site, so their number is what the ids run past the listed frames. Asked id by id
+        // from the last listed one, until the adapter knows no more.
+        var lastKnown = -1;
+        var endFound = false;
+
+        // Up to the limit of hidden frames, and one further to see where the ids end.
+        for (var id = firstId + listed.Count - 1; id <= firstId + listed.Count + HiddenFramesLimit; id++)
+        {
+            if (!await KnowsFrameAsync(client, id, ct).ConfigureAwait(false))
+            {
+                endFound = true;
+                break;
+            }
+
+            lastKnown = id;
+        }
+
+        // Nothing known where Main should be, or no end within reach (more hidden frames than are looked through):
+        // no locals are shown rather than another frame's.
+        int? shift = lastKnown < 0 || !endFound ? null : lastKnown - (firstId + listed.Count - 1);
+
+        _measuredShift = new MeasuredShift(generation, shift);
+
+        return shift;
+    }
+
+    /// <summary>How many hidden library frames above a listed one are looked through.</summary>
+    private const int HiddenFramesLimit = 16;
+
+    /// <summary>Whether the adapter has a frame with this id: it refuses "scopes" for one it does not.</summary>
+    private static async Task<bool> KnowsFrameAsync(IDapConnection client, int frameId, CancellationToken ct)
+    {
+        var scopes = await client.SendAsync("scopes", new JsonObject { ["frameId"] = frameId }, ct).ConfigureAwait(false);
+
+        return scopes["success"]?.GetValue<bool>() == true;
+    }
+
+    private static string SourcePathOf(JsonObject? frame) =>
+        (frame?["source"] as JsonObject)?["path"]?.GetValue<string>() ?? "";
+
+    /// <summary>Whether a frame's source is Visual Basic, whose expressions the evaluator must have translated.</summary>
+    private static bool IsBasicSource(string filePath)
+    {
+        var extension = Path.GetExtension(filePath);
+
+        return extension.Equals(".vb", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".vbhtml", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".vbrazor", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".bas", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// What to send the evaluator for an expression typed in a frame: the C# readings of Visual Basic, likeliest
+    /// first, or the text as it is for any other language.
+    /// </summary>
+    private static IReadOnlyList<string> EvaluatorForms(string expression, string sourcePath)
+    {
+        if (!IsBasicSource(sourcePath)) return [expression];
+
+        var candidates = VbExpressionTranslator.Candidates(expression);
+
+        // Text the translator could not read is still Visual Basic: sent as it is, "n = x" would be a C#
+        // assignment in the Immediate window. The comparison translation turns its "=" into "==" first.
+        return candidates.Count == 0 || (candidates.Count == 1 && candidates[0] == expression.Trim())
+            ? [VbConditionTranslator.ToEvaluatorSyntax(expression.Trim())]
+            : candidates;
     }
 
     public async Task<string?> EvaluateAsync(
         string expression, int frameIndex, CancellationToken ct = default)
     {
-        if (_client is null || !IsPaused) return null;
+        // Read once: several readings are sent in turn, and Stop clears the field between any two of them.
+        var client = _client;
 
-        await RefreshFrameIdsAsync(ct).ConfigureAwait(false);
+        if (client is null || !IsPaused) return null;
 
-        var arguments = new JsonObject
-        {
-            ["expression"] = expression,
-            ["context"] = "watch"
-        };
-
-        if (frameIndex >= 0 && frameIndex < _frameIds.Count)
-            arguments["frameId"] = _frameIds[frameIndex];
+        var generation = Volatile.Read(ref _stopGeneration);
 
         try
         {
-            var response = await _client.SendAsync("evaluate", arguments, ct).ConfigureAwait(false);
+            var frames = await ReadFramesAsync(client, ct).ConfigureAwait(false);
+            int? frameId = frameIndex >= 0 && frameIndex < frames.Count ? frames[frameIndex].Id : null;
+            var sourcePath = frameIndex >= 0 && frameIndex < frames.Count ? frames[frameIndex].SourcePath : "";
 
-            return response["success"]?.GetValue<bool>() == true
-                ? response["body"]?["result"]?.GetValue<string>()
-                : null;
+            // A frame whose id cannot be known: without one the adapter would answer for the top frame instead.
+            if (frameIndex >= 0 && frameIndex < frames.Count && frameId is null) return null;
+
+            // The readings are tried in turn: the evaluator refuses the ones that do not fit the program
+            // ("numbers(1)" as a call when numbers is an array), and the first it accepts is the answer.
+            foreach (var form in EvaluatorForms(expression, sourcePath))
+            {
+                // Stepped, resumed or stopped elsewhere since the frames were read: the id names another place.
+                if (generation != Volatile.Read(ref _stopGeneration) || !IsPaused) return null;
+
+                var arguments = new JsonObject
+                {
+                    ["expression"] = form,
+                    ["context"] = "watch"
+                };
+
+                if (frameId is { } id) arguments["frameId"] = id;
+
+                var response = await client.SendAsync("evaluate", arguments, ct).ConfigureAwait(false);
+
+                if (response["success"]?.GetValue<bool>() == true)
+                    return response["body"]?["result"]?.GetValue<string>();
+
+                if (!WorthAnotherReading(form, response, mayRunCodeOnce: false)) return null;
+            }
+
+            return null;
         }
         catch (IOException)
         {
@@ -565,30 +757,46 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 ? frames[frameIndex] as JsonObject
                 : null;
 
-            // The evaluator speaks C#: a value asked for in a Visual Basic
-            // file is translated like a breakpoint condition.
-            var sourcePath = (frame?["source"] as JsonObject)?["path"]?.GetValue<string>() ?? "";
-            var expression = TranslateCondition(text, sourcePath);
+            // The evaluator speaks C#: a value asked for in a Visual Basic file is tried in each of its C#
+            // readings, as a watch is.
+            var sourcePath = SourcePathOf(frame);
+            string? firstRefusal = null;
 
-            var arguments = new JsonObject
+            foreach (var form in EvaluatorForms(text, sourcePath))
             {
-                ["expression"] = expression,
-                ["context"] = "repl"
-            };
+                var arguments = new JsonObject
+                {
+                    ["expression"] = form,
+                    ["context"] = "repl"
+                };
 
-            if (frame?["id"]?.GetValue<int>() is { } frameId) arguments["frameId"] = frameId;
+                if (frame?["id"]?.GetValue<int>() is { } frameId)
+                {
+                    // Unknown at an exception stop: the frame named nothing the adapter can be asked about.
+                    if (await FrameIdShiftAsync(client, frames!, generation, ct).ConfigureAwait(false) is not { } shift)
+                        return new ReplEvaluation(false, "");
 
-            // The frame id belongs to the stop it was read in. If the program
-            // ran on while the stack was fetched, the id names nothing (or
-            // another frame) and the answer would be about the wrong place.
-            if (generation != Volatile.Read(ref _stopGeneration) || !IsPaused || !IsStopShown)
-                return new ReplEvaluation(false, Localizer.Get(StringKeys.ImmediateStale));
+                    arguments["frameId"] = frameId + shift;
+                }
 
-            var response = await client.SendAsync("evaluate", arguments, ct).ConfigureAwait(false);
+                // The frame id belongs to the stop it was read in. If the program
+                // ran on while the stack was fetched, the id names nothing (or
+                // another frame) and the answer would be about the wrong place.
+                if (generation != Volatile.Read(ref _stopGeneration) || !IsPaused || !IsStopShown)
+                    return new ReplEvaluation(false, Localizer.Get(StringKeys.ImmediateStale));
 
-            return response["success"]?.GetValue<bool>() == true
-                ? new ReplEvaluation(true, response["body"]?["result"]?.GetValue<string>() ?? "")
-                : new ReplEvaluation(false, response["message"]?.GetValue<string>() ?? "");
+                var response = await client.SendAsync("evaluate", arguments, ct).ConfigureAwait(false);
+
+                if (response["success"]?.GetValue<bool>() == true)
+                    return new ReplEvaluation(true, response["body"]?["result"]?.GetValue<string>() ?? "");
+
+                // The likeliest reading's refusal is the one worth showing; the others are guesses that failed too.
+                firstRefusal ??= response["message"]?.GetValue<string>() ?? "";
+
+                if (!WorthAnotherReading(form, response, mayRunCodeOnce: true)) break;
+            }
+
+            return new ReplEvaluation(false, firstRefusal ?? "");
         }
         catch (Exception ex) when (ex is IOException or ObjectDisposedException
                                       || (ex is InvalidOperationException && SessionEnded(client)))
@@ -649,6 +857,10 @@ public sealed class NetCoreDebugService : IDebugSessionService
         {
             case "stopped":
                 _currentThread = dapEvent.Body?["threadId"]?.GetValue<int>() ?? 0;
+                _stopReason = dapEvent.Body?["reason"]?.GetValue<string>();
+
+                // Whatever was thrown at the last stop is not what this one is about.
+                StoppedException = null;
                 Interlocked.Increment(ref _stopGeneration);
                 IsPaused = true;
                 _ = OnStoppedAsync();
@@ -741,6 +953,9 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 return;
             }
 
+            // Read before the stop is shown, so the interface finds it when it is told.
+            StoppedException = _stopReason == "exception" ? await ReadExceptionAsync().ConfigureAwait(false) : null;
+
             Volatile.Write(ref _shownGeneration, generation);
             Paused?.Invoke(this, frame);
         }
@@ -754,12 +969,65 @@ public sealed class NetCoreDebugService : IDebugSessionService
         }
     }
 
+    /// <summary>
+    /// Whether, after a reading was refused, the next one may be sent.
+    /// </summary>
+    /// <param name="mayRunCodeOnce">
+    /// True for the Immediate window, where a call is something the user does to the program: no reading
+    /// follows one that calls something, which may have run before the refusal ("!Compute(n)" ran Compute,
+    /// measured). A watch or a hover reads, and is read again at every step anyway, so it tries every reading.
+    /// </param>
+    /// <remarks>
+    /// Never after a time-out, which netcoredbg says leaves the program in an inconsistent state: the next
+    /// reading would hang the same way.
+    /// </remarks>
+    private static bool WorthAnotherReading(string form, JsonNode response, bool mayRunCodeOnce)
+    {
+        var message = response["message"]?.GetValue<string>() ?? "";
+
+        if (message.Contains("timed out", StringComparison.OrdinalIgnoreCase)) return false;
+
+        return !mayRunCodeOnce || !VbExpressionTranslator.Calls(form);
+    }
+
+    /// <summary>The exception stopped on, as "Type: message", or null when the adapter cannot say.</summary>
+    private async Task<string?> ReadExceptionAsync()
+    {
+        if (_client is not { } client) return null;
+
+        // Bounded: the stop is shown after this, and an adapter that never answers must not keep it hidden.
+        using var limit = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        JsonObject response;
+
+        try
+        {
+            response = await client.SendAsync("exceptionInfo", new JsonObject
+            {
+                ["threadId"] = _currentThread
+            }, limit.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+
+        if (response["success"]?.GetValue<bool>() != true) return null;
+
+        var details = response["body"]?["details"];
+        var type = details?["fullTypeName"]?.GetValue<string>() ?? response["body"]?["exceptionId"]?.GetValue<string>();
+        var message = details?["message"]?.GetValue<string>();
+
+        return type is null ? response["body"]?["description"]?.GetValue<string>()
+            : message is null ? type
+            : $"{type}: {message}";
+    }
+
     /// <summary>Whether this stop is an early pass of a counted breakpoint.</summary>
     private bool ShouldSkip(StackFrame frame)
     {
         if (frame.FilePath is not { Length: > 0 } path) return false;
 
-        var file = _pathsAsGiven.TryGetValue(path, out var original) ? original : path;
+        var file = AsGiven(path)!;
 
         if (!_breakpoints.TryGetValue(file, out var breakpoints)) return false;
 

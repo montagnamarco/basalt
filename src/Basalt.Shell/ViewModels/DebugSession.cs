@@ -32,6 +32,9 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
     /// <summary>Where execution is stopped, or null when it is running.</summary>
     public StackFrame? CurrentFrame { get; private set; }
 
+    /// <summary>The exception the program is stopped on, "Type: message", or null when the stop is not one.</summary>
+    public string? StoppedException => IsPaused ? _service?.StoppedException : null;
+
     /// <summary>The frame the user is looking at, which may not be the innermost.</summary>
     public int SelectedFrame { get; set; }
 

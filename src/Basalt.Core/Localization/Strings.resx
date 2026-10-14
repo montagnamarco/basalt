@@ -1074,6 +1074,8 @@
   <data name="Designer_CannotShow" xml:space="preserve"><value>This file cannot be shown in the designer.</value></data>
   <data name="Debug_BannerPaused" xml:space="preserve"><value>Debugging — paused</value></data>
   <data name="Debug_BannerRunning" xml:space="preserve"><value>Debugging — running</value></data>
+  <data name="Debug_BannerException" xml:space="preserve"><value>Debugging — stopped on an exception</value></data>
+  <data name="Debug_OutputException" xml:space="preserve"><value>[debug] Stopped on an unhandled exception: {0}</value></data>
   <data name="Debug_Exited" xml:space="preserve"><value>{0} exited with code {1}.</value></data>
   <data name="Debug_TheProgram" xml:space="preserve"><value>The program</value></data>
   <data name="Debug_InputOnInterfaceThread" xml:space="preserve"><value>A program asked for input from the interface thread, which cannot be answered without stopping it.</value></data>

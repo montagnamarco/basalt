@@ -36,6 +36,26 @@ internal sealed class FakeDapConnection : IDapConnection
     /// <summary>Called as each request arrives, before it is answered.</summary>
     public Action<string>? OnRequest { get; set; }
 
+    /// <summary>Whether the frames carry a module id, as netcoredbg's do at every stop but an unhandled exception.</summary>
+    public bool FramesHaveModule { get; set; }
+
+    /// <summary>The frames listed, as (name, file, line); ids are numbered from 100.</summary>
+    public List<(string Name, string Path, int Line)> Frames { get; set; } =
+        [("Main", "/app/Module1.vb", 5), ("Caller", "/app/Helpers.cs", 9)];
+
+    /// <summary>
+    /// The variables each frame id holds, for "scopes" and "variables". An id left out is unknown to the
+    /// adapter, as netcoredbg answers past the last frame.
+    /// </summary>
+    public Dictionary<int, string[]> LocalsById { get; set; } = new()
+    {
+        [100] = ["total"],
+        [101] = ["count"],
+    };
+
+    /// <summary>What "exceptionInfo" answers; by default it says nothing.</summary>
+    public JsonObject ExceptionInfoAnswer { get; set; } = Answer(false, new JsonObject());
+
     /// <summary>Holds the answer to the next stackTrace until it is completed.</summary>
     public TaskCompletionSource? HoldNextStackTrace { get; set; }
 
@@ -60,13 +80,12 @@ internal sealed class FakeDapConnection : IDapConnection
         {
             "stackTrace" => Answer(true, new JsonObject
             {
-                ["stackFrames"] = new JsonArray
-                {
-                    Frame(100, "Main", "/app/Module1.vb", 5),
-                    Frame(101, "Caller", "/app/Helpers.cs", 9)
-                }
+                ["stackFrames"] = new JsonArray([.. Frames.Select((f, i) => (JsonNode)Frame(100 + i, f.Name, f.Path, f.Line, FramesHaveModule))])
             }),
+            "scopes" => Scopes(arguments!["frameId"]!.GetValue<int>()),
+            "variables" => Variables(arguments!["variablesReference"]!.GetValue<int>()),
             "evaluate" => EvaluateAnswer(arguments),
+            "exceptionInfo" => ExceptionInfoAnswer,
             _ => Answer(true, new JsonObject())
         };
 
@@ -83,6 +102,19 @@ internal sealed class FakeDapConnection : IDapConnection
     public void Raise(string name, JsonObject body) =>
         EventReceived?.Invoke(this, new DapEvent(name, body));
 
+    private JsonObject Scopes(int frameId) => LocalsById.ContainsKey(frameId)
+        ? Answer(true, new JsonObject
+        {
+            ["scopes"] = new JsonArray(new JsonObject { ["name"] = "Locals", ["variablesReference"] = 1000 + frameId })
+        })
+        : Answer(false, new JsonObject(), "Failed command 'scopes' : 0x80004005");
+
+    private JsonObject Variables(int reference) => Answer(true, new JsonObject
+    {
+        ["variables"] = new JsonArray([.. (LocalsById.TryGetValue(reference - 1000, out var names) ? names : [])
+            .Select(name => (JsonNode)new JsonObject { ["name"] = name, ["value"] = "1", ["type"] = "int", ["variablesReference"] = 0 })])
+    });
+
     public static JsonObject Answer(bool success, JsonObject body, string? message = null)
     {
         var answer = new JsonObject { ["success"] = success, ["body"] = body };
@@ -91,13 +123,20 @@ internal sealed class FakeDapConnection : IDapConnection
         return answer;
     }
 
-    private static JsonObject Frame(int id, string name, string path, int line) => new()
+    private static JsonObject Frame(int id, string name, string path, int line, bool withModule)
     {
-        ["id"] = id,
-        ["name"] = name,
-        ["source"] = new JsonObject { ["path"] = path },
-        ["line"] = line
-    };
+        var frame = new JsonObject
+        {
+            ["id"] = id,
+            ["name"] = name,
+            ["source"] = new JsonObject { ["path"] = path },
+            ["line"] = line
+        };
+
+        if (withModule) frame["moduleId"] = "d8564ecd-204f-415c-a399-37394aa31c30";
+
+        return frame;
+    }
 
     public void Dispose()
     {

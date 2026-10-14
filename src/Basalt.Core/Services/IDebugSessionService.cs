@@ -18,6 +18,12 @@ public interface IDebugSessionService : IDebugService, IDisposable
     /// <summary>Whether the program is stopped somewhere.</summary>
     bool IsPaused { get; }
 
+    /// <summary>
+    /// The exception the program is stopped on, as its type and message, or null when the stop is not one.
+    /// Read when <see cref="IDebugService.Paused"/> is raised.
+    /// </summary>
+    string? StoppedException => null;
+
     /// <summary>What the program printed.</summary>
     event EventHandler<string>? OutputReceived;
 

@@ -1091,6 +1091,10 @@ public partial class MainWindow : Window
     /// <summary>Shows where execution stopped, and what is in scope there.</summary>
     private async Task OnDebuggerPausedAsync(StackFrame frame)
     {
+        // Said once, where the program's own output is: the banner shows it only while stopped here.
+        if (_debug.StoppedException is { } exception)
+            ViewModel.WriteOutput(Localizer.Get(StringKeys.DebugOutputException, exception));
+
         await ShowFrameAsync(frame);
 
         if (_callStack is not null)
@@ -1250,14 +1254,18 @@ public partial class MainWindow : Window
 
         DebugBanner.IsVisible = true;
 
-        DebugBannerText.Text = _debug.IsPaused
-            ? Localizer.Get(StringKeys.DebugBannerPaused)
-            : Localizer.Get(StringKeys.DebugBannerRunning);
+        var exception = _debug.StoppedException;
+
+        DebugBannerText.Text = !_debug.IsPaused ? Localizer.Get(StringKeys.DebugBannerRunning)
+            : exception is not null ? Localizer.Get(StringKeys.DebugBannerException)
+            : Localizer.Get(StringKeys.DebugBannerPaused);
 
         // Where it stopped, which is the one thing worth reading at a glance;
         // while running there is nothing truer to say than what is running.
+        // Stopped on an exception, what was thrown comes first: the place alone does not say why.
         DebugBannerDetail.Text = detail ?? (_debug.CurrentFrame is { } frame
-            ? $"{frame.Method}"
+            ? (exception is not null ? exception + " — " : "")
+              + $"{frame.Method}"
               + (frame.FilePath is { } file
                   ? $" — {Path.GetFileName(file)}:{frame.Line}"
                   : "")
