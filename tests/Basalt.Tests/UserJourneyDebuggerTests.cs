@@ -516,6 +516,67 @@ public sealed class UserJourneyDebuggerTests : IDisposable
     }
 
     // ==================================================================
+    // Journey 1e. Break All while the program sleeps. The innermost frame is
+    // Thread.Sleep, which has no source: the panels showed no line and no
+    // locals. The program's own frame, Main, is shown instead.
+    // ==================================================================
+    private const string SleepingProgram = """
+        Module Program
+            Sub Main()
+                Dim n As Long = 0
+                Do
+                    n += 1
+                    Threading.Thread.Sleep(10)
+                Loop
+            End Sub
+        End Module
+        """;
+
+    [AvaloniaFact]
+    public async Task BreakAllInsideASleepShowsTheProgramsOwnFrameWithItsLocals()
+    {
+        Assert.SkipWhen(DebugAdapterLocator.Find() is null, "netcoredbg is not installed.");
+
+        var project = WriteProject();
+        File.WriteAllText(ProgramPath, SleepingProgram);
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        await vm.OpenFileAsync(ProgramPath);
+        await host.SettleAsync(8);
+
+        try
+        {
+            PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
+
+            var session = typeof(MainWindow)
+                .GetField("_debug", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .GetValue(w) as DebugSession;
+            Assert.True(await PumpUntilAsync(host, () => session?.IsRunning == true, TimeSpan.FromSeconds(90)), "The program did not start.");
+            await Task.Delay(1500);
+
+            InvokeMenu(w, L(StringKeys.MenuDebug), L(StringKeys.MenuDebugPause));
+
+            // Line 6 is the Sleep call in Main; the margin marks it although the stop is inside Sleep.
+            await PauseAtAsync(host, 6);
+
+            var callStack = PanelOf<CallStackPanel>(w, f => f.CallStack);
+            Assert.Contains("Main", callStack.Frames[callStack.SelectedFrame].Method, StringComparison.Ordinal);
+
+            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolVariables));
+            var variables = PanelOf<VariablesPanel>(w, f => f.Variables);
+            Assert.True(await PumpUntilAsync(host, () => variables.Nodes.Any(n => n.Value.Name == "n"), TimeSpan.FromSeconds(10)),
+                "Main's locals are not shown: " + string.Join(", ", variables.Nodes.Select(n => n.Value.Name)));
+        }
+        finally
+        {
+            await w.StopDebuggingForTests();
+        }
+    }
+
+    // ==================================================================
     // Journey 2. A breakpoint set by clicking the margin. F10 steps over the
     // call and the Watch value moves with it; F11 steps into the Sub and the
     // Call Stack lists the Sub above Main.

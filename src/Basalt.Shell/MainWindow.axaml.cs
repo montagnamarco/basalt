@@ -1095,15 +1095,33 @@ public partial class MainWindow : Window
         if (_debug.StoppedException is { } exception)
             ViewModel.WriteOutput(Localizer.Get(StringKeys.DebugOutputException, exception));
 
-        await ShowFrameAsync(frame);
+        var frames = await _debug.GetCallStackAsync().ConfigureAwait(true);
 
-        if (_callStack is not null)
-            _callStack.Show(await _debug.GetCallStackAsync().ConfigureAwait(true));
+        // Stopped where there is no source (Break All inside Thread.Sleep, a library call): the first frame of
+        // the program's own is shown, as Visual Studio does, with its line and its variables. The innermost
+        // showed nothing, neither a line nor a local.
+        var shown = frame.FilePath is null ? FirstFrameWithSource(frames) : 0;
+        _debug.SelectedFrame = shown;
+
+        await ShowFrameAsync(shown < frames.Count ? frames[shown] : frame);
+
+        _callStack?.Show(frames, shown);
 
         await RefreshDebugValuesAsync();
 
         if (_factory.BottomArea is not null)
             _factory.ShowTool(_factory.CallStack, _factory.BottomArea);
+    }
+
+    /// <summary>The first frame with a source file, or the innermost when none has one.</summary>
+    private static int FirstFrameWithSource(IReadOnlyList<StackFrame> frames)
+    {
+        for (var i = 0; i < frames.Count; i++)
+        {
+            if (frames[i].FilePath is not null && frames[i].Line > 0) return i;
+        }
+
+        return 0;
     }
 
     /// <summary>Opens the file execution stopped in and marks the line.</summary>

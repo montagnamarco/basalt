@@ -60,7 +60,11 @@ public sealed class CallStackPanel : UserControl
             : $"{frame.Method}  —  {Path.GetFileName(frame.FilePath)}:{frame.Line}";
     }
 
-    public void Show(IReadOnlyList<StackFrame> frames)
+    /// <param name="selected">
+    /// The frame to put the user in: the innermost, or the first of the program's own when the innermost has
+    /// no source. Selected directly, so no other frame's values are read for this stop.
+    /// </param>
+    public void Show(IReadOnlyList<StackFrame> frames, int selected = 0)
     {
         _frames = frames;
 
@@ -75,7 +79,7 @@ public sealed class CallStackPanel : UserControl
 
         // Stopping somewhere puts the user in the innermost frame, which is
         // where they were looking when execution paused.
-        _list.SelectedIndex = 0;
+        _list.SelectedIndex = selected >= 0 && selected < frames.Count ? selected : 0;
     }
 
     public void Clear() => Show([]);
