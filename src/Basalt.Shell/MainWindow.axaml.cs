@@ -473,7 +473,10 @@ public partial class MainWindow : Window
     private void GiveTabsTheirMenus()
     {
         foreach (var tab in Docking.GetVisualDescendants().OfType<DocumentTabStripItem>())
+        {
+            Basalt.Shell.Docking.DocumentTabContentGuard.Apply(tab);
             GiveTabItsMenu(tab);
+        }
     }
 
     /// <summary>
