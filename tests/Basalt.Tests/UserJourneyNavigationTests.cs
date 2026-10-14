@@ -324,8 +324,10 @@ public sealed class UserJourneyNavigationTests : IDisposable
 
         dialog!.KeyTextInput("Greet");
 
-        Assert.True(await WaitUntilAsync(host,
-                () => dialog.Choices.Any(c => c.Name == "Greet" && c.FilePath == HelperPath)),
+        // The symbols come from the solution's index, built in the background: waited for by time, because
+        // on a loaded machine a hundred layout passes go by before the index is ready.
+        Assert.True(await UserJourneyItemsTests.WaitUntilAsync(host,
+                () => dialog.Choices.Any(c => c.Name == "Greet" && c.FilePath == HelperPath), TimeSpan.FromSeconds(60)),
             "Typing the name of a Sub in another file found no symbol called that.");
 
         Press(dialog, Key.Enter, RawInputModifiers.None, PhysicalKey.Enter);

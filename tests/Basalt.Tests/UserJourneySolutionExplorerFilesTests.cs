@@ -634,9 +634,11 @@ public sealed class UserJourneySolutionExplorerFilesTests : IDisposable
         Assert.True(NodeAt(vm, extra).IsOutOfProject);
 
         ChooseInExplorerMenu(host, NodeAt(vm, extra), StringKeys.ExplorerIncludeInProject);
-        await host.SettleAsync(10);
 
-        Assert.False(NodeAt(vm, extra).IsOutOfProject, "the single-quoted exclude was not removed");
+        // The tree reads the project file again once it is written: waited for by time, not by a count of
+        // layout passes, which a loaded machine runs through before the reload lands.
+        Assert.True(await UserJourneyItemsTests.WaitUntilAsync(host, () => !NodeAt(vm, extra).IsOutOfProject, TimeSpan.FromSeconds(60)),
+            "the single-quoted exclude was not removed");
         Assert.Equal(original, File.ReadAllText(project));
     }
 
