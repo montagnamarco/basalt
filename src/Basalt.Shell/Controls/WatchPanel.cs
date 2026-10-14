@@ -149,9 +149,14 @@ public sealed class WatchPanel : UserControl
     public async Task RefreshAsync(
         Func<string, Task<string?>> evaluate, CancellationToken ct = default)
     {
-        foreach (var entry in _entries)
+        // A copy: the user can add or delete a watch while an evaluation is awaited, and the list itself
+        // would then change under the loop.
+        foreach (var entry in _entries.ToList())
         {
             ct.ThrowIfCancellationRequested();
+
+            // Deleted while an earlier one was being evaluated: nothing is shown for it any more.
+            if (!_entries.Contains(entry)) continue;
 
             try
             {

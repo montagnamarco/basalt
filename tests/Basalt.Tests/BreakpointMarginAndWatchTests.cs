@@ -184,6 +184,31 @@ public class WatchPanelTests
         Assert.Contains("not available", panel.Entries[0].Display);
     }
 
+    /// <remarks>
+    /// Typing a watch while the stopped frame's watches were still being evaluated threw "Collection was
+    /// modified" out of the refresh, once per watch typed, into the Output panel. Seen live with netcoredbg.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task AWatchAddedOrRemovedWhileTheOthersAreEvaluatedDoesNotBreakTheRefresh()
+    {
+        var panel = new WatchPanel();
+        panel.Add("total");
+        panel.Add("i");
+
+        var answer = new TaskCompletionSource<string?>();
+        var refresh = panel.RefreshAsync(expression => expression == "total" ? answer.Task : Task.FromResult<string?>("4"));
+
+        // The user types another watch and deletes one while "total" is still being asked for.
+        panel.Add("count");
+        panel.Remove(panel.Entries.Single(e => e.Expression == "i"));
+        answer.SetResult("6");
+
+        await refresh;
+
+        Assert.Equal("total = 6", panel.Entries.Single(e => e.Expression == "total").Display);
+        Assert.Equal(["total", "count"], panel.Entries.Select(e => e.Expression));
+    }
+
     [AvaloniaFact]
     public async Task KeepsEvaluatingAfterOneExpressionFails()
     {
