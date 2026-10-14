@@ -221,7 +221,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         {
             Path = d.FilePath,
             InDesigner = d.OpenInDesigner
-        })],
+        }), .. ExtraOpenTabs?.Invoke() ?? []],
         ActiveFile = ActiveDocument?.FilePath,
         ActiveInDesigner = ActiveDocument?.OpenInDesigner ?? false,
         InDesigner = [.. OpenDocuments.Where(d => d.OpenInDesigner).Select(d => d.FilePath)],
@@ -292,6 +292,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>
+    /// Tabs the window shows that are not editor documents, such as a query saved to a file. They are recorded
+    /// with the solution's session and opened again by <see cref="OpenFileAsync"/> the next time.
+    /// </summary>
+    public Func<IEnumerable<OpenDocumentSession>>? ExtraOpenTabs { get; set; }
+
+    /// <summary>
+    /// Asks about the query tabs with changes before a solution is left. False when the user cancelled, which keeps
+    /// the solution open with its tabs. Set by the window; null where no query tab can exist.
+    /// </summary>
+    public Func<Task<bool>>? ConfirmClosingQueryTabs { get; set; }
+
+    /// <summary>Closes the query tabs of the solution being left. Set by the window, which owns those tabs.</summary>
+    public Action? CloseQueryTabs { get; set; }
+
     /// <summary>Records what the current solution has open, if any.</summary>
     public void RememberSession()
     {
@@ -320,6 +335,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
         OpenDocuments.Clear();
         ActiveDocument = null;
+
+        // Query tabs belong to a solution's session like the code tabs do: a .sql tab of the solution left
+        // would otherwise be recorded with the one opened next.
+        CloseQueryTabs?.Invoke();
     }
 
     /// <summary>
@@ -344,6 +363,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             StatusMessage = Localizer.Get(StringKeys.StatusOpenFailed, Path.GetFileName(path));
             return;
         }
+
+        // The query tabs with changes are asked about first: a cancel keeps the solution open, and its tabs with it.
+        if (ConfirmClosingQueryTabs is { } confirm && !await confirm().ConfigureAwait(true)) return;
 
         // What the solution being left had open, before it is left: after the
         // documents are closed there is nothing to record.
@@ -432,9 +454,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         _ = RefreshDiagnosticsOfAsync(OpenDocuments);
     }
 
+    /// <summary>
+    /// Offered each file before it opens as an editor tab. Returns true when the window opened it some other
+    /// way, such as a .sql file as a query document. Set by the window.
+    /// </summary>
+    public Func<string, Task<bool>>? FileRouter { get; set; }
+
     /// <summary>Opens a file: .axaml files in the designer, everything else in the text editor.</summary>
     public async Task OpenFileAsync(string path, bool inDesigner = false)
     {
+        // A file the window opens another way (a .sql as a query document) is handed over, and this is done.
+        if (!inDesigner && FileRouter is { } route && await route(path).ConfigureAwait(true)) return;
+
         var existing = OpenDocuments.FirstOrDefault(d =>
             string.Equals(d.FilePath, path, StringComparison.Ordinal) && d.OpenInDesigner == inDesigner);
 

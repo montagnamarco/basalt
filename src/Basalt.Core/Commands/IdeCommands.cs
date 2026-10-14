@@ -46,6 +46,9 @@ public static class IdeCommands
     public const string ViewTests = "view.tests";
     public const string ViewAssistant = "view.assistant";
     public const string ViewObjectBrowser = "view.objectBrowser";
+    public const string ViewDatabaseExplorer = "view.databaseExplorer";
+    public const string DatabaseAddConnection = "database.addConnection";
+    public const string DatabaseNewQuery = "database.newQuery";
 
     public const string NavigateGoToDefinition = "navigate.goToDefinition";
     public const string NavigateFindReferences = "navigate.findReferences";
@@ -205,6 +208,12 @@ public static class IdeCommands
             // is Rename here, as in Visual Studio and VS Code. Bind one in
             // the shortcut settings.
             new(ViewObjectBrowser, "Object Browser", CommandCategory.View),
+            // Visual Studio's gesture for Server Explorer.
+            new(ViewDatabaseExplorer, "Database Explorer", CommandCategory.View)
+                { DefaultGesture = "Ctrl+Alt+S" },
+            new(DatabaseAddConnection, "Add Database Connection", CommandCategory.Tools),
+            new(DatabaseNewQuery, "New Query", CommandCategory.Tools)
+                { DefaultGesture = "Ctrl+Alt+Q" },
 
             new(NavigateGoToDefinition, "Go to Definition", CommandCategory.Navigate)
                 { DefaultGesture = "F12" },

@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using Basalt.Core.Localization;
 using Basalt.Shell;
 using Basalt.Shell.Controls;
+using Basalt.Shell.Database;
 using Basalt.Shell.ViewModels;
 using Basalt.Workspace.ObjectBrowser;
 using Dock.Model.Core;
@@ -356,20 +357,20 @@ public sealed class UserJourneyPanelEmptyStatesTests : IDisposable
     }
 
     // ------------------------------------------------------------------
-    // Database: nothing open says what to do once, in the status line.
+    // Database: with no connection saved, the Explorer says what to do once.
     // ------------------------------------------------------------------
     [AvaloniaFact]
-    public async Task TheDatabasePanelSaysToOpenAFileOnce()
+    public async Task TheDatabaseExplorerSaysToAddAConnectionOnce()
     {
         using var host = new TestWindow();
         await host.SettleAsync(10);
 
-        InvokeMenu(host.Window, L(StringKeys.MenuView), L(StringKeys.ToolDatabase));
+        InvokeMenu(host.Window, L(StringKeys.MenuView), L(StringKeys.DbExplorerTitle));
         await host.SettleAsync(10);
-        var panel = host.Window.GetVisualDescendants().OfType<DatabasePanel>().Single();
+        var panel = host.Window.GetVisualDescendants().OfType<DatabaseExplorerPanel>().Single();
 
         var visible = VisibleTextsOf(panel);
-        Assert.Single(visible, text => text == L(StringKeys.DatabaseNothingOpen));
+        Assert.Single(visible, text => text == L(StringKeys.DbNoConnections));
     }
 
     // ------------------------------------------------------------------

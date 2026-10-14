@@ -24,6 +24,28 @@ public enum AppTheme
     SolarizedDark
 }
 
+/// <summary>The database connections the user saved.</summary>
+public sealed class DatabaseSettings
+{
+    public List<DatabaseConnectionSettings> Connections { get; set; } = [];
+}
+
+/// <summary>
+/// One saved database connection.
+///
+/// <see cref="ConnectionString"/> is complete except for the password, which
+/// is kept in the platform keychain under <see cref="Id"/>: this file is plain
+/// JSON a user may copy or paste, and a database password is a credential.
+/// <see cref="Kind"/> is the name of the database engine, as its enum spells it.
+/// </summary>
+public sealed class DatabaseConnectionSettings
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = "";
+    public string Kind { get; set; } = "Sqlite";
+    public string ConnectionString { get; set; } = "";
+}
+
 /// <summary>Settings for the text editor.</summary>
 public sealed class EditorSettings
 {
@@ -181,6 +203,9 @@ public sealed class IdeSettings
     public BuildSettings Build { get; set; } = new();
     public ToolbarSettings Toolbar { get; set; } = new();
     public RecentSettings Recent { get; set; } = new();
+
+    /// <summary>The database connections the Database Explorer lists. Never holds a password.</summary>
+    public DatabaseSettings Database { get; set; } = new();
 
     /// <summary>What was open in each solution when it was last closed.</summary>
     public SessionSettings Session { get; set; } = new();

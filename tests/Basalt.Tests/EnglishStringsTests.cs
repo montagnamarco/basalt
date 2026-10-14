@@ -212,9 +212,6 @@ public class EnglishStringsTests
         ("MainWindow.axaml", "Basalt", "product name"),
         // A Visual Basic type name that is the default for a new parameter.
         ("ChangeSignatureDialog.cs", "Integer", "Visual Basic type name, the default parameter type"),
-        // SQL text the database panel puts into its query box.
-        ("DatabasePanel.cs", "SELECT * FROM ", "SQL text, not interface text"),
-        ("DatabasePanel.cs", "SELECT * FROM \\", "SQL text, not interface text"),
         // Visual Basic declaration syntax, "name As Type", in a parameter's label.
         ("ChangeSignatureDialog.cs", "{parameter.Name} As {parameter.Type}", "Visual Basic declaration syntax"),
         // The platform's name and version in the About text, not a translatable phrase.

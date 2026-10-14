@@ -124,7 +124,7 @@ public sealed class DatabaseTool : IdeTool
     public DatabaseTool()
     {
         Id = "Database";
-        Title = Localizer.Get(StringKeys.ToolDatabase);
+        Title = Localizer.Get(StringKeys.DbExplorerTitle);
         Icon = IconKind.JsonFile;
     }
 }

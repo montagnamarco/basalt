@@ -339,14 +339,7 @@ public partial class MainWindow : Window
                 ViewModel.WriteOutput, "designer");
         };
 
-        // The panel knows about databases; only the window can put a file
-        // picker on screen.
-        var database = new DatabasePanel();
-
-        database.OpenRequested += (_, _) => Guarded.Run(
-            () => ChooseDatabaseAsync(database), ViewModel.WriteOutput, "database");
-
-        _contents[_factory.Database] = database;
+        BuildDatabaseClient();
 
         _properties = new PropertyPanel { EventsContent = _events };
 
@@ -2630,27 +2623,6 @@ public partial class MainWindow : Window
         if (loaded > 0) ViewModel.WriteOutput($"[plugin] {Localizer.Get(StringKeys.PluginLoaded, loaded)}");
     }
 
-    /// <summary>Asks for a database file and opens it in the panel.</summary>
-    private async Task ChooseDatabaseAsync(DatabasePanel panel)
-    {
-        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = Localizer.Get(StringKeys.DatabaseOpen),
-            AllowMultiple = false,
-            FileTypeFilter =
-            [
-                new FilePickerFileType(Localizer.Get(StringKeys.OpenFilterSqlite))
-                {
-                    Patterns = ["*.db", "*.sqlite", "*.sqlite3", "*.db3"]
-                },
-                new FilePickerFileType(Localizer.Get(StringKeys.OpenFilterAllFiles)) { Patterns = ["*"] }
-            ]
-        });
-
-        if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
-            await panel.OpenAsync(path);
-    }
-
     /// <summary>Shows what this is and which version is running.</summary>
     private void ShowAbout() => _ = new AboutWindow().ShowDialog(this);
 
@@ -2927,6 +2899,9 @@ public partial class MainWindow : Window
         // RefactorRename's gesture below, and without this a press meant for
         // the selected node would rename the active editor's symbol instead.
         if (await TryRunExplorerShortcutAsync(e.Key, e.KeyModifiers)) return true;
+
+        // A query has the keyboard: F5 runs it rather than starting the debugger.
+        if (TryRunQueryShortcut(e)) return true;
 
         var gesture = ShortcutRecorder.Describe(e.Key, e.KeyModifiers);
 
@@ -3367,6 +3342,10 @@ public partial class MainWindow : Window
 
             case IdeCommands.ToolsSettings:
                 await ShowSettingsAsync();
+                break;
+
+            case IdeCommands.ViewDatabaseExplorer or IdeCommands.DatabaseAddConnection or IdeCommands.DatabaseNewQuery:
+                await RunDatabaseCommandAsync(commandId);
                 break;
 
             case IdeCommands.ViewGeneratedCode:
@@ -5087,7 +5066,7 @@ public partial class MainWindow : Window
                 Action: () => ShowTool(_factory.References)) { Icon = IconKind.References },
             new(Localizer.Get(StringKeys.ToolObjectBrowser),
                 Action: ShowObjectBrowser) { Icon = IconKind.ObjectBrowser },
-            new(Localizer.Get(StringKeys.ToolDatabase),
+            new(Localizer.Get(StringKeys.DbExplorerTitle),
                 Action: () => ShowTool(_factory.Database)) { Icon = IconKind.JsonFile },
             MenuEntry.Separator,
             // The rest of these belong to the debug layout (IdeDockFactory.
@@ -5110,6 +5089,7 @@ public partial class MainWindow : Window
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuViewResetLayout), Action: ResetLayout) { Icon = IconKind.Layout }
         ]),
+        new(Localizer.Get(StringKeys.DbMenu), Children: DatabaseMenuEntries()),
         new(Localizer.Get(StringKeys.MenuNavigate), Children:
         [
             new(Localizer.Get(StringKeys.MenuNavigateGoToDefinition),
@@ -5354,6 +5334,10 @@ public partial class MainWindow : Window
             ViewModel.ActiveDocument = document;
             ShowActiveDocument();
         }
+
+        // Table Data and Query tabs too, as they were: they hold results and unsaved edits that
+        // exist nowhere else, so they are moved into the new layout rather than rebuilt.
+        RestoreDatabaseDocumentsAfterReset();
     }
 
     /// <summary>

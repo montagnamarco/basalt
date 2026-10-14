@@ -131,11 +131,10 @@ public partial class MainWindow
     /// </summary>
     private async void OnWindowClosingAskToSave(object? sender, Avalonia.Controls.WindowClosingEventArgs e)
     {
-        if (_quitConfirmed || SkipSaveChangesPromptForTests) return;
+        if (_quitConfirmed) return;
 
-        // The dialog below is awaited, not synchronous: a second Closing
-        // event (another close request arriving while the first is still
-        // being answered) must not open a second one on top of it.
+        // The question below is awaited, not synchronous: a second Closing event while the first is still
+        // being answered must not open a second one on top of it.
         if (_closingInProgress)
         {
             e.Cancel = true;
@@ -143,14 +142,25 @@ public partial class MainWindow
         }
 
         var dirty = ViewModel.OpenDocuments.Where(d => d.IsModified).ToList();
-        if (dirty.Count == 0) return;
+
+        // Table and query tabs with changes the database does not have are asked about too: quitting must not lose them.
+        var dirtyDatabase = _databaseDocuments.Where(d => d.Editor.HasUnsavedChanges).ToList();
+
+        // Closing also releases the databases: a running batch is stopped and each session disposed, awaited.
+        if (dirty.Count == 0 && dirtyDatabase.Count == 0 && !DatabasesNeedReleasing) return;
 
         e.Cancel = true;
         _closingInProgress = true;
 
         try
         {
-            if (!await ConfirmAndCloseDirtyDocumentsAsync(dirty, _ => { })) return;
+            // A test that skips the questions still releases the databases, so a test can check that they are.
+            if (!SkipSaveChangesPromptForTests)
+            {
+                if (dirty.Count > 0 && !await ConfirmAndCloseDirtyDocumentsAsync(dirty, _ => { })) return;
+                if (!await ConfirmClosingDatabaseDocumentsAsync(dirtyDatabase)) return;
+            }
+            await ReleaseDatabasesAsync();
 
             _quitConfirmed = true;
             Close();

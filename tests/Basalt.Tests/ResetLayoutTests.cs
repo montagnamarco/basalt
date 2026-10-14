@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
 using Basalt.Core.Localization;
 using Basalt.Shell;
+using Basalt.Shell.Database;
 using Basalt.Shell.ViewModels;
 using Dock.Avalonia.Controls;
 
@@ -12,7 +13,8 @@ namespace Basalt.Tests;
 /// View > Reset Layout with documents open: they come back in the new layout, and the window still closes.
 ///
 /// A tab taken out of its strip lost its close template and asked the window's template for the document's
-/// view, which the document area already showed: closing the window then threw.
+/// view, which the document area already showed: closing the window then threw. The query tab was also
+/// lost, unsaved text with it, because only file documents were put back.
 /// </summary>
 public sealed class ResetLayoutTests
 {
@@ -66,6 +68,30 @@ public sealed class ResetLayoutTests
         Assert.Contains("Module1.vb", TabTitles(host));
 
         // Closing is where the tab, out of its strip, asked for the editor a second time.
+        host.Dispose();
+        await host.SettleAsync(5);
+    }
+
+    [AvaloniaFact]
+    public async Task AQueryTabKeepsItsTextThroughAResetAndTheWindowStillCloses()
+    {
+        var host = new TestWindow();
+        await host.SettleAsync(3);
+
+        Invoke(host.Window, Localizer.Get(StringKeys.DbNewQuery));
+        await host.SettleAsync(3);
+
+        var query = Assert.IsType<QueryView>(Assert.Single(host.Window.DatabaseDocumentsForTests).View);
+        query.Sql = "SELECT 42 AS Answer";
+        var title = Assert.Single(host.Window.DatabaseDocumentsForTests).Title!;
+
+        Invoke(host.Window, Localizer.Get(StringKeys.MenuViewResetLayout));
+        await host.SettleAsync(5);
+
+        Assert.True(query.IsEffectivelyVisible && query.IsAttachedToVisualTree(), "The query tab is not shown after the reset.");
+        Assert.Equal("SELECT 42 AS Answer", query.Sql);
+        Assert.Contains(title, TabTitles(host));
+
         host.Dispose();
         await host.SettleAsync(5);
     }

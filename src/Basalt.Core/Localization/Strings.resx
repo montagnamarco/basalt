@@ -1211,4 +1211,119 @@
   <data name="Theme_SolarizedLight" xml:space="preserve"><value>Solarized Light</value></data>
   <data name="Theme_SolarizedDark" xml:space="preserve"><value>Solarized Dark</value></data>
   <data name="Language_PlainText" xml:space="preserve"><value>Plain Text</value></data>
+  <!-- Database client: the Explorer, the connection dialog, Table Data and Query documents -->
+  <data name="DatabaseClient_Menu" xml:space="preserve"><value>Database</value></data>
+  <data name="DatabaseClient_ExplorerTitle" xml:space="preserve"><value>Database Explorer</value></data>
+  <data name="DatabaseClient_AddConnection" xml:space="preserve"><value>Add Connection…</value></data>
+  <data name="DatabaseClient_EditConnection" xml:space="preserve"><value>Edit Connection…</value></data>
+  <data name="DatabaseClient_RemoveConnection" xml:space="preserve"><value>Remove Connection</value></data>
+  <data name="DatabaseClient_NewQuery" xml:space="preserve"><value>New Query</value></data>
+  <data name="DatabaseClient_OpenData" xml:space="preserve"><value>Open Data</value></data>
+  <data name="DatabaseClient_SelectTop" xml:space="preserve"><value>Select Top 1000</value></data>
+  <data name="DatabaseClient_CopyName" xml:space="preserve"><value>Copy Name</value></data>
+  <data name="DatabaseClient_NoConnections" xml:space="preserve"><value>No database connections yet. Add one to see its tables, views, columns, indexes and keys.</value></data>
+  <data name="DatabaseClient_Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="DatabaseClient_NotConnected" xml:space="preserve"><value>Not connected. Expand the connection to connect again.</value></data>
+  <data name="DatabaseClient_TablesGroup" xml:space="preserve"><value>Tables</value></data>
+  <data name="DatabaseClient_ViewsGroup" xml:space="preserve"><value>Views</value></data>
+  <data name="DatabaseClient_ColumnsGroup" xml:space="preserve"><value>Columns</value></data>
+  <data name="DatabaseClient_IndexesGroup" xml:space="preserve"><value>Indexes</value></data>
+  <data name="DatabaseClient_ForeignKeysGroup" xml:space="preserve"><value>Foreign Keys</value></data>
+  <data name="DatabaseClient_PrimaryKeyMark" xml:space="preserve"><value>PK</value></data>
+  <data name="DatabaseClient_NullableMark" xml:space="preserve"><value>NULL</value></data>
+  <data name="DatabaseClient_NotNullMark" xml:space="preserve"><value>NOT NULL</value></data>
+  <data name="DatabaseClient_UniqueMark" xml:space="preserve"><value>UNIQUE</value></data>
+  <data name="DatabaseClient_PrimaryKeyIndexMark" xml:space="preserve"><value>PRIMARY KEY</value></data>
+  <data name="DatabaseClient_ForeignKeyLabel" xml:space="preserve"><value>{0} → {1}({2})</value></data>
+  <data name="DatabaseClient_Connected" xml:space="preserve"><value>Connected to {0}.</value></data>
+  <data name="DatabaseClient_OpenFailed" xml:space="preserve"><value>{0} could not be opened: {1}</value></data>
+  <data name="DatabaseClient_Disconnected" xml:space="preserve"><value>{0} disconnected.</value></data>
+  <data name="DatabaseClient_DialogAddTitle" xml:space="preserve"><value>Add Connection</value></data>
+  <data name="DatabaseClient_DialogEditTitle" xml:space="preserve"><value>Edit Connection</value></data>
+  <data name="DatabaseClient_FieldName" xml:space="preserve"><value>Name</value></data>
+  <data name="DatabaseClient_FieldProvider" xml:space="preserve"><value>Provider</value></data>
+  <data name="DatabaseClient_FieldFile" xml:space="preserve"><value>Database file</value></data>
+  <data name="DatabaseClient_FieldBrowse" xml:space="preserve"><value>Browse…</value></data>
+  <data name="DatabaseClient_FieldServer" xml:space="preserve"><value>Server</value></data>
+  <data name="DatabaseClient_FieldPort" xml:space="preserve"><value>Port</value></data>
+  <data name="DatabaseClient_FieldDatabase" xml:space="preserve"><value>Database</value></data>
+  <data name="DatabaseClient_FieldIntegrated" xml:space="preserve"><value>Windows authentication (integrated security)</value></data>
+  <data name="DatabaseClient_FieldUser" xml:space="preserve"><value>User</value></data>
+  <data name="DatabaseClient_FieldPassword" xml:space="preserve"><value>Password</value></data>
+  <data name="DatabaseClient_FieldEncrypt" xml:space="preserve"><value>Encrypt connection</value></data>
+  <data name="DatabaseClient_FieldTrustCertificate" xml:space="preserve"><value>Trust server certificate</value></data>
+  <data name="DatabaseClient_FieldSslMode" xml:space="preserve"><value>SSL mode</value></data>
+  <data name="DatabaseClient_FieldAdvanced" xml:space="preserve"><value>Advanced: connection string</value></data>
+  <data name="DatabaseClient_AdvancedHint" xml:space="preserve"><value>When this is filled in, it is used instead of the fields above.</value></data>
+  <data name="DatabaseClient_PasswordNote" xml:space="preserve"><value>The password is kept in the system keychain, never in the settings file.</value></data>
+  <data name="DatabaseClient_KindSqlite" xml:space="preserve"><value>SQLite</value></data>
+  <data name="DatabaseClient_KindSqlServer" xml:space="preserve"><value>SQL Server</value></data>
+  <data name="DatabaseClient_KindPostgreSql" xml:space="preserve"><value>PostgreSQL</value></data>
+  <data name="DatabaseClient_KindMySql" xml:space="preserve"><value>MySQL</value></data>
+  <data name="DatabaseClient_SslDisable" xml:space="preserve"><value>Disable</value></data>
+  <data name="DatabaseClient_SslPrefer" xml:space="preserve"><value>Prefer</value></data>
+  <data name="DatabaseClient_SslRequire" xml:space="preserve"><value>Require</value></data>
+  <data name="DatabaseClient_TestConnection" xml:space="preserve"><value>Test Connection</value></data>
+  <data name="DatabaseClient_Testing" xml:space="preserve"><value>Testing…</value></data>
+  <data name="DatabaseClient_TestOk" xml:space="preserve"><value>Connected to {0}.</value></data>
+  <data name="DatabaseClient_TestFailed" xml:space="preserve"><value>The connection failed: {0}</value></data>
+  <data name="DatabaseClient_NameRequired" xml:space="preserve"><value>Give the connection a name.</value></data>
+  <data name="DatabaseClient_FileRequired" xml:space="preserve"><value>Choose the database file.</value></data>
+  <data name="DatabaseClient_ServerRequired" xml:space="preserve"><value>Enter the server name.</value></data>
+  <data name="DatabaseClient_DatabaseRequired" xml:space="preserve"><value>Enter the database name.</value></data>
+  <data name="DatabaseClient_Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="DatabaseClient_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="DatabaseClient_Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="DatabaseClient_SavedRows" xml:space="preserve"><value>Saved {0} row changes.</value></data>
+  <data name="DatabaseClient_DataTitle" xml:space="preserve"><value>{0} [data]</value></data>
+  <data name="DatabaseClient_First" xml:space="preserve"><value>First</value></data>
+  <data name="DatabaseClient_Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="DatabaseClient_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="DatabaseClient_Last" xml:space="preserve"><value>Last</value></data>
+  <data name="DatabaseClient_RowsRange" xml:space="preserve"><value>rows {0}–{1} of {2}</value></data>
+  <data name="DatabaseClient_RowsRangeUnknown" xml:space="preserve"><value>rows {0}–{1}</value></data>
+  <data name="DatabaseClient_Filter" xml:space="preserve"><value>WHERE</value></data>
+  <data name="DatabaseClient_FilterHint" xml:space="preserve"><value>Condition, for example Name LIKE 'R%'</value></data>
+  <data name="DatabaseClient_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="DatabaseClient_Null" xml:space="preserve"><value>NULL</value></data>
+  <data name="DatabaseClient_SetNull" xml:space="preserve"><value>Set to NULL</value></data>
+  <data name="DatabaseClient_AddRow" xml:space="preserve"><value>Add Row</value></data>
+  <data name="DatabaseClient_DeleteRow" xml:space="preserve"><value>Delete Row</value></data>
+  <data name="DatabaseClient_PendingChanges" xml:space="preserve"><value>{0} changes not saved to the database.</value></data>
+  <data name="DatabaseClient_SaveFirst" xml:space="preserve"><value>Save or discard the changes before paging, sorting or filtering.</value></data>
+  <data name="DatabaseClient_ExportCsv" xml:space="preserve"><value>Export CSV…</value></data>
+  <data name="DatabaseClient_CopyWithHeaders" xml:space="preserve"><value>Copy with Headers</value></data>
+  <data name="DatabaseClient_Exported" xml:space="preserve"><value>Exported {0} rows to {1}.</value></data>
+  <data name="DatabaseClient_Copied" xml:space="preserve"><value>Copied {0} rows.</value></data>
+  <data name="DatabaseClient_CloseAskMessage" xml:space="preserve"><value>{0} has changes that are not saved to the database. Save them before closing?</value></data>
+  <data name="DatabaseClient_SaveQueryTitle" xml:space="preserve"><value>Save Query</value></data>
+  <data name="DatabaseClient_SqlFilter" xml:space="preserve"><value>SQL script</value></data>
+  <data name="DatabaseClient_QueryTitle" xml:space="preserve"><value>Query{0}.sql</value></data>
+  <data name="DatabaseClient_Connection" xml:space="preserve"><value>Connection</value></data>
+  <data name="DatabaseClient_ChooseConnection" xml:space="preserve"><value>Choose a connection to run the query on.</value></data>
+  <data name="DatabaseClient_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="DatabaseClient_ResultTab" xml:space="preserve"><value>Result {0}</value></data>
+  <data name="DatabaseClient_MessagesTab" xml:space="preserve"><value>Messages</value></data>
+  <data name="DatabaseClient_RowCount" xml:space="preserve"><value>{0} rows</value></data>
+  <data name="DatabaseClient_Truncated" xml:space="preserve"><value>Only the first {0} rows are shown.</value></data>
+  <data name="DatabaseClient_Elapsed" xml:space="preserve"><value>Elapsed {0} ms</value></data>
+  <data name="DatabaseClient_Running" xml:space="preserve"><value>Running… {0} ms</value></data>
+  <data name="DatabaseClient_FailedAfter" xml:space="preserve"><value>Failed after {0} ms.</value></data>
+  <data name="DatabaseClient_MessageLine" xml:space="preserve"><value>Line {0}: {1}</value></data>
+  <data name="DatabaseClient_NoResultSets" xml:space="preserve"><value>The batch returned no result sets.</value></data>
+  <data name="DatabaseClient_EditRefused" xml:space="preserve"><value>Save was refused, so nothing was changed. Row {0}: {1}</value></data>
+  <data name="DatabaseClient_OpenedQuery" xml:space="preserve"><value>Opened {0}</value></data>
+  <data name="DatabaseClient_PasswordNotStored" xml:space="preserve"><value>The password could not be stored in the keychain, so the connection was not saved.</value></data>
+  <data name="DatabaseClient_BadConnectionString" xml:space="preserve"><value>The connection string is not valid: {0}</value></data>
+  <data name="DatabaseClient_ClearPassword" xml:space="preserve"><value>Clear the stored password</value></data>
+  <data name="DatabaseClient_SavedQuery" xml:space="preserve"><value>Saved {0}</value></data>
+  <data name="DatabaseClient_ResultFileName" xml:space="preserve"><value>Result.csv</value></data>
+  <data name="DatabaseClient_RemoveQuestion" xml:space="preserve"><value>Remove the connection {0}? Its saved settings and password are deleted, and its open tables are closed.</value></data>
+  <data name="DatabaseClient_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="DatabaseClient_ConnectionRemoved" xml:space="preserve"><value>The connection was removed, so this table can no longer be read or saved.</value></data>
+  <data name="DatabaseClient_ConnectionChanged" xml:space="preserve"><value>The connection was edited after this table was read, so nothing more is read or saved here. Close the table and open it again.</value></data>
+  <data name="DatabaseClient_ReconnectedKeepsEdits" xml:space="preserve"><value>Connected again. The pending changes are kept: save them, or discard them.</value></data>
+  <data name="DatabaseClient_Reconnect" xml:space="preserve"><value>Reconnect</value></data>
+  <data name="DatabaseClient_SettingsNotSaved" xml:space="preserve"><value>The connection was not saved: the settings file could not be written. Nothing was changed.</value></data>
+  <data name="DatabaseClient_CloseFailed" xml:space="preserve"><value>A database connection did not close cleanly: {0}</value></data>
 </root>

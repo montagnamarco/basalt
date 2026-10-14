@@ -31,32 +31,39 @@ public sealed class ApiKeyStore : IApiKeyStore
     public bool UsesPlatformKeychain => OperatingSystem.IsMacOS();
 
     /// <summary>The key for an assistant, or null when none is set.</summary>
-    public string? Get(AiVendor vendor)
-    {
-        var account = AccountFor(vendor);
+    public string? Get(AiVendor vendor) => GetSecret(AccountFor(vendor));
 
+    /// <summary>Stores a key, replacing any already there.</summary>
+    public bool Set(AiVendor vendor, string apiKey) => SetSecret(AccountFor(vendor), apiKey);
+
+    public bool Remove(AiVendor vendor) => RemoveSecret(AccountFor(vendor));
+
+    /// <summary>
+    /// A secret kept under an account name other than an assistant's, such as a
+    /// database password. Same keychain, same file fallback, same protection as
+    /// the keys above; the account name is the only difference.
+    /// </summary>
+    public string? GetSecret(string account)
+    {
         if (UsesPlatformKeychain && ReadFromKeychain(account) is { Length: > 0 } stored)
             return stored;
 
         return ReadFromFile(account);
     }
 
-    /// <summary>Stores a key, replacing any already there.</summary>
-    public bool Set(AiVendor vendor, string apiKey)
+    /// <summary>Stores a secret under an account name, replacing any already there.</summary>
+    public bool SetSecret(string account, string secret)
     {
-        var account = AccountFor(vendor);
+        if (secret.Length == 0) return RemoveSecret(account);
 
-        if (apiKey.Length == 0) return Remove(vendor);
+        if (UsesPlatformKeychain && WriteToKeychain(account, secret)) return true;
 
-        if (UsesPlatformKeychain && WriteToKeychain(account, apiKey)) return true;
-
-        return WriteToFile(account, apiKey);
+        return WriteToFile(account, secret);
     }
 
-    public bool Remove(AiVendor vendor)
+    /// <summary>Removes a secret stored under an account name, whether it is in the keychain or the file.</summary>
+    public bool RemoveSecret(string account)
     {
-        var account = AccountFor(vendor);
-
         if (UsesPlatformKeychain) RunSecurity(["delete-generic-password", "-s", ServiceName, "-a", account]);
 
         try
