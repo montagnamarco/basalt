@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
@@ -73,8 +74,23 @@ public sealed class DatabaseConnectionDialog : Window
         };
 
         _file = new TextBox { Text = initial.FilePath, Name = "DatabaseFile" };
-        var browse = new Button { Content = Localizer.Get(StringKeys.DbFieldBrowse), Name = "DatabaseBrowse" };
+        var browse = new Button
+        {
+            Content = Localizer.Get(StringKeys.DbFieldBrowse),
+            Name = "DatabaseBrowse",
+
+            // Stretched to the row, so it is as tall as the box beside it; the gap is the same as the rest of the dialog's.
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(Spacing.Tight, 0, 0, 0),
+        };
         browse.Click += async (_, _) => await BrowseAsync();
+
+        // The box takes the row's width and Browse sits to its right. A grid, not a dock: a dock puts the
+        // first child at the left edge, which is where Browse was.
+        var fileLine = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        fileLine.Children.Add(_file);
+        fileLine.Children.Add(browse);
+        Grid.SetColumn(browse, 1);
 
         _fileRow = new StackPanel
         {
@@ -82,7 +98,7 @@ public sealed class DatabaseConnectionDialog : Window
             Children =
             {
                 Label(StringKeys.DbFieldFile),
-                new DockPanel { LastChildFill = true, Children = { browse, _file } },
+                fileLine,
             },
         };
 

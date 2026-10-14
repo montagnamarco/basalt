@@ -724,7 +724,12 @@ public sealed class TableDataView : Grid, IDatabaseDocumentContent
         {
             text.Text = cell.IsNull ? Localizer.Get(StringKeys.DbNull) : cell.Text ?? "";
             text.FontStyle = cell.IsNull ? FontStyle.Italic : FontStyle.Normal;
-            text.Foreground = cell.IsNull ? DescriptionBrush(border) : null;
+
+            // A local null Foreground is not "the theme's colour": it is no brush at all, so the text
+            // is drawn transparent. A value takes its colour from the theme only once the local value is cleared.
+            if (cell.IsNull && DescriptionBrush(border) is { } description) text.Foreground = description;
+            else text.ClearValue(TextBlock.ForegroundProperty);
+
             border.Background = cell.IsChanged ? ChangedBrush(border) : null;
         }
 

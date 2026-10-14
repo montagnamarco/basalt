@@ -111,7 +111,7 @@ public partial class MainWindow
     /// <summary>Opens a query: a new one with the given SQL, or a saved file of SQL when a path is given.</summary>
     private DatabaseDocument OpenQueryDocument(string? connectionId, string sql, string? filePath)
     {
-        var view = new QueryView(_databases, ++_queryCount, connectionId, sql, filePath);
+        var view = new QueryView(_databases, ++_queryCount, connectionId, sql, filePath, _settingsStore.Load().Appearance.Theme);
         var document = new DatabaseDocument(view.Title, view);
 
         view.TitleChanged += (_, _) =>
@@ -296,6 +296,9 @@ public partial class MainWindow
         _databaseDocuments.Remove(document);
         _contents.Remove(document);
         ViewModel.OtherDocumentCount = _databaseDocuments.Count;
+
+        // The window disposes what is still in _contents when it closes; a tab closed before that is released here.
+        (document.View as IDisposable)?.Dispose();
 
         if (!_closingQueryTabs) ViewModel.RememberSession();
     }

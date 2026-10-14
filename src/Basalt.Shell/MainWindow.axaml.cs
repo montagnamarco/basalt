@@ -2843,6 +2843,9 @@ public partial class MainWindow : Window
         foreach (var output in _contents.Values.OfType<OutputPanel>())
             output.ApplySettings(settings);
 
+        foreach (var query in _contents.Values.OfType<Basalt.Shell.Database.QueryView>())
+            query.ApplySettings(settings);
+
         _search?.ApplySettings(settings);
 
         ApplyTheme(settings.Appearance.Theme);

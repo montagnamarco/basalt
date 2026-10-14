@@ -6,9 +6,11 @@ using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using Basalt.Core.Localization;
+using Basalt.Core.Settings;
 using Basalt.Data.Sessions;
 using Basalt.Shell.Controls;
 using Basalt.Shell.Syntax;
@@ -26,7 +28,7 @@ namespace Basalt.Shell.Database;
 /// moves the caret to that line of the editor, counting from the first line the
 /// batch was run from, so an error in a selection is found where it was typed.
 /// </remarks>
-public sealed class QueryView : Grid, IDatabaseDocumentContent
+public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
 {
     /// <summary>The most rows kept per result set. The engine stops reading there and says so.</summary>
     public const int MaximumRows = 10_000;
@@ -43,17 +45,28 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent
     private readonly DispatcherTimer _clock;
     private readonly List<ResultSet> _resultSets = [];
 
+    /// <summary>The SQL colouring, installed with the interface theme and re-themed when the settings change.</summary>
+    private TextMateHighlighting? _highlighting;
+
+    /// <summary>The theme the colouring was last set for, with System already resolved.</summary>
+    private AppTheme _theme;
+
+    /// <summary>The theme as the settings name it, System included, so System can be resolved again.</summary>
+    private AppTheme _chosenTheme;
+
     private CancellationTokenSource? _running;
     private Stopwatch? _clockWatch;
     private string _savedText;
     private int _messageBase = 1;
 
-    public QueryView(DatabaseWorkspace workspace, int number, string? connectionId, string sql, string? filePath)
+    public QueryView(DatabaseWorkspace workspace, int number, string? connectionId, string sql, string? filePath, AppTheme theme)
     {
         _workspace = workspace;
         _number = number;
         FilePath = filePath;
         _savedText = sql;
+        _chosenTheme = theme;
+        _theme = ResolvedTheme(theme);
 
         _editor = new TextEditor
         {
@@ -63,8 +76,9 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent
             Text = sql,
         };
 
-        // The SQL grammar the registry ships, reached the same way every other language is.
-        TextMateHighlighting.InstallFor(_editor, "query.sql");
+        // The SQL grammar the registry ships, coloured with the grammar theme that goes with the window's theme:
+        // the light palette on a dark editor left keywords near-invisible.
+        _highlighting = TextMateHighlighting.InstallFor(_editor, "query.sql", _theme);
 
         _connection = new ComboBox
         {
@@ -262,6 +276,56 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent
 
     /// <summary>Cancels the batch that is running, if one is. Used when the window closes.</summary>
     internal void CancelRun() => _running?.Cancel();
+
+    /// <summary>
+    /// Follows the settings the window applies. The colours change with the theme at once, as an open
+    /// code editor's do, rather than on the next query opened.
+    /// </summary>
+    public void ApplySettings(IdeSettings settings)
+    {
+        _chosenTheme = settings.Appearance.Theme;
+        Retheme();
+    }
+
+    /// <summary>The theme the SQL colouring is set for, System resolved. For the tests.</summary>
+    internal AppTheme ColouringTheme => _theme;
+
+    /// <summary>
+    /// Under System the variant decides, and it is not known until the view is in the window (a view being
+    /// built reads the default, which is light) and changes when the operating system switches.
+    /// </summary>
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == ThemeVariantScope.ActualThemeVariantProperty && _chosenTheme == AppTheme.System) Retheme();
+    }
+
+    private void Retheme()
+    {
+        var theme = ResolvedTheme(_chosenTheme);
+
+        if (theme == _theme) return;
+
+        _theme = theme;
+        _highlighting?.SetTheme(theme);
+    }
+
+    /// <summary>
+    /// The theme "follow the system" came out as. Read from the variant Avalonia settled on, the same way
+    /// the code editor reads it.
+    /// </summary>
+    private AppTheme ResolvedTheme(AppTheme theme) =>
+        theme != AppTheme.System
+            ? theme
+            : ActualThemeVariant == ThemeVariant.Dark ? AppTheme.Dark : AppTheme.Light;
+
+    /// <summary>Releases the colouring installed on the editor.</summary>
+    public void Dispose()
+    {
+        _highlighting?.Dispose();
+        _highlighting = null;
+    }
 
     /// <summary>Saves the query to its file, asking for one when it has none yet. Returns false when the user chose none.</summary>
     public async Task<bool> SaveAsync()
