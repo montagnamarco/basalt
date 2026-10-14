@@ -177,7 +177,31 @@ public sealed class ProjectProperties
 
     public IReadOnlyList<string> ProjectReferences => _file.GetProjectReferences();
 
-    public void AddPackage(string id, string version) => _file.AddPackageReference(id, version);
+    /// <summary>
+    /// Adds a package, or sets the version of one already there.
+    /// </summary>
+    /// <param name="centralPackageManagement">
+    /// Whether Directory.Packages.props owns the versions. Then the reference is
+    /// written without a Version, whatever <paramref name="version"/> says.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// The version is blank and the versions are not managed centrally. A
+    /// reference without one would be written as a wildcard, which floats to
+    /// whatever NuGet has next; the version is what pins the package.
+    /// </exception>
+    public void AddPackage(string id, string version, bool centralPackageManagement = false)
+    {
+        if (centralPackageManagement)
+        {
+            _file.AddPackageReference(id, null);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(version))
+            throw new ArgumentException("A package reference needs a version to pin it.", nameof(version));
+
+        _file.AddPackageReference(id, version.Trim());
+    }
 
     public bool RemovePackage(string id) => _file.RemovePackageReference(id);
 

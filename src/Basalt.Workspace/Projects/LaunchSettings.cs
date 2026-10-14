@@ -6,18 +6,26 @@ namespace Basalt.Workspace.Projects;
 /// <summary>
 /// How a project is started when run or debugged.
 ///
-/// These live in Properties/launchSettings.json rather than in the project
-/// file, so the properties window reads and writes them separately.
+/// These live in the project's launchSettings.json (see
+/// <see cref="LaunchSettingsLocation"/>) rather than in the project file, so
+/// the properties window reads and writes them separately.
 /// </summary>
 public sealed class LaunchSettings
 {
     private readonly JsonObject _root;
 
-    private LaunchSettings(JsonObject root, string path, string profileName)
+    /// <summary>
+    /// The older file this one replaces, when the settings were read from it:
+    /// Saving writes the new file and then removes the old one.
+    /// </summary>
+    private readonly string? _migratedFrom;
+
+    private LaunchSettings(JsonObject root, string path, string profileName, string? migratedFrom = null)
     {
         _root = root;
         Path = path;
         ProfileName = profileName;
+        _migratedFrom = migratedFrom;
     }
 
     public string Path { get; }
@@ -29,19 +37,29 @@ public sealed class LaunchSettings
     /// Loads the settings for a project, creating an empty set when the file
     /// does not exist yet.
     /// </summary>
+    /// <remarks>
+    /// Read from <see cref="LaunchSettingsLocation.PathOf"/>. A Visual Basic
+    /// project the older IDE wrote into Properties/ is read from there until
+    /// it is saved, and then moved.
+    /// </remarks>
     public static LaunchSettings Load(string projectPath)
     {
-        var directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(projectPath))!;
-        var path = System.IO.Path.Combine(directory, "Properties", "launchSettings.json");
+        var path = LaunchSettingsLocation.PathOf(projectPath);
+        var legacy = LaunchSettingsLocation.LegacyPathOf(projectPath);
+
+        var source = File.Exists(path) ? path
+            : legacy is not null && File.Exists(legacy) ? legacy
+            : null;
+        var migratedFrom = source is not null && source == legacy ? legacy : null;
 
         var projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath);
 
-        if (!File.Exists(path))
+        if (source is null)
             return new LaunchSettings(NewDocument(projectName), path, projectName);
 
         try
         {
-            var parsed = JsonNode.Parse(File.ReadAllText(path)) as JsonObject
+            var parsed = JsonNode.Parse(File.ReadAllText(source)) as JsonObject
                          ?? NewDocument(projectName);
 
             // The first profile is the one the IDE runs, matching what
@@ -49,7 +67,7 @@ public sealed class LaunchSettings
             var profiles = parsed["profiles"] as JsonObject;
             var name = profiles?.FirstOrDefault().Key ?? projectName;
 
-            return new LaunchSettings(parsed, path, name);
+            return new LaunchSettings(parsed, path, name, migratedFrom);
         }
         catch (JsonException)
         {
@@ -150,6 +168,11 @@ public sealed class LaunchSettings
         else Profile[key] = value;
     }
 
+    /// <summary>
+    /// Writes the file. When the settings were migrated from the older
+    /// location, that file is removed once the new one is written, and its
+    /// folder too when nothing else is left in it.
+    /// </summary>
     public async Task SaveAsync(CancellationToken ct = default)
     {
         var directory = System.IO.Path.GetDirectoryName(Path);
@@ -158,6 +181,13 @@ public sealed class LaunchSettings
         var json = _root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
 
         await File.WriteAllTextAsync(Path, json + Environment.NewLine, ct).ConfigureAwait(false);
+
+        if (_migratedFrom is null || !File.Exists(_migratedFrom)) return;
+
+        File.Delete(_migratedFrom);
+        var legacyFolder = System.IO.Path.GetDirectoryName(_migratedFrom)!;
+        if (Directory.Exists(legacyFolder) && !Directory.EnumerateFileSystemEntries(legacyFolder).Any())
+            Directory.Delete(legacyFolder);
     }
 
     public string ToJson() =>

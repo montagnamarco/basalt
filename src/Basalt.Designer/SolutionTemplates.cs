@@ -808,7 +808,9 @@ public static partial class SolutionTemplates
 
             """, ct).ConfigureAwait(false);
 
-        var properties = Path.Combine(directory, "Properties");
+        // Visual Basic's AppDesignerFolder is "My Project", and dotnet run reads
+        // launchSettings.json from there; Properties/ is ignored for these projects.
+        var properties = Path.Combine(directory, "My Project");
         Directory.CreateDirectory(properties);
 
         await File.WriteAllTextAsync(Path.Combine(properties, "launchSettings.json"), $$"""

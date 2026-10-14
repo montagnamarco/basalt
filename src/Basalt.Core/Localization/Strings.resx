@@ -1332,4 +1332,5 @@
   <data name="DatabaseClient_Reconnect" xml:space="preserve"><value>Reconnect</value></data>
   <data name="DatabaseClient_SettingsNotSaved" xml:space="preserve"><value>The connection was not saved: the settings file could not be written. Nothing was changed.</value></data>
   <data name="DatabaseClient_CloseFailed" xml:space="preserve"><value>A database connection did not close cleanly: {0}</value></data>
+  <data name="Package_VersionRequired" xml:space="preserve"><value>Enter a version, for example 13.0.3, so the package is pinned.</value></data>
 </root>

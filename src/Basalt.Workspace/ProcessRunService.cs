@@ -31,9 +31,10 @@ public sealed class ProcessRunService : IDisposable
     /// directory.
     ///
     /// Launching through "dotnet run" rather than "dotnet &lt;dll&gt;" is
-    /// deliberate: only "dotnet run" applies Properties/launchSettings.json
-    /// (environment variables, arguments, applicationUrl), and without it
-    /// web and Blazor apps start in Production. The caller builds first, so
+    /// deliberate: only "dotnet run" applies the project's launchSettings.json
+    /// (environment variables, arguments, applicationUrl), read from its
+    /// AppDesignerFolder (My Project for Visual Basic), and without it web and
+    /// Blazor apps start in Production. The caller builds first, so
     /// "--no-build" keeps run from compiling a second time.
     ///
     /// <paramref name="compatibilityArguments"/> are the MSBuild properties the

@@ -74,10 +74,12 @@ public sealed class PanelFixTests
         var file = Path.Combine(root, "Program.vb");
 
         // Ten lines so line 7 is unambiguous; column 9 lands just past the
-        // indentation on that line, matching the bug report (7:9).
+        // indentation on that line, matching the bug report (7:9). The code is
+        // valid: a real error would reach the panel from the live check and
+        // replace the synthetic row with its own column.
         File.WriteAllText(file, string.Join("\n",
             "Module Program", "    Sub Main()", "        Dim a = 1", "        Dim b = 2",
-            "        Dim c = 3", "        Dim d = 4", "        Dim broken = e", "        Dim f = 6",
+            "        Dim c = 3", "        Dim d = 4", "        Dim broken = 5", "        Dim f = 6",
             "    End Sub", "End Module"));
 
         using var host = new TestWindow(project);

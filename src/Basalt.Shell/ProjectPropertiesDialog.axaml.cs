@@ -154,6 +154,11 @@ public partial class ProjectPropertiesDialog : Window
         var packageId = new TextBox { PlaceholderText = Localizer.Get(StringKeys.ProjectPropertiesPackageId) };
         var packageVersion = new TextBox { PlaceholderText = Localizer.Get(StringKeys.ProjectPropertiesVersion), Margin = new Avalonia.Thickness(8, 0, 8, 0) };
         var add = new Button { Content = Localizer.Get(StringKeys.ProjectPropertiesAddPackage) };
+
+        // Under central package management the version lives in Directory.Packages.props,
+        // so a blank version is the normal case and is not asked for.
+        var centrally = ReferencesDialog.DetectsCentralPackageManagement(properties.Path, properties.ToXml());
+        var packageMessage = new TextBlock { IsVisible = false, FontSize = 12, TextWrapping = Avalonia.Media.TextWrapping.Wrap };
         var remove = new Button { Content = Localizer.Get(StringKeys.ProjectPropertiesRemovePackage), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
 
         Grid.SetColumn(packageVersion, 1);
@@ -168,8 +173,17 @@ public partial class ProjectPropertiesDialog : Window
         {
             if (string.IsNullOrWhiteSpace(packageId.Text)) return;
 
-            properties.AddPackage(packageId.Text!.Trim(),
-                string.IsNullOrWhiteSpace(packageVersion.Text) ? "*" : packageVersion.Text!.Trim());
+            // A package needs a version to be pinned; a blank one is not written
+            // as a floating "*", and the user is told why.
+            if (!centrally && string.IsNullOrWhiteSpace(packageVersion.Text))
+            {
+                packageMessage.Text = Localizer.Get(StringKeys.PackageVersionRequired);
+                packageMessage.IsVisible = true;
+                return;
+            }
+
+            packageMessage.IsVisible = false;
+            properties.AddPackage(packageId.Text!.Trim(), (packageVersion.Text ?? "").Trim(), centrally);
 
             packages.ItemsSource = properties.PackageReferences
                 .Select(p => $"{p.Id}  {p.Version}").ToList();
@@ -186,6 +200,7 @@ public partial class ProjectPropertiesDialog : Window
         };
 
         panel.Children.Add(packageRow);
+        panel.Children.Add(packageMessage);
 
         panel.Children.Add(Heading(Localizer.Get(StringKeys.ProjectPropertiesProjects)));
         panel.Children.Add(new ListBox

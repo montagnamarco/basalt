@@ -354,11 +354,11 @@ public sealed class ProblemsPanel : UserControl
     {
         RowsMapped++;
 
-        var path = diagnostic.FilePath ?? "";
+        var path = diagnostic.LocationPath ?? "";
         if (!_relative.TryGetValue(path, out var relative))
         {
             RelativePathsComputed++;
-            relative = RelativePath(diagnostic.FilePath, solutionFolder);
+            relative = RelativePath(diagnostic.LocationPath, solutionFolder);
             _relative[path] = relative;
         }
 

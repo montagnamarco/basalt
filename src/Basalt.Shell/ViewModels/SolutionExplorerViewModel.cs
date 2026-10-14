@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using Basalt.Core.Features;
 using Basalt.Workspace;
+using Basalt.Workspace.Projects;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Basalt.Shell.ViewModels;
@@ -29,6 +30,19 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         && (fileName.StartsWith('.') && fileName is not ".editorconfig"
             || fileName.EndsWith(".user", StringComparison.OrdinalIgnoreCase)
             || fileName.EndsWith(".cache", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// How paths compare here: ignoring case on Windows and macOS, whose
+    /// default file systems do, exactly on Linux. The solution's project paths
+    /// and the folders walked are compared with it.
+    /// </summary>
+    private static StringComparison PathCase { get; } =
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+    private static StringComparer PathComparer { get; } =
+        PathCase == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
     private static readonly HashSet<string> Ignored =
         new(StringComparer.OrdinalIgnoreCase) { "bin", "obj", ".git", ".vs", "node_modules" };
@@ -100,6 +114,23 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
     private readonly Dictionary<string, string?> _projectTexts = new(StringComparer.Ordinal);
 
     /// <summary>
+    /// The projects the loaded solution lists, in its order, or null when the
+    /// tree is a project's and not a solution's. A solution's project is the one
+    /// its file names, wherever that is on disk; a project file in a folder the
+    /// solution does not list is a file, not a project of the solution.
+    /// </summary>
+    private List<string>? _solutionProjects;
+
+    /// <summary>The same projects as a set, for the membership tests made per file.</summary>
+    private HashSet<string>? _solutionProjectSet;
+
+    /// <summary>The folder the loaded solution file sits in.</summary>
+    private string? _solutionDirectory;
+
+    /// <summary>The solution projects already shown as a node, during one load.</summary>
+    private readonly HashSet<string> _shownProjects = new(PathComparer);
+
+    /// <summary>
     /// Whether the project a file belongs to includes it. A file in no
     /// project, or in a project that is not SDK-style, is included.
     /// </summary>
@@ -135,9 +166,13 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         // the last one, by Exclude or by another editor, is seen as it is now.
         _projectOfDirectory.Clear();
         _projectTexts.Clear();
+        _shownProjects.Clear();
 
-        var isSolution = Path.GetExtension(solutionOrProjectPath)
-            is ".sln" or ".slnx";
+        var isSolution = SolutionFile.IsSolutionFile(solutionOrProjectPath);
+        // A solution file that lists no projects keeps the folder layout it always had.
+        var listed = isSolution ? SolutionFile.ProjectsOf(solutionOrProjectPath) : [];
+        _solutionProjects = listed.Count > 0 ? listed.ToList() : null;
+        _solutionProjectSet = _solutionProjects is null ? null : new HashSet<string>(_solutionProjects, PathComparer);
 
         var root = new SolutionTreeNode(
             Path.GetFileName(solutionOrProjectPath),
@@ -146,7 +181,10 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         { IsExpanded = true };
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(solutionOrProjectPath));
+        _solutionDirectory = directory;
         if (directory is not null) PopulateFrom(root, directory, inSolution: isSolution);
+
+        if (isSolution) AddSolutionProjectsOutsideTree(root);
 
         // Visual Studio opens a solution with its projects showing, one level
         // deep: each project's own folders stay closed. A remembered session
@@ -157,6 +195,33 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
 
         Roots.Add(root);
         Loaded?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Shows each solution project that no folder of the tree already stands
+    /// for: one the solution keeps outside its own folder, such as ..\App\App.vbproj.
+    /// Each one is a project node with its own folder beneath it, the way a
+    /// project in a folder of the solution is.
+    /// </summary>
+    private void AddSolutionProjectsOutsideTree(SolutionTreeNode root)
+    {
+        foreach (var project in _solutionProjects ?? [])
+        {
+            if (_shownProjects.Contains(project)) continue;
+
+            // A project in the solution's own folder is a file of the root, as
+            // it always was: the root lists that folder's files already.
+            var folder = Path.GetDirectoryName(project)!;
+            if (string.Equals(folder, _solutionDirectory, PathCase)) continue;
+
+            _shownProjects.Add(project);
+            var node = new SolutionTreeNode(Path.GetFileNameWithoutExtension(project), project, NodeKind.Project)
+            {
+                FolderPath = folder
+            };
+            PopulateFrom(node, folder, inSolution: true);
+            root.Children.Add(node);
+        }
     }
 
     /// <summary>Raised after the tree has been read from disk, so the panel can watch the same folder.</summary>
@@ -257,8 +322,9 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
             // The folder of one project is that project, as Visual Studio shows
             // it: its node is the project file, and the file is then not listed
             // again inside it, as for the root. A folder with none, or with two
-            // or more, stays a folder.
+            // or more, stays a folder. Only a project the solution lists counts.
             var projectFile = inSolution ? SoleProjectFileIn(subdirectory) : null;
+            if (projectFile is not null) _shownProjects.Add(projectFile);
             var node = projectFile is null
                 ? new SolutionTreeNode(name, subdirectory, NodeKind.Folder)
                 : new SolutionTreeNode(Path.GetFileNameWithoutExtension(projectFile), projectFile, NodeKind.Project)
@@ -279,6 +345,7 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
         var listed = Directory.EnumerateFiles(directory)
             .Where(file => !IsNoise(Path.GetFileName(file)))
             .Where(file => rootFile is null || Path.GetFullPath(file) != rootFile)
+            .Where(file => !IsSolutionProjectShownElsewhere(file, directory, inSolution))
             .OrderBy(file => file, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
@@ -339,16 +406,30 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Whether a project file of the solution is listed as its own node rather
+    /// than as a file here. The solution's own folder keeps its project files as
+    /// files, as before; a project file in any other folder is a node, whether
+    /// its folder is shown as one or not.
+    /// </summary>
+    private bool IsSolutionProjectShownElsewhere(string file, string directory, bool inSolution) =>
+        inSolution
+        && _solutionProjects is not null
+        && !string.Equals(directory, _solutionDirectory, PathCase)
+        && _solutionProjectSet!.Contains(file);
+
+    /// <summary>
     /// The project file a folder holds when it holds exactly one, or null when
     /// it holds none or several: a folder with two projects has no single
-    /// project to stand for it, so both project files stay plain files in it.
+    /// project to stand for it. With a solution's list, only the projects it
+    /// lists count; without one, any project file does.
     /// </summary>
-    private static string? SoleProjectFileIn(string directory)
+    private string? SoleProjectFileIn(string directory)
     {
         string? found = null;
         foreach (var file in Directory.EnumerateFiles(directory))
         {
             if (Path.GetExtension(file).ToLowerInvariant() is not (".vbproj" or ".csproj")) continue;
+            if (_solutionProjectSet is not null && !_solutionProjectSet.Contains(file)) continue;
             if (found is not null) return null;
             found = file;
         }
@@ -382,8 +463,16 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
     /// that silently drops what it does not know leaves the project looking
     /// half empty, and the user with no way to tell whether the file is there.
     /// </summary>
-    private NodeKind Classify(string path) =>
-        Path.GetExtension(path).ToLowerInvariant() switch
+    private NodeKind Classify(string path)
+    {
+        // A project file the loaded solution does not list is a file of the
+        // folder, not a project of the solution.
+        if (_solutionProjectSet is not null
+            && SolutionFile.IsProjectFile(path)
+            && !_solutionProjectSet.Contains(path))
+            return NodeKind.Other;
+
+        return Path.GetExtension(path).ToLowerInvariant() switch
         {
             ".axaml" or ".xaml" => NodeKind.XamlFile,
 
@@ -399,4 +488,5 @@ public sealed partial class SolutionExplorerViewModel : ObservableObject
             ".css" or ".js" or ".html" or ".htm" or ".scss" or ".map" => NodeKind.WebAsset,
             _ => NodeKind.Other
         };
+    }
 }

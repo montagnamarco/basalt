@@ -295,7 +295,16 @@ public sealed class ReferencesDialog : Window
         if (id.Length == 0) return;
 
         var version = (_packageVersion.Text ?? "").Trim();
-        if (version.Length == 0) version = "*";
+
+        // Without central package management the reference carries its own
+        // version, and a blank one would float to the newest package. Refuse it
+        // and say why, rather than writing "*".
+        if (version.Length == 0 && !_centralPackageManagement)
+        {
+            _packageMessage.Text = Localizer.Get(StringKeys.PackageVersionRequired);
+            _packageMessage.IsVisible = true;
+            return;
+        }
 
         // Under central package management Directory.Packages.props owns
         // the version: a new reference is written without one, and one
@@ -372,7 +381,11 @@ public sealed class ReferencesDialog : Window
     /// only ever sees this one file's text) or a Directory.Packages.props
     /// anywhere from the project's own folder up to the drive root.
     /// </summary>
-    private static bool DetectsCentralPackageManagement(string projectPath, string projectXml)
+    /// <summary>
+    /// Whether the project's package versions are managed centrally, by its own
+    /// property or by a Directory.Packages.props above it.
+    /// </summary>
+    internal static bool DetectsCentralPackageManagement(string projectPath, string projectXml)
     {
         if (ProjectReferenceEditor.DeclaresCentralPackageManagement(projectXml)) return true;
 

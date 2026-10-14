@@ -53,7 +53,8 @@ public sealed class SolutionTemplatesTests : IDisposable
         var directory = Path.GetDirectoryName(created.ProjectPath)!;
 
         Assert.True(File.Exists(Path.Combine(directory, "appsettings.json")));
-        Assert.True(File.Exists(Path.Combine(directory, "Properties", "launchSettings.json")));
+        // dotnet run reads a Visual Basic project's launch settings from My Project.
+        Assert.True(File.Exists(Path.Combine(directory, "My Project", "launchSettings.json")));
         Assert.True(Directory.Exists(Path.Combine(directory, "wwwroot")));
     }
 

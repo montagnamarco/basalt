@@ -10,6 +10,7 @@ using Basalt.Core.Services;
 using Basalt.Designer;
 using Basalt.Designer.Model;
 using Basalt.Workspace;
+using Basalt.Workspace.Projects;
 using Basalt.Workspace.Languages;
 using LanguageRegistry = Basalt.Extensibility.LanguageRegistry;
 
@@ -415,11 +416,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             // MainWindowViewModel.SourceFiles.cs for how it is run.
             var sourceFileLanguage = RoutedProviderFor(path);
 
+            // Read once, off the interface thread: the solution file, each of
+            // its project files, and the launch settings an older IDE left in
+            // Properties/. The explorer then reuses the parsed solution file.
+            var catalog = await Task.Run(() =>
+            {
+                var entries = ProjectCatalog.Read(path);
+                foreach (var project in entries.Projects) LaunchSettingsLocation.MigrateLegacy(project);
+                return entries;
+            }).ConfigureAwait(true);
+
             SolutionPath = path;
             Explorer.Load(path);
             Opened?.Invoke(this, (path, true));
-            RunnableProjects = FindRunnableProjects(path);
-            StartupProject = FindStartupProject(path);
+            RunnableProjects = catalog.Runnable;
+            StartupProject = catalog.Startup;
 
             // Also makes this the solution Windows desktop projects are
             // retargeted for (see Compatibility).
@@ -1523,127 +1534,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
         // The cap keeps unbounded output from eating memory during long builds.
         BuildOutput.AddRange(lines, MaxOutputLines);
-    }
-
-    /// <summary>Finds the executable project to build first.</summary>
-    /// <summary>
-    /// The projects that produce something runnable.
-    ///
-    /// Read from the project files rather than guessed from their names: a
-    /// library called "Runner" is still a library.
-    /// </summary>
-    private static IReadOnlyList<string> FindRunnableProjects(string solutionOrProjectPath)
-    {
-        var directory = Path.GetDirectoryName(Path.GetFullPath(solutionOrProjectPath));
-
-        if (directory is null) return [];
-
-        try
-        {
-            return
-            [
-                .. Directory
-                    .EnumerateFiles(directory, "*.*proj", SearchOption.AllDirectories)
-                    .Where(p => p.EndsWith(".vbproj", StringComparison.OrdinalIgnoreCase)
-                             || p.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
-                    .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")
-                             && !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
-                    .Where(IsRunnable)
-                    .Order(StringComparer.Ordinal)
-            ];
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return [];
-        }
-    }
-
-    /// <summary>Whether a project builds something that can be started.</summary>
-    private static bool IsRunnable(string projectPath)
-    {
-        try
-        {
-            var text = File.ReadAllText(projectPath);
-
-            // The Web SDK infers an executable without saying OutputType.
-            return text.Contains("<OutputType>Exe</OutputType>", StringComparison.OrdinalIgnoreCase)
-                || text.Contains("<OutputType>WinExe</OutputType>", StringComparison.OrdinalIgnoreCase)
-                || text.Contains("Sdk=\"Microsoft.NET.Sdk.Web\"", StringComparison.OrdinalIgnoreCase);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return false;
-        }
-    }
-
-    private static string? FindStartupProject(string solutionOrProjectPath)
-    {
-        if (Path.GetExtension(solutionOrProjectPath) is ".csproj" or ".vbproj")
-            return solutionOrProjectPath;
-
-        var directory = Path.GetDirectoryName(Path.GetFullPath(solutionOrProjectPath));
-        if (directory is null) return null;
-
-        var projects = Directory
-            .EnumerateFiles(directory, "*.*proj", SearchOption.AllDirectories)
-            .Where(p => Path.GetExtension(p) is ".csproj" or ".vbproj")
-            // Build output holds copies of the project file, and one picked
-            // from there builds into a folder that is deleted on the next
-            // clean.
-            .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
-                     && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
-            .ToList();
-
-        // An executable project, and among several the one whose name matches
-        // the solution's: a solution called Basalt with a Basalt.Shell and a
-        // Basalt.Razor.Vb.LanguageServer has an obvious answer, and taking
-        // whichever the filesystem listed first gets it wrong about half the
-        // time.
-        var executables = projects.Where(IsExecutable).ToList();
-
-        if (executables.Count == 0) return projects.FirstOrDefault();
-        if (executables.Count == 1) return executables[0];
-
-        var solutionName = Path.GetFileNameWithoutExtension(solutionOrProjectPath);
-
-        return executables.FirstOrDefault(p =>
-                   Path.GetFileNameWithoutExtension(p)
-                       .Equals(solutionName, StringComparison.OrdinalIgnoreCase))
-            // Then the shallowest: a program sits beside its solution far more
-            // often than a tool three folders down does.
-            ?? executables.OrderBy(p => p.Count(c => c == Path.DirectorySeparatorChar))
-                          .ThenBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase)
-                          .First();
-    }
-
-    /// <summary>Whether a project builds something that can be run.</summary>
-    /// <remarks>
-    /// By reading OutputType rather than looking for "Exe" anywhere in the
-    /// file. The word appears inside "exercising" in a comment, so a test
-    /// project was picked as the one to run and Build reported "no project" or
-    /// built the wrong thing — decided, in the end, by a sentence of English
-    /// prose.
-    ///
-    /// A project with no OutputType is a library: the SDK defaults it to
-    /// Library, and a web project that means to be run says WinExe or Exe like
-    /// any other.
-    /// </remarks>
-    private static bool IsExecutable(string projectPath)
-    {
-        try
-        {
-            var match = System.Text.RegularExpressions.Regex.Match(
-                File.ReadAllText(projectPath),
-                @"<OutputType>\s*(\w+)\s*</OutputType>",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-            return match.Success
-                && match.Groups[1].Value.EndsWith("Exe", StringComparison.OrdinalIgnoreCase);
-        }
-        catch (IOException)
-        {
-            return false;
-        }
     }
 
     /// <summary>

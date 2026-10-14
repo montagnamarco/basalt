@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Basalt.Core.Model;
 using Basalt.Core.Services;
+using Basalt.Workspace.Projects;
 
 namespace Basalt.Workspace;
 
@@ -22,9 +23,14 @@ public sealed partial class MsBuildBuildService : IBuildService
         RegexOptions.Multiline)]
     private static partial Regex DiagnosticPattern { get; }
 
-    /// <summary>Diagnostics without a location, for example MSBuild or NuGet errors.</summary>
+    /// <summary>
+    /// Diagnostics without a position in a source file, for example NuGet or
+    /// project errors. MSBuild names the project in front of the message
+    /// ("App.vbproj : error NU1102: ...") or in brackets after it, and the
+    /// brackets can name the solution instead, so both are captured.
+    /// </summary>
     [GeneratedRegex(
-        @"^(?:\s*\d+>)?\s*(?:[^:\n]+\s:\s)?(?<sev>error|warning)\s+(?<id>[A-Za-z]+[0-9]+):\s+(?<msg>.+?)(?:\s+\[[^\]]+\])?$",
+        @"^(?:\s*\d+>)?\s*(?:(?<prefix>[^\n]+?)\s:\s)?(?<sev>error|warning)\s+(?<id>[A-Za-z]+[0-9]+):\s+(?<msg>.+?)(?:\s+\[(?<bracket>[^\]]+)\])?$",
         RegexOptions.Multiline)]
     private static partial Regex GlobalDiagnosticPattern { get; }
 
@@ -136,7 +142,7 @@ public sealed partial class MsBuildBuildService : IBuildService
                 int.Parse(m.Groups["col"].Value));
 
             // MSBuild repeats the same diagnostic for every target that propagates it.
-            if (seen.Add(diagnostic.ToString())) results.Add(diagnostic);
+            if (seen.Add(DuplicateKey(diagnostic))) results.Add(diagnostic);
         }
 
         foreach (Match m in GlobalDiagnosticPattern.Matches(output))
@@ -148,13 +154,40 @@ public sealed partial class MsBuildBuildService : IBuildService
                 m.Groups["id"].Value,
                 m.Groups["msg"].Value.Trim(),
                 m.Groups["sev"].Value == "error" ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning,
-                null, 0, 0);
+                null, 0, 0,
+                ProjectPathOf(m.Groups["prefix"].Value, m.Groups["bracket"].Value));
 
-            if (seen.Add(diagnostic.ToString())) results.Add(diagnostic);
+            if (seen.Add(DuplicateKey(diagnostic))) results.Add(diagnostic);
         }
 
         return results;
     }
+
+    /// <summary>
+    /// What makes two diagnostics the same one. ToString leaves out the project
+    /// of a position-less diagnostic, so the same NU1102 or BC30738 reported by
+    /// two projects would collapse into one row; the project is part of the key.
+    /// </summary>
+    private static string DuplicateKey(IdeDiagnostic diagnostic) =>
+        $"{diagnostic}|{diagnostic.ProjectPath}";
+
+    /// <summary>
+    /// The project or solution file a position-less diagnostic is about: the
+    /// one in front of the message when MSBuild gives it, else the bracketed
+    /// one when that is a project. A bracketed solution alone says nothing
+    /// about which project failed, so it does not stand in for one.
+    /// </summary>
+    private static string? ProjectPathOf(string prefix, string bracket)
+    {
+        var front = prefix.Trim();
+        if (IsBuildFile(front)) return front;
+
+        var behind = bracket.Trim();
+        return IsBuildFile(behind) ? behind : null;
+    }
+
+    private static bool IsBuildFile(string path) =>
+        path.Length > 0 && (SolutionFile.IsProjectFile(path) || SolutionFile.IsSolutionFile(path));
 
     /// <summary>Extracts the produced assembly path from the "Project -> path.dll" line.</summary>
     private static string? FindOutputAssembly(string output)

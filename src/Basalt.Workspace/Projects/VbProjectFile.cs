@@ -116,7 +116,13 @@ public sealed class VbProjectFile
             .Where(r => r.Id.Length > 0)
             .ToList();
 
-    public void AddPackageReference(string id, string version)
+    /// <summary>
+    /// Adds a package reference, or sets the version of one already there.
+    /// A null version writes no Version attribute, which is what central
+    /// package management wants (Directory.Packages.props owns the version); an
+    /// existing reference keeps its version then.
+    /// </summary>
+    public void AddPackageReference(string id, string? version)
     {
         var existing = Root.Elements("ItemGroup")
             .SelectMany(g => g.Elements("PackageReference"))
@@ -124,7 +130,7 @@ public sealed class VbProjectFile
 
         if (existing is not null)
         {
-            existing.SetAttributeValue("Version", version);
+            if (version is not null) existing.SetAttributeValue("Version", version);
             return;
         }
 
@@ -140,7 +146,7 @@ public sealed class VbProjectFile
 
         group.Add(new XElement("PackageReference",
             new XAttribute("Include", id),
-            new XAttribute("Version", version)));
+            version is null ? null : new XAttribute("Version", version)));
     }
 
     public bool RemovePackageReference(string id)

@@ -1,6 +1,7 @@
 using Basalt.Core.Localization;
 using Basalt.Core.Model;
 using Basalt.Workspace;
+using Basalt.Workspace.Projects;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Basalt.Shell.ViewModels;
@@ -323,6 +324,8 @@ public sealed partial class MainWindowViewModel
             // "dotnet run --no-build": the build above is what runs, and
             // launchSettings.json (environment, arguments, URLs) still
             // applies, which launching the dll directly would drop.
+            // Settings an older IDE left in Properties/ move to where dotnet run reads them.
+            if (StartupProject is { } launchTarget) LaunchSettingsLocation.MigrateLegacy(launchTarget);
             _runService.Start(StartupProject, configuration: expectedConfiguration ?? Configuration,
                 compatibilityArguments);
 

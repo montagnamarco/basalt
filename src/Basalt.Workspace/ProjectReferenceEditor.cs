@@ -131,9 +131,17 @@ public static class ProjectReferenceEditor
     /// the user the version lives elsewhere rather than let this silently
     /// do nothing.
     /// </summary>
+    /// <exception cref="ArgumentException">
+    /// The version is blank and this project's version is not managed centrally.
+    /// Writing the reference without one would float it to the newest
+    /// package, so the caller asks for a version first.
+    /// </exception>
     public static string AddPackageReference(
         string projectXml, string id, string version, bool centralPackageManagement = false)
     {
+        if (!centralPackageManagement && string.IsNullOrWhiteSpace(version))
+            throw new ArgumentException("A package reference needs a version to pin it.", nameof(version));
+
         var (lines, newLine) = SplitLines(projectXml);
         var existing = FindItems(lines, "PackageReference")
             .FirstOrDefault(item => string.Equals(ItemKey(item), id, StringComparison.OrdinalIgnoreCase));

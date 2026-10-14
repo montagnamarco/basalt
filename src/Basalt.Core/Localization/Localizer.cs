@@ -1374,4 +1374,5 @@ public static class StringKeys
     public const string DbReconnect = "DatabaseClient_Reconnect";
     public const string DbSettingsNotSaved = "DatabaseClient_SettingsNotSaved";
     public const string DbCloseFailed = "DatabaseClient_CloseFailed";
+    public const string PackageVersionRequired = "Package_VersionRequired";
 }

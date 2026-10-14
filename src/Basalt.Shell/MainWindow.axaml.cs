@@ -4899,18 +4899,20 @@ public partial class MainWindow : Window
     /// </remarks>
     private void OpenDiagnostic(IdeDiagnostic diagnostic)
     {
-        if (diagnostic.FilePath is null || !File.Exists(diagnostic.FilePath)) return;
+        if (ProblemNavigation.TargetOf(diagnostic) is not { } target) return;
 
         Guarded.Run(
             async () =>
             {
-                await ViewModel.OpenFileAsync(diagnostic.FilePath);
-                if (ViewModel.ActiveDocument is not { } opened) return;
+                await ViewModel.OpenFileAsync(target.Path);
+
+                // A project-level diagnostic has no line to go to.
+                if (target.Line <= 0 || ViewModel.ActiveDocument is not { } opened) return;
 
                 // The editor is created by the document change, so moving the
                 // caret waits until after that has happened.
                 Dispatcher.UIThread.Post(
-                    () => GoToLineWhenReady(opened, diagnostic.Line, diagnostic.Column),
+                    () => GoToLineWhenReady(opened, target.Line, target.Column),
                     DispatcherPriority.Background);
             },
             ViewModel.WriteOutput, "ide");
