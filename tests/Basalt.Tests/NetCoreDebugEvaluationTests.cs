@@ -82,7 +82,7 @@ public sealed class NetCoreDebugEvaluationTests
             dap.LocalsById = new() { [100] = ["$exception"], [101] = ["$exception", "n"], [102] = ["$exception", "marker"] };
         });
 
-        await service.EvaluateReplAsync("n", isExpression: true, frameIndex: 0);
+        await service.EvaluateReplAsync("n + 0", isExpression: true, frameIndex: 0);
 
         Assert.Equal(101, dap.ArgumentsOf("evaluate")!["frameId"]!.GetValue<int>());
     }
@@ -125,6 +125,228 @@ public sealed class NetCoreDebugEvaluationTests
         });
 
         Assert.Contains("n", (await service.GetLocalsAsync(frameIndex: 0)).Select(v => v.Name));
+    }
+
+    [Theory]
+    [InlineData("$VB$Local_n", "n")]
+    [InlineData("$VB$ResumableLocal_before$0", "before")]
+    [InlineData("$VB$ResumableLocal_doubled$12", "doubled")]
+    [InlineData("$VB$Me", "Me")]
+    [InlineData("$State", null)]
+    [InlineData("$Builder", null)]
+    [InlineData("$A0", null)]
+    public void NamesAHoistedFieldAsTheSourceDid(string field, string? name) =>
+        Assert.Equal(name, NetCoreDebugService.SourceNameOfHoisted(field));
+
+    /// <remarks>
+    /// Measured on netcoredbg 3.2.0 in ComputeAsync(n): the frame held only "this", the state machine, and the
+    /// Variables panel showed nothing the user wrote; a watch on "n" was not available.
+    /// </remarks>
+    [Fact]
+    public async Task AnAsyncMethodsLocalsAreShownAndReadUnderTheirOwnNames()
+    {
+        var (dap, service) = await StoppedAsync(arrange: dap =>
+        {
+            dap.Frames = [("Program.VB$StateMachine_1_ComputeAsync.MoveNext()", "/app/Program.vb", 12)];
+            dap.LocalsById = new() { [100] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("this", "{Program.VB$StateMachine_1_ComputeAsync}", "Program.VB$StateMachine_1_ComputeAsync", 2)],
+                [2] =
+                [
+                    ("$State", "-1", "int", 0),
+                    ("$Builder", "{AsyncTaskMethodBuilder}", "AsyncTaskMethodBuilder<int>", 3),
+                    ("$VB$Local_n", "5", "int", 0),
+                    ("$VB$ResumableLocal_doubled$1", "10", "int", 0),
+                ],
+            };
+        });
+        dap.EvaluateAnswer = _ => FakeDapConnection.Answer(false, new JsonObject(), "error: The name 'n' does not exist in the current context");
+
+        var locals = await service.GetLocalsAsync(frameIndex: 0);
+
+        Assert.Equal(["n", "doubled"], locals.Select(v => v.Name));
+        Assert.Equal("5", await service.EvaluateAsync("n", frameIndex: 0));
+        Assert.Equal("10", await service.EvaluateAsync("Doubled", frameIndex: 0));
+    }
+
+    [Fact]
+    public async Task ALambdasCapturedLocalsAreShownAndItsMeIsTheObjectNotTheClosure()
+    {
+        var (dap, service) = await StoppedAsync(arrange: dap =>
+        {
+            dap.Frames = [("Program._Closure$__0-0._Lambda$__1()", "/app/Program.vb", 7)];
+            dap.LocalsById = new() { [100] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("this", "{Program._Closure$__0-0}", "Program._Closure$__0-0", 2), ("local", "42", "int", 0)],
+                [2] = [("$VB$Local_total", "6", "int", 0), ("$VB$Me", "{Customer}", "Customer", 3)],
+            };
+        });
+
+        var locals = await service.GetLocalsAsync(frameIndex: 0);
+
+        Assert.Equal(["total", "Me", "local"], locals.Select(v => v.Name));
+        Assert.Equal("{Customer}", locals.Single(v => v.Name == "Me").Value);
+    }
+
+    [Fact]
+    public async Task AWatchOnAPlainNameWhoseStopMovedOnSaysNothing()
+    {
+        // The locals were read for a stop the program has left (F11 while they were being read): their value
+        // belongs to another place.
+        var (dap, service) = await StoppedAsync();
+        dap.OnRequest = command =>
+        {
+            if (command != "variables") return;
+
+            dap.OnRequest = null;
+            dap.Raise("continued", new JsonObject { ["threadId"] = 1 });
+            dap.Raise("stopped", new JsonObject { ["threadId"] = 1, ["reason"] = "step" });
+        };
+
+        Assert.Null(await service.EvaluateAsync("total", frameIndex: 0));
+    }
+
+    [Fact]
+    public async Task APlainNameAtAnExceptionStopIsReadFromTheShiftedFrame()
+    {
+        var (dap, service) = await StoppedAsync("exception", arrange: dap =>
+        {
+            dap.Frames = [("Program.Fail(Int32 n)", "/app/Program.vb", 15), ("Program.Main()", "/app/Program.vb", 5)];
+            dap.LocalsById = new() { [100] = [], [101] = [], [102] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("$exception", "{System.IndexOutOfRangeException}", "System.IndexOutOfRangeException", 0)],
+                [1101] = [("n", "3", "int", 0)],
+                [1102] = [("n", "99", "int", 0)],
+            };
+        });
+
+        Assert.Equal("3", await service.EvaluateAsync("n", frameIndex: 0));
+        Assert.Equal("3", (await service.EvaluateReplAsync("n", isExpression: true, frameIndex: 0)).Text);
+    }
+
+    [Fact]
+    public async Task MeWhereThereIsNoneIsNotTheStateMachine()
+    {
+        // An Async Function in a Module: no $VB$Me field, and the evaluator's "this" is the compiler's machine.
+        var (dap, service) = await StoppedAsync(arrange: dap =>
+        {
+            dap.Frames = [("Program.VB$StateMachine_1_RunAsync.MoveNext()", "/app/Program.vb", 20)];
+            dap.LocalsById = new() { [100] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("this", "{Program.VB$StateMachine_1_RunAsync}", "Program.VB$StateMachine_1_RunAsync", 2)],
+                [2] = [("$VB$Local_n", "5", "int", 0)],
+            };
+        });
+        dap.EvaluateAnswer = _ => FakeDapConnection.Answer(true, new JsonObject { ["result"] = "{Program.VB$StateMachine_1_RunAsync}" });
+
+        Assert.Null(await service.EvaluateAsync("Me", frameIndex: 0));
+    }
+
+    [Fact]
+    public async Task TwoHoistedLocalsWithOneNameAreBothShownAndAWatchDoesNotGuessAndACapturedOneIsOpened()
+    {
+        var (dap, service) = await StoppedAsync(arrange: dap =>
+        {
+            dap.Frames = [("Program.VB$StateMachine_1_RunAsync.MoveNext()", "/app/Program.vb", 20)];
+            dap.LocalsById = new() { [100] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("this", "{Program.VB$StateMachine_1_RunAsync}", "Program.VB$StateMachine_1_RunAsync", 2)],
+                [2] =
+                [
+                    ("$VB$ResumableLocal_item$0", "1", "int", 0),
+                    ("$VB$ResumableLocal_item$2", "9", "int", 0),
+                    ("$VB$ResumableLocal_$VB$Closure_2$1", "{Program._Closure$__2-0}", "Program._Closure$__2-0", 5),
+                ],
+                [5] = [("$VB$Local_captured", "\"x\"", "string", 0)],
+            };
+        });
+
+        var locals = await service.GetLocalsAsync(frameIndex: 0);
+
+        Assert.Equal(["item", "item", "captured"], locals.Select(v => v.Name));
+        Assert.Equal(["1", "9"], locals.Where(v => v.Name == "item").Select(v => v.Value));
+        Assert.Null(await service.EvaluateAsync("item", frameIndex: 0));
+    }
+
+    [Fact]
+    public async Task MeInAnAsyncMethodIsTheObjectNotTheStateMachine()
+    {
+        var (dap, service) = await StoppedAsync(arrange: dap =>
+        {
+            dap.Frames = [("Program.VB$StateMachine_1_RunAsync.MoveNext()", "/app/Program.vb", 20)];
+            dap.LocalsById = new() { [100] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("this", "{Program.VB$StateMachine_1_RunAsync}", "Program.VB$StateMachine_1_RunAsync", 2)],
+                [2] = [("$VB$Me", "{Customer}", "Customer", 3), ("$VB$Local_n", "5", "int", 0)],
+            };
+        });
+        dap.EvaluateAnswer = _ => FakeDapConnection.Answer(true, new JsonObject { ["result"] = "{Program.VB$StateMachine_1_RunAsync}" });
+
+        Assert.Equal("{Customer}", await service.EvaluateAsync("Me", frameIndex: 0));
+
+        var repl = await service.EvaluateReplAsync("n", isExpression: true, frameIndex: 0);
+        Assert.Equal("5", repl.Text);
+        Assert.DoesNotContain(dap.Requests, r => r.Command == "evaluate");
+    }
+
+    [Fact]
+    public async Task ChildrenAndImmediateAnswersOfAVisualBasicFrameAreShownInVisualBasic()
+    {
+        var (dap, service) = await StoppedAsync(arrange: dap =>
+        {
+            dap.Frames = [("Program.Main()", "/app/Module1.vb", 5)];
+            dap.LocalsById = new() { [100] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("c", "{Customer}", "Customer", 7)],
+                [7] = [("Name", "null", "string", 0), ("Tags", "{string[2]}", "string[]", 8)],
+            };
+        });
+        dap.EvaluateAnswer = _ => FakeDapConnection.Answer(true, new JsonObject { ["result"] = "false" });
+
+        await service.GetLocalsAsync(frameIndex: 0);
+        var children = await service.ExpandAsync(7);
+
+        Assert.Equal(["Nothing", "{Length=2}"], children.Select(v => v.Value));
+        Assert.Equal(["String", "String()"], children.Select(v => v.Type));
+        Assert.Equal("False", (await service.EvaluateReplAsync("c.Name Is Nothing", isExpression: true, frameIndex: 0)).Text);
+    }
+
+    [Fact]
+    public async Task AVisualBasicFrameIsShownInVisualBasicAndACSharpFrameAsItCame()
+    {
+        var (dap, service) = await StoppedAsync(arrange: dap =>
+        {
+            dap.Frames = [("Program.Fail(Int32 n)", "/app/Module1.vb", 5), ("Helpers.Caller(Int32 n)", "/app/Helpers.cs", 9)];
+            dap.LocalsById = new() { [100] = [], [101] = [] };
+            dap.ChildrenByReference = new()
+            {
+                [1100] = [("this", "{Customer}", "Customer", 0), ("name", "null", "string", 0), ("ok", "true", "bool", 0)],
+                [1101] = [("this", "{Helpers}", "Helpers", 0), ("name", "null", "string", 0)],
+            };
+        });
+        dap.EvaluateAnswer = _ => FakeDapConnection.Answer(true, new JsonObject { ["result"] = "true" });
+
+        var basic = await service.GetLocalsAsync(frameIndex: 0);
+        Assert.Equal(["Me", "name", "ok"], basic.Select(v => v.Name));
+        Assert.Equal(["Customer", "String", "Boolean"], basic.Select(v => v.Type));
+        Assert.Equal(["{Customer}", "Nothing", "True"], basic.Select(v => v.Value));
+
+        var csharp = await service.GetLocalsAsync(frameIndex: 1);
+        Assert.Equal(["this", "name"], csharp.Select(v => v.Name));
+        Assert.Equal(["Helpers", "string"], csharp.Select(v => v.Type));
+
+        var stack = await service.GetCallStackAsync();
+        Assert.Equal(["Program.Fail(n As Integer)", "Helpers.Caller(Int32 n)"], stack.Select(f => f.Method));
+
+        Assert.Equal("True", await service.EvaluateAsync("ok", frameIndex: 0));
+        Assert.Equal("true", await service.EvaluateAsync("ok", frameIndex: 1));
     }
 
     [Fact]
@@ -180,7 +402,8 @@ public sealed class NetCoreDebugEvaluationTests
         Assert.Contains("n", (await service.GetLocalsAsync(frameIndex: 0)).Select(v => v.Name));
         Assert.Contains("marker", (await service.GetLocalsAsync(frameIndex: 2)).Select(v => v.Name));
 
-        await service.EvaluateAsync("depth", frameIndex: 1);
+        // An expression, not a plain name: a plain name is found among the locals without asking the evaluator.
+        await service.EvaluateAsync("depth + 0", frameIndex: 1);
         Assert.Equal(102, dap.ArgumentsOf("evaluate")!["frameId"]!.GetValue<int>());
     }
 

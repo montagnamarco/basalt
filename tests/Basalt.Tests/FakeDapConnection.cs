@@ -109,10 +109,19 @@ internal sealed class FakeDapConnection : IDapConnection
         })
         : Answer(false, new JsonObject(), "Failed command 'scopes' : 0x80004005");
 
+    /// <summary>
+    /// Children by variables reference, as (name, value, type, child reference), for a local that has them, such
+    /// as an Async method's state machine.
+    /// </summary>
+    public Dictionary<int, (string Name, string Value, string Type, int Reference)[]> ChildrenByReference { get; set; } = [];
+
     private JsonObject Variables(int reference) => Answer(true, new JsonObject
     {
-        ["variables"] = new JsonArray([.. (LocalsById.TryGetValue(reference - 1000, out var names) ? names : [])
-            .Select(name => (JsonNode)new JsonObject { ["name"] = name, ["value"] = "1", ["type"] = "int", ["variablesReference"] = 0 })])
+        ["variables"] = ChildrenByReference.TryGetValue(reference, out var children)
+            ? new JsonArray([.. children.Select(c => (JsonNode)new JsonObject
+                { ["name"] = c.Name, ["value"] = c.Value, ["type"] = c.Type, ["variablesReference"] = c.Reference })])
+            : new JsonArray([.. (LocalsById.TryGetValue(reference - 1000, out var names) ? names : [])
+                .Select(name => (JsonNode)new JsonObject { ["name"] = name, ["value"] = "1", ["type"] = "int", ["variablesReference"] = 0 })])
     });
 
     public static JsonObject Answer(bool success, JsonObject body, string? message = null)

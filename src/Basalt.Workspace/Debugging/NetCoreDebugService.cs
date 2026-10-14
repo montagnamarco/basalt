@@ -448,10 +448,17 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         return frames
             .OfType<JsonObject>()
-            .Select(f => new StackFrame(
-                f["name"]?.GetValue<string>() ?? "",
-                AsGiven((f["source"] as JsonObject)?["path"]?.GetValue<string>()),
-                f["line"]?.GetValue<int>() ?? 0))
+            .Select(f =>
+            {
+                var name = f["name"]?.GetValue<string>() ?? "";
+
+                // A Visual Basic frame is named as its source names it: "ComputeAsync()", not its state
+                // machine's MoveNext; "Fail(n As Integer)", not "Fail(Int32 n)".
+                return new StackFrame(
+                    IsBasicSource(SourcePathOf(f)) ? VbDisplay.FrameName(name) : name,
+                    AsGiven((f["source"] as JsonObject)?["path"]?.GetValue<string>()),
+                    f["line"]?.GetValue<int>() ?? 0);
+            })
             .ToList();
     }
 
@@ -484,6 +491,30 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         if (frameIndex < 0 || frameIndex >= frames.Count || frames[frameIndex].Id is not { } frameId) return [];
 
+        var locals = await ReadLocalsAsync(client, frameId, ct).ConfigureAwait(false);
+        var basic = IsBasicSource(frames[frameIndex].SourcePath);
+
+        // Children opened later in the Variables panel belong to the frame read last.
+        _expandAsBasic = basic;
+
+        return basic ? [.. locals.Select(AsBasic)] : locals;
+    }
+
+    /// <summary>Whether the variables expanded next are written as Visual Basic: those of the frame read last.</summary>
+    private volatile bool _expandAsBasic;
+
+    /// <summary>A variable written as Visual Basic: Me, Integer, Nothing.</summary>
+    private static VariableValue AsBasic(VariableValue value) => value with
+    {
+        Name = VbDisplay.Name(value.Name),
+        Type = VbDisplay.Type(value.Type),
+        Value = VbDisplay.Value(value.Value),
+    };
+
+    /// <summary>A frame's locals as the user wrote them, an Async or Iterator method's included.</summary>
+    private static async Task<IReadOnlyList<VariableValue>> ReadLocalsAsync(IDapConnection client, int frameId, CancellationToken ct)
+    {
+
         var scopes = await client.SendAsync("scopes", new JsonObject
         {
             ["frameId"] = frameId
@@ -502,7 +533,107 @@ public sealed class NetCoreDebugService : IDebugSessionService
             values.AddRange(await ReadVariablesAsync(client, reference, ct).ConfigureAwait(false));
         }
 
-        return values;
+        return await UnhoistAsync(client, values, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The locals of an Async or Iterator method, which the compiler moves into fields of a generated state
+    /// machine. Measured on netcoredbg 3.2.0: in ComputeAsync(n) the frame holds only "this", typed
+    /// Program.VB$StateMachine_1_ComputeAsync, and n, before and doubled are its fields $VB$Local_n,
+    /// $VB$ResumableLocal_before$0 and $VB$ResumableLocal_doubled$1. They are shown under their own names, with
+    /// the method's Me ($VB$Me) as Me; the machine's own fields ($State, $Builder, awaiters) are left out.
+    /// </summary>
+    private static async Task<IReadOnlyList<VariableValue>> UnhoistAsync(
+        IDapConnection client, IReadOnlyList<VariableValue> values, CancellationToken ct)
+    {
+        var holder = values.FirstOrDefault(IsGeneratedHolder);
+
+        if (holder is not { Reference: > 0 }) return values;
+
+        var hoisted = await HoistedLocalsAsync(client, holder.Reference, depth: 0, ct).ConfigureAwait(false);
+        var unhoisted = new List<VariableValue>();
+
+        foreach (var value in values)
+        {
+            if (ReferenceEquals(value, holder)) unhoisted.AddRange(hoisted);
+            else unhoisted.Add(value);
+        }
+
+        return unhoisted;
+    }
+
+    /// <summary>
+    /// A frame's "this" that is not the user's object but one the compiler made: an Async or Iterator method's
+    /// state machine, or a lambda's closure, whose fields are the locals the source declared or captured.
+    /// </summary>
+    private static bool IsGeneratedHolder(VariableValue value) =>
+        value.Name == "this"
+        && (value.Type.Contains("VB$StateMachine_", StringComparison.Ordinal)
+            || value.Type.Contains("_Closure$__", StringComparison.Ordinal));
+
+    /// <summary>
+    /// The fields of a state machine or a closure that hold source locals, under their source names. A closure
+    /// the machine holds (locals captured by a lambda inside an Async method) is opened in turn. Two fields may
+    /// carry one name (two loops each declaring "item" around an Await): both are shown, since which one is in
+    /// scope where the program stopped is not in what the adapter reports, and a guess would show a value
+    /// from the other loop as if it were this one.
+    /// </summary>
+    private static async Task<List<VariableValue>> HoistedLocalsAsync(
+        IDapConnection client, int reference, int depth, CancellationToken ct)
+    {
+        var fields = await ReadVariablesAsync(client, reference, ct).ConfigureAwait(false);
+        var hoisted = new List<VariableValue>();
+
+        foreach (var field in fields)
+        {
+            if (depth < 3 && field.Reference > 0 && IsClosureField(field))
+            {
+                hoisted.AddRange(await HoistedLocalsAsync(client, field.Reference, depth + 1, ct).ConfigureAwait(false));
+                continue;
+            }
+
+            if (SourceNameOfHoisted(field.Name) is { } name) hoisted.Add(field with { Name = name });
+        }
+
+        return hoisted;
+    }
+
+    /// <summary>A field holding a closure: its type is one, or its name says so ("$VB$ResumableLocal_$VB$Closure_2$1").</summary>
+    private static bool IsClosureField(VariableValue field) =>
+        field.Type.Contains("_Closure$__", StringComparison.Ordinal)
+        || field.Name.Contains("$VB$Closure_", StringComparison.Ordinal);
+
+    /// <summary>The name a hoisted field had in the source, or null for the state machine's own fields.</summary>
+    internal static string? SourceNameOfHoisted(string fieldName) => SourceNameOfHoisted(fieldName, out _);
+
+    /// <param name="slot">The compiler's slot number for a resumable local, -1 for any other field.</param>
+    internal static string? SourceNameOfHoisted(string fieldName, out int slot)
+    {
+        slot = -1;
+
+        if (fieldName == "$VB$Me") return "Me";
+
+        const string local = "$VB$Local_";
+        const string resumable = "$VB$ResumableLocal_";
+
+        string? name = null;
+
+        if (fieldName.StartsWith(local, StringComparison.Ordinal))
+        {
+            name = fieldName[local.Length..];
+        }
+        else if (fieldName.StartsWith(resumable, StringComparison.Ordinal))
+        {
+            var rest = fieldName[resumable.Length..];
+            var dollar = rest.LastIndexOf('$');
+
+            if (dollar > 0 && int.TryParse(rest[(dollar + 1)..], out var number)) slot = number;
+
+            name = dollar > 0 ? rest[..dollar] : rest;
+        }
+
+        // A VB identifier cannot hold "$": what is left is the compiler's own (a closure, a spill), not a local.
+        return name is { Length: > 0 } && !name.Contains('$') ? name : null;
     }
 
     /// <summary>Expands a variable that has children, such as an object.</summary>
@@ -513,7 +644,9 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         if (client is null || !IsPaused || variablesReference == 0) return [];
 
-        return await ReadVariablesAsync(client, variablesReference, ct).ConfigureAwait(false);
+        var children = await ReadVariablesAsync(client, variablesReference, ct).ConfigureAwait(false);
+
+        return _expandAsBasic ? [.. children.Select(AsBasic)] : children;
     }
 
     /// <summary>The children of a reference, asked on the connection the caller read once: Stop clears the field.</summary>
@@ -690,6 +823,17 @@ public sealed class NetCoreDebugService : IDebugSessionService
             // A frame whose id cannot be known: without one the adapter would answer for the top frame instead.
             if (frameIndex >= 0 && frameIndex < frames.Count && frameId is null) return null;
 
+            // A plain name is looked up among the frame's locals first: an Async or Iterator method keeps its
+            // locals in fields the evaluator cannot name ($VB$Local_n), and "Me" there would be the state machine.
+            if (frameId is { } localsFrame && IsPlainName(expression))
+            {
+                var found = await FindLocalAsync(client, localsFrame, expression, IsBasicSource(sourcePath), ct).ConfigureAwait(false);
+
+                if (generation != Volatile.Read(ref _stopGeneration) || !IsPaused) return null;
+                if (found.Found) return found.Value;
+                if (found.Ambiguous) return null;
+            }
+
             // The readings are tried in turn: the evaluator refuses the ones that do not fit the program
             // ("numbers(1)" as a call when numbers is an array), and the first it accepts is the answer.
             foreach (var form in EvaluatorForms(expression, sourcePath))
@@ -708,7 +852,11 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 var response = await client.SendAsync("evaluate", arguments, ct).ConfigureAwait(false);
 
                 if (response["success"]?.GetValue<bool>() == true)
-                    return response["body"]?["result"]?.GetValue<string>();
+                {
+                    var result = response["body"]?["result"]?.GetValue<string>();
+
+                    return result is not null && IsBasicSource(sourcePath) ? VbDisplay.Value(result) : result;
+                }
 
                 if (!WorthAnotherReading(form, response, mayRunCodeOnce: false)) return null;
             }
@@ -777,6 +925,16 @@ public sealed class NetCoreDebugService : IDebugSessionService
                         return new ReplEvaluation(false, "");
 
                     arguments["frameId"] = frameId + shift;
+
+                    // As for a watch: a plain name is a local first, hoisted or not.
+                    if (firstRefusal is null && IsPlainName(text)
+                        && await FindLocalAsync(client, frameId + shift, text, IsBasicSource(sourcePath), ct).ConfigureAwait(false) is { } local
+                        && (local.Found || local.Ambiguous))
+                    {
+                        return generation != Volatile.Read(ref _stopGeneration) || !IsPaused
+                            ? new ReplEvaluation(false, Localizer.Get(StringKeys.ImmediateStale))
+                            : new ReplEvaluation(local.Found, local.Value ?? "");
+                    }
                 }
 
                 // The frame id belongs to the stop it was read in. If the program
@@ -788,7 +946,11 @@ public sealed class NetCoreDebugService : IDebugSessionService
                 var response = await client.SendAsync("evaluate", arguments, ct).ConfigureAwait(false);
 
                 if (response["success"]?.GetValue<bool>() == true)
-                    return new ReplEvaluation(true, response["body"]?["result"]?.GetValue<string>() ?? "");
+                {
+                    var result = response["body"]?["result"]?.GetValue<string>() ?? "";
+
+                    return new ReplEvaluation(true, IsBasicSource(sourcePath) ? VbDisplay.Value(result) : result);
+                }
 
                 // The likeliest reading's refusal is the one worth showing; the others are guesses that failed too.
                 firstRefusal ??= response["message"]?.GetValue<string>() ?? "";
@@ -988,6 +1150,43 @@ public sealed class NetCoreDebugService : IDebugSessionService
         if (message.Contains("timed out", StringComparison.OrdinalIgnoreCase)) return false;
 
         return !mayRunCodeOnce || !VbExpressionTranslator.Calls(form);
+    }
+
+    /// <summary>
+    /// The value of a local by name, as shown: Visual Basic matches names whatever their case and calls "this"
+    /// Me; any other language matches exactly. Null when the frame has no such local.
+    /// </summary>
+    private static async Task<LocalLookup> FindLocalAsync(IDapConnection client, int frameId, string name, bool basic, CancellationToken ct)
+    {
+        var locals = await ReadLocalsAsync(client, frameId, ct).ConfigureAwait(false);
+        var wanted = name.Trim();
+
+        var matches = basic
+            ? locals.Where(v => VbDisplay.Name(v.Name).Equals(wanted, StringComparison.OrdinalIgnoreCase)).ToList()
+            : locals.Where(v => v.Name.Equals(wanted, StringComparison.Ordinal)).ToList();
+
+        // Two locals of one name (hoisted from two loops): which one is meant cannot be told, so neither is said.
+        if (matches.Count > 1) return new LocalLookup(Found: false, Ambiguous: true, null);
+
+        if (matches.Count == 1)
+            return new LocalLookup(true, false, basic ? VbDisplay.Value(matches[0].Value) : matches[0].Value);
+
+        // "Me" in a Module, a Shared method, or a lambda capturing nothing: there is none, and the evaluator's
+        // "this" would be the state machine or the closure the compiler made.
+        var noMe = basic && wanted.Equals("Me", StringComparison.OrdinalIgnoreCase);
+
+        return new LocalLookup(Found: false, Ambiguous: noMe, null);
+    }
+
+    /// <summary>What a plain name came to among the locals: found, unanswerable (ambiguous or absent Me), or not a local.</summary>
+    private sealed record LocalLookup(bool Found, bool Ambiguous, string? Value);
+
+    /// <summary>Whether an expression is one identifier, as a hover or a simple watch sends.</summary>
+    private static bool IsPlainName(string expression)
+    {
+        var text = expression.Trim();
+
+        return text.Length > 0 && (char.IsLetter(text[0]) || text[0] == '_') && text.All(c => char.IsLetterOrDigit(c) || c == '_');
     }
 
     /// <summary>The exception stopped on, as "Type: message", or null when the adapter cannot say.</summary>

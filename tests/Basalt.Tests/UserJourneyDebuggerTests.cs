@@ -356,10 +356,10 @@ public sealed class UserJourneyDebuggerTests : IDisposable
             string ValueOf(string expression) => watch.Entries.Single(e => e.Expression == expression).Value ?? "<not available>";
 
             Assert.Equal("2", ValueOf("total Mod 4"));
-            Assert.Equal("false", ValueOf("total <> 2"));
+            Assert.Equal("False", ValueOf("total <> 2"));
             Assert.Equal("40", ValueOf("numbers(1) * 10"));
-            Assert.Equal("false", ValueOf("Not (total = 2)"));
-            Assert.Equal("true", ValueOf("total > 1 AndAlso total < 10"));
+            Assert.Equal("False", ValueOf("Not (total = 2)"));
+            Assert.Equal("True", ValueOf("total > 1 AndAlso total < 10"));
             Assert.Equal("\"t=2\"", ValueOf("\"t=\" & total"));
             Assert.Equal("\"2\"", ValueOf("CStr(total)"));
         }
@@ -442,6 +442,72 @@ public sealed class UserJourneyDebuggerTests : IDisposable
             Assert.True(await PumpUntilAsync(host, () => variables.Nodes.Any(n => n.Value.Name == "marker"), TimeSpan.FromSeconds(10)),
                 "Main's locals are not shown: " + string.Join(", ", variables.Nodes.Select(n => n.Value.Name)));
             Assert.Equal("99", variables.Nodes.Single(n => n.Value.Name == "marker").Value.Value);
+        }
+        finally
+        {
+            await w.StopDebuggingForTests();
+        }
+    }
+
+    // ==================================================================
+    // Journey 1d. An Async Function. The compiler moves its locals into a
+    // state machine, and the Variables panel showed only that machine; a
+    // watch on a local was not available.
+    // ==================================================================
+    private const string AsyncProgram = """
+        Imports System.Threading.Tasks
+        Module Program
+            Sub Main()
+                Dim result = ComputeAsync(5).GetAwaiter().GetResult()
+                Console.WriteLine("async result " & result)
+            End Sub
+
+            Async Function ComputeAsync(n As Integer) As Task(Of Integer)
+                Dim before = n + 1
+                Await Task.Delay(50)
+                Dim doubled = n * 2
+                Return doubled + before
+            End Function
+        End Module
+        """;
+
+    [AvaloniaFact]
+    public async Task AnAsyncFunctionShowsItsOwnLocalsAndWatchesReadThem()
+    {
+        Assert.SkipWhen(DebugAdapterLocator.Find() is null, "netcoredbg is not installed.");
+
+        var project = WriteProject();
+        File.WriteAllText(ProgramPath, AsyncProgram);
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        await vm.OpenFileAsync(ProgramPath);
+        await host.SettleAsync(8);
+
+        try
+        {
+            ClickMargin(w, ProgramPath, 12);
+            PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
+            await PauseAtAsync(host, 12);
+
+            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolVariables));
+            var variables = PanelOf<VariablesPanel>(w, f => f.Variables);
+            Assert.True(await PumpUntilAsync(host, () => variables.Nodes.Any(n => n.Value.Name == "doubled"), TimeSpan.FromSeconds(10)),
+                "The Async Function's locals are not shown: " + string.Join(", ", variables.Nodes.Select(n => n.Value.Name)));
+
+            string ValueOf(string name) => variables.Nodes.Single(n => n.Value.Name == name).Value.Value;
+            Assert.Equal("5", ValueOf("n"));
+            Assert.Equal("6", ValueOf("before"));
+            Assert.Equal("10", ValueOf("doubled"));
+            Assert.DoesNotContain(variables.Nodes, n => n.Value.Name.StartsWith('$') || n.Value.Name == "this");
+
+            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolWatch));
+            var watch = PanelOf<WatchPanel>(w, f => f.Watch);
+            AddWatch(watch, "doubled");
+            Assert.True(await PumpUntilAsync(host, () => watch.Entries.Single().Value == "10", TimeSpan.FromSeconds(10)),
+                "A watch on a local of the Async Function: " + watch.Entries.Single().Display);
         }
         finally
         {
