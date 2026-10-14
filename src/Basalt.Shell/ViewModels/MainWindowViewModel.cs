@@ -43,6 +43,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsWelcomeVisible))]
     private string? _solutionPath;
+
+    /// <summary>Tabs open that are not files: Table Data and Query. The welcome screen would cover them.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsWelcomeVisible))]
+    private int _otherDocumentCount;
+
+    /// <summary>
+    /// The user asked for a panel without a solution (the Database Explorer, a terminal): the welcome screen
+    /// steps aside until the next solution is opened or closed.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsWelcomeVisible))]
+    private bool _welcomeDismissed;
+
+    partial void OnSolutionPathChanged(string? value) => WelcomeDismissed = false;
     [ObservableProperty] private string? _currentBranch;
     [ObservableProperty] private bool _isRunning;
 
@@ -87,7 +102,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// welcome screen still on top would make the IDE look like nothing had
     /// loaded.
     /// </summary>
-    public bool IsWelcomeVisible => SolutionPath is null && OpenDocuments.Count == 0;
+    /// <remarks>
+    /// Nor while a database tab is open, or after the user asked for a panel: the screen covers the whole
+    /// dock, and a database client used without a solution showed nothing at all.
+    /// </remarks>
+    public bool IsWelcomeVisible =>
+        SolutionPath is null && OpenDocuments.Count == 0 && OtherDocumentCount == 0 && !WelcomeDismissed;
 
     /// <summary>Error and warning counts shown in the status bar.</summary>
     public string ErrorSummary

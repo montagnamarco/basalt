@@ -265,6 +265,7 @@ public partial class MainWindow
     {
         _contents[document] = document.View;
         _databaseDocuments.Add(document);
+        ViewModel.OtherDocumentCount = _databaseDocuments.Count;
 
         if (_factory.DocumentArea is not { } area) return;
 
@@ -294,6 +295,7 @@ public partial class MainWindow
 
         _databaseDocuments.Remove(document);
         _contents.Remove(document);
+        ViewModel.OtherDocumentCount = _databaseDocuments.Count;
 
         if (!_closingQueryTabs) ViewModel.RememberSession();
     }

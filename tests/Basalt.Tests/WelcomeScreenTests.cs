@@ -74,6 +74,87 @@ public sealed class WelcomeScreenTests : IDisposable
         Assert.False(welcome.IsVisible);
     }
 
+    /// <remarks>
+    /// The database client works without a solution, and the welcome screen covered its tabs: a query opened
+    /// from the Database menu was there, running, and could not be seen.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task ADatabaseTabWithoutASolutionIsNotCoveredAndClosingItBringsTheWelcomeBack()
+    {
+        using var host = new TestWindow();
+        await host.SettleAsync(5);
+        var welcome = host.Window.FindControl<Border>("WelcomePane")!;
+        Assert.True(welcome.IsVisible, "The welcome screen is not shown at start.");
+
+        Invoke(host.Window, Basalt.Core.Localization.StringKeys.DbNewQuery);
+        await host.SettleAsync(5);
+
+        var document = Assert.Single(host.Window.DatabaseDocumentsForTests);
+        Assert.False(welcome.IsVisible, "The welcome screen covers the query tab.");
+
+        host.Window.CloseDatabaseDocumentForTests(document);
+        await host.SettleAsync(5);
+
+        Assert.Empty(host.Window.DatabaseDocumentsForTests);
+        Assert.True(welcome.IsVisible, "Closing the last tab did not bring the welcome screen back.");
+    }
+
+    [AvaloniaFact]
+    public async Task APanelAskedForWithoutASolutionIsNotCovered()
+    {
+        using var host = new TestWindow();
+        await host.SettleAsync(5);
+        var welcome = host.Window.FindControl<Border>("WelcomePane")!;
+        Assert.True(welcome.IsVisible);
+
+        Invoke(host.Window, Basalt.Core.Localization.StringKeys.DbExplorerTitle);
+        await host.SettleAsync(5);
+
+        Assert.False(welcome.IsVisible, "The welcome screen covers the Database Explorer the user asked for.");
+    }
+
+    [AvaloniaFact]
+    public async Task ATerminalOpenedWithoutASolutionIsNotCovered()
+    {
+        // View > New Terminal opens its panel through the dock factory, not through ShowTool.
+        using var host = new TestWindow();
+        await host.SettleAsync(5);
+        var welcome = host.Window.FindControl<Border>("WelcomePane")!;
+        Assert.True(welcome.IsVisible);
+
+        Invoke(host.Window, Basalt.Core.Localization.StringKeys.MenuViewNewTerminal);
+        await host.SettleAsync(5);
+
+        Assert.False(welcome.IsVisible, "The welcome screen covers the terminal the user opened.");
+    }
+
+    /// <summary>Runs the first menu entry with this text, wherever it sits in the menus.</summary>
+    private static void Invoke(MainWindow window, string key)
+    {
+        var header = Basalt.Core.Localization.Localizer.Get(key);
+        var entry = Leaves(window.MenuEntriesForTests()).First(e => e.Header == header);
+
+        if (entry.Action is { } action) action();
+        else entry.Command!.Execute(null);
+    }
+
+    private static IEnumerable<MenuEntry> Leaves(IReadOnlyList<MenuEntry> entries)
+    {
+        foreach (var entry in entries)
+        {
+            if (entry.IsSeparator) continue;
+
+            if (entry.Children is { Count: > 0 } children)
+            {
+                foreach (var leaf in Leaves(children)) yield return leaf;
+            }
+            else
+            {
+                yield return entry;
+            }
+        }
+    }
+
     public void Dispose()
     {
         try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }

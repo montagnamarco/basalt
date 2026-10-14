@@ -5287,6 +5287,9 @@ public partial class MainWindow : Window
 
     private void ShowTool(IDockable tool)
     {
+        // A panel asked for is a panel the user means to see: the welcome screen would hide it.
+        ViewModel.WelcomeDismissed = true;
+
         var owner = tool.Owner as IDock ?? DefaultDockForTool(tool);
         if (owner is not null)
             _factory.ShowTool(tool, owner);
@@ -5296,6 +5299,9 @@ public partial class MainWindow : Window
 
     private void OpenNewTerminal()
     {
+        // A terminal is a panel asked for, as ShowTool's are: the welcome screen would cover it.
+        ViewModel.WelcomeDismissed = true;
+
         _factory.TerminalWorkingDirectory = ViewModel.SolutionPath is { } path
             ? Path.GetDirectoryName(Path.GetFullPath(path)) ?? Directory.GetCurrentDirectory()
             : Directory.GetCurrentDirectory();
