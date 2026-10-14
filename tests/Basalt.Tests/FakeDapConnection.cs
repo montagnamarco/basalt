@@ -53,6 +53,15 @@ internal sealed class FakeDapConnection : IDapConnection
         [101] = ["count"],
     };
 
+    /// <summary>What "configurationDone" answers; by default it succeeds.</summary>
+    public JsonObject ConfigurationDoneAnswer { get; set; } = Answer(true, new JsonObject());
+
+    /// <summary>"configurationDone" left unanswered, as netcoredbg does when attached to a process that is not .NET.</summary>
+    public bool ConfigurationDoneNeverAnswers { get; set; }
+
+    /// <summary>What "attach" answers; by default it succeeds.</summary>
+    public JsonObject AttachAnswer { get; set; } = Answer(true, new JsonObject());
+
     /// <summary>What "exceptionInfo" answers; by default it says nothing.</summary>
     public JsonObject ExceptionInfoAnswer { get; set; } = Answer(false, new JsonObject());
 
@@ -86,6 +95,9 @@ internal sealed class FakeDapConnection : IDapConnection
             "variables" => Variables(arguments!["variablesReference"]!.GetValue<int>()),
             "evaluate" => EvaluateAnswer(arguments),
             "exceptionInfo" => ExceptionInfoAnswer,
+            "attach" => AttachAnswer,
+            "configurationDone" when ConfigurationDoneNeverAnswers => await new TaskCompletionSource<JsonObject>().Task.WaitAsync(ct).ConfigureAwait(false),
+            "configurationDone" => ConfigurationDoneAnswer,
             _ => Answer(true, new JsonObject())
         };
 

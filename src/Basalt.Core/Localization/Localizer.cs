@@ -1117,6 +1117,7 @@ public static class StringKeys
     public const string DebugBannerRunning = "Debug_BannerRunning";
     public const string DebugBannerException = "Debug_BannerException";
     public const string DebugOutputException = "Debug_OutputException";
+    public const string DebugAttachTimedOut = "Debug_AttachTimedOut";
     public const string DebugExited = "Debug_Exited";
     public const string DebugTheProgram = "Debug_TheProgram";
     public const string DebugInputOnInterfaceThread = "Debug_InputOnInterfaceThread";

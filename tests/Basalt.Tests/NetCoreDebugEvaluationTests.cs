@@ -127,6 +127,48 @@ public sealed class NetCoreDebugEvaluationTests
         Assert.Contains("n", (await service.GetLocalsAsync(frameIndex: 0)).Select(v => v.Name));
     }
 
+    [Fact]
+    public async Task ARefusedAttachEndsTheSessionWithTheAdaptersReason()
+    {
+        // Left as it was, a refused attach kept the session reported running over a program nobody debugged.
+        var dap = new FakeDapConnection
+        {
+            AttachAnswer = FakeDapConnection.Answer(false, new JsonObject(), "Failed to attach to process 12345"),
+        };
+        var service = new NetCoreDebugService(() => dap);
+
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => service.AttachAsync(12345, "/app/App.dll"));
+
+        Assert.Contains("Failed to attach", refused.Message, StringComparison.Ordinal);
+        Assert.False(service.IsRunning);
+    }
+
+    [Fact]
+    public async Task AnAttachRefusedAtConfigurationDoneEndsTheSession()
+    {
+        // Measured on netcoredbg 3.2.0: "attach" succeeds for a process that has gone, and configurationDone is
+        // what says 0x80070057.
+        var dap = new FakeDapConnection
+        {
+            ConfigurationDoneAnswer = FakeDapConnection.Answer(false, new JsonObject(), "Failed command 'configurationDone' : 0x80070057"),
+        };
+        var service = new NetCoreDebugService(() => dap);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.AttachAsync(999999, "/app/App.dll"));
+        Assert.False(service.IsRunning);
+    }
+
+    [Fact]
+    public async Task AnAttachNeverAnsweredIsGivenUp()
+    {
+        // Measured: attached to a process that is not .NET, netcoredbg never answers configurationDone.
+        var dap = new FakeDapConnection { ConfigurationDoneNeverAnswers = true };
+        var service = new NetCoreDebugService(() => dap) { AttachTimeout = TimeSpan.FromMilliseconds(300) };
+
+        await Assert.ThrowsAsync<TimeoutException>(() => service.AttachAsync(4242, "/app/App.dll"));
+        Assert.False(service.IsRunning);
+    }
+
     [Theory]
     [InlineData("$VB$Local_n", "n")]
     [InlineData("$VB$ResumableLocal_before$0", "before")]

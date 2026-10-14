@@ -209,6 +209,13 @@ public sealed class UserJourneyDebuggerTests : IDisposable
             KeyModifiers.None));
     }
 
+    /// <summary>
+    /// What the program wrote to its console. A console program is debugged in a Terminal tab, where it can be
+    /// typed to, so its output is there rather than in the Output panel.
+    /// </summary>
+    private static string ConsoleTextOf(MainWindow window) =>
+        string.Join("\n", ContentsOf(window).Values.OfType<TerminalView>().Select(t => t.ScreenText));
+
     /// <summary>What the program has written so far, for a failure message.</summary>
     private static string OutputOf(MainWindowViewModel vm) => string.Join("\n", vm.BuildOutput);
 
@@ -227,7 +234,7 @@ public sealed class UserJourneyDebuggerTests : IDisposable
             TimeSpan.FromSeconds(90));
 
         Assert.True(stopped,
-            $"The program did not stop at line {line}.\n{OutputOf((MainWindowViewModel)w.DataContext!)}");
+            $"The program did not stop at line {line}: {StateOf(w, ProgramPath)}\n{OutputOf((MainWindowViewModel)w.DataContext!)}");
     }
 
     /// <summary>
@@ -243,7 +250,7 @@ public sealed class UserJourneyDebuggerTests : IDisposable
         var callStack = PanelOf<CallStackPanel>(w, f => f.CallStack);
         var banner = w.FindControl<Border>("DebugBanner");
         var line = w.CodeEditorForTests(filePath)?.BreakpointMargin.CurrentLine;
-        var frames = string.Join(" | ", callStack.Frames.Select(f => $"{f.Method}:{f.Line}"));
+        var frames = string.Join(" | ", callStack.Frames.Select(f => $"{f.Method}@{Path.GetFileName(f.FilePath ?? "-")}:{f.Line}"));
 
         return $"margin line {line}; frames [{frames}]; banner visible {banner?.IsVisible}; "
             + $"session running {session?.IsRunning}, paused {session?.IsPaused}";
@@ -577,6 +584,76 @@ public sealed class UserJourneyDebuggerTests : IDisposable
     }
 
     // ==================================================================
+    // Journey 1f. F5 on a console program that reads a line. netcoredbg
+    // passes nothing typed on to a program it launches, so ReadLine waited
+    // for ever. The program now runs in a Terminal tab with the debugger
+    // attached: the prompt shows there, what is typed reaches it, and the
+    // breakpoint after the read stops with the line in the watch.
+    // ==================================================================
+    private const string ReadingProgram = """
+        Module Program
+            Sub Main()
+                Console.Write("name? ")
+                Dim s As String = Console.ReadLine()
+                Console.WriteLine("hello [" & s & "]")
+            End Sub
+        End Module
+        """;
+
+    [AvaloniaFact]
+    public async Task F5OnAConsoleProgramThatReadsALineTakesWhatIsTypedInItsTerminalAndStopsAfterIt()
+    {
+        Assert.SkipWhen(DebugAdapterLocator.Find() is null, "netcoredbg is not installed.");
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The terminal journeys run on a Unix pseudo-terminal.");
+
+        var project = WriteProject();
+        File.WriteAllText(ProgramPath, ReadingProgram);
+
+        using var host = new TestWindow(project);
+        await host.SettleAsync(10);
+        var w = host.Window;
+        var vm = (MainWindowViewModel)w.DataContext!;
+        await vm.OpenFileAsync(ProgramPath);
+        await host.SettleAsync(8);
+
+        try
+        {
+            // Line 3 is the program's first statement: stopping there proves the program waited for the
+            // debugger instead of running ahead while it attached.
+            ClickMargin(w, ProgramPath, 3);
+            ClickMargin(w, ProgramPath, 5);
+            PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
+
+            await PauseAtAsync(host, 3);
+            Assert.DoesNotContain("name?", ConsoleTextOf(w), StringComparison.Ordinal);
+            PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
+
+            Assert.True(await PumpUntilAsync(host, () => ConsoleTextOf(w).Contains("name?", StringComparison.Ordinal), TimeSpan.FromSeconds(60)),
+                "The program's prompt did not appear in a Terminal tab.\n" + OutputOf(vm));
+
+            w.KeyTextInput("Ada");
+            w.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+            w.KeyRelease(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+
+            await PauseAtAsync(host, 5);
+
+            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolWatch));
+            var watch = PanelOf<WatchPanel>(w, f => f.Watch);
+            AddWatch(watch, "s");
+            Assert.True(await PumpUntilAsync(host, () => watch.Entries.Single().Value == "\"Ada\"", TimeSpan.FromSeconds(10)),
+                "The line typed in the terminal is not what the program read: " + watch.Entries.Single().Display);
+
+            PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
+            Assert.True(await PumpUntilAsync(host, () => ConsoleTextOf(w).Contains("hello [Ada]", StringComparison.Ordinal), TimeSpan.FromSeconds(30)),
+                "The program did not go on after the breakpoint: " + ConsoleTextOf(w));
+        }
+        finally
+        {
+            await w.StopDebuggingForTests();
+        }
+    }
+
+    // ==================================================================
     // Journey 2. A breakpoint set by clicking the margin. F10 steps over the
     // call and the Watch value moves with it; F11 steps into the Sub and the
     // Call Stack lists the Sub above Main.
@@ -698,10 +775,10 @@ public sealed class UserJourneyDebuggerTests : IDisposable
     // ==================================================================
     // Journey 4. A breakpoint switched off in the Breakpoints panel, then
     // Continue: the program runs its loop to the end without stopping, and
-    // the Output panel shows what the program wrote to the console.
+    // its Terminal tab shows what it wrote to the console.
     // ==================================================================
     [AvaloniaFact]
-    public async Task ADisabledBreakpointIsIgnoredOnContinueAndTheOutputPanelShowsTheProgramsConsole()
+    public async Task ADisabledBreakpointIsIgnoredOnContinueAndTheTerminalShowsTheProgramsConsole()
     {
         Assert.SkipWhen(DebugAdapterLocator.Find() is null, "netcoredbg is not installed.");
 
@@ -734,23 +811,16 @@ public sealed class UserJourneyDebuggerTests : IDisposable
             PressKey(w, Key.F5, RawInputModifiers.None, PhysicalKey.F5);
 
             Assert.True(await PumpUntilAsync(host,
-                () => vm.BuildOutput.Any(line => line.Contains("basalt-loop finished 12", StringComparison.Ordinal)),
+                () => ConsoleTextOf(w).Contains("basalt-loop finished 12", StringComparison.Ordinal),
                 TimeSpan.FromSeconds(90)),
-                "The program did not run to the end.\n" + OutputOf(vm));
+                "The program did not run to the end.\n" + ConsoleTextOf(w) + "\n" + OutputOf(vm));
 
             // Each pass of the loop printed its running total, so the program
             // ran straight through the line it was stopped on before.
-            Assert.Contains(vm.BuildOutput, line => line.Contains("basalt-loop running total 2", StringComparison.Ordinal));
-            Assert.Contains(vm.BuildOutput, line => line.Contains("basalt-loop running total 6", StringComparison.Ordinal));
-            Assert.Contains(vm.BuildOutput, line => line.Contains("basalt-loop running total 12", StringComparison.Ordinal));
-
-            InvokeMenu(w, L(StringKeys.MenuView), L(StringKeys.ToolOutput));
-            var output = PanelOf<OutputPanel>(w, f => f.Output);
-            Assert.True(await PumpUntilAsync(host,
-                () => output.GetVisualDescendants().OfType<SelectableTextBlock>()
-                    .Any(t => t.Text?.Contains("basalt-loop finished 12", StringComparison.Ordinal) == true),
-                TimeSpan.FromSeconds(5)),
-                "The Output panel does not show the program's console output.");
+            var console = ConsoleTextOf(w);
+            Assert.Contains("basalt-loop running total 2", console, StringComparison.Ordinal);
+            Assert.Contains("basalt-loop running total 6", console, StringComparison.Ordinal);
+            Assert.Contains("basalt-loop running total 12", console, StringComparison.Ordinal);
         }
         finally
         {
@@ -800,7 +870,7 @@ public sealed class UserJourneyDebuggerTests : IDisposable
                 TimeSpan.FromSeconds(60)),
                 "The program did not report its exit.\n" + OutputOf(vm));
 
-            Assert.Contains(vm.BuildOutput, line => line.Contains("basalt-loop finished 12", StringComparison.Ordinal));
+            Assert.Contains("basalt-loop finished 12", ConsoleTextOf(w), StringComparison.Ordinal);
 
             Assert.IsType<EmptyState>(callStack.Content);
             Assert.Empty(callStack.Frames);

@@ -225,14 +225,19 @@ public sealed class UserJourneyPanelsTests : IDisposable
 
         Assert.False(breakpoints.Breakpoints.Single(b => b.Line == 9).Enabled);
 
-        // Continue runs to the end: the program's own output appears.
+        // Continue runs to the end: the program's own output appears, in the Terminal tab a console program
+        // is debugged in.
         InvokeMenu(w, L(StringKeys.MenuDebug), L(StringKeys.MenuDebugContinue));
 
+        string ConsoleText() => string.Join("\n", ((Dictionary<Dock.Model.Core.IDockable, Control>)typeof(MainWindow)
+            .GetField("_contents", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetValue(w)!).Values.OfType<TerminalView>().Select(t => t.ScreenText));
+
         await PumpUntilAsync(
-            () => vm.BuildOutput.Any(line => line.Contains("basalt-panels 82", StringComparison.Ordinal)) && !vm.IsRunning,
+            () => ConsoleText().Contains("basalt-panels 82", StringComparison.Ordinal) && !vm.IsRunning,
             attempts: 600, delayMs: 100);
 
-        Assert.Contains(vm.BuildOutput, line => line.Contains("basalt-panels 82", StringComparison.Ordinal));
+        Assert.Contains("basalt-panels 82", ConsoleText(), StringComparison.Ordinal);
         Assert.False(vm.IsRunning);
     }
 

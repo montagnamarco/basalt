@@ -967,9 +967,13 @@ public partial class MainWindow : Window
                 // expressions are read from.
                 _debug.SelectedFrame = index;
 
+                // The stop this choice belongs to: if the program moves on while the stack is read, the line
+                // marked would be one it has left.
+                var stop = _debug.CurrentFrame;
                 var frames = await _debug.GetCallStackAsync().ConfigureAwait(true);
 
-                if (index >= 0 && index < frames.Count) await ShowFrameAsync(frames[index]);
+                if (index >= 0 && index < frames.Count)
+                    await ShowFrameAsync(frames[index], () => ReferenceEquals(_debug.CurrentFrame, stop) && _debug.SelectedFrame == index);
 
                 await RefreshDebugValuesAsync();
             },
@@ -1022,10 +1026,26 @@ public partial class MainWindow : Window
             },
             ViewModel.WriteOutput, "debug");
 
-        _debug.Resumed += (_, _) => { OnDebuggerResumed(); ShowDebugState(); };
+        _debug.Resumed += (_, _) =>
+        {
+            OnDebuggerResumed();
+            ShowDebugState();
+
+        };
+
+        // Continue, not a step: a console program debugged in its terminal is what the user talks to next, so its
+        // tab comes back in front with the keyboard, as Visual Studio brings its console window forward. A step
+        // stops again at once, and bringing the terminal forward for it would make the panels flicker.
+        _debug.Continuing += (_, _) =>
+        {
+            if (_debuggedProgram is { } program) ShowProgramTab(program);
+        };
 
         _debug.Exited += (_, code) =>
         {
+            // The program is gone: its finished tab must not be brought forward by a later session.
+            _debuggedProgram = null;
+
             OnDebuggerResumed();
 
             // Which is the whole of what a run without breakpoints has to
@@ -1042,7 +1062,16 @@ public partial class MainWindow : Window
         // "running" is the last thing that will ever be said about it. Until
         // this was heard the banner stayed on "starting" for a program that
         // had in fact started perfectly well.
-        _debug.Started += (_, _) => { ShowDebugState(); _factory.EnterDebugLayout(); };
+        _debug.Started += (_, _) =>
+        {
+            ShowDebugState();
+            _factory.EnterDebugLayout();
+
+            // A console program debugged in its terminal keeps that tab in front: the debug layout would cover
+            // the prompt it is waiting at. Not when it is already stopped (the report of its start can come
+            // after the first stop), where the Call Stack is what the user needs.
+            if (_debuggedProgram is { } program && !_debug.IsPaused) ShowProgramTab(program);
+        };
 
         _debug.BreakpointsChanged += (_, file) => RefreshBreakpointDisplay(file);
         _debug.OutputReceived += (_, text) => ViewModel.WriteOutput(text);
@@ -1098,20 +1127,34 @@ public partial class MainWindow : Window
 
         var frames = await _debug.GetCallStackAsync().ConfigureAwait(true);
 
+        // A newer stop arrived while this one's stack was read (F10 then F11 in quick succession): showing this
+        // one now would mark the line the program has already left.
+        if (!ReferenceEquals(_debug.CurrentFrame, frame)) return;
+
         // Stopped where there is no source (Break All inside Thread.Sleep, a library call): the first frame of
         // the program's own is shown, as Visual Studio does, with its line and its variables. The innermost
         // showed nothing, neither a line nor a local.
         var shown = frame.FilePath is null ? FirstFrameWithSource(frames) : 0;
         _debug.SelectedFrame = shown;
 
-        await ShowFrameAsync(shown < frames.Count ? frames[shown] : frame);
+        await ShowFrameAsync(shown < frames.Count ? frames[shown] : frame, () => ReferenceEquals(_debug.CurrentFrame, frame));
+
+        if (!ReferenceEquals(_debug.CurrentFrame, frame)) return;
 
         _callStack?.Show(frames, shown);
 
         await RefreshDebugValuesAsync();
 
-        if (_factory.BottomArea is not null)
+        // Not when the session ended while the stop was being read (Stop pressed meanwhile): the debug layout
+        // has been taken down, and the Call Stack would come back over a session that is over.
+        if (_debug.IsPaused && _factory.BottomArea is not null)
+        {
+            // The debug layout first, which counts the panels it opens so the end of the session closes them.
+            // It is opened when the program is reported started, but after an attach that report can come after
+            // the first stop: the Call Stack opened here was then taken for one the user had opened, and stayed.
+            _factory.EnterDebugLayout();
             _factory.ShowTool(_factory.CallStack, _factory.BottomArea);
+        }
     }
 
     /// <summary>The first frame with a source file, or the innermost when none has one.</summary>
@@ -1126,11 +1169,17 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Opens the file execution stopped in and marks the line.</summary>
-    private async Task ShowFrameAsync(StackFrame frame)
+    /// <param name="stillWanted">
+    /// Asked again after the file is opened: a newer stop may have been shown meanwhile (F10 then F11 in quick
+    /// succession), and marking this frame's line then would point at a line the program has left.
+    /// </param>
+    private async Task ShowFrameAsync(StackFrame frame, Func<bool>? stillWanted = null)
     {
         if (frame.FilePath is null || frame.Line <= 0) return;
 
         await OpenAtAsync(frame.FilePath, frame.Line, 1);
+
+        if (stillWanted is not null && !stillWanted()) return;
 
         if (_margins.TryGetValue(frame.FilePath, out var margin))
             margin.ShowCurrentLine(frame.Line);
@@ -2109,7 +2158,10 @@ public partial class MainWindow : Window
         ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugStarting, _debugTarget)}");
         ShowStartingBanner();
 
-        await _debug.StartAsync(assembly, ViewModel.StartupDirectory);
+        // A console program runs in a Terminal tab, so what it reads can be typed; anything else is launched
+        // by the debugger as before.
+        if (!await TryDebugInTerminalAsync(startupProject!, assembly))
+            await _debug.StartAsync(assembly, ViewModel.StartupDirectory);
 
         // StartAsync reports a failure through Failed rather than throwing,
         // so the banner is settled from what actually came up, not from
@@ -3891,7 +3943,14 @@ public partial class MainWindow : Window
 
     private async Task StopDebuggingAsync()
     {
+        // Taken before the session is stopped: its end clears the field, and the program would be left running.
+        var program = _debuggedProgram;
+
         await _debug.StopAsync();
+
+        // Detached from the debugger, a program started in the terminal would go on running there.
+        program?.Stop();
+        StopDebuggedProgram();
 
         OnDebuggerResumed();
 

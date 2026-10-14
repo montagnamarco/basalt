@@ -46,6 +46,19 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>The tab and view of each program running in a terminal, so its tab can be brought forward again.</summary>
+    private readonly Dictionary<ProgramTerminal, (TerminalTool Tool, TerminalView View)> _programTabs = [];
+
+    /// <summary>Puts a program's terminal tab in front, with the keyboard in it.</summary>
+    private void ShowProgramTab(ProgramTerminal program)
+    {
+        if (!_programTabs.TryGetValue(program, out var tab) || _factory.BottomArea is not { } area) return;
+
+        _factory.SetActiveDockable(tab.Tool);
+        _factory.SetFocusedDockable(area, tab.Tool);
+        Dispatcher.UIThread.Post(() => tab.View.FocusInput(), DispatcherPriority.Background);
+    }
+
     private ProgramTerminal StartProgramTerminal(
         string title,
         string program,
@@ -96,6 +109,9 @@ public partial class MainWindow
 
         // Focus goes to the program, so the first keys typed reach it, as a freshly opened terminal's do.
         Dispatcher.UIThread.Post(() => view.FocusInput(), DispatcherPriority.Background);
+
+        _programTabs[terminal] = (tool, view);
+        terminal.Closed += (_, _) => _programTabs.Remove(terminal);
 
         return terminal;
     }

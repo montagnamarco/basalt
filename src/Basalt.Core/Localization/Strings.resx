@@ -1078,6 +1078,7 @@
   <data name="Debug_BannerPaused" xml:space="preserve"><value>Debugging — paused</value></data>
   <data name="Debug_BannerRunning" xml:space="preserve"><value>Debugging — running</value></data>
   <data name="Debug_BannerException" xml:space="preserve"><value>Debugging — stopped on an exception</value></data>
+  <data name="Debug_AttachTimedOut" xml:space="preserve"><value>The debugger could not attach to process {0}: it is not a .NET program, or it ended.</value></data>
   <data name="Debug_OutputException" xml:space="preserve"><value>[debug] Stopped on an unhandled exception: {0}</value></data>
   <data name="Debug_Exited" xml:space="preserve"><value>{0} exited with code {1}.</value></data>
   <data name="Debug_TheProgram" xml:space="preserve"><value>The program</value></data>

@@ -207,13 +207,43 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
     }
 
     /// <summary>
+    /// Debugs a program already running, started by the IDE in its terminal so it can be typed to, and
+    /// holding at its start until the debugger is attached (see DebuggerWaitHook).
+    /// </summary>
+    /// <param name="programPath">The program's assembly, for reporting its paths as the IDE spells them.</param>
+    public async Task AttachAsync(int processId, string programPath, CancellationToken ct = default)
+    {
+        await StopAsync(ct).ConfigureAwait(true);
+
+        var adapter = DebugAdapterLocator.Find();
+
+        if (adapter is null)
+        {
+            Failed?.Invoke(this,
+                Localizer.Get(StringKeys.DebugAdapterNotFound,
+                Path.Combine("~", ".basalt", "debugger", DebugAdapterLocator.RuntimeIdentifier)));
+            return;
+        }
+
+        var service = new NetCoreDebugService(adapter);
+
+        await StartWithAsync(service, (s, token) => ((NetCoreDebugService)s).AttachAsync(processId, programPath, token), ct)
+            .ConfigureAwait(true);
+    }
+
+    /// <summary>
     /// Connects a service to the session's events and launches the program with it.
     ///
     /// Apart from <see cref="StartAsync"/> so that a stand-in for the debug
     /// adapter can be run through the same wiring the real one gets.
     /// </summary>
-    internal async Task StartWithAsync(
-        IDebugSessionService service, string assemblyPath, string? workingDirectory, CancellationToken ct = default)
+    internal Task StartWithAsync(
+        IDebugSessionService service, string assemblyPath, string? workingDirectory, CancellationToken ct = default) =>
+        StartWithAsync(service, (s, token) => s.LaunchAsync(assemblyPath, workingDirectory, token), ct);
+
+    /// <summary>Connects a service to the session's events, sends the breakpoints and starts it the given way.</summary>
+    private async Task StartWithAsync(
+        IDebugSessionService service, Func<IDebugSessionService, CancellationToken, Task> start, CancellationToken ct)
     {
         _service = service;
 
@@ -247,7 +277,7 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
 
         try
         {
-            await _service.LaunchAsync(assemblyPath, workingDirectory, ct).ConfigureAwait(true);
+            await start(_service, ct).ConfigureAwait(true);
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or TimeoutException)
         {
@@ -343,8 +373,16 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
         Exited?.Invoke(this, code);
     }
 
-    public Task ContinueAsync(CancellationToken ct = default) =>
-        _service?.ContinueAsync(ct) ?? Task.CompletedTask;
+    public Task ContinueAsync(CancellationToken ct = default)
+    {
+        // Said before the program runs on: what the user talks to next is the program, not the panels.
+        if (_service is not null) Continuing?.Invoke(this, EventArgs.Empty);
+
+        return _service?.ContinueAsync(ct) ?? Task.CompletedTask;
+    }
+
+    /// <summary>The user asked the program to run on (Continue), as opposed to a step that stops again at once.</summary>
+    public event EventHandler? Continuing;
 
     /// <summary>
     /// Breaks into a running program.

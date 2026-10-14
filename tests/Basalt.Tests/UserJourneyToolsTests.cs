@@ -258,11 +258,16 @@ public sealed class UserJourneyToolsTests : IDisposable
 
         InvokeMenu(w, L(StringKeys.MenuRun), L(StringKeys.MenuRunWithoutDebugging));
 
+        // A console program runs in a Terminal tab, where it can be typed to: its output is there.
+        string ConsoleText() => string.Join("\n", ((Dictionary<Dock.Model.Core.IDockable, Control>)typeof(MainWindow)
+            .GetField("_contents", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .GetValue(w)!).Values.OfType<TerminalView>().Select(t => t.ScreenText));
+
         await PumpUntilAsync(
-            () => vm.BuildOutput.Any(line => line.Contains("basalt-run-journey", StringComparison.Ordinal)),
+            () => ConsoleText().Contains("basalt-run-journey", StringComparison.Ordinal),
             attempts: 300);
 
-        Assert.Contains(vm.BuildOutput, line => line.Contains("basalt-run-journey", StringComparison.Ordinal));
+        Assert.Contains("basalt-run-journey", ConsoleText(), StringComparison.Ordinal);
         Assert.True(vm.IsRunning);
 
         InvokeMenu(w, L(StringKeys.MenuRun), L(StringKeys.MenuRunStop));

@@ -140,17 +140,58 @@ public sealed class NetCoreDebugService : IDebugSessionService
         _client.Send("configurationDone");
     }
 
-    public async Task AttachAsync(int processId, CancellationToken ct = default)
+    public Task AttachAsync(int processId, CancellationToken ct = default) => AttachAsync(processId, programPath: null, ct);
+
+    /// <param name="programPath">
+    /// The program's assembly as the IDE spells it, so paths reported resolved through a linked directory are
+    /// given back in that spelling, as for a launch.
+    /// </param>
+    public async Task AttachAsync(int processId, string? programPath, CancellationToken ct = default)
     {
+        _prefixAsGiven = programPath is null ? null : LinkedPrefix(Path.GetFullPath(programPath));
+
         await StartAdapterAsync(ct).ConfigureAwait(false);
 
-        _client!.Send("attach", new JsonObject { ["processId"] = processId });
+        // Answered, unlike a launch's requests: a refused attach must end the session with the adapter's reason,
+        // not leave it reported as running over a program nobody debugs. Measured on netcoredbg 3.2.0, "attach"
+        // succeeds whatever the process, and the attach itself happens at configurationDone: refused there for a
+        // process that has gone (0x80070057), and never answered at all for one that is not .NET.
+        var attach = _client!.SendAsync("attach", new JsonObject { ["processId"] = processId }, ct);
 
         await ReadyForBreakpointsAsync(ct).ConfigureAwait(false);
         await ResendBreakpointsAsync(ct).ConfigureAwait(false);
 
-        _client.Send("configurationDone");
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        limit.CancelAfter(AttachTimeout);
+
+        JsonObject attached;
+        JsonObject configured;
+
+        try
+        {
+            configured = await _client.SendAsync("configurationDone", null, limit.Token).ConfigureAwait(false);
+            attached = await attach.WaitAsync(limit.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            Stop();
+            throw new TimeoutException(Localizer.Get(StringKeys.DebugAttachTimedOut, processId));
+        }
+
+        var refusal = new[] { attached, configured }.FirstOrDefault(a => a["success"]?.GetValue<bool>() == false);
+
+        if (refusal is not null)
+        {
+            Stop();
+            throw new InvalidOperationException(refusal["message"]?.GetValue<string>() ?? "attach");
+        }
     }
+
+    /// <summary>
+    /// How long an attach may take before it is given up: a program held by the wait hook is attached in well
+    /// under a second. Shorter in the tests.
+    /// </summary>
+    internal TimeSpan AttachTimeout { get; set; } = TimeSpan.FromSeconds(20);
 
     private async Task StartAdapterAsync(CancellationToken ct)
     {
@@ -380,14 +421,85 @@ public sealed class NetCoreDebugService : IDebugSessionService
         // after the program is already reported running. Asked with no
         // thread, netcoredbg refuses the request outright (0x80070057), so
         // the threads are fetched when none is known yet.
-        if (_currentThread == 0) await AdoptAThreadAsync(ct).ConfigureAwait(false);
-
-        if (_currentThread == 0) return;
-
-        await _client.SendAsync("pause", new JsonObject
+        //
+        // Asked again for a few seconds when there is none yet, or the pause is refused: just after an attach the
+        // adapter answers "threads" with nothing while it is still reading the program, and a Break All pressed
+        // then was dropped without a word. Measured: two journeys in three paused nothing.
+        for (var attempt = 0; attempt < PauseAttempts; attempt++)
         {
-            ["threadId"] = _currentThread
-        }, ct).ConfigureAwait(false);
+            if (_client is not { } client || IsPaused) return;
+
+            if (_currentThread == 0) await AdoptAThreadAsync(ct).ConfigureAwait(false);
+
+            if (_currentThread != 0)
+            {
+                var generation = Volatile.Read(ref _stopGeneration);
+                var answer = await client.SendAsync("pause", new JsonObject
+                {
+                    ["threadId"] = _currentThread
+                }, ct).ConfigureAwait(false);
+
+                if (answer["success"]?.GetValue<bool>() != false) return;
+
+                // Refused: the thread named may be one that has ended. Another is found on the next try, unless
+                // a stop arrived meanwhile and named the thread it is about (the generation moved on).
+                if (IsPaused || generation != Volatile.Read(ref _stopGeneration)) return;
+
+                _currentThread = 0;
+            }
+
+            await Task.Delay(PauseRetryDelay, ct).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>How many times a Break All is tried before it is given up, and how far apart.</summary>
+    private const int PauseAttempts = 25;
+
+    private static readonly TimeSpan PauseRetryDelay = TimeSpan.FromMilliseconds(200);
+
+    /// <summary>
+    /// Makes the current thread one whose stack reaches the program's own code: the first with a frame that has
+    /// a source file, else the first with any frame. Left as it is when none has either.
+    /// </summary>
+    private async Task SelectThreadRunningTheProgramAsync()
+    {
+        if (_client is not { } client) return;
+
+        // The thread named is kept when it is in the program's code already (Debugger.Break, VB's Stop).
+        if (_currentThread != 0)
+        {
+            var own = await client.SendAsync("stackTrace", new JsonObject { ["threadId"] = _currentThread }).ConfigureAwait(false);
+
+            if (own["body"]?["stackFrames"] is JsonArray ownFrames && ownFrames.OfType<JsonObject>().Any(f => SourcePathOf(f).Length > 0))
+                return;
+        }
+
+        var answer = await client.SendAsync("threads", new JsonObject()).ConfigureAwait(false);
+
+        if (answer["body"]?["threads"] is not JsonArray threads) return;
+
+        int? withFrames = null;
+
+        foreach (var thread in threads)
+        {
+            var id = thread?["id"]?.GetValue<int>() ?? 0;
+
+            if (id == 0) continue;
+
+            var trace = await client.SendAsync("stackTrace", new JsonObject { ["threadId"] = id }).ConfigureAwait(false);
+
+            if (trace["body"]?["stackFrames"] is not JsonArray { Count: > 0 } frames) continue;
+
+            withFrames ??= id;
+
+            if (frames.OfType<JsonObject>().Any(f => SourcePathOf(f).Length > 0))
+            {
+                _currentThread = id;
+                return;
+            }
+        }
+
+        if (withFrames is { } some) _currentThread = some;
     }
 
     /// <summary>Takes the first thread the adapter admits to having.</summary>
@@ -1091,6 +1203,10 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         try
         {
+            // A Break All stops every thread and names the one it was asked on, which after an attach can be a
+            // thread of the runtime's own, with no frame of the program: the panels then showed nothing.
+            if (_stopReason == "pause") await SelectThreadRunningTheProgramAsync().ConfigureAwait(false);
+
             var frames = await GetCallStackAsync().ConfigureAwait(false);
 
             var frame = frames.Count > 0 ? frames[0] : new StackFrame("", null, 0);
