@@ -3987,6 +3987,9 @@ public partial class MainWindow : Window
             },
             ViewModel.WriteOutput, "ide");
 
+        _tests.RefreshRequested += (_, _) => Guarded.Run(
+            () => DiscoverTestsAsync(), ViewModel.WriteOutput, "ide");
+
         // The same retargeting the build used: "dotnet test" builds too.
         _testService = new DotnetTestService(ViewModel.BuildGate);
         _testService.Compatibility = ViewModel.Compatibility;
@@ -3996,6 +3999,16 @@ public partial class MainWindow : Window
 
         _contents[_factory.Tests] = _tests;
 
+        // Subscribed only now: a subscription replays the last successful build
+        // at once, and the discovery it starts needs the service assigned above.
+        // A build of a test project changes what it declares, so its tests are
+        // discovered again; the other builds leave the window alone.
+        _ = ViewModel.SubscribeToSuccessfulBuilds((project, _, _) =>
+        {
+            if (TestProjectDetector.IsTestProject(project))
+                Guarded.Run(() => DiscoverTestsAsync(), ViewModel.WriteOutput, "ide");
+        });
+
         // Discovering on open means the window has something in it before the
         // user asks, which is what makes it worth opening.
         ViewModel.PropertyChanged += (_, e) => Guarded.Run(
@@ -4004,7 +4017,9 @@ public partial class MainWindow : Window
                 if (e.PropertyName != nameof(ViewModel.SolutionPath)) return;
 
                 // A run or discovery of the previous solution would otherwise go
-                // on, and its results land in the window of the new one.
+                // on, and its results land in the window of the new one. The
+                // discovery is cancelled and made stale, so its result is dropped.
+                _discovery.Cancel();
                 _testService.StopAll();
 
                 // The runnable projects are not known until a solution is open,
@@ -4031,59 +4046,27 @@ public partial class MainWindow : Window
         var directory = Path.GetDirectoryName(Path.GetFullPath(solution));
         if (directory is null) return;
 
-        var found = new List<TestCase>();
-
-        foreach (var project in FindTestProjects(directory))
-        {
-            try
-            {
-                found.AddRange(await _testService.DiscoverAsync(project).ConfigureAwait(true));
-            }
-            catch (Exception ex) when (ex is IOException or InvalidOperationException)
-            {
-                ViewModel.WriteOutput($"[test] {ex.Message}");
-            }
-        }
-
-        _tests.Show(found);
-    }
-
-    /// <summary>The projects that reference a test runner.</summary>
-    private static IEnumerable<string> FindTestProjects(string directory)
-    {
-        IEnumerable<string> projects;
+        // Two discoveries can overlap (a build and Refresh, say). The newer one
+        // cancels the older, which would otherwise run "dotnet test --list-tests"
+        // for every project for nothing, and only the latest may replace the window.
+        var run = _discovery.Begin();
+        var panel = _tests;
 
         try
         {
-            projects = Directory
-                .EnumerateFiles(directory, "*.*proj", SearchOption.AllDirectories)
-                .Where(p => p.EndsWith(".vbproj", StringComparison.OrdinalIgnoreCase)
-                         || p.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
-                .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")
-                         && !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"));
+            var found = await TestDiscovery.DiscoverFolderAsync(
+                directory, _testService, ViewModel.WriteOutput, run.Token).ConfigureAwait(true);
+
+            if (_discovery.IsCurrent(run)) panel.ShowDiscovered(found);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (OperationCanceledException) when (!_discovery.IsCurrent(run))
         {
-            yield break;
-        }
-
-        foreach (var project in projects)
-        {
-            string text;
-
-            try
-            {
-                text = File.ReadAllText(project);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                continue;
-            }
-
-            if (text.Contains("Microsoft.NET.Test.Sdk", StringComparison.OrdinalIgnoreCase))
-                yield return project;
+            // Superseded, or the solution closed meanwhile: nothing to show.
         }
     }
+
+    /// <summary>The discovery whose result is still wanted.</summary>
+    private readonly LatestDiscovery _discovery = new();
 
     /// <summary>Runs the tests the user asked for.</summary>
     private async Task RunTestsAsync(TestExplorerPanel.RunScope scope)

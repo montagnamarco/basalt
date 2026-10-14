@@ -43,6 +43,7 @@ public class DotnetTestParsingTests
     {
         // A built assembly's path is indented and contains dots too.
         const string output = """
+            The following tests are available:
               VbTests -> /tmp/vbtest/bin/Debug/net10.0/VbTests.dll
                 Sample.CalculatorTests.AddsTwoNumbers
             """;
@@ -72,15 +73,19 @@ public class DotnetTestParsingTests
     }
 
     [Fact]
-    public void StillIgnoresProse()
+    public void KeepsSentenceStyledNames()
     {
-        // A translated heading is indented in some locales and has dots.
+        // A display name can read as a sentence. The list is told from the
+        // build's lines by its indent, so the sentence is kept as a test.
         const string output = """
-                Some sentence. With dots.
+            The following tests are available:
+                Opens when the file is empty.
                 CalculatorTests.Adds
             """;
 
-        Assert.Single(DotnetTestService.ParseDiscovered(output));
+        Assert.Equal(
+            ["Opens when the file is empty.", "CalculatorTests.Adds"],
+            DotnetTestService.ParseDiscovered(output));
     }
 
     [Fact]

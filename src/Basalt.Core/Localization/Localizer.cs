@@ -1375,4 +1375,6 @@ public static class StringKeys
     public const string DbSettingsNotSaved = "DatabaseClient_SettingsNotSaved";
     public const string DbCloseFailed = "DatabaseClient_CloseFailed";
     public const string PackageVersionRequired = "Package_VersionRequired";
+    public const string TestsRefresh = "Tests_Refresh";
+    public const string TestDiscoveryFailed = "Test_DiscoveryFailed";
 }

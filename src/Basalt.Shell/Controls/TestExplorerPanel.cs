@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Basalt.Core.Localization;
 using Basalt.Core.Services;
+using Basalt.Workspace.Testing;
 
 namespace Basalt.Shell.Controls;
 
@@ -26,6 +27,12 @@ public sealed class TestNode
     }
 
     public string Name { get; }
+
+    /// <summary>
+    /// What identifies a container across a rediscovery: the project's path,
+    /// and for a class that path and the class's full name. Empty for a test.
+    /// </summary>
+    public string Key { get; init; } = "";
 
     /// <summary>The test itself, for a leaf; null for a container.</summary>
     public TestCase? Test { get; }
@@ -164,6 +171,11 @@ public sealed class TestExplorerPanel : UserControl
         var debugSelected = new Button { Content = Localizer.Get(StringKeys.TestsDebug) };
         debugSelected.Click += (_, _) => DebugRequested?.Invoke(this, EventArgs.Empty);
 
+        // Discovery runs when a solution opens and after a build of a test
+        // project. This is for a test that changed in a way no build reported.
+        var refresh = new Button { Content = Localizer.Get(StringKeys.TestsRefresh) };
+        refresh.Click += (_, _) => RefreshRequested?.Invoke(this, EventArgs.Empty);
+
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -175,6 +187,7 @@ public sealed class TestExplorerPanel : UserControl
         buttons.Children.Add(_runSelected);
         buttons.Children.Add(_runFailed);
         buttons.Children.Add(debugSelected);
+        buttons.Children.Add(refresh);
 
         _tree = new TreeView
         {
@@ -302,6 +315,9 @@ public sealed class TestExplorerPanel : UserControl
 
     public event EventHandler<RunScope>? RunRequested;
 
+    /// <summary>Raised when the user asks to discover the tests again.</summary>
+    public event EventHandler? RefreshRequested;
+
     /// <summary>Raised when the user asks to debug the selected test.</summary>
     public event EventHandler? DebugRequested;
 
@@ -411,6 +427,19 @@ public sealed class TestExplorerPanel : UserControl
     /// </summary>
     public void Show(IReadOnlyList<TestCase> tests)
     {
+        // A rediscovery finds the same tests again. What the user already has
+        // is kept for them: the results, the classes left open, and the selection.
+        // The open classes are read from the nodes, so the rows the user opened
+        // since the last redraw are written to them first.
+        RememberExpansion();
+
+        var previousLeaves = new Dictionary<string, TestNode>(_byName, StringComparer.Ordinal);
+        var previousOpen = _roots
+            .SelectMany(r => new[] { r }.Concat(r.Children))
+            .Where(n => n.Key.Length > 0)
+            .ToDictionary(n => n.Key, n => n.IsExpanded, StringComparer.Ordinal);
+        var selected = (_tree.SelectedItem as TestNode)?.Test?.FullyQualifiedName;
+
         _tests = tests;
         _byName.Clear();
 
@@ -418,16 +447,32 @@ public sealed class TestExplorerPanel : UserControl
 
         foreach (var byProject in tests.GroupBy(t => t.ProjectPath, StringComparer.Ordinal))
         {
-            var project = new TestNode(Path.GetFileNameWithoutExtension(byProject.Key));
+            var project = new TestNode(Path.GetFileNameWithoutExtension(byProject.Key))
+            {
+                Key = byProject.Key,
+                IsExpanded = previousOpen.GetValueOrDefault(byProject.Key)
+            };
 
             foreach (var byClass in byProject.GroupBy(t => t.ClassName, StringComparer.Ordinal))
             {
+                var classKey = byProject.Key + "\u0001" + byClass.Key;
+
                 var className = new TestNode(
-                    byClass.Key.Length == 0 ? Localizer.Get(StringKeys.TestsNoClass) : ShortClassName(byClass.Key));
+                    byClass.Key.Length == 0 ? Localizer.Get(StringKeys.TestsNoClass) : ShortClassName(byClass.Key))
+                {
+                    Key = classKey,
+                    IsExpanded = previousOpen.GetValueOrDefault(classKey)
+                };
 
                 foreach (var test in byClass.OrderBy(t => t.DisplayName, StringComparer.Ordinal))
                 {
                     var leaf = new TestNode(test.DisplayName, test);
+
+                    if (previousLeaves.TryGetValue(test.FullyQualifiedName, out var before))
+                    {
+                        leaf.Outcome = before.Outcome;
+                        leaf.Result = before.Result;
+                    }
 
                     _byName[test.FullyQualifiedName] = leaf;
                     className.Children.Add(leaf);
@@ -443,6 +488,25 @@ public sealed class TestExplorerPanel : UserControl
 
         RebuildTree();
         UpdateSummary();
+
+        // Put the selection back on the same test, when the rediscovery still has it.
+        if (selected is not null && _byName.TryGetValue(selected, out var reselected))
+            _tree.SelectedItem = reselected;
+    }
+
+    /// <summary>
+    /// Shows what a discovery found, unless the discovery failed for a project.
+    /// </summary>
+    /// <remarks>
+    /// A failed project leaves its tests out of the list, so the tree the user
+    /// has is kept: the failure is reported in the output, and the window does
+    /// not drop tests it had because one project would not build.
+    /// </remarks>
+    public void ShowDiscovered(TestDiscoveryResult result)
+    {
+        if (!result.Succeeded) return;
+
+        Show(result.Tests);
     }
 
     /// <summary>The class without its namespace, which the tree already shows.</summary>
@@ -693,6 +757,9 @@ public sealed class TestExplorerPanel : UserControl
     };
 
     internal void SelectForTests(TestNode node) => _tree.SelectedItem = node;
+
+    /// <summary>Asks for the tests to be discovered again, as Refresh does. For tests.</summary>
+    internal void RequestRefreshForTests() => RefreshRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>Types in the search box and lets the pause run out. For tests.</summary>
     internal void SearchForTests(string text)
