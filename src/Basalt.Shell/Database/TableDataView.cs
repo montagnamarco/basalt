@@ -197,21 +197,21 @@ public sealed class TableDataView : Grid, IDatabaseDocumentContent
 
         _range = new TextBlock { FontSize = PanelMetrics.FontSize, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(Spacing.Normal, 0) };
 
-        _first = Command(StringKeys.DbFirst, () => GoToAsync(0));
-        _previous = Command(StringKeys.DbPrevious, () => GoToAsync(Math.Max(0, _offset - PageSize)));
-        _next = Command(StringKeys.DbNext, () => GoToAsync(_offset + PageSize));
-        _last = Command(StringKeys.DbLast, () => GoToAsync(LastOffset()));
+        _first = Command(IconKind.PageFirst, StringKeys.DbFirst, () => GoToAsync(0));
+        _previous = Command(IconKind.Back, StringKeys.DbPrevious, () => GoToAsync(Math.Max(0, _offset - PageSize)));
+        _next = Command(IconKind.Forward, StringKeys.DbNext, () => GoToAsync(_offset + PageSize));
+        _last = Command(IconKind.PageLast, StringKeys.DbLast, () => GoToAsync(LastOffset()));
 
-        var refresh = Command(StringKeys.DatabaseRefresh, () => GoToAsync(_offset));
-        _save = Command(StringKeys.DbSave, () => SaveAsync());
-        _discard = Command(StringKeys.DbDiscard, DiscardAsync);
-        _addRow = Immediate(StringKeys.DbAddRow, AddRow);
-        _deleteRow = Immediate(StringKeys.DbDeleteRow, DeleteSelectedRow);
-        var export = Command(StringKeys.DbExportCsv, ExportAsync);
-        var copy = Command(StringKeys.DbCopyWithHeaders, CopyWithHeadersAsync);
+        var refresh = Command(IconKind.Refresh, StringKeys.DatabaseRefresh, () => GoToAsync(_offset));
+        _save = Command(IconKind.Save, StringKeys.DbSave, () => SaveAsync());
+        _discard = Command(IconKind.Undo, StringKeys.DbDiscard, DiscardAsync);
+        _addRow = Immediate(IconKind.RowAdd, StringKeys.DbAddRow, AddRow);
+        _deleteRow = Immediate(IconKind.RowDelete, StringKeys.DbDeleteRow, DeleteSelectedRow);
+        var export = Command(IconKind.Publish, StringKeys.DbExportCsv, ExportAsync);
+        var copy = Command(IconKind.Copy, StringKeys.DbCopyWithHeaders, CopyWithHeadersAsync);
 
         var paging = Row(_first, _previous, _next, _last, _range);
-        _reconnect = Command(StringKeys.DbReconnect, ReconnectAsync);
+        _reconnect = Command(IconKind.Connect, StringKeys.DbReconnect, ReconnectAsync);
         _reconnect.IsVisible = false;
 
         var editing = Row(refresh, _reconnect, _save, _discard, _addRow, _deleteRow, export, copy);
@@ -222,7 +222,7 @@ public sealed class TableDataView : Grid, IDatabaseDocumentContent
             if (e.Key == Key.Enter) RunInBackground(ApplyFilterAsync);
         };
 
-        var apply = Command(StringKeys.DbApply, ApplyFilterAsync);
+        var apply = Command(IconKind.Find, StringKeys.DbApply, ApplyFilterAsync);
         var filtering = new DockPanel
         {
             LastChildFill = true,
@@ -942,18 +942,18 @@ public sealed class TableDataView : Grid, IDatabaseDocumentContent
     }
 
     /// <summary>A button whose work is asynchronous; a failure is written to the status line.</summary>
-    private Button Command(string key, Func<Task> action)
+    private Button Command(IconKind icon, string key, Func<Task> action)
     {
-        var button = new Button { Content = Localizer.Get(key), FontSize = PanelMetrics.FontSize };
+        var button = DatabaseButtons.Create(icon, Localizer.Get(key));
         button.Click += (_, _) => RunInBackground(action);
 
         return button;
     }
 
     /// <summary>A button whose work is done at once, on the interface thread.</summary>
-    private static Button Immediate(string key, Action action)
+    private static Button Immediate(IconKind icon, string key, Action action)
     {
-        var button = new Button { Content = Localizer.Get(key), FontSize = PanelMetrics.FontSize };
+        var button = DatabaseButtons.Create(icon, Localizer.Get(key));
         button.Click += (_, _) => action();
 
         return button;

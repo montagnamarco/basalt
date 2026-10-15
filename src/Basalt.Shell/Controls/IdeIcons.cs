@@ -58,7 +58,10 @@ public enum IconKind
     /// </summary>
     DatabaseSqlite, DatabaseSqlServer, DatabasePostgreSql, DatabaseMySql,
     FolderTables, FolderViews,
-    Table, View, Column, PrimaryKeyColumn, ForeignKeyColumn, Index
+    Table, View, Column, PrimaryKeyColumn, ForeignKeyColumn, Index,
+
+    /// <summary>The database views' buttons: a database with a plus, a plug in and out, first and last page, a row added or removed.</summary>
+    DatabaseAdd, Connect, Disconnect, PageFirst, PageLast, RowAdd, RowDelete
 }
 
 /// <summary>
@@ -373,6 +376,16 @@ public static class IdeIcons
         IconKind.Index => "M2,3.5 H9 M2,7 H7 M2,10.5 H9 M2,14 H7 M12,3 V13 M10,11 L12,13 L14,11",
 
         // A block that runs, and an f of the kind a mathematician writes.
+
+        // The buttons of the database views.
+        IconKind.DatabaseAdd => "M2,3.5 A5,1.75 0 1 1 12,3.5 A5,1.75 0 1 1 2,3.5 Z M2,3.5 V10 A5,1.75 0 0 0 7,11.75 "
+                              + "M2,6.75 A5,1.75 0 0 0 12,6.75 M12,3.5 V7 M12.5,9 V15 M9.5,12 H15.5",
+        IconKind.Connect => "M5.5,2 V5.5 M10.5,2 V5.5 M3.5,5.5 H12.5 V8 A4.5,3.5 0 0 1 3.5,8 Z M8,11.5 V14.5",
+        IconKind.Disconnect => "M5.5,2 V5.5 M10.5,2 V5.5 M3.5,5.5 H12.5 V8 A4.5,3.5 0 0 1 3.5,8 Z M8,11.5 V14.5 M2,14 L14,2",
+        IconKind.PageFirst => "M3,3 V13 M13,3 L6,8 L13,13 Z",
+        IconKind.PageLast => "M13,3 V13 M3,3 L10,8 L3,13 Z",
+        IconKind.RowAdd => "M2,3.5 H14 V8 H2 Z M8,10 V15 M5.5,12.5 H10.5",
+        IconKind.RowDelete => "M2,3.5 H14 V8 H2 Z M5.5,12.5 H10.5",
 
         IconKind.Error => "M8,1.5 A6.5,6.5 0 1 1 8,14.5 A6.5,6.5 0 0 1 8,1.5 M5.5,5.5 L10.5,10.5 M10.5,5.5 L5.5,10.5",
         IconKind.Warning => "M8,2 L15,14 H1 Z M8,6 V10 M8,11.5 V12.5",

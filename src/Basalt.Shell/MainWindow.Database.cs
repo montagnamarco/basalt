@@ -55,6 +55,7 @@ public partial class MainWindow
         _databaseExplorer.ObjectDescribed += (_, sentence) => ViewModel.WriteOutput(sentence);
         _databaseExplorer.ConnectionRemoved += (_, connectionId) => MarkConnectionRemoved(connectionId);
         _databaseExplorer.ConnectionEdited += (_, connectionId) => MarkConnectionChanged(connectionId);
+        WireDatabaseDesign();
 
         _contents[_factory.Database] = _databaseExplorer;
 
@@ -442,6 +443,14 @@ public partial class MainWindow
             if (e.Key != Key.S || e.KeyModifiers != KeyModifiers.Control) return false;
 
             table.SaveFromKeyboard();
+            return true;
+        }
+
+        if (focused.FindAncestorOfType<TableDesignerView>(includeSelf: true) is { } designer)
+        {
+            if (e.Key != Key.S || e.KeyModifiers != KeyModifiers.Control) return false;
+
+            designer.SaveFromKeyboard();
             return true;
         }
 

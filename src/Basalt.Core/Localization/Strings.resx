@@ -1364,59 +1364,108 @@
   <data name="Menu_Format_CenterVertically" xml:space="preserve"><value>Vertically</value></data>
   <data name="Menu_Format_Order" xml:space="preserve"><value>Order</value></data>
   <data name="Menu_Format_LockControls" xml:space="preserve"><value>Lock Controls</value></data>
-  <data name="AttachProcess_Attach" xml:space="preserve"><value>Attach</value></data>
-  <data name="AttachProcess_ColumnId" xml:space="preserve"><value>ID</value></data>
+  <data name="Menu_Edit_DuplicateLine" xml:space="preserve"><value>Duplicate Line</value></data>
+  <data name="Status_ChordWaiting" xml:space="preserve"><value>({0}) was pressed. Waiting for second key of chord...</value></data>
+  <data name="Menu_Build_RebuildSolution" xml:space="preserve"><value>Rebuild Solution</value></data>
+  <data name="Menu_Build_CleanSolution" xml:space="preserve"><value>Clean Solution</value></data>
+  <data name="Menu_Build_BuildProject" xml:space="preserve"><value>Build {0}</value></data>
+  <data name="Menu_Build_RebuildProject" xml:space="preserve"><value>Rebuild {0}</value></data>
+  <data name="Menu_Build_CleanProject" xml:space="preserve"><value>Clean {0}</value></data>
+  <data name="Menu_Build_ProjectFallback" xml:space="preserve"><value>Project</value></data>
+  <data name="ProjectProperties_StartupObjectNotSet" xml:space="preserve"><value>(Not set)</value></data>
+  <data name="Menu_Debug_AttachToProcess" xml:space="preserve"><value>Attach to Process...</value></data>
+  <data name="Menu_Debug_ExceptionSettings" xml:space="preserve"><value>Exception Settings...</value></data>
+  <data name="ExceptionSettings_Title" xml:space="preserve"><value>Exception Settings</value></data>
+  <data name="ExceptionSettings_BreakWhenThrown" xml:space="preserve"><value>Break when any exception is thrown</value></data>
+  <data name="ExceptionSettings_BreakWhenThrownHelp" xml:space="preserve"><value>Stops at the Throw, even when a Try/Catch handles the exception.</value></data>
+  <data name="ExceptionSettings_BreakUserUnhandled" xml:space="preserve"><value>Break on exceptions not handled in user code</value></data>
+  <data name="ExceptionSettings_BreakUserUnhandledHelp" xml:space="preserve"><value>Stops on an exception your own code does not handle, even when the framework catches it. An exception nothing handles always stops.</value></data>
+  <data name="AttachProcess_Title" xml:space="preserve"><value>Attach to Process</value></data>
   <data name="AttachProcess_ColumnName" xml:space="preserve"><value>Process</value></data>
+  <data name="AttachProcess_ColumnId" xml:space="preserve"><value>ID</value></data>
   <data name="AttachProcess_ColumnTitle" xml:space="preserve"><value>Title</value></data>
+  <data name="AttachProcess_Attach" xml:space="preserve"><value>Attach</value></data>
+  <data name="AttachProcess_Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="AttachProcess_Looking" xml:space="preserve"><value>Looking for running .NET processes...</value></data>
   <data name="AttachProcess_None" xml:space="preserve"><value>No running .NET process was found. A program started with DOTNET_EnableDiagnostics=0 cannot be listed.</value></data>
   <data name="AttachProcess_Note" xml:space="preserve"><value>Stopping the debugger detaches from the process and leaves it running.</value></data>
-  <data name="AttachProcess_Refresh" xml:space="preserve"><value>Refresh</value></data>
-  <data name="AttachProcess_Title" xml:space="preserve"><value>Attach to Process</value></data>
-  <data name="Debug_AlreadyDebugging" xml:space="preserve"><value>A debugging session is already running. Stop it before attaching to a process.</value></data>
   <data name="Debug_Attaching" xml:space="preserve"><value>Attaching to {0} (process {1})...</value></data>
-  <data name="Debug_BannerExceptionThrown" xml:space="preserve"><value>Debugging — stopped on a thrown exception</value></data>
   <data name="Debug_Detached" xml:space="preserve"><value>Detached from process {0}; it keeps running.</value></data>
-  <data name="Debug_LaunchProfileInvalid" xml:space="preserve"><value>{0} could not be used ({1}). The program starts without its launch profile.</value></data>
+  <data name="Debug_AlreadyDebugging" xml:space="preserve"><value>A debugging session is already running. Stop it before attaching to a process.</value></data>
   <data name="Debug_OutputExceptionThrown" xml:space="preserve"><value>[debug] Stopped on a thrown exception: {0}</value></data>
-  <data name="Debug_TestRunInProgress" xml:space="preserve"><value>A test run is in progress. Stop it before starting the debugger.</value></data>
-  <data name="ExceptionSettings_BreakUserUnhandled" xml:space="preserve"><value>Break on exceptions not handled in user code</value></data>
-  <data name="ExceptionSettings_BreakUserUnhandledHelp" xml:space="preserve"><value>Stops on an exception your own code does not handle, even when the framework catches it. An exception nothing handles always stops.</value></data>
-  <data name="ExceptionSettings_BreakWhenThrown" xml:space="preserve"><value>Break when any exception is thrown</value></data>
-  <data name="ExceptionSettings_BreakWhenThrownHelp" xml:space="preserve"><value>Stops at the Throw, even when a Try/Catch handles the exception.</value></data>
-  <data name="ExceptionSettings_Title" xml:space="preserve"><value>Exception Settings</value></data>
-  <data name="Menu_Debug_AttachToProcess" xml:space="preserve"><value>Attach to Process...</value></data>
-  <data name="Menu_Debug_ExceptionSettings" xml:space="preserve"><value>Exception Settings...</value></data>
+  <data name="Debug_BannerExceptionThrown" xml:space="preserve"><value>Debugging — stopped on a thrown exception</value></data>
   <data name="Test_DebugAttachFailed" xml:space="preserve"><value>Could not attach to the test host (process {0}); the test run was stopped.</value></data>
+  <data name="Debug_LaunchProfileInvalid" xml:space="preserve"><value>{0} could not be used ({1}). The program starts without its launch profile.</value></data>
+  <data name="Debug_TestRunInProgress" xml:space="preserve"><value>A test run is in progress. Stop it before starting the debugger.</value></data>
   <data name="Test_DebugHostTimeout" xml:space="preserve"><value>The test host did not report its process id within {0} seconds, so no debugger could attach. The test run was stopped.</value></data>
   <data name="Test_DebugMultiTarget" xml:space="preserve"><value>{0} targets several frameworks, so there is more than one test host to attach to. Build it for a single TargetFramework to debug a test.</value></data>
   <data name="Test_DebugTestingPlatform" xml:space="preserve"><value>{0} runs its tests with Microsoft.Testing.Platform, which has no test host to attach to. Debug Test works with VSTest projects; to debug this one, start it from Debug > Attach to Process.</value></data>
-  <data name="Menu_Edit_DuplicateLine" xml:space="preserve"><value>Duplicate Line</value></data>
-  <data name="Status_ChordWaiting" xml:space="preserve"><value>({0}) was pressed. Waiting for second key of chord...</value></data>
-  <data name="Menu_Build_BuildProject" xml:space="preserve"><value>Build {0}</value></data>
-  <data name="Menu_Build_CleanProject" xml:space="preserve"><value>Clean {0}</value></data>
-  <data name="Menu_Build_CleanSolution" xml:space="preserve"><value>Clean Solution</value></data>
-  <data name="Menu_Build_ProjectFallback" xml:space="preserve"><value>Project</value></data>
-  <data name="Menu_Build_RebuildProject" xml:space="preserve"><value>Rebuild {0}</value></data>
-  <data name="Menu_Build_RebuildSolution" xml:space="preserve"><value>Rebuild Solution</value></data>
-  <data name="ProjectProperties_StartupObjectNotSet" xml:space="preserve"><value>(Not set)</value></data>
-  <data name="DatabaseClient_CountFailed" xml:space="preserve"><value>The database did not answer the row count.</value></data>
-  <data name="DatabaseClient_FilterNoMatch" xml:space="preserve"><value>No object matches "{0}".</value></data>
-  <data name="DatabaseClient_FilterWatermark" xml:space="preserve"><value>Filter objects by name</value></data>
-  <data name="DatabaseClient_FilteredGroup" xml:space="preserve"><value>{0} ({1} of {2})</value></data>
   <data name="DatabaseClient_ForeignKeyMark" xml:space="preserve"><value>FK</value></data>
+  <data name="DatabaseClient_FilterWatermark" xml:space="preserve"><value>Filter objects by name</value></data>
+  <data name="DatabaseClient_FilterNoMatch" xml:space="preserve"><value>No object matches "{0}".</value></data>
+  <data name="DatabaseClient_FilteredGroup" xml:space="preserve"><value>{0} ({1} of {2})</value></data>
+  <data name="DatabaseClient_ScriptAs" xml:space="preserve"><value>Script as</value></data>
+  <data name="DatabaseClient_ScriptSelect" xml:space="preserve"><value>SELECT</value></data>
+  <data name="DatabaseClient_ScriptInsert" xml:space="preserve"><value>INSERT</value></data>
+  <data name="DatabaseClient_ScriptUpdate" xml:space="preserve"><value>UPDATE</value></data>
+  <data name="DatabaseClient_ScriptDelete" xml:space="preserve"><value>DELETE</value></data>
+  <data name="DatabaseClient_ScriptCreate" xml:space="preserve"><value>CREATE</value></data>
+  <data name="DatabaseClient_ScriptNoCreate" xml:space="preserve"><value>{0} cannot be scripted as CREATE for this database.</value></data>
+  <data name="DatabaseClient_ScriptFailed" xml:space="preserve"><value>Could not script {0}: {1}</value></data>
   <data name="DatabaseClient_History" xml:space="preserve"><value>History</value></data>
   <data name="DatabaseClient_HistoryEmpty" xml:space="preserve"><value>No queries have been run on this connection yet.</value></data>
   <data name="DatabaseClient_HistoryToolTip" xml:space="preserve"><value>The last queries run on this connection</value></data>
   <data name="DatabaseClient_ObjectProperties" xml:space="preserve"><value>Properties</value></data>
-  <data name="DatabaseClient_ObjectPropertiesFailed" xml:space="preserve"><value>Could not read the properties of {0}: {1}</value></data>
   <data name="DatabaseClient_ObjectPropertiesText" xml:space="preserve"><value>{0}: {1} rows, {2} columns, {3} indexes, {4} foreign keys</value></data>
-  <data name="DatabaseClient_ScriptAs" xml:space="preserve"><value>Script as</value></data>
-  <data name="DatabaseClient_ScriptCreate" xml:space="preserve"><value>CREATE</value></data>
-  <data name="DatabaseClient_ScriptDelete" xml:space="preserve"><value>DELETE</value></data>
-  <data name="DatabaseClient_ScriptFailed" xml:space="preserve"><value>Could not script {0}: {1}</value></data>
-  <data name="DatabaseClient_ScriptInsert" xml:space="preserve"><value>INSERT</value></data>
-  <data name="DatabaseClient_ScriptNoCreate" xml:space="preserve"><value>{0} cannot be scripted as CREATE for this database.</value></data>
-  <data name="DatabaseClient_ScriptSelect" xml:space="preserve"><value>SELECT</value></data>
-  <data name="DatabaseClient_ScriptUpdate" xml:space="preserve"><value>UPDATE</value></data>
+  <data name="DatabaseClient_ObjectPropertiesFailed" xml:space="preserve"><value>Could not read the properties of {0}: {1}</value></data>
+  <data name="DatabaseClient_CountFailed" xml:space="preserve"><value>The database did not answer the row count.</value></data>
+  <data name="TableDesigner_TableNameRequired" xml:space="preserve"><value>The table needs a name.</value></data>
+  <data name="TableDesigner_NoColumns" xml:space="preserve"><value>The table needs at least one column.</value></data>
+  <data name="TableDesigner_ColumnNameRequired" xml:space="preserve"><value>Column {0} needs a name.</value></data>
+  <data name="TableDesigner_DuplicateColumn" xml:space="preserve"><value>The column name {0} is used twice.</value></data>
+  <data name="TableDesigner_TypeRequired" xml:space="preserve"><value>Column {0} needs a type.</value></data>
+  <data name="TableDesigner_OneIdentity" xml:space="preserve"><value>Only one column can be an identity column.</value></data>
+  <data name="TableDesigner_IdentityNeedsKey" xml:space="preserve"><value>The identity column {0} must be a primary key column, and for SQLite the only one.</value></data>
+  <data name="TableDesigner_IndexDropped" xml:space="preserve"><value>The index {0} uses a column that no longer exists and is not recreated.</value></data>
+  <data name="TableDesigner_ForeignKeyDropped" xml:space="preserve"><value>The foreign key {0} uses a column that no longer exists and is not recreated.</value></data>
+  <data name="TableDesigner_RebuildLoses" xml:space="preserve"><value>{0} has CHECK constraints, collations, generated columns or table options that the rebuild cannot copy. Review the table afterwards.</value></data>
+  <data name="TableDesigner_IdentityUnsupported" xml:space="preserve"><value>The identity setting of {0} cannot be changed on an existing column, so that change is not in the script.</value></data>
+  <data name="TableDesigner_ForeignKeyViolation" xml:space="preserve"><value>The change would break {0} foreign key references, so nothing was changed.</value></data>
+  <data name="TableDesigner_Title" xml:space="preserve"><value>Design: {0}</value></data>
+  <data name="TableDesigner_NewTitle" xml:space="preserve"><value>New Table</value></data>
+  <data name="TableDesigner_TableName" xml:space="preserve"><value>Table name</value></data>
+  <data name="TableDesigner_ColumnName" xml:space="preserve"><value>Name</value></data>
+  <data name="TableDesigner_ColumnType" xml:space="preserve"><value>Type</value></data>
+  <data name="TableDesigner_ColumnNullable" xml:space="preserve"><value>Allow nulls</value></data>
+  <data name="TableDesigner_ColumnKey" xml:space="preserve"><value>Primary key</value></data>
+  <data name="TableDesigner_ColumnDefault" xml:space="preserve"><value>Default</value></data>
+  <data name="TableDesigner_ColumnIdentity" xml:space="preserve"><value>Identity</value></data>
+  <data name="TableDesigner_AddColumn" xml:space="preserve"><value>Add Column</value></data>
+  <data name="TableDesigner_RemoveColumn" xml:space="preserve"><value>Remove Column</value></data>
+  <data name="TableDesigner_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="TableDesigner_Revert" xml:space="preserve"><value>Revert</value></data>
+  <data name="TableDesigner_ReviewTitle" xml:space="preserve"><value>Review script</value></data>
+  <data name="TableDesigner_Apply" xml:space="preserve"><value>Run script</value></data>
+  <data name="TableDesigner_ScriptOnly" xml:space="preserve"><value>Generate script only</value></data>
+  <data name="TableDesigner_NoChanges" xml:space="preserve"><value>There are no changes to save.</value></data>
+  <data name="TableDesigner_Saved" xml:space="preserve"><value>Saved {0}.</value></data>
+  <data name="TableDesigner_SaveFailed" xml:space="preserve"><value>Could not save {0}: {1}</value></data>
+  <data name="TableDesigner_LoadFailed" xml:space="preserve"><value>Could not read {0}: {1}</value></data>
+  <data name="TableDesigner_NewColumn" xml:space="preserve"><value>Column{0}</value></data>
+  <data name="TableDesigner_NewTableName" xml:space="preserve"><value>NewTable</value></data>
+  <data name="TableDesigner_NoTransaction" xml:space="preserve"><value>This database commits each statement as it runs, so a failure part-way leaves the earlier statements applied.</value></data>
+  <data name="DatabaseClient_DesignTable" xml:space="preserve"><value>Design Table</value></data>
+  <data name="DatabaseClient_NewTable" xml:space="preserve"><value>New Table</value></data>
+  <data name="DatabaseClient_Diagram" xml:space="preserve"><value>Database Diagram</value></data>
+  <data name="DatabaseDiagram_Title" xml:space="preserve"><value>Diagram: {0}</value></data>
+  <data name="DatabaseDiagram_Empty" xml:space="preserve"><value>This database has no tables.</value></data>
+  <data name="DatabaseDiagram_LoadFailed" xml:space="preserve"><value>Could not read the diagram of {0}: {1}</value></data>
+  <data name="DatabaseDiagram_ResetLayout" xml:space="preserve"><value>Reset Layout</value></data>
+  <data name="DatabaseDiagram_Hint" xml:space="preserve"><value>Drag the background to pan, Ctrl+wheel to zoom, drag a table to move it, double-click a table to design it.</value></data>
+  <data name="TableDesigner_IndexUnsafe" xml:space="preserve"><value>The index {0} cannot be adjusted safely for the columns that were renamed or dropped. Drop or recreate it yourself first. Nothing was changed.</value></data>
+  <data name="TableDesigner_TriggerUnsafe" xml:space="preserve"><value>The trigger {0} uses a column that was renamed or dropped, and a trigger cannot be rewritten safely. Change or drop it yourself first. Nothing was changed.</value></data>
+  <data name="TableDesigner_DeferrableAmbiguous" xml:space="preserve"><value>The foreign keys of {0} to {1} cannot be told apart in its CREATE statement, so DEFERRABLE cannot be carried over safely. Nothing was changed.</value></data>
+  <data name="TableDesigner_RebuildComment" xml:space="preserve"><value>SQLite cannot alter this table in place. The statements below rebuild it, and must be run together as a whole: stopping part-way leaves the table half rebuilt.</value></data>
+  <data name="TableDesigner_Stale" xml:space="preserve"><value>{0} was changed in the database after it was loaded here. Press Revert to read it again before saving. Nothing was changed.</value></data>
+  <data name="TableDesigner_MySqlExtrasUnknown" xml:space="preserve"><value>MODIFY and CHANGE redefine the whole column: its collation, comment and ON UPDATE clause were not read and are reset unless written here.</value></data>
 </root>

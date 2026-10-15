@@ -103,13 +103,13 @@ public sealed partial class DatabaseExplorerPanel : UserControl
         };
         DetachedFromVisualTree += (_, _) => CancelOperations();
 
-        var add = new Button { Content = Localizer.Get(StringKeys.DbAddConnection), FontSize = PanelMetrics.FontSize };
+        var add = DatabaseButtons.Create(IconKind.DatabaseAdd, Localizer.Get(StringKeys.DbAddConnection));
         add.Click += (_, _) => Run(AddConnectionAsync);
 
-        _refresh = new Button { Content = Localizer.Get(StringKeys.DatabaseRefresh), FontSize = PanelMetrics.FontSize };
+        _refresh = DatabaseButtons.Create(IconKind.Refresh, Localizer.Get(StringKeys.DatabaseRefresh));
         _refresh.Click += (_, _) => Run(() => RefreshAsync(_tree.SelectedItem as ExplorerNode));
 
-        _disconnect = new Button { Content = Localizer.Get(StringKeys.DatabaseDisconnect), FontSize = PanelMetrics.FontSize };
+        _disconnect = DatabaseButtons.Create(IconKind.Disconnect, Localizer.Get(StringKeys.DatabaseDisconnect));
         _disconnect.Click += (_, _) => Run(DisconnectSelectedAsync);
 
         var toolbar = PanelToolbar.Row(new StackPanel
@@ -121,7 +121,8 @@ public sealed partial class DatabaseExplorerPanel : UserControl
 
         // Shown instead of the tree while there is nothing to list: a line that
         // says what to do, and the button that does it.
-        var addFirst = new Button { Content = Localizer.Get(StringKeys.DbAddConnection), FontSize = PanelMetrics.FontSize, HorizontalAlignment = HorizontalAlignment.Center };
+        var addFirst = DatabaseButtons.Create(IconKind.DatabaseAdd, Localizer.Get(StringKeys.DbAddConnection));
+        addFirst.HorizontalAlignment = HorizontalAlignment.Center;
         addFirst.Click += (_, _) => Run(AddConnectionAsync);
 
         _empty = new Border
@@ -435,6 +436,7 @@ public sealed partial class DatabaseExplorerPanel : UserControl
             IsAvailable = () => _menuNode is ObjectNode,
             Icon = IconKind.Properties,
         },
+        .. DesignMenuActions(),
         new(Localizer.Get(StringKeys.DatabaseRefresh), () => Run(() => RefreshAsync(_menuNode)))
         {
             IsAvailable = () => ConnectionOf(_menuNode) is not null,

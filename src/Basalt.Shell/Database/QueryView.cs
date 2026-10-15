@@ -88,38 +88,24 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
             FontSize = PanelMetrics.FontSize,
         };
 
-        _run = ButtonFor(StringKeys.DatabaseRun, () => RunInBackground(RunAsync));
+        _run = ButtonFor(IconKind.Run, StringKeys.DatabaseRun, () => RunInBackground(RunAsync));
         _run.Name = "QueryRun";
 
-        _cancel = ButtonFor(StringKeys.DbCancel, () => _running?.Cancel());
+        _cancel = ButtonFor(IconKind.Stop, StringKeys.DbCancel, () => _running?.Cancel());
         _cancel.Name = "QueryCancel";
         _cancel.IsVisible = false;
 
-        _historyButton = new Button
-        {
-            Name = "QueryHistory",
-            FontSize = PanelMetrics.FontSize,
-            Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 6,
-                Children =
-                {
-                    new IconView { Kind = IconKind.History, IconSize = 14, VerticalAlignment = VerticalAlignment.Center },
-                    new TextBlock { Text = Localizer.Get(StringKeys.DbHistory), VerticalAlignment = VerticalAlignment.Center },
-                },
-            },
-        };
-        ToolTip.SetTip(_historyButton, Localizer.Get(StringKeys.DbHistoryToolTip));
+        _historyButton = DatabaseButtons.Create(IconKind.History, Localizer.Get(StringKeys.DbHistory), Localizer.Get(StringKeys.DbHistoryToolTip));
+        _historyButton.Name = "QueryHistory";
         _historyButton.Click += (_, _) => RunInBackground(ShowHistoryAsync);
 
-        var saveAs = ButtonFor(StringKeys.DbSaveQueryTitle, () => RunInBackground(SaveWithPickerAsync));
+        var saveAs = ButtonFor(IconKind.Save, StringKeys.DbSaveQueryTitle, () => RunInBackground(SaveWithPickerAsync));
         saveAs.Name = "QuerySaveAs";
 
-        var export = ButtonFor(StringKeys.DbExportCsv, () => RunInBackground(ExportWithPickerAsync));
+        var export = ButtonFor(IconKind.Publish, StringKeys.DbExportCsv, () => RunInBackground(ExportWithPickerAsync));
         export.Name = "QueryExport";
 
-        var copy = ButtonFor(StringKeys.DbCopyWithHeaders, () => RunInBackground(CopyActiveAsync));
+        var copy = ButtonFor(IconKind.Copy, StringKeys.DbCopyWithHeaders, () => RunInBackground(CopyActiveAsync));
         copy.Name = "QueryCopy";
 
         var toolbar = new StackPanel
@@ -664,9 +650,9 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
         _status.Text = Localizer.Get(StringKeys.DbCopied, set.Rows.Count);
     }
 
-    private static Button ButtonFor(string key, Action click)
+    private static Button ButtonFor(IconKind icon, string key, Action click)
     {
-        var button = new Button { Content = Localizer.Get(key), FontSize = PanelMetrics.FontSize };
+        var button = DatabaseButtons.Create(icon, Localizer.Get(key));
         button.Click += (_, _) => click();
 
         return button;
