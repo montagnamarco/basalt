@@ -90,7 +90,8 @@ public sealed class DotnetProcessLanguageTests : IDisposable
         Localizer.Culture = new CultureInfo("it-IT");
         var service = new DotnetTestService(new Basalt.Workspace.BuildGate());
 
-        service.DiscoverAsync(MissingProject).GetAwaiter().GetResult();
+        // The project does not exist, so the listing fails and discovery says so; dotnet was still started.
+        Assert.Throws<InvalidOperationException>(() => service.DiscoverAsync(MissingProject).GetAwaiter().GetResult());
 
         Assert.Equal("en", Language(service.LastStartInfo));
     }
