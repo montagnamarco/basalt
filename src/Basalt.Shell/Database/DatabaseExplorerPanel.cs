@@ -202,6 +202,8 @@ public sealed partial class DatabaseExplorerPanel : UserControl
 
         var icon = new IconView
         {
+            Classes = { "rowIcon" },
+            [RowIcon.FollowsSelectionProperty] = true,
             IconSize = 14,
             VerticalAlignment = VerticalAlignment.Center,
             [!IconView.KindProperty] = new Binding(nameof(ExplorerNode.Icon)),

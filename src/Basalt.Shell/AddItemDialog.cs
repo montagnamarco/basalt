@@ -207,7 +207,7 @@ public sealed class AddItemDialog : Window
                 Spacing = Spacing.Normal,
                 Children =
                 {
-                    new IconView { Kind = IconFor(category), IconSize = 16, VerticalAlignment = VerticalAlignment.Center },
+                    new IconView { Kind = IconFor(category), Classes = { "rowIcon" }, [RowIcon.FollowsSelectionProperty] = true, IconSize = 16, VerticalAlignment = VerticalAlignment.Center },
                     new TextBlock { Text = title, VerticalAlignment = VerticalAlignment.Center }
                 }
             };
@@ -455,6 +455,8 @@ public sealed class AddItemDialog : Window
         var icon = new IconView
         {
             Kind = Enum.TryParse<IconKind>(template.Icon, out var kind) ? kind : IconKind.TextFile,
+            Classes = { "rowIcon" },
+            [RowIcon.FollowsSelectionProperty] = true,
             IconSize = 24,
             VerticalAlignment = VerticalAlignment.Center
         };

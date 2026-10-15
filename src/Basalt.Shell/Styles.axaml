@@ -528,6 +528,15 @@
   </Style>
 
   <!--
+    The icon of a selected row takes the selection's foreground while its owner has the focus. Only the row's own
+    icon has the rowIcon class and FollowsSelection (RowIcon.cs), which sets the rowSelected class on it from its own row. A
+    button or a status icon in a row keeps its colour, and the rows nested under a selected row are not affected.
+  -->
+  <Style Selector="controls|IconView.rowIcon.rowSelected">
+    <Setter Property="Foreground" Value="{DynamicResource ListActiveSelectionForegroundBrush}" />
+  </Style>
+
+  <!--
     Panel toolbars (Problems, Output, Search): flat buttons that show a fill
     only under the pointer, and toggles that stay filled while pressed so a
     filter that is on reads differently from one that is off. Fluent's

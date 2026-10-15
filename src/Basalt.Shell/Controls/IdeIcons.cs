@@ -120,14 +120,18 @@ public static class IdeIcons
         // icons do, so each is at least 3:1 against a white list and the dark one
         // (AddItemIconTests checks it); the first set of colours was too dark for Dark.
         IconKind.VisualBasicFile => Color.FromRgb(0x2F, 0x80, 0xD0),
-        IconKind.CSharpFile => Color.FromRgb(0x68, 0x21, 0x7A),
+        // C#, Solution and Project keep their hue and are lighter than Visual Studio's own. At #68217A and
+        // #0069C0 they were 1.8:1 and 3.2:1 at best on the Dark side bar, and 1.3:1 and 2.3:1 on Solarized
+        // Dark's. Each now reaches 3.2:1 or more on the side bar and the editor of every palette
+        // (TreeIconSelectionTests checks it), and the hue is the same to within a degree.
+        IconKind.CSharpFile => Color.FromRgb(0xB9, 0x54, 0xD2),
         IconKind.RazorFile => Color.FromRgb(0x8A, 0x6F, 0xC9),
         IconKind.WebFile => Color.FromRgb(0xE4, 0x4D, 0x26),
         IconKind.StyleFile => Color.FromRgb(0x4A, 0x7F, 0xE8),
         IconKind.ScriptFile => Color.FromRgb(0xA6, 0x7C, 0x00),
         IconKind.JsonFile => Color.FromRgb(0x8A, 0x8A, 0x00),
-        IconKind.Solution => Color.FromRgb(0x68, 0x21, 0x7A),
-        IconKind.Project => Color.FromRgb(0x00, 0x69, 0xC0),
+        IconKind.Solution => Color.FromRgb(0xB9, 0x54, 0xD2),
+        IconKind.Project => Color.FromRgb(0x3A, 0x84, 0xC2),
         IconKind.Folder or IconKind.FolderOpen => Color.FromRgb(0xDC, 0xB6, 0x7A),
         IconKind.Run or IconKind.Continue => Color.FromRgb(0x2E, 0xA0, 0x43),
         IconKind.Stop or IconKind.Error or IconKind.Breakpoint => Color.FromRgb(0xE5, 0x14, 0x00),

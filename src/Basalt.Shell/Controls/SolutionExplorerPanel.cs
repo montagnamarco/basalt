@@ -395,6 +395,8 @@ public sealed partial class SolutionExplorerPanel : UserControl
         row.Children.Add(new IconView
         {
             Kind = IconFor(node),
+            Classes = { "rowIcon" },
+            [RowIcon.FollowsSelectionProperty] = true,
             IconSize = 14,
             VerticalAlignment = VerticalAlignment.Center
         });
