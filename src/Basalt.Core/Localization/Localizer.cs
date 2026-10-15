@@ -1443,4 +1443,11 @@ public static class StringKeys
     public const string TestDebugTestingPlatform = "Test_DebugTestingPlatform";
     public const string MenuEditDuplicateLine = "Menu_Edit_DuplicateLine";
     public const string StatusChordWaiting = "Status_ChordWaiting";
+    public const string MenuBuildBuildProject = "Menu_Build_BuildProject";
+    public const string MenuBuildCleanProject = "Menu_Build_CleanProject";
+    public const string MenuBuildCleanSolution = "Menu_Build_CleanSolution";
+    public const string MenuBuildProjectFallback = "Menu_Build_ProjectFallback";
+    public const string MenuBuildRebuildProject = "Menu_Build_RebuildProject";
+    public const string MenuBuildRebuildSolution = "Menu_Build_RebuildSolution";
+    public const string ProjectPropertiesStartupObjectNotSet = "ProjectProperties_StartupObjectNotSet";
 }

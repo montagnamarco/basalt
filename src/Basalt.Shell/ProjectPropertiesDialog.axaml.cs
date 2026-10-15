@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
+using Basalt.Shell.ViewModels;
 using Basalt.Workspace.Projects;
 using Basalt.Core.Localization;
 
@@ -17,6 +18,37 @@ public partial class ProjectPropertiesDialog : Window
 {
     private readonly ProjectProperties? _properties;
     private readonly LaunchSettings? _launch;
+
+    // The startup object: the list the compiler reads (started once per dialog, shared by every page built), and
+    // the choice as the list shows it, which is what Save writes.
+    private Task<StartupObjects>? _startupObjects;
+
+    // Completes when the list has been offered, or the reason it could not be read has been shown.
+    private Task _startupObjectsFilled = Task.CompletedTask;
+
+    /// <summary>Completes once the startup object list has been offered in the page, for the tests to wait on.</summary>
+    internal Task StartupObjectsFilled => _startupObjectsFilled;
+    private string? _startupObjectNotSet;
+    private string? _startupObjectChoice;
+    private bool _startupObjectFilling;
+
+    // The RootNamespace the page opened with (its text, empty when the project sets none), and the root the compiler
+    // gave the listed names, which is the project name when none is set.
+    private string? _openedRoot;
+    private string? _listedRoot;
+    private IReadOnlyList<string> _listedNames = [];
+
+    // The Application Framework, when the project has one: then the list offers the forms, and the choice is the
+    // form the framework opens, written to its file rather than to StartupObject.
+    private ApplicationFramework? _framework;
+
+    /// <summary>A fully qualified name without the root namespace in front of it.</summary>
+    private static string RelativeTo(string name, string root) =>
+        root.Length > 0 && name.StartsWith(root + ".", StringComparison.Ordinal) ? name[(root.Length + 1)..] : name;
+
+    /// <summary>The name with the root namespace in front of it, as Visual Basic declares it.</summary>
+    private static string QualifyWith(string relative, string root) =>
+        root.Length == 0 ? relative : root + "." + relative;
 
     /// <summary>Parameterless constructor for the XAML previewer and tests.</summary>
     public ProjectPropertiesDialog() : this(null, null) { }
@@ -85,9 +117,132 @@ public partial class ProjectPropertiesDialog : Window
                    Enum.GetNames<ProjectOutputType>(),
                    properties.OutputType.ToString(),
                    v => properties.OutputType = Enum.Parse<ProjectOutputType>(v)),
-            Text(Localizer.Get(StringKeys.ProjectPropertiesStartupObject), properties.StartupObject ?? "",
-                 v => properties.StartupObject = v,
-                 Localizer.Get(StringKeys.ProjectPropertiesStartupObjectHelp)));
+            StartupObjectChoice(properties));
+    }
+
+    /// <summary>
+    /// The type whose Main runs at startup, chosen from the types that have one rather than typed by hand.
+    /// </summary>
+    /// <remarks>
+    /// The list is read by the compiler on the thread pool. The page shows the value the project has at once, and
+    /// the candidates when they arrive. A value the list does not hold is kept in it, so that saving the page
+    /// does not drop what the project already says.
+    /// </remarks>
+    private Control StartupObjectChoice(ProjectProperties properties)
+    {
+        _startupObjectNotSet ??= Localizer.Get(StringKeys.ProjectPropertiesStartupObjectNotSet);
+
+        _framework ??= ApplicationFramework.For(properties.Path);
+        _openedRoot ??= properties.RootNamespace;
+
+        // The choice survives the page being built again, so a pick made before switching pages is not lost. With the
+        // framework the choice is the form's name as the framework's file gives it; otherwise the StartupObject.
+        _startupObjectChoice ??= _framework.InUse
+            ? _framework.MainForm ?? _startupObjectNotSet
+            : string.IsNullOrWhiteSpace(properties.StartupObject)
+                ? _startupObjectNotSet
+                : properties.StartupObject;
+
+        var combo = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+        combo.SelectionChanged += (_, _) =>
+        {
+            if (!_startupObjectFilling && combo.SelectedItem is string chosen) _startupObjectChoice = chosen;
+        };
+
+        ShowStartupObjects(combo, []);
+        _startupObjectsFilled = FillStartupObjectsAsync(combo);
+
+        return Labelled(
+            Localizer.Get(StringKeys.ProjectPropertiesStartupObject), combo,
+            Localizer.Get(StringKeys.ProjectPropertiesStartupObjectHelp));
+    }
+
+    /// <summary>Reads the candidates once per dialog, and offers them in the combo box when they are read.</summary>
+    private async Task FillStartupObjectsAsync(ComboBox combo)
+    {
+        try
+        {
+            _startupObjects ??= StartupObjectCatalog.ReadAsync(_properties!.Path);
+            var listed = await _startupObjects.ConfigureAwait(true);
+            _listedRoot = listed.RootNamespace;
+            _listedNames = listed.Names;
+
+            // With the framework the forms are offered, named as the framework's file names them.
+            ShowStartupObjects(combo, _framework is { InUse: true }
+                ? listed.Forms.Select(form => RelativeTo(form, listed.RootNamespace)).ToList()
+                : listed.Names);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // The choice still shows, so the page is usable; the reason says why there is no list.
+            StatusLabel.Text = ex.Message;
+        }
+    }
+
+    private void ShowStartupObjects(ComboBox combo, IReadOnlyList<string> found)
+    {
+        var choice = _startupObjectChoice!;
+
+        var items = new List<string> { _startupObjectNotSet! };
+        items.AddRange(found);
+        if (!items.Contains(choice)) items.Add(choice);
+
+        // Replacing the items moves the selection, which is not the user's choice and must not be recorded as one.
+        _startupObjectFilling = true;
+        try
+        {
+            combo.ItemsSource = items;
+            combo.SelectedItem = choice;
+        }
+        finally
+        {
+            _startupObjectFilling = false;
+        }
+    }
+
+    /// <summary>Writes the chosen startup object; "(Not set)" removes the element.</summary>
+    private void CommitStartupObject()
+    {
+        if (_properties is null || _startupObjectChoice is null) return;
+
+        // With the Application Framework the startup object is the framework's own class, and the form goes to its
+        // files, which are written after the project is saved (see SaveFrameworkFormAsync).
+        if (_framework is { InUse: true }) return;
+
+        string? value = _startupObjectChoice == _startupObjectNotSet ? null : _startupObjectChoice;
+
+        // Only a value that is one of the listed types is renamed, and only when the root was changed in this dialog:
+        // the root it was listed with is swapped for the root being saved. Anything else is written as it stands.
+        if (value is not null
+            && _listedRoot is { } listedRoot
+            && _listedNames.Contains(value)
+            && _properties.RootNamespace != _openedRoot)
+        {
+            value = QualifyWith(RelativeTo(value, listedRoot), _properties.RootNamespace);
+        }
+
+        _properties.StartupObject = value;
+    }
+
+    /// <summary>
+    /// Writes the form the Application Framework opens, to Application.myapp and to the designer file that names it in
+    /// code. Called only once the project is saved, so a project that failed to save leaves the framework as it was.
+    /// </summary>
+    private async Task SaveFrameworkFormAsync()
+    {
+        if (_framework is not { InUse: true } framework || _startupObjectChoice is null) return;
+
+        // The designer names the form with the root namespace the list was read with. A list that failed to load was
+        // reported when it failed, and the root the page opened with is then the best there is.
+        if (_startupObjects is not null)
+        {
+            try { await _startupObjects.ConfigureAwait(true); }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { }
+        }
+
+        framework.SaveMainForm(
+            _startupObjectChoice == _startupObjectNotSet ? null : _startupObjectChoice,
+            _listedRoot ?? _openedRoot ?? "");
     }
 
     private Control BuildCompilePage()
@@ -298,7 +453,19 @@ public partial class ProjectPropertiesDialog : Window
 
         // Applied when the box loses focus, so a half-typed value is never
         // written to the project file.
-        Action commit = () => apply(box.Text ?? "");
+        // Only a changed value is written: an editor the person did not touch must leave the file as it was, and a
+        // value the editor shows (such as the assembly name the project defaults to) is not written back into it.
+        // Compared with the last value applied, not the opening one: a change followed by a return to the opening
+        // value must write that value back, or the file keeps the change.
+        var applied = value;
+        Action commit = () =>
+        {
+            var text = box.Text ?? "";
+            if (text == applied) return;
+
+            applied = text;
+            apply(text);
+        };
         box.LostFocus += (_, _) => commit();
 
         // Save commits every box too, whether or not it still holds the focus
@@ -376,16 +543,40 @@ public partial class ProjectPropertiesDialog : Window
             // it before the file is written.
             SaveFocusedEditor();
             CommitEditors();
+            CommitStartupObject();
 
             await _properties.SaveAsync();
             await _launch.SaveAsync();
 
+            // The framework's files change only once the project has been saved.
+            await SaveFrameworkFormAsync();
+
+            // The window that opened the dialog is asked to bring the project up to date. The owner is taken before
+            // the close, and the work runs after it, so the window is not held while the solution is read again.
+            var owner = Owner as MainWindow;
             Close(true);
+
+            if (owner is not null) RefreshAfterSave(owner);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             StatusLabel.Text = ex.Message;
         }
+    }
+
+    /// <summary>
+    /// Brings the solution's projects up to date with the file just saved: the language service, the Problems
+    /// panel, the projects offered to run, and the startup project list of the toolbar.
+    /// </summary>
+    private static void RefreshAfterSave(MainWindow owner)
+    {
+        if (owner.DataContext is not MainWindowViewModel viewModel) return;
+
+        Guarded.Run(async () =>
+        {
+            await viewModel.ProjectPropertiesSavedAsync().ConfigureAwait(true);
+            owner.RefreshToolbar();
+        }, viewModel.WriteOutput, "properties");
     }
 
     /// <summary>

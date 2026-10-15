@@ -910,56 +910,95 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             await _languageService.UpdateDocumentAsync(document.FilePath, document.Text).ConfigureAwait(true);
     }
 
-    /// <summary>Deletes what the last build produced.</summary>
-    public Task CleanAsync() => BuildWithTargetAsync("clean");
+    /// <summary>
+    /// Deletes what the last build produced, for the solution: its file when one is open. Returns whether the clean
+    /// succeeded.
+    /// </summary>
+    public Task<bool> CleanAsync() => BuildWithTargetAsync("clean", wholeSolution: true);
 
-    /// <summary>Cleans and then builds.</summary>
+    /// <summary>Deletes what the last build of the startup project produced. Returns whether the clean succeeded.</summary>
+    public Task<bool> CleanStartupProjectAsync() => BuildWithTargetAsync("clean", wholeSolution: false);
+
+    /// <summary>
+    /// Cleans the solution and then builds it once. A build is not started after a clean that failed: the output it
+    /// would write is the one the failed clean could not delete.
+    /// </summary>
     public async Task RebuildAsync()
     {
-        await CleanAsync().ConfigureAwait(true);
+        if (!await CleanAsync().ConfigureAwait(true)) return;
         await BuildAsync().ConfigureAwait(true);
     }
 
     /// <summary>The process Clean or Rebuild last started, for the tests.</summary>
     internal System.Diagnostics.ProcessStartInfo? LastTargetStartInfo { get; private set; }
 
-    private async Task BuildWithTargetAsync(string target)
+    private async Task<bool> BuildWithTargetAsync(string target, bool wholeSolution)
     {
-        if (StartupProject is null)
+        // The same choice as a build: the solution file when a solution is open and the target is the solution's,
+        // else the startup project. A solution without a startup project is still cleaned as a whole.
+        var solution = wholeSolution && SolutionPath is { } path && SolutionFile.IsSolutionFile(path) ? path : null;
+        var targetPath = solution ?? StartupProject;
+        if (targetPath is null)
         {
             StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
-            return;
+            return false;
         }
 
-        var start = new System.Diagnostics.ProcessStartInfo("dotnet")
+        // Cleaning writes the output the build writes, so it waits for the build gate and is busy as a build is.
+        BeginBusy();
+        var operation = Operations.Start(Localizer.Get(StringKeys.StatusBuilding));
+        IDisposable? gate = null;
+
+        try
         {
-            ArgumentList = { target, StartupProject, "-c", Configuration, "--nologo" },
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+            gate = await BuildGate.AcquireAsync(
+                Localizer.Get(StringKeys.GateBuild),
+                holder => StatusMessage = Localizer.Get(StringKeys.StatusWaitingForBuild, holder),
+                operation.Token).ConfigureAwait(true);
 
-        // Clean and rebuild print into the Output panel as well.
-        Basalt.Workspace.DotnetProcess.UseInterfaceLanguage(start);
+            var start = new System.Diagnostics.ProcessStartInfo("dotnet")
+            {
+                ArgumentList = { target, targetPath, "-c", Configuration, "--nologo" },
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-        await AddCompatibilityArgumentsAsync(start).ConfigureAwait(true);
+            // Clean and rebuild print into the Output panel as well.
+            Basalt.Workspace.DotnetProcess.UseInterfaceLanguage(start);
 
-        LastTargetStartInfo = start;
-        using var process = System.Diagnostics.Process.Start(start);
+            await AddCompatibilityArgumentsAsync(start).ConfigureAwait(true);
 
-        if (process is null) return;
+            LastTargetStartInfo = start;
+            using var process = System.Diagnostics.Process.Start(start);
 
-        var output = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(true);
+            if (process is null) return false;
 
-        await process.WaitForExitAsync().ConfigureAwait(true);
+            var output = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(true);
 
-        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-            AppendOutput(line.TrimEnd());
+            await process.WaitForExitAsync().ConfigureAwait(true);
 
-        StatusMessage = process.ExitCode == 0
-            ? Localizer.Get(StringKeys.StatusCleaned)
-            : Localizer.Get(StringKeys.StatusCleanFailed);
+            foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                AppendOutput(line.TrimEnd());
+
+            var succeeded = process.ExitCode == 0;
+            StatusMessage = succeeded
+                ? Localizer.Get(StringKeys.StatusCleaned)
+                : Localizer.Get(StringKeys.StatusCleanFailed);
+            return succeeded;
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = Localizer.Get(StringKeys.StatusBuildStopped);
+            return false;
+        }
+        finally
+        {
+            Operations.Finish(operation);
+            gate?.Dispose();
+            EndBusy();
+        }
     }
 
     /// <summary>Works out what a quick action would change.</summary>

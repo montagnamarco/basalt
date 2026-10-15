@@ -1393,4 +1393,11 @@
   <data name="Test_DebugTestingPlatform" xml:space="preserve"><value>{0} runs its tests with Microsoft.Testing.Platform, which has no test host to attach to. Debug Test works with VSTest projects; to debug this one, start it from Debug > Attach to Process.</value></data>
   <data name="Menu_Edit_DuplicateLine" xml:space="preserve"><value>Duplicate Line</value></data>
   <data name="Status_ChordWaiting" xml:space="preserve"><value>({0}) was pressed. Waiting for second key of chord...</value></data>
+  <data name="Menu_Build_BuildProject" xml:space="preserve"><value>Build {0}</value></data>
+  <data name="Menu_Build_CleanProject" xml:space="preserve"><value>Clean {0}</value></data>
+  <data name="Menu_Build_CleanSolution" xml:space="preserve"><value>Clean Solution</value></data>
+  <data name="Menu_Build_ProjectFallback" xml:space="preserve"><value>Project</value></data>
+  <data name="Menu_Build_RebuildProject" xml:space="preserve"><value>Rebuild {0}</value></data>
+  <data name="Menu_Build_RebuildSolution" xml:space="preserve"><value>Rebuild Solution</value></data>
+  <data name="ProjectProperties_StartupObjectNotSet" xml:space="preserve"><value>(Not set)</value></data>
 </root>

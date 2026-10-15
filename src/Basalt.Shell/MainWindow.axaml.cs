@@ -227,6 +227,11 @@ public partial class MainWindow : Window
         {
             if (e.PropertyName == nameof(MainWindowViewModel.IsRunning))
                 ShowDebugState();
+
+            // The Build menu names the startup project. Opening a solution sets the project after the solution path
+            // is raised, so the menu is installed again on the next turn of the dispatcher, when both are set.
+            if (e.PropertyName is nameof(MainWindowViewModel.StartupProject) or nameof(MainWindowViewModel.SolutionPath))
+                Dispatcher.UIThread.Post(() => InstallMenu(viewModel));
         };
 
         DataContext = viewModel;
@@ -5365,7 +5370,22 @@ public partial class MainWindow : Window
         new(Localizer.Get(StringKeys.MenuBuild), Children:
         [
             new(Localizer.Get(StringKeys.MenuBuildBuildSolution), vm.BuildCommand,
-                Gesture: Shortcut(IdeCommands.BuildSolution)) { Icon = IconKind.Build }
+                Gesture: Shortcut(IdeCommands.BuildSolution)) { Icon = IconKind.Build },
+            new(Localizer.Get(StringKeys.MenuBuildRebuildSolution),
+                Action: () => Guarded.Run(vm.RebuildAsync, vm.WriteOutput, "build"),
+                Gesture: Shortcut(IdeCommands.BuildRebuild)),
+            new(Localizer.Get(StringKeys.MenuBuildCleanSolution),
+                Action: () => Guarded.Run(vm.CleanAsync, vm.WriteOutput, "build"),
+                Gesture: Shortcut(IdeCommands.BuildClean)),
+            MenuEntry.Separator,
+
+            // The entries above act on the solution file; these on the startup project alone, which they name.
+            new(Localizer.Get(StringKeys.MenuBuildBuildProject, vm.StartupProjectNameForMenu),
+                Action: () => Guarded.Run(vm.BuildStartupProjectAsync, vm.WriteOutput, "build")) { IsEnabled = vm.StartupProject is not null },
+            new(Localizer.Get(StringKeys.MenuBuildRebuildProject, vm.StartupProjectNameForMenu),
+                Action: () => Guarded.Run(vm.RebuildStartupProjectAsync, vm.WriteOutput, "build")) { IsEnabled = vm.StartupProject is not null },
+            new(Localizer.Get(StringKeys.MenuBuildCleanProject, vm.StartupProjectNameForMenu),
+                Action: () => Guarded.Run(vm.CleanStartupProjectAsync, vm.WriteOutput, "build")) { IsEnabled = vm.StartupProject is not null }
         ]),
         new(Localizer.Get(StringKeys.MenuTest), Children:
         [

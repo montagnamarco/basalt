@@ -36,8 +36,12 @@ public sealed partial class MsBuildBuildService : IBuildService
 
     public event EventHandler<string>? OutputReceived;
 
-    /// <summary>The process the last build or restore started, for the tests.</summary>
-    internal ProcessStartInfo? LastStartInfo { get; private set; }
+    /// <summary>
+    /// The process the last build or restore started. Public because the shell's
+    /// tests read the arguments it was given: a build is checked by what it was
+    /// asked to run, without running a real one.
+    /// </summary>
+    public ProcessStartInfo? LastStartInfo { get; private set; }
 
     /// <summary>
     /// Where the properties that retarget a Visual Studio Windows desktop

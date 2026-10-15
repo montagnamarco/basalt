@@ -39,19 +39,46 @@ public sealed partial class MainWindowViewModel
         public void Dispose() => unsubscribe();
     }
 
+    /// <summary>
+    /// Build Solution: the solution file when a solution is open, so each of its projects is built; a project
+    /// opened alone is built as itself.
+    /// </summary>
     [RelayCommand]
     private async Task BuildAsync()
+    {
+        await BuildProjectAsync(wholeSolution: true).ConfigureAwait(true);
+    }
+
+    /// <summary>Build of the startup project alone, whatever solution is open. The project entries of the menu use it.</summary>
+    public async Task BuildStartupProjectAsync()
     {
         await BuildProjectAsync().ConfigureAwait(true);
     }
 
+    /// <summary>Clean and then build of the startup project alone.</summary>
+    public async Task RebuildStartupProjectAsync()
+    {
+        if (!await CleanStartupProjectAsync().ConfigureAwait(true)) return;
+        await BuildStartupProjectAsync().ConfigureAwait(true);
+    }
+
     internal Task<bool> BuildProjectForTestsAsync() => BuildProjectAsync();
 
-    private async Task<bool> BuildProjectAsync()
+    /// <summary>How many builds were started, for the tests that check a rebuild builds once.</summary>
+    internal int BuildStartsForTests { get; private set; }
+
+    private async Task<bool> BuildProjectAsync(bool wholeSolution = false)
     {
         var projectPath = StartupProject;
         var configuration = Configuration;
-        if (projectPath is null)
+
+        // "dotnet build" takes a solution file as well as a project, so a solution build names the .sln. Without a
+        // startup project the solution is still built, and then no project's output is taken for the run.
+        var solutionTarget = wholeSolution && SolutionPath is { } solutionFile && SolutionFile.IsSolutionFile(solutionFile)
+            ? solutionFile
+            : null;
+        var target = solutionTarget ?? projectPath;
+        if (target is null)
         {
             StatusMessage = Localizer.Get(StringKeys.StatusNoProject);
             return false;
@@ -108,19 +135,26 @@ public sealed partial class MainWindowViewModel
             // The build starts by clearing the output, so the explanation
             // given when the solution was opened is repeated here, where the
             // SDK's own NETSDK1100 is about to appear.
-            if ((await Compatibility.GetAsync(projectPath, operation.Token).ConfigureAwait(true)).SourcesMissing)
+            if ((await Compatibility.GetAsync(target, operation.Token).ConfigureAwait(true)).SourcesMissing)
                 AppendOutput(MissingWindowsDesktopSourcesMessage);
 
             StatusMessage = Localizer.Get(StringKeys.StatusBuilding);
+            BuildStartsForTests++;
             var result = await _buildService
-                .BuildAsync(projectPath, configuration, operation.Token)
+                .BuildAsync(target, configuration, operation.Token)
                 .ConfigureAwait(true);
 
             _builtAssemblyPath = result.Succeeded ? result.OutputAssemblyPath : null;
 
+            // A solution build prints the output of every project, and the one reported last is not necessarily the
+            // startup project's. Only an assembly in the startup project's own folder is taken as its output.
+            if (projectPath is null
+                || (target != projectPath && _builtAssemblyPath is { } built && !IsInFolderOf(built, projectPath)))
+                _builtAssemblyPath = null;
+
             // The designer reloads the project's own controls from this output (see
             // WinFormsDesignerView.DesignContext). Only a success is raised: a failed build keeps them.
-            if (_builtAssemblyPath is { } builtAssembly)
+            if (projectPath is not null && _builtAssemblyPath is { } builtAssembly)
             {
                 var buildId = ++_successfulBuildCount;
                 _lastSuccessfulBuild = (projectPath, builtAssembly, buildId);
@@ -141,7 +175,7 @@ public sealed partial class MainWindowViewModel
             // "built and still the target" can rely on this return value.
             // RunBuiltProjectAsync asks once more because it can be reached
             // without a build of its own.
-            return result.Succeeded && LaunchTargetIsCurrent(projectPath, configuration);
+            return result.Succeeded && (projectPath is null || LaunchTargetIsCurrent(projectPath, configuration));
         }
         catch (OperationCanceledException)
         {
@@ -403,5 +437,56 @@ public sealed partial class MainWindowViewModel
         StopSourceFileRun();
         IsRunning = false;
         StatusMessage = Localizer.Get(StringKeys.StatusStopped);
+    }
+
+    /// <summary>The process the last build started, for the tests that check the arguments it was given.</summary>
+    internal System.Diagnostics.ProcessStartInfo? LastBuildStartInfo => _buildService.LastStartInfo;
+
+    private static bool IsInFolderOf(string file, string project) =>
+        Path.GetFullPath(file).StartsWith(
+            Path.GetDirectoryName(Path.GetFullPath(project)) + Path.DirectorySeparatorChar,
+            StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The startup project's name for a menu label, or the word "Project" when none is chosen.</summary>
+    internal string StartupProjectNameForMenu =>
+        (StartupProject is null ? null : Path.GetFileNameWithoutExtension(StartupProject))
+        ?? Localizer.Get(StringKeys.MenuBuildProjectFallback);
+
+    /// <summary>
+    /// Brings what depends on the solution's projects up to date once a project's properties are saved.
+    /// </summary>
+    /// <remarks>
+    /// The language service reads the project again, so a changed RootNamespace, Option Strict or Imports
+    /// reaches the diagnostics of the open files without reopening the solution; those files are then checked
+    /// again. The projects offered to run are read again too, so a project made an executable can be started.
+    /// Before this, the Problems panel kept the answers of the old properties until the solution was reopened.
+    /// </remarks>
+    public async Task ProjectPropertiesSavedAsync()
+    {
+        if (SolutionPath is not { Length: > 0 } solution) return;
+
+        await ReloadLanguageServiceAsync().ConfigureAwait(true);
+        await RefreshRunnableProjectsAsync(solution).ConfigureAwait(true);
+        await RefreshDiagnosticsOfAsync(OpenDocuments.ToList()).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Reads the runnable projects and the startup project again, as opening the solution did.
+    /// </summary>
+    /// <remarks>
+    /// The startup project the user chose stays while it still runs. Otherwise the one the solution starts is
+    /// chosen, which is how a solution with a single executable behaves when it is opened.
+    /// </remarks>
+    private async Task RefreshRunnableProjectsAsync(string solution)
+    {
+        var catalog = await Task.Run(() => ProjectCatalog.Read(solution)).ConfigureAwait(true);
+
+        RunnableProjects = catalog.Runnable;
+        OnPropertyChanged(nameof(RunnableProjects));
+
+        if (StartupProject is null || !RunnableProjects.Contains(StartupProject, StringComparer.Ordinal))
+            StartupProject = catalog.Startup;
+
+        OnPropertyChanged(nameof(StartupProject));
     }
 }

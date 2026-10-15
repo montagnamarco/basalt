@@ -252,7 +252,14 @@ public sealed class UserJourneyProjectTests : IDisposable
         // Application page.
         TypeInto(dialog, "Assembly name", "JourneyApp", categories);
         TypeInto(dialog, "Root namespace", "Journey", categories);
-        TypeInto(dialog, "Startup object", "Journey.Program", categories);
+        // The startup object is picked from the types the compiler found, which arrive after the page is shown.
+        var startupObject = Assert.IsType<ComboBox>(EditorLabelled(dialog, "Startup object"));
+        // The project sets no root namespace, so the compiler names its types under the project name; the root typed
+        // below replaces that when the page is saved.
+        var listed = DateTime.UtcNow.AddSeconds(120);
+        while (DateTime.UtcNow < listed && !startupObject.Items.Cast<object>().Contains("App.Program"))
+            await host.SettleAsync(1);
+        ChooseInCombo(dialog, "Startup object", "App.Program");
 
         // Compile page: the target framework and Option Strict.
         categories.SelectedIndex = 1;
