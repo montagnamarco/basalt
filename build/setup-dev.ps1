@@ -99,7 +99,7 @@ $rows = @(
         Found = if (Test-Command "clang") { Get-FirstLine { clang --version } } else { "" }
     },
     [pscustomobject]@{
-        Tool = "Node.js 18+"; For = "VS Code extension (check only)"
+        Tool = "Node.js 20+"; For = "VS Code extension (check only)"
         Found = if (Test-Command "node") { Get-FirstLine { node --version } } else { "" }
     },
     [pscustomobject]@{

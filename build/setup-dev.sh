@@ -96,5 +96,5 @@ if [[ -z "$found_debugger" && -n "${BASALT_NETCOREDBG:-}" ]]; then found_debugge
 row "netcoredbg" "$found_debugger" "debugging, debugger tests"
 
 row "clang" "$(command -v clang >/dev/null && first_line clang --version)" "native QuickBASIC tests"
-row "Node.js 18+" "$(command -v node >/dev/null && first_line node --version)" "VS Code extension (check only)"
+row "Node.js 20+" "$(command -v node >/dev/null && first_line node --version)" "VS Code extension (check only)"
 row "JDK 21" "${JAVA_HOME:-}" "Rider plugin (check only)"

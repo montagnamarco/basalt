@@ -1,35 +1,39 @@
 # Basalt
 
-**A cross-platform IDE for Visual Basic and its dialects.**
+**A cross-platform IDE for VB.NET, built on Avalonia.**
 
-Basalt is an integrated development environment for Visual Basic, running on
-macOS, Windows and Linux from one source tree. MSBuild compilation with
-clickable errors, Roslyn IntelliSense in-process, a visual Avalonia designer
-previewing through the real engine, Git, real terminals, and typing that
-behaves the way VB does on Windows — `end if` becoming `End If` as you type.
+Basalt is an integrated development environment for Visual Basic on modern
+.NET. It runs on macOS, Windows and Linux (x64 and arm64) from one source tree.
+It builds with the real .NET SDK, answers IntelliSense questions with Roslyn
+inside its own process, debugs with netcoredbg, and types the way Visual Basic
+does on Windows: `end if` becomes `End If` as you type.
 
-Along the way it grew a few things that stand on their own:
+The repository also holds a set of packages that stand on their own: Razor for
+Visual Basic (`.vbhtml`), Blazor components in Visual Basic (`.vbrazor`),
+`.vbpage` pages, and Windows Forms for .NET on all three desktop systems.
+The packages do not depend on the IDE. They are described in
+[Part II](#part-ii-razor-for-visual-basic-blazor-and-the-packages).
 
-- **Razor for Visual Basic on modern .NET.** `.vbhtml` was left behind at the
-  .NET Framework; Basalt brings it back, as packages that work in Rider,
-  Visual Studio and VS Code as well as here. This is the largest piece of
-  work in the repository and most of what follows is about it.
-- **Blazor components in Visual Basic.** A `.vbrazor` file compiles into a
-  real `ComponentBase`, with parameters, event handlers and routing.
-  Server, WebAssembly and Auto interactivity are all verified in a browser.
-- **`.vbpage` pages** — Classic ASP's philosophy, brought up to date: a page is a
-  file, a URL is a path, save and refresh. **Under active development.**
-- **QuickBASIC**, which is here for the fun of it. See
-  [below](#quickbasic-for-the-fun-of-it).
-
-Everything is MIT licensed. The Razor packages have no dependency on the IDE:
-use them in whatever editor you already have.
+Everything is MIT licensed.
 
 ---
 
 ## Table of contents
 
-- [The IDE](#the-ide)
+**Part I: the IDE**
+
+- [Why Basalt](#why-basalt)
+- [Feature tour](#feature-tour)
+- [Prerequisites](#prerequisites)
+- [Install or build from source](#install-or-build-from-source)
+- [Your first project](#your-first-project)
+- [Keyboard shortcuts](#keyboard-shortcuts)
+- [Troubleshooting](#troubleshooting)
+- [Known limitations of the IDE](#known-limitations-of-the-ide)
+- [FAQ](#faq)
+
+**Part II: Razor for Visual Basic, Blazor and the packages**
+
 - [The `.vbhtml` story](#the-vbhtml-story)
 - [Quick start](#quick-start)
 - [The packages](#the-packages)
@@ -41,43 +45,611 @@ use them in whatever editor you already have.
 - [IDE support for `.vbhtml`](#ide-support-for-vbhtml)
 - [Project templates](#project-templates)
 - [QuickBASIC, for the fun of it](#quickbasic-for-the-fun-of-it)
-- [Building from source](#building-from-source)
+- [Building the packages and the extensions](#building-the-packages-and-the-extensions)
 - [Repository layout](#repository-layout)
 - [Design decisions](#design-decisions)
 - [Known limitations](#known-limitations)
 - [Contributing](#contributing)
+- [Licence](#licence)
 
 ---
 
-## The IDE
+# Part I: the IDE
 
-The editor these packages were developed in, and the reason the repository
-exists.
+## Why Basalt
 
-- **MSBuild compilation** with clickable errors carrying file, line and column
-- **Roslyn IntelliSense** in-process — completion, diagnostics, quick info,
-  go-to-definition — with no external server
-- **A visual Avalonia designer**: toolbox, drag-and-drop, selection handles,
-  property grid, undo/redo. The preview is rendered by the real Avalonia
-  engine rather than an imitation of it, and VB.NET code-behind is generated
-  and kept in sync
-- **Typing that behaves like VB on Windows**: `end if` becomes `End If`,
-  `if x=1 then` becomes `If x = 1 Then`, blocks close themselves on Enter,
-  and identifiers follow the project's real symbols
-  (`console.writeline` → `Console.WriteLine`). Strings and comments are left
-  alone
-- **Integrated terminals** on a pseudo-terminal on macOS and Linux, where shell
-  prompts work; colours, cursor addressing and full-screen programs such as
-  `vim` are not rendered yet, and on Windows the terminal does not start yet
-  (ConPTY is planned)
-- **Git**: branch, status, staging, commit, history
-- **Dockable panels** that split, float into their own window, and restore
-- **New Solution** generating VB.NET solutions that are verified by tests that
-  actually compile them
+Visual Basic is alive on .NET, but its tooling lives almost entirely in Visual
+Studio on Windows. Basalt is an IDE where VB.NET is the first language, not an
+afterthought, and where the platform does not matter.
+
+| Advantage | What it means concretely |
+|---|---|
+| **VB.NET first, on modern .NET** | New Solution offers Visual Basic .NET projects on .NET 10: Windows Forms, Avalonia, console, class library, test project, Web API, web application, Razor Pages, MVC and Blazor. |
+| **Cross-platform** | One IDE for macOS, Windows and Linux. It also builds self-contained programs for the six desktop runtimes (Windows, macOS, Linux; x64 and arm64) from File > Make executable. |
+| **Roslyn in-process** | Completion, quick info, diagnostics, go to definition, find references and refactorings come from Roslyn running inside the IDE, with the project's real compilation loaded through MSBuild. There is no language server to configure. |
+| **Real MSBuild** | Build and Run call `dotnet build` and `dotnet run`. If it builds in Basalt, it builds in a terminal and in CI. Errors are parsed into clickable entries in the Problems panel. |
+| **Typing that behaves like VB** | Keywords and identifiers are corrected as you type, blocks close themselves on Enter, `Implements` and `Overrides` write the members for you. |
+| **Visual Studio muscle memory** | Shortcuts follow Visual Studio's wherever they could, with a Visual Studio and a VS Code keyboard scheme in Settings. |
+| **Windows Forms anywhere** | Forms made with the `.vb` / `.Designer.vb` pair open in a visual designer and run on macOS and Linux through the Basalt.WinForms package. |
+| **Web in Visual Basic** | `.vbhtml` views, `.vbrazor` Blazor components and `.vbpage` pages compile, are highlighted and complete in the editor, and stop at breakpoints. |
+
+Basalt is not a Visual Studio clone. [Known limitations](#known-limitations-of-the-ide)
+lists what it does not do.
+
+---
+
+## Feature tour
+
+Menu names below are the ones in the IDE. Where a shortcut is given it is the
+default of the Basalt keyboard scheme; on macOS "Ctrl" is Cmd, except for
+the completion keys (Ctrl+Space, Ctrl+J, Ctrl+Shift+Space), which use Control (see
+[Keyboard shortcuts](#keyboard-shortcuts)).
+
+### Editor and IntelliSense
+
+- **Completion** opens as you type (switch it off under Settings > Editor) or
+  on Ctrl+Space or Ctrl+J. Ctrl+Shift+Space shows signature help. **Enter and
+  Tab** take the highlighted entry when it matches what you typed (a Tab after
+  `Str` writes `String`; after `Strq` it does not). With nothing typed they take
+  an entry only if the list preselected it or you moved the highlight to it with
+  the arrow keys, so Enter still starts a new line. When a keyword and a type
+  share a name, the keyword comes first.
+- **Quick info** on hover and **diagnostics** as squiggles, from Roslyn.
+- **Navigation**: Go to Definition (F12), Find All References (Shift+F12), Go to
+  File (Ctrl+Shift+O), Go to Symbol in Solution (Ctrl+T), Go to Symbol in File,
+  Go to Line (Ctrl+G), Navigate Backward and Forward. The Outline and
+  References panels list symbols and results.
+- **Find and Replace** in the open file (Ctrl+F, Ctrl+H, F3 and Shift+F3 for the
+  next and previous match) and **Find in Files** (Ctrl+Shift+F) with a Search
+  panel.
+- **Code folding**, **bracket and quote closing**, a **Git change margin** and a
+  **breakpoint margin**.
+- **Snippets**: type a shortcut and press Tab twice. The shortcuts are `for`,
+  `foreach`, `while`, `do`, `if`, `ifelse`, `select`, `try`, `tryf`, `sub`,
+  `function`, `property`, `class`, `module`, `interface`, `enum`, `structure`,
+  `using`, `with`, `ctor`, `region`, and `?` for `Console.WriteLine`.
+- **Format Document** (Edit menu), **Format Selection**, and formatting on save
+  (on by default, Settings > Editor). Code is also tidied while you type.
+- **Object Browser** (View menu) and an **Object and Procedure** pair of lists
+  in the code window.
+- The status bar shows the line ending and encoding of the file; click the
+  encoding to reopen the file as another one.
+
+Typing conventions you get without asking: `end if` becomes `End If`,
+`if x=1 then` becomes `If x = 1 Then`, `console.writeline` becomes
+`Console.WriteLine`, `Then` is added to a finished `If`, the matching
+`End Sub` / `End If` is written on Enter, XML documentation comments are
+started for you, and `Implements` / `Overrides` lines get their members written
+out. Strings and comments are left alone. Turn the conventions off with
+Settings > Editor > "Apply conventions while typing".
+
+### Refactoring
+
+Right-click in the editor, press Ctrl+. (Quick Actions), or use the command
+palette (Ctrl+Shift+P):
+
+| Refactoring | Default shortcut |
+|---|---|
+| Rename | F2 |
+| Quick Actions | Ctrl+. |
+| Extract Method | Ctrl+Alt+M |
+| Extract Variable | Ctrl+Alt+V |
+| Extract Constant | |
+| Inline Variable | Ctrl+Alt+N |
+| Convert If / Select Case | |
+| Generate Constructor, Generate Property | |
+| Move Type to File | |
+| Change Signature | |
+| Add Imports for the Name Under the Caret | |
+| Sort and Remove Imports | Ctrl+Alt+O |
+
+Some refactorings show a preview dialog before they apply. They work on
+Visual Basic projects.
+
+### Build, Problems and Run
+
+- **Build > Build Solution** (F6; Ctrl+Shift+B in the Visual Studio scheme).
+  Rebuild Solution and Clean Solution are commands in the palette.
+- The toolbar has pickers for the **build configuration** (Debug or Release)
+  and the **startup project**. Settings > Toolbar chooses which buttons show.
+- The **Problems** panel lists errors, warnings and messages, filterable;
+  double-click opens the file at the line. **Output** shows the build log.
+- **Run > Start Without Debugging** (Ctrl+F5) builds, then runs
+  `dotnet run --no-build`, so the project's `launchSettings.json` (environment,
+  arguments, URLs) is honoured. A **console program** (a project on the plain
+  `Microsoft.NET.Sdk` with `OutputType` `Exe`, without Windows Forms, WPF or
+  Avalonia) runs in a **Terminal tab** named after the project, so
+  `Console.ReadLine` receives what you type there; when the program ends the tab
+  stays open and shows `[process exited with code N]`. A program with a window,
+  and web projects, keep the redirected run, whose output goes to the **Output**
+  panel. **Run > Stop** ends either kind.
+- **Launch settings.** For a Visual Basic project the file is
+  `My Project/launchSettings.json`, the project's `AppDesignerFolder`, because
+  that is where `dotnet run` reads it. A file an older Basalt wrote to
+  `Properties/launchSettings.json` is moved there when the solution opens or the
+  project runs, unless a file already exists in the new place. Project >
+  Properties... edits the settings.
+- **File > Make executable...** publishes the startup project as a release,
+  self-contained, single-file program for the platforms you tick.
+- **Project > Add New Item...**, **Project > References...** (projects,
+  assemblies, packages) and **Project > Properties...** edit the project.
+- **Solution Explorer** creates, renames, deletes, cuts, copies, pastes, and
+  excludes or includes files.
+- **Solutions** open from `.sln` and `.slnx` files, including projects that sit
+  inside solution folders nested to any depth. The projects a solution lists are
+  the ones shown, not every project found in the folders around it.
+
+### The debugger
+
+Debugging uses [netcoredbg](https://github.com/Samsung/netcoredbg), found as
+described in [Prerequisites](#prerequisites). **Debug > Start Debugging** (F5)
+builds first, then launches the startup project under the debugger.
+
+- **Console programs run in a Terminal tab.** F5 on a console program (the same
+  kind Ctrl+F5 sends to a tab) starts it in a Terminal tab, so `Console.ReadLine`
+  gets what you type. The program waits at its start, through a .NET startup
+  hook that Basalt compiles for your installed runtime and keeps in
+  `~/.basalt/debugger-wait/`, until the debugger attaches (it gives up after 30
+  seconds). Breakpoints therefore work from the first line. The tab comes to the
+  front when the session starts and again on Continue; a step leaves the panels
+  as they are. Programs with a window, and web projects, are launched by the
+  debugger as before.
+- **Breakpoints**: F9 toggles one in the margin. A breakpoint can have a
+  condition written in Visual Basic (`i = 4`,
+  `name <> "" AndAlso total > 10`) and a number of passes to skip first
+  ("Add Condition..."). Run to Cursor is Ctrl+F10.
+- **Stepping**: Step Over F10, Step Into F11, Step Out Shift+F11, Continue F5,
+  Stop Shift+F5. **Break All** is in the Debug menu and the palette; it has no
+  default key. If Break All stops inside library code with no source (in
+  `Thread.Sleep`, say), the first frame that has source is selected, with its
+  line and variables.
+- **Panels**: Call Stack, Variables, Breakpoints, Watch and Immediate (View
+  menu). Hovering a variable while paused shows its value.
+- **Visual Basic expressions.** netcoredbg evaluates C#. Watches, hovers and the
+  Immediate window parse your Visual Basic expression with Roslyn and send its
+  C# reading, so you write `Items.Count`, `x <> 3`, `total Mod 4` or `Me.Name`
+  as you would in the editor. Where VB syntax can mean two things (`items(1)` is
+  an index or a call), Basalt tries the likelier reading first and the next if
+  the debugger refuses it.
+- **Visual Basic display.** Variables, Watch and Call Stack show Visual Basic
+  type names and values: `Integer`, `List(Of String)`, `Integer()`, `Nothing`,
+  `True`, `Me`. Frames read `Program.ComputeAsync()` rather than the compiler's
+  state-machine name, and parameters read `n As Integer`.
+- **Async, Iterator and lambda locals.** The locals of an `Async` or `Iterator`
+  method, and of a lambda that captured variables, are shown under their source
+  names, with `Me`, and can be watched.
+- **Exception stops.** At an unhandled exception the banner says "stopped on an
+  exception" and Output names the exception type and message. The locals of each
+  of your frames in the call stack can be read.
+- **Immediate window** (Ctrl+Alt+I). `?expression` or `Print expression`
+  evaluates in the paused frame. Statements are refused while debugging. With no
+  debug session, the line is compiled and run in a separate process against
+  your built project. Up and Down recall earlier lines. `Debug.Print` and
+  `Debug.WriteLine` output from the program appears there too.
+- Breakpoints in `.vbhtml` and `.vbrazor` files stop while the view or
+  component renders; this is covered by the tests.
+- Settings > Debugging: path to netcoredbg, stop at entry, step into code
+  without debug symbols.
+
+What the debugger cannot do is listed under
+[Known limitations of the IDE](#known-limitations-of-the-ide).
+
+### The Windows Forms designer
+
+Open a form's `.vb` / `.Designer.vb` pair from Solution Explorer. The tab has a
+**Designer** and a **Code** view. The designer includes:
+
+- a toolbox (double-click or drag to add), including controls from referenced
+  libraries and the project's own;
+- a Properties window grouped by category, an Events panel (double-click an
+  event to create its handler), and smart tags;
+- layout tools: alignment, distribution, snap to grid and to other controls,
+  rulers, tab order, z-order, copy and paste, undo and redo;
+- the **keyboard**: the arrow keys move the selected control (one grid step when
+  snapping is on, one pixel with Ctrl), Shift+arrow resizes it by one pixel from
+  its bottom-right corner, Tab and Shift+Tab walk the controls in tab order,
+  Esc selects the container, Delete removes the selection and Ctrl+A (Cmd+A on
+  macOS) selects the controls of the form. Lock Controls stops the keys
+  from moving anything;
+- the **Edit menu** (Cut, Copy, Paste, Select All) and the **Format menu**
+  (Align, Make Same Size, Horizontal and Vertical Spacing, Center in Form,
+  Order, Lock Controls) act on the designer in front;
+- in-place editing of menus, `ToolStrip`, `StatusStrip` and drop-down items;
+- the component tray, user controls, localizable forms and a `.resx` resource
+  editor with image pickers.
+
+The controls are drawn by Basalt.Forms (Avalonia and SkiaSharp), so a form
+looks and runs the same on macOS, Windows and Linux. Visual Studio WinForms
+projects (`net6.0-windows` and later with `UseWindowsForms`) are retargeted at
+build time off Windows without touching your project files. The limits of the
+package are in [Known limitations of the IDE](#known-limitations-of-the-ide).
+
+### The Avalonia designer
+
+`.axaml` files open with a **Designer** and a **XAML** view. The preview is
+rendered by the real Avalonia engine. You get a toolbox with a filter, drag and
+drop, selection handles, a Properties panel, a **Structure** tree (also the way
+to select a container its children cover), an Events panel, a row and column
+editor for `Grid`, undo and redo, snap guides while dragging, rulers, zoom and
+the Align commands in the **Designer** menu. **Project > Add Window...** creates
+a window with Visual Basic or C# code-behind. VB.NET code-behind is generated and
+kept in sync.
+
+### Web, Razor and Blazor
+
+New Solution creates Web API, Web Application, Razor Pages, MVC and Blazor
+projects in Visual Basic. In the editor, `.vbhtml`, `.vbrazor` and `.vbpage`
+files get colouring, completion (including the model's members), diagnostics,
+hover, go to definition, find references and formatting from the same parser the
+compiler uses. **View > Show Generated Code** (Ctrl+Alt+G) shows the Visual
+Basic generated from a template, and the editor menu has **Extract to Partial
+View...**. Details of the languages are in [Part II](#part-ii-razor-for-visual-basic-blazor-and-the-packages).
+
+### Database client
+
+The **Database** menu and **Database Explorer** (Ctrl+Alt+S) connect to:
+
+- **SQLite** (a file),
+- **SQL Server** (with Windows authentication, encrypt and trust-certificate
+  options),
+- **PostgreSQL** (with SSL mode),
+- **MySQL and MariaDB**.
+
+Add Connection... has a Test Connection button and an advanced connection
+string field. The explorer lists tables, views, columns, indexes and foreign
+keys. From a table you can **Open Data** (paged grid with a WHERE filter, add
+and delete rows, set NULL, save or discard; views and tables without a primary
+key are read-only), **Select Top 1000**, export CSV or copy with headers.
+**New Query** (Ctrl+Alt+Q) opens a SQL editor: F5 or Ctrl+Enter runs, several
+result sets and server messages are shown, a running statement can be
+cancelled, and Ctrl+S saves the `.sql` file. Passwords are stored apart from
+the settings file (see [AI assistant](#ai-assistant)).
+
+### Git
+
+Git uses the `git` executable, so it must be installed. The **Git** menu opens
+the **Changes** panel (stage, discard, commit), **Branches**, **History** (with
+the commit graph) and a **Diff** view, and runs Fetch, Pull and Push.
+**Start a Repository Here** runs `git init -b main`, writes a `.gitignore` and
+makes a first commit. The editor margin marks changed lines.
+
+### Terminal
+
+**View > New Terminal** (Ctrl+`) opens a terminal in the solution's folder. It
+runs your shell (`$SHELL`, interactive) on macOS and Linux (a pseudo-terminal) and `%COMSPEC%`
+(`cmd.exe`) on Windows through ConPTY; Settings > Terminal chooses another
+shell, the font size and the scrollback. Prompts, history and line editing
+work. The terminal shows text only: colours and cursor-addressing programs such
+as `vim` are not rendered. The same panel hosts the tabs in which console
+programs run (see [Build, Problems and Run](#build-problems-and-run) and
+[The debugger](#the-debugger)); closing such a tab ends its program.
+
+### Tests
+
+The **Tests** panel discovers tests with `dotnet test --list-tests` and reads
+results from the TRX report. The code handles the names that xUnit, NUnit and
+MSTest print (including MSTest's own project SDK and the Microsoft Testing
+Platform runner), and the Test Project template uses xUnit. Run All
+(Ctrl+Alt+T), Run Selected, Run Failed and Debug Selected, with a filter by
+name, class, namespace and outcome. "Open Source" in a test's menu jumps to it.
+
+### AI assistant
+
+The **Assistant** panel (Ctrl+Shift+A) talks to **Claude**, **Gemini** or
+**ChatGPT**. Choose the assistant, model and API key in Settings > Assistant.
+
+- Actions: Explain, Fix the error, Document, Generate tests, Ask. By default
+  the open file and the current errors are sent with the question; both are
+  switches in Settings.
+- The assistant can read the solution with tools and **propose edits, which you
+  review as diffs** and accept or reject one by one. Nothing is written without
+  your approval.
+- **Inline suggestions** (grey text; Tab accepts) are off by default. When on,
+  about 4 KB before and 1 KB after the caret are sent to the provider; files
+  that may hold secrets are not.
+- **Where keys are kept.** On macOS the key goes to the Keychain. On Windows it
+  goes to a file under `~/.basalt/keys` protected with DPAPI for your account.
+  On Linux it is a file there readable by your user only, not encrypted. Keys
+  are never in the settings file. Database passwords use the same store.
+
+### Settings, themes and keyboard schemes
+
+**Tools > Settings...** (Ctrl+,) has pages for Editor, Appearance, Keyboard,
+Toolbar, Terminal, Debugging, Assistant and each language. Settings apply as you
+change them and are saved in `~/.basalt/settings.json` (set `BASALT_SETTINGS` to
+use another file).
+
+- **Themes**: Light (the default), Dark, Follow the system, Visual Studio Blue,
+  High Contrast Light, High Contrast Dark, Solarized Light, Solarized Dark.
+  Density is Comfortable or Compact.
+- **Keyboard schemes**: Basalt, Visual Studio, Visual Studio Code. Any command
+  can be rebound; Settings warns when a key is already taken.
+- **Command palette** (Ctrl+Shift+P) finds and runs any command by name.
+- Panels dock, split and float; **View > Reset Layout** restores the default.
+
+---
+
+## Prerequisites
+
+| Need | Detail |
+|---|---|
+| **.NET SDK 10** | `global.json` asks for 10.0.100 and rolls forward within version 10. Needed to build and run the IDE and by every build, run and test it starts. Check with `dotnet --version`. |
+| **git** | Required for the Git features and to clone the repository. |
+| **netcoredbg** | Required for debugging only. Without it the IDE tells you and runs the program without debugging. See below. |
+| macOS | macOS 13 or later (the oldest macOS .NET 10 runs on). |
+| Windows | Windows with the .NET 10 SDK; PowerShell for `build/setup-dev.ps1`. |
+| Linux | Any distribution the .NET 10 SDK and Avalonia support. |
+| Database servers | SQL Server, PostgreSQL and MySQL/MariaDB are servers you run yourself (Docker is one way); Basalt connects to them and does not start them. SQLite needs only a file. |
+
+Only for the packages and extensions, not for the IDE: Node.js 20 or later (VS
+Code extension), JDK 21 (Rider plugin), the Visual Studio extension development
+workload (Visual Studio extension), clang (the QuickBASIC native tests).
+
+### How Basalt finds netcoredbg
+
+Basalt looks in this order and uses the first that exists:
+
+1. the path in Settings > Debugging;
+2. the `BASALT_NETCOREDBG` environment variable (path to the executable);
+3. a `debugger/<rid>/` folder (or `debugger/`) next to the IDE;
+4. `~/.basalt/debugger/<rid>/` (or `~/.basalt/debugger/`), where `<rid>` is
+   `osx-arm64`, `osx-x64`, `win-x64`, `win-arm64`, `linux-x64` or `linux-arm64`;
+5. your `PATH`.
+
+The IDE does not download it. The setup script does:
 
 ```bash
+build/setup-dev.sh --check      # macOS, Linux: list what is present or missing
+build/setup-dev.sh              # also installs netcoredbg 3.2.0-1092 into ~/.basalt/debugger/<rid>
+```
+
+```powershell
+build\setup-dev.ps1 -Check      # Windows
+build\setup-dev.ps1             # also installs netcoredbg (and LLVM through winget)
+```
+
+`--check` / `-Check` installs nothing. Published netcoredbg builds exist for
+linux-x64, linux-arm64, osx-arm64 and win-x64 (on Windows arm64 the x64 build
+runs under emulation). For osx-x64 build netcoredbg from source and set
+`BASALT_NETCOREDBG`.
+
+---
+
+## Install or build from source
+
+Basalt is built from source. There is no installer and no published release;
+the only packaging script is for macOS.
+
+```bash
+git clone https://github.com/montagnamarco/basalt.git
+cd basalt
+dotnet build Basalt.slnx
 dotnet run --project src/Basalt.Shell
 ```
+
+Open a solution directly by passing its path:
+
+```bash
+dotnet run --project src/Basalt.Shell -- path/to/MyApp.sln
+```
+
+**macOS app bundle.** `build/bundle-macos.sh [output-folder] [runtime]` publishes
+the IDE self-contained (default runtime `osx-arm64`, output `artifacts/`) and
+assembles `Basalt.app` with its icon, signed ad hoc:
+
+```bash
+build/bundle-macos.sh                      # Apple silicon
+build/bundle-macos.sh artifacts osx-x64    # Intel
+```
+
+**Run from a checkout.** Windows Forms and web projects made by New Solution
+refer to the repository's sources (`src/Basalt.Forms`, `src/Basalt.Razor.Vb`),
+which the IDE finds by walking up from where it runs. If you move the IDE away
+from the checkout, set `BASALT_FORMS_PATH` and `BASALT_RAZORVB_PATH` to the
+`src` folder, or point `BASALT_WINFORMS_PACKAGES` to a folder holding the
+`Basalt.WinForms` and `Basalt.Drawing` `.nupkg` files (made by
+`build/pack.sh --winforms-only`).
+
+Tests: `dotnet test tests/Basalt.Tests`.
+
+---
+
+## Your first project
+
+1. **File > New Solution...** (Ctrl+Shift+N). Under *Visual Basic .NET* choose
+   *Console Application*, give a name and a location, and press Create. A
+   `.sln` and a project with `Program.vb` are written and opened.
+2. Double-click `Program.vb` in **Solution Explorer**. Type `console.writeline("Hi")`
+   and watch it become `Console.WriteLine("Hi")`. Press Ctrl+Space inside a call
+   for members and Ctrl+Shift+Space for the signature.
+3. **Build > Build Solution** (F6). Errors appear in **Problems**; double-click
+   one to jump to it.
+4. Add a line such as `Dim name = Console.ReadLine()` and press **Ctrl+F5**.
+   The program runs in a **Terminal** tab named after the project: type a line
+   and it arrives in `ReadLine`. When the program ends the tab shows
+   `[process exited with code N]`.
+5. Press F9 on a line to set a **breakpoint**, then press **F5**. The console
+   program starts in a Terminal tab and stops at the breakpoint, even on its
+   first line. Look at **Variables** and **Watch** (type a Visual Basic
+   expression such as `name.Length`), type `?expression` in **Immediate**
+   (Ctrl+Alt+I), step with F10 and F11, press F5 to continue (the Terminal tab
+   comes back to the front) and stop with Shift+F5. If the IDE reports that
+   netcoredbg was not found, see
+   [Prerequisites](#how-basalt-finds-netcoredbg). A program with a window
+   writes to **Output** instead of a Terminal tab.
+6. Add a *Test Project* the same way (xUnit), then press Ctrl+Alt+T to run the
+   tests from the **Tests** panel.
+7. **Git > Start a Repository Here** puts the folder under version control.
+
+For a form, choose *Windows Forms Application* in step 1 and open the form from
+Solution Explorer to get the designer. For the web, choose *MVC*, *Razor Pages*
+or *Blazor*.
+
+---
+
+## Keyboard shortcuts
+
+Defaults of the **Basalt** scheme. "Ctrl" is **Cmd on macOS**, except for the
+completion keys (member list and signature help), which stay on Control. Where the Visual
+Studio (VS) or VS Code scheme differs, the table says so. Every shortcut can be
+changed in Settings > Keyboard.
+
+| Action | Shortcut |
+|---|---|
+| New Solution / Open / Save / Save All / Close Document | Ctrl+Shift+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S / Ctrl+W |
+| Undo / Redo | Ctrl+Z / Ctrl+Shift+Z (VS: Ctrl+Y) |
+| Cut / Copy / Paste | Ctrl+X / Ctrl+C / Ctrl+V |
+| Find / Replace in the file | Ctrl+F / Ctrl+H (then F3, Shift+F3) |
+| Find in Files | Ctrl+Shift+F |
+| Toggle Comment | Ctrl+/ |
+| Command Palette | Ctrl+Shift+P |
+| Settings | Ctrl+, |
+| Member list / Signature help | Ctrl+Space or Ctrl+J / Ctrl+Shift+Space |
+| Expand a snippet | shortcut word, then Tab Tab |
+| Go to Definition / Find References | F12 / Shift+F12 |
+| Go to File | Ctrl+Shift+O (VS Code: Ctrl+P) |
+| Go to Symbol in Solution / Go to Line | Ctrl+T / Ctrl+G |
+| Navigate Backward / Forward | Ctrl+- / Ctrl+Shift+- |
+| Rename / Quick Actions | F2 / Ctrl+. |
+| Extract Method / Extract Variable / Inline Variable | Ctrl+Alt+M / Ctrl+Alt+V / Ctrl+Alt+N |
+| Sort and Remove Imports | Ctrl+Alt+O |
+| Show Generated Code | Ctrl+Alt+G |
+| Build Solution | F6 (VS: Ctrl+Shift+B) |
+| Start Debugging / Start Without Debugging | F5 / Ctrl+F5 |
+| Stop Debugging | Shift+F5 |
+| Step Over / Step Into / Step Out | F10 / F11 / Shift+F11 |
+| Toggle Breakpoint / Run to Cursor | F9 / Ctrl+F10 |
+| Run All Tests | Ctrl+Alt+T |
+| New Terminal | Ctrl+` |
+| Immediate window | Ctrl+Alt+I |
+| Assistant | Ctrl+Shift+A |
+| Database Explorer / New Query | Ctrl+Alt+S / Ctrl+Alt+Q |
+| View Code / View Designer (forms and windows) | F7 / Shift+F7 |
+| Run the query (in a query tab) | F5 or Ctrl+Enter |
+| Designer: Actual Size / Fit to Window / Select Container | Ctrl+0 / Ctrl+9 / Esc |
+
+Commands with no default key (use the menu or the palette, or bind one): Break
+All, Continue as a separate command, Rebuild and Clean, Run Selected / Failed
+Tests, Extract Constant, Change Signature, Make executable, Object Browser,
+Format Selection.
+
+Two-step shortcuts such as Ctrl+K, Ctrl+D (Format Document), Ctrl+K, Ctrl+I
+(Quick Info) and Ctrl+M, Ctrl+M (fold) are listed in the keyboard settings, but
+the key handler matches single key presses only, so they do not fire from the
+keyboard. Use Edit > Format Document or the palette. In the VS Code scheme
+Format Document is Ctrl+Shift+I and works.
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| "The debugger (netcoredbg) was not found" | Install it with `build/setup-dev.sh` / `build/setup-dev.ps1`, or set `BASALT_NETCOREDBG`, or put it on `PATH`. The program runs without debugging meanwhile. |
+| `build/setup-dev.sh --check` shows `MISSING` | Read the "Needed for" column. Only the .NET SDK and git are needed for everything; the rest are optional. |
+| No MSBuild or SDK found when opening a solution | Install the .NET 10 SDK and make sure `dotnet --version` works in a terminal. |
+| Windows Forms or web project cannot restore Basalt packages | The project refers to the checkout's `src`. Set `BASALT_FORMS_PATH`, `BASALT_RAZORVB_PATH` or `BASALT_WINFORMS_PACKAGES` (see [Install](#install-or-build-from-source)). |
+| "The terminal could not start" | The configured shell must exist; clear Settings > Terminal > Shell to use the default. |
+| A console program started with F5 sits at its start and does not run | It waits for the debugger to attach, for at most 30 seconds, then goes on without it. If the debugger could not attach, the failure is reported. Check that netcoredbg is found (see above) and press Shift+F5 before trying again. |
+| `Console.ReadLine` gets no input | Only a console program run in a Terminal tab (Ctrl+F5 or F5) can be typed to. A program with a window, or a web project, writes to Output and has no input. |
+| Launch settings are ignored | For a Visual Basic project the file is `My Project/launchSettings.json`, not `Properties/`. Basalt moves an older `Properties/launchSettings.json` there when it does not clash with an existing file. |
+| A watch says it cannot evaluate an expression | netcoredbg evaluates C#, so only the Visual Basic that Basalt can translate works. See the debugger entry in [Known limitations of the IDE](#known-limitations-of-the-ide); try a simpler expression, or a member of a local. |
+| Immediate says statements cannot run | Not while debugging. Use `?expression`, or stop the session to run a statement in a separate process. |
+| A key does nothing | Check Settings > Keyboard for conflicts and for the scheme in force; chords do not work (see above). |
+| Settings misbehave | Close the IDE and delete or fix `~/.basalt/settings.json`; an unreadable file is replaced by the defaults. |
+| API key not remembered on Linux | Keys are kept under `~/.basalt/keys`; check that folder is writable. |
+
+---
+
+## Known limitations of the IDE
+
+- **Visual Basic only.** C# has no language service in Basalt: `.cs` files get
+  colour and nothing else. `.csproj` and `.sln` / `.slnx` files do open.
+- **Two-step (chord) shortcuts** do not fire; see
+  [Keyboard shortcuts](#keyboard-shortcuts).
+- **Terminal** shows text only: no colours, no full-screen programs. The Windows
+  terminal is built on ConPTY.
+- **Immediate window** does not run statements while debugging.
+- **Debugger.** These were measured on netcoredbg 3.2.0.
+  - netcoredbg evaluates C#, so Basalt translates Visual Basic expressions
+    before it sends them. Many forms work (member access, calls, arithmetic,
+    comparisons, `Mod`, `Not`, `AndAlso`, indexing, `Me`), but `If(...)`
+    ternaries, `Is Nothing` comparisons, casts, `TypeOf`,
+    LINQ and the members of arrays cannot be evaluated in watches. When the
+    debugger refuses an expression it says so.
+  - After an unhandled exception the program's exit code is reported as 0.
+  - Breakpoint conditions go through a simpler translator than watches do. It
+    rewrites the comparisons people usually type (`i = 4`, `<>`, `AndAlso`) and
+    passes anything else through untouched.
+  - Edit and Continue is not available, and the value of a variable cannot be
+    changed in a compiled program.
+  - The Terminal run and debug of console programs was verified on the
+    macOS and Linux (pseudo-terminal) paths. Windows uses ConPTY for the same
+    thing, but it has not been run in this round.
+  - netcoredbg is not bundled with the IDE.
+- **Windows Forms** is the public WinForms API on Avalonia and SkiaSharp. Not
+  supported: native window handles, `WndProc` / `DefWndProc`, `CreateParams`,
+  P/Invoke needing an `HWND`, ActiveX / COM controls (`AxHost`) and the Internet
+  Explorer based `WebBrowser`. Whether a Visual Studio project needs retargeting
+  is judged from the project XML alone; `UseWindowsForms` that comes only from
+  `Directory.Build.props` is not seen. The IDE designer works on the Visual Basic
+  `.vb` / `.Designer.vb` pair.
+- **Refactorings** work on Visual Basic projects.
+- **No installer or release.** Build from source; macOS has a bundle script.
+- **Packages are not on nuget.org.** See Part II.
+- **Visual Basic 6 and QuickBASIC.** The code for both is in the repository, but
+  the IDE does not offer them (a build-time switch that is off by default, with
+  no setting for it). Treat them as experimental.
+- **Database client** lists the four providers above; other databases are
+  "not supported yet".
+- **Extensions** for Rider, Visual Studio and VS Code have not been run end to
+  end inside their editors yet; see `extensions/README.md`.
+
+---
+
+## FAQ
+
+**Do I need Windows?** No. Basalt runs on macOS, Windows and Linux, and so do
+the Windows Forms projects it designs.
+
+**Can it open my Visual Studio solution?** It opens `.sln`, `.slnx`, `.vbproj`
+and `.csproj`. Visual Basic projects are the supported case. A Visual Studio
+Windows Forms project is retargeted at build time off Windows, without editing
+your files.
+
+**Is it the same compiler as Visual Studio's?** The build is `dotnet build`
+with the .NET SDK, and IntelliSense is Roslyn, which is also what Visual Studio
+uses for Visual Basic.
+
+**Can my console program read from the keyboard?** Yes. Run it with Ctrl+F5 or
+debug it with F5 and it runs in a Terminal tab, where what you type reaches
+`Console.ReadLine`. Programs with a window, and web projects, write to Output.
+
+**Do I have to install a debugger?** For debugging, yes: netcoredbg, which the
+setup script installs. Everything else works without it.
+
+**Can I use my Visual Studio keys?** Choose the Visual Studio scheme in
+Settings > Keyboard. Most defaults already match.
+
+**Where are my settings?** `~/.basalt/settings.json` (`%USERPROFILE%\.basalt\`
+on Windows). Debugger copies live in `~/.basalt/debugger/`, API keys on
+Windows and Linux in `~/.basalt/keys`.
+
+**Does the assistant send my code anywhere?** Only to the provider you chose
+(Claude, Gemini or ChatGPT), only when you ask, and with the open file and
+errors only if those switches are on. Inline suggestions are off by default.
+
+**Is there VB6 support?** Not in the IDE you get by default; see the
+limitations.
+
+**Are the packages on nuget.org?** Not yet. Part II explains how to build and
+use them locally.
+
+---
+
+# Part II: Razor for Visual Basic, Blazor and the packages
+
+Everything below works without the IDE, in Rider, Visual Studio and VS Code.
 
 ---
 
@@ -121,7 +693,7 @@ compiles at build time, and it is served by stock ASP.NET Core MVC.
 > **Not on nuget.org yet.** All four packages build and are verified end to end
 > — `build/pack.sh` installs the templates, creates a project through
 > `dotnet new`, and checks the views really became classes (see
-> [Building the packages](#building-the-packages)). They have not been
+> [Building the packages and the extensions](#building-the-packages-and-the-extensions)). They have not been
 > published. Until they are, build them locally and restore from `artifacts/`:
 >
 > ```bash
@@ -685,7 +1257,7 @@ alone — a template is unparseable most of the time it is being typed into.
 | Rider | Reformat Code (⌥⌘L), and while typing |
 | Visual Studio | Format Document (Ctrl+K, Ctrl+D), and while typing |
 | VS Code | on save and while typing, enabled by the extension for these files only |
-| Basalt | ⌥⌘D, on save, and while typing |
+| Basalt | Edit > Format Document, on save, and while typing |
 
 Both `.vbhtml` and `.vbpage` are handled.
 
@@ -753,38 +1325,21 @@ verifies it by building for the other architecture and reading back what
 `PRINT`, `INPUT`, `GOTO`, `GOSUB`, `DIM`, `WHILE`/`WEND`, `SELECT CASE`, `SUB`
 and `FUNCTION` are understood, with editor support alongside the rest.
 
+The IDE you get by default does not offer QuickBASIC (or Visual Basic 6): both
+sit behind a feature switch, `IdeFeatures.LegacyBasic` in `src/Basalt.Core`,
+that is off. The code behind it is unchanged, builds, and is tested; treat it as
+experimental.
+
 See [`src/Basalt.QuickBasic/CROSS-COMPILING.md`](src/Basalt.QuickBasic/CROSS-COMPILING.md)
 for which targets build out of the box and which need a sysroot first.
 
 ---
 
-## Building from source
+## Building the packages and the extensions
 
-Requires the **.NET 10 SDK**. For the IDE extensions: **JDK 17+** for Rider (the
-Gradle wrapper is included — use `./gradlew`, no separate Gradle install) and
-**Node 18+** for VS Code.
-
-```bash
-git clone https://github.com/montagnamarco/basalt.git
-cd basalt
-dotnet build Basalt.slnx
-dotnet test tests/Basalt.Tests
-dotnet run --project src/Basalt.Shell     # the IDE
-```
-
-After restoring the checkout, `build/acceptance.ps1` runs the core, HTTP and
-browser test projects sequentially and writes a Markdown report, logs, TRX
-results and browser screenshots under `artifacts/acceptance/`. Run it with
-PowerShell 5.1 on Windows or `pwsh` on other platforms. Use `-Suite Web,Browser`
-to select projects, or `-List` to show the selection without running tests.
-Use `-NoBuild` only after building the intended test binaries, for example when
-the running IDE locks its executable and only its DLL has been rebuilt.
-`-Filter` passes an explicit test filter to the selected projects and records
-that narrower scope in the report.
-It installs nothing: browser tests use installed Edge on Windows or Playwright
-Chromium, and debugger tests need netcoredbg. Exit 1 means failure; exit 2 means
-incomplete coverage because tests were skipped. A passing selected run does
-not establish every IDE journey or equivalence with Visual Studio.
+Extensions need **Node 20+** (VS Code), **JDK 21** (Rider; the Gradle wrapper is
+included, so no separate Gradle install) or the "Visual Studio extension
+development" workload (Visual Studio).
 
 The Rider plugin, server included:
 
@@ -795,40 +1350,56 @@ cd extensions/rider-vbrazor && ./gradlew buildPlugin
 ```
 
 The zip lands in `build/distributions/`. Substitute your own runtime identifier
-for `osx-arm64` as needed.
+for `osx-arm64`. VS Code: `npm ci && npm run compile` in
+`extensions/vscode-vbrazor`.
+
+`build/acceptance.ps1` runs the core, HTTP and browser test projects
+sequentially and writes a Markdown report, logs, TRX results and browser
+screenshots under `artifacts/acceptance/`. Run it with PowerShell 5.1 on Windows
+or `pwsh` elsewhere; `-Suite Web,Browser` selects projects, `-List` shows the
+selection without running tests, and `-Filter` passes an explicit test filter to
+the selected projects and records that narrower scope in the report. Use
+`-NoBuild` only after building the intended test binaries, for example when the
+running IDE locks its executable and only its DLL has been rebuilt. It installs
+nothing: browser tests use installed Edge on Windows or Playwright Chromium, and
+debugger tests need netcoredbg. Exit 1 means failure; exit 2 means incomplete
+coverage because tests were skipped. A passing selected run does not establish
+every IDE journey or equivalence with Visual Studio.
 
 ### Building the packages
 
 ```bash
-build/pack.sh
+build/pack.sh              # macOS, Linux
+build/pack.ps1             # Windows
 ```
 
-Packs the NuGet packages into `artifacts/` — the four Razor for VB packages,
-`Basalt.Drawing` and `Basalt.WinForms` — then proves they work. It
-reads the template package's own layout, installs it, creates a project through
+Packs the NuGet packages into `artifacts/` (the four Razor for VB packages,
+`Basalt.Drawing` and `Basalt.WinForms`), then proves they work. It reads the
+template package's own layout, installs it, creates a project through
 `dotnet new mvc -lang VB`, restores it **by version from a feed** with no
 reference to this repository's sources, builds it, and checks the `.vbhtml`
-views actually became classes in the assembly.
+views became classes in the assembly. The two Windows Forms packages are checked
+the same way with a throwaway `net10.0` VB project that references
+`Basalt.WinForms`.
 
-Those last checks are the reason the script exists. A package can pack cleanly,
-restore cleanly and still produce nothing — the generator flows through a
+Those checks are the reason the script exists. A package can pack cleanly,
+restore cleanly and still produce nothing: the generator flows through a
 dependency but the MSBuild props that hand it the views do not, so the project
-builds green with no views in it and says nothing about why. A template package
-can pack cleanly and put its templates one folder deeper than `dotnet new`
-looks, installing successfully and offering nothing. Both of those happened
-here, and asserting only that the build succeeded missed both.
+builds green with no views in it. A template package can put its templates one
+folder deeper than `dotnet new` looks, installing successfully and offering
+nothing. Both happened here, and asserting only that the build succeeded missed
+both.
 
 The template check reads the package rather than asking `dotnet new` what it
 offers: templates left over from an earlier run answer that question, so the
-check passed with the layout deliberately broken. It was rewritten and then
+check once passed with the layout deliberately broken. It was rewritten and then
 verified by breaking the layout again.
 
-The two Windows Forms packages are checked the same way, by version from the
-feed: a throwaway net10.0 VB project with a form, a button and a `MessageBox`
-references `Basalt.WinForms` and must build. `build/pack.sh --winforms-only`
-packs and checks just those two, without installing the templates.
-
-`build/pack.sh --skip-test` packs without verifying. Publishing:
+`build/pack.sh --skip-test` packs without verifying; `--winforms-only` packs and
+checks just the two Windows Forms packages without installing the templates.
+Nothing is published and the packages are not on nuget.org. For a maintainer who
+decides to publish them, the command is the usual one, with your own key in
+place of the placeholder:
 
 ```bash
 dotnet nuget push "artifacts/*.nupkg" -s https://api.nuget.org/v3/index.json -k YOUR_KEY
@@ -842,9 +1413,10 @@ The IDE:
 
 | Path | |
 |---|---|
-| `src/Basalt.Shell` | the IDE itself — editor, panels, menus, terminals |
-| `src/Basalt.Workspace` | projects, MSBuild, Roslyn, Git |
-| `src/Basalt.Designer` | the Avalonia visual designer |
+| `src/Basalt.Shell` | the IDE itself: editor, panels, menus, terminals |
+| `src/Basalt.Workspace` | projects, MSBuild, Roslyn, Git, debugger, assistant |
+| `src/Basalt.Designer` | the Avalonia visual designer and solution templates |
+| `src/Basalt.Data` | the database client's providers |
 | `src/Basalt.Core`, `src/Basalt.Extensibility` | shared model and extension points |
 
 Razor for Visual Basic:
@@ -852,7 +1424,7 @@ Razor for Visual Basic:
 | Path | |
 |---|---|
 | `src/Basalt.Razor.Vb` | parser, view and component writers, source mappings |
-| `src/Basalt.Razor.Vb.AspNetCore` | the ASP.NET Core integration — `AddVbViews` |
+| `src/Basalt.Razor.Vb.AspNetCore` | the ASP.NET Core integration, `AddVbViews` |
 | `src/Basalt.Razor.Vb.Generator` | the build-time generator entry point |
 | `src/Basalt.Razor.Vb.LanguageServer` | the LSP server all four editors run |
 | `src/Basalt.Razor.Vb.Hosting` | `.vbpage` pages and on-the-fly compilation |
@@ -860,12 +1432,22 @@ Razor for Visual Basic:
 | `templates/` | `dotnet new` templates |
 | `samples/` | a working MVC site and a `.vbpage` site |
 
+Windows Forms for .NET on every desktop system:
+
+| Path | |
+|---|---|
+| `src/Basalt.Forms`, `src/Basalt.Forms.Primitives`, `src/Basalt.Forms.VisualBasic` | the `System.Windows.Forms` API on Avalonia |
+| `src/Basalt.Drawing` | `System.Drawing` on SkiaSharp |
+| `src/Basalt.WinForms` | the package that carries them; see its `PACKAGE.md` |
+| `src/Basalt.Accessibility`, `src/Basalt.Windows.Extensions` | the smaller assemblies of the same package |
+
 And the rest:
 
 | Path | |
 |---|---|
-| `src/Basalt.QuickBasic` | the QuickBASIC dialect, interpreter and native compiler |
-| `tests/` | 2,226 tests |
+| `src/Basalt.QuickBasic`, `src/Basalt.Vb6`, `src/Basalt.Vb6.Generator` | the QuickBASIC and Visual Basic 6 dialects: experimental and not offered by the IDE by default (see [`CROSS-COMPILING.md`](src/Basalt.QuickBasic/CROSS-COMPILING.md)) |
+| `tests/` | the test projects: `Basalt.Tests`, `Basalt.Web.Tests`, `Basalt.E2E.Tests` and the Drawing and Forms suites |
+| `build/` | setup, pack, bundle and acceptance scripts |
 
 ---
 
@@ -884,7 +1466,7 @@ validation are stock ASP.NET Core. The integration is three registrations. There
 is nothing to keep in step with each .NET release.
 
 **Tests that would fail.** A test that passes both with and without the fix
-proves nothing — that mistake has been made in this repository and caught by
+proves nothing; that mistake has been made in this repository and caught by
 re-introducing the defect on purpose. Rendering is verified by rasterising and
 looking at the pixels, because numbers agree with each other while the screen
 shows something else.
@@ -898,18 +1480,18 @@ shows something else.
 - **Tag helpers**: `<vc:name>` view component tags are not generated yet, and
   attribute values are matched by name only (a `[type=text]` selector in
   `[HtmlTargetElement]` is treated as "has a type attribute").
-- **The Visual Studio and VS Code extensions** are built from the same server as
-  the Rider plugin but have had less use. Reports are welcome.
-- **`.vbpage` pages** are under active development — the newest part of the
-  repository, and the one whose shape is most likely to still change.
+- **The Visual Studio, VS Code and Rider extensions** have not been run end to
+  end inside their editors yet (see `extensions/README.md`).
+- **`.vbpage` pages** are under active development: the newest part of the
+  repository, and the one whose shape is most likely to change.
 - **Blazor components** cover routing, parameters, event handlers, child
   components, `ChildContent` and named fragments, `@bind`, cascading values
   and generics. A generic component's type arguments are inferred, except from
   a value naming a render-tree local such as a loop variable, where the tag
   has to write them. The editor sees another component's changed parameters
   once the project's compilation next changes.
-- **The designer** is missing distance guides while dragging, a grid row/column
-  overlay, and a colour picker in the property grid.
+- The IDE's own limits are in
+  [Known limitations of the IDE](#known-limitations-of-the-ide).
 
 ---
 
@@ -918,14 +1500,16 @@ shows something else.
 Issues and pull requests are welcome at
 <https://github.com/montagnamarco/basalt>.
 
-A concrete failing case is worth more than a description of one — the view, the
+A concrete failing case is worth more than a description of one: the view, the
 line, and what you expected. Most of the subtle defects fixed here were found
 that way.
 
-Code and comments are written in English; user-facing strings are translatable.
+Code and comments are written in English; user-facing strings are translatable
+through `src/Basalt.Core/Localization`. Agents and contributors working in the
+repository should read [AGENTS.md](AGENTS.md) first.
 
 ---
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
