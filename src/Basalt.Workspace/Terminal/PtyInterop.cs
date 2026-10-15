@@ -49,6 +49,10 @@ internal static partial class UnixPty
     [LibraryImport("libc", SetLastError = true)]
     internal static partial int getpgid(int pid);
 
+    /// <summary>The terminal's foreground process group, or -1 when it is no session's controlling terminal.</summary>
+    [LibraryImport("libc", SetLastError = true)]
+    internal static partial int tcgetpgrp(int fd);
+
     /// <summary>
     /// TIOCSWINSZ would resize a live terminal, but ioctl is variadic and
     /// P/Invoke marshals its payload incorrectly on this platform: the call

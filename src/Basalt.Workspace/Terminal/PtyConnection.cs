@@ -37,10 +37,10 @@ public interface IPtyConnection : IDisposable
 /// <summary>
 /// Pseudo-terminal for macOS and Linux.
 ///
-/// Uses openpty plus a normal process launch rather than forkpty: forking a
-/// multi-threaded .NET process and not immediately calling exec can deadlock,
-/// because only the forking thread survives in the child while locks held by
-/// other threads stay locked forever.
+/// Uses openpty plus posix_spawn rather than forkpty: forking a multi-threaded
+/// .NET process and not immediately calling exec can deadlock, because only the
+/// forking thread survives in the child while locks held by other threads stay
+/// locked forever. The child gets a session of its own; see <see cref="UnixSpawn"/>.
 /// </summary>
 public sealed class UnixPtyConnection : IPtyConnection
 {
@@ -49,9 +49,10 @@ public sealed class UnixPtyConnection : IPtyConnection
 
     private readonly int _master;
     private readonly int _worker;
-    private readonly System.Diagnostics.Process _process;
+    private readonly ManualResetEventSlim _childEnded = new();
     private readonly CancellationTokenSource _reading = new();
     private readonly Lock _writeGate = new();
+    private readonly bool _runsShell;
     private bool _disposed;
 
     public UnixPtyConnection(
@@ -60,37 +61,43 @@ public sealed class UnixPtyConnection : IPtyConnection
         string workingDirectory,
         int columns = 80,
         int rows = 24,
-        IReadOnlyDictionary<string, string>? environment = null)
+        IReadOnlyDictionary<string, string>? environment = null,
+        bool runsShell = false)
     {
+        _runsShell = runsShell;
         var size = new UnixPty.WinSize { Cols = (ushort)columns, Rows = (ushort)rows };
 
         if (UnixPty.openpty(out _master, out _worker, IntPtr.Zero, IntPtr.Zero, ref size) != 0)
             throw new IOException(
                 $"Could not allocate a pseudo-terminal: {Marshal.GetLastWin32Error()}");
 
-        var startInfo = new System.Diagnostics.ProcessStartInfo(shellPath)
-        {
-            WorkingDirectory = workingDirectory,
-            UseShellExecute = false
-        };
-        foreach (var argument in arguments) startInfo.ArgumentList.Add(argument);
+        var childEnvironment = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+            childEnvironment[(string)entry.Key] = (string?)entry.Value ?? "";
 
         // TERM tells programs which escape sequences they may emit; xterm-256color
         // is what terminal emulators advertise and what our parser understands.
-        startInfo.Environment["TERM"] = "xterm-256color";
-        startInfo.Environment["COLORTERM"] = "truecolor";
-        startInfo.Environment["LINES"] = rows.ToString();
-        startInfo.Environment["COLUMNS"] = columns.ToString();
+        childEnvironment["TERM"] = "xterm-256color";
+        childEnvironment["COLORTERM"] = "truecolor";
+        childEnvironment["LINES"] = rows.ToString();
+        childEnvironment["COLUMNS"] = columns.ToString();
 
         if (environment is not null)
-            foreach (var (key, value) in environment) startInfo.Environment[key] = value;
+            foreach (var (key, value) in environment) childEnvironment[key] = value;
 
-        RedirectToWorkerTerminal(startInfo);
+        try
+        {
+            ProcessId = UnixSpawn.Start(shellPath, arguments, workingDirectory, childEnvironment, _worker, _master);
+        }
+        catch
+        {
+            UnixPty.close(_worker);
+            UnixPty.close(_master);
+            throw;
+        }
 
-        _process = new System.Diagnostics.Process { StartInfo = startInfo, EnableRaisingEvents = true };
-        _process.Exited += (_, _) => Exited?.Invoke(this, _process.ExitCode);
-        _process.Start();
-        ProcessId = _process.Id;
+        // Waited for on a thread of its own: the child is not a .NET Process, so nothing else collects its status.
+        new Thread(WaitForChild) { IsBackground = true, Name = "Terminal child " + ProcessId }.Start();
 
         // The worker end belongs to the child now: holding it open here would
         // stop us from ever seeing end-of-file when the child exits.
@@ -101,16 +108,72 @@ public sealed class UnixPtyConnection : IPtyConnection
 
     // A disposed connection has released its process: asking it for HasExited
     // throws, so a closed terminal reports itself as not running instead.
-    public bool IsRunning => !_disposed && !_process.HasExited;
+    public bool IsRunning => !_disposed && !_childEnded.IsSet;
 
-    /// <summary>
-    /// The child's id. /bin/sh replaces itself with the program, so this is
-    /// the program's own pid, not the shell's.
-    /// </summary>
+    /// <summary>The child's id: the program's own, and the id of its session and process group.</summary>
     public int ProcessId { get; }
 
+    /// <summary>Waits for the child to end and reports its exit code.</summary>
+    private void WaitForChild()
+    {
+        int code;
+
+        while (true)
+        {
+            var result = UnixSpawn.waitpid(ProcessId, out var status, 0);
+
+            if (result == ProcessId)
+            {
+                code = UnixSpawn.ExitCodeOf(status);
+                break;
+            }
+
+            // Interrupted by a signal: wait again. Anything else (the status was collected elsewhere) ends it.
+            if (result < 0 && Marshal.GetLastPInvokeError() == 4) continue;
+
+            code = -1;
+            break;
+        }
+
+        EventHandler<int>? handlers;
+        lock (_exitGate)
+        {
+            _exitCode = code;
+            handlers = _exited;
+        }
+
+        _childEnded.Set();
+        handlers?.Invoke(this, code);
+    }
+
     public event EventHandler<string>? OutputReceived;
-    public event EventHandler<int>? Exited;
+
+    private readonly Lock _exitGate = new();
+    private EventHandler<int>? _exited;
+    private int? _exitCode;
+
+    /// <summary>
+    /// Raised once when the child ends. A handler added after that is called at once: a program that ends
+    /// straight away can be gone before its tab has subscribed.
+    /// </summary>
+    public event EventHandler<int>? Exited
+    {
+        add
+        {
+            int? already;
+            lock (_exitGate)
+            {
+                _exited += value;
+                already = _exitCode;
+            }
+
+            if (already is { } code) value?.Invoke(this, code);
+        }
+        remove
+        {
+            lock (_exitGate) _exited -= value;
+        }
+    }
 
     public void Write(string text)
     {
@@ -142,11 +205,78 @@ public sealed class UnixPtyConnection : IPtyConnection
     public int RequestedRows { get; private set; }
 
     /// <summary>
-    /// Writes the interrupt character into the terminal rather than signalling
-    /// the shell directly, so the foreground job receives it, which is what
-    /// pressing Ctrl+C in a terminal actually does.
+    /// Writes the interrupt character into the terminal, which turns it into SIGINT for the foreground job.
     /// </summary>
-    public void Interrupt() => Write(InterruptCharacter);
+    /// <remarks>
+    /// The child opens the terminal as the leader of its own session, so it is the session's controlling
+    /// terminal and the kernel does the rest: SIGINT only when the program has not asked for raw input, as ssh
+    /// or a program reading Ctrl+C as a key does. Should a system not hand over the terminal that way (no
+    /// foreground group), the signal is sent from here, off the interface thread, to what the foreground job
+    /// would be: the program and what it started, or for a shell what the shell started, never the shell.
+    /// </remarks>
+    public void Interrupt()
+    {
+        Write(InterruptCharacter);
+
+        if (!IsRunning || UnixPty.tcgetpgrp(_master) > 0) return;
+
+        var root = ProcessId;
+        var includeRoot = !_runsShell;
+        _ = Task.Run(() =>
+        {
+            foreach (var target in ForegroundOf(root, includeRoot)) UnixPty.kill(target, UnixPty.SIGINT);
+        });
+    }
+
+    /// <summary>The process and everything it started, read from ps; the root only when asked for.</summary>
+    internal static IReadOnlyList<int> ForegroundOf(int root, bool includeRoot)
+    {
+        var children = new Dictionary<int, List<int>>();
+
+        try
+        {
+            using var ps = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ps", ["-A", "-o", "pid=,ppid="])
+            {
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            });
+
+            if (ps is null) return includeRoot ? [root] : [];
+
+            var output = ps.StandardOutput.ReadToEnd();
+            ps.WaitForExit(2000);
+
+            foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var fields = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (fields.Length < 2 || !int.TryParse(fields[0], out var pid) || !int.TryParse(fields[1], out var parent)) continue;
+
+                if (!children.TryGetValue(parent, out var list)) children[parent] = list = [];
+                list.Add(pid);
+            }
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+        {
+            // Without ps only the program itself can be reached.
+        }
+
+        var found = new List<int>();
+        if (includeRoot) found.Add(root);
+
+        var pending = new Queue<int>([root]);
+        while (pending.TryDequeue(out var next))
+        {
+            if (!children.TryGetValue(next, out var list)) continue;
+
+            foreach (var child in list.Where(child => !found.Contains(child) && child != root))
+            {
+                found.Add(child);
+                pending.Enqueue(child);
+            }
+        }
+
+        return found;
+    }
 
     private async Task PumpOutputAsync()
     {
@@ -177,30 +307,6 @@ public sealed class UnixPtyConnection : IPtyConnection
         }
     }
 
-    /// <summary>
-    /// Points the child standard streams at the worker end of the terminal.
-    ///
-    /// .NET offers no supported way to hand a raw file descriptor to a child,
-    /// so /bin/sh performs the redirection with its own syntax and then replaces
-    /// itself with the real command, leaving no extra process behind.
-    /// </summary>
-    private void RedirectToWorkerTerminal(System.Diagnostics.ProcessStartInfo startInfo)
-    {
-        var command = startInfo.FileName;
-        var arguments = startInfo.ArgumentList.ToList();
-        var quoted = string.Join(' ', new[] { command }.Concat(arguments).Select(Quote));
-
-        startInfo.FileName = "/bin/sh";
-        startInfo.ArgumentList.Clear();
-        startInfo.ArgumentList.Add("-c");
-        startInfo.ArgumentList.Add($"exec {quoted} <&{_worker} >&{_worker} 2>&{_worker}");
-    }
-
-    private static string Quote(string value) =>
-        value.Length > 0 && value.All(c => char.IsLetterOrDigit(c) || c is '/' or '.' or '-' or '_')
-            ? value
-            : "'" + value.Replace("'", "'\\''") + "'";
-
     public void Dispose()
     {
         if (_disposed) return;
@@ -215,35 +321,18 @@ public sealed class UnixPtyConnection : IPtyConnection
         // closing the IDE with a terminal open hung. Once the shell's group
         // is gone the slave side closes, read() returns, and close() is
         // immediate.
-        try
+        // The child leads its own group: the shell and the commands in front of it. Jobs in the background keep
+        // running, as they do when a real terminal closes. Once the child has ended its id is free again and may
+        // name an unrelated group, so nothing is signalled then.
+        if (!_childEnded.IsSet && ProcessId != UnixPty.getpgid(Environment.ProcessId))
         {
-            if (!_process.HasExited)
-            {
-                // Signalling the group, not the pid: /bin/sh launched the shell
-                // through exec, so the shell may sit in a different process than
-                // the one .NET is holding. A negative pid means "the group".
-                // Never our own group, though: when the shell was not given a
-                // session of its own it shares the IDE's, and signalling it
-                // would take the IDE down with it.
-                var group = UnixPty.getpgid(_process.Id);
-                var ownGroup = UnixPty.getpgid(Environment.ProcessId);
-                var target = group > 0 && group != ownGroup ? -group : _process.Id;
-
-                UnixPty.kill(target, UnixPty.SIGHUP);
-                if (!_process.WaitForExit(300)) UnixPty.kill(target, UnixPty.SIGKILL);
-
-                // Last resort, so a stuck child never outlives the IDE.
-                if (!_process.WaitForExit(300)) _process.Kill(entireProcessTree: true);
-            }
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or SystemException)
-        {
-            // Already gone.
+            UnixPty.kill(-ProcessId, UnixPty.SIGHUP);
+            if (!_childEnded.Wait(300)) UnixPty.kill(-ProcessId, UnixPty.SIGKILL);
+            _childEnded.Wait(300);
         }
 
         UnixPty.close(_master);
 
-        _process.Dispose();
         _reading.Dispose();
     }
 }

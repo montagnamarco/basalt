@@ -271,7 +271,7 @@ public sealed class TerminalView : UserControl, IDisposable
 
         // An interactive login shell prints a prompt and reads its startup
         // files, which is what makes the panel behave like a real terminal.
-        return new UnixPtyConnection(chosen, ["-i"], workingDirectory);
+        return new UnixPtyConnection(chosen, ["-i"], workingDirectory, runsShell: true);
     }
 
     /// <summary>The user's configured shell, falling back to a POSIX default.</summary>
@@ -326,7 +326,10 @@ public sealed class TerminalView : UserControl, IDisposable
         if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key is >= Key.A and <= Key.Z)
         {
             var control = (char)(e.Key - Key.A + 1);
-            _pty.Write(control.ToString());
+
+            // Ctrl+C interrupts: the connection also signals the program when the terminal cannot.
+            if (control == '\u0003') _pty.Interrupt();
+            else _pty.Write(control.ToString());
             e.Handled = true;
             return;
         }
