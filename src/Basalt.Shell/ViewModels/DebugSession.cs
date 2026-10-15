@@ -23,6 +23,9 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
 
     private IDebugSessionService? _service;
 
+    /// <summary>Which exceptions stop the program; null until the window says, so a session nobody configured sends nothing.</summary>
+    private ExceptionBreaks? _exceptionBreaks;
+
     /// <summary>Whether a program is being debugged.</summary>
     public bool IsRunning => _service is { IsRunning: true };
 
@@ -34,6 +37,18 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
 
     /// <summary>The exception the program is stopped on, "Type: message", or null when the stop is not one.</summary>
     public string? StoppedException => IsPaused ? _service?.StoppedException : null;
+
+    /// <summary>
+    /// Whether the stop is on an exception that was thrown (and may yet be caught), as opposed to one nothing
+    /// handled. Only meaningful while <see cref="StoppedException"/> is not null.
+    /// </summary>
+    public bool StoppedOnThrow => IsPaused && _service?.StoppedOnThrow == true;
+
+    /// <summary>
+    /// Whether stopping the session lets the program go on running: true for a process the user attached to,
+    /// which the debugger detaches from, false for a program the IDE launched, which ends with the session.
+    /// </summary>
+    public bool DetachesOnStop => _service is { DetachesOnStop: true };
 
     /// <summary>The frame the user is looking at, which may not be the innermost.</summary>
     public int SelectedFrame { get; set; }
@@ -147,6 +162,30 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
         await PushAsync(filePath, ct).ConfigureAwait(true);
     }
 
+    /// <summary>
+    /// Chooses which exceptions stop the program, now if a session is running and for every session after.
+    /// Called on the interface thread; the service sends it on the adapter's connection under its own guard.
+    /// </summary>
+    public async Task SetExceptionBreaksAsync(ExceptionBreaks breaks, CancellationToken ct = default)
+    {
+        _exceptionBreaks = breaks;
+
+        // Read once: the session can end on another thread between the check and the call.
+        var service = _service;
+
+        if (service is null) return;
+
+        try
+        {
+            await service.SetExceptionBreaksAsync(breaks, ct).ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or OperationCanceledException)
+        {
+            // The session ended meanwhile, or the adapter refused: the choice is kept for the next session.
+            if (ex is not OperationCanceledException) Failed?.Invoke(this, ex.Message);
+        }
+    }
+
     private async Task PushAsync(string filePath, CancellationToken ct)
     {
         BreakpointsChanged?.Invoke(this, filePath);
@@ -176,8 +215,13 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
     /// Fails with a message rather than an exception when the debugger is not
     /// installed, since that is a setup problem the user can act on.
     /// </summary>
+    public Task StartAsync(
+        string assemblyPath, string? workingDirectory = null, CancellationToken ct = default) =>
+        StartAsync(assemblyPath, LaunchOptions.In(workingDirectory), ct);
+
+    /// <summary>Starts debugging with the arguments and environment of the project's launch profile.</summary>
     public async Task StartAsync(
-        string assemblyPath, string? workingDirectory = null, CancellationToken ct = default)
+        string assemblyPath, LaunchOptions options, CancellationToken ct = default)
     {
         await StopAsync(ct).ConfigureAwait(true);
 
@@ -203,15 +247,19 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
             _service = new NetCoreDebugService(adapter);
         }
 
-        await StartWithAsync(_service, assemblyPath, workingDirectory, ct).ConfigureAwait(true);
+        await StartWithOptionsAsync(_service, assemblyPath, options, ct).ConfigureAwait(true);
     }
 
     /// <summary>
     /// Debugs a program already running, started by the IDE in its terminal so it can be typed to, and
     /// holding at its start until the debugger is attached (see DebuggerWaitHook).
     /// </summary>
-    /// <param name="programPath">The program's assembly, for reporting its paths as the IDE spells them.</param>
-    public async Task AttachAsync(int processId, string programPath, CancellationToken ct = default)
+    /// <param name="programPath">The program's assembly, for reporting its paths as the IDE spells them; null when it is not known.</param>
+    /// <param name="detachOnStop">
+    /// True for a process the user chose to attach to: stopping the session then lets it go on running. False for a
+    /// program the IDE started and ends itself.
+    /// </param>
+    public async Task AttachAsync(int processId, string? programPath, bool detachOnStop = false, CancellationToken ct = default)
     {
         await StopAsync(ct).ConfigureAwait(true);
 
@@ -227,7 +275,7 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
 
         var service = new NetCoreDebugService(adapter);
 
-        await StartWithAsync(service, (s, token) => ((NetCoreDebugService)s).AttachAsync(processId, programPath, token), ct)
+        await StartWithAsync(service, (s, token) => ((NetCoreDebugService)s).AttachAsync(processId, programPath, detachOnStop, token), ct)
             .ConfigureAwait(true);
     }
 
@@ -239,7 +287,12 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
     /// </summary>
     internal Task StartWithAsync(
         IDebugSessionService service, string assemblyPath, string? workingDirectory, CancellationToken ct = default) =>
-        StartWithAsync(service, (s, token) => s.LaunchAsync(assemblyPath, workingDirectory, token), ct);
+        StartWithOptionsAsync(service, assemblyPath, LaunchOptions.In(workingDirectory), ct);
+
+    /// <summary>As <see cref="StartWithAsync(IDebugSessionService, string, string?, CancellationToken)"/> with the launch profile's arguments and environment.</summary>
+    internal Task StartWithOptionsAsync(
+        IDebugSessionService service, string assemblyPath, LaunchOptions options, CancellationToken ct = default) =>
+        StartWithAsync(service, (s, token) => s.LaunchAsync(assemblyPath, options, token), ct);
 
     /// <summary>Connects a service to the session's events, sends the breakpoints and starts it the given way.</summary>
     private async Task StartWithAsync(
@@ -256,15 +309,22 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
         // Marshalled once here rather than in each subscriber: this is the
         // edge where the background thread ends, and a handler added later
         // would otherwise have to remember on its own.
-        _service.Paused += (_, frame) => OnUiThread(() => OnPaused(this, frame));
-        _service.Resumed += (_, _) => OnUiThread(() => OnResumed(this, EventArgs.Empty));
-        _service.Exited += (_, code) => OnUiThread(() => OnExited(this, code));
+        // Stops and resumes of a session that has been stopped or replaced are dropped: they arrive late, from the
+        // reader thread, and would set the frame of a session that is over (or of the one that took its place).
+        //
+        // Started, Faulted and Exited are dropped only when another session has taken its place: while the field is
+        // empty (the session was just stopped) the end of a service that raises Exited as it is disposed is still how the
+        // window learns the session is over, but a late Exited (the interpreter raises it from its own thread) must not
+        // end the layout of the session that replaced it.
+        _service.Paused += (_, frame) => OnUiThread(() => { if (ReferenceEquals(_service, service)) OnPaused(this, frame); });
+        _service.Resumed += (_, _) => OnUiThread(() => { if (ReferenceEquals(_service, service)) OnResumed(this, EventArgs.Empty); });
+        _service.Exited += (_, code) => OnUiThread(() => { if (IsCurrentOrNone(service)) OnExited(this, code); });
         _service.OutputReceived += (_, text) => OnUiThread(() => OutputReceived?.Invoke(this, text));
-        _service.Started += (_, _) => OnUiThread(() => Started?.Invoke(this, EventArgs.Empty));
+        _service.Started += (_, _) => OnUiThread(() => { if (IsCurrentOrNone(service)) Started?.Invoke(this, EventArgs.Empty); });
 
         if (_service is NetCoreDebugService netCore)
             netCore.DebugOutputReceived += (_, text) => OnUiThread(() => DebugOutputReceived?.Invoke(this, text));
-        _service.Faulted += (_, ex) => OnUiThread(() => Failed?.Invoke(this, ex.Message));
+        _service.Faulted += (_, ex) => OnUiThread(() => { if (IsCurrentOrNone(service)) Failed?.Invoke(this, ex.Message); });
 
         // Not marshalled: the interpreter blocks inside a statement waiting
         // for the answer, so posting to the interface thread and returning
@@ -274,6 +334,10 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
 
         foreach (var (file, list) in _breakpoints)
             await _service.SetBreakpointsAsync(file, list, ct).ConfigureAwait(true);
+
+        // Stored by the service now and sent when the adapter is configured, with the breakpoints.
+        if (_exceptionBreaks is { } exceptionBreaks)
+            await _service.SetExceptionBreaksAsync(exceptionBreaks, ct).ConfigureAwait(true);
 
         try
         {
@@ -454,15 +518,29 @@ public sealed class DebugSession : IDisposable, IImmediateDebugger
         string text, bool isExpression, CancellationToken ct) =>
         EvaluateReplAsync(text, isExpression, ct);
 
+    /// <summary>Whether no session is held or the held one is this service: an event of a replaced service is stale.</summary>
+    private bool IsCurrentOrNone(IDebugSessionService service) => _service is null || ReferenceEquals(_service, service);
+
     public async Task StopAsync(CancellationToken ct = default)
     {
-        if (_service is null) return;
+        // Taken and cleared before anything is awaited: stopping waits for the adapter to answer, and a second Stop
+        // (Shift+F5 twice, a failed start) or a session started meanwhile must find the field as it will stay, not
+        // this session's service to stop or dispose again.
+        var service = _service;
 
-        await _service.StopAsync(ct).ConfigureAwait(true);
+        if (service is null) return;
 
-        _service.Dispose();
         _service = null;
         CurrentFrame = null;
+
+        try
+        {
+            await service.StopAsync(ct).ConfigureAwait(true);
+        }
+        finally
+        {
+            service.Dispose();
+        }
     }
 
     public void Dispose()

@@ -1364,4 +1364,31 @@
   <data name="Menu_Format_CenterVertically" xml:space="preserve"><value>Vertically</value></data>
   <data name="Menu_Format_Order" xml:space="preserve"><value>Order</value></data>
   <data name="Menu_Format_LockControls" xml:space="preserve"><value>Lock Controls</value></data>
+  <data name="AttachProcess_Attach" xml:space="preserve"><value>Attach</value></data>
+  <data name="AttachProcess_ColumnId" xml:space="preserve"><value>ID</value></data>
+  <data name="AttachProcess_ColumnName" xml:space="preserve"><value>Process</value></data>
+  <data name="AttachProcess_ColumnTitle" xml:space="preserve"><value>Title</value></data>
+  <data name="AttachProcess_Looking" xml:space="preserve"><value>Looking for running .NET processes...</value></data>
+  <data name="AttachProcess_None" xml:space="preserve"><value>No running .NET process was found. A program started with DOTNET_EnableDiagnostics=0 cannot be listed.</value></data>
+  <data name="AttachProcess_Note" xml:space="preserve"><value>Stopping the debugger detaches from the process and leaves it running.</value></data>
+  <data name="AttachProcess_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="AttachProcess_Title" xml:space="preserve"><value>Attach to Process</value></data>
+  <data name="Debug_AlreadyDebugging" xml:space="preserve"><value>A debugging session is already running. Stop it before attaching to a process.</value></data>
+  <data name="Debug_Attaching" xml:space="preserve"><value>Attaching to {0} (process {1})...</value></data>
+  <data name="Debug_BannerExceptionThrown" xml:space="preserve"><value>Debugging — stopped on a thrown exception</value></data>
+  <data name="Debug_Detached" xml:space="preserve"><value>Detached from process {0}; it keeps running.</value></data>
+  <data name="Debug_LaunchProfileInvalid" xml:space="preserve"><value>{0} could not be used ({1}). The program starts without its launch profile.</value></data>
+  <data name="Debug_OutputExceptionThrown" xml:space="preserve"><value>[debug] Stopped on a thrown exception: {0}</value></data>
+  <data name="Debug_TestRunInProgress" xml:space="preserve"><value>A test run is in progress. Stop it before starting the debugger.</value></data>
+  <data name="ExceptionSettings_BreakUserUnhandled" xml:space="preserve"><value>Break on exceptions not handled in user code</value></data>
+  <data name="ExceptionSettings_BreakUserUnhandledHelp" xml:space="preserve"><value>Stops on an exception your own code does not handle, even when the framework catches it. An exception nothing handles always stops.</value></data>
+  <data name="ExceptionSettings_BreakWhenThrown" xml:space="preserve"><value>Break when any exception is thrown</value></data>
+  <data name="ExceptionSettings_BreakWhenThrownHelp" xml:space="preserve"><value>Stops at the Throw, even when a Try/Catch handles the exception.</value></data>
+  <data name="ExceptionSettings_Title" xml:space="preserve"><value>Exception Settings</value></data>
+  <data name="Menu_Debug_AttachToProcess" xml:space="preserve"><value>Attach to Process...</value></data>
+  <data name="Menu_Debug_ExceptionSettings" xml:space="preserve"><value>Exception Settings...</value></data>
+  <data name="Test_DebugAttachFailed" xml:space="preserve"><value>Could not attach to the test host (process {0}); the test run was stopped.</value></data>
+  <data name="Test_DebugHostTimeout" xml:space="preserve"><value>The test host did not report its process id within {0} seconds, so no debugger could attach. The test run was stopped.</value></data>
+  <data name="Test_DebugMultiTarget" xml:space="preserve"><value>{0} targets several frameworks, so there is more than one test host to attach to. Build it for a single TargetFramework to debug a test.</value></data>
+  <data name="Test_DebugTestingPlatform" xml:space="preserve"><value>{0} runs its tests with Microsoft.Testing.Platform, which has no test host to attach to. Debug Test works with VSTest projects; to debug this one, start it from Debug > Attach to Process.</value></data>
 </root>

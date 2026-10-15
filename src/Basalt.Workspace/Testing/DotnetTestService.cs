@@ -14,7 +14,7 @@ namespace Basalt.Workspace.Testing;
 /// fail in Italian, and it carries no stack trace to jump to. The report is
 /// the same XML whatever the language.
 /// </summary>
-public sealed class DotnetTestService : ITestService
+public sealed partial class DotnetTestService : ITestService
 {
     /// <summary>The session that retargets Windows desktop projects, shared with the build.</summary>
     public WindowsDesktopCompatibilitySession Compatibility { get; set; } = new();
@@ -256,8 +256,70 @@ public sealed class DotnetTestService : ITestService
         return [.. names.Distinct(StringComparer.Ordinal)];
     }
 
-    public async Task<IReadOnlyList<TestResult>> RunAsync(
-        string projectPath, string? filter = null, CancellationToken ct = default)
+    public Task<IReadOnlyList<TestResult>> RunAsync(
+        string projectPath, string? filter = null, CancellationToken ct = default) =>
+        RunCoreAsync(projectPath, filter, host: null, ct);
+
+    /// <summary>
+    /// Runs tests with the test host held until a debugger attaches, and says which process that is.
+    ///
+    /// The run is told to wait (VSTEST_HOST_DEBUG=1), set in the environment of the test process alone and never in
+    /// the IDE's own: the host then prints "Process Id: N, Name: dotnet" (measured with Microsoft.NET.Test.Sdk
+    /// 17.14, the line is not translated by DOTNET_CLI_UI_LANGUAGE) and waits for ever. <paramref name="onTestHost"/> is
+    /// called with that id, from a thread of the pool and at most once per run, and the host goes on when a debugger
+    /// has attached. A run in which nothing attaches never ends: cancel <paramref name="ct"/> to end it.
+    /// </summary>
+    public Task<IReadOnlyList<TestResult>> DebugAsync(
+        string projectPath, string? filter, Action<int> onTestHost, CancellationToken ct = default)
+    {
+        // One host per target framework would be held, each waiting for a debugger that attaches to one session:
+        // refused rather than left to hang on the second.
+        // Under Microsoft.Testing.Platform the project is the test program itself: there is no host that waits.
+        if (TestProjectDetector.UsesTestingPlatform(projectPath))
+            throw new InvalidOperationException(Localizer.Get(StringKeys.TestDebugTestingPlatform, Path.GetFileName(projectPath)));
+
+        if (TargetsSeveralFrameworks(projectPath))
+            throw new InvalidOperationException(Localizer.Get(StringKeys.TestDebugMultiTarget, Path.GetFileName(projectPath)));
+
+        return RunCoreAsync(projectPath, filter, new HostDebug(onTestHost), ct);
+    }
+
+    /// <summary>How long the test host may take to print its process id before the run is given up.</summary>
+    internal TimeSpan HostTimeout { get; set; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>Reads the host's process id from a line of output; replaced by the tests to keep the service from ever hearing it.</summary>
+    internal Func<string, int?> HostLineReader { get; set; } = HostProcessIdIn;
+
+    internal static bool TargetsSeveralFrameworks(string projectPath)
+    {
+        try
+        {
+            return Projects.VbProjectFile.Load(projectPath).GetProperty("TargetFrameworks") is { } frameworks
+                   && frameworks.Contains(';', StringComparison.Ordinal);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Xml.XmlException)
+        {
+            // Unreadable here is reported by the build that follows.
+            return false;
+        }
+    }
+
+    /// <summary>What a run held for a debugger adds: the host variable, and a listener for the host's process id.</summary>
+    private sealed record HostDebug(Action<int> OnTestHost);
+
+    /// <summary>The line the test host prints while it waits for a debugger.</summary>
+    [System.Text.RegularExpressions.GeneratedRegex(@"^\s*Process Id: (?<pid>\d+), Name: ", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+    private static partial System.Text.RegularExpressions.Regex HostProcessLine();
+
+    /// <summary>The process id in a test host's "Process Id: N, Name: dotnet" line, or null for any other line.</summary>
+    internal static int? HostProcessIdIn(string line) =>
+        HostProcessLine().Match(line) is { Success: true } match
+        && int.TryParse(match.Groups["pid"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var id)
+            ? id
+            : null;
+
+    private async Task<IReadOnlyList<TestResult>> RunCoreAsync(
+        string projectPath, string? filter, HostDebug? host, CancellationToken ct)
     {
         // The build is made once, here, and the runs after it do not build again.
         // A build that fails ends the run: its errors are in the output already.
@@ -266,13 +328,18 @@ public sealed class DotnetTestService : ITestService
 
         if (buildExit != 0) return [];
 
-        var results = await RunOnceAsync(projectPath, filter, ct).ConfigureAwait(false);
+        var results = await RunOnceAsync(projectPath, filter, host, ct).ConfigureAwait(false);
 
         // xUnit's adapter does not match a case by its display name, so a case
         // filter runs nothing there. The case then runs with its whole method, which
         // reports every case under its own name; the one picked is among them.
         if (results.Count == 0 && SelectsACase(filter))
-            results = await RunOnceAsync(projectPath, WholeMethodsOf(filter!), ct).ConfigureAwait(false);
+        {
+            // A run that was stopped (Stop Debugging cancels it) must not start another, held, one.
+            ct.ThrowIfCancellationRequested();
+
+            results = await RunOnceAsync(projectPath, WholeMethodsOf(filter!), host, ct).ConfigureAwait(false);
+        }
 
         return results;
     }
@@ -284,7 +351,7 @@ public sealed class DotnetTestService : ITestService
             .Distinct(StringComparer.Ordinal));
 
     private async Task<IReadOnlyList<TestResult>> RunOnceAsync(
-        string projectPath, string? filter, CancellationToken ct)
+        string projectPath, string? filter, HostDebug? host, CancellationToken ct)
     {
         // A directory of its own per run: two runs of the same project would
         // otherwise read each other's report.
@@ -318,7 +385,7 @@ public sealed class DotnetTestService : ITestService
 
         try
         {
-            await RunDotnetAsync(projectPath, arguments, ct, programArguments).ConfigureAwait(false);
+            await RunDotnetAsync(projectPath, arguments, ct, programArguments, host).ConfigureAwait(false);
 
             // No report means the run never got as far as testing: a build
             // failure, usually, which the output panel has already shown.
@@ -583,8 +650,8 @@ public sealed class DotnetTestService : ITestService
 
     private Task<(int ExitCode, string Output)> RunDotnetAsync(
         string projectPath, IReadOnlyList<string> arguments, CancellationToken callerToken,
-        IReadOnlyList<string>? programArguments = null) =>
-        RunGatedAsync(ct => RunDotnetCoreAsync(projectPath, arguments, programArguments ?? [], ct), callerToken);
+        IReadOnlyList<string>? programArguments = null, HostDebug? host = null) =>
+        RunGatedAsync(ct => RunDotnetCoreAsync(projectPath, arguments, programArguments ?? [], ct, host), callerToken);
 
     /// <summary>
     /// Takes the build gate, runs the work under it, and releases the gate
@@ -678,7 +745,7 @@ public sealed class DotnetTestService : ITestService
 
     private async Task<(int ExitCode, string Output)> RunDotnetCoreAsync(
         string projectPath, IReadOnlyList<string> arguments, IReadOnlyList<string> programArguments,
-        CancellationToken ct)
+        CancellationToken ct, HostDebug? host = null)
     {
         var startInfo = DotnetProcess.CreateStartInfo();
         LastStartInfo = startInfo;
@@ -698,7 +765,43 @@ public sealed class DotnetTestService : ITestService
             foreach (var argument in programArguments) startInfo.ArgumentList.Add(argument);
         }
 
-        var (exitCode, text) = await RunTrackedAsync(startInfo, ct).ConfigureAwait(false);
+        Action<string>? onLine = null;
+
+        // Ends the wait for the host's process id: started with the run, cancelled by the first line that names it.
+        using var hostWait = new CancellationTokenSource();
+        using var withHostWait = CancellationTokenSource.CreateLinkedTokenSource(ct, hostWait.Token);
+
+        if (host is not null)
+        {
+            hostWait.CancelAfter(HostTimeout);
+
+            // In the child's environment only: the variable is never set in the IDE's own, where it would hold
+            // every test run it started afterwards.
+            startInfo.Environment["VSTEST_HOST_DEBUG"] = "1";
+
+            var told = 0;
+
+            onLine = line =>
+            {
+                if (HostLineReader(line) is not { } id || Interlocked.Exchange(ref told, 1) != 0) return;
+
+                hostWait.CancelAfter(Timeout.InfiniteTimeSpan);
+                host.OnTestHost(id);
+            };
+        }
+
+        int exitCode;
+        string text;
+
+        try
+        {
+            (exitCode, text) = await RunTrackedAsync(startInfo, withHostWait.Token, onLine).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (hostWait.IsCancellationRequested && !ct.IsCancellationRequested)
+        {
+            // The host never said which process it is: nothing could attach, and it would wait for ever.
+            throw new TimeoutException(Localizer.Get(StringKeys.TestDebugHostTimeout, (int)HostTimeout.TotalSeconds));
+        }
 
         if (text.Length > 0) OutputReceived?.Invoke(this, text);
 
@@ -709,7 +812,8 @@ public sealed class DotnetTestService : ITestService
     /// Runs a process to its end, keeping it in the set <see cref="StopAll"/>
     /// ends, and returns its exit code and everything it wrote.
     /// </summary>
-    private async Task<(int ExitCode, string Output)> RunTrackedAsync(ProcessStartInfo startInfo, CancellationToken ct)
+    private async Task<(int ExitCode, string Output)> RunTrackedAsync(
+        ProcessStartInfo startInfo, CancellationToken ct, Action<string>? onLine = null)
     {
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("The dotnet CLI could not be started.");
@@ -720,7 +824,9 @@ public sealed class DotnetTestService : ITestService
         {
             // Not bound to the token: a cancelled read would fault while the
             // process it reads from is still being killed below.
-            var output = process.StandardOutput.ReadToEndAsync();
+            var output = onLine is null
+                ? process.StandardOutput.ReadToEndAsync()
+                : ReadLinesAsync(process.StandardOutput, onLine);
             var error = process.StandardError.ReadToEndAsync();
 
             try
@@ -745,6 +851,38 @@ public sealed class DotnetTestService : ITestService
         {
             lock (_running) _running.Remove(process);
         }
+    }
+
+    /// <summary>
+    /// Reads a stream to its end, line by line, telling the listener of each line as it arrives: what the test host
+    /// prints while it waits for a debugger must be seen then, not when the run is over.
+    /// </summary>
+    /// <remarks>
+    /// A listener that throws does not stop the reading: the pipe would fill and the process block on it. The
+    /// first failure is raised once everything has been read.
+    /// </remarks>
+    private static async Task<string> ReadLinesAsync(StreamReader reader, Action<string> onLine)
+    {
+        var text = new System.Text.StringBuilder();
+        Exception? failure = null;
+
+        while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
+        {
+            text.Append(line).Append('\n');
+
+            try
+            {
+                onLine(line);
+            }
+            catch (Exception ex)
+            {
+                failure ??= ex;
+            }
+        }
+
+        if (failure is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+
+        return text.ToString();
     }
 
     /// <summary>

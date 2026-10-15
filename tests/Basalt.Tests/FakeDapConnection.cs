@@ -12,7 +12,22 @@ internal sealed class FakeDapConnection : IDapConnection
     private readonly object _gate = new();
     private readonly List<(string Command, JsonObject? Arguments)> _requests = [];
 
-    public bool IsRunning { get; private set; } = true;
+    private bool _running = true;
+
+    /// <summary>Makes <see cref="IsRunning"/> throw, as a disposed DapClient does (its process is gone).</summary>
+    public bool IsRunningThrows { get; set; }
+
+    public bool IsRunning
+    {
+        get => IsRunningThrows ? throw new InvalidOperationException("No process is associated with this object.") : _running;
+        private set => _running = value;
+    }
+
+    /// <summary>The adapter process dies without a word: it answers nothing from now on.</summary>
+    public void Kill() => IsRunning = false;
+
+    /// <summary>Holds the answer to "disconnect" until completed; null answers at once.</summary>
+    public TaskCompletionSource? HoldDisconnect { get; set; }
 
     public event EventHandler<DapEvent>? EventReceived;
     public event EventHandler<int>? Exited;
@@ -62,6 +77,9 @@ internal sealed class FakeDapConnection : IDapConnection
     /// <summary>What "attach" answers; by default it succeeds.</summary>
     public JsonObject AttachAnswer { get; set; } = Answer(true, new JsonObject());
 
+    /// <summary>What "setExceptionBreakpoints" answers; by default it succeeds.</summary>
+    public JsonObject SetExceptionBreakpointsAnswer { get; set; } = Answer(true, new JsonObject());
+
     /// <summary>What "exceptionInfo" answers; by default it says nothing.</summary>
     public JsonObject ExceptionInfoAnswer { get; set; } = Answer(false, new JsonObject());
 
@@ -78,6 +96,9 @@ internal sealed class FakeDapConnection : IDapConnection
         }
 
         OnRequest?.Invoke(command);
+
+        if (command == "disconnect" && HoldDisconnect is { } disconnectHold)
+            await disconnectHold.Task.ConfigureAwait(false);
 
         if (command == "stackTrace" && HoldNextStackTrace is { } hold)
         {
@@ -96,6 +117,7 @@ internal sealed class FakeDapConnection : IDapConnection
             "evaluate" => EvaluateAnswer(arguments),
             "exceptionInfo" => ExceptionInfoAnswer,
             "attach" => AttachAnswer,
+            "setExceptionBreakpoints" => SetExceptionBreakpointsAnswer,
             "configurationDone" when ConfigurationDoneNeverAnswers => await new TaskCompletionSource<JsonObject>().Task.WaitAsync(ct).ConfigureAwait(false),
             "configurationDone" => ConfigurationDoneAnswer,
             _ => Answer(true, new JsonObject())

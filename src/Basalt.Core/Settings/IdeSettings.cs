@@ -115,6 +115,12 @@ public sealed class DebugSettings
 
     /// <summary>Whether to step through code without debug symbols.</summary>
     public bool StepIntoExternalCode { get; set; }
+
+    /// <summary>Whether to stop at the throw of any exception, even one a Try/Catch handles. Off by default.</summary>
+    public bool BreakWhenExceptionThrown { get; set; }
+
+    /// <summary>Whether to stop on an exception the program's own code does not handle. Off by default.</summary>
+    public bool BreakOnUserUnhandledException { get; set; }
 }
 
 /// <summary>What a build produces, and from which project.</summary>

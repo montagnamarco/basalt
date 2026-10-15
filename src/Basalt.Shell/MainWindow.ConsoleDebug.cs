@@ -1,4 +1,5 @@
 using Basalt.Core.Localization;
+using Basalt.Core.Services;
 using Basalt.Shell.Controls;
 using Basalt.Workspace;
 using Basalt.Workspace.Debugging;
@@ -28,7 +29,7 @@ public partial class MainWindow
     /// when what that needs (a runtime to build the wait hook for) is not there: the caller then launches it
     /// as before.
     /// </summary>
-    private async Task<bool> TryDebugInTerminalAsync(string project, string assembly)
+    private async Task<bool> TryDebugInTerminalAsync(string project, string assembly, LaunchOptions launch)
     {
         string? hook;
 
@@ -52,8 +53,15 @@ public partial class MainWindow
 
         if (hook is null) return false;
 
-        var environment = DebuggerWaitHook.EnvironmentFor(
-            hook, DebuggerWaitSeconds, Environment.GetEnvironmentVariable(DebuggerWaitHook.StartupHooksVariable));
+        // The profile's variables first, the hook's after them: the hook must be the one that holds the program. Hooks
+        // the profile itself names are joined to it as the user's own environment's are.
+        var environment = new Dictionary<string, string>(launch.Environment, StringComparer.Ordinal);
+
+        foreach (var (name, value) in DebuggerWaitHook.EnvironmentFor(
+                     hook, DebuggerWaitSeconds,
+                     launch.Environment.GetValueOrDefault(DebuggerWaitHook.StartupHooksVariable)
+                     ?? Environment.GetEnvironmentVariable(DebuggerWaitHook.StartupHooksVariable)))
+            environment[name] = value;
 
         ProgramTerminal program;
 
@@ -64,8 +72,8 @@ public partial class MainWindow
             program = await StartProgramInTerminalAsync(
                 Path.GetFileNameWithoutExtension(project),
                 "dotnet",
-                [assembly],
-                ViewModel.StartupDirectory ?? Path.GetDirectoryName(assembly)!,
+                [assembly, .. launch.Arguments],
+                launch.WorkingDirectory ?? ViewModel.StartupDirectory ?? Path.GetDirectoryName(assembly)!,
                 environment);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -101,6 +109,26 @@ public partial class MainWindow
         if (!_debug.IsPaused) ShowProgramTab(program);
 
         return true;
+    }
+
+    /// <summary>
+    /// The arguments, environment and working directory the project's launch profile gives the program, for F5 to
+    /// start it with as Ctrl+F5 ("dotnet run") already does. Read off the interface thread; a profile that cannot
+    /// be read is reported and the program starts without it, in the project's folder.
+    /// </summary>
+    private async Task<LaunchOptions> ReadLaunchOptionsAsync(string project)
+    {
+        var directory = ViewModel.StartupDirectory;
+
+        try
+        {
+            return await Task.Run(() => DebugLaunchProfile.For(project, directory)).ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException or InvalidDataException)
+        {
+            ViewModel.WriteOutput($"[debug] {ex.Message}");
+            return LaunchOptions.In(directory);
+        }
     }
 
     /// <summary>Ends the program a terminal debug session started, when the session is stopped.</summary>

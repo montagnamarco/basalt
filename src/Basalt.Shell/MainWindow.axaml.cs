@@ -226,6 +226,7 @@ public partial class MainWindow : Window
         DataContext = viewModel;
         InitializeDocumentViewLifetime();
         InitializeProgramTerminals();
+        ApplySavedExceptionBreaks();
         InitializeSaveChanges();
         InitializeWindowTitle();
 
@@ -1123,7 +1124,10 @@ public partial class MainWindow : Window
     {
         // Said once, where the program's own output is: the banner shows it only while stopped here.
         if (_debug.StoppedException is { } exception)
-            ViewModel.WriteOutput(Localizer.Get(StringKeys.DebugOutputException, exception));
+        {
+            ViewModel.WriteOutput(Localizer.Get(
+                _debug.StoppedOnThrow ? StringKeys.DebugOutputExceptionThrown : StringKeys.DebugOutputException, exception));
+        }
 
         var frames = await _debug.GetCallStackAsync().ConfigureAwait(true);
 
@@ -1325,7 +1329,7 @@ public partial class MainWindow : Window
         var exception = _debug.StoppedException;
 
         DebugBannerText.Text = !_debug.IsPaused ? Localizer.Get(StringKeys.DebugBannerRunning)
-            : exception is not null ? Localizer.Get(StringKeys.DebugBannerException)
+            : exception is not null ? Localizer.Get(_debug.StoppedOnThrow ? StringKeys.DebugBannerExceptionThrown : StringKeys.DebugBannerException)
             : Localizer.Get(StringKeys.DebugBannerPaused);
 
         // Where it stopped, which is the one thing worth reading at a glance;
@@ -2089,6 +2093,13 @@ public partial class MainWindow : Window
 
         if (_debug.IsRunning) return;
 
+        // A test run holds the build and its output: starting the program over it would build under the tests.
+        if (_testRunInProgress)
+        {
+            ViewModel.WriteOutput($"[debug] {Localizer.Get(StringKeys.DebugTestRunInProgress)}");
+            return;
+        }
+
         // Pressing Start used to build in silence and, when anything went
         // wrong, write one line into a panel that was not on top: from the
         // outside nothing happened at all. Everything a session says goes to
@@ -2160,8 +2171,10 @@ public partial class MainWindow : Window
 
         // A console program runs in a Terminal tab, so what it reads can be typed; anything else is launched
         // by the debugger as before.
-        if (!await TryDebugInTerminalAsync(startupProject!, assembly))
-            await _debug.StartAsync(assembly, ViewModel.StartupDirectory);
+        var launch = await ReadLaunchOptionsAsync(startupProject!);
+
+        if (!await TryDebugInTerminalAsync(startupProject!, assembly, launch))
+            await _debug.StartAsync(assembly, launch);
 
         // StartAsync reports a failure through Failed rather than throwing,
         // so the banner is settled from what actually came up, not from
@@ -3970,8 +3983,14 @@ public partial class MainWindow : Window
     {
         // Taken before the session is stopped: its end clears the field, and the program would be left running.
         var program = _debuggedProgram;
+        var detaching = _debug.DetachesOnStop;
+
+        // A test being debugged is ended with its session, before the session is: its run must not start another host.
+        CancelDebuggedTestRun();
 
         await _debug.StopAsync();
+
+        if (detaching) ReportDetached();
 
         // Detached from the debugger, a program started in the terminal would go on running there.
         program?.Stop();
@@ -4159,52 +4178,6 @@ public partial class MainWindow : Window
 
         _tests.ShowResults(results);
         _toolbar?.RefreshAvailability();
-    }
-
-    /// <summary>
-    /// Debugs the selected test.
-    ///
-    /// The runner is told to wait for a debugger, and the session attaches to
-    /// it: a test cannot be launched directly, since the runner is what has
-    /// the entry point.
-    /// </summary>
-    private async Task DebugSelectedTestAsync()
-    {
-        if (_tests is null) return;
-
-        var chosen = _tests.SelectedTests;
-
-        if (chosen.Count != 1)
-        {
-            ViewModel.WriteOutput("[test] " + Localizer.Get(StringKeys.TestSelectSingleToDebug));
-            return;
-        }
-
-        // Same as Run Tests: debug what is on disk, not a stale save.
-        await ViewModel.SaveAllAsync();
-
-        var test = chosen[0];
-
-        ViewModel.WriteOutput($"[test] {Localizer.Get(StringKeys.TestDebugging, test.FullyQualifiedName)}");
-
-        // VSTEST_HOST_DEBUG makes the runner print its process id and wait,
-        // which is the documented way to attach to a test.
-        Environment.SetEnvironmentVariable("VSTEST_HOST_DEBUG", "1");
-
-        try
-        {
-            await _testService
-                .RunAsync(test.ProjectPath, DotnetTestService.FilterFor([test.FullyQualifiedName]))
-                .ConfigureAwait(true);
-        }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException)
-        {
-            ViewModel.WriteOutput($"[test] {ex.Message}");
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("VSTEST_HOST_DEBUG", null);
-        }
     }
 
     /// <summary>Builds the assistant panel; the controller owns everything it does.</summary>
@@ -5374,7 +5347,12 @@ public partial class MainWindow : Window
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDebugToggleBreakpoint),
                 Action: () => _ = ToggleBreakpointAtCaretAsync(),
-                Gesture: Shortcut(IdeCommands.DebugToggleBreakpoint)) { Icon = IconKind.Breakpoint }
+                Gesture: Shortcut(IdeCommands.DebugToggleBreakpoint)) { Icon = IconKind.Breakpoint },
+            MenuEntry.Separator,
+            new(Localizer.Get(StringKeys.MenuDebugAttachToProcess),
+                Action: () => Guarded.Run(AttachToProcessAsync, ViewModel.WriteOutput, "debug")),
+            new(Localizer.Get(StringKeys.MenuDebugExceptionSettings),
+                Action: () => Guarded.Run(ShowExceptionSettingsAsync, ViewModel.WriteOutput, "debug"))
         ]),
         new(Localizer.Get(StringKeys.MenuRun), Children:
         [

@@ -62,10 +62,13 @@ public sealed class LaunchSettings
             var parsed = JsonNode.Parse(File.ReadAllText(source)) as JsonObject
                          ?? NewDocument(projectName);
 
-            // The first profile is the one the IDE runs, matching what
-            // "dotnet run" does without a named profile.
+            // The first profile that runs the project is the one the IDE runs, matching what "dotnet run" does
+            // without a named profile: it skips IIS Express and Executable profiles. A file with none keeps its
+            // first profile, so that the properties window still has one to edit.
             var profiles = parsed["profiles"] as JsonObject;
-            var name = profiles?.FirstOrDefault().Key ?? projectName;
+            var name = profiles?.FirstOrDefault(p => p.Value is JsonObject o && o["commandName"]?.ToString() == "Project").Key
+                       ?? profiles?.FirstOrDefault(p => p.Value is JsonObject).Key
+                       ?? projectName;
 
             return new LaunchSettings(parsed, path, name, migratedFrom);
         }
@@ -106,6 +109,9 @@ public sealed class LaunchSettings
             return profile;
         }
     }
+
+    /// <summary>What the profile launches: "Project" for the project itself, which is the only kind "dotnet run" applies.</summary>
+    public string? CommandName => Profile["commandName"]?.ToString();
 
     /// <summary>Arguments passed to the program.</summary>
     public string? CommandLineArguments

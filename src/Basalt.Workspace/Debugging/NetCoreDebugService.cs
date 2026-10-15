@@ -23,6 +23,29 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
     /// <inheritdoc />
     public string? StoppedException { get; private set; }
+
+    /// <inheritdoc />
+    public bool StoppedOnThrow { get; private set; }
+
+    /// <summary>
+    /// Which exceptions stop the program, as last asked; null until someone asked, so that a session nobody
+    /// configured sends nothing and netcoredbg keeps its own behaviour (it stops on an unhandled exception).
+    /// Read and written under <see cref="_exceptionGate"/>, together with the sending of it.
+    /// </summary>
+    private ExceptionBreaks? _exceptionBreaks;
+
+    /// <summary>
+    /// Held while the choice is read and its request written, never while the answer is awaited: a choice made
+    /// from the interface thread during the start of a session (the adapter thread sending the stored one) must
+    /// not be overtaken on the wire by the older choice, or the debugger would keep what the user just changed.
+    /// </summary>
+    private readonly Lock _exceptionGate = new();
+
+    /// <summary>Whether the session ends by letting the program go rather than ending it.</summary>
+    private volatile bool _detachOnStop;
+
+    /// <inheritdoc />
+    public bool DetachesOnStop => _detachOnStop;
     private readonly Dictionary<string, IReadOnlyList<Breakpoint>> _breakpoints = new(StringComparer.Ordinal);
 
     /// <summary>
@@ -120,62 +143,131 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// </summary>
     public event EventHandler<Exception>? Faulted;
 
+    public Task LaunchAsync(
+        string assemblyPath, string? workingDirectory = null, CancellationToken ct = default) =>
+        LaunchAsync(assemblyPath, LaunchOptions.In(workingDirectory), ct);
+
+    /// <summary>
+    /// Launches with the profile's arguments ("args") and environment ("env"): netcoredbg adds the variables to the
+    /// ones it inherits. The program's own arguments follow its assembly, as for "dotnet App.dll a b".
+    /// </summary>
     public async Task LaunchAsync(
-        string assemblyPath, string? workingDirectory = null, CancellationToken ct = default)
+        string assemblyPath, LaunchOptions options, CancellationToken ct = default)
     {
         _prefixAsGiven = LinkedPrefix(Path.GetFullPath(assemblyPath));
 
         await StartAdapterAsync(ct).ConfigureAwait(false);
 
-        _client!.Send("launch", new JsonObject
+        // Taken once: a Stop on another thread clears the field, and the session it ended is not ours to go on with.
+        var client = _client;
+
+        if (client is null) return;
+
+        _detachOnStop = false;
+
+        var launch = new JsonObject
         {
             ["program"] = assemblyPath,
-            ["cwd"] = workingDirectory ?? Path.GetDirectoryName(assemblyPath),
+            ["cwd"] = options.WorkingDirectory ?? Path.GetDirectoryName(assemblyPath),
             ["stopAtEntry"] = false
-        });
+        };
 
-        await ReadyForBreakpointsAsync(ct).ConfigureAwait(false);
-        await ResendBreakpointsAsync(ct).ConfigureAwait(false);
+        if (options.Arguments.Count > 0)
+            launch["args"] = new JsonArray([.. options.Arguments.Select(a => (JsonNode?)JsonValue.Create(a))]);
 
-        _client.Send("configurationDone");
+        if (options.Environment.Count > 0)
+        {
+            var env = new JsonObject();
+            foreach (var (name, value) in options.Environment) env[name] = value;
+            launch["env"] = env;
+        }
+
+        try
+        {
+            client.Send("launch", launch);
+
+            await ReadyForBreakpointsAsync(ct).ConfigureAwait(false);
+            await ResendBreakpointsAsync(ct).ConfigureAwait(false);
+            await SendExceptionBreaksAsync(ct).ConfigureAwait(false);
+
+            client.Send("configurationDone");
+        }
+        catch (Exception ex) when (StoppedMeanwhile(client, ex))
+        {
+            // Stopped while it was being configured: the session is over, and says nothing more.
+        }
     }
 
+    /// <summary>
+    /// Whether a failure is only the session having been stopped from another thread meanwhile: the connection it
+    /// used has been taken off the service, and what it throws (a closed pipe, a disposed client) is not news.
+    /// </summary>
+    private bool StoppedMeanwhile(IDapConnection client, Exception ex) =>
+        ex is IOException or InvalidOperationException or ObjectDisposedException && !ReferenceEquals(_client, client);
+
     public Task AttachAsync(int processId, CancellationToken ct = default) => AttachAsync(processId, programPath: null, ct);
+
+    public Task AttachAsync(int processId, string? programPath, CancellationToken ct = default) =>
+        AttachAsync(processId, programPath, detachOnStop: false, ct);
 
     /// <param name="programPath">
     /// The program's assembly as the IDE spells it, so paths reported resolved through a linked directory are
     /// given back in that spelling, as for a launch.
     /// </param>
-    public async Task AttachAsync(int processId, string? programPath, CancellationToken ct = default)
+    /// <param name="detachOnStop">
+    /// Whether ending the session lets the program go on running. Measured on netcoredbg 3.2.0: "disconnect" with
+    /// terminateDebuggee false on an attached process detaches it (it keeps running, even when it was stopped at a
+    /// breakpoint), and with true it kills it. A program the IDE started itself is ended by the IDE, so only the
+    /// process the user chose to attach to is let go.
+    /// </param>
+    public async Task AttachAsync(int processId, string? programPath, bool detachOnStop, CancellationToken ct = default)
     {
         _prefixAsGiven = programPath is null ? null : LinkedPrefix(Path.GetFullPath(programPath));
 
         await StartAdapterAsync(ct).ConfigureAwait(false);
 
+        // After the adapter is up (Stop, which starting one runs, resets it) and before anything can fail: a refused
+        // attach stops the session, and that stop must not kill a process this session never owned.
+        _detachOnStop = detachOnStop;
+
+        // Taken once, as in a launch: a Stop on another thread clears the field while the attach is under way.
+        var client = _client;
+
+        if (client is null) return;
+
         // Answered, unlike a launch's requests: a refused attach must end the session with the adapter's reason,
         // not leave it reported as running over a program nobody debugs. Measured on netcoredbg 3.2.0, "attach"
         // succeeds whatever the process, and the attach itself happens at configurationDone: refused there for a
         // process that has gone (0x80070057), and never answered at all for one that is not .NET.
-        var attach = _client!.SendAsync("attach", new JsonObject { ["processId"] = processId }, ct);
-
-        await ReadyForBreakpointsAsync(ct).ConfigureAwait(false);
-        await ResendBreakpointsAsync(ct).ConfigureAwait(false);
-
-        using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        limit.CancelAfter(AttachTimeout);
-
         JsonObject attached;
         JsonObject configured;
 
         try
         {
-            configured = await _client.SendAsync("configurationDone", null, limit.Token).ConfigureAwait(false);
-            attached = await attach.WaitAsync(limit.Token).ConfigureAwait(false);
+            var attach = client.SendAsync("attach", new JsonObject { ["processId"] = processId }, ct);
+
+            await ReadyForBreakpointsAsync(ct).ConfigureAwait(false);
+            await ResendBreakpointsAsync(ct).ConfigureAwait(false);
+            await SendExceptionBreaksAsync(ct).ConfigureAwait(false);
+
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            limit.CancelAfter(AttachTimeout);
+
+            try
+            {
+                configured = await client.SendAsync("configurationDone", null, limit.Token).ConfigureAwait(false);
+                attached = await attach.WaitAsync(limit.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested && ReferenceEquals(_client, client))
+            {
+                Stop();
+                throw new TimeoutException(Localizer.Get(StringKeys.DebugAttachTimedOut, processId));
+            }
         }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (StoppedMeanwhile(client, ex))
         {
-            Stop();
-            throw new TimeoutException(Localizer.Get(StringKeys.DebugAttachTimedOut, processId));
+            // Stopped while it was attaching: the session is over, and says nothing more.
+            return;
         }
 
         var refusal = new[] { attached, configured }.FirstOrDefault(a => a["success"]?.GetValue<bool>() == false);
@@ -258,6 +350,56 @@ public sealed class NetCoreDebugService : IDebugSessionService
     {
         foreach (var (file, breakpoints) in _breakpoints)
             await SendBreakpointsAsync(file, breakpoints, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Measured on netcoredbg 3.2.0: the filters are "all" (every exception, at its throw, breakMode "always") and
+    /// "user-unhandled"; neither is needed for an exception nothing handles, which stops anyway.
+    /// </remarks>
+    public Task SetExceptionBreaksAsync(ExceptionBreaks breaks, CancellationToken ct = default)
+    {
+        lock (_exceptionGate) _exceptionBreaks = breaks;
+
+        return SendExceptionBreaksAsync(ct);
+    }
+
+    /// <summary>
+    /// Sends the choice made so far, if there is one and a session to send it to. Idempotent: the debugger
+    /// replaces its filters with each request.
+    /// </summary>
+    private async Task SendExceptionBreaksAsync(CancellationToken ct)
+    {
+        Task<JsonObject> answer;
+
+        lock (_exceptionGate)
+        {
+            if (_exceptionBreaks is not { } breaks || _client is not { } client) return;
+
+            var filters = new JsonArray();
+            if (breaks.WhenThrown) filters.Add("all");
+            if (breaks.WhenUserUnhandled) filters.Add("user-unhandled");
+
+            try
+            {
+                if (!client.IsRunning) return;
+
+                // The request is written before SendAsync returns its task; the wait is outside the lock.
+                answer = client.SendAsync("setExceptionBreakpoints", new JsonObject { ["filters"] = filters }, ct);
+            }
+            catch (InvalidOperationException)
+            {
+                // The session ended between the check and the send: there is nothing left to configure.
+                return;
+            }
+        }
+
+        var response = await answer.ConfigureAwait(false);
+
+        // Not fatal: the program runs on, only without the stops the user asked for, which is said.
+        if (response["success"]?.GetValue<bool>() == false)
+            Faulted?.Invoke(this, new InvalidOperationException(
+                response["message"]?.GetValue<string>() ?? "setExceptionBreakpoints"));
     }
 
     /// <summary>
@@ -395,7 +537,10 @@ public sealed class NetCoreDebugService : IDebugSessionService
         var resolved = ResolvePath(filePath);
         if (resolved != filePath) _pathsAsGiven[resolved] = filePath;
 
-        await _client!.SendAsync("setBreakpoints", new JsonObject
+        // Stopped on another thread since the caller looked: nothing left to send to.
+        if (_client is not { } client) return;
+
+        await client.SendAsync("setBreakpoints", new JsonObject
         {
             ["source"] = new JsonObject { ["path"] = resolved },
             ["breakpoints"] = lines
@@ -1100,29 +1245,96 @@ public sealed class NetCoreDebugService : IDebugSessionService
         }
     }
 
-    public Task StopAsync(CancellationToken ct = default)
+    /// <summary>
+    /// How long a disconnect may take to be answered before the adapter is closed anyway. Measured on netcoredbg
+    /// 3.2.0: it answers within milliseconds, also when detaching from a process stopped at a breakpoint.
+    /// </summary>
+    internal TimeSpan DisconnectTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// How long the synchronous stop (a window closing, a session replaced) waits for the answer: it holds the interface
+    /// thread, so it waits much less than <see cref="DisconnectTimeout"/>.
+    /// </summary>
+    internal TimeSpan SynchronousDisconnectTimeout { get; set; } = TimeSpan.FromSeconds(1);
+
+    public async Task StopAsync(CancellationToken ct = default)
     {
-        Stop();
-        return Task.CompletedTask;
+        var answer = BeginStop(out var client);
+
+        if (client is null) return;
+
+        try
+        {
+            // The answer is waited for: DapClient kills the adapter a second after its input closes, and an adapter
+            // killed in the middle of detaching could leave the process it was let go of suspended.
+            if (answer is not null) await answer.WaitAsync(DisconnectTimeout, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is TimeoutException or IOException or OperationCanceledException)
+        {
+            // Not answered in time, or the adapter has gone: closed regardless.
+        }
+        finally
+        {
+            client.Dispose();
+        }
     }
 
     private void Stop()
     {
-        if (_client is null) return;
+        var answer = BeginStop(out var client);
+
+        if (client is null) return;
 
         try
         {
-            _client.Send("disconnect", new JsonObject { ["terminateDebuggee"] = true });
+            answer?.Wait(SynchronousDisconnectTimeout);
         }
-        catch (IOException)
+        catch (AggregateException ex) when (ex.InnerExceptions.All(e => e is IOException or OperationCanceledException))
+        {
+            // The adapter has gone.
+        }
+        finally
+        {
+            client.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Gives the session up and asks the adapter to disconnect, without waiting: the connection is taken off the
+    /// service first, so nothing sends to it again. Null client when there was no session.
+    /// </summary>
+    private Task<JsonObject>? BeginStop(out IDapConnection? client)
+    {
+        client = _client;
+
+        if (client is null) return null;
+
+        // The program has been given up, not lost: whatever the adapter reports as it closes is no "exit" to report.
+        MarkExited();
+
+        Task<JsonObject>? answer = null;
+
+        try
+        {
+            // A dead adapter drops the request and never answers: asking would only make every Stop wait out the timeout.
+            if (client.IsRunning)
+                answer = client.SendAsync("disconnect", new JsonObject { ["terminateDebuggee"] = !_detachOnStop });
+
+            // Observed whatever happens: an adapter closed before it answers faults the wait with nobody left to hear.
+            _ = answer?.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or ObjectDisposedException)
         {
             // Already gone.
         }
 
-        _client.Dispose();
         _client = null;
         Interlocked.Increment(ref _stopGeneration);
         IsPaused = false;
+        StoppedException = null;
+        StoppedOnThrow = false;
+
+        return answer;
     }
 
     private void OnEvent(object? sender, DapEvent dapEvent)
@@ -1135,6 +1347,7 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
                 // Whatever was thrown at the last stop is not what this one is about.
                 StoppedException = null;
+                StoppedOnThrow = false;
                 Interlocked.Increment(ref _stopGeneration);
                 IsPaused = true;
                 _ = OnStoppedAsync();
@@ -1328,6 +1541,10 @@ public sealed class NetCoreDebugService : IDebugSessionService
 
         if (response["success"]?.GetValue<bool>() != true) return null;
 
+        // Measured on netcoredbg 3.2.0: "always" for a stop at the throw ("all"), "unhandled" for one nothing handled;
+        // "userUnhandled" (DAP's word for the user-unhandled filter) is not a stop at a throw, so it keeps the generic wording.
+        StoppedOnThrow = response["body"]?["breakMode"]?.GetValue<string>() == "always";
+
         var details = response["body"]?["details"];
         var type = details?["fullTypeName"]?.GetValue<string>() ?? response["body"]?["exceptionId"]?.GetValue<string>();
         var message = details?["message"]?.GetValue<string>();
@@ -1360,7 +1577,8 @@ public sealed class NetCoreDebugService : IDebugSessionService
     /// <summary>Waits for a named event, used to follow the protocol's order.</summary>
     private Task WaitForEventAsync(string name, CancellationToken ct)
     {
-        if (_client is null) return Task.CompletedTask;
+        // Taken once: a Stop on another thread clears the field, and the handler runs on the adapter's reader thread.
+        if (_client is not { } client) return Task.CompletedTask;
 
         var waiter = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -1368,11 +1586,11 @@ public sealed class NetCoreDebugService : IDebugSessionService
         {
             if (dapEvent.Name != name) return;
 
-            _client.EventReceived -= Handler;
+            client.EventReceived -= Handler;
             waiter.TrySetResult();
         }
 
-        _client.EventReceived += Handler;
+        client.EventReceived += Handler;
         ct.Register(() => waiter.TrySetCanceled(ct));
 
         return waiter.Task;
