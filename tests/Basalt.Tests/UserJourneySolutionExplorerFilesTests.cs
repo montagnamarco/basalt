@@ -112,7 +112,7 @@ public sealed class UserJourneySolutionExplorerFilesTests : IDisposable
         Assert.Equal(NodeKind.Folder, folderNode.Kind);
 
         var itemDialog = await UserJourneyItemsTests.OpenAddNewItemFromExplorerAsync(host, folderNode);
-        UserJourneyItemsTests.ChooseTemplate(itemDialog, ItemTemplate.Class);
+        UserJourneyItemsTests.ChooseTemplate(itemDialog, ItemTemplateIds.Class);
         UserJourneyItemsTests.TypeName(itemDialog, "Customer");
         await PressAsync(host, itemDialog, Text(StringKeys.AddItemCreate));
 

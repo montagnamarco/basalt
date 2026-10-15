@@ -136,23 +136,34 @@ public sealed class UserJourneyItemsTests : IDisposable
         }
     }
 
-    /// <summary>The labels of the templates the dialog offers, in its list order.</summary>
+    /// <summary>The names of the templates the dialog lists now, in its list order.</summary>
     internal static IReadOnlyList<string> OfferedTemplates(Window dialog) =>
-        dialog.GetVisualDescendants().OfType<ListBox>().Single()
-            .Items.OfType<ListBoxItem>()
-            .Select(item => (string)item.Content!)
+        TemplateList(dialog).Items.OfType<ListBoxItem>()
+            .Select(item => ((ItemTemplateDefinition)item.Tag!).Name)
             .ToList();
 
-    /// <summary>Picks a template in the Add New Item dialog's list, as a click on it does.</summary>
-    internal static void ChooseTemplate(Window dialog, ItemTemplate template)
+    internal static ListBox TemplateList(Window dialog) =>
+        dialog.GetVisualDescendants().OfType<ListBox>().Single(list => list.Name == "AddItemTemplates");
+
+    /// <summary>Shows the templates of a category, as a click on it in the tree does.</summary>
+    internal static void SelectCategory(Window dialog, ItemCategory category)
     {
-        var list = dialog.GetVisualDescendants().OfType<ListBox>().Single();
+        var tree = dialog.GetVisualDescendants().OfType<TreeView>().Single(t => t.Name == "AddItemCategories");
+        tree.SelectedItem = tree.Items.OfType<TreeViewItem>().Single(item => item.Tag is ItemCategory c && c == category);
+    }
+
+    /// <summary>Picks a template in the Add New Item dialog, in its category, as clicks on them do.</summary>
+    internal static void ChooseTemplate(Window dialog, string templateId)
+    {
+        SelectCategory(dialog, ItemTemplates.ById(templateId).Category);
+
+        var list = TemplateList(dialog);
         list.SelectedItem = list.Items.OfType<ListBoxItem>()
-            .Single(item => item.Tag is ItemTemplate chosen && chosen == template);
+            .Single(item => item.Tag is ItemTemplateDefinition chosen && chosen.Id == templateId);
     }
 
     internal static void TypeName(Window dialog, string name) =>
-        dialog.GetVisualDescendants().OfType<TextBox>().Single().Text = name;
+        dialog.GetVisualDescendants().OfType<TextBox>().Single(box => box.Name == "AddItemName").Text = name;
 
     /// <summary>The explorer's Add New Item, from its context menu on the selected node.</summary>
     internal static async Task<Window> OpenAddNewItemFromExplorerAsync(TestWindow host, SolutionTreeNode node)
@@ -185,12 +196,12 @@ public sealed class UserJourneyItemsTests : IDisposable
         var w = host.Window;
         var vm = (MainWindowViewModel)w.DataContext!;
 
-        var items = new (ItemTemplate Template, string FileName, string Declaration)[]
+        var items = new (string Template, string FileName, string Declaration)[]
         {
-            (ItemTemplate.Class, "Customer.vb", "Public Class Customer"),
-            (ItemTemplate.Module, "Helpers.vb", "Module Helpers"),
-            (ItemTemplate.Interface, "IStore.vb", "Public Interface IStore"),
-            (ItemTemplate.EmptyFile, "Scratch.vb", "")
+            (ItemTemplateIds.Class, "Customer.vb", "Public Class Customer"),
+            (ItemTemplateIds.Module, "Helpers.vb", "Module Helpers"),
+            (ItemTemplateIds.Interface, "IStore.vb", "Public Interface IStore"),
+            (ItemTemplateIds.EmptyFile, "Scratch.vb", "")
         };
 
         foreach (var (template, fileName, declaration) in items)
@@ -232,7 +243,7 @@ public sealed class UserJourneyItemsTests : IDisposable
         var dialog = await WaitForDialogAsync(host);
         Assert.NotNull(dialog);
 
-        ChooseTemplate(dialog!, ItemTemplate.Class);
+        ChooseTemplate(dialog!, ItemTemplateIds.Class);
         TypeName(dialog!, "Ledger");
         ClickLikeAMouse(ButtonWithText(dialog!, L(StringKeys.AddItemCreate)));
         await host.SettleAsync(10);
@@ -256,7 +267,7 @@ public sealed class UserJourneyItemsTests : IDisposable
         await host.SettleAsync(10);
         var vm = (MainWindowViewModel)host.Window.DataContext!;
 
-        foreach (var (template, name) in new[] { (ItemTemplate.Class, "End"), (ItemTemplate.Module, "Sub") })
+        foreach (var (template, name) in new[] { (ItemTemplateIds.Class, "End"), (ItemTemplateIds.Module, "Sub") })
         {
             var dialog = await OpenAddNewItemFromExplorerAsync(host, vm.Explorer.Roots.Single());
 
@@ -276,11 +287,12 @@ public sealed class UserJourneyItemsTests : IDisposable
     }
 
     // ------------------------------------------------------------------
-    // A project that cannot build Windows Forms must not be offered the
-    // Windows Form or UserControl items, which would not compile in it.
+    // A project that cannot build Windows Forms still sees the Windows Form
+    // and UserControl items, marked as not for it: they are not hidden, and
+    // adding one is allowed, with a warning (see AddItemDialogTests).
     // ------------------------------------------------------------------
     [AvaloniaFact]
-    public async Task AConsoleProjectIsNotOfferedTheWindowsFormItems()
+    public async Task AConsoleProjectSeesTheWindowsFormItemsMarkedAsNotForIt()
     {
         var project = WriteConsoleProject(_root, "App");
 
@@ -293,8 +305,19 @@ public sealed class UserJourneyItemsTests : IDisposable
         var offered = OfferedTemplates(dialog);
         Assert.Contains(L(StringKeys.AddItemClass), offered);
         Assert.Contains(L(StringKeys.AddItemEmptyFile), offered);
-        Assert.DoesNotContain(L(StringKeys.AddItemWindowsForm), offered);
-        Assert.DoesNotContain(L(StringKeys.AddItemUserControl), offered);
+
+        SelectCategory(dialog, ItemCategory.WindowsForms);
+        await host.SettleAsync(3);
+        var windowsForms = OfferedTemplates(dialog);
+        Assert.Contains(L(StringKeys.AddItemWindowsForm), windowsForms);
+        Assert.Contains(L(StringKeys.AddItemUserControl), windowsForms);
+
+        var marked = TemplateList(dialog).Items.OfType<ListBoxItem>()
+            .Where(item => item.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Name == "AddItemRowMisfit"))
+            .Select(item => ((ItemTemplateDefinition)item.Tag!).Id)
+            .ToList();
+        Assert.Contains(ItemTemplateIds.WindowsForm, marked);
+        Assert.Contains(ItemTemplateIds.UserControl, marked);
 
         ClickLikeAMouse(ButtonWithText(dialog, L(StringKeys.ButtonCancel)));
         await host.SettleAsync(3);

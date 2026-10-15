@@ -1,5 +1,3 @@
-using System.Xml;
-using System.Xml.Linq;
 using Avalonia.Platform.Storage;
 using Basalt.Core.Localization;
 using Basalt.Designer;
@@ -41,38 +39,40 @@ public partial class MainWindow
 
     /// <summary>
     /// Asks which item to add and writes it into <paramref name="directory"/>,
-    /// then opens it: a Windows Form in the designer, the rest in the editor.
-    /// It appears in Solution Explorer as the other new files do.
+    /// then opens it: a Windows Form or an Avalonia window in the designer, the
+    /// rest in the editor. It appears in Solution Explorer as the other new
+    /// files do.
     /// </summary>
     private async Task AddNewItemAsync(string? directory)
     {
         if (directory is not { Length: > 0 }) return;
 
-        // Only a project that builds Windows Forms can build a Form or a
-        // UserControl, so those are offered only there. The project is the one
-        // the folder belongs to; a folder with none offers the plain items.
-        // ProjectContaining looks from a file's folder upwards, so a
-        // placeholder name inside the folder is what it is given.
+        // Every template is offered; the ones that do not fit the project the
+        // folder belongs to are marked in the dialog, and warned about when
+        // added, rather than hidden. ProjectContaining looks from a file's
+        // folder upwards, so a placeholder name inside the folder is what it
+        // is given.
         var project = ExplorerFileOperations.ProjectContaining(Path.Combine(directory, "_"));
-        var templates = Enum.GetValues<ItemTemplate>()
-            .Where(t => !ItemTemplates.NeedsWindowsForms(t) || UsesWindowsForms(project))
-            .ToList();
+        var profile = ItemProjectProfile.FromProjectFile(project);
 
-        var dialog = new AddItemDialog(templates);
+        var memory = AddItemMemory.PathBeside(_settingsStore.FilePath);
+        var dialog = new AddItemDialog(ItemTemplates.All, profile, directory, AddItemMemory.Load(memory));
         var choice = await dialog.ShowDialog<AddItemChoice?>(this);
+        AddItemMemory.Save(memory, dialog.Category);
         if (choice is null) return;
 
         var files = ItemTemplates.FilesFor(choice.Template, choice.FileName);
 
         // Every file is checked before the first is written, so a Form whose
-        // Designer.vb is already there is refused rather than half made.
-        var problem = files
-            .Select(file => ExplorerFileOperations.Validate(file.FileName, directory))
-            .FirstOrDefault(p => p != ExplorerFileOperations.NameProblem.None);
+        // Designer.vb is already there is refused rather than half made. The
+        // dialog checked as the name was typed; this is for what changed since.
+        var conflict = files
+            .Select(file => (file.FileName, Problem: ExplorerFileOperations.Validate(file.FileName, directory)))
+            .FirstOrDefault(p => p.Problem != ExplorerFileOperations.NameProblem.None);
 
-        if (problem != ExplorerFileOperations.NameProblem.None)
+        if (conflict.Problem != ExplorerFileOperations.NameProblem.None)
         {
-            ViewModel.WriteOutput(DescribeNameProblem(problem, choice.FileName));
+            ViewModel.WriteOutput(DescribeNameProblem(conflict.Problem, conflict.FileName));
             return;
         }
 
@@ -92,47 +92,35 @@ public partial class MainWindow
 
         ViewModel.Explorer.Refresh();
 
+        // Added all the same: the file is the user's to keep, and a project that
+        // lacks the package or the SDK for it is one line away from having it.
+        if (choice.Misfit is { } missing)
+        {
+            var warning = Localizer.Get(StringKeys.AddItemMisfitWarning,
+                choice.FileName, AddItemDialog.Describe(missing));
+            ViewModel.WriteOutput(warning);
+            ViewModel.StatusMessage = warning;
+        }
+        else
+        {
+            ViewModel.StatusMessage = Localizer.Get(StringKeys.AddItemAdded, choice.FileName);
+        }
+
         // A form opens in the designer from its Designer.vb, as the WinForms
-        // project template opens the MainForm it writes; the other items open
-        // in the editor.
+        // project template opens the MainForm it writes; an Avalonia window
+        // from its .axaml; the other items open in the editor.
         if (files.FirstOrDefault(f => f.FileName.EndsWith(".Designer.vb", StringComparison.OrdinalIgnoreCase))
             is { } designer)
         {
             await ViewModel.OpenFileAsync(Path.Combine(directory, designer.FileName), inDesigner: true);
         }
+        else if (created.EndsWith(".axaml", StringComparison.OrdinalIgnoreCase))
+        {
+            await ViewModel.OpenFileAsync(created, inDesigner: true);
+        }
         else
         {
             await ViewModel.OpenFileAsync(created);
-        }
-    }
-
-    /// <summary>
-    /// Whether a project builds Windows Forms, the way the WinForms project
-    /// template says so: UseWindowsForms, a Windows target framework, or the
-    /// System.Windows.Forms import. A project that cannot be read builds
-    /// nothing with Windows Forms, so it offers none.
-    /// </summary>
-    private static bool UsesWindowsForms(string? projectPath)
-    {
-        if (projectPath is null || !File.Exists(projectPath)) return false;
-
-        try
-        {
-            return XDocument.Load(projectPath).Descendants().Any(element => element.Name.LocalName switch
-            {
-                "UseWindowsForms" => string.Equals(element.Value.Trim(), "true", StringComparison.OrdinalIgnoreCase),
-                "TargetFramework" or "TargetFrameworks" => element.Value.Contains("-windows", StringComparison.OrdinalIgnoreCase),
-                "Import" => string.Equals((string?)element.Attribute("Include"), "System.Windows.Forms", StringComparison.OrdinalIgnoreCase),
-                _ => false
-            });
-        }
-        catch (XmlException)
-        {
-            return false;
-        }
-        catch (IOException)
-        {
-            return false;
         }
     }
 

@@ -22,12 +22,27 @@ namespace Basalt.Tests;
 /// directory. Sessions saved before the change remember the folder, and the
 /// folder path still opens and selects the node.
 /// </summary>
+[Collection(SettingsFileCollection.Name)]
 public sealed class SolutionExplorerProjectNodeTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("basalt-project-node-").FullName;
 
+    // The windows these tests open read and write settings, and Add New Item
+    // keeps its last category beside them: without a settings file of their
+    // own that is the developer's ~/.basalt.
+    private readonly string _settings = Path.Combine(
+        Path.GetTempPath(), "basalt-project-node-settings-" + Guid.NewGuid().ToString("N") + ".json");
+
+    private readonly string? _previousSettings = Environment.GetEnvironmentVariable("BASALT_SETTINGS");
+
+    public SolutionExplorerProjectNodeTests() =>
+        Environment.SetEnvironmentVariable("BASALT_SETTINGS", _settings);
+
     public void Dispose()
     {
+        Environment.SetEnvironmentVariable("BASALT_SETTINGS", _previousSettings);
+        try { File.Delete(_settings); } catch (IOException) { }
+        try { File.Delete(Basalt.Shell.AddItemMemory.PathBeside(_settings)); } catch (IOException) { }
         try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
@@ -336,7 +351,7 @@ public sealed class SolutionExplorerProjectNodeTests : IDisposable
         var project = ProbeNode(vm.Explorer);
 
         var dialog = await UserJourneyItemsTests.OpenAddNewItemFromExplorerAsync(host, project);
-        UserJourneyItemsTests.ChooseTemplate(dialog, ItemTemplate.Class);
+        UserJourneyItemsTests.ChooseTemplate(dialog, ItemTemplateIds.Class);
         UserJourneyItemsTests.TypeName(dialog, "Customer");
         UserJourneyItemsTests.ClickLikeAMouse(UserJourneyItemsTests.ButtonWithText(dialog, L(StringKeys.AddItemCreate)));
         await host.SettleAsync(10);
@@ -344,6 +359,10 @@ public sealed class SolutionExplorerProjectNodeTests : IDisposable
         var created = Path.Combine(_root, "Probe", "Customer.vb");
         Assert.True(File.Exists(created), "the new class was not written into the project's folder");
         Assert.Contains(Flatten(vm.Explorer.Roots), n => n.Path == created);
+
+        // The dialog kept its category beside this test's own settings file, not in the developer's ~/.basalt.
+        Assert.True(File.Exists(Basalt.Shell.AddItemMemory.PathBeside(_settings)),
+            "Add New Item did not keep its category beside BASALT_SETTINGS");
     }
 
     /// <summary>New File and New Folder on the project node create inside the project's folder.</summary>

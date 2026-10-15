@@ -57,8 +57,9 @@ public sealed class UserJourneyItemsWinFormsTests : IDisposable
 
         var dialog = await OpenAddNewItemFromExplorerAsync(host, vm.Explorer.Roots.Single());
 
+        SelectCategory(dialog, ItemCategory.WindowsForms);
         Assert.Contains(L(StringKeys.AddItemWindowsForm), OfferedTemplates(dialog));
-        ChooseTemplate(dialog, ItemTemplate.WindowsForm);
+        ChooseTemplate(dialog, ItemTemplateIds.WindowsForm);
         TypeName(dialog, "Form1.vb");
         ClickLikeAMouse(ButtonWithText(dialog, L(StringKeys.AddItemCreate)));
         await host.SettleAsync(10);

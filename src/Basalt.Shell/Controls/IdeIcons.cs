@@ -61,7 +61,17 @@ public enum IconKind
     Table, View, Column, PrimaryKeyColumn, ForeignKeyColumn, Index,
 
     /// <summary>The database views' buttons: a database with a plus, a plug in and out, first and last page, a row added or removed.</summary>
-    DatabaseAdd, Connect, Disconnect, PageFirst, PageLast, RowAdd, RowDelete
+    DatabaseAdd, Connect, Disconnect, PageFirst, PageLast, RowAdd, RowDelete,
+
+    /// <summary>
+    /// The templates of Add New Item that have no file type of their own to
+    /// borrow an icon from: a class is not a text file, and a controller is not
+    /// a view. Files that are only a file (HTML, CSS, JSON...) keep the icon
+    /// of their extension.
+    /// </summary>
+    ClassItem, InterfaceItem, ModuleItem, StructureItem, EnumItem, ExceptionItem,
+    FormItem, UserControlItem, ComponentItem,
+    ControllerItem, ApiItem, BlazorItem, TestItem, ResourceItem, ConfigItem, SchemaItem
 }
 
 /// <summary>
@@ -106,12 +116,15 @@ public static class IdeIcons
     /// <summary>The colour an icon is drawn in, where it carries meaning.</summary>
     public static Color? AccentFor(IconKind kind) => kind switch
     {
-        IconKind.VisualBasicFile => Color.FromRgb(0x00, 0x69, 0xC0),
+        // The file types sit between a luminance of 0.14 and 0.30, as the database
+        // icons do, so each is at least 3:1 against a white list and the dark one
+        // (AddItemIconTests checks it); the first set of colours was too dark for Dark.
+        IconKind.VisualBasicFile => Color.FromRgb(0x2F, 0x80, 0xD0),
         IconKind.CSharpFile => Color.FromRgb(0x68, 0x21, 0x7A),
-        IconKind.RazorFile => Color.FromRgb(0x51, 0x2B, 0xD4),
+        IconKind.RazorFile => Color.FromRgb(0x8A, 0x6F, 0xC9),
         IconKind.WebFile => Color.FromRgb(0xE4, 0x4D, 0x26),
-        IconKind.StyleFile => Color.FromRgb(0x26, 0x4D, 0xE4),
-        IconKind.ScriptFile => Color.FromRgb(0xD6, 0xA5, 0x00),
+        IconKind.StyleFile => Color.FromRgb(0x4A, 0x7F, 0xE8),
+        IconKind.ScriptFile => Color.FromRgb(0xA6, 0x7C, 0x00),
         IconKind.JsonFile => Color.FromRgb(0x8A, 0x8A, 0x00),
         IconKind.Solution => Color.FromRgb(0x68, 0x21, 0x7A),
         IconKind.Project => Color.FromRgb(0x00, 0x69, 0xC0),
@@ -136,6 +149,17 @@ public static class IdeIcons
         IconKind.PrimaryKeyColumn => Color.FromRgb(0xB7, 0x8A, 0x3A),
         IconKind.ForeignKeyColumn => Color.FromRgb(0x8A, 0x6F, 0xC9),
         IconKind.Index => Color.FromRgb(0x2F, 0x9A, 0x8E),
+
+        // Add New Item. Mid tones, as the database icons: legible on a white
+        // list and on a dark one with the same colour.
+        IconKind.ClassItem or IconKind.InterfaceItem or IconKind.ModuleItem
+            or IconKind.StructureItem or IconKind.EnumItem => Color.FromRgb(0x3D, 0x8F, 0xC9),
+        IconKind.ExceptionItem => Color.FromRgb(0xC2, 0x4A, 0x45),
+        IconKind.FormItem or IconKind.UserControlItem or IconKind.ComponentItem => Color.FromRgb(0x2F, 0x9A, 0x8E),
+        IconKind.ControllerItem or IconKind.ApiItem => Color.FromRgb(0xC2, 0x7A, 0x1E),
+        IconKind.BlazorItem => Color.FromRgb(0x8A, 0x6F, 0xC9),
+        IconKind.TestItem => Color.FromRgb(0x2E, 0xA0, 0x43),
+        IconKind.ResourceItem or IconKind.ConfigItem or IconKind.SchemaItem => Color.FromRgb(0xB7, 0x8A, 0x3A),
 
         // Basalt is dark rock; the lava is what gives it colour.
         IconKind.Application => Color.FromRgb(0xE4, 0x57, 0x2E),
@@ -386,6 +410,35 @@ public static class IdeIcons
         IconKind.PageLast => "M13,3 V13 M3,3 L10,8 L3,13 Z",
         IconKind.RowAdd => "M2,3.5 H14 V8 H2 Z M8,10 V15 M5.5,12.5 H10.5",
         IconKind.RowDelete => "M2,3.5 H14 V8 H2 Z M5.5,12.5 H10.5",
+
+        // Add New Item: a class is a box with its name above its members, an
+        // interface the lollipop of UML, a module its braces, a structure a
+        // box within a box, an enumeration a list of names.
+        IconKind.ClassItem => "M2.5,2.5 H13.5 V13.5 H2.5 Z M2.5,6 H13.5 M5,9 H11",
+        IconKind.InterfaceItem => "M10.5,3 A3.5,3.5 0 1 1 10.5,10 A3.5,3.5 0 0 1 10.5,3 M7,6.5 H2 M4.5,13.5 H13",
+        IconKind.ModuleItem => "M5,2 C3,2 4,6 2,8 C4,10 3,14 5,14 M11,2 C13,2 12,6 14,8 C12,10 13,14 11,14",
+        IconKind.StructureItem => "M2.5,2.5 H13.5 V13.5 H2.5 Z M6,6 H10 V10 H6 Z",
+        IconKind.EnumItem => "M2,4 H3.5 M6,4 H14 M2,8 H3.5 M6,8 H14 M2,12 H3.5 M6,12 H14 M1.5,4 V12",
+
+        // A bolt: what an exception is.
+        IconKind.ExceptionItem => "M9,1.5 L3.5,9 H8 L7,14.5 L12.5,7 H8 Z",
+
+        // A window with a title bar and a button; a control without the
+        // title bar; a component, a block with a tab that plugs in.
+        IconKind.FormItem => "M2,2.5 H14 V13.5 H2 Z M2,5.5 H14 M5,8 H11 V11 H5 Z",
+        IconKind.UserControlItem => "M2.5,2.5 H13.5 V13.5 H2.5 Z M5,5 H11 V11 H5 Z M2.5,8 H5 M11,8 H13.5",
+        IconKind.ComponentItem => "M3,5 H7 V3 H9 V5 H13 V13 H3 Z",
+
+        // Requests in, answers out; an endpoint with its two wires; a flame,
+        // as Blazor's own logo; a flask for a test; a picture for resources;
+        // sliders for settings; a tree of boxes for a schema.
+        IconKind.ControllerItem => "M2,5 H12 M9,2 L12,5 L9,8 M14,11 H4 M7,8 L4,11 L7,14",
+        IconKind.ApiItem => "M3,8 H6 M10,8 H13 M8,3 V6 M8,10 V13 M6,6 H10 V10 H6 Z",
+        IconKind.BlazorItem => "M8,1.5 C10,4 13,6 12.5,10 A4.5,4.5 0 0 1 3.5,10 C3.5,7.5 5.5,6.5 6,4 C7,5 7.5,3.5 8,1.5 Z",
+        IconKind.TestItem => "M6,2 H10 M7,2 V6 L3,13.5 H13 L9,6 V2 M5,10.5 H11",
+        IconKind.ResourceItem => "M2.5,3 H13.5 V13 H2.5 Z M2.5,10 L6,6.5 L9,9.5 L11,7.5 L13.5,10",
+        IconKind.ConfigItem => "M2,4.5 H14 M2,8 H14 M2,11.5 H14 M10,3 V6 M5,6.5 V9.5 M11,10 V13",
+        IconKind.SchemaItem => "M6,2 H10 V5 H6 Z M2,11 H6 V14 H2 Z M10,11 H14 V14 H10 Z M8,5 V8 M4,11 V8 H12 V11",
 
         IconKind.Error => "M8,1.5 A6.5,6.5 0 1 1 8,14.5 A6.5,6.5 0 0 1 8,1.5 M5.5,5.5 L10.5,10.5 M10.5,5.5 L5.5,10.5",
         IconKind.Warning => "M8,2 L15,14 H1 Z M8,6 V10 M8,11.5 V12.5",

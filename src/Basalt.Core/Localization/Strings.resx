@@ -991,7 +991,7 @@
   <data name="AddItem_Interface" xml:space="preserve"><value>Interface</value></data>
   <data name="AddItem_WindowsForm" xml:space="preserve"><value>Windows Form</value></data>
   <data name="AddItem_UserControl" xml:space="preserve"><value>Windows Forms User Control</value></data>
-  <data name="AddItem_EmptyFile" xml:space="preserve"><value>Empty File</value></data>
+  <data name="AddItem_EmptyFile" xml:space="preserve"><value>Code File</value></data>
   <data name="Open_Filter_Solutions" xml:space="preserve"><value>Solutions, projects and programs</value></data>
   <!-- Project Properties dialog -->
   <data name="ProjectProperties_Title" xml:space="preserve"><value>Project Properties</value></data>
@@ -1468,4 +1468,94 @@
   <data name="TableDesigner_RebuildComment" xml:space="preserve"><value>SQLite cannot alter this table in place. The statements below rebuild it, and must be run together as a whole: stopping part-way leaves the table half rebuilt.</value></data>
   <data name="TableDesigner_Stale" xml:space="preserve"><value>{0} was changed in the database after it was loaded here. Press Revert to read it again before saving. Nothing was changed.</value></data>
   <data name="TableDesigner_MySqlExtrasUnknown" xml:space="preserve"><value>MODIFY and CHANGE redefine the whole column: its collation, comment and ON UPDATE clause were not read and are reset unless written here.</value></data>
+  <data name="AddItem_Category_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="AddItem_Category_WindowsForms" xml:space="preserve"><value>Windows Forms</value></data>
+  <data name="AddItem_Category_Avalonia" xml:space="preserve"><value>Avalonia</value></data>
+  <data name="AddItem_Category_Web" xml:space="preserve"><value>Web</value></data>
+  <data name="AddItem_Category_Razor" xml:space="preserve"><value>Razor and Blazor</value></data>
+  <data name="AddItem_Category_Data" xml:space="preserve"><value>Data</value></data>
+  <data name="AddItem_Category_Testing" xml:space="preserve"><value>Testing</value></data>
+  <data name="AddItem_Category_General" xml:space="preserve"><value>General</value></data>
+  <data name="AddItem_Categories" xml:space="preserve"><value>Categories</value></data>
+  <data name="AddItem_SearchPlaceholder" xml:space="preserve"><value>Search templates</value></data>
+  <data name="AddItem_NoMatches" xml:space="preserve"><value>No template matches your search.</value></data>
+  <data name="AddItem_DescriptionHeader" xml:space="preserve"><value>Description</value></data>
+  <data name="AddItem_PreviewHeader" xml:space="preserve"><value>Preview</value></data>
+  <data name="AddItem_NameEmpty" xml:space="preserve"><value>Enter a name for the new item.</value></data>
+  <data name="AddItem_NameFileInvalid" xml:space="preserve"><value>'{0}' is not a valid file name.</value></data>
+  <data name="AddItem_NameExists" xml:space="preserve"><value>'{0}' already exists in this folder.</value></data>
+  <data name="AddItem_NotForProject" xml:space="preserve"><value>Not for this project</value></data>
+  <data name="AddItem_MisfitNote" xml:space="preserve"><value>This project does not have {0}. You can add the item, but it will not build until the project does.</value></data>
+  <data name="AddItem_MisfitWarning" xml:space="preserve"><value>Warning: {0} was added, but the project does not have {1}. It will not build until it does.</value></data>
+  <data name="AddItem_NeedsWeb" xml:space="preserve"><value>a web project (ASP.NET Core or Basalt.Razor.Vb)</value></data>
+  <data name="AddItem_NeedsWindowsForms" xml:space="preserve"><value>a Windows Forms project</value></data>
+  <data name="AddItem_NeedsAvalonia" xml:space="preserve"><value>an Avalonia project</value></data>
+  <data name="AddItem_NeedsXUnit" xml:space="preserve"><value>the xunit package (dotnet add package xunit)</value></data>
+  <data name="AddItem_NeedsNUnit" xml:space="preserve"><value>the NUnit package (dotnet add package NUnit)</value></data>
+  <data name="AddItem_NeedsMSTest" xml:space="preserve"><value>the MSTest package (dotnet add package MSTest)</value></data>
+  <data name="AddItem_Added" xml:space="preserve"><value>Added {0}</value></data>
+  <data name="AddItem_FilesHeader" xml:space="preserve"><value>Files: {0}</value></data>
+  <data name="AddItem_Tpl_Class_Description" xml:space="preserve"><value>An empty Visual Basic class.</value></data>
+  <data name="AddItem_Tpl_Module_Description" xml:space="preserve"><value>A module: shared procedures and values that need no instance.</value></data>
+  <data name="AddItem_Tpl_Interface_Description" xml:space="preserve"><value>An interface: the members a type promises to offer.</value></data>
+  <data name="AddItem_Tpl_Structure_Name" xml:space="preserve"><value>Structure</value></data>
+  <data name="AddItem_Tpl_Structure_Description" xml:space="preserve"><value>A value type that holds a few related fields.</value></data>
+  <data name="AddItem_Tpl_Enum_Name" xml:space="preserve"><value>Enumeration</value></data>
+  <data name="AddItem_Tpl_Enum_Description" xml:space="preserve"><value>A set of named constants.</value></data>
+  <data name="AddItem_Tpl_ExceptionClass_Name" xml:space="preserve"><value>Exception Class</value></data>
+  <data name="AddItem_Tpl_ExceptionClass_Description" xml:space="preserve"><value>An exception type with the three standard constructors.</value></data>
+  <data name="AddItem_Tpl_EmptyFile_Description" xml:space="preserve"><value>An empty Visual Basic code file.</value></data>
+  <data name="AddItem_Tpl_WindowsForm_Description" xml:space="preserve"><value>A form for the Windows Forms designer, with its Designer.vb file.</value></data>
+  <data name="AddItem_Tpl_UserControl_Description" xml:space="preserve"><value>A reusable control built in the Windows Forms designer.</value></data>
+  <data name="AddItem_Tpl_Dialog_Name" xml:space="preserve"><value>Dialog</value></data>
+  <data name="AddItem_Tpl_Dialog_Description" xml:space="preserve"><value>A fixed-size form with OK and Cancel buttons wired to Enter and Esc.</value></data>
+  <data name="AddItem_Tpl_AboutBox_Name" xml:space="preserve"><value>About Box</value></data>
+  <data name="AddItem_Tpl_AboutBox_Description" xml:space="preserve"><value>An About box that shows the name, version and copyright of the assembly.</value></data>
+  <data name="AddItem_Tpl_Component_Name" xml:space="preserve"><value>Component Class</value></data>
+  <data name="AddItem_Tpl_Component_Description" xml:space="preserve"><value>A class that derives from System.ComponentModel.Component.</value></data>
+  <data name="AddItem_Tpl_AvaloniaWindow_Name" xml:space="preserve"><value>Avalonia Window</value></data>
+  <data name="AddItem_Tpl_AvaloniaWindow_Description" xml:space="preserve"><value>A window with its XAML and Visual Basic code-behind, opened in the designer.</value></data>
+  <data name="AddItem_Tpl_AvaloniaUserControl_Name" xml:space="preserve"><value>Avalonia User Control</value></data>
+  <data name="AddItem_Tpl_AvaloniaUserControl_Description" xml:space="preserve"><value>A user control with its XAML and Visual Basic code-behind.</value></data>
+  <data name="AddItem_Tpl_HtmlPage_Name" xml:space="preserve"><value>HTML Page</value></data>
+  <data name="AddItem_Tpl_HtmlPage_Description" xml:space="preserve"><value>A web page with the usual head and an empty body.</value></data>
+  <data name="AddItem_Tpl_StyleSheet_Name" xml:space="preserve"><value>Style Sheet</value></data>
+  <data name="AddItem_Tpl_StyleSheet_Description" xml:space="preserve"><value>A CSS file for the look of a web page.</value></data>
+  <data name="AddItem_Tpl_JavaScript_Name" xml:space="preserve"><value>JavaScript File</value></data>
+  <data name="AddItem_Tpl_JavaScript_Description" xml:space="preserve"><value>A script that runs in the browser.</value></data>
+  <data name="AddItem_Tpl_JsonFile_Name" xml:space="preserve"><value>JSON File</value></data>
+  <data name="AddItem_Tpl_JsonFile_Description" xml:space="preserve"><value>A JSON document, empty and ready to fill.</value></data>
+  <data name="AddItem_Tpl_MvcView_Name" xml:space="preserve"><value>MVC View</value></data>
+  <data name="AddItem_Tpl_MvcView_Description" xml:space="preserve"><value>A Razor view (.vbhtml) with a model type and a title.</value></data>
+  <data name="AddItem_Tpl_LayoutPage_Name" xml:space="preserve"><value>Layout Page</value></data>
+  <data name="AddItem_Tpl_LayoutPage_Description" xml:space="preserve"><value>The page that wraps every view: head, body and a Scripts section.</value></data>
+  <data name="AddItem_Tpl_PartialView_Name" xml:space="preserve"><value>Partial View</value></data>
+  <data name="AddItem_Tpl_PartialView_Description" xml:space="preserve"><value>A Razor view for a piece of a page, shared by other views.</value></data>
+  <data name="AddItem_Tpl_MvcController_Name" xml:space="preserve"><value>MVC Controller</value></data>
+  <data name="AddItem_Tpl_MvcController_Description" xml:space="preserve"><value>A controller with an Index action that returns its view.</value></data>
+  <data name="AddItem_Tpl_ApiController_Name" xml:space="preserve"><value>Web API Controller</value></data>
+  <data name="AddItem_Tpl_ApiController_Description" xml:space="preserve"><value>A controller for a JSON API, with [ApiController] and [Route].</value></data>
+  <data name="AddItem_Tpl_BlazorComponent_Name" xml:space="preserve"><value>Blazor Component</value></data>
+  <data name="AddItem_Tpl_BlazorComponent_Description" xml:space="preserve"><value>A Blazor component (.vbrazor) with a parameter.</value></data>
+  <data name="AddItem_Tpl_VbPage_Name" xml:space="preserve"><value>Page</value></data>
+  <data name="AddItem_Tpl_VbPage_Description" xml:space="preserve"><value>A .vbpage page in the Classic ASP style, served from its own URL.</value></data>
+  <data name="AddItem_Tpl_XmlFile_Name" xml:space="preserve"><value>XML File</value></data>
+  <data name="AddItem_Tpl_XmlFile_Description" xml:space="preserve"><value>An XML document with a root element.</value></data>
+  <data name="AddItem_Tpl_XmlSchema_Name" xml:space="preserve"><value>XML Schema</value></data>
+  <data name="AddItem_Tpl_XmlSchema_Description" xml:space="preserve"><value>An XSD schema that describes the shape of an XML file.</value></data>
+  <data name="AddItem_Tpl_TextFile_Name" xml:space="preserve"><value>Text File</value></data>
+  <data name="AddItem_Tpl_TextFile_Description" xml:space="preserve"><value>An empty text file.</value></data>
+  <data name="AddItem_Tpl_ResourceFile_Name" xml:space="preserve"><value>Resources File</value></data>
+  <data name="AddItem_Tpl_ResourceFile_Description" xml:space="preserve"><value>A .resx file for strings, images and other resources.</value></data>
+  <data name="AddItem_Tpl_AppConfig_Name" xml:space="preserve"><value>Application Configuration File</value></data>
+  <data name="AddItem_Tpl_AppConfig_Description" xml:space="preserve"><value>An App.config file with an appSettings section.</value></data>
+  <data name="AddItem_Tpl_XUnitTest_Name" xml:space="preserve"><value>xUnit Test Class</value></data>
+  <data name="AddItem_Tpl_XUnitTest_Description" xml:space="preserve"><value>A test class for xUnit, with one [Fact].</value></data>
+  <data name="AddItem_Tpl_NUnitTest_Name" xml:space="preserve"><value>NUnit Test Class</value></data>
+  <data name="AddItem_Tpl_NUnitTest_Description" xml:space="preserve"><value>A test fixture for NUnit, with one [Test].</value></data>
+  <data name="AddItem_Tpl_MSTestTest_Name" xml:space="preserve"><value>MSTest Test Class</value></data>
+  <data name="AddItem_Tpl_MSTestTest_Description" xml:space="preserve"><value>A test class for MSTest, with one [TestMethod].</value></data>
+  <data name="AddItem_Tpl_AnyFile_Name" xml:space="preserve"><value>Empty File</value></data>
+  <data name="AddItem_Tpl_AnyFile_Description" xml:space="preserve"><value>A file of any kind. The name is kept exactly as you type it, extension included.</value></data>
+  <data name="AddItem_NameShadows" xml:space="preserve"><value>'{0}' is the name of the class this item inherits from. Choose another name.</value></data>
 </root>
