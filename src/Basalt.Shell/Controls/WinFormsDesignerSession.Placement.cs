@@ -15,8 +15,7 @@ internal sealed partial class WinFormsDesignerSession
         var number = 1;
         var name = type.Name + number;
         while (Document.DeclaredNames.Contains(name, StringComparer.OrdinalIgnoreCase)) name = type.Name + ++number;
-        return ApplyControlEditAsync(document => new WinFormsDesignerDocument(document.AddControl(name, "Global." + type.FullName, parentName))
-            .SetProperty(name, "Location", $"New System.Drawing.Point({location.X}, {location.Y})"));
+        return ApplyControlEditAsync(document => document.AddControl(name, "Global." + type.FullName, parentName, (location.X, location.Y)));
     }
 
     /// <summary>The panel names the designer writes for the Forms containers that hold children.</summary>

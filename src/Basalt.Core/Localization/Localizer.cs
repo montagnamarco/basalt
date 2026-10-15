@@ -1388,4 +1388,30 @@ public static class StringKeys
     public const string RefactorExtractMethodYield = "Refactor_ExtractMethod_Yield";
     public const string RefactorExtractMethodAsyncByRef = "Refactor_ExtractMethod_AsyncByRef";
     public const string RefactorExtractMethodLambdaByRef = "Refactor_ExtractMethod_LambdaByRef";
+    public const string MenuEditCut = "Menu_Edit_Cut";
+    public const string MenuEditCopy = "Menu_Edit_Copy";
+    public const string MenuEditPaste = "Menu_Edit_Paste";
+    public const string MenuEditDelete = "Menu_Edit_Delete";
+    public const string MenuEditSelectAll = "Menu_Edit_SelectAll";
+
+    public const string MenuFormat = "Menu_Format";
+    public const string MenuFormatAlign = "Menu_Format_Align";
+    public const string MenuFormatMakeSameSize = "Menu_Format_MakeSameSize";
+    public const string MenuFormatMakeSameWidth = "Menu_Format_MakeSameWidth";
+    public const string MenuFormatMakeSameHeight = "Menu_Format_MakeSameHeight";
+    public const string MenuFormatMakeSameBoth = "Menu_Format_MakeSameBoth";
+    public const string MenuFormatHorizontalSpacing = "Menu_Format_HorizontalSpacing";
+    public const string MenuFormatVerticalSpacing = "Menu_Format_VerticalSpacing";
+    public const string MenuFormatMakeEqual = "Menu_Format_MakeEqual";
+    public const string MenuFormatCenterInForm = "Menu_Format_CenterInForm";
+    public const string MenuFormatCenterHorizontally = "Menu_Format_CenterHorizontally";
+    public const string MenuFormatCenterVertically = "Menu_Format_CenterVertically";
+    public const string MenuFormatOrder = "Menu_Format_Order";
+    public const string MenuFormatLockControls = "Menu_Format_LockControls";
+    public const string WinFormsDesignerAlignLeft = "WinFormsDesigner_AlignLeft";
+    public const string WinFormsDesignerAlignCenter = "WinFormsDesigner_AlignCenter";
+    public const string WinFormsDesignerAlignRight = "WinFormsDesigner_AlignRight";
+    public const string WinFormsDesignerAlignTop = "WinFormsDesigner_AlignTop";
+    public const string WinFormsDesignerAlignMiddle = "WinFormsDesigner_AlignMiddle";
+    public const string WinFormsDesignerAlignBottom = "WinFormsDesigner_AlignBottom";
 }

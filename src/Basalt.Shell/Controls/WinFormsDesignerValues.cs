@@ -59,6 +59,13 @@ internal static class WinFormsDesignerValues
             var number = (decimal)Evaluate(unary.Operand, typeof(decimal))!;
             return ConvertConstant(unary.IsKind(SyntaxKind.UnaryMinusExpression) ? -number : number, type);
         }
+        // Visual Basic's & joins two constant strings, so "A" & "B" previews as "AB". Nothing joins as an empty string.
+        if (type == typeof(string) && syntax is BinaryExpressionSyntax { } concatenation
+            && concatenation.IsKind(SyntaxKind.ConcatenateExpression))
+        {
+            return Convert.ToString(Evaluate(concatenation.Left, typeof(string)), CultureInfo.InvariantCulture)
+                + Convert.ToString(Evaluate(concatenation.Right, typeof(string)), CultureInfo.InvariantCulture);
+        }
         if (type.IsEnum && syntax is BinaryExpressionSyntax binary && binary.IsKind(SyntaxKind.OrExpression))
         {
             var left = Convert.ToInt64(Evaluate(binary.Left, type), CultureInfo.InvariantCulture);
@@ -222,6 +229,19 @@ internal static class WinFormsDesignerValues
     private static string Float(float value) => float.IsFinite(value)
         ? value.ToString("R", CultureInfo.InvariantCulture) + "!" : throw Unsupported();
     private static string Quote(string value) => "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+
+    /// <summary>
+    /// The font a font dialog hands back, as the designer writes it. The dialog keeps the character set of the font it was
+    /// given, and a font made without one has DEFAULT_CHARSET (1), which no installed font reports. Visual Studio writes the
+    /// ANSI character set (0) that the font resolved to, so an edited font with DEFAULT_CHARSET becomes one with ANSI_CHARSET.
+    /// Any other character set is kept. A font that is not replaced is returned as it is.
+    /// </summary>
+    public static Font AsEditedFont(Font edited) => edited.GdiCharSet == DefaultCharSet
+        ? new Font(edited.OriginalFontName ?? edited.Name, edited.Size, edited.Style, edited.Unit, AnsiCharSet, edited.GdiVerticalFont)
+        : edited;
+
+    private const byte DefaultCharSet = 1;
+    private const byte AnsiCharSet = 0;
     private static string Normalize(string name) => name.StartsWith("Global.", StringComparison.OrdinalIgnoreCase) ? name[7..] : name;
     private static NotSupportedException Unsupported() => new(Localizer.Get(StringKeys.WinFormsDesignerUnsupportedExpression));
 

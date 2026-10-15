@@ -244,7 +244,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
 
     public void ApplyLayoutCommand(WinFormsLayoutCommand command)
     {
-        if (_tabOrderMode || _gesture is not null) return;
+        if (_tabOrderMode || _gesture is not null || LockControls) return;
         var edits = WinFormsDesignerLayout.Apply(_selection, command);
         if (edits.Count == 0) return;
         foreach (var edit in edits) edit.Control.Bounds = edit.After;
@@ -277,8 +277,9 @@ public sealed partial class WinFormsDesignSurface : ContentControl
 
         _host.Width = outerWidth + Gutter * 2;
         _host.Height = outerHeight + Gutter * 2;
-        MinWidth = _host.Width;
-        MinHeight = _host.Height;
+        // The host is drawn at the zoom, so the space the surface takes is the host's size times it.
+        MinWidth = _host.Width * _zoom;
+        MinHeight = _host.Height * _zoom;
         _adorners.Width = _host.Width;
         _adorners.Height = _host.Height;
         _guides.Width = _host.Width;
@@ -317,7 +318,8 @@ public sealed partial class WinFormsDesignSurface : ContentControl
             return;
         }
         var primary = SelectedControl;
-        var handle = primary is not null
+        // A locked control has no handles: a press on its corner selects it and starts nothing.
+        var handle = primary is not null && !LockControls
             ? HandleAt(BoundsOnHost(primary), at)
             : null;
         var hit = handle is null ? SelectableOf(HitTest(at)) : primary;
@@ -347,7 +349,7 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         var alreadySelected = hit is not null && _selection.Contains(hit);
         if (!alreadySelected) Select(hit);
 
-        if (hit is not null && (handle is not null || !ReferenceEquals(hit, _rootForm)))
+        if (!LockControls && hit is not null && (handle is not null || !ReferenceEquals(hit, _rootForm)))
         {
             var group = _selection.Select(control => (control, control.Bounds)).ToArray();
             var collapse = alreadySelected && group.Length > 1 ? hit : null;
@@ -477,61 +479,6 @@ public sealed partial class WinFormsDesignSurface : ContentControl
         CancelBand();
         CancelGesture();
         base.OnDetachedFromVisualTree(e);
-    }
-
-    protected override void OnKeyDown(KeyEventArgs e)
-    {
-        base.OnKeyDown(e);
-        if (IsInlineMenuInput(e.Source)) return;
-        if (_tabOrderMode)
-        {
-            if (e.Key == Key.Escape)
-            {
-                TabOrderMode = false;
-                e.Handled = true;
-            }
-            return;
-        }
-        if ((_gesture is not null || _bandOrigin is not null) && e.Key == Key.Escape)
-        {
-            CancelBand();
-            CancelGesture();
-            e.Handled = true;
-            return;
-        }
-
-        if (SelectedControl is not { } selected || _rootForm is null) return;
-
-        if (e.Key is Key.Delete or Key.Back && !ReferenceEquals(selected, _rootForm))
-        {
-            DeleteRequested?.Invoke(selected);
-            e.Handled = true;
-            return;
-        }
-
-        var step = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 10 : 1;
-        var (dx, dy) = e.Key switch
-        {
-            Key.Left => (-step, 0),
-            Key.Right => (step, 0),
-            Key.Up => (0, -step),
-            Key.Down => (0, step),
-            _ => (0, 0),
-        };
-
-        if ((dx == 0 && dy == 0) || ReferenceEquals(selected, _rootForm)) return;
-
-        var group = _selection.Select(control => (control, control.Bounds)).ToArray();
-        foreach (var (control, before) in group)
-            control.Bounds = new Rectangle(before.X + dx, before.Y + dy,
-                before.Width, before.Height);
-
-        RefreshForm();
-
-        if (group.Length > 1) CompleteGroup(group);
-        else Complete(selected, group[0].Bounds);
-
-        e.Handled = true;
     }
 
     private void CancelGesture()

@@ -12,6 +12,7 @@ public class WinFormsEventHandlersTests
         End Class
         """;
     private const string Companion = """
+        Imports System
         Partial Class MainForm
             ' Keep unsaved user code and this comment.
             Private Sub Existing(sender As Object, e As System.EventArgs) Handles Button1.Click, Me.Load

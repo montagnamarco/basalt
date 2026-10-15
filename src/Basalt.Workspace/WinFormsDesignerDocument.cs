@@ -31,8 +31,7 @@ public sealed partial class WinFormsDesignerDocument
     {
         _text = SourceText.From(source);
         _syntax = (CompilationUnitSyntax)VisualBasicSyntaxTree.ParseText(_text).GetRoot();
-        if (_syntax.ContainsDiagnostics)
-            throw new FormatException(Localizer.Get(StringKeys.WinFormsDesignerSyntaxErrors));
+        ThrowOnSyntaxErrors(_syntax);
         _initialize = _syntax.DescendantNodes().OfType<MethodBlockSyntax>()
             .SingleOrDefault(method => method.SubOrFunctionStatement.Identifier.ValueText
                 .Equals("InitializeComponent", StringComparison.OrdinalIgnoreCase))
@@ -113,10 +112,24 @@ public sealed partial class WinFormsDesignerDocument
             return _text.WithChanges(new TextChange(matches[^1].Right.Span, expression)).ToString();
         }
         var receiver = controlName.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Me" : $"Me.{controlName}";
-        return InsertStatements($"{receiver}.{propertyName} = {expression}");
+        var statement = $"{receiver}.{propertyName} = {expression}";
+        // A property that selects a child, such as a TabControl's SelectedIndex, needs the child to exist: it goes after the
+        // last child is added, as Visual Studio writes it. The pages of a TabControl are added after its own Controls.Add.
+        if (NeedsChildrenFirst(propertyName) && LastChildAddStatement(controlName) is { } lastChild)
+            return InsertStatementAfter(lastChild, statement);
+        // Visual Studio writes a control's properties before its Controls.Add, so a new one goes in front of it.
+        return ControlAddStatement(controlName) is { } add
+            ? InsertStatementBefore(add, statement)
+            : InsertStatements(statement);
     }
 
-    public string AddControl(string name, string typeName, string parentName = "Me")
+    /// <summary>
+    /// Adds a control the way Visual Studio writes one: its properties first, then <c>Controls.Add</c>. The starting size,
+    /// text and dock come from <see cref="WinFormsControlDefaults"/>, the TabIndex is the next one in drop order, and a
+    /// TabControl brings its two TabPages, which are controls of their own.
+    /// </summary>
+    /// <param name="location">Where the control was dropped, in its parent's client area; null keeps the control at (20, 20).</param>
+    public string AddControl(string name, string typeName, string parentName = "Me", (int X, int Y)? location = null)
     {
         ValidateIdentifier(name);
         parentName = ResolveParentKey(parentName);
@@ -125,14 +138,110 @@ public sealed partial class WinFormsDesignerDocument
             throw new ArgumentException(Localizer.Get(StringKeys.WinFormsDesignerNameAlreadyExists), nameof(name));
         var type = SyntaxFactory.ParseTypeName(typeName);
         if (type.ContainsDiagnostics) throw new FormatException(Localizer.Get(StringKeys.WinFormsDesignerControlTypeInvalid));
-        var source = InsertStatements($"Me.{name} = New {typeName}()",
-            $"Me.{name}.Name = \"{name}\"", $"Me.{name}.Location = New System.Drawing.Point(20, 20)",
-            $"Me.{name}.Size = New System.Drawing.Size(100, 30)", $"Me.{name}.Text = \"{name}\"",
-            $"{(parentName == "Me" ? "Me" : $"Me.{parentName}")}.Controls.Add(Me.{name})");
+
+        var starting = WinFormsControlDefaults.For(typeName);
+        var tabIndex = NextTabIndex(parentName);
+        var form = FormClientSize();
+        var statements = new List<string>();
+        var fields = new List<string>();
+        AppendControl(statements, fields, name, typeName, starting, location ?? (20, 20), form, tabIndex,
+            parentName == "Me" ? "Me" : $"Me.{parentName}");
+        if (starting.TabPages)
+        {
+            var pageType = "Global.System.Windows.Forms.TabPage";
+            var pages = FreeNames("TabPage", 2, name);
+            // The pages are children of the TabControl, so they are numbered within it from 0, not after the form's controls.
+            for (var index = 0; index < pages.Length; index++)
+                AppendControl(statements, fields, pages[index], pageType, new(Text: true), null, form, index, $"Me.{name}");
+        }
+        var source = InsertStatements(statements.ToArray());
         var updated = new WinFormsDesignerDocument(source);
         var position = updated._class.EndClassStatement.FullSpan.Start;
         return updated._text.WithChanges(new TextChange(new TextSpan(position, 0),
-            $"    Friend WithEvents {name} As {typeName}{NewLine}")).ToString();
+            string.Concat(fields.Select(field => $"    {field}{NewLine}")))).ToString();
+    }
+
+    /// <summary>
+    /// The statements that create one control, in Visual Studio's order: New, Name, Location, Size, AutoSize, Text, Dock,
+    /// TabIndex, and last <c>Controls.Add</c>. The Location and Size come from <see cref="Bounds"/>.
+    /// </summary>
+    private static void AppendControl(List<string> statements, List<string> fields, string name, string typeName,
+        WinFormsControlDefaults.Starting starting, (int X, int Y)? location, (int Width, int Height) form, int tabIndex,
+        string parentReceiver)
+    {
+        statements.Add($"Me.{name} = New {typeName}()");
+        statements.Add($"Me.{name}.Name = \"{name}\"");
+        var (position, size) = Bounds(starting, location, form);
+        if (position is { } point)
+            statements.Add($"Me.{name}.Location = New System.Drawing.Point({point.X}, {point.Y})");
+        if (size is { } measure)
+            statements.Add($"Me.{name}.Size = New System.Drawing.Size({measure.Width}, {measure.Height})");
+        if (starting.AutoSize) statements.Add($"Me.{name}.AutoSize = True");
+        if (starting.Text) statements.Add($"Me.{name}.Text = \"{name}\"");
+        if (starting.Dock is { } dock) statements.Add($"Me.{name}.Dock = System.Windows.Forms.DockStyle.{dock}");
+        statements.Add($"Me.{name}.TabIndex = {tabIndex}");
+        statements.Add($"{parentReceiver}.Controls.Add(Me.{name})");
+        fields.Add($"Friend WithEvents {name} As {typeName}");
+    }
+
+    /// <summary>
+    /// The next TabIndex in drop order within a container: one more than the highest that a control of the same container
+    /// already has, or 0. Visual Studio numbers the tab order per container, so a TabPage's index does not follow the form's.
+    /// </summary>
+    private int NextTabIndex(string containerKey) => Controls
+        .Where(control => string.Equals(ContainerKeyOf(control), containerKey, StringComparison.OrdinalIgnoreCase))
+        .Select(control => control.Properties.TryGetValue("TabIndex", out var value)
+            && int.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var index)
+            ? index : -1)
+        .DefaultIfEmpty(-1)
+        .Max() + 1;
+
+    /// <summary>The key of the container a control sits in, as <see cref="ResolveParentKey"/> names it: its owner, or owner.panel.</summary>
+    private static string ContainerKeyOf(WinFormsDesignerControl control) =>
+        control.ParentPanel is null ? control.ParentName : control.ParentName + "." + control.ParentPanel;
+
+    /// <summary>
+    /// The Location and Size a new control is written with. A control that is not docked takes the drop point and its
+    /// starting size. A docked control takes none, except a strip (MenuStrip, ToolStrip, StatusStrip), which Visual Studio
+    /// writes at its docked edge across the form's client width.
+    /// </summary>
+    private static ((int X, int Y)? Position, (int Width, int Height)? Size) Bounds(
+        WinFormsControlDefaults.Starting starting, (int X, int Y)? location, (int Width, int Height) form)
+    {
+        if (starting.Dock is null)
+        {
+            (int Width, int Height)? size = starting.Width is { } width && starting.Height is { } height ? (width, height) : null;
+            return (location, size);
+        }
+        if (!starting.DockedBounds) return (null, null);
+        var stripHeight = starting.Height ?? 0;
+        var top = starting.Dock == "Bottom" ? form.Height - stripHeight : 0;
+        return ((0, top), (form.Width, stripHeight));
+    }
+
+    /// <summary>The form's client size as its designer code writes it, or Visual Studio's default for a form that writes none.</summary>
+    private (int Width, int Height) FormClientSize()
+    {
+        var arguments = Root.PropertySyntax.TryGetValue("ClientSize", out var expression)
+            && expression is ObjectCreationExpressionSyntax creation
+            ? creation.ArgumentList?.Arguments.OfType<SimpleArgumentSyntax>().Select(argument => argument.Expression).ToArray()
+            : null;
+        return arguments is [LiteralExpressionSyntax { Token.Value: int width }, LiteralExpressionSyntax { Token.Value: int height }]
+            ? (width, height) : (300, 300);
+    }
+
+    /// <summary>
+    /// The first <paramref name="count"/> names of the form <c>prefix</c> + number that no field of the designer uses, and
+    /// that <paramref name="alsoTaken"/> does not name either: the control being added is not a field yet.
+    /// </summary>
+    private string[] FreeNames(string prefix, int count, string alsoTaken)
+    {
+        var taken = DeclaredNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        taken.Add(alsoTaken);
+        var names = new List<string>();
+        for (var number = 1; names.Count < count; number++)
+            if (!taken.Contains(prefix + number)) names.Add(prefix + number);
+        return names.ToArray();
     }
 
     public string RemoveControl(string name)
@@ -172,6 +281,47 @@ public sealed partial class WinFormsDesignerDocument
         }
         return _text.WithChanges(changes).ToString();
     }
+
+    /// <summary>The <c>Controls.Add(Me.name)</c> statement of a control in InitializeComponent, the one that places it, or null.</summary>
+    private StatementSyntax? ControlAddStatement(string name) => _initialize.Statements.OfType<ExpressionStatementSyntax>()
+        .FirstOrDefault(statement => IsControlsAddOf(statement.Expression, name));
+
+    private static bool IsControlsAddOf(ExpressionSyntax expression, string name) =>
+        expression is InvocationExpressionSyntax invocation
+        && invocation.Expression is MemberAccessExpressionSyntax
+        {
+            Name.Identifier.ValueText: "Add",
+            Expression: MemberAccessExpressionSyntax { Name.Identifier.ValueText: "Controls" },
+        }
+        && invocation.ArgumentList is { } list
+        && list.Arguments.OfType<SimpleArgumentSyntax>().Any(argument => argument.Expression is MemberAccessExpressionSyntax
+        {
+            Expression: MeExpressionSyntax,
+        } member && member.Name.Identifier.ValueText.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+    private string InsertStatementBefore(StatementSyntax anchor, string statement) =>
+        _text.WithChanges(new TextChange(new TextSpan(anchor.SpanStart, 0), $"{statement}{NewLine}        ")).ToString();
+
+    private string InsertStatementAfter(StatementSyntax anchor, string statement) =>
+        _text.WithChanges(new TextChange(new TextSpan(anchor.Span.End, 0), $"{NewLine}        {statement}")).ToString();
+
+    /// <summary>The properties that select one of a control's children, which Visual Studio writes after the children are added.</summary>
+    private static bool NeedsChildrenFirst(string propertyName) =>
+        propertyName.Equals("SelectedIndex", StringComparison.OrdinalIgnoreCase)
+        || propertyName.Equals("SelectedTab", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The last <c>Me.name.Controls.Add(...)</c> statement of InitializeComponent, the one that adds a child of the control, or null.</summary>
+    private StatementSyntax? LastChildAddStatement(string name) => _initialize.Statements.OfType<ExpressionStatementSyntax>()
+        .LastOrDefault(statement => AddsToControlsOf(statement.Expression, name));
+
+    private static bool AddsToControlsOf(ExpressionSyntax expression, string name) =>
+        expression is InvocationExpressionSyntax
+        {
+            Expression: MemberAccessExpressionSyntax { Name.Identifier.ValueText: "Add", Expression: MemberAccessExpressionSyntax controls },
+        }
+        && (controls.Name.Identifier.ValueText.Equals("Controls", StringComparison.OrdinalIgnoreCase)
+            || controls.Name.Identifier.ValueText.Equals("TabPages", StringComparison.OrdinalIgnoreCase))
+        && string.Equals(ControlName(controls.Expression), name, StringComparison.OrdinalIgnoreCase);
 
     private string InsertStatements(params string[] statements)
     {

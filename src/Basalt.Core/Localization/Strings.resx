@@ -593,7 +593,7 @@
   <data name="WinFormsDesigner_SelectAtLeastOneControl" xml:space="preserve"><value>Select at least one control.</value></data>
   <data name="WinFormsDesigner_SplitSharedFieldDeleteComponent" xml:space="preserve"><value>Split a shared field declaration before deleting this component.</value></data>
   <data name="WinFormsDesigner_SplitSharedFieldDeleteControl" xml:space="preserve"><value>Split a shared field declaration before deleting this control.</value></data>
-  <data name="WinFormsDesigner_SyntaxErrors" xml:space="preserve"><value>The form designer source contains syntax errors.</value></data>
+  <data name="WinFormsDesigner_SyntaxErrors" xml:space="preserve"><value>The form designer source contains a syntax error on line {0}, column {1}.</value></data>
   <data name="WinFormsDesigner_TargetFieldMissing" xml:space="preserve"><value>The target form lacks a compatible '{0}' field.</value></data>
   <data name="WinFormsDesigner_TargetMethodMissing" xml:space="preserve"><value>The target form lacks a method used by the copied control.</value></data>
   <data name="WinFormsDesigner_UnsupportedInitializationStatement" xml:space="preserve"><value>A selected control has an unsupported initialization statement.</value></data>
@@ -1345,4 +1345,23 @@
   <data name="Refactor_ExtractMethod_Yield" xml:space="preserve"><value>That selection yields. A method cannot be lifted out of an iterator without changing what it returns.</value></data>
   <data name="Refactor_ExtractMethod_AsyncByRef" xml:space="preserve"><value>That selection awaits and also changes the parameter {0}. An Async method cannot take a parameter ByRef, so the change could not come back.</value></data>
   <data name="Refactor_ExtractMethod_LambdaByRef" xml:space="preserve"><value>That selection changes the parameter {0} and uses it in a lambda. A lambda cannot use a ByRef parameter, so the change could not come back.</value></data>
+  <data name="Menu_Edit_Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="Menu_Edit_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Menu_Edit_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="Menu_Edit_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Menu_Edit_SelectAll" xml:space="preserve"><value>Select All</value></data>
+  <data name="Menu_Format" xml:space="preserve"><value>Format</value></data>
+  <data name="Menu_Format_Align" xml:space="preserve"><value>Align</value></data>
+  <data name="Menu_Format_MakeSameSize" xml:space="preserve"><value>Make Same Size</value></data>
+  <data name="Menu_Format_MakeSameWidth" xml:space="preserve"><value>Width</value></data>
+  <data name="Menu_Format_MakeSameHeight" xml:space="preserve"><value>Height</value></data>
+  <data name="Menu_Format_MakeSameBoth" xml:space="preserve"><value>Both</value></data>
+  <data name="Menu_Format_HorizontalSpacing" xml:space="preserve"><value>Horizontal Spacing</value></data>
+  <data name="Menu_Format_VerticalSpacing" xml:space="preserve"><value>Vertical Spacing</value></data>
+  <data name="Menu_Format_MakeEqual" xml:space="preserve"><value>Make Equal</value></data>
+  <data name="Menu_Format_CenterInForm" xml:space="preserve"><value>Center in Form</value></data>
+  <data name="Menu_Format_CenterHorizontally" xml:space="preserve"><value>Horizontally</value></data>
+  <data name="Menu_Format_CenterVertically" xml:space="preserve"><value>Vertically</value></data>
+  <data name="Menu_Format_Order" xml:space="preserve"><value>Order</value></data>
+  <data name="Menu_Format_LockControls" xml:space="preserve"><value>Lock Controls</value></data>
 </root>

@@ -135,6 +135,10 @@ public static class WinFormsEventHandlers
 
         // By name, not by Type identity: the control may come from a design context's own load.
         if (type.FullName is { } fullName && Keywords.TryGetValue(fullName, out var keyword)) return keyword;
+
+        // Every Visual Basic project imports System by default (the SDK's global imports), so a type declared in System is
+        // written by its own name: "e As EventArgs", as Visual Studio writes it. Other namespaces stay Global.-qualified.
+        if (type is { Namespace: "System", DeclaringType: null }) return type.Name;
         return "Global." + type.FullName!.Replace('+', '.');
     }
 }

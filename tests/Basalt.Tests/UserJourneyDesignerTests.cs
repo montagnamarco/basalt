@@ -272,8 +272,6 @@ public sealed class UserJourneyDesignerTests : IDisposable
     [AvaloniaFact]
     public async Task DraggingEachCommonToolboxControlOntoTheFormAddsIt()
     {
-        using var f = await OpenAsync(EmptyDesignerSource, CodeSource);
-
         Type[] types =
         [
             typeof(Forms.Button), typeof(Forms.Label), typeof(Forms.TextBox), typeof(Forms.CheckBox),
@@ -284,7 +282,10 @@ public sealed class UserJourneyDesignerTests : IDisposable
             typeof(Forms.FolderBrowserDialog), typeof(Forms.ColorDialog), typeof(Forms.FontDialog),
         ];
 
-        // Spread across the empty 500x400 form so two drops never land on each other.
+        // Spread across the empty 500x400 form. The containers start at Visual Studio's sizes (a Panel is 200 by 100),
+        // so a later drop can land inside an earlier container and go into it, as it does in Visual Studio: the
+        // control is looked for anywhere in the form, not only among the form's own children.
+        using var f = await OpenAsync(EmptyDesignerSource, CodeSource);
         var column = 0;
         var row = 0;
         foreach (var controlType in types)
@@ -304,7 +305,7 @@ public sealed class UserJourneyDesignerTests : IDisposable
 
             if (typeof(Forms.Control).IsAssignableFrom(controlType))
             {
-                await WaitUntilAsync(() => f.Surface.RootForm!.Controls.Cast<Forms.Control>()
+                await WaitUntilAsync(() => AllControls(f.Surface.RootForm!)
                     .Any(control => control.GetType() == controlType), controlType.Name + " was not added.");
             }
             else
@@ -314,6 +315,10 @@ public sealed class UserJourneyDesignerTests : IDisposable
             }
         }
     }
+
+    /// <summary>Every control in the form, at any depth.</summary>
+    private static IEnumerable<Forms.Control> AllControls(Forms.Control parent) =>
+        parent.Controls.Cast<Forms.Control>().SelectMany(child => AllControls(child).Prepend(child));
 
     private static DataTransfer Transfer(Type controlType)
     {

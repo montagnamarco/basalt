@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.IO.Ports;
 using Basalt.Core.Localization;
 using Basalt.Workspace;
+using Forms = System.Windows.Forms;
 
 namespace Basalt.Shell.Controls;
 
@@ -25,16 +26,27 @@ internal sealed partial class WinFormsDesignerView
 
     private Task OpenDefaultEventAsync(object component, string field)
     {
-        var descriptor = TypeDescriptor.GetDefaultEvent(component)
-            ?? (component is SerialPort
-                ? TypeDescriptor.GetEvents(component)[nameof(SerialPort.DataReceived)]
-                : null);
+        var descriptor = DefaultEventOf(component);
         if (descriptor is null)
             return Task.CompletedTask;
 
         var handler = _handlers.GetValueOrDefault(field)?.GetValueOrDefault(descriptor.Name)
             ?? (field == "Me" ? _session!.Document.ClassName : field) + "_" + descriptor.Name;
         return SetHandlerAsync(component, field, descriptor.Name, handler, preferExisting: true);
+    }
+
+    /// <summary>
+    /// The event a double-click on the control writes. Basalt.Forms' DataGridView has no DefaultEvent of its own and inherits
+    /// Control's Click, where Visual Studio's DataGridView defaults to CellContentClick, so that name is asked for first.
+    /// </summary>
+    private static EventDescriptor? DefaultEventOf(object component)
+    {
+        if (component is Forms.DataGridView && TypeDescriptor.GetEvents(component)[nameof(Forms.DataGridView.CellContentClick)] is { } cellClick)
+            return cellClick;
+        return TypeDescriptor.GetDefaultEvent(component)
+            ?? (component is SerialPort
+                ? TypeDescriptor.GetEvents(component)[nameof(SerialPort.DataReceived)]
+                : null);
     }
 
     private async Task SetHandlerAsync(object control, string fieldName, string eventName, string? handlerName, bool preferExisting = false)

@@ -8,9 +8,10 @@ namespace Basalt.Tests;
 /// <remarks>
 /// Double-clicking a form wrote "sender As Global.System.Object": correct, but
 /// not the code a Visual Basic developer reads or writes. A type Visual Basic
-/// has a keyword for is now written with the keyword; other types keep their
-/// Global.-qualified name, which no project import can shadow. Reintroduced
-/// once (every type qualified): both tests failed.
+/// has a keyword for is written with the keyword; a type declared in System is
+/// written by its own name, since every Visual Basic project imports System;
+/// other types keep their Global.-qualified name, which no project import can
+/// shadow. Reintroduced once (every type qualified): both tests failed.
 /// </remarks>
 public sealed class WinFormsEventHandlerSignatureTests
 {
@@ -21,7 +22,7 @@ public sealed class WinFormsEventHandlerSignatureTests
     {
         var written = WinFormsEventHandlers.Set(Code, "MainForm", "Me", "Load", "MainForm_Load", typeof(EventHandler));
 
-        Assert.Contains("Private Sub MainForm_Load(sender As Object, e As Global.System.EventArgs) Handles Me.Load", written, StringComparison.Ordinal);
+        Assert.Contains("Private Sub MainForm_Load(sender As Object, e As EventArgs) Handles Me.Load", written, StringComparison.Ordinal);
     }
 
     private delegate void Progress(object sender, int percent, ref bool cancel, string[] names);

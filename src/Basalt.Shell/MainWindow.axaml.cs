@@ -2495,6 +2495,28 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// Runs a designer command on the WinForms designer when one is in front, and otherwise on the caller's own code path.
+    /// The menus and their shortcuts name each command once; WinFormsDesignerCommands decides where it goes.
+    /// </summary>
+    private void RunDesignerCommand(WinFormsDesignerCommand command, Action otherDesigner)
+    {
+        if (!WinFormsDesignerCommands.TryRun(WinFormsDesignerInFront, command)) otherDesigner();
+    }
+
+    /// <summary>
+    /// Edit &gt; Delete for the code editor: the selection, or else the character after the caret, as the Delete key does.
+    /// </summary>
+    private void DeleteInEditor()
+    {
+        if (CurrentEditor() is not { } text) return;
+
+        if (text.SelectionLength > 0)
+            text.Document.Remove(text.SelectionStart, text.SelectionLength);
+        else if (text.CaretOffset < text.Document.TextLength)
+            text.Document.Remove(text.CaretOffset, 1);
+    }
+
+    /// <summary>
     /// Selects the container of what is selected.
     /// </summary>
     /// <remarks>
@@ -3394,27 +3416,30 @@ public partial class MainWindow : Window
                 break;
 
             case IdeCommands.DesignerZoomIn:
-                if (_activeSurface is { } zoomIn) zoomIn.Zoom *= 1.25;
+                RunDesignerCommand(WinFormsDesignerCommand.ZoomIn,
+                    () => { if (_activeSurface is { } zoomIn) zoomIn.Zoom *= 1.25; });
                 break;
 
             case IdeCommands.DesignerZoomOut:
-                if (_activeSurface is { } zoomOut) zoomOut.Zoom /= 1.25;
+                RunDesignerCommand(WinFormsDesignerCommand.ZoomOut,
+                    () => { if (_activeSurface is { } zoomOut) zoomOut.Zoom /= 1.25; });
                 break;
 
             case IdeCommands.DesignerZoomReset:
-                _activeSurface?.ResetView();
+                RunDesignerCommand(WinFormsDesignerCommand.ZoomReset, () => _activeSurface?.ResetView());
                 break;
 
             case IdeCommands.DesignerZoomToFit:
-                _activeSurface?.ZoomToFit();
+                RunDesignerCommand(WinFormsDesignerCommand.ZoomToFit, () => _activeSurface?.ZoomToFit());
                 break;
 
             case IdeCommands.DesignerSelectParent:
-                SelectContainer();
+                RunDesignerCommand(WinFormsDesignerCommand.SelectParent, SelectContainer);
                 break;
 
             case IdeCommands.DesignerToggleRulers:
-                if (_activeSurface is { } ruled) ruled.ShowRulers = !ruled.ShowRulers;
+                RunDesignerCommand(WinFormsDesignerCommand.ToggleRulers,
+                    () => { if (_activeSurface is { } ruled) ruled.ShowRulers = !ruled.ShowRulers; });
                 break;
 
             // Added by a plugin, which named it and said what it does.
@@ -5109,6 +5134,29 @@ public partial class MainWindow : Window
                 Action: () => _ = RunCommandAsync(IdeCommands.EditRedo),
                 Gesture: Shortcut(IdeCommands.EditRedo)) { Icon = IconKind.Redo },
             MenuEntry.Separator,
+            // Cut, Copy and Paste reach the designer in front, or else the code editor, through the same command as their shortcuts.
+            new(Localizer.Get(StringKeys.MenuEditCut),
+                Action: () => _ = RunCommandAsync(IdeCommands.EditCut),
+                Gesture: Shortcut(IdeCommands.EditCut)),
+            new(Localizer.Get(StringKeys.MenuEditCopy),
+                Action: () => _ = RunCommandAsync(IdeCommands.EditCopy),
+                Gesture: Shortcut(IdeCommands.EditCopy)),
+            new(Localizer.Get(StringKeys.MenuEditPaste),
+                Action: () => _ = RunCommandAsync(IdeCommands.EditPaste),
+                Gesture: Shortcut(IdeCommands.EditPaste)),
+            // Delete in a XAML designer in front removes its selection, as the Designer menu does. Select All has no XAML
+            // counterpart, and the code editor behind a XAML designer is hidden, so it does nothing there rather than
+            // select text the user cannot see.
+            new(Localizer.Get(StringKeys.MenuEditDelete),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.Delete, () =>
+                {
+                    if (DesignerInFront is { } designer) designer.RemoveSelected();
+                    else DeleteInEditor();
+                })),
+            new(Localizer.Get(StringKeys.MenuEditSelectAll),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.SelectAll,
+                    () => { if (DesignerInFront is null && CurrentEditor() is { } text) text.SelectAll(); })),
+            MenuEntry.Separator,
             // The registry's shortcut for the scheme in force, which is what the key handler answers to.
             // No icon: the only one that fit was the hammer that means Build,
             // and formatting is not building.
@@ -5257,37 +5305,49 @@ public partial class MainWindow : Window
             // No gesture shown for these two: Ctrl+- and Ctrl+Shift+- belong
             // to navigating back and forward, so naming a key here would
             // promise one that does something else.
+            // Each entry runs on the WinForms designer when one is in front, and on the XAML designer otherwise.
             new(Localizer.Get(StringKeys.MenuDesignerZoomIn),
-                Action: () => { if (_activeSurface is { } s) s.Zoom *= 1.25; }),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.ZoomIn,
+                    () => { if (_activeSurface is { } s) s.Zoom *= 1.25; })),
             new(Localizer.Get(StringKeys.MenuDesignerZoomOut),
-                Action: () => { if (_activeSurface is { } s) s.Zoom /= 1.25; }),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.ZoomOut,
+                    () => { if (_activeSurface is { } s) s.Zoom /= 1.25; })),
             new(Localizer.Get(StringKeys.MenuDesignerZoomReset),
-                Action: () => _activeSurface?.ResetView(),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.ZoomReset, () => _activeSurface?.ResetView()),
                 Gesture: Shortcut(IdeCommands.DesignerZoomReset)),
             new(Localizer.Get(StringKeys.MenuDesignerZoomToFit),
-                Action: () => _activeSurface?.ZoomToFit(),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.ZoomToFit, () => _activeSurface?.ZoomToFit()),
                 Gesture: Shortcut(IdeCommands.DesignerZoomToFit)),
             new(Localizer.Get(StringKeys.MenuDesignerRulers),
-                Action: () => { if (_activeSurface is { } s) s.ShowRulers = !s.ShowRulers; }),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.ToggleRulers,
+                    () => { if (_activeSurface is { } s) s.ShowRulers = !s.ShowRulers; })),
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDesignerSelectParent),
-                Action: SelectContainer,
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.SelectParent, SelectContainer),
                 Gesture: Shortcut(IdeCommands.DesignerSelectParent)),
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDesignerAlignLeft),
-                Action: () => AlignSelection(AlignmentCommand.Left)),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.AlignLeft,
+                    () => AlignSelection(AlignmentCommand.Left))),
             new(Localizer.Get(StringKeys.MenuDesignerAlignRight),
-                Action: () => AlignSelection(AlignmentCommand.Right)),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.AlignRight,
+                    () => AlignSelection(AlignmentCommand.Right))),
             new(Localizer.Get(StringKeys.MenuDesignerAlignTop),
-                Action: () => AlignSelection(AlignmentCommand.Top)),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.AlignTop,
+                    () => AlignSelection(AlignmentCommand.Top))),
             new(Localizer.Get(StringKeys.MenuDesignerAlignBottom),
-                Action: () => AlignSelection(AlignmentCommand.Bottom)),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.AlignBottom,
+                    () => AlignSelection(AlignmentCommand.Bottom))),
             MenuEntry.Separator,
             new(Localizer.Get(StringKeys.MenuDesignerSameWidth),
-                Action: () => AlignSelection(AlignmentCommand.SameWidth)),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.SameWidth,
+                    () => AlignSelection(AlignmentCommand.SameWidth))),
             new(Localizer.Get(StringKeys.MenuDesignerSameHeight),
-                Action: () => AlignSelection(AlignmentCommand.SameHeight)),
+                Action: () => RunDesignerCommand(WinFormsDesignerCommand.SameHeight,
+                    () => AlignSelection(AlignmentCommand.SameHeight))),
         ]),
+        // The Format menu exists for the WinForms designer alone: the XAML designer has no such layout to format.
+        new(Localizer.Get(StringKeys.MenuFormat), Children: WinFormsDesignerCommands.FormatEntries(() => WinFormsDesignerInFront)),
         new(Localizer.Get(StringKeys.MenuDebug), Children:
         [
             new(Localizer.Get(StringKeys.MenuDebugStart),

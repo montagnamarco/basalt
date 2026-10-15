@@ -317,12 +317,17 @@ internal sealed partial class WinFormsDesignerSession : IDisposable
         BuildComponentPreviews(problems);
         WinFormsCollectionPreview.Apply(Document, _controls, problems, _resources, _projectPath);
         ApplyProperties(Document.Root, Form, problems);
+        // Every control is placed before any control's properties are applied: a parent's SelectedIndex names a TabPage
+        // that only exists once the TabPage is in the TabControl, and Visual Studio's code may set it before the Controls.Add.
         foreach (var model in Document.Controls)
         {
             if (!_controls.TryGetValue(model.Name, out var control)) continue;
-            ApplyProperties(model, control, problems);
             if (_controls.TryGetValue(model.ParentName, out var parent)) AddToPlacement(parent, model, control, problems);
             else problems.Add(model.Name + ": " + model.ParentName);
+        }
+        foreach (var model in Document.Controls)
+        {
+            if (_controls.TryGetValue(model.Name, out var control)) ApplyProperties(model, control, problems);
         }
         ApplyZOrderPreview();
         PreviewProblems = problems;

@@ -102,7 +102,7 @@ public sealed class WinFormsDesignerLocalizationControlTests
         var resources = new WinFormsResourceDocument(session.ResourceSource!);
         Assert.Equal("20, 20", resources.TryGet("Button2.Location")!.Value);
         Assert.Equal("System.Drawing.Point, System.Drawing", resources.TryGet("Button2.Location")!.TypeName);
-        Assert.Equal("100, 30", resources.TryGet("Button2.Size")!.Value);
+        Assert.Equal("75, 23", resources.TryGet("Button2.Size")!.Value);
         Assert.Equal("Button2", resources.TryGet("Button2.Text")!.Value);
         // The name stays in code, as it does for every control Visual Studio localizes.
         Assert.Null(resources.TryGet("Button2.Name"));
@@ -141,7 +141,7 @@ public sealed class WinFormsDesignerLocalizationControlTests
 
         var resources = new WinFormsResourceDocument(session.ResourceSource!);
         Assert.Equal("70, 80", resources.TryGet("Button2.Location")!.Value);
-        Assert.Equal("100, 30", resources.TryGet("Button2.Size")!.Value);
+        Assert.Equal("75, 23", resources.TryGet("Button2.Size")!.Value);
         Assert.Equal("Button2", resources.TryGet("Button2.Text")!.Value);
         Assert.Contains("        resources.ApplyResources(Me.Button2, \"Button2\")\n", session.Document.Source);
         Assert.DoesNotContain("Me.Button2.Location = ", session.Document.Source);

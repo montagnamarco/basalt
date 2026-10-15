@@ -129,7 +129,9 @@ internal sealed partial class WinFormsDesignerView
                     return;
                 }
 
-                selectedFont = editor.SelectedFont;
+                var edited = editor.SelectedFont;
+                selectedFont = edited is null ? null : WinFormsDesignerValues.AsEditedFont(edited);
+                if (!ReferenceEquals(selectedFont, edited)) edited?.Dispose();
                 selectedValue = selectedFont;
             }
             else if (property.IsComponentReference)
