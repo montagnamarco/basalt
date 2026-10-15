@@ -548,7 +548,52 @@ public sealed class CompletionTypingTests : IAsyncLifetime
         Assert.True(text.Contains("<a asp-action>Home</a>", StringComparison.Ordinal), $"the tag as written:\n{text}");
     }
 
-    [AvaloniaFact(Skip = "VbHtmlCodeRegions.IsInCode reads '@oncl' inside a tag as code, so no markup list opens; the parser (Basalt.Razor.Vb, owner-only) has to treat it as a directive attribute first.")]
+    [AvaloniaFact]
+    public async Task AnExpressionInTheTextOfAComponentIsStillCompletedAsCode()
+    {
+        // "@onc" in the text, not in a tag, is an expression even though it begins "@onclick", which the parser
+        // would read as an event attribute with "=" after it: Enter writes the field, not the attribute.
+        using var journey = await OpenFileAsync(
+            "Counter.vbrazor",
+            "<p>Clicks: §</p>\n@Code\n    Private oncePerClick As Integer\nEnd Code\n",
+            web: true);
+
+        await TypeAsync(journey, "@onc");
+        await WaitForListAsync(journey, seconds: 30);
+
+        Assert.True(journey.Editor.CompletionOpenForTests, "no list for '@onc'");
+
+        await TypeAsync(journey, "\n");
+        await journey.Host.SettleAsync(5);
+
+        var text = journey.Editor.TextForTests;
+
+        Assert.True(text.Contains("<p>Clicks: @oncePerClick</p>", StringComparison.Ordinal), $"the text as written:\n{text}");
+    }
+
+    [AvaloniaFact]
+    public async Task TheFirstLettersOfADirectiveAttributeOpenTheMarkupList()
+    {
+        // "@re" is not yet a name the parser accepts, but "@ref" is: the markup list opens and Enter writes it.
+        using var journey = await OpenFileAsync(
+            "Counter.vbrazor",
+            "<button §>+</button>\n",
+            web: true);
+
+        await TypeAsync(journey, "@re");
+        await WaitForListAsync(journey, seconds: 30);
+
+        Assert.True(journey.Editor.CompletionOpenForTests, "no list for '@re'");
+
+        await TypeAsync(journey, "\n");
+        await journey.Host.SettleAsync(5);
+
+        var text = journey.Editor.TextForTests;
+
+        Assert.True(text.Contains("<button @ref>+</button>", StringComparison.Ordinal), $"the tag as written:\n{text}");
+    }
+
+    [AvaloniaFact]
     public async Task ADirectiveAttributeWithItsAtIsWrittenWhole()
     {
         using var journey = await OpenFileAsync(

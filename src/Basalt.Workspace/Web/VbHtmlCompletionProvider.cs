@@ -122,6 +122,8 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
                      (spaces.Length > 0 && !TemplateGeneration.IsPage(document.FilePath) &&
                       VbHtmlCodeRegions.IsAfterStatementBody(document.Text, position));
 
+        if (inCode && IsDirectiveAttributeBeingWritten(document, position)) inCode = false;
+
         if (!inCode)
         {
             var markup = await _html.GetCompletionsAsync(document, position, ct).ConfigureAwait(false);
@@ -341,6 +343,45 @@ public sealed class VbHtmlCompletionProvider : ICompletionProvider
         return parent is not null && string.Equals(Path.GetFileName(parent), "Views", StringComparison.OrdinalIgnoreCase)
             ? Path.GetFileName(folder)
             : null;
+    }
+
+    /// <summary>
+    /// Whether the caret ends an "@name" that the parser will read as a directive attribute once it is written.
+    /// </summary>
+    /// <remarks>
+    /// The parser takes "@onclick" for a directive attribute only when "=" or ":" follows it, so "@oncl" while it
+    /// is being typed parses as an expression and the caret looks like code. The parser is asked rather than
+    /// second-guessed: each directive attribute the typed text begins is written out in full with an empty value,
+    /// and if the parser then reads the place as markup, the markup list answers. "@o" and "@re" open it too,
+    /// since the parser accepts only whole names.
+    /// </remarks>
+    private static bool IsDirectiveAttributeBeingWritten(LanguageDocument document, int position)
+    {
+        if (!TemplateGeneration.IsComponent(document.FilePath)) return false;
+
+        var text = document.Text;
+        if (position > text.Length) return false;
+
+        // Cheap first: the word before the caret has to follow an "@".
+        var nameStart = position;
+        while (nameStart > 0 && (char.IsLetterOrDigit(text[nameStart - 1]) || text[nameStart - 1] == '-')) nameStart--;
+
+        if (nameStart == 0 || text[nameStart - 1] != '@') return false;
+
+        // Inside a tag, where an attribute goes: the word then takes its "@". In the page's text "@online" is an
+        // expression even with "=" after it.
+        if (Completion.CompletionWord.StartOf(document.FilePath, text, position) != nameStart - 1) return false;
+
+        var typed = text[nameStart..position];
+
+        // One name the typed text begins is enough: after a space, where an attribute goes, the parser reads them
+        // all the same way ("@bind" it takes even without the space, which the tag check above already covers).
+        if (VbHtmlDirectives.Attributes.FirstOrDefault(attribute => attribute.Name[1..].StartsWith(typed, StringComparison.Ordinal))
+            is not { Name: { } name }) return false;
+
+        var finished = string.Concat(text.AsSpan(0, nameStart), name.AsSpan(1), "=\"\"", text.AsSpan(position));
+
+        return !VbHtmlCodeRegions.IsInCode(finished, nameStart);
     }
 
     /// <summary>

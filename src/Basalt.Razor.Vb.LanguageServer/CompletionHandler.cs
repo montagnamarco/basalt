@@ -123,7 +123,9 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
 
             if (answered.Count > 0)
             {
-                var translated = answered.Select(Translate).ToArray();
+                var translated = WithAtNamesReplaced(
+                    answered.Select(Translate).ToArray(),
+                    request.TextDocument.Uri.GetFileSystemPath(), document.Text, offset, request.Position);
                 if (capture.GeneratedText is not null &&
                     revision == _compilation.Revision &&
                     ReferenceEquals(_documents.Get(document.Uri), document))
@@ -156,6 +158,34 @@ public sealed class VbHtmlCompletionHandler : CompletionHandlerBase
             return new CompletionList();
 
         return new CompletionList(Suggest(document, offset));
+    }
+
+    /// <summary>
+    /// The items that write an "@" name (a directive attribute such as "@onclick") replace the whole name,
+    /// "@" included, through an edit with its range.
+    /// </summary>
+    /// <remarks>
+    /// Without a range the editor replaces its own idea of the word, which in VS Code leaves the "@" out:
+    /// "@oncl" became "@@onclick". The range is where Basalt's editor starts the name, so both agree. The
+    /// filter text then carries the "@" too: the editor matches it against the text in the range, "@oncl".
+    /// Positions are UTF-16 columns on the caret's line, the protocol's own units: a name has no line break.
+    /// </remarks>
+    internal static CompletionItem[] WithAtNamesReplaced(
+        CompletionItem[] items, string path, string text, int offset, Position caret)
+    {
+        var start = Basalt.Workspace.Completion.CompletionWord.StartOf(path, text, offset);
+
+        if (start >= offset || text[start] != '@' || offset - start > caret.Character) return items;
+
+        var range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+            new Position(caret.Line, caret.Character - (offset - start)), caret);
+
+        return
+        [
+            .. items.Select(item => item.InsertText is { Length: > 0 } insert && insert[0] == '@'
+                ? item with { TextEdit = new TextEdit { Range = range, NewText = insert }, FilterText = insert }
+                : item)
+        ];
     }
 
     /// <summary>An item as the protocol wants it.</summary>
