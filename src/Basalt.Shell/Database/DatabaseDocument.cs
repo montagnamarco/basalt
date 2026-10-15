@@ -1,7 +1,10 @@
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Markup.Xaml.MarkupExtensions;
+using Avalonia.Styling;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Basalt.Core.Localization;
@@ -52,6 +55,23 @@ public sealed class DatabaseDocument : Document
 internal static class DatabaseGrids
 {
     /// <summary>
+    /// Gives a grid's column headers the chrome background of the IDE's title bars. Fluent's DataGrid theme takes
+    /// the header colour from a resource this application's themes do not define, and a missing one is drawn
+    /// black: on the dark theme a black bar over a dark grid, which was the only theme that showed it.
+    /// </summary>
+    public static void StyleHeaders(DataGrid grid)
+    {
+        grid.Styles.Add(new Style(x => x.OfType<DataGridColumnHeader>())
+        {
+            Setters =
+            {
+                new Setter(TemplatedControl.BackgroundProperty, new DynamicResourceExtension("TitleBarBackgroundBrush")),
+                new Setter(TemplatedControl.ForegroundProperty, new DynamicResourceExtension("ChromeForegroundBrush")),
+            },
+        });
+    }
+
+    /// <summary>
     /// A grid over result columns and rows, read-only, with NULL shown as grey italics.
     /// </summary>
     public static DataGrid ReadOnly(IReadOnlyList<ResultColumnInfo> columns, IReadOnlyList<IReadOnlyList<object?>> rows)
@@ -66,6 +86,8 @@ internal static class DatabaseGrids
             FontSize = PanelMetrics.FontSize,
             ItemsSource = rows,
         };
+
+        StyleHeaders(grid);
 
         for (var i = 0; i < columns.Count; i++)
         {

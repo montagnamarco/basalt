@@ -177,6 +177,8 @@ public sealed class TableDataView : Grid, IDatabaseDocumentContent
             FontSize = PanelMetrics.FontSize,
         };
 
+        DatabaseGrids.StyleHeaders(_grid);
+
         _grid.Sorting += (_, e) => RunInBackground(() => SortByAsync(e.Column.SortMemberPath));
         _grid.CellEditEnding += OnCellEditEnding;
         _grid.LoadingRow += (_, e) => WatchRow(e.Row);

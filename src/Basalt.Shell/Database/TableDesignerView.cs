@@ -6,6 +6,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Basalt.Core.Localization;
 using Basalt.Data.Sessions;
 using Basalt.Shell.Controls;
@@ -184,8 +185,11 @@ public sealed class TableDesignerView : Grid, IDatabaseDocumentContent
             HeadersVisibility = DataGridHeadersVisibility.Column,
             GridLinesVisibility = DataGridGridLinesVisibility.Horizontal,
             SelectionMode = DataGridSelectionMode.Single,
+            CanUserResizeColumns = true,
             FontSize = PanelMetrics.FontSize,
         };
+
+        DatabaseGrids.StyleHeaders(_grid);
 
         _notice = new TextBlock
         {
@@ -470,12 +474,39 @@ public sealed class TableDesignerView : Grid, IDatabaseDocumentContent
     }
 
     /// <summary>A column whose cells are always live controls, so there is no separate edit mode to enter.</summary>
-    private static DataGridTemplateColumn Template(string headerKey, double width, Func<Control> cell) => new()
+    private static DataGridTemplateColumn Template(string headerKey, double width, Func<Control> cell)
     {
-        Header = Localizer.Get(headerKey),
-        Width = new DataGridLength(width),
-        CellTemplate = new FuncDataTemplate<DesignRow>((_, _) => cell(), supportsRecycling: false),
-    };
+        var header = Localizer.Get(headerKey);
+
+        // The width the header's own text needs, whatever the language: "Allow nulls" and "Primary key" were
+        // cut to "Allow nu" and "Primary ke" at the widths picked for the cells.
+        var needed = HeaderWidth(header);
+
+        return new DataGridTemplateColumn
+        {
+            Header = header,
+            Width = new DataGridLength(Math.Max(width, needed)),
+            MinWidth = needed,
+            CanUserResize = true,
+            CellTemplate = new FuncDataTemplate<DesignRow>((_, _) => cell(), supportsRecycling: false),
+        };
+    }
+
+    /// <summary>
+    /// Room for a header: its text at the grid's size, and what Fluent's header takes besides, which is its
+    /// padding on both sides, the space kept for a sort arrow, and the grip that resizes the column.
+    /// </summary>
+    internal static double HeaderWidth(string header)
+    {
+        var text = new TextBlock { Text = header, FontSize = PanelMetrics.FontSize };
+
+        text.Measure(Size.Infinity);
+
+        return Math.Ceiling(text.DesiredSize.Width) + HeaderChrome;
+    }
+
+    /// <summary>Padding (12 + 12), the sort arrow's room and the resize grip, measured on the Fluent header.</summary>
+    private const double HeaderChrome = 52;
 
     private static TextBox Text(string property) => new()
     {
@@ -486,12 +517,34 @@ public sealed class TableDesignerView : Grid, IDatabaseDocumentContent
         [!TextBox.TextProperty] = new Binding(property) { Mode = BindingMode.TwoWay },
     };
 
-    private static ComboBox TypeBox(IReadOnlyList<string> types) => new()
+    private static ComboBox TypeBox(IReadOnlyList<string> types)
+    {
+        var box = NewTypeBox(types);
+
+        // An editable ComboBox's text lives in a TextBox of the template, which keeps its own top alignment
+        // whatever the ComboBox says: the text sat at the top of the row, above the name and the checkboxes.
+        box.Styles.Add(new Style(x => x.OfType<ComboBox>().Template().OfType<TextBox>())
+        {
+            Setters =
+            {
+                new Setter(TextBox.VerticalContentAlignmentProperty, VerticalAlignment.Center),
+                new Setter(Layoutable.VerticalAlignmentProperty, VerticalAlignment.Center),
+            },
+        });
+
+        return box;
+    }
+
+    private static ComboBox NewTypeBox(IReadOnlyList<string> types) => new()
     {
         FontSize = PanelMetrics.FontSize,
         IsEditable = true,
         ItemsSource = types,
         HorizontalAlignment = HorizontalAlignment.Stretch,
+
+        // The text is in the row's line with the name and the checkboxes, not at the top of the cell.
+        VerticalAlignment = VerticalAlignment.Center,
+        VerticalContentAlignment = VerticalAlignment.Center,
         BorderThickness = default,
         Background = Brushes.Transparent,
         [!ComboBox.TextProperty] = new Binding(nameof(DesignRow.DataType)) { Mode = BindingMode.TwoWay },
