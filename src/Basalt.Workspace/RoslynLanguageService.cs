@@ -15,6 +15,7 @@ using Basalt.Core.Services;
 using Basalt.Extensibility;
 using Basalt.Razor.Vb;
 using Basalt.Razor.Vb.Generator;
+using Basalt.Workspace.Completion;
 using RoslynDiagnostic = Microsoft.CodeAnalysis.Diagnostic;
 using RoslynCompletionItem = Microsoft.CodeAnalysis.Completion.CompletionItem;
 using IdeCompletionItem = Basalt.Core.Model.CompletionItem;
@@ -322,14 +323,79 @@ public sealed partial class RoslynLanguageService : ILanguageService, IDisposabl
                     .GetCompletionsAsync(document, caret, trigger, cancellationToken: ct)
                     .ConfigureAwait(false);
 
+                var typePosition = await IsTypePositionAsync(document, text, caret, ct).ConfigureAwait(false);
+
+                // Suggestion mode: Roslyn offers a new name, as for "For Each item"
+                // with an "items" in scope. The list is then only a suggestion.
+                var suggesting = completions.SuggestionModeItem is not null;
+
                 return completions.ItemsList
-                    .Select(item => ToCompletionItem(item) with
+                    .Select(item =>
                     {
-                        ResolveCommit = token => CommitAsync(service, document, item, token),
+                        var mapped = ToCompletionItem(item);
+
+                        return mapped with
+                        {
+                            ResolveCommit = token => CommitAsync(service, document, item, token),
+                            Rank = typePosition ? CommonTypes.RankFor(mapped.DisplayText, mapped.Kind) : 0,
+                            Container = ContainerOf(item),
+                            SoftSelection = suggesting,
+                        };
                     })
                     .ToList();
             },
             ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The namespace a name is declared in, when Roslyn records it on the item.
+    /// </summary>
+    /// <remarks>
+    /// Measured in Microsoft.CodeAnalysis.Features 5.9.0: a type of an imported
+    /// namespace carries only InsertionText, SymbolName, SymbolKind and
+    /// ContextPosition, and two imported types of one name, System.Threading.Timer
+    /// and System.Timers.Timer, are ONE item that holds both symbols. Only an item
+    /// from a namespace the file does not import (the "unimported types" provider,
+    /// off here) carries "ContainingNamespaceName". The key is singular; the
+    /// plural this once read exists nowhere in Roslyn. Null otherwise, and for a
+    /// keyword or a local.
+    /// </remarks>
+    private static string? ContainerOf(RoslynCompletionItem item) =>
+        item.Properties.TryGetValue("ContainingNamespaceName", out var namespaceName) && namespaceName.Length > 0
+            ? namespaceName
+            : null;
+
+    /// <summary>
+    /// Whether the word being written at the caret follows "As" or "Of", where
+    /// a type is wanted.
+    /// </summary>
+    /// <remarks>
+    /// Asked of the syntax tree, as one parser answers for the editor, rather
+    /// than of the characters: the token before the word is the keyword as the
+    /// parser reads it, even in a line that is not finished yet.
+    /// </remarks>
+    private static async Task<bool> IsTypePositionAsync(
+        Document document, SourceText text, int caret, CancellationToken ct)
+    {
+        if (document.Project.Language != LanguageNames.VisualBasic) return false;
+
+        var wordStart = caret;
+
+        while (wordStart > 0 && (char.IsLetterOrDigit(text[wordStart - 1]) || text[wordStart - 1] == '_'))
+            wordStart--;
+
+        if (wordStart == 0) return false;
+
+        var root = await document.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+
+        if (root is null) return false;
+
+        // The character before the word: a space after "As" belongs to the
+        // "As" token's trivia, so the token found is the keyword either way.
+        var token = root.FindToken(wordStart - 1);
+
+        return token.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.AsKeyword)
+            || token.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.OfKeyword);
     }
 
     public Task<(string FilePath, int Line, int Column)?> GoToDefinitionAsync(

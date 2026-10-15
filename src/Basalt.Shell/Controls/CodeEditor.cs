@@ -28,6 +28,16 @@ public sealed partial class CodeEditor : UserControl
     private readonly MainWindowViewModel _shell;
     private readonly VisualBasicSnippetInput _snippets;
     private CompletionWindow? _completionWindow;
+
+    /// <summary>Every candidate of the open list, before it was narrowed to what is typed.</summary>
+    private IReadOnlyList<CompletionItem>? _completionCandidates;
+
+    /// <summary>
+    /// Whether the user moved the highlight of the open list with the arrow
+    /// keys. Only such a choice may be taken by Enter, Tab or a space when
+    /// nothing is typed, and it survives a refresh of the list while it is shown.
+    /// </summary>
+    private bool _completionHighlightMoved;
     private bool _completionSuggestionMode;
     private readonly EditorRequestGate _completionRequests = new();
     private readonly EditorRequestGate _signatureRequests = new();
@@ -110,6 +120,16 @@ public sealed partial class CodeEditor : UserControl
         {
             if (_completionWindow is null && _snippets.HandleFieldKey(e)) e.Handled = true;
         }, RoutingStrategies.Tunnel);
+
+        // Deleting a letter of the name widens what matches. The text area removes
+        // the letter while the key is handled, and the bubbling pass comes after
+        // that, so the list is narrowed at once over the text as it now is. The
+        // text area marks the key handled, hence the handled events too.
+        AddHandler(KeyDownEvent, (_, e) =>
+        {
+            if (e.Key is Key.Back or Key.Delete && _completionWindow is not null)
+                RefreshCompletionList();
+        }, RoutingStrategies.Bubble, handledEventsToo: true);
 
         // Brackets are handled before the character is inserted, so the pair
         // can be written as a single edit the user undoes in one step.
@@ -531,7 +551,7 @@ public sealed partial class CodeEditor : UserControl
     private void OnTextInputForBrackets(object? sender, TextInputEventArgs e)
     {
         if (_document.Language == SourceLanguage.VisualBasic)
-            VisualBasicCompletionInput.HandleText(_completionWindow, e, _completionSuggestionMode);
+            VisualBasicCompletionInput.HandleText(_completionWindow, e, _completionSuggestionMode, _completionHighlightMoved);
 
         if (!AutoCloseBrackets) return;
         if (e.Text is not { Length: 1 } input) return;
@@ -568,6 +588,13 @@ public sealed partial class CodeEditor : UserControl
         if (string.IsNullOrEmpty(e.Text)) return;
 
         SuggestionTyped();
+
+        // A name going on while the list is open narrows it at once, over every
+        // candidate: the text is in the document by now, as the list is asked.
+        // Whatever is typed, the refresh decides whether the list still belongs
+        // to the word being written: a space or a colon ends it.
+        if (_completionWindow is not null)
+            RefreshCompletionList();
 
         // Guarded, and no longer "async void": anything thrown while working
         // out what to offer used to reach the runtime, where it either took
@@ -835,8 +862,13 @@ public sealed partial class CodeEditor : UserControl
         // else does, and only while one is showing.
         if (_inline.TryHandleKey(e)) return;
 
+        // The arrow keys move the highlight of the list: from then on the entry
+        // under it is the user's choice, not the one the list picked for itself.
+        if (_completionWindow is not null && e.Key is Key.Up or Key.Down)
+            _completionHighlightMoved = true;
+
         if (_document.Language == SourceLanguage.VisualBasic &&
-            VisualBasicCompletionInput.HandleKey(_editor, _completionWindow, e))
+            VisualBasicCompletionInput.HandleKey(_editor, _completionWindow, e, _completionHighlightMoved))
         {
             // Committing a snippet keyword is already the first Tab in Tab, Tab.
             if (e.Key == Key.Tab && _snippets.HandleKey(e) is { } armSnippet)
@@ -1640,26 +1672,22 @@ public sealed partial class CodeEditor : UserControl
             StartOffset = _editor.CaretOffset - typed.Length
         };
         _completionWindow = window;
+        _completionCandidates = completions;
 
-        // A cap keeps a list of thousands from being built for a window that
-        // shows a dozen rows; the ordering means the cut falls on the least
-        // relevant entries.
-        // The preselected entry first when nothing is typed yet: the list is
-        // cut at 200 below, and in alphabetical order the declared type after
-        // "= New " fell past the cut among thousands of types.
-        if (typed.Length == 0)
-            ranked = [.. ranked.Where(match => match.Item.IsPreselected), .. ranked.Where(match => !match.Item.IsPreselected)];
+        // AvaloniaEdit would narrow the entries it holds by its own rules, over
+        // the list as it was when it opened. The list is narrowed here instead,
+        // over every candidate, so AvaloniaEdit's filter is off.
+        window.CompletionList.IsFiltering = false;
 
-        foreach (var match in ranked.Take(200))
-            _completionWindow.CompletionList.CompletionData.Add(new EditorCompletionData(match.Item, OnCompletionCommitted));
-
-        _completionWindow.CompletionList.SelectedItem = AfterTrailingDotInMarkup()
-            ? null
-            : InitialSelection(_completionWindow.CompletionList.CompletionData, typed, trigger);
+        ShowEntries(window, ranked, typed, trigger, keepChoice: false);
 
         window.Closed += (_, _) =>
         {
-            if (ReferenceEquals(_completionWindow, window)) _completionWindow = null;
+            if (!ReferenceEquals(_completionWindow, window)) return;
+
+            _completionWindow = null;
+            _completionCandidates = null;
+            _completionHighlightMoved = false;
         };
 
         // VB commits from layout-translated text input. Other providers keep
@@ -1673,7 +1701,108 @@ public sealed partial class CodeEditor : UserControl
     }
 
     /// <summary>
-    /// The identifier being typed, which the completion list filters on.
+    /// The most entries the list holds. Cut after filtering, and high enough
+    /// that a statement offers its names in full: Roslyn gives some 3,500 for
+    /// a blank line, and a cap below that drops the locals, which sort late.
+    /// </summary>
+    private const int MaxListedEntries = 5000;
+
+    /// <summary>
+    /// Shows the entries that matched. The best is selected, as the caller
+    /// chooses, unless the user chose an entry and it is still shown.
+    /// </summary>
+    /// <param name="keepChoice">Whether a highlight the user moved is kept, when its entry is still listed.</param>
+    private void ShowEntries(
+        CompletionWindow window, IReadOnlyList<CompletionMatch> ranked, string typed, char? trigger, bool keepChoice)
+    {
+        var data = window.CompletionList.CompletionData;
+
+        // Read before the list changes: the refresh replaces the entries, and
+        // the box forgets its selection with them.
+        var chosen = keepChoice ? window.CompletionList.SelectedItem as EditorCompletionData : null;
+
+        data.Clear();
+
+        foreach (var match in ranked.Take(MaxListedEntries))
+            data.Add(new EditorCompletionData(match.Item, OnCompletionCommitted));
+
+        // The list box reads the collection it was given, and the list's
+        // CompletionData is a plain List that says nothing when it changes
+        // (measured: System.Collections.Generic.List over ICompletionData), so
+        // left as it was the box keeps the count it had and fails on the entries
+        // that went. It is given the entries again. Measured at 1 to 5 ms for
+        // the full list, so the reset stays.
+        if (window.CompletionList.ListBox is { } listBox)
+        {
+            listBox.ItemsSource = null;
+            listBox.ItemsSource = data;
+        }
+
+        var kept = chosen is null
+            ? null
+            : data.OfType<EditorCompletionData>().FirstOrDefault(entry => entry.Item.DisplayText == chosen.Item.DisplayText);
+
+        _completionHighlightMoved = kept is not null;
+
+        window.CompletionList.SelectedItem = AfterTrailingDotInMarkup()
+            ? null
+            : kept ?? InitialSelection(data, typed, trigger);
+    }
+
+    /// <summary>
+    /// Narrows the open list to the name being written now, over every
+    /// candidate the language service gave for the word.
+    /// </summary>
+    /// <remarks>
+    /// Called as each letter is typed and after a deletion, so the list is
+    /// always what the text says. It closes when nothing matches, when the caret
+    /// has gone back before the word, or when the word is no longer a name.
+    /// </remarks>
+    private void RefreshCompletionList()
+    {
+        var window = _completionWindow;
+
+        if (window is null || _completionCandidates is null) return;
+
+        var caret = _editor.CaretOffset;
+
+        if (caret < window.StartOffset)
+        {
+            window.Close();
+            return;
+        }
+
+        var text = _editor.Text;
+
+        // The list belongs to the word it was opened on. A character that is not
+        // part of a name in this file ends that word, and the list with it.
+        if (CompletionWord.StartOf(_document.FilePath, text, caret) != window.StartOffset)
+        {
+            Trace("the word at the caret is no longer the one the list was opened on");
+            window.Close();
+            return;
+        }
+
+        var typed = text[window.StartOffset..caret];
+
+        var ranked = CompletionMatcher.Filter(_completionCandidates, typed);
+
+        LastCompletionCountForTests = ranked.Count;
+
+        if (ranked.Count == 0)
+        {
+            Trace($"nothing matches '{typed}' any longer");
+            window.Close();
+            return;
+        }
+
+        ShowEntries(window, ranked, typed, trigger: null, keepChoice: _completionHighlightMoved);
+    }
+
+    /// <summary>
+    /// The name being typed, which the completion list filters on and replaces:
+    /// an identifier in Visual Basic, a property or markup name with its dashes,
+    /// a directive attribute with its "@" (see <see cref="CompletionWord"/>).
     ///
     /// Empty right after a dot, where every member is a candidate.
     /// </summary>
@@ -1682,12 +1811,7 @@ public sealed partial class CodeEditor : UserControl
         var text = _editor.Text;
         var caret = Math.Clamp(_editor.CaretOffset, 0, text.Length);
 
-        var start = caret;
-
-        while (start > 0 && (char.IsLetterOrDigit(text[start - 1]) || text[start - 1] == '_'))
-            start--;
-
-        return text[start..caret];
+        return text[CompletionWord.StartOf(_document.FilePath, text, caret)..caret];
     }
 
 }

@@ -135,7 +135,8 @@ public sealed partial class MainWindowViewModel
         new(item.DisplayText, item.InsertionText, ToCompletionKind(item.Kind))
         {
             Description = item.Description,
-            IsPreselected = item.IsPreselected
+            IsPreselected = item.IsPreselected,
+            FilterText = item.FilterText
         };
 
     /// <summary>
