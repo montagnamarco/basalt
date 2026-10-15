@@ -1400,4 +1400,23 @@
   <data name="Menu_Build_RebuildProject" xml:space="preserve"><value>Rebuild {0}</value></data>
   <data name="Menu_Build_RebuildSolution" xml:space="preserve"><value>Rebuild Solution</value></data>
   <data name="ProjectProperties_StartupObjectNotSet" xml:space="preserve"><value>(Not set)</value></data>
+  <data name="DatabaseClient_CountFailed" xml:space="preserve"><value>The database did not answer the row count.</value></data>
+  <data name="DatabaseClient_FilterNoMatch" xml:space="preserve"><value>No object matches "{0}".</value></data>
+  <data name="DatabaseClient_FilterWatermark" xml:space="preserve"><value>Filter objects by name</value></data>
+  <data name="DatabaseClient_FilteredGroup" xml:space="preserve"><value>{0} ({1} of {2})</value></data>
+  <data name="DatabaseClient_ForeignKeyMark" xml:space="preserve"><value>FK</value></data>
+  <data name="DatabaseClient_History" xml:space="preserve"><value>History</value></data>
+  <data name="DatabaseClient_HistoryEmpty" xml:space="preserve"><value>No queries have been run on this connection yet.</value></data>
+  <data name="DatabaseClient_HistoryToolTip" xml:space="preserve"><value>The last queries run on this connection</value></data>
+  <data name="DatabaseClient_ObjectProperties" xml:space="preserve"><value>Properties</value></data>
+  <data name="DatabaseClient_ObjectPropertiesFailed" xml:space="preserve"><value>Could not read the properties of {0}: {1}</value></data>
+  <data name="DatabaseClient_ObjectPropertiesText" xml:space="preserve"><value>{0}: {1} rows, {2} columns, {3} indexes, {4} foreign keys</value></data>
+  <data name="DatabaseClient_ScriptAs" xml:space="preserve"><value>Script as</value></data>
+  <data name="DatabaseClient_ScriptCreate" xml:space="preserve"><value>CREATE</value></data>
+  <data name="DatabaseClient_ScriptDelete" xml:space="preserve"><value>DELETE</value></data>
+  <data name="DatabaseClient_ScriptFailed" xml:space="preserve"><value>Could not script {0}: {1}</value></data>
+  <data name="DatabaseClient_ScriptInsert" xml:space="preserve"><value>INSERT</value></data>
+  <data name="DatabaseClient_ScriptNoCreate" xml:space="preserve"><value>{0} cannot be scripted as CREATE for this database.</value></data>
+  <data name="DatabaseClient_ScriptSelect" xml:space="preserve"><value>SELECT</value></data>
+  <data name="DatabaseClient_ScriptUpdate" xml:space="preserve"><value>UPDATE</value></data>
 </root>

@@ -102,7 +102,7 @@ public class MySqlSession : AdoNetSession
                     Text(r[2]) == "YES",
                     primaryKey.Contains(columnName),
                     Text(r[3]).Contains("auto_increment", StringComparison.OrdinalIgnoreCase),
-                    TextOrNull(r[4]),
+                    DefaultText(Text(r[1]), Text(r[3]), TextOrNull(r[4])),
                     index + 1);
             })
             .ToList();
@@ -110,6 +110,41 @@ public class MySqlSession : AdoNetSession
         var foreignKeys = await ReadForeignKeysAsync(connection, schema, name.Name, ct).ConfigureAwait(false);
 
         return new TableDetails(canonical, kind, columns, indexes, foreignKeys);
+    }
+
+    /// <summary>
+    /// A column default as SQL, which is how <see cref="ColumnInfo.DefaultValue"/> is documented ("as the
+    /// catalogue spells it" is only usable in a script when it is valid SQL). MySQL's COLUMN_DEFAULT holds the
+    /// bare value, so <c>abc</c> must come out as <c>'abc'</c>; an expression default (EXTRA says
+    /// DEFAULT_GENERATED) is already SQL and goes in parentheses, and a number is left as it is.
+    /// MariaDB already quotes its string defaults, and says the text NULL for none.
+    /// </summary>
+    public static string? DefaultText(string columnType, string extra, string? value)
+    {
+        if (value is null) return null;
+
+        if (extra.Contains("DEFAULT_GENERATED", StringComparison.OrdinalIgnoreCase))
+        {
+            var expression = value.Trim();
+
+            return expression.StartsWith('(') || expression.StartsWith("CURRENT_TIMESTAMP", StringComparison.OrdinalIgnoreCase)
+                ? expression
+                : "(" + expression + ")";
+        }
+
+        if (value.Equals("NULL", StringComparison.OrdinalIgnoreCase)) return null;
+        if (value.Length >= 2 && value[0] == '\'' && value[^1] == '\'') return value;
+
+        var type = columnType.Trim().ToLowerInvariant();
+        var numeric = type.StartsWith("tinyint") || type.StartsWith("smallint") || type.StartsWith("mediumint")
+            || type.StartsWith("int") || type.StartsWith("bigint") || type.StartsWith("decimal") || type.StartsWith("numeric")
+            || type.StartsWith("float") || type.StartsWith("double") || type.StartsWith("bit");
+
+        if (numeric && decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out _)) return value;
+        if (numeric && type.StartsWith("bit")) return value;
+
+        // Backslash is an escape in MySQL's default mode, so it is doubled with the quote.
+        return "'" + value.Replace("\\", "\\\\").Replace("'", "''") + "'";
     }
 
     private async Task<IReadOnlyList<IndexInfo>> ReadIndexesAsync(DbConnection connection, string schema, string table, CancellationToken ct)

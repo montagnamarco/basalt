@@ -8,6 +8,8 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Basalt.Core.Localization;
 using Basalt.Core.Settings;
@@ -33,7 +35,7 @@ public sealed record DatabaseQueryRequest(string ConnectionId, string Sql);
 /// Adding, editing and removing a connection go through the connection dialog
 /// and the workspace, and the tree is rebuilt from the saved list afterwards.
 /// </remarks>
-public sealed class DatabaseExplorerPanel : UserControl
+public sealed partial class DatabaseExplorerPanel : UserControl
 {
     private readonly DatabaseWorkspace _workspace;
     private readonly ObservableCollection<ExplorerNode> _roots = [];
@@ -43,6 +45,20 @@ public sealed class DatabaseExplorerPanel : UserControl
     private readonly TextBlock _status;
     private readonly Button _refresh;
     private readonly Button _disconnect;
+    private readonly TextBox _filter;
+
+    /// <summary>Waits for a pause in the typing before the tree is narrowed, so each key does not rebuild it.</summary>
+    private readonly DispatcherTimer _filterTimer = new() { Interval = FilterDelay };
+
+    /// <summary>How long the filter waits after the last key.</summary>
+    internal static readonly TimeSpan FilterDelay = TimeSpan.FromMilliseconds(150);
+
+    /// <summary>
+    /// Stops the database work the panel started: listing, details, counting and scripting. Cancelled when the
+    /// tree is rebuilt, a connection is disconnected, or the panel leaves the window, so a slow count does not
+    /// keep running for a tree nobody sees.
+    /// </summary>
+    private CancellationTokenSource _operation = new();
 
     /// <summary>The node the context menu was opened on, found from the pointer press before it.</summary>
     private ExplorerNode? _menuNode;
@@ -57,15 +73,35 @@ public sealed class DatabaseExplorerPanel : UserControl
             Background = Brushes.Transparent,
             BorderThickness = default,
             ItemTemplate = new FuncTreeDataTemplate<ExplorerNode>(
-                (node, _) => new TextBlock
-                {
-                    FontSize = PanelMetrics.FontSize,
-                    Margin = new Thickness(0, Spacing.Hairline),
-                    [!TextBlock.TextProperty] = new Binding(nameof(ExplorerNode.Text)),
-                    [!ToolTip.TipProperty] = new Binding(nameof(ExplorerNode.Text)),
-                },
+                (node, _) => BuildRow(),
                 node => node is null ? NoChildren : node.Children),
         };
+
+        // A node opens and closes through its own flag, so a filter can open the groups that hold a match and
+        // the tree keeps what the user folded when the list is rebuilt under it.
+        _tree.Styles.Add(new Style(x => x.OfType<TreeViewItem>())
+        {
+            Setters = { new Setter(TreeViewItem.IsExpandedProperty, new Binding(nameof(ExplorerNode.IsExpanded)) { Mode = BindingMode.TwoWay }) },
+        });
+
+        _filter = new TextBox
+        {
+            Name = "DatabaseFilter",
+            Watermark = Localizer.Get(StringKeys.DbFilterWatermark),
+            FontSize = PanelMetrics.FontSize,
+            Margin = new Thickness(Spacing.Normal, Spacing.Tight),
+        };
+        _filterTimer.Tick += (_, _) =>
+        {
+            _filterTimer.Stop();
+            ApplyFilter(_filter.Text ?? "");
+        };
+        _filter.TextChanged += (_, _) =>
+        {
+            _filterTimer.Stop();
+            _filterTimer.Start();
+        };
+        DetachedFromVisualTree += (_, _) => CancelOperations();
 
         var add = new Button { Content = Localizer.Get(StringKeys.DbAddConnection), FontSize = PanelMetrics.FontSize };
         add.Click += (_, _) => Run(AddConnectionAsync);
@@ -109,13 +145,15 @@ public sealed class DatabaseExplorerPanel : UserControl
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
         }.Themed(TextBlock.ForegroundProperty, "DescriptionForegroundBrush");
 
-        var body = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto") };
+        var body = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto") };
         var content = new Grid { Children = { _tree, _empty } };
 
         Grid.SetRow(toolbar, 0);
-        Grid.SetRow(content, 1);
-        Grid.SetRow(_status, 2);
+        Grid.SetRow(_filter, 1);
+        Grid.SetRow(content, 2);
+        Grid.SetRow(_status, 3);
         body.Children.Add(toolbar);
+        body.Children.Add(_filter);
         body.Children.Add(content);
         body.Children.Add(_status);
 
@@ -132,7 +170,7 @@ public sealed class DatabaseExplorerPanel : UserControl
             if (e.GetCurrentPoint(_tree).Properties.IsRightButtonPressed) _menuNode = NodeOf(e.Source);
         }, RoutingStrategies.Tunnel, handledEventsToo: true);
 
-        _tree.ContextMenu = ContextMenus.Build(MenuActions());
+        _tree.ContextMenu = BuildContextMenu();
 
         // Double-clicking a table is the question a person usually asks of one:
         // what is in it. The tree's own selection stands in when the tap's source is not a row.
@@ -148,6 +186,70 @@ public sealed class DatabaseExplorerPanel : UserControl
 
     /// <summary>The children of a node that has none: an empty list, so the tree shows no expander.</summary>
     private static readonly IEnumerable<ExplorerNode> NoChildren = [];
+
+    /// <summary>One row of the tree: the node's icon and its text, as the Solution Explorer draws its rows.</summary>
+    private static Control BuildRow()
+    {
+        var text = new TextBlock
+        {
+            FontSize = PanelMetrics.FontSize,
+            Margin = new Thickness(0, Spacing.Hairline),
+            VerticalAlignment = VerticalAlignment.Center,
+            [!TextBlock.TextProperty] = new Binding(nameof(ExplorerNode.Text)),
+            [!ToolTip.TipProperty] = new Binding(nameof(ExplorerNode.Text)),
+        };
+
+        var icon = new IconView
+        {
+            IconSize = 14,
+            VerticalAlignment = VerticalAlignment.Center,
+            [!IconView.KindProperty] = new Binding(nameof(ExplorerNode.Icon)),
+        };
+
+        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { icon, text } };
+    }
+
+    /// <summary>The filter box. For the tests, which type into it.</summary>
+    internal TextBox FilterBox => _filter;
+
+    /// <summary>The tree. For the tests, which read the rows it drew.</summary>
+    internal TreeView Tree => _tree;
+
+    /// <summary>The tree's context menu. For the tests.</summary>
+    internal ContextMenu? TreeMenu => _tree.ContextMenu;
+
+    /// <summary>Raised with a sentence about a table or view, for the Output window.</summary>
+    public event EventHandler<string>? ObjectDescribed;
+
+    /// <summary>
+    /// Narrows every connection's objects to those whose name contains the text, ignoring case. The filter
+    /// is kept, so a connection listed afterwards is narrowed too.
+    /// </summary>
+    private void ApplyFilter(string text)
+    {
+        FilterRuns++;
+        _filterText = text;
+
+        foreach (var connection in _roots.OfType<ConnectionNode>()) connection.ApplyFilter(text);
+    }
+
+    private string _filterText = "";
+
+    /// <summary>How many times the tree was narrowed. For the tests: typing three letters should do it once.</summary>
+    internal int FilterRuns { get; private set; }
+
+    /// <summary>The text the tree is narrowed by now, which trails the box by the typing pause. For the tests.</summary>
+    internal string AppliedFilter => _filterText;
+
+    /// <summary>Stops what the panel has running and starts a fresh token for what comes next.</summary>
+    internal void CancelOperations()
+    {
+        var stopped = _operation;
+
+        _operation = new CancellationTokenSource();
+        stopped.Cancel();
+        stopped.Dispose();
+    }
 
     /// <summary>Raised when the rows of a table or view are asked for.</summary>
     public event EventHandler<DatabaseObjectRequest>? DataRequested;
@@ -227,7 +329,7 @@ public sealed class DatabaseExplorerPanel : UserControl
                 break;
 
             case ObjectNode table:
-                await table.LoadDetailsAsync(CancellationToken.None).ConfigureAwait(true);
+                await table.LoadDetailsAsync(_operation.Token).ConfigureAwait(true);
                 break;
         }
     }
@@ -238,13 +340,19 @@ public sealed class DatabaseExplorerPanel : UserControl
 
         try
         {
-            var session = await _workspace.OpenAsync(connection.ConnectionId).ConfigureAwait(true);
+            var session = await _workspace.OpenAsync(connection.ConnectionId, _operation.Token).ConfigureAwait(true);
 
-            await connection.LoadAsync(session, CancellationToken.None).ConfigureAwait(true);
+            connection.ApplyFilter(_filterText);
+            await connection.LoadAsync(session, _operation.Token).ConfigureAwait(true);
 
             _status.Text = Localizer.Get(StringKeys.DbConnected, session.DisplayName);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (OperationCanceledException)
+        {
+            // Stopped by a rebuild, a disconnect or the panel leaving: nothing to report, and nothing was read.
+            connection.Reset();
+        }
+        catch (Exception ex)
         {
             var message = Localizer.Get(StringKeys.DbOpenFailed, connection.Text, ex.Message);
 
@@ -260,7 +368,7 @@ public sealed class DatabaseExplorerPanel : UserControl
         {
             case ObjectNode table:
                 table.ForgetDetails();
-                await table.LoadDetailsAsync(CancellationToken.None).ConfigureAwait(true);
+                await table.LoadDetailsAsync(_operation.Token).ConfigureAwait(true);
                 break;
 
             case var other when ConnectionOf(other) is { } connection:
@@ -274,6 +382,7 @@ public sealed class DatabaseExplorerPanel : UserControl
     {
         if (ConnectionOf(_tree.SelectedItem as ExplorerNode) is not { } connection) return;
 
+        CancelOperations();
         await _workspace.CloseAsync(connection.ConnectionId).ConfigureAwait(true);
 
         connection.Reset();
@@ -321,6 +430,11 @@ public sealed class DatabaseExplorerPanel : UserControl
         {
             IsAvailable = () => _menuNode is ObjectNode,
         },
+        new(Localizer.Get(StringKeys.DbObjectProperties), () => Run(() => DescribeAsync((ObjectNode)_menuNode!)))
+        {
+            IsAvailable = () => _menuNode is ObjectNode,
+            Icon = IconKind.Properties,
+        },
         new(Localizer.Get(StringKeys.DatabaseRefresh), () => Run(() => RefreshAsync(_menuNode)))
         {
             IsAvailable = () => ConnectionOf(_menuNode) is not null,
@@ -341,6 +455,153 @@ public sealed class DatabaseExplorerPanel : UserControl
             IsAvailable = () => _menuNode is ConnectionNode,
         },
     ];
+
+    /// <summary>
+    /// The context menu: the entries of <see cref="MenuActions"/>, and the "Script as" submenu after the
+    /// query entries. ContextMenus.Build has no submenus, so this one is added to the list it built.
+    /// </summary>
+    private ContextMenu BuildContextMenu()
+    {
+        var menu = ContextMenus.Build(MenuActions());
+        var items = (IList<object>)menu.ItemsSource!;
+
+        var scriptAs = new MenuItem
+        {
+            Header = Localizer.Get(StringKeys.DbScriptAs),
+            Icon = new IconView { Kind = IconKind.ScriptFile, IconSize = 14 },
+        };
+
+        var live = new List<(MenuAction Action, MenuItem Item)>();
+
+        foreach (var action in ScriptActions())
+        {
+            var entry = new MenuItem { Header = action.Header };
+            var captured = action;
+
+            entry.Click += (_, _) => captured.Invoke();
+            live.Add((action, entry));
+            scriptAs.Items.Add(entry);
+        }
+
+        // After "Select Top": the entries that open a query are together.
+        var selectTop = items.OfType<MenuItem>().FirstOrDefault(i => i.Header as string == Localizer.Get(StringKeys.DbSelectTop));
+
+        items.Insert(selectTop is null ? items.Count : items.IndexOf(selectTop) + 1, scriptAs);
+
+        menu.Opening += (_, _) =>
+        {
+            scriptAs.IsEnabled = _menuNode is ObjectNode;
+
+            foreach (var (action, item) in live) item.IsEnabled = action.IsAvailable?.Invoke() ?? true;
+        };
+
+        return menu;
+    }
+
+    /// <summary>The "Script as" entries. Each opens a new query tab with the text, quoted as the engine quotes.</summary>
+    private IReadOnlyList<MenuAction> ScriptActions() =>
+    [
+        new(Localizer.Get(StringKeys.DbScriptSelect), () => Run(() => ScriptAsync((ObjectNode)_menuNode!, ScriptKind.Select)))
+        {
+            IsAvailable = () => _menuNode is ObjectNode,
+        },
+        new(Localizer.Get(StringKeys.DbScriptInsert), () => Run(() => ScriptAsync((ObjectNode)_menuNode!, ScriptKind.Insert)))
+        {
+            IsAvailable = () => _menuNode is ObjectNode { IsView: false },
+        },
+        new(Localizer.Get(StringKeys.DbScriptUpdate), () => Run(() => ScriptAsync((ObjectNode)_menuNode!, ScriptKind.Update)))
+        {
+            IsAvailable = () => _menuNode is ObjectNode { IsView: false },
+        },
+        new(Localizer.Get(StringKeys.DbScriptDelete), () => Run(() => ScriptAsync((ObjectNode)_menuNode!, ScriptKind.Delete)))
+        {
+            IsAvailable = () => _menuNode is ObjectNode { IsView: false },
+        },
+        new(Localizer.Get(StringKeys.DbScriptCreate), () => Run(() => ScriptAsync((ObjectNode)_menuNode!, ScriptKind.Create)))
+        {
+            IsAvailable = () => _menuNode is ObjectNode,
+        },
+    ];
+
+    /// <summary>The "Script as" entries as actions, for a test that chooses one as the menu does.</summary>
+    internal IReadOnlyList<MenuAction> ScriptActionsForTests(ExplorerNode node)
+    {
+        _menuNode = node;
+
+        return ScriptActions();
+    }
+
+    private enum ScriptKind { Select, Insert, Update, Delete, Create }
+
+    /// <summary>
+    /// Reads the table's columns on the session's worker and opens a query tab with the script. The tab opens
+    /// when the text is ready, not before, so it never shows an empty query the user might start typing in.
+    /// </summary>
+    private async Task ScriptAsync(ObjectNode table, ScriptKind kind)
+    {
+        var token = _operation.Token;
+
+        try
+        {
+            var details = await table.Session.GetDetailsAsync(table.Name, token).ConfigureAwait(true);
+            var dialect = table.Session.Dialect;
+
+            var sql = kind switch
+            {
+                ScriptKind.Select => SqlScripts.Select(dialect, details),
+                ScriptKind.Insert => SqlScripts.Insert(dialect, details),
+                ScriptKind.Update => SqlScripts.Update(dialect, details),
+                ScriptKind.Delete => SqlScripts.Delete(dialect, details),
+                _ => await SqlScripts.CreateAsync(table.Session, details, token).ConfigureAwait(true),
+            };
+
+            if (sql is null)
+            {
+                _status.Text = Localizer.Get(StringKeys.DbScriptNoCreate, table.Name.ToString());
+                return;
+            }
+
+            NewQuery(ConnectionIdOf(table), sql);
+        }
+        catch (OperationCanceledException)
+        {
+            // Stopped with the tree it was started from.
+        }
+        catch (Exception ex)
+        {
+            _status.Text = Localizer.Get(StringKeys.DbScriptFailed, table.Name.ToString(), ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Counts a table's rows and describes it: the count is a query on the session's worker, so a large
+    /// table does not hold the window. The sentence goes to the status line and the Output window.
+    /// </summary>
+    internal async Task DescribeAsync(ObjectNode table)
+    {
+        var token = _operation.Token;
+
+        try
+        {
+            _status.Text = Localizer.Get(StringKeys.DbLoading);
+
+            var stats = await ObjectStatistics.ReadAsync(table.Session, table.Name, token).ConfigureAwait(true);
+
+            var sentence = Localizer.Get(
+                StringKeys.DbObjectPropertiesText, stats.Name, stats.RowCount, stats.ColumnCount, stats.IndexCount, stats.ForeignKeyCount);
+
+            _status.Text = sentence;
+            ObjectDescribed?.Invoke(this, sentence);
+        }
+        catch (OperationCanceledException)
+        {
+            // Stopped with the tree it was started from: the count is no longer wanted.
+        }
+        catch (Exception ex)
+        {
+            _status.Text = Localizer.Get(StringKeys.DbObjectPropertiesFailed, table.Name.ToString(), ex.Message);
+        }
+    }
 
     private void SelectTop(ObjectNode table)
     {
@@ -365,9 +626,18 @@ public sealed class DatabaseExplorerPanel : UserControl
     /// <summary>Rebuilds the connection list from what was saved. The tree is shown only when there is something in it.</summary>
     private void Rebuild()
     {
+        // The nodes the running work would fill are about to be replaced.
+        CancelOperations();
+
         _roots.Clear();
 
-        foreach (var saved in _workspace.Connections) _roots.Add(new ConnectionNode(saved));
+        foreach (var saved in _workspace.Connections)
+        {
+            var node = new ConnectionNode(saved);
+
+            node.ApplyFilter(_filterText);
+            _roots.Add(node);
+        }
 
         _empty.IsVisible = _roots.Count == 0;
         _tree.IsVisible = _roots.Count > 0;

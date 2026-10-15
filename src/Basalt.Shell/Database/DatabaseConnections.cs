@@ -312,6 +312,7 @@ public sealed class DatabaseWorkspace : IAsyncDisposable
     {
         _settings = settings;
         Passwords = passwords;
+        History = new QueryHistory(QueryHistory.PathBeside(settings.FilePath));
 
         // The settings file is read on the pool: the window is being built on the interface thread.
         _loaded = Task.Run(() =>
@@ -321,6 +322,9 @@ public sealed class DatabaseWorkspace : IAsyncDisposable
             lock (_cacheLock) _connections = list;
         }).ContinueWith(_ => Dispatcher.UIThread.Post(() => Changed?.Invoke(this, EventArgs.Empty)), TaskScheduler.Default);
     }
+
+    /// <summary>The last queries run on each connection, kept beside the settings file.</summary>
+    public QueryHistory History { get; }
 
     /// <summary>Where passwords are kept. Replaced by a test before any connection is saved.</summary>
     public IDatabasePasswordStore Passwords { get; private set; }
@@ -488,6 +492,9 @@ public sealed class DatabaseWorkspace : IAsyncDisposable
                     Commit(connectionId, new SecretPlan(string.Empty, SecretAction.Remove, null), next);
                 }
             }, ct).ConfigureAwait(false);
+
+            // Its queries go with it: a connection added later never reuses the id, and the file should not grow for ever.
+            await History.ForgetAsync(connectionId).ConfigureAwait(false);
         }
         finally
         {

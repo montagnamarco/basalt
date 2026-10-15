@@ -52,6 +52,7 @@ public partial class MainWindow
             () => OpenTableDataAsync(request), ViewModel.WriteOutput, "database");
 
         _databaseExplorer.QueryRequested += (_, request) => OpenQueryDocument(request.ConnectionId, request.Sql, null);
+        _databaseExplorer.ObjectDescribed += (_, sentence) => ViewModel.WriteOutput(sentence);
         _databaseExplorer.ConnectionRemoved += (_, connectionId) => MarkConnectionRemoved(connectionId);
         _databaseExplorer.ConnectionEdited += (_, connectionId) => MarkConnectionChanged(connectionId);
 

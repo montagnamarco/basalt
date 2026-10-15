@@ -49,7 +49,16 @@ public enum IconKind
     ChevronRight, ChevronDown,
 
     /// <summary>Basalt itself: a volcano, which is where basalt comes from.</summary>
-    Application
+    Application,
+
+    /// <summary>
+    /// The Database Explorer's tree. A connection wears the cylinder of a
+    /// database with a small mark for its engine; the rest name what a node
+    /// is, so the tree reads at a glance.
+    /// </summary>
+    DatabaseSqlite, DatabaseSqlServer, DatabasePostgreSql, DatabaseMySql,
+    FolderTables, FolderViews,
+    Table, View, Column, PrimaryKeyColumn, ForeignKeyColumn, Index
 }
 
 /// <summary>
@@ -110,6 +119,21 @@ public static class IdeIcons
         IconKind.Information => Color.FromRgb(0x37, 0x94, 0xFF),
         IconKind.Branch or IconKind.Commit => Color.FromRgb(0x2E, 0xA0, 0x43),
 
+        // The database icons. Each sits between a luminance of 0.14 and 0.30,
+        // which keeps it at least 3:1 against both a white panel and a dark
+        // one (DatabaseIconTests checks it), so one colour serves both themes.
+        IconKind.DatabaseSqlite => Color.FromRgb(0x3D, 0x8F, 0xC9),
+        IconKind.DatabaseSqlServer => Color.FromRgb(0xC2, 0x4A, 0x45),
+        IconKind.DatabasePostgreSql => Color.FromRgb(0x4B, 0x7F, 0xB5),
+        IconKind.DatabaseMySql => Color.FromRgb(0xC2, 0x7A, 0x1E),
+        IconKind.FolderTables or IconKind.FolderViews => Color.FromRgb(0xB7, 0x8A, 0x3A),
+        IconKind.Table => Color.FromRgb(0x4A, 0x86, 0xC5),
+        IconKind.View => Color.FromRgb(0x2F, 0x9A, 0x8E),
+        IconKind.Column => Color.FromRgb(0x6F, 0x8F, 0xB8),
+        IconKind.PrimaryKeyColumn => Color.FromRgb(0xB7, 0x8A, 0x3A),
+        IconKind.ForeignKeyColumn => Color.FromRgb(0x8A, 0x6F, 0xC9),
+        IconKind.Index => Color.FromRgb(0x2F, 0x9A, 0x8E),
+
         // Basalt is dark rock; the lava is what gives it colour.
         IconKind.Application => Color.FromRgb(0xE4, 0x57, 0x2E),
         _ => null
@@ -140,6 +164,10 @@ public static class IdeIcons
     /// far more often than they are changed, and a path is the clearest way to
     /// say what one looks like.
     /// </summary>
+    /// <summary>The cylinder under a connection's engine mark: shorter than a database's, to leave room for the mark.</summary>
+    private const string ConnectionBase =
+        "M2,3.5 A5,1.75 0 1 1 12,3.5 A5,1.75 0 1 1 2,3.5 Z M2,3.5 V10 A5,1.75 0 0 0 8.5,11.75 M2,6.75 A5,1.75 0 0 0 12,6.75 M12,3.5 V7 ";
+
     private static string? Data(IconKind kind) => kind switch
     {
         // A document with a folded corner is the base for every file icon;
@@ -317,6 +345,34 @@ public static class IdeIcons
 
         IconKind.Commit => "M1,8 H5 M11,8 H15 M8,5 A3,3 0 1 1 8,11 A3,3 0 0 1 8,5",
         IconKind.Refresh => "M13,4 A6,6 0 1 0 14,9 M13,1 V4 H10",
+
+        // The cylinder of a database, and the same drawn shorter above a mark
+        // for the engine: SQLite a page (the file it is), SQL Server a
+        // diamond, PostgreSQL a ring, MySQL a triangle.
+        IconKind.DatabaseSqlite => ConnectionBase + "M10.5,9.5 H15 V15 H10.5 Z",
+        IconKind.DatabaseSqlServer => ConnectionBase + "M12.75,9.25 L15,12 L12.75,14.75 L10.5,12 Z",
+        IconKind.DatabasePostgreSql => ConnectionBase + "M12.75,9.75 A2.25,2.25 0 1 1 12.75,14.25 A2.25,2.25 0 0 1 12.75,9.75",
+        IconKind.DatabaseMySql => ConnectionBase + "M12.75,9.5 L15,14.75 H10.5 Z",
+
+        // A folder with the shape of what it holds inside: a grid of cells,
+        // an eye, a block that runs, an f.
+        IconKind.FolderTables => "M1,3 H6 L7.5,5 H15 V13 H1 Z M4,8 H12 M4,10.5 H12 M7,6.5 V13",
+        IconKind.FolderViews => "M1,3 H6 L7.5,5 H15 V13 H1 Z M3.5,9.5 C5,7 11,7 12.5,9.5 C11,12 5,12 3.5,9.5 Z M8,8.75 V10.25",
+
+        // A table is a grid; a view is the same grid seen through an eye.
+        IconKind.Table => "M2,3 H14 V13 H2 Z M2,6.5 H14 M2,9.75 H14 M6.5,3 V13",
+        IconKind.View => "M2,2.5 H14 V13.5 H2 Z M2,5.5 H14 M4.5,9.75 C6,7.75 10,7.75 11.5,9.75 C10,11.75 6,11.75 4.5,9.75 Z M7.4,9.75 A0.6,0.6 0 1 1 8.6,9.75 A0.6,0.6 0 1 1 7.4,9.75",
+
+        // A column is one stripe of the grid; a key marks the one that
+        // identifies a row, a chain link the one that points at another table.
+        IconKind.Column => "M5,2.5 H11 V13.5 H5 Z M5,5.5 H11",
+        IconKind.PrimaryKeyColumn => "M4.5,4.5 A2.75,2.75 0 1 1 4.5,10 A2.75,2.75 0 0 1 4.5,4.5 M7.25,7.25 H14 M11.5,7.25 V10 M14,7.25 V9.5",
+        IconKind.ForeignKeyColumn => "M6.5,5 H5 A3,3 0 0 0 5,11 H6.5 M9.5,5 H11 A3,3 0 0 1 11,11 H9.5 M6,8 H10",
+
+        // Lines in order, with the pointer that finds one: an index.
+        IconKind.Index => "M2,3.5 H9 M2,7 H7 M2,10.5 H9 M2,14 H7 M12,3 V13 M10,11 L12,13 L14,11",
+
+        // A block that runs, and an f of the kind a mathematician writes.
 
         IconKind.Error => "M8,1.5 A6.5,6.5 0 1 1 8,14.5 A6.5,6.5 0 0 1 8,1.5 M5.5,5.5 L10.5,10.5 M10.5,5.5 L5.5,10.5",
         IconKind.Warning => "M8,2 L15,14 H1 Z M8,6 V10 M8,11.5 V12.5",

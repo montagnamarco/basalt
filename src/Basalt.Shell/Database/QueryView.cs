@@ -39,6 +39,7 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
     private readonly ComboBox _connection;
     private readonly Button _run;
     private readonly Button _cancel;
+    private readonly Button _historyButton;
     private readonly TabControl _results;
     private StackPanel _messages;
     private readonly TextBlock _status;
@@ -94,6 +95,24 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
         _cancel.Name = "QueryCancel";
         _cancel.IsVisible = false;
 
+        _historyButton = new Button
+        {
+            Name = "QueryHistory",
+            FontSize = PanelMetrics.FontSize,
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children =
+                {
+                    new IconView { Kind = IconKind.History, IconSize = 14, VerticalAlignment = VerticalAlignment.Center },
+                    new TextBlock { Text = Localizer.Get(StringKeys.DbHistory), VerticalAlignment = VerticalAlignment.Center },
+                },
+            },
+        };
+        ToolTip.SetTip(_historyButton, Localizer.Get(StringKeys.DbHistoryToolTip));
+        _historyButton.Click += (_, _) => RunInBackground(ShowHistoryAsync);
+
         var saveAs = ButtonFor(StringKeys.DbSaveQueryTitle, () => RunInBackground(SaveWithPickerAsync));
         saveAs.Name = "QuerySaveAs";
 
@@ -120,6 +139,7 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
                 _connection,
                 _run,
                 _cancel,
+                _historyButton,
                 saveAs,
                 export,
                 copy,
@@ -184,6 +204,9 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
         set => _editor.Text = value;
     }
 
+    /// <summary>The id of the connection the picker shows. For the tests.</summary>
+    internal string? SelectedConnectionId => (_connection.SelectedItem as ConnectionChoice)?.Id;
+
     /// <summary>The status line. For the tests.</summary>
     internal string StatusText => _status.Text ?? "";
 
@@ -227,6 +250,11 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
         _clockWatch = watch;
         UpdateRunning(true);
 
+        // Remembered whatever happens to it: a query that fails or is stopped is one the user will want back to
+        // fix. Started here and awaited at the end, not before the batch: waiting for the file first would
+        // leave a Stop or a Disconnect in that gap with no session yet to stop, and the batch would then run.
+        var recording = _workspace.History.AddAsync(choice.Id, text);
+
         try
         {
             var session = await _workspace.OpenAsync(choice.Id, running.Token).ConfigureAwait(true);
@@ -251,6 +279,21 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
             running.Dispose();
             UpdateRunning(false);
         }
+
+        await AwaitRecordingAsync(recording).ConfigureAwait(true);
+    }
+
+    /// <summary>Waits for the history write that went with a run. A history that could not be kept is not a failure of the query.</summary>
+    private static async Task AwaitRecordingAsync(Task recording)
+    {
+        try
+        {
+            await recording.ConfigureAwait(true);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Debug.WriteLine("The query history was not saved: " + ex.Message);
+        }
     }
 
     /// <summary>Writes the active result set to a CSV file. Returns the rows written, or 0 when no result is active.</summary>
@@ -272,6 +315,55 @@ public sealed class QueryView : Grid, IDatabaseDocumentContent, IDisposable
 
         _status.Text = Localizer.Get(StringKeys.DbExported, written, path);
         return written;
+    }
+
+    /// <summary>The menu the History button last opened. For the tests, which choose from it.</summary>
+    internal ContextMenu? HistoryMenu { get; private set; }
+
+    /// <summary>
+    /// Lists the last queries run on the chosen connection, newest first, under the History button. Choosing
+    /// one puts its text in the editor. The list is read on the pool, not on the interface thread.
+    /// </summary>
+    internal async Task ShowHistoryAsync()
+    {
+        if (_connection.SelectedItem is not ConnectionChoice choice) return;
+
+        var queries = await _workspace.History.GetAsync(choice.Id).ConfigureAwait(true);
+
+        var items = new List<object>();
+
+        if (queries.Count == 0)
+            items.Add(new MenuItem { Header = Localizer.Get(StringKeys.DbHistoryEmpty), IsEnabled = false });
+
+        foreach (var sql in queries)
+        {
+            var entry = sql;
+            var item = new MenuItem { Header = HistoryHeader(entry) };
+
+            ToolTip.SetTip(item, entry);
+            item.Click += (_, _) => ReopenFromHistory(entry);
+            items.Add(item);
+        }
+
+        HistoryMenu = new ContextMenu { ItemsSource = items, PlacementTarget = _historyButton };
+
+        if (_historyButton.IsEffectivelyVisible) HistoryMenu.Open(_historyButton);
+    }
+
+    /// <summary>A query as one line of a menu: its lines joined, and cut where it would run off the screen.</summary>
+    private static string HistoryHeader(string sql)
+    {
+        var line = string.Join(' ', sql.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+        return line.Length <= 80 ? line : line[..79] + "…";
+    }
+
+    /// <summary>Puts a query from the history back into the editor, ready to run again.</summary>
+    internal void ReopenFromHistory(string sql)
+    {
+        _editor.Text = sql;
+        _editor.CaretOffset = sql.Length;
+        _editor.Focus();
     }
 
     /// <summary>Cancels the batch that is running, if one is. Used when the window closes.</summary>

@@ -1450,4 +1450,23 @@ public static class StringKeys
     public const string MenuBuildRebuildProject = "Menu_Build_RebuildProject";
     public const string MenuBuildRebuildSolution = "Menu_Build_RebuildSolution";
     public const string ProjectPropertiesStartupObjectNotSet = "ProjectProperties_StartupObjectNotSet";
+    public const string DbCountFailed = "DatabaseClient_CountFailed";
+    public const string DbFilterNoMatch = "DatabaseClient_FilterNoMatch";
+    public const string DbFilterWatermark = "DatabaseClient_FilterWatermark";
+    public const string DbFilteredGroup = "DatabaseClient_FilteredGroup";
+    public const string DbForeignKeyMark = "DatabaseClient_ForeignKeyMark";
+    public const string DbHistory = "DatabaseClient_History";
+    public const string DbHistoryEmpty = "DatabaseClient_HistoryEmpty";
+    public const string DbHistoryToolTip = "DatabaseClient_HistoryToolTip";
+    public const string DbObjectProperties = "DatabaseClient_ObjectProperties";
+    public const string DbObjectPropertiesFailed = "DatabaseClient_ObjectPropertiesFailed";
+    public const string DbObjectPropertiesText = "DatabaseClient_ObjectPropertiesText";
+    public const string DbScriptAs = "DatabaseClient_ScriptAs";
+    public const string DbScriptCreate = "DatabaseClient_ScriptCreate";
+    public const string DbScriptDelete = "DatabaseClient_ScriptDelete";
+    public const string DbScriptFailed = "DatabaseClient_ScriptFailed";
+    public const string DbScriptInsert = "DatabaseClient_ScriptInsert";
+    public const string DbScriptNoCreate = "DatabaseClient_ScriptNoCreate";
+    public const string DbScriptSelect = "DatabaseClient_ScriptSelect";
+    public const string DbScriptUpdate = "DatabaseClient_ScriptUpdate";
 }
