@@ -118,9 +118,23 @@ public sealed partial class WinFormsDesignerDocument
             CopiedResources(statements, resources, carriedEntries ?? [], names));
     }
 
-    public WinFormsControlPasteResult PasteControls(WinFormsControlClipboard clipboard, string targetParent)
+    /// <summary>
+    /// Pastes the copied controls into <paramref name="targetParent"/>. With <paramref name="gridStep"/>, a copy that goes back
+    /// into the container it was copied from is offset from its original by whole steps, as Visual Studio offsets a paste on
+    /// the same form: the fewest steps that put no pasted control on a location in <paramref name="occupied"/> and keep it inside
+    /// <paramref name="clientSize"/>, wrapping when none does. Without a grid step, or
+    /// into another container, a copy keeps the location it was copied with.
+    /// </summary>
+    public WinFormsControlPasteResult PasteControls(WinFormsControlClipboard clipboard, string targetParent,
+        (int Width, int Height)? gridStep = null, IReadOnlyCollection<(int X, int Y)>? occupied = null,
+        (int Width, int Height)? clientSize = null)
     {
         ArgumentNullException.ThrowIfNull(clipboard);
+        if (gridStep is { } step)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(step.Width, 1);
+            ArgumentOutOfRangeException.ThrowIfLessThan(step.Height, 1);
+        }
         targetParent = ResolveParentKey(targetParent);
         ValidateClipboardDependencies(clipboard);
 
@@ -130,10 +144,14 @@ public sealed partial class WinFormsDesignerDocument
             // A picture is read through the ComponentResourceManager local InitializeComponent declares. The target
             // declares one when it has none, and the paste then runs against the document that declares it.
             var (withManager, existingManager) = EnsureComponentResourceManager();
-            if (!ReferenceEquals(withManager, this)) return withManager.PasteControls(clipboard, targetParent);
+            if (!ReferenceEquals(withManager, this))
+                return withManager.PasteControls(clipboard, targetParent, gridStep, occupied, clientSize);
             managerName = existingManager;
         }
 
+        var moved = gridStep is { } offsetBy
+            ? OffsetLocations(clipboard, targetParent, offsetBy, occupied ?? [], clientSize)
+            : new Dictionary<string, (int X, int Y)>(StringComparer.OrdinalIgnoreCase);
         var used = DeclaredNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
         used.Add(ClassName);
         foreach (var method in _class.Members.OfType<MethodBlockSyntax>())
@@ -148,7 +166,8 @@ public sealed partial class WinFormsDesignerDocument
         var statements = new List<string>();
         foreach (var original in clipboard.Statements)
         {
-            var statement = RenameNameProperty(original, renamed);
+            var statement = RelocateStatement(original, moved);
+            statement = RenameNameProperty(statement, renamed);
             statement = (StatementSyntax)rewriter.Visit(statement)!;
             if (managerName is not null && StatementOwner(statement) is { } owner)
                 statement = (StatementSyntax)new ClipboardResourceRewriter(managerName, owner).Visit(statement)!;
@@ -409,6 +428,96 @@ public sealed partial class WinFormsDesignerDocument
         MemberAccessExpressionSyntax member => RootField(member.Expression),
         _ => null,
     };
+
+    /// <summary>
+    /// The new location of each copied top-level control a paste offsets: the ones copied from <paramref name="targetParent"/>
+    /// whose copied Location is a literal point. They all move by the same number of steps, so the copies keep their
+    /// arrangement. The number is the fewest that puts no copy on an occupied location and keeps every copy inside the container's
+    /// client area. When no step count does, the copies wrap to one step from the container's top-left corner, as Visual Studio
+    /// keeps a copy visible.
+    /// </summary>
+    private static Dictionary<string, (int X, int Y)> OffsetLocations(WinFormsControlClipboard clipboard, string targetParent,
+        (int Width, int Height) step, IReadOnlyCollection<(int X, int Y)> occupied, (int Width, int Height)? client)
+    {
+        var origins = new Dictionary<string, (int X, int Y)>(StringComparer.OrdinalIgnoreCase);
+        var sizes = new Dictionary<string, (int Width, int Height)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var name in clipboard.TopLevelNames)
+        {
+            var control = clipboard.Controls.FirstOrDefault(copied => copied.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (control is null || !ClipboardContainerKey(control).Equals(targetParent, StringComparison.OrdinalIgnoreCase)) continue;
+            if (CopiedPair(clipboard.Statements, name, "Location") is not { } at) continue;
+            origins[name] = at;
+            sizes[name] = CopiedPair(clipboard.Statements, name, "Size") ?? (0, 0);
+        }
+        if (origins.Count == 0) return new(StringComparer.OrdinalIgnoreCase);
+
+        // Every candidate moves by the same shift. Moving right and down only grows the group, so once it leaves the client
+        // area no larger step count fits and the search stops there.
+        var occupiedSet = occupied.ToHashSet();
+        Dictionary<string, (int X, int Y)> Shift(int dx, int dy) => origins.ToDictionary(pair => pair.Key,
+            pair => (pair.Value.X + dx, pair.Value.Y + dy), StringComparer.OrdinalIgnoreCase);
+        bool Fits(Dictionary<string, (int X, int Y)> targets) => client is not { } area || targets.All(pair =>
+            pair.Value.X >= 0 && pair.Value.Y >= 0
+            && pair.Value.X + sizes[pair.Key].Width <= area.Width && pair.Value.Y + sizes[pair.Key].Height <= area.Height);
+        bool Free(Dictionary<string, (int X, int Y)> targets) => targets.Values.All(at => !occupiedSet.Contains(at));
+
+        for (var steps = 1; ; steps++)
+        {
+            var targets = Shift(steps * step.Width, steps * step.Height);
+            if (!Fits(targets)) break;
+            if (Free(targets)) return targets;
+        }
+
+        // No step count keeps the copies inside and free, so they wrap: the group's top-left corner lands one step from the
+        // container's top-left, and the copies are visible even if they cover a control there.
+        var minX = origins.Values.Min(at => at.X);
+        var minY = origins.Values.Min(at => at.Y);
+        return Shift(step.Width - minX, step.Height - minY);
+    }
+
+    /// <summary>The container a copied control sat in, named as <see cref="ResolveParentKey"/> names it: its owner, or owner.panel.</summary>
+    private static string ClipboardContainerKey(WinFormsClipboardControl control) =>
+        control.ParentPanel is null ? control.ParentName : control.ParentName + "." + control.ParentPanel;
+
+    /// <summary>
+    /// The literal pair of integers the copied statements assign to a control's <paramref name="property"/> (a Location or a
+    /// Size), the last assignment that takes effect, or null when there is none or it is not a literal pair.
+    /// </summary>
+    private static (int X, int Y)? CopiedPair(IEnumerable<StatementSyntax> statements, string name, string property)
+    {
+        (int X, int Y)? value = null;
+        foreach (var assignment in statements.OfType<AssignmentStatementSyntax>())
+        {
+            if (assignment.Left is not MemberAccessExpressionSyntax left
+                || !left.Name.Identifier.ValueText.Equals(property, StringComparison.OrdinalIgnoreCase)
+                || RootField(left.Expression) is not { } owner || !owner.Equals(name, StringComparison.OrdinalIgnoreCase)) continue;
+            if (assignment.Right is ObjectCreationExpressionSyntax
+                {
+                    ArgumentList.Arguments: [SimpleArgumentSyntax { Expression: LiteralExpressionSyntax { Token.Value: int x } },
+                        SimpleArgumentSyntax { Expression: LiteralExpressionSyntax { Token.Value: int y } }],
+                })
+                value = (x, y);
+            else
+                value = null;
+        }
+        return value;
+    }
+
+    /// <summary>
+    /// Writes a copied Location assignment at the control's offset location. Other statements, and a control that is not
+    /// offset, come back unchanged.
+    /// </summary>
+    private static StatementSyntax RelocateStatement(StatementSyntax statement, IReadOnlyDictionary<string, (int X, int Y)> moved)
+    {
+        if (moved.Count == 0
+            || statement is not AssignmentStatementSyntax
+            {
+                Left: MemberAccessExpressionSyntax { Name.Identifier.ValueText: "Location" } left,
+            } assignment
+            || RootField(left.Expression) is not { } owner
+            || !moved.TryGetValue(owner, out var at)) return statement;
+        return assignment.WithRight(SyntaxFactory.ParseExpression($"New System.Drawing.Point({at.X}, {at.Y})"));
+    }
 
     private static StatementSyntax RenameNameProperty(StatementSyntax statement,
         IReadOnlyDictionary<string, string> renamed)

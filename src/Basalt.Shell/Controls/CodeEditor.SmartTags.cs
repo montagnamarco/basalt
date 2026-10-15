@@ -152,7 +152,9 @@ public sealed partial class CodeEditor
             return;
         }
 
-        if (_smartTagSource != _editor.Text || _smartTagCaret != _editor.CaretOffset)
+        // An empty answer is asked again, not reused: it can be one given before the solution loaded, and Ctrl+. must not
+        // report "none" for the rest of the text's life. Rename and Extract are still offered alongside it.
+        if (_smartTagSource != _editor.Text || _smartTagCaret != _editor.CaretOffset || _smartTagActions.Count == 0)
         {
             InvalidateSmartTags();
             _smartTagCancellation = new CancellationTokenSource();

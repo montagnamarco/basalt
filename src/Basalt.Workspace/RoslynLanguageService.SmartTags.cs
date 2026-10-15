@@ -9,13 +9,41 @@ namespace Basalt.Workspace;
 
 public sealed partial class RoslynLanguageService
 {
-    public Task<IReadOnlyList<QuickAction>> GetQuickActionsAsync(
+    public async Task<IReadOnlyList<QuickAction>> GetQuickActionsAsync(
         string filePath, int position, CancellationToken ct = default) =>
-        GetQuickActionsForDocumentAsync(GetDocument(filePath), position, ct);
+        await GetQuickActionsForDocumentAsync(await DocumentWhenLoadedAsync(filePath, ct).ConfigureAwait(false), position, ct)
+            .ConfigureAwait(false);
 
-    public Task<IReadOnlyList<QuickAction>> GetQuickActionsAsync(
-        string filePath, string currentText, int position, CancellationToken ct = default) =>
-        GetQuickActionsForDocumentAsync(GetDocument(filePath)?.WithText(SourceText.From(currentText)), position, ct);
+    public async Task<IReadOnlyList<QuickAction>> GetQuickActionsAsync(
+        string filePath, string currentText, int position, CancellationToken ct = default)
+    {
+        var document = await DocumentWhenLoadedAsync(filePath, ct).ConfigureAwait(false);
+        return await GetQuickActionsForDocumentAsync(document?.WithText(SourceText.From(currentText)), position, ct)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The document of a file, after the gate is free. OpenSolutionAsync holds the gate for the whole MSBuild load, and the
+    /// workspace has no document for the file until the load is done: a question answered during the load was empty (measured:
+    /// 300 ms into a load of about 650 ms), and the editor kept that answer for the same text. An idle gate costs one acquire
+    /// and release. The gate is held only by loads and short document updates, never by a question.
+    /// </summary>
+    private async Task<Document?> DocumentWhenLoadedAsync(string filePath, CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+        _gate.Release();
+        return GetDocument(filePath);
+    }
+
+    /// <summary>
+    /// Test seam: holds the gate as a load does, until the returned action runs, so a question asked meanwhile must wait.
+    /// Production code never calls it.
+    /// </summary>
+    internal async Task<Action> HoldGateForTestsAsync()
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        return () => _gate.Release();
+    }
 
     private async Task<IReadOnlyList<QuickAction>> GetQuickActionsForDocumentAsync(
         Document? document, int position, CancellationToken ct)

@@ -50,14 +50,23 @@ internal sealed partial class WinFormsDesignerSession
         _ = preview.PreviewProblems;
     }
 
+    /// <param name="gridStep">
+    /// The offset a copy made on this same form takes from its original (see <see cref="WinFormsDesignerDocument.PasteControls"/>);
+    /// null keeps the copies where they were copied from.
+    /// </param>
     internal async Task<IReadOnlyList<string>> PasteControlsAsync(
-        WinFormsControlClipboard clipboard, Forms.Control parent)
+        WinFormsControlClipboard clipboard, Forms.Control parent, (int Width, int Height)? gridStep = null)
     {
         ArgumentNullException.ThrowIfNull(clipboard);
         ArgumentNullException.ThrowIfNull(parent);
         var parentName = NameOf(parent);
         var original = Document;
-        var pasted = await Task.Run(() => original.PasteControls(clipboard, parentName));
+        // Read on the interface thread, where the controls are: a copy never lands on a location one of them already holds.
+        var occupied = parent.Controls.Cast<Forms.Control>().Select(control => (control.Location.X, control.Location.Y)).ToArray();
+        // The copies stay inside the container's client area, so a paste near its edge wraps back into view.
+        var client = parent.ClientSize;
+        var pasted = await Task.Run(() => original.PasteControls(clipboard, parentName, gridStep, occupied,
+            (client.Width, client.Height)));
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!ReferenceEquals(original, Document)) throw new InvalidOperationException("The document changed during the edit.");
         if (pasted.Resources.Count == 0)
