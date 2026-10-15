@@ -98,6 +98,12 @@ public partial class MainWindow : Window
     /// </summary>
     private CommandRegistry _commands = LoadCommands(new SettingsStore().Load());
 
+    /// <summary>The first half of a chord waiting for its second key; see <see cref="ShortcutChords"/>.</summary>
+    private readonly ShortcutChords _chords = new();
+
+    /// <summary>The status bar text before a chord began to wait, and the text the chord showed; null when none waits.</summary>
+    private (string Before, string Waiting)? _chordStatus;
+
     /// <summary>
     /// Builds the registry from what the user chose.
     ///
@@ -385,6 +391,12 @@ public partial class MainWindow : Window
         // Tunnelling, so the debugging keys win over the editor's own handling
         // of F-keys before it consumes them.
         AddHandler(KeyDownEvent, OnKeyboardShortcut, RoutingStrategies.Tunnel);
+
+        // A chord does not outlast the window: a key pressed after coming back is not the second half of one begun before.
+        Deactivated += (_, _) => CancelChord();
+
+        // A press anywhere is a change of attention, so it abandons a chord waiting for its second key too.
+        AddHandler(PointerPressedEvent, (_, _) => CancelChord(), RoutingStrategies.Tunnel, handledEventsToo: true);
 
         viewModel.ActiveDocumentChanged += (_, _) => Guarded.Run(
             () => RefreshOutlineAsync(),
@@ -2063,7 +2075,12 @@ public partial class MainWindow : Window
     private async void OnKeyboardShortcut(object? sender, KeyEventArgs e)
     {
         // Esc closes an open find bar before any command bound to Esc runs.
-        if (EditorFindBar.ClaimsEscape(e)) return;
+        if (EditorFindBar.ClaimsEscape(e))
+        {
+            // Esc closes the find bar, and it also abandons a chord waiting in the editor.
+            CancelChord();
+            return;
+        }
 
         try
         {
@@ -3011,6 +3028,25 @@ public partial class MainWindow : Window
             return false;
         }
 
+        // A chord belongs to the code editor. Its first half starts only while
+        // the editor's text has the keyboard, and a chord already waiting is
+        // abandoned the moment the keyboard goes elsewhere: a terminal, a text
+        // box or the Solution Explorer keeps every key it is given.
+        if (!CodeEditorHasFocus()) CancelChord();
+        else
+        {
+            var step = _chords.Press(_commands, e.Key, e.KeyModifiers);
+
+            if (step.Outcome != ChordOutcome.NotAChord)
+            {
+                // Claimed before the first await. Left unclaimed, the second key
+                // would still reach the editor, whose own Ctrl+D deletes a line.
+                e.Handled = true;
+                await RunChordStepAsync(step);
+                return true;
+            }
+        }
+
         // This handler runs in the Tunnel phase, before the Solution
         // Explorer's own (Bubble) key handling ever sees the key: F2 is also
         // RefactorRename's gesture below, and without this a press meant for
@@ -3022,7 +3058,13 @@ public partial class MainWindow : Window
 
         var gesture = ShortcutRecorder.Describe(e.Key, e.KeyModifiers);
 
-        if (_commands.ForGesture(gesture) is not { } command) return false;
+        // Redo answers to Ctrl+Y as well, under either scheme, where nothing else holds the key.
+        if ((_commands.ForGesture(gesture) ?? ShortcutChords.AlternateFor(_commands, gesture)) is not { } command)
+            return false;
+
+        // An editor command acts on the code editor. Elsewhere the key belongs
+        // to the control that has the focus, which is left to take it.
+        if (!EditorScopedCommandApplies(command.Id)) return false;
 
         // A text box edits its own text: run as Edit commands, these keys
         // would cut, paste or undo in the code editor behind it instead.
@@ -3037,9 +3079,94 @@ public partial class MainWindow : Window
         return true;
     }
 
+    /// <summary>
+    /// Whether the code editor's own text has the keyboard. The find bar's text
+    /// box is not part of it, though the bar sits inside the editor's control,
+    /// and neither is the terminal.
+    /// </summary>
+    private bool CodeEditorHasFocus() =>
+        FocusManager?.GetFocusedElement() is Visual focused
+        && focused.FindAncestorOfType<AvaloniaEdit.Editing.TextArea>(includeSelf: true) is { } area
+        && area.FindAncestorOfType<CodeEditor>() is not null;
+
+    /// <summary>
+    /// Whether the focused control handles its own editing keys: a terminal,
+    /// a text box, or another text area such as a read-only editor or the
+    /// query editor. Such a key is left to that control. Whatever else has the
+    /// focus, a toolbar button or a tab header, editing keys act as they always
+    /// have: on the designer in front, or else on the code editor.
+    /// </summary>
+    private bool FocusedControlKeepsItsKeys()
+    {
+        if (CodeEditorHasFocus()) return false;
+        if (FocusManager?.GetFocusedElement() is not Visual focused) return false;
+
+        return focused.FindAncestorOfType<TerminalView>(includeSelf: true) is not null
+            || focused.FindAncestorOfType<TextBox>(includeSelf: true) is not null
+            || focused.FindAncestorOfType<AvaloniaEdit.Editing.TextArea>(includeSelf: true) is not null;
+    }
+
+    /// <summary>
+    /// Whether a command that works on the text may take the key now. Duplicate
+    /// Line belongs to the code editor alone; the editing keys go to whichever
+    /// control keeps its own keys, and otherwise to the designer or the editor.
+    /// </summary>
+    private bool EditorScopedCommandApplies(string commandId) => commandId switch
+    {
+        IdeCommands.EditDuplicateLine => CodeEditorHasFocus(),
+        IdeCommands.EditUndo or IdeCommands.EditRedo or IdeCommands.EditCut
+            or IdeCommands.EditCopy or IdeCommands.EditPaste => !FocusedControlKeepsItsKeys(),
+        _ => true
+    };
+
     private static bool IsTextBoxEditingCommand(string commandId) =>
         commandId is IdeCommands.EditUndo or IdeCommands.EditRedo
             or IdeCommands.EditCut or IdeCommands.EditCopy or IdeCommands.EditPaste;
+
+    /// <summary>Carries out what a chord step asks for, and keeps the status bar in step with a chord that waits.</summary>
+    private async Task RunChordStepAsync(ChordStep step)
+    {
+        switch (step.Outcome)
+        {
+            case ChordOutcome.Waiting:
+                ShowChordWaiting(step.FirstHalf!);
+                break;
+
+            case ChordOutcome.Completed:
+                EndChordWaiting();
+                await RunCommandAsync(step.Command!.Id);
+                break;
+
+            default:
+                EndChordWaiting();
+                break;
+        }
+    }
+
+    /// <summary>Abandons a chord that waits, and puts the status bar back as it was.</summary>
+    private void CancelChord()
+    {
+        _chords.Cancel();
+        EndChordWaiting();
+    }
+
+    private void ShowChordWaiting(string firstHalf)
+    {
+        var waiting = Localizer.Get(StringKeys.StatusChordWaiting, firstHalf);
+
+        _chordStatus ??= (ViewModel.StatusMessage, waiting);
+        ViewModel.StatusMessage = waiting;
+    }
+
+    private void EndChordWaiting()
+    {
+        if (_chordStatus is not { } status) return;
+
+        _chordStatus = null;
+
+        // Put back only what the chord wrote: a message that reached the status bar meanwhile stays.
+        if (ViewModel.StatusMessage == status.Waiting) ViewModel.StatusMessage = status.Before;
+    }
 
     /// <summary>Opens the palette and runs whatever was chosen.</summary>
     private async Task ShowCommandPaletteAsync()
@@ -3321,6 +3448,12 @@ public partial class MainWindow : Window
 
             case IdeCommands.EditToggleComment:
                 ToggleComment();
+                break;
+
+            // A designer in front keeps no text to copy, and the code editor behind it is hidden.
+            case IdeCommands.EditDuplicateLine:
+                if (WinFormsDesignerInFront is null && DesignerInFront is null && CurrentEditor() is { } lines)
+                    CodeEditorLineCommands.DuplicateLine(lines);
                 break;
 
             case IdeCommands.EditFormatSelection:
@@ -5129,6 +5262,10 @@ public partial class MainWindow : Window
             new(Localizer.Get(StringKeys.MenuEditSelectAll),
                 Action: () => RunDesignerCommand(WinFormsDesignerCommand.SelectAll,
                     () => { if (DesignerInFront is null && CurrentEditor() is { } text) text.SelectAll(); })),
+            // Its shortcut is the one the key handler answers to, Ctrl+D under the Basalt and Visual Studio schemes.
+            new(Localizer.Get(StringKeys.MenuEditDuplicateLine),
+                Action: () => _ = RunCommandAsync(IdeCommands.EditDuplicateLine),
+                Gesture: Shortcut(IdeCommands.EditDuplicateLine)),
             MenuEntry.Separator,
             // The registry's shortcut for the scheme in force, which is what the key handler answers to.
             // No icon: the only one that fit was the hammer that means Build,

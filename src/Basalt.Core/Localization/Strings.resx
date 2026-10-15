@@ -1391,4 +1391,6 @@
   <data name="Test_DebugHostTimeout" xml:space="preserve"><value>The test host did not report its process id within {0} seconds, so no debugger could attach. The test run was stopped.</value></data>
   <data name="Test_DebugMultiTarget" xml:space="preserve"><value>{0} targets several frameworks, so there is more than one test host to attach to. Build it for a single TargetFramework to debug a test.</value></data>
   <data name="Test_DebugTestingPlatform" xml:space="preserve"><value>{0} runs its tests with Microsoft.Testing.Platform, which has no test host to attach to. Debug Test works with VSTest projects; to debug this one, start it from Debug > Attach to Process.</value></data>
+  <data name="Menu_Edit_DuplicateLine" xml:space="preserve"><value>Duplicate Line</value></data>
+  <data name="Status_ChordWaiting" xml:space="preserve"><value>({0}) was pressed. Waiting for second key of chord...</value></data>
 </root>

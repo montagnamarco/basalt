@@ -1441,4 +1441,6 @@ public static class StringKeys
     public const string TestDebugHostTimeout = "Test_DebugHostTimeout";
     public const string TestDebugMultiTarget = "Test_DebugMultiTarget";
     public const string TestDebugTestingPlatform = "Test_DebugTestingPlatform";
+    public const string MenuEditDuplicateLine = "Menu_Edit_DuplicateLine";
+    public const string StatusChordWaiting = "Status_ChordWaiting";
 }

@@ -36,6 +36,7 @@ public static class IdeCommands
     public const string EditFoldAll = "edit.foldAll";
     public const string EditUnfoldAll = "edit.unfoldAll";
     public const string EditToggleComment = "edit.toggleComment";
+    public const string EditDuplicateLine = "edit.duplicateLine";
 
     public const string ViewCommandPalette = "view.commandPalette";
     public const string ViewSolutionExplorer = "view.solutionExplorer";
@@ -187,6 +188,11 @@ public static class IdeCommands
                 { DefaultGesture = "Ctrl+M, Ctrl+L" },
             new(EditToggleComment, "Toggle Comment", CommandCategory.Edit)
                 { DefaultGesture = "Ctrl+/" },
+            // Visual Studio's Edit.Duplicate. Visual Studio Code's Ctrl+D adds the next match to a
+            // selection, so that scheme leaves the command without a key.
+            new(EditDuplicateLine, "Duplicate Line", CommandCategory.Edit)
+                { DefaultGesture = code ? null : "Ctrl+D",
+                  Description = "Copy the selection, or the current line, just after itself." },
 
             new(ViewCommandPalette, "Command Palette…", CommandCategory.View)
                 { DefaultGesture = "Ctrl+Shift+P",
