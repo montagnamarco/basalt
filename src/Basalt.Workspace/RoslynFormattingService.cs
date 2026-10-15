@@ -33,21 +33,38 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
         return RunAsync(text, language, new TextSpan(from, to - from), ct);
     }
 
-    private async Task<FormattingResult> RunAsync(
+    private Task<FormattingResult> RunAsync(
         string text, SourceLanguage language, TextSpan? span, CancellationToken ct)
     {
         if (language is not SourceLanguage.VisualBasic)
-            return new FormattingResult(text, Changed: false);
+            return Task.FromResult(new FormattingResult(text, Changed: false));
 
-        var document = CreateScratchDocument(text, language);
+        // Parsing and formatting are Roslyn work: they run off the interface thread.
+        return Task.Run(async () =>
+        {
+            // Keyword casing is a whole-document rule. Roslyn's formatter fixes
+            // spacing and indentation but never casing, so Format Document would
+            // leave "dim x as integer" as typed. A selection is formatted as it is.
+            var cased = span is null
+                ? await VisualBasicCaseCorrector.CorrectKeywordsAsync(text, ct).ConfigureAwait(false)
+                : text;
 
-        var formatted = span is { } range
-            ? await Formatter.FormatAsync(document, range, cancellationToken: ct).ConfigureAwait(false)
-            : await Formatter.FormatAsync(document, cancellationToken: ct).ConfigureAwait(false);
+            var document = CreateScratchDocument(cased, language);
 
-        var result = (await formatted.GetTextAsync(ct).ConfigureAwait(false)).ToString();
+            var formatted = span is { } range
+                ? await Formatter.FormatAsync(document, range, cancellationToken: ct).ConfigureAwait(false)
+                : await Formatter.FormatAsync(document, cancellationToken: ct).ConfigureAwait(false);
 
-        return new FormattingResult(result, !string.Equals(result, text, StringComparison.Ordinal));
+            var result = (await formatted.GetTextAsync(ct).ConfigureAwait(false)).ToString();
+
+            // Whole documents also get the lambda columns Visual Studio uses; a
+            // selection is left to the formatter, as it is typed.
+            if (span is null)
+                result = VisualBasicLambdaBodyIndentation.Apply(result,
+                    _workspace.Options.GetOption(FormattingOptions.IndentationSize, language.ToRoslynName()));
+
+            return new FormattingResult(result, !string.Equals(result, text, StringComparison.Ordinal));
+        }, ct);
     }
 
     /// <summary>
@@ -85,8 +102,16 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
     /// </summary>
     public bool TriggersFormatting(char character, SourceLanguage language) => false;
 
-    public async Task<TypingFormattingResult> FormatLineAsync(
-        string text, SourceLanguage language, int caret, CancellationToken ct = default)
+    /// <remarks>
+    /// Called from the interface thread while the user types: parsing and
+    /// formatting run on the thread pool, and the caller resumes on its own context.
+    /// </remarks>
+    public Task<TypingFormattingResult> FormatLineAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct = default) =>
+        Task.Run(() => FormatLineOnThreadPoolAsync(text, language, caret, ct), ct);
+
+    private async Task<TypingFormattingResult> FormatLineOnThreadPoolAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct)
     {
         if (language is not SourceLanguage.VisualBasic)
             return new TypingFormattingResult(text, caret, Changed: false);
@@ -114,14 +139,18 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             .Where(change => StaysOnLine(change, line))
             .ToList();
 
-        if (changes.Count == 0) return new TypingFormattingResult(text, caret, Changed: false);
+        var laidOut = changes.Count == 0 ? source : source.WithChanges(changes);
+        var laidOutCaret = changes.Count == 0 ? caret : ShiftCaret(caret, changes);
 
-        var updated = source.WithChanges(changes);
+        // A line inside a lambda gets the columns Format Document gives it, not
+        // the formatter's own (see VisualBasicLambdaBodyIndentation).
+        var moved = changes.Any(change => VisualBasicLambdaBodyIndentation.MovesIndentation(change, line, source));
+        var (aligned, alignedCaret) = VisualBasicLambdaBodyIndentation.AlignLine(
+            laidOut.ToString(), laidOutCaret, line.LineNumber, moved);
 
-        return new TypingFormattingResult(
-            updated.ToString(),
-            ShiftCaret(caret, changes),
-            Changed: true);
+        return aligned == text
+            ? new TypingFormattingResult(text, caret, Changed: false)
+            : new TypingFormattingResult(aligned, alignedCaret, Changed: true);
     }
 
     /// <summary>
@@ -208,8 +237,16 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
         }, ct);
     }
 
-    public async Task<TypingFormattingResult> ApplyTypingConventionsAsync(
-        string text, SourceLanguage language, int caret, CancellationToken ct = default)
+    /// <remarks>
+    /// Called from the interface thread when the caret leaves a line: parsing,
+    /// formatting and the lambda layout run on the thread pool.
+    /// </remarks>
+    public Task<TypingFormattingResult> ApplyTypingConventionsAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct = default) =>
+        Task.Run(() => ApplyTypingConventionsOnThreadPoolAsync(text, language, caret, ct), ct);
+
+    private async Task<TypingFormattingResult> ApplyTypingConventionsOnThreadPoolAsync(
+        string text, SourceLanguage language, int caret, CancellationToken ct)
     {
         if (language != SourceLanguage.VisualBasic)
             return new TypingFormattingResult(text, caret, Changed: false);
@@ -251,6 +288,7 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             .ConfigureAwait(false);
 
         var currentLine = cased.Lines.GetLineFromPosition(position);
+
         var layout = (await formatted.GetTextChangesAsync(document, ct).ConfigureAwait(false))
             .Where(change => StaysOnLine(change, currentLine))
             // Trailing whitespace at the caret is where the user is about to
@@ -259,14 +297,18 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             .Where(change => !TouchesCaretWhitespace(change, cased, position))
             .ToList();
 
-        if (layout.Count == 0) return Result(text, cased.ToString(), caret, conventions);
+        var laidOut = layout.Count == 0 ? cased : cased.WithChanges(layout);
+        var laidOutCaret = layout.Count == 0 ? caret : ShiftCaret(caret, layout);
 
-        var final = cased.WithChanges(layout);
+        // A lambda body line gets the columns Format Document gives it.
+        var moved = layout.Any(change => VisualBasicLambdaBodyIndentation.MovesIndentation(change, currentLine, cased));
+        var (aligned, alignedCaret) = VisualBasicLambdaBodyIndentation.AlignLine(
+            laidOut.ToString(), laidOutCaret, currentLine.LineNumber, moved);
 
         return new TypingFormattingResult(
-            final.ToString(),
-            ShiftCaret(caret, layout),
-            Changed: true);
+            aligned,
+            alignedCaret,
+            Changed: !string.Equals(text, aligned, StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -365,6 +407,14 @@ public sealed class RoslynFormattingService : IFormattingService, IDisposable
             var result = (await formatted.GetTextAsync(ct).ConfigureAwait(false)).ToString();
             var index = result.IndexOf(probe, StringComparison.Ordinal);
             if (index < 0) return 0;
+            if (!continuation)
+            {
+                var formattedRoot = await formatted.GetSyntaxRootAsync(ct).ConfigureAwait(false);
+                var lambdaColumn = formattedRoot is null ? null : VisualBasicLambdaBodyIndentation.ColumnFor(
+                    formattedRoot, SourceText.From(result), index,
+                    _workspace.Options.GetOption(FormattingOptions.IndentationSize, language.ToRoslynName()));
+                if (lambdaColumn is { } column) return column;
+            }
             if (continuation)
             {
                 // The formatter preserves continuation indentation instead

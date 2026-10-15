@@ -787,9 +787,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// The formatting service could already do it; nothing exposed it, so the
     /// Format Selection command did nothing when chosen.
     /// </summary>
-    public Task<Basalt.Core.Services.FormattingResult> FormatRangeAsync(
-        string text, SourceLanguage language, int start, int length) =>
-        _formattingService.FormatRangeAsync(text, language, start, length);
+    public async Task<Basalt.Core.Services.FormattingResult> FormatRangeAsync(
+        string text, SourceLanguage language, int start, int length)
+    {
+        var result = await _formattingService.FormatRangeAsync(text, language, start, length).ConfigureAwait(true);
+        if (FormattingGateForTests is { } gate) await gate().ConfigureAwait(true);
+        return result;
+    }
 
     /// <summary>
     /// Saves every document that has unsaved changes.
@@ -1155,16 +1159,26 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         await FormatDocumentAsync(document).ConfigureAwait(true);
     }
 
+    /// <summary>Test seam: holds a format between the formatter's answer and its application.</summary>
+    internal Func<Task>? FormattingGateForTests { get; set; }
+
     /// <summary>Formats a given document in place, active or not.</summary>
     private async Task FormatDocumentAsync(EditorDocumentViewModel document)
     {
         if (document.Language is not SourceLanguage.VisualBasic) return;
 
+        // Formatting runs off the interface thread, so the user may type while
+        // it works. Its result was computed from the text as it was then: writing
+        // it back would erase what was typed. The result is discarded instead, and
+        // Format on Save then saves the text the user has.
+        var input = document.Text;
         var result = await _formattingService
-            .FormatAsync(document.Text, document.Language)
+            .FormatAsync(input, document.Language)
             .ConfigureAwait(true);
 
-        if (!result.Changed) return;
+        if (FormattingGateForTests is { } gate) await gate().ConfigureAwait(true);
+
+        if (!result.Changed || !string.Equals(document.Text, input, StringComparison.Ordinal)) return;
 
         document.Text = result.Text;
         StatusMessage = Localizer.Get(StringKeys.StatusFormatted, document.FileName);
@@ -1188,9 +1202,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>Re-indents the caret's line, used by the editor while typing.</summary>
-    public Task<TypingFormattingResult> FormatLineAsync(
-        string text, SourceLanguage language, int caret) =>
-        _formattingService.FormatLineAsync(text, language, caret);
+    public async Task<TypingFormattingResult> FormatLineAsync(
+        string text, SourceLanguage language, int caret)
+    {
+        var result = await _formattingService.FormatLineAsync(text, language, caret).ConfigureAwait(true);
+        if (FormattingGateForTests is { } gate) await gate().ConfigureAwait(true);
+        return result;
+    }
 
     /// <summary>Whether typing this character should re-indent its line.</summary>
     public bool TriggersFormatting(char character, SourceLanguage language) =>

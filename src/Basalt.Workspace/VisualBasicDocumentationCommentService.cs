@@ -17,7 +17,8 @@ public static class VisualBasicDocumentationCommentService
     /// Examines the current editor snapshot after the third apostrophe was typed.
     /// The caret and returned offset count UTF-16 code units. Returns null unless
     /// the caret ends a standalone, undocumented triple-apostrophe line immediately
-    /// before a method, constructor, property or event at type scope. Parsing runs off the caller thread.
+    /// before a class, module, structure, interface, or a method, constructor, property
+    /// or event at type scope. Parsing runs off the caller thread.
     /// The insertion preserves the trigger line's indentation and line ending;
     /// the returned caret sits on the blank summary line.
     /// </summary>
@@ -49,19 +50,31 @@ public static class VisualBasicDocumentationCommentService
         var declaration = root.DescendantNodes()
             .FirstOrDefault(node => node.SpanStart >= caretPosition
                 && node is MethodStatementSyntax or SubNewStatementSyntax
-                    or PropertyStatementSyntax or EventStatementSyntax);
+                    or PropertyStatementSyntax or EventStatementSyntax
+                    or ClassStatementSyntax or ModuleStatementSyntax
+                    or StructureStatementSyntax or InterfaceStatementSyntax);
         if (declaration is null || declaration.ContainsDiagnostics
             || source[caretPosition..declaration.SpanStart].Any(character => !char.IsWhiteSpace(character)))
             return null;
 
-        var container = declaration.Parent switch
+        // A type is documented on its own line wherever it is declared: at file
+        // level, in a namespace, or nested in another type. Its statement sits
+        // inside the type's block, so the container is one level further out.
+        // Members belong to a type; an interface member sits directly in the
+        // InterfaceBlock, which is why the two cases are kept apart.
+        var isType = declaration is ClassStatementSyntax or ModuleStatementSyntax
+            or StructureStatementSyntax or InterfaceStatementSyntax;
+        var container = isType ? declaration.Parent?.Parent : declaration.Parent switch
         {
             MethodBlockBaseSyntax block => block.Parent,
             PropertyBlockSyntax block => block.Parent,
             EventBlockSyntax block => block.Parent,
             _ => declaration.Parent
         };
-        if (container is not TypeBlockSyntax)
+        var containerAccepted = isType
+            ? container is TypeBlockSyntax or NamespaceBlockSyntax or CompilationUnitSyntax
+            : container is TypeBlockSyntax;
+        if (!containerAccepted)
             return null;
 
         // Documentation trivia may combine several adjacent lines. Only the newly
@@ -83,28 +96,31 @@ public static class VisualBasicDocumentationCommentService
         var caretOffset = builder.Length;
         builder.Append(continuation).Append("</summary>");
 
-        ParameterListSyntax? parameters;
-        if (declaration is MethodStatementSyntax method)
+        // Generic methods and generic types both take a typeparam per parameter.
+        var typeParameters = declaration switch
         {
-            foreach (var parameter in method.TypeParameterList?.Parameters
-                ?? default(SeparatedSyntaxList<TypeParameterSyntax>))
-            {
-                builder.Append(continuation).Append("<typeparam name=\"")
-                    .Append(SecurityElement.Escape(parameter.Identifier.ValueText))
-                    .Append("\"></typeparam>");
-            }
-            parameters = method.ParameterList;
-        }
-        else
+            MethodStatementSyntax method => method.TypeParameterList,
+            ClassStatementSyntax type => type.TypeParameterList,
+            StructureStatementSyntax type => type.TypeParameterList,
+            InterfaceStatementSyntax type => type.TypeParameterList,
+            _ => null
+        };
+        foreach (var parameter in typeParameters?.Parameters
+            ?? default(SeparatedSyntaxList<TypeParameterSyntax>))
         {
-            parameters = declaration switch
-            {
-                SubNewStatementSyntax constructor => constructor.ParameterList,
-                PropertyStatementSyntax property => property.ParameterList,
-                EventStatementSyntax eventDeclaration => eventDeclaration.ParameterList,
-                _ => null
-            };
+            builder.Append(continuation).Append("<typeparam name=\"")
+                .Append(SecurityElement.Escape(parameter.Identifier.ValueText))
+                .Append("\"></typeparam>");
         }
+
+        ParameterListSyntax? parameters = declaration switch
+        {
+            MethodStatementSyntax method => method.ParameterList,
+            SubNewStatementSyntax constructor => constructor.ParameterList,
+            PropertyStatementSyntax property => property.ParameterList,
+            EventStatementSyntax eventDeclaration => eventDeclaration.ParameterList,
+            _ => null
+        };
 
         foreach (var parameter in parameters?.Parameters
             ?? default(SeparatedSyntaxList<ParameterSyntax>))

@@ -970,11 +970,14 @@ public sealed partial class CodeEditor : UserControl
         var length = _editor.SelectionLength;
         var caret = _editor.CaretOffset;
 
+        // The formatter answers for the text as it was when asked. Typing while it
+        // works makes that answer stale: writing it back would erase the typing.
+        var snapshot = _editor.Text;
         var result = await _shell
-            .FormatRangeAsync(_editor.Text, _document.Language, start, length)
+            .FormatRangeAsync(snapshot, _document.Language, start, length)
             .ConfigureAwait(true);
 
-        if (!result.Changed) return;
+        if (!result.Changed || !string.Equals(snapshot, _editor.Text, StringComparison.Ordinal)) return;
 
         _suppressTextChanged = true;
 
@@ -999,11 +1002,16 @@ public sealed partial class CodeEditor : UserControl
 
         var caret = _editor.CaretOffset;
 
+        // As for the selection: the answer applies only to the text it was computed from.
+        var snapshot = _editor.Text;
+        var line = _editor.Document.GetLineByOffset(caret).LineNumber;
         var result = await _shell
-            .FormatLineAsync(_editor.Text, _document.Language, caret)
+            .FormatLineAsync(snapshot, _document.Language, caret)
             .ConfigureAwait(true);
 
-        if (!result.Changed) return;
+        // The replacement goes to the caret's line, so the caret must still be on the line formatted.
+        if (!result.Changed || !string.Equals(snapshot, _editor.Text, StringComparison.Ordinal) ||
+            _editor.Document.GetLineByOffset(_editor.CaretOffset).LineNumber != line) return;
 
         ReplaceCurrentLine(result.Text, result.Caret);
     }

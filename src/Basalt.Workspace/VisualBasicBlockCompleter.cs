@@ -49,7 +49,14 @@ public static class VisualBasicBlockCompleter
                 candidate.SubOrFunctionHeader.Span.End > line.Start &&
                 candidate.SubOrFunctionHeader.Span.End <= line.End);
         if (lambda is not null)
-            return HasRealClosingToken(lambda) ? null : ClosingFor(lambda);
+        {
+            if (HasRealClosingToken(lambda) && !EndWasTakenFromEnclosingBlock(lambda)) return null;
+
+            // A lambda passed as an argument is closed inside its call: "End Sub)".
+            return ClosingFor(lambda) is { } lambdaClosing
+                ? lambdaClosing + new string(')', UnclosedArgumentLists(lambda))
+                : null;
+        }
 
         // The statement that begins on this line: its parent block, if any, is
         // what needs closing.
@@ -99,7 +106,9 @@ public static class VisualBasicBlockCompleter
         SyntaxKind.MultiLineIfBlock => "End If",
         SyntaxKind.WhileBlock => "End While",
         SyntaxKind.ForBlock or SyntaxKind.ForEachBlock => "Next",
-        SyntaxKind.SubBlock or SyntaxKind.MultiLineSubLambdaExpression => "End Sub",
+        // "Sub New" is a constructor block, not a SubBlock, and needs the same
+        // closing line as any other Sub.
+        SyntaxKind.SubBlock or SyntaxKind.ConstructorBlock or SyntaxKind.MultiLineSubLambdaExpression => "End Sub",
         SyntaxKind.FunctionBlock or SyntaxKind.MultiLineFunctionLambdaExpression => "End Function",
         SyntaxKind.TryBlock => "End Try",
         SyntaxKind.SelectBlock => "End Select",
@@ -142,6 +151,31 @@ public static class VisualBasicBlockCompleter
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// How many argument lists around the lambda are still open: the call
+    /// <c>list.ForEach(Sub(x)</c> needs its ")" after the lambda's End Sub.
+    /// </summary>
+    private static int UnclosedArgumentLists(SyntaxNode lambda) =>
+        lambda.Ancestors().OfType<ArgumentListSyntax>().Count(list => list.CloseParenToken.IsMissing);
+
+    /// <summary>
+    /// Whether a lambda's "End Sub" or "End Function" is really the one the
+    /// enclosing method or type needs.
+    ///
+    /// A lambda body accepts any statement, so when its own closing line is
+    /// missing, the parser pairs the lambda with the next "End Sub" in the file:
+    /// the one that closes the method around it. The enclosing block then
+    /// reports a missing terminator, and the lambda is the block that needs
+    /// the line Enter is about to write.
+    /// </summary>
+    private static bool EndWasTakenFromEnclosingBlock(SyntaxNode lambda)
+    {
+        var enclosing = lambda.Ancestors().FirstOrDefault(node =>
+            node is MethodBlockBaseSyntax or TypeBlockSyntax or MultiLineLambdaExpressionSyntax);
+
+        return enclosing is not null && !HasRealClosingToken(enclosing);
     }
 
     /// <summary>

@@ -59,6 +59,16 @@ internal static class VisualBasicEnterInput
                 .ConfigureAwait(false);
             var correctedSource = SourceText.From(corrected);
             var correctedPosition = Math.Clamp(formatted.Caret, 0, corrected.Length);
+
+            // Inside a documentation comment Enter carries the comment on at
+            // the same indentation. A block opener or closer is never written
+            // there, and the comment's indentation is the one to keep.
+            if (Basalt.Workspace.VisualBasicDocumentationContinuation.PrefixFor(corrected, correctedPosition) is { } documentation)
+            {
+                var continued = newline + documentation;
+                return new Plan(corrected, correctedPosition, continued, correctedPosition + continued.Length);
+            }
+
             var line = correctedSource.Lines.GetLineFromPosition(correctedPosition);
             var indentation = await shell.GetIndentationAsync(corrected, SourceLanguage.VisualBasic, line.End)
                 .ConfigureAwait(false);
